@@ -27,6 +27,7 @@ const {
   WEBAPP,
   MOBILE,
   INTRA_HOLDING,
+  SELF_POSITIONNING,
 } = require('../../../src/helpers/constants');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
@@ -1859,6 +1860,240 @@ describe('exportCoursePaymentHistory', () => {
         { query: 'lean' },
       ],
       1
+    );
+  });
+});
+
+describe('exportSelfPositionningQuestionnaireHistory', () => {
+  let findCourseSlot;
+  let findCourse;
+  let findQuestionnaireHistory;
+
+  const credentials = { role: { vendor: { name: 'training_organisation_manager' } } };
+  const startDate = '2021-01-01T23:00:00.000Z';
+  const endDate = '2021-02-28T22:59:59.000Z';
+
+  beforeEach(() => {
+    findCourseSlot = sinon.stub(CourseSlot, 'find');
+    findCourse = sinon.stub(Course, 'find');
+    findQuestionnaireHistory = sinon.stub(QuestionnaireHistory, 'find');
+  });
+
+  afterEach(() => {
+    findCourseSlot.restore();
+    findCourse.restore();
+    findQuestionnaireHistory.restore();
+  });
+
+  it('should return an empty array if no course', async () => {
+    findCourseSlot.returns(SinonMongoose.stubChainedQueries([], ['lean']));
+    findCourse.returns(SinonMongoose.stubChainedQueries([]));
+    findQuestionnaireHistory.returns(SinonMongoose.stubChainedQueries([], ['populate', 'setOptions', 'lean']));
+
+    const result = await ExportHelper.exportSelfPositionningQuestionnaireHistory(startDate, endDate, credentials);
+
+    expect(result).toEqual([[NO_DATA]]);
+
+    SinonMongoose.calledOnceWithExactly(
+      findCourseSlot,
+      [
+        { query: 'find', args: [{ startDate: { $lte: endDate }, endDate: { $gte: startDate } }, { course: 1 }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findCourse,
+      [
+        { query: 'find', args: [{ _id: { $in: [] } }, { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1 }] },
+        { query: 'populate', args: [{ path: 'slotsToPlan' }] },
+        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate' }] },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'program name', populate: [{ path: 'program', select: 'name' }] }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findQuestionnaireHistory,
+      [
+        { query: 'find', args: [{ course: { $in: [] } }, { questionnaire: 1, course: 1, timeline: 1, questionnaireAnswersList: 1 }] },
+        { query: 'populate', args: [{ path: 'questionnaire', select: 'type' }] },
+        { query: 'populate', args: [{ path: 'questionnaireAnswersList.card' }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should return an array with the header and 1 row', async () => {
+    const courseSlotIdList = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+    const courseIdList = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const programIdList = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const traineeIdList = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+
+    const courseList = [
+      {
+        _id: courseIdList[0],
+        misc: 'Groupe 1',
+        slots: [{ _id: courseSlotIdList[0], startDate: '2021-01-03T08:00:00.000Z', endDate: '2021-01-03T10:00:00.000Z' }, { _id: courseSlotIdList[1], startDate: '2020-02-01T10:00:00.000Z', endDate: '2021-02-01T16:00:00.000Z' }],
+        slotsToPlan: [],
+        subProgram: { _id: new ObjectId(), name: 'Sous-programme 1', program: { _id: new ObjectId(), name: 'Programme 1' } },
+        trainers: [{ identity: { firstname: 'Albert', lastname: 'Einstein' } }],
+        trainees: traineeIdList,
+      },
+      {
+        _id: courseIdList[1],
+        misc: 'Groupe 2',
+        slots: [{ _id: courseSlotIdList[2], startDate: '2021-02-01T08:00:00.000Z', endDate: '2021-02-01T10:00:00.000Z' }, { _id: courseSlotIdList[3], startDate: '2021-04-02T08:00:00.000Z', endDate: '2021-04-02T10:00:00.000Z' }],
+        slotsToPlan: [],
+        subProgram: { _id: new ObjectId(), name: 'Sous-programme 1', program: { _id: programIdList[0], name: 'Programme 2' } },
+        trainers: [],
+      },
+      {
+        _id: courseIdList[2],
+        misc: 'Groupe 3',
+        slots: [{ _id: courseSlotIdList[4], startDate: '2021-04-02T08:00:00.000Z', endDate: '2021-04-02T10:00:00.000Z' }],
+        slotsToPlan: [{ _id: courseSlotIdList[5] }],
+        subProgram: { _id: new ObjectId(), name: 'Sous-programme 1', program: { _id: programIdList[1], name: 'Programme 3' } },
+        trainers: [],
+      },
+    ];
+
+    const courseSlotList = [
+      { _id: courseSlotIdList[0], course: courseList[0]._id, startDate: '2021-01-03T08:00:00.000Z', endDate: '2021-05-03T10:00:00.000Z' },
+      { _id: courseSlotIdList[1], course: courseList[0]._id, startDate: '2021-02-01T10:00:00.000Z', endDate: '2021-02-01T16:00:00.000Z' },
+      { _id: courseSlotIdList[2], course: courseList[1]._id, startDate: '2021-02-01T08:00:00.000Z', endDate: '2021-02-01T10:00:00.000Z' },
+      { _id: courseSlotIdList[3], course: courseList[1]._id, startDate: '2021-04-02T08:00:00.000Z', endDate: '2021-04-02T10:00:00.000Z' },
+      { _id: courseSlotIdList[4], course: courseList[2]._id, startDate: '2021-04-02T08:00:00.000Z', endDate: '2021-04-02T10:00:00.000Z' },
+    ];
+
+    const cardIdList = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const labels = {
+      1: 'Je me sens en difficulté',
+      2: 'En difficulté mais j\'identifie des axes de progression',
+      3: 'Je me sens capable',
+      4: 'J\'y arrive parfois',
+      5: 'Oui peu importe le contexte',
+    };
+
+    const cardList = [
+      {
+        _id: cardIdList[0],
+        template: 'survey',
+        question: 'Je me sens capable de faire la toilette d\'un résident seule',
+        labels,
+      },
+      {
+        _id: cardIdList[1],
+        template: 'survey',
+        question: 'Je me sens capable de proposer une animation adaptée a tous les residents',
+        labels,
+      },
+      {
+        _id: cardIdList[2],
+        template: 'survey',
+        question: 'Je me sens capable de cuisiner avec les residents',
+        labels,
+      },
+    ];
+    const questionnaire = { _id: new ObjectId(), name: 'auto-positionnement', program: programIdList[0], cards: cardIdList[0], type: SELF_POSITIONNING };
+    const questionnaireHistories = [{
+      course: courseIdList[0],
+      user: traineeIdList[1],
+      questionnaire,
+      timeline: 'start_course',
+      questionnaireAnswersList: [{ card: cardList[0], answerList: ['3'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[1], answerList: ['4'] }],
+    },
+    {
+      course: courseIdList[0],
+      user: traineeIdList[1],
+      questionnaire,
+      timeline: 'end_course',
+      questionnaireAnswersList: [{ card: cardList[0], answerList: ['4'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[1], answerList: ['3'] }],
+    },
+    {
+      course: courseIdList[0],
+      user: traineeIdList[2],
+      questionnaire,
+      timeline: 'start_course',
+      questionnaireAnswersList: [{ card: cardList[0], answerList: ['1'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[1], answerList: ['3'] }],
+    },
+    {
+      course: courseIdList[0],
+      user: traineeIdList[2],
+      questionnaire,
+      timeline: 'end_course',
+      questionnaireAnswersList: [{ card: cardList[0], answerList: ['3'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[1], answerList: ['3'] }],
+    }];
+    findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList, ['lean']));
+    findCourse.returns(SinonMongoose.stubChainedQueries([courseList[0], courseList[1], courseList[2]], ['populate', 'populate', 'populate', 'lean']));
+    findQuestionnaireHistory.returns(SinonMongoose.stubChainedQueries(questionnaireHistories, ['populate', 'setOptions', 'lean']));
+
+    const result = await ExportHelper.exportSelfPositionningQuestionnaireHistory(startDate, endDate, credentials);
+
+    expect(result).toEqual([
+      [
+        'Id formation',
+        'Programme',
+        'Infos complémentaires',
+        'Sous-programme',
+        'Prénom Nom intervenant',
+        'Nombre d\'apprenants inscrits',
+        'Nombre de réponses au questionnaire de début',
+        'Moyenne de l’auto-positionnement de début',
+        'Nombre de réponses au questionnaire de fin',
+        'Moyenne de l’auto-positionnement de fin',
+        'Delta entre la moyenne de début et de fin',
+        'Question ayant la plus grande progression',
+        'Progression maximale associée',
+        'Question ayant la plus faible progression',
+        'Progression minimale associée',
+      ],
+      [
+        courseIdList[0],
+        'Programme 1',
+        'Groupe 1',
+        'Sous-programme 1',
+        'Albert EINSTEIN',
+        6,
+        2,
+        '2,50',
+        2,
+        '2,83',
+        '0,33',
+        'Je me sens capable de faire la toilette d\'un résident seule',
+        '1,50',
+        'Je me sens capable de proposer une animation adaptée a tous les residents',
+        '-0,25',
+      ],
+    ]);
+
+    SinonMongoose.calledOnceWithExactly(
+      findCourseSlot,
+      [
+        { query: 'find', args: [{ startDate: { $lte: endDate }, endDate: { $gte: startDate } }, { course: 1 }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findCourse,
+      [
+        { query: 'find', args: [{ _id: { $in: [courseList[0]._id, courseList[1]._id, courseList[2]._id] } }, { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1 }] },
+        { query: 'populate', args: [{ path: 'slotsToPlan' }] },
+        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate' }] },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'program name', populate: [{ path: 'program', select: 'name' }] }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findQuestionnaireHistory,
+      [
+        { query: 'find', args: [{ course: { $in: [courseIdList[0]] } }, { questionnaire: 1, course: 1, timeline: 1, questionnaireAnswersList: 1 }] },
+        { query: 'populate', args: [{ path: 'questionnaire', select: 'type' }] },
+        { query: 'populate', args: [{ path: 'questionnaireAnswersList.card' }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
     );
   });
 });

@@ -592,6 +592,7 @@ module.exports = {
       this.END_OF_COURSE,
       this.COURSE_BILL,
       this.COURSE_PAYMENT,
+      this.SELF_POSITIONNING,
     ];
   },
   get CLIENT_EXPORT_TYPES() {
@@ -615,7 +616,14 @@ module.exports = {
     ];
   },
   get VENDOR_EXPORT_TYPES() {
-    return [this.COURSE, this.COURSE_SLOT, this.END_OF_COURSE, this.COURSE_BILL, this.COURSE_PAYMENT];
+    return [
+      this.COURSE,
+      this.COURSE_SLOT,
+      this.END_OF_COURSE,
+      this.COURSE_BILL,
+      this.COURSE_PAYMENT,
+      this.SELF_POSITIONNING,
+    ];
   },
   // COURSE BILLING
   LIST: 'list',

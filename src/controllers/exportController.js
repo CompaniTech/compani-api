@@ -22,6 +22,7 @@ const {
   END_OF_COURSE,
   COURSE_BILL,
   COURSE_PAYMENT,
+  SELF_POSITIONNING,
 } = require('../helpers/constants');
 const { CompaniDate } = require('../helpers/dates/companiDates');
 const HistoryExportHelper = require('../helpers/historyExport');
@@ -128,6 +129,10 @@ const exportHistory = async (req, h) => {
         break;
       case COURSE_PAYMENT:
         exportArray = await VendorHistoryExportHelper.exportCoursePaymentHistory(startDate, endDate, credentials);
+        break;
+      case SELF_POSITIONNING:
+        exportArray = await VendorHistoryExportHelper
+          .exportSelfPositionningQuestionnaireHistory(startDate, endDate, credentials);
         break;
     }
 
