@@ -206,7 +206,7 @@ describe('addTutor', () => {
     addTutorContent.restore();
   });
 
-  it('should send an email to new tutor #tag', async () => {
+  it('should send an email to new tutor', async () => {
     const tutor = {
       _id: new ObjectId(),
       local: { email: 'aude+test95@compani.fr' },
@@ -218,22 +218,16 @@ describe('addTutor', () => {
       trainees: [{ _id: new ObjectId(), identity: { firstname: 'Robyn', lastname: 'FENTY' } }],
     };
     const addNewTutorContent = 'content for tutor';
-    const mailOptions = {
-      from: 'Compani <nepasrepondre@compani.fr>',
-      to: tutor.local.email,
-      subject: 'Vous avez été nommé tuteur d\'une formation',
-      html: addNewTutorContent,
-    };
 
     userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['select', 'lean']));
-    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
-    formatIdentity.onCall(0).returns('Bat MAN');
-    formatIdentity.onCall(1).returns('Robyn FENTY');
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
+    formatIdentity.onCall(0).returns('Robyn FENTY');
+    formatIdentity.onCall(1).returns('Bat MAN');
     sendinBlueTransporter.returns({ sendMail });
     sendMail.returns(sentObj);
     addTutorContent.returns(addNewTutorContent);
 
-    const result = await NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+    const result = await EmailHelper.addTutor(tutor._id, course._id);
 
     expect(result).toEqual(sentObj);
 
@@ -248,7 +242,7 @@ describe('addTutor', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }] },
+        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1 }] },
         {
           query: 'populate',
           args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
@@ -257,8 +251,8 @@ describe('addTutor', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledWithExactly(formatIdentity.getCall(0), { firstname: 'Bat', lastname: 'MAN' }, 'FL');
-    sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstname: 'Robyn', lastname: 'FENTY' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(0), { firstname: 'Robyn', lastname: 'FENTY' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstname: 'Bat', lastname: 'MAN' }, 'FL');
     sinon.assert.calledWithExactly(sendinBlueTransporter);
     sinon.assert.calledOnceWithExactly(
       sendMail,
@@ -266,9 +260,9 @@ describe('addTutor', () => {
         from: 'Compani <nepasrepondre@compani.fr>',
         to: tutor.local.email,
         subject: 'Vous avez été nommé tuteur d\'une formation',
-        html: addNewTutorContent(course.trainees.identity, course.subProgram.program.name, tutor.identity),
+        html: addNewTutorContent,
       }
     );
-    sinon.assert.calledWithExactly(addTutorContent);
+    sinon.assert.calledWithExactly(addTutorContent, 'Robyn FENTY', 'Program 1', 'Bat MAN');
   });
 });
