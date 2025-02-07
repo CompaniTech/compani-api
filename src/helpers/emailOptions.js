@@ -49,8 +49,8 @@ const welcomeTraineeContent = () => `<p>Bonjour,</p>
   <p>Bienvenue sur Compani Formation, l'outil au service du prendre soin,
   nous venons de vous créer votre compte apprenant.</p>
   <p>
-  Vous y trouverez de nombreuses formation ludiques pour vous accompagner dans votre quotidien : 
-  les troubles cognitif, la communication empathique, gérer la fin de vie et le deuil, et bien d'autres encore... 
+  Vous y trouverez de nombreuses formations ludiques pour vous accompagner dans votre quotidien : 
+  les troubles cognitifs, la communication empathique, gérer la fin de vie et le deuil, et bien d'autres encore... 
   </p>
   <p>
   Nous vous invitons à télécharger l'application Compani Formation sur votre store et
@@ -85,6 +85,18 @@ const GooglePlayAndAppStoreButtons = () => `
   </table>
   <p style="color: grey; font-size: 8px">Google Play et le logo Google Play sont des marques de Google LLC.</p>`;
 
+const addTutorContent = (learnerIdentity, courseName, tutorIdentity) => `<p>Bonjour ${tutorIdentity},</p>
+  <p> Vous avez été ajouté comme tuteur ${learnerIdentity ? `de ${learnerIdentity}` : 'd\'un apprenant'} dans le cadre de la formation ${courseName}.</p>
+  <p> Vous pourrez retrouver tout ce qui concerne sa formation sur l'application Compani Formation, onglet "Mes formations", section "Tutorat".</p>
+  <p>
+  Nous vous invitons à télécharger l'application Compani Formation sur votre store et à cliquer sur "c'est ma première connexion" pour vous créer un mot de passe.
+  </p>
+  <p>Bien cordialement,<br>
+  L'équipe Compani</p>
+  <br>
+  ${GooglePlayAndAppStoreButtons()}
+`;
+
 module.exports = {
   baseWelcomeContent,
   trainerCustomContent,
@@ -92,4 +104,5 @@ module.exports = {
   forgotPasswordEmail,
   verificationCodeEmail,
   welcomeTraineeContent,
+  addTutorContent,
 };

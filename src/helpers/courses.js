@@ -76,6 +76,7 @@ const CourseBill = require('../models/CourseBill');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHistory = require('../models/CourseHistory');
 const { CompaniDuration } = require('./dates/companiDurations');
+const EmailHelper = require('./email');
 
 exports.createCourse = async (payload, credentials) => {
   const coursePayload = payload.company
@@ -1312,8 +1313,11 @@ exports.removeTrainer = async (courseId, trainerId) => {
   await Course.updateOne({ _id: courseId }, query);
 };
 
-exports.addTutor = async (courseId, payload) =>
-  Course.updateOne({ _id: courseId }, { $addToSet: { tutors: payload.tutor } });
+exports.addTutor = async (courseId, payload) => {
+  await Course.updateOne({ _id: courseId }, { $addToSet: { tutors: payload.tutor } });
+
+  return EmailHelper.addTutor(payload.tutor, courseId);
+};
 
 exports.removeTutor = async (courseId, tutorId) => {
   await Course.updateOne({ _id: courseId }, { $pull: { tutors: tutorId } });
