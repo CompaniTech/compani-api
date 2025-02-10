@@ -149,7 +149,7 @@ exports.formatIdentity = (identity, format) => {
   return values.join(' ');
 };
 exports.flatQuery = (payload) => {
-  const flattenPayload = flat(JSON.parse(JSON.stringify(payload, (key, value) =>
+  const flattenPayload = flat(JSON.parse(JSON.stringify(payload, (_, value) =>
     (value instanceof ObjectId ? value.toHexString() : value)
   )), { safe: true });
 
