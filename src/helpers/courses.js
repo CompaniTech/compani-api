@@ -65,6 +65,7 @@ const {
   END_COURSE,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
+const EmailHelper = require('./email');
 const NotificationHelper = require('./notifications');
 const VendorCompaniesHelper = require('./vendorCompanies');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
@@ -1312,8 +1313,11 @@ exports.removeTrainer = async (courseId, trainerId) => {
   await Course.updateOne({ _id: courseId }, query);
 };
 
-exports.addTutor = async (courseId, payload) =>
-  Course.updateOne({ _id: courseId }, { $addToSet: { tutors: payload.tutor } });
+exports.addTutor = async (courseId, payload) => {
+  await Course.updateOne({ _id: courseId }, { $addToSet: { tutors: payload.tutor } });
+
+  return EmailHelper.addTutor(courseId, payload.tutor);
+};
 
 exports.removeTutor = async (courseId, tutorId) => {
   await Course.updateOne({ _id: courseId }, { $pull: { tutors: tutorId } });

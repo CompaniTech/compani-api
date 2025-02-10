@@ -67,6 +67,8 @@ const {
   trainerOrganisationManager,
   auxiliary,
 } = require('../seed/authUsersSeed');
+const EmailOptionsHelper = require('../../src/helpers/emailOptions');
+const NodemailerHelper = require('../../src/helpers/nodemailer');
 const SmsHelper = require('../../src/helpers/sms');
 const DocxHelper = require('../../src/helpers/docx');
 const NotificationHelper = require('../../src/helpers/notifications');
@@ -691,7 +693,7 @@ describe('COURSES ROUTES - GET /courses', () => {
           program: {
             _id: programsList[0]._id,
             name: programsList[0].name,
-            subPrograms: [expect.any(ObjectId)],
+            subPrograms: [expect.any(ObjectId), expect.any(ObjectId)],
           },
         }),
         trainers: [pick(trainerAndCoach, ['_id', 'identity.firstname', 'identity.lastname'])],
@@ -872,7 +874,7 @@ describe('COURSES ROUTES - GET /courses', () => {
             name: programsList[0].name,
             image: programsList[0].image,
             description: programsList[0].description,
-            subPrograms: [expect.any(ObjectId)],
+            subPrograms: [expect.any(ObjectId), expect.any(ObjectId)],
           },
         }),
         slots: [{
@@ -5094,8 +5096,19 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainers/{trainerId}', () => {
 
 describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
   let authToken;
+  let sendinBlueTransporter;
+  let addTutorContent;
 
   beforeEach(populateDB);
+  beforeEach(() => {
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
+      .returns({ sendMail: sinon.stub().returns('emailSent') });
+    addTutorContent = sinon.stub(EmailOptionsHelper, 'addTutorContent').returns('content for tutor');
+  });
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+    addTutorContent.restore();
+  });
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
@@ -5114,6 +5127,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
 
       const course = await Course.countDocuments({ _id: coursesList[24]._id, tutors: auxiliary._id });
       expect(course).toEqual(1);
+      sinon.assert.calledOnceWithExactly(sendinBlueTransporter);
+      sinon.assert.calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Michel DRUCKER', 'program');
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
