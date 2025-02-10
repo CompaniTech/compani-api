@@ -7152,8 +7152,11 @@ describe('addTutor', () => {
     const course = { _id: new ObjectId(), misc: 'Test', tutors: [new ObjectId()] };
     const payload = { tutor: tutorId };
 
-    await CourseHelper.addTutor(course._id, payload);
+    emailAddTutor.returns('email sent');
 
+    const result = await CourseHelper.addTutor(course._id, payload);
+
+    expect(result).toEqual('email sent');
     sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $addToSet: { tutors: tutorId } });
     sinon.assert.calledOnceWithExactly(emailAddTutor, course._id, tutorId);
   });

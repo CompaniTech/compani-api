@@ -77,29 +77,28 @@ exports.sendVerificationCodeEmail = async (receiver, verificationCode) => {
 };
 
 exports.addTutor = async (courseId, tutorId) => {
-  const tutor = await User.findOne({ _id: tutorId }).select('local.email identity').lean();
-
-  const tutorIdentity = UtilsHelper.formatIdentity(tutor.identity, 'FL');
-
-  const course = await Course.findOne({ _id: courseId }, { subProgram: 1, trainees: 1 })
-    .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
-    .populate({ path: 'trainees', select: 'identity' })
-    .lean();
-
-  const learnerIdentity = course.trainees.length === 1
-    ? UtilsHelper.formatIdentity(course.trainees[0].identity, 'FL')
-    : '';
-
-  const courseName = course.subProgram.program.name;
-
-  const mailOptions = {
-    from: `Compani <${SENDER_MAIL}>`,
-    to: tutor.local.email,
-    subject: 'Vous avez été nommé tuteur d\'une formation',
-    html: EmailOptionsHelper.addTutorContent(tutorIdentity, learnerIdentity, courseName),
-  };
-
   try {
+    const tutor = await User.findOne({ _id: tutorId }, { 'local.email': 1, identity: 1 }).lean();
+
+    const tutorIdentity = UtilsHelper.formatIdentity(tutor.identity, 'FL');
+
+    const course = await Course.findOne({ _id: courseId }, { subProgram: 1, trainees: 1 })
+      .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
+      .populate({ path: 'trainees', select: 'identity' })
+      .lean();
+
+    const learnerIdentity = course.trainees.length === 1
+      ? UtilsHelper.formatIdentity(course.trainees[0].identity, 'FL')
+      : '';
+
+    const courseName = course.subProgram.program.name;
+
+    const mailOptions = {
+      from: `Compani <${SENDER_MAIL}>`,
+      to: tutor.local.email,
+      subject: 'Vous avez été nommé tuteur d\'une formation',
+      html: EmailOptionsHelper.addTutorContent(tutorIdentity, learnerIdentity, courseName),
+    };
     return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
   } catch (error) {
     console.error(error);

@@ -219,7 +219,7 @@ describe('addTutor', () => {
     };
     const addNewTutorContent = 'content for tutor';
 
-    userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['select', 'lean']));
+    userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['lean']));
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
     formatIdentity.onCall(0).returns('Bat MAN');
     formatIdentity.onCall(1).returns('Robyn FENTY');
@@ -233,11 +233,7 @@ describe('addTutor', () => {
 
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
-      [
-        { query: 'findOne', args: [{ _id: tutor._id }] },
-        { query: 'select', args: ['local.email identity'] },
-        { query: 'lean' },
-      ]
+      [{ query: 'findOne', args: [{ _id: tutor._id }, { 'local.email': 1, identity: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
@@ -282,7 +278,7 @@ describe('addTutor', () => {
     };
     const addNewTutorContent = 'content for tutor';
 
-    userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['select', 'lean']));
+    userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['lean']));
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
     formatIdentity.returns('Bat MAN');
     sendMail.returns(sentObj);
@@ -295,11 +291,7 @@ describe('addTutor', () => {
 
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
-      [
-        { query: 'findOne', args: [{ _id: tutor._id }] },
-        { query: 'select', args: ['local.email identity'] },
-        { query: 'lean' },
-      ]
+      [{ query: 'findOne', args: [{ _id: tutor._id }, { 'local.email': 1, identity: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,

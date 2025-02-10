@@ -322,7 +322,7 @@ const programsList = [
     learningGoals: 'on est là',
     image: { link: 'belle/url', publicId: '12345' },
     description: 'Ceci est une description',
-    subPrograms: [subProgramsList[0]._id],
+    subPrograms: [subProgramsList[0]._id, subProgramsList[4]._id],
   },
   { _id: new ObjectId(), name: 'training program', image: { link: 'belle/url', publicId: '12345' } },
 ];
