@@ -206,7 +206,7 @@ describe('addTutor', () => {
     addTutorContent.restore();
   });
 
-  it('should send an email to new tutor', async () => {
+  it('should send an email to new tutor (one trainee)', async () => {
     const tutor = {
       _id: new ObjectId(),
       local: { email: 'aude+test95@compani.fr' },
@@ -221,13 +221,13 @@ describe('addTutor', () => {
 
     userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['select', 'lean']));
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
-    formatIdentity.onCall(0).returns('Robyn FENTY');
-    formatIdentity.onCall(1).returns('Bat MAN');
-    sendinBlueTransporter.returns({ sendMail });
+    formatIdentity.onCall(0).returns('Bat MAN');
+    formatIdentity.onCall(1).returns('Robyn FENTY');
     sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
     addTutorContent.returns(addNewTutorContent);
 
-    const result = await EmailHelper.addTutor(tutor._id, course._id);
+    const result = await EmailHelper.addTutor(course._id, tutor._id);
 
     expect(result).toEqual(sentObj);
 
@@ -245,14 +245,14 @@ describe('addTutor', () => {
         { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1 }] },
         {
           query: 'populate',
-          args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
+          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledWithExactly(formatIdentity.getCall(0), { firstname: 'Robyn', lastname: 'FENTY' }, 'FL');
-    sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstname: 'Bat', lastname: 'MAN' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(0), { firstname: 'Bat', lastname: 'MAN' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstname: 'Robyn', lastname: 'FENTY' }, 'FL');
     sinon.assert.calledWithExactly(sendinBlueTransporter);
     sinon.assert.calledOnceWithExactly(
       sendMail,
@@ -263,6 +263,67 @@ describe('addTutor', () => {
         html: addNewTutorContent,
       }
     );
-    sinon.assert.calledWithExactly(addTutorContent, 'Robyn FENTY', 'Program 1', 'Bat MAN');
+    sinon.assert.calledWithExactly(addTutorContent, 'Bat MAN', 'Robyn FENTY', 'Program 1');
+  });
+
+  it('should send an email to new tutor (several trainees)', async () => {
+    const tutor = {
+      _id: new ObjectId(),
+      local: { email: 'aude+test95@compani.fr' },
+      identity: { firstname: 'Bat', lastname: 'MAN' },
+    };
+    const course = {
+      _id: new ObjectId(),
+      subProgram: { program: { name: 'Program 1' } },
+      trainees: [
+        { _id: new ObjectId(), identity: { firstname: 'Robyn', lastname: 'FENTY' } },
+        { _id: new ObjectId(), identity: { firstname: 'Robin', lastname: 'Hood' } },
+      ],
+    };
+    const addNewTutorContent = 'content for tutor';
+
+    userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['select', 'lean']));
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
+    formatIdentity.returns('Bat MAN');
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+    addTutorContent.returns(addNewTutorContent);
+
+    const result = await EmailHelper.addTutor(course._id, tutor._id);
+
+    expect(result).toEqual(sentObj);
+
+    SinonMongoose.calledOnceWithExactly(
+      userFindOne,
+      [
+        { query: 'findOne', args: [{ _id: tutor._id }] },
+        { query: 'select', args: ['local.email identity'] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1 }] },
+        {
+          query: 'populate',
+          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        },
+        { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(formatIdentity, { firstname: 'Bat', lastname: 'MAN' }, 'FL');
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: tutor.local.email,
+        subject: 'Vous avez été nommé tuteur d\'une formation',
+        html: addNewTutorContent,
+      }
+    );
+    sinon.assert.calledWithExactly(addTutorContent, 'Bat MAN', '', 'Program 1');
   });
 });

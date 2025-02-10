@@ -21,6 +21,7 @@ const Drive = require('../../../src/models/Google/Drive');
 const Questionnaire = require('../../../src/models/Questionnaire');
 const TrainingContract = require('../../../src/models/TrainingContract');
 const CourseHelper = require('../../../src/helpers/courses');
+const EmailHelper = require('../../../src/helpers/email');
 const SmsHelper = require('../../../src/helpers/sms');
 const UtilsHelper = require('../../../src/helpers/utils');
 const PdfHelper = require('../../../src/helpers/pdf');
@@ -7132,15 +7133,18 @@ describe('removeTrainer', () => {
   });
 });
 
-describe('add tutor', () => {
+describe('addTutor', () => {
   let courseUpdateOne;
+  let emailAddTutor;
 
   beforeEach(() => {
     courseUpdateOne = sinon.stub(Course, 'updateOne');
+    emailAddTutor = sinon.stub(EmailHelper, 'addTutor');
   });
 
   afterEach(() => {
     courseUpdateOne.restore();
+    emailAddTutor.restore();
   });
 
   it('should add tutor to course', async () => {
@@ -7151,6 +7155,7 @@ describe('add tutor', () => {
     await CourseHelper.addTutor(course._id, payload);
 
     sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $addToSet: { tutors: tutorId } });
+    sinon.assert.calledOnceWithExactly(emailAddTutor, course._id, tutorId);
   });
 });
 

@@ -85,11 +85,11 @@ const GooglePlayAndAppStoreButtons = () => `
   </table>
   <p style="color: grey; font-size: 8px">Google Play et le logo Google Play sont des marques de Google LLC.</p>`;
 
-const addTutorContent = (learnerIdentity, courseName, tutorIdentity) => `<p>Bonjour ${tutorIdentity},</p>
+const addTutorContent = (tutorIdentity, learnerIdentity, courseName) => `<p>Bonjour ${tutorIdentity},</p>
   <p> Vous avez été ajouté comme tuteur ${learnerIdentity ? `de ${learnerIdentity}` : 'd\'un apprenant'} dans le cadre de la formation ${courseName}.</p>
   <p> Vous pourrez retrouver tout ce qui concerne sa formation sur l'application Compani Formation, onglet "Mes formations", section "Tutorat".</p>
   <p>
-  Nous vous invitons à télécharger l'application Compani Formation sur votre store et à cliquer sur "c'est ma première connexion" pour vous créer un mot de passe.
+  Nous vous invitons à télécharger l'application Compani Formation sur votre store et à cliquer sur "C'est ma première connexion" pour vous créer un mot de passe.
   </p>
   <p>Bien cordialement,<br>
   L'équipe Compani</p>

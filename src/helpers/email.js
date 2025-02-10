@@ -76,11 +76,13 @@ exports.sendVerificationCodeEmail = async (receiver, verificationCode) => {
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
 
-exports.addTutor = async (tutorId, courseId) => {
+exports.addTutor = async (courseId, tutorId) => {
   const tutor = await User.findOne({ _id: tutorId }).select('local.email identity').lean();
 
-  const course = Course.findOne({ _id: courseId }, { subProgram: 1, trainees: 1 })
-    .populate({ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] })
+  const tutorIdentity = UtilsHelper.formatIdentity(tutor.identity, 'FL');
+
+  const course = await Course.findOne({ _id: courseId }, { subProgram: 1, trainees: 1 })
+    .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
     .populate({ path: 'trainees', select: 'identity' })
     .lean();
 
@@ -88,15 +90,13 @@ exports.addTutor = async (tutorId, courseId) => {
     ? UtilsHelper.formatIdentity(course.trainees[0].identity, 'FL')
     : '';
 
-  const tutorIdentity = UtilsHelper.formatIdentity(tutor.identity, 'FL');
-
   const courseName = course.subProgram.program.name;
 
   const mailOptions = {
     from: `Compani <${SENDER_MAIL}>`,
     to: tutor.local.email,
     subject: 'Vous avez été nommé tuteur d\'une formation',
-    html: EmailOptionsHelper.addTutorContent(learnerIdentity, courseName, tutorIdentity),
+    html: EmailOptionsHelper.addTutorContent(tutorIdentity, learnerIdentity, courseName),
   };
 
   try {

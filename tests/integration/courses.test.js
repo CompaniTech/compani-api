@@ -67,6 +67,7 @@ const {
   trainerOrganisationManager,
   auxiliary,
 } = require('../seed/authUsersSeed');
+const EmailHelper = require('../../src/helpers/email');
 const SmsHelper = require('../../src/helpers/sms');
 const DocxHelper = require('../../src/helpers/docx');
 const NotificationHelper = require('../../src/helpers/notifications');
@@ -5094,8 +5095,15 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainers/{trainerId}', () => {
 
 describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
   let authToken;
+  let addTutorEmailStub;
 
   beforeEach(populateDB);
+  beforeEach(async () => {
+    addTutorEmailStub = sinon.stub(EmailHelper, 'addTutor');
+  });
+  afterEach(() => {
+    addTutorEmailStub.restore();
+  });
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
@@ -5114,6 +5122,11 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
 
       const course = await Course.countDocuments({ _id: coursesList[24]._id, tutors: auxiliary._id });
       expect(course).toEqual(1);
+      sinon.assert.calledOnceWithExactly(
+        addTutorEmailStub,
+        coursesList[24]._id.toHexString(),
+        auxiliary._id.toHexString()
+      );
     });
 
     it('should return 404 if course doesn\'t exist', async () => {

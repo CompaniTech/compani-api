@@ -65,6 +65,7 @@ const {
   END_COURSE,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
+const EmailHelper = require('./email');
 const NotificationHelper = require('./notifications');
 const VendorCompaniesHelper = require('./vendorCompanies');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
@@ -76,7 +77,6 @@ const CourseBill = require('../models/CourseBill');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHistory = require('../models/CourseHistory');
 const { CompaniDuration } = require('./dates/companiDurations');
-const EmailHelper = require('./email');
 
 exports.createCourse = async (payload, credentials) => {
   const coursePayload = payload.company
@@ -1316,7 +1316,7 @@ exports.removeTrainer = async (courseId, trainerId) => {
 exports.addTutor = async (courseId, payload) => {
   await Course.updateOne({ _id: courseId }, { $addToSet: { tutors: payload.tutor } });
 
-  return EmailHelper.addTutor(payload.tutor, courseId);
+  return EmailHelper.addTutor(courseId, payload.tutor);
 };
 
 exports.removeTutor = async (courseId, tutorId) => {
