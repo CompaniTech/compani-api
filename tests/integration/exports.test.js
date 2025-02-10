@@ -23,6 +23,7 @@ const {
   END_OF_COURSE,
   COURSE_BILL,
   COURSE_PAYMENT,
+  SELF_POSITIONNING,
 } = require('../../src/helpers/constants');
 const { getToken } = require('./helpers/authentication');
 const {
@@ -173,6 +174,15 @@ const vendorHistoryExportTypes = [
       '"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";2;"Chèque";"200,00"',
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
+  },
+  {
+    exportType: SELF_POSITIONNING,
+    expectedRows: [
+      '\ufeff"Id formation";"Programme";"Infos complémentaires";"Sous-programme";"Prénom Nom intervenant";"Nombre d\'apprenants inscrits";"Nombre de réponses au questionnaire de début";"Moyenne de l’auto-positionnement de début";"Nombre de réponses au questionnaire de fin";"Moyenne de l’auto-positionnement de fin";"Delta entre la moyenne de début et de fin";"Question ayant la plus grande progression";"Progression maximale associée";"Question ayant la plus faible progression";"Progression minimale associée"',
+      `${coursesList[0]._id};"Program 1";"group 1";"subProgram 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";3;3;"3,22";2;"3,50";"0,28";"Je me sens capable de proposer une animation adaptée a tous les residents";"1,17";"Je me sens capable de cuisiner avec un groupe de residents";"-0,67"`,
+      `${coursesList[3]._id};"Program 1";"group 4";"subProgram 1";"Gilles FORMATEUR";2;2;"1,33";2;"3,83";"2,50";"Je me sens capable de faire la toilette d'un résident seule";"3,00";"Je me sens capable de cuisiner avec un groupe de residents";"2,00"`,
+    ],
+    query: 'startDate=2021-01-01T10:00:00.000Z&endDate=2021-05-05T10:00:00.000Z',
   },
 ];
 

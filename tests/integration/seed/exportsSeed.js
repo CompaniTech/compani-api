@@ -89,6 +89,9 @@ const {
   LOGIN_CODE,
   IDENTITY_VERIFICATION,
   INTRA_HOLDING,
+  SELF_POSITIONNING,
+  START_COURSE,
+  END_COURSE,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1054,6 +1057,14 @@ const helpersList = [
 
 const programIdList = [new ObjectId(), new ObjectId()];
 
+const labels = {
+  1: 'Je me sens en difficulté',
+  2: 'En difficulté mais j\'identifie des axes de progression',
+  3: 'Je me sens capable',
+  4: 'J\'y arrive parfois',
+  5: 'Oui peu importe le contexte',
+};
+
 const cardList = [
   { _id: new ObjectId(), template: TRANSITION, title: 'test' },
   { _id: new ObjectId(), template: OPEN_QUESTION, question: 'Où est Charlie ?' },
@@ -1072,6 +1083,24 @@ const cardList = [
       { _id: new ObjectId(), text: '15 euros' },
       { _id: new ObjectId(), text: '50 euros' },
     ],
+  },
+  {
+    _id: new ObjectId(),
+    template: SURVEY,
+    question: 'Je me sens capable de faire la toilette d\'un résident seule',
+    labels,
+  },
+  {
+    _id: new ObjectId(),
+    template: SURVEY,
+    question: 'Je me sens capable de proposer une animation adaptée a tous les residents',
+    labels,
+  },
+  {
+    _id: new ObjectId(),
+    template: SURVEY,
+    question: 'Je me sens capable de cuisiner avec un groupe de residents',
+    labels,
   },
 ];
 
@@ -1685,13 +1714,27 @@ const smsList = [
 ];
 
 const questionnaireList = [
-  { _id: new ObjectId(), type: EXPECTATIONS, name: 'attentes', status: PUBLISHED, cards: cardList.map(c => c._id) },
+  {
+    _id: new ObjectId(),
+    type: EXPECTATIONS,
+    name: 'attentes',
+    status: PUBLISHED,
+    cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
+  },
   {
     _id: new ObjectId(),
     type: END_OF_COURSE,
     name: 'satisfaction',
     status: PUBLISHED,
-    cards: cardList.map(c => c._id),
+    cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
+  },
+  {
+    _id: new ObjectId(),
+    type: SELF_POSITIONNING,
+    program: programList[0]._id,
+    name: 'auto-positionnement',
+    status: PUBLISHED,
+    cards: [cardList[4]._id, cardList[5]._id, cardList[6]._id],
   },
 ];
 
@@ -1784,6 +1827,142 @@ const questionnaireHistoriesList = [
     createdAt: '2021-12-10T20:30:04.000Z',
     company: companyWithoutSubscription._id,
     origin: MOBILE,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['2'] },
+      { card: cardList[5]._id, answerList: ['2'] },
+      { card: cardList[6]._id, answerList: ['4'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['3'] },
+    ],
+    timeline: END_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[2]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['3'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[3]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['4'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[3]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['5'] },
+      { card: cardList[6]._id, answerList: ['3'] },
+    ],
+    timeline: END_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['1'] },
+      { card: cardList[5]._id, answerList: ['1'] },
+      { card: cardList[6]._id, answerList: ['1'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['3'] },
+    ],
+    timeline: END_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[2]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['1'] },
+      { card: cardList[5]._id, answerList: ['2'] },
+      { card: cardList[6]._id, answerList: ['2'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[2]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['5'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['4'] },
+    ],
+    timeline: END_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
   },
 ];
 
