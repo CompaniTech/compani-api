@@ -3,6 +3,7 @@ const UtilsPdfHelper = require('./utils');
 const PdfHelper = require('../../../helpers/pdf');
 const NumbersHelper = require('../../../helpers/numbers');
 const CourseBillHelper = require('../../../helpers/courseBills');
+const UtilsHelper = require('../../../helpers/utils');
 
 exports.getPdfContent = async (bill) => {
   const { coursePayments, courseCreditNote } = bill;
@@ -54,6 +55,16 @@ exports.getPdfContent = async (bill) => {
       styles: {
         header: { fillColor: COPPER_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
+      },
+      footer: {
+        text:
+          `${bill.vendorCompany.name} au capital social de ${UtilsHelper.formatPrice(bill.vendorCompany.shareCapital)},`
+          + ` SIRET ${UtilsHelper.formatSiret(bill.vendorCompany.siret || '')}`,
+        italics: true,
+        fontSize: 8,
+        marginTop: 24,
+        marginRight: 16,
+        alignment: 'right',
       },
     },
     images: [compani, ...(isPaid ? [signature] : [])],

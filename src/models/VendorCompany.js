@@ -11,6 +11,7 @@ const VendorCompanySchema = mongoose.Schema({
   iban: { type: String, validate: IBAN_VALIDATION, required: true, unique: true },
   bic: { type: String, validate: BIC_VALIDATION, required: true, unique: true },
   billingRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  shareCapital: { type: Number, required: true },
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => VendorCompanySchema.pre(middleware, formatQuery));
