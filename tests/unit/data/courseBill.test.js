@@ -87,7 +87,7 @@ describe('getPdfContent', () => {
             { text: 'Auchan', bold: true },
             { text: '32 Rue du Loup' },
             { text: '33000 Bordeaux' },
-            { text: 'Siret : 272 727 272 74124' },
+            { text: 'SIRET : 272 727 272 74124' },
           ],
           marginBottom: 36,
         },
@@ -213,12 +213,12 @@ describe('getPdfContent', () => {
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
       footer: {
-        text: 'Auchan au capital social de 123 000,00 €, SIRET 272 727 272 74124',
+        text: 'Auchan au capital social de 123 000,00 € - SIRET 272 727 272 74124',
         italics: true,
         fontSize: 8,
         marginTop: 24,
         marginRight: 16,
-        alignment: 'right',
+        alignment: 'center',
       },
     };
     const imageList = [
@@ -304,7 +304,7 @@ describe('getPdfContent', () => {
             { text: 'Auchan', bold: true },
             { text: '32 Rue du Loup' },
             { text: '33000 Bordeaux' },
-            { text: 'Siret : 272 727 272 74124' },
+            { text: 'SIRET : 272 727 272 74124' },
           ],
           marginBottom: 36,
         },
@@ -404,12 +404,12 @@ describe('getPdfContent', () => {
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
       footer: {
-        text: 'Auchan au capital social de 123 000,00 €, SIRET 272 727 272 74124',
+        text: 'Auchan au capital social de 123 000,00 € - SIRET 272 727 272 74124',
         italics: true,
         fontSize: 8,
         marginTop: 24,
         marginRight: 16,
-        alignment: 'right',
+        alignment: 'center',
       },
     };
     const imageList = [
@@ -491,12 +491,12 @@ describe('getPdf', () => {
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
       footer: {
-        text: 'Auchan au capital social de 123 000,00 €, SIRET 272 727 272 74124',
+        text: 'Auchan au capital social de 123 000,00 € - SIRET 272 727 272 74124',
         italics: true,
         fontSize: 8,
         marginTop: 24,
         marginRight: 16,
-        alignment: 'right',
+        alignment: 'center',
       },
     };
     const images = [{ url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' }];

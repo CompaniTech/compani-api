@@ -58,13 +58,13 @@ exports.getPdfContent = async (bill) => {
       },
       footer: {
         text:
-          `${bill.vendorCompany.name} au capital social de ${UtilsHelper.formatPrice(bill.vendorCompany.shareCapital)},`
-          + ` SIRET ${UtilsHelper.formatSiret(bill.vendorCompany.siret || '')}`,
+          `${bill.vendorCompany.name} au capital social de ${UtilsHelper.formatPrice(bill.vendorCompany.shareCapital)} `
+          + `- SIRET ${UtilsHelper.formatSiret(bill.vendorCompany.siret || '')}`,
         italics: true,
         fontSize: 8,
         marginTop: 24,
         marginRight: 16,
-        alignment: 'right',
+        alignment: 'center',
       },
     },
     images: [compani, ...(isPaid ? [signature] : [])],

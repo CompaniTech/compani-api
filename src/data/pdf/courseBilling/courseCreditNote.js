@@ -2,6 +2,7 @@ const { ORANGE_600 } = require('../../../helpers/constants');
 const UtilsPdfHelper = require('./utils');
 const PdfHelper = require('../../../helpers/pdf');
 const CourseBillHelper = require('../../../helpers/courseBills');
+const UtilsHelper = require('../../../helpers/utils');
 
 exports.getPdfContent = async (creditNote) => {
   const [compani] = await UtilsPdfHelper.getImages();
@@ -28,6 +29,17 @@ exports.getPdfContent = async (creditNote) => {
       styles: {
         header: { fillColor: ORANGE_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
+      },
+      footer: {
+        text:
+          `${creditNote.vendorCompany.name} au capital social de `
+          + `${UtilsHelper.formatPrice(creditNote.vendorCompany.shareCapital)} `
+          + `- SIRET ${UtilsHelper.formatSiret(creditNote.vendorCompany.siret || '')}`,
+        italics: true,
+        fontSize: 8,
+        marginTop: 24,
+        marginRight: 16,
+        alignment: 'center',
       },
     },
     images: [compani],

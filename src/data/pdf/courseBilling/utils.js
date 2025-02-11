@@ -78,7 +78,7 @@ exports.getHeader = (data, compani, isBill = false, isPaid = false) => {
         {
           text: `${get(data, 'vendorCompany.address.zipCode') || ''} ${get(data, 'vendorCompany.address.city') || ''}`,
         },
-        { text: `Siret : ${UtilsHelper.formatSiret(get(data, 'vendorCompany.siret') || '')}` },
+        { text: `SIRET : ${UtilsHelper.formatSiret(get(data, 'vendorCompany.siret') || '')}` },
       ],
       marginBottom: 36,
     },
