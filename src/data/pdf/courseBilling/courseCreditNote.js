@@ -29,6 +29,7 @@ exports.getPdfContent = async (creditNote) => {
         header: { fillColor: ORANGE_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
+      footer: UtilsPdfHelper.getFooter(creditNote.vendorCompany),
     },
     images: [compani],
   };

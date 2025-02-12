@@ -78,7 +78,7 @@ exports.getHeader = (data, compani, isBill = false, isPaid = false) => {
         {
           text: `${get(data, 'vendorCompany.address.zipCode') || ''} ${get(data, 'vendorCompany.address.city') || ''}`,
         },
-        { text: `Siret : ${UtilsHelper.formatSiret(get(data, 'vendorCompany.siret') || '')}` },
+        { text: `SIRET : ${UtilsHelper.formatSiret(get(data, 'vendorCompany.siret') || '')}` },
       ],
       marginBottom: 36,
     },
@@ -196,4 +196,15 @@ exports.getBalanceInfos = (courseCreditNote, amountPaid, netInclTaxes, totalBala
       { text: UtilsHelper.formatPrice(totalBalance), alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
     ],
   ],
+});
+
+exports.getFooter = vendorCompany => ({
+  text:
+    `${vendorCompany.name} au capital social de ${UtilsHelper.formatPrice(vendorCompany.shareCapital)} `
+    + `- SIRET ${UtilsHelper.formatSiret(vendorCompany.siret || '')}`,
+  italics: true,
+  fontSize: 8,
+  marginTop: 24,
+  marginRight: 16,
+  alignment: 'center',
 });

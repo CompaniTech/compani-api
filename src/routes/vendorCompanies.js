@@ -30,6 +30,7 @@ exports.plugin = {
             bic: bicValidation,
             activityDeclarationNumber: Joi.string(),
             billingRepresentative: Joi.objectId(),
+            shareCapital: Joi.number().positive(),
           }),
         },
         auth: { scope: ['vendorcompanies:edit'] },

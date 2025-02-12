@@ -55,6 +55,7 @@ exports.getPdfContent = async (bill) => {
         header: { fillColor: COPPER_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
+      footer: UtilsPdfHelper.getFooter(bill.vendorCompany),
     },
     images: [compani, ...(isPaid ? [signature] : [])],
   };
