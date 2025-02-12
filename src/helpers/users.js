@@ -346,7 +346,7 @@ exports.updateUser = async (userId, userPayload) => {
 
   if (userPayload.holding) await UserHolding.create({ user: userId, holding: userPayload.holding });
 
-  await User.updateOne({ _id: userId }, { $set: flat(payload) });
+  await User.updateOne({ _id: userId }, { $set: UtilsHelper.flatQuery(payload) });
 };
 
 exports.removeUser = async (user, credentials) => {

@@ -682,20 +682,20 @@ describe('COURSES ROUTES - GET /courses', () => {
 
       const course =
          response.result.data.courses.find(c => UtilsHelper.areObjectIdsEquals(coursesList[3]._id, c._id));
-      expect(course).toEqual(expect.objectContaining({
+      expect(course).toMatchObject({
         misc: 'second team formation',
         type: INTRA,
         companies: [
           { ...pick(otherCompany, ['_id', 'name']), holding: { _id: otherHolding._id, name: otherHolding.name } },
         ],
-        subProgram: expect.objectContaining({
+        subProgram: {
           _id: expect.any(ObjectId),
           program: {
             _id: programsList[0]._id,
             name: programsList[0].name,
             subPrograms: [expect.any(ObjectId), expect.any(ObjectId)],
           },
-        }),
+        },
         trainers: [pick(trainerAndCoach, ['_id', 'identity.firstname', 'identity.lastname'])],
         slots: [{
           _id: expect.any(ObjectId),
@@ -713,7 +713,7 @@ describe('COURSES ROUTES - GET /courses', () => {
         }],
         trainees: expect.arrayContaining([expect.any(ObjectId)]),
         slotsToPlan: [{ _id: expect.any(ObjectId), course: course._id }],
-      }));
+      });
 
       const archivedCourse = response.result.data.courses
         .find(c => UtilsHelper.areObjectIdsEquals(coursesList[14]._id, c._id));

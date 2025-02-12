@@ -136,7 +136,7 @@ exports.getBalances = async (credentials, customerId = null, maxDate = null) => 
   const companyId = get(credentials, 'company._id');
   let customersIds = [];
 
-  if (customerId) customersIds.push(new ObjectId(customerId));
+  if (customerId) customersIds.push(new ObjectId(`${customerId}`));
   else {
     const notArchivedCustomers = await Customer
       .find({ company: credentials.company._id, archivedAt: { $eq: null } }, { _id: 1 })

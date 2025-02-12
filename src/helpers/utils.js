@@ -1,7 +1,9 @@
 const get = require('lodash/get');
 const omit = require('lodash/omit');
 const isEmpty = require('lodash/isEmpty');
+const flat = require('flat');
 const { ObjectId } = require('mongodb');
+const { isObjectIdOrHexString } = require('mongoose');
 const Intl = require('intl');
 const { CIVILITY_LIST, SHORT_DURATION_H_MM, HHhMM, SECOND } = require('./constants');
 const DatesHelper = require('./dates');
@@ -146,13 +148,21 @@ exports.formatIdentity = (identity, format) => {
 
   return values.join(' ');
 };
+exports.flatQuery = (payload) => {
+  const flattenPayload = flat(JSON.parse(JSON.stringify(payload, (_, value) =>
+    (value instanceof ObjectId ? value.toHexString() : value)
+  )), { safe: true });
 
-exports.formatObjectIdsArray = ids => (Array.isArray(ids) ? ids.map(id => new ObjectId(id)) : [new ObjectId(ids)]);
-
+  const flattenPayloadWithObjectIds = {};
+  for (const [key, value] of Object.entries(flattenPayload)) {
+    flattenPayloadWithObjectIds[key] = isObjectIdOrHexString(value) ? new ObjectId(`${value}`) : value;
+  }
+  return flattenPayloadWithObjectIds;
+};
 exports.formatIdsArray = ids => (Array.isArray(ids) ? ids : [ids]);
 
 exports.areObjectIdsEquals = (id1, id2) => !!id1 && !!id2 &&
-  new ObjectId(id1).toHexString() === new ObjectId(id2).toHexString();
+  new ObjectId(`${id1}`).toHexString() === new ObjectId(`${id2}`).toHexString();
 
 exports.doesArrayIncludeId = (array, id) => !!array && array.some(item => exports.areObjectIdsEquals(item, id));
 
@@ -217,7 +227,7 @@ exports.getDurationForExport = (startDate, endDate) =>
   exports.formatFloatForExport(CompaniDuration(CompaniDate(endDate).diff(startDate, 'minutes')).asHours());
 
 exports.getKeysOf2DepthObject = object => Object.entries(object).reduce((acc, [key, value]) => {
-  if (typeof value === 'object' && Object.keys(value).length && !Array.isArray(value)) {
+  if (typeof value === 'object' && !(value instanceof ObjectId) && Object.keys(value).length && !Array.isArray(value)) {
     return [...acc, ...Object.keys(value).map(k => `${key}.${k}`)];
   }
 
