@@ -88,6 +88,10 @@ const {
   MOBILE,
   LOGIN_CODE,
   IDENTITY_VERIFICATION,
+  INTRA_HOLDING,
+  SELF_POSITIONNING,
+  START_COURSE,
+  END_COURSE,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -99,6 +103,7 @@ const { trainerAndCoach } = require('../../seed/authUsersSeed');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
 const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const CourseCreditNoteNumber = require('../../../src/models/CourseCreditNoteNumber');
+const Holding = require('../../../src/models/Holding');
 
 const sector = { _id: new ObjectId(), name: 'Etoile', company: authCompany._id };
 
@@ -1052,6 +1057,14 @@ const helpersList = [
 
 const programIdList = [new ObjectId(), new ObjectId()];
 
+const labels = {
+  1: 'Je me sens en difficulté',
+  2: 'En difficulté mais j\'identifie des axes de progression',
+  3: 'Je me sens capable',
+  4: 'J\'y arrive parfois',
+  5: 'Oui peu importe le contexte',
+};
+
 const cardList = [
   { _id: new ObjectId(), template: TRANSITION, title: 'test' },
   { _id: new ObjectId(), template: OPEN_QUESTION, question: 'Où est Charlie ?' },
@@ -1070,6 +1083,24 @@ const cardList = [
       { _id: new ObjectId(), text: '15 euros' },
       { _id: new ObjectId(), text: '50 euros' },
     ],
+  },
+  {
+    _id: new ObjectId(),
+    template: SURVEY,
+    question: 'Je me sens capable de faire la toilette d\'un résident seule',
+    labels,
+  },
+  {
+    _id: new ObjectId(),
+    template: SURVEY,
+    question: 'Je me sens capable de proposer une animation adaptée a tous les residents',
+    labels,
+  },
+  {
+    _id: new ObjectId(),
+    template: SURVEY,
+    question: 'Je me sens capable de cuisiner avec un groupe de residents',
+    labels,
   },
 ];
 
@@ -1186,6 +1217,8 @@ const userCompanies = [
   { _id: new ObjectId(), user: traineeList[4]._id, company: otherCompany._id, startDate: '2019-05-01T08:00:00.000Z' },
 ];
 
+const holding = { _id: new ObjectId(), name: 'Société mère' };
+
 const coursesList = [
   { // 0 with 1 bill
     _id: new ObjectId(),
@@ -1200,6 +1233,7 @@ const coursesList = [
     trainees: [traineeList[0]._id, traineeList[2]._id, traineeList[3]._id],
     companies: [authCompany._id],
     archivedAt: '2024-07-07T22:00:00.000Z',
+    createdAt: '2018-01-07T22:00:00.000Z',
   },
   { // 1 with 2 bills
     _id: new ObjectId(),
@@ -1211,6 +1245,7 @@ const coursesList = [
     trainees: [traineeList[3]._id, traineeList[4]._id],
     estimatedStartDate: '2019-01-01T08:00:00.000Z',
     companies: [authCompany._id, otherCompany._id],
+    createdAt: '2018-01-07T22:00:00.000Z',
   },
   { // 2 without bills
     _id: new ObjectId(),
@@ -1223,6 +1258,7 @@ const coursesList = [
     trainees: [traineeList[3]._id, traineeList[4]._id, auxiliaryList[0]._id],
     estimatedStartDate: '2022-01-12T08:00:00.000Z',
     companies: [authCompany._id, otherCompany._id, companyWithoutSubscription._id],
+    createdAt: '2018-01-07T22:00:00.000Z',
   },
   { // 3 with 1 bill
     _id: new ObjectId(),
@@ -1236,6 +1272,7 @@ const coursesList = [
     trainees: [traineeList[0]._id, traineeList[2]._id],
     companies: [authCompany._id],
     expectedBillsCount: 1,
+    createdAt: '2018-01-07T22:00:00.000Z',
   },
   { // 4 with 1 bill
     _id: new ObjectId(),
@@ -1249,6 +1286,7 @@ const coursesList = [
     contact: operationsRepresentative._id,
     trainees: [traineeList[0]._id, traineeList[2]._id],
     expectedBillsCount: 1,
+    createdAt: '2018-01-07T22:00:00.000Z',
   },
   { // 5 with 3 bills and 1 creditNote
     _id: new ObjectId(),
@@ -1262,6 +1300,7 @@ const coursesList = [
     contact: operationsRepresentative._id,
     trainees: [traineeList[0]._id, traineeList[2]._id, traineeList[3]._id],
     expectedBillsCount: 3,
+    createdAt: '2018-01-07T22:00:00.000Z',
   },
   { // 6 without bills
     _id: new ObjectId(),
@@ -1275,17 +1314,21 @@ const coursesList = [
     contact: operationsRepresentative._id,
     trainees: [],
     expectedBillsCount: 0,
+    createdAt: '2018-01-07T22:00:00.000Z',
   },
   { // 7 without trainee
     _id: new ObjectId(),
-    type: INTER_B2B,
+    type: INTRA_HOLDING,
     companies: [],
+    holding: holding._id,
     subProgram: subProgramList[0]._id,
     misc: 'group 8',
     trainers: [trainer._id],
     operationsRepresentative: operationsRepresentative._id,
     contact: operationsRepresentative._id,
     trainees: [],
+    createdAt: '2018-01-07T22:00:00.000Z',
+    maxTrainees: 8,
   },
   { // 8 intra with other Company
     _id: new ObjectId(),
@@ -1299,6 +1342,7 @@ const coursesList = [
     expectedBillsCount: 1,
     trainees: [traineeList[1]._id],
     companies: [otherCompany._id],
+    createdAt: '2018-01-07T22:00:00.000Z',
   },
 ];
 
@@ -1670,13 +1714,27 @@ const smsList = [
 ];
 
 const questionnaireList = [
-  { _id: new ObjectId(), type: EXPECTATIONS, name: 'attentes', status: PUBLISHED, cards: cardList.map(c => c._id) },
+  {
+    _id: new ObjectId(),
+    type: EXPECTATIONS,
+    name: 'attentes',
+    status: PUBLISHED,
+    cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
+  },
   {
     _id: new ObjectId(),
     type: END_OF_COURSE,
     name: 'satisfaction',
     status: PUBLISHED,
-    cards: cardList.map(c => c._id),
+    cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
+  },
+  {
+    _id: new ObjectId(),
+    type: SELF_POSITIONNING,
+    program: programList[0]._id,
+    name: 'auto-positionnement',
+    status: PUBLISHED,
+    cards: [cardList[4]._id, cardList[5]._id, cardList[6]._id],
   },
 ];
 
@@ -1769,6 +1827,142 @@ const questionnaireHistoriesList = [
     createdAt: '2021-12-10T20:30:04.000Z',
     company: companyWithoutSubscription._id,
     origin: MOBILE,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['2'] },
+      { card: cardList[5]._id, answerList: ['2'] },
+      { card: cardList[6]._id, answerList: ['4'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['3'] },
+    ],
+    timeline: END_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[2]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['3'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[3]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['4'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    user: traineeList[3]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['5'] },
+      { card: cardList[6]._id, answerList: ['3'] },
+    ],
+    timeline: END_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['1'] },
+      { card: cardList[5]._id, answerList: ['1'] },
+      { card: cardList[6]._id, answerList: ['1'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['3'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['3'] },
+    ],
+    timeline: END_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[2]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['1'] },
+      { card: cardList[5]._id, answerList: ['2'] },
+      { card: cardList[6]._id, answerList: ['2'] },
+    ],
+    timeline: START_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // self positionning
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[2]._id,
+    questionnaire: questionnaireList[2]._id,
+    questionnaireAnswersList: [
+      { card: cardList[4]._id, answerList: ['5'] },
+      { card: cardList[5]._id, answerList: ['4'] },
+      { card: cardList[6]._id, answerList: ['4'] },
+    ],
+    timeline: END_COURSE,
+    createdAt: '2021-12-10T20:30:04.000Z',
+    origin: MOBILE,
+    company: authCompany._id,
   },
 ];
 
@@ -2043,6 +2237,7 @@ const populateDB = async () => {
     EventHistory.create(eventHistoriesList),
     FinalPay.create(finalPayList),
     Helper.create(helpersList),
+    Holding.create(holding),
     InternalHour.create(internalHour),
     Pay.create(payList),
     Payment.create(paymentsList),
@@ -2071,6 +2266,7 @@ module.exports = {
   auxiliaryList,
   establishment,
   thirdPartyPayer,
+  holding,
   coursesList,
   courseSlotList,
   distanceMatrixList,

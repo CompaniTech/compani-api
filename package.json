@@ -64,7 +64,7 @@
     "nodemailer": "~6.9.15",
     "pdfmake": "~0.2.15",
     "pizzip": "~3.1.7",
-    "qrcode": "git+https://github.com/sophiemoustard/node-qrcode.git",
+    "qrcode": "git+https://github.com/CompaniTech/node-qrcode.git",
     "randomatic": "~3.1.1",
     "shelljs": "~0.8.5",
     "util": "~0.12.3",

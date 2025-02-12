@@ -64,6 +64,8 @@ const {
 const { auxiliaryRoleId, trainerRoleId, coachRoleId, clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 
+const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
+
 const traineeFromAuthFormerlyInOther = {
   _id: new ObjectId(),
   identity: { firstname: 'Michel', lastname: 'Drucker' },
@@ -310,6 +312,7 @@ const subProgramsList = [
   { _id: new ObjectId(), name: 'sous-programme 2', steps: [stepList[1]._id, stepList[2]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 3', steps: [stepList[1]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 4 (non publié)', steps: [stepList[1]._id, stepList[2]._id] },
+  { _id: SINGLE_COURSES_SUBPROGRAM_IDS[0], name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
 ];
 
 const programsList = [
@@ -319,7 +322,7 @@ const programsList = [
     learningGoals: 'on est là',
     image: { link: 'belle/url', publicId: '12345' },
     description: 'Ceci est une description',
-    subPrograms: [subProgramsList[0]._id],
+    subPrograms: [subProgramsList[0]._id, subProgramsList[4]._id],
   },
   { _id: new ObjectId(), name: 'training program', image: { link: 'belle/url', publicId: '12345' } },
 ];
@@ -484,7 +487,7 @@ const coursesList = [
   },
   { // 14 archived course
     _id: new ObjectId(),
-    subProgram: subProgramsList[0]._id,
+    subProgram: subProgramsList[4]._id,
     misc: 'old session',
     trainers: [trainer._id],
     trainees: [coach._id, helper._id, clientAdmin._id],
@@ -494,6 +497,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-01-01T00:00:00.000Z',
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
+    tutors: [traineeFromAuthFormerlyInOther._id],
   },
   { // 15 course billed INTRA without trainees and slots
     _id: new ObjectId(),
@@ -616,6 +620,32 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     holding: otherHolding._id,
     companyRepresentative: holdingAdminFromOtherCompany._id,
+  },
+  { // 24 Single course
+    _id: new ObjectId(),
+    subProgram: subProgramsList[4]._id,
+    contact: trainer._id,
+    misc: 'inter b2b session',
+    type: INTER_B2B,
+    format: BLENDED,
+    trainees: [traineeFromAuthFormerlyInOther._id],
+    companies: [authCompany._id],
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    tutors: [],
+  },
+  { // 25 Single course with tutor already in course
+    _id: new ObjectId(),
+    subProgram: subProgramsList[4]._id,
+    contact: trainer._id,
+    misc: 'inter b2b session',
+    type: INTER_B2B,
+    format: BLENDED,
+    trainees: [traineeFromAuthFormerlyInOther._id],
+    companies: [authCompany._id],
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    tutors: [noRole._id],
   },
 ];
 

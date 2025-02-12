@@ -37,6 +37,7 @@ describe('getPdfContent', () => {
           location: { type: 'Point', coordinates: [-0.573054, 44.837914] },
         },
         siret: '27272727274124',
+        shareCapital: 123000,
       },
       courseBill: { number: 'FACT-000045', date: '18/08/1998' },
       payer: {
@@ -77,7 +78,7 @@ describe('getPdfContent', () => {
             { text: 'Auchan', bold: true },
             { text: '32 Rue du Loup' },
             { text: '33000 Bordeaux' },
-            { text: 'Siret : 272 727 272 74124' },
+            { text: 'SIRET : 272 727 272 74124' },
           ],
           marginBottom: 36,
         },
@@ -178,6 +179,14 @@ describe('getPdfContent', () => {
         header: { fillColor: ORANGE_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
+      footer: {
+        text: 'Auchan au capital social de 123 000,00 € - SIRET 272 727 272 74124',
+        italics: true,
+        fontSize: 8,
+        marginTop: 24,
+        marginRight: 16,
+        alignment: 'center',
+      },
     };
     const imageList = [
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
@@ -192,6 +201,7 @@ describe('getPdfContent', () => {
     formatPrice.onCall(5).returns('200,00 €');
     formatPrice.onCall(6).returns('1300,00 €');
     formatPrice.onCall(7).returns('1300,00 €');
+    formatPrice.onCall(8).returns('123 000,00 €');
 
     const result = await CourseCreditNote.getPdfContent(creditNote);
 
@@ -217,6 +227,7 @@ describe('getPdfContent', () => {
           location: { type: 'Point', coordinates: [-0.573054, 44.837914] },
         },
         siret: '27272727274124',
+        shareCapital: 123000,
       },
       courseBill: { number: 'FACT-000045', date: '18/08/1998' },
       payer: {
@@ -253,7 +264,7 @@ describe('getPdfContent', () => {
             { text: 'Auchan', bold: true },
             { text: '32 Rue du Loup' },
             { text: '33000 Bordeaux' },
-            { text: 'Siret : 272 727 272 74124' },
+            { text: 'SIRET : 272 727 272 74124' },
           ],
           marginBottom: 36,
         },
@@ -330,6 +341,14 @@ describe('getPdfContent', () => {
         header: { fillColor: ORANGE_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
+      footer: {
+        text: 'Auchan au capital social de 123 000,00 € - SIRET 272 727 272 74124',
+        italics: true,
+        fontSize: 8,
+        marginTop: 24,
+        marginRight: 16,
+        alignment: 'center',
+      },
     };
     const imageList = [
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
@@ -340,6 +359,7 @@ describe('getPdfContent', () => {
     formatPrice.onCall(1).returns('1000,00 €');
     formatPrice.onCall(2).returns('1000,00 €');
     formatPrice.onCall(3).returns('1000,00 €');
+    formatPrice.onCall(4).returns('123 000,00 €');
 
     const result = await CourseCreditNote.getPdfContent(creditNote);
 

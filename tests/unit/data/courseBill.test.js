@@ -38,6 +38,7 @@ describe('getPdfContent', () => {
         siret: '27272727274124',
         iban: 'FR9210096000302523177152Q14',
         bic: 'BPCEFRPP',
+        shareCapital: 123000,
       },
       companies: [{ name: 'Test structure' }],
       payer: {
@@ -86,7 +87,7 @@ describe('getPdfContent', () => {
             { text: 'Auchan', bold: true },
             { text: '32 Rue du Loup' },
             { text: '33000 Bordeaux' },
-            { text: 'Siret : 272 727 272 74124' },
+            { text: 'SIRET : 272 727 272 74124' },
           ],
           marginBottom: 36,
         },
@@ -211,6 +212,14 @@ describe('getPdfContent', () => {
         header: { fillColor: COPPER_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
+      footer: {
+        text: 'Auchan au capital social de 123 000,00 € - SIRET 272 727 272 74124',
+        italics: true,
+        fontSize: 8,
+        marginTop: 24,
+        marginRight: 16,
+        alignment: 'center',
+      },
     };
     const imageList = [
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
@@ -228,6 +237,7 @@ describe('getPdfContent', () => {
     formatPrice.onCall(7).returns('1300,00 €');
     formatPrice.onCall(8).returns('1300,00 €');
     formatPrice.onCall(9).returns('0,00 €');
+    formatPrice.onCall(10).returns('123 000,00 €');
 
     const result = await CourseBill.getPdfContent(bill);
 
@@ -254,6 +264,7 @@ describe('getPdfContent', () => {
         siret: '27272727274124',
         iban: 'FR9210096000302523177152Q14',
         bic: 'BPCEFRPP',
+        shareCapital: 123000,
       },
       companies: [{ name: 'Test structure' }],
       payer: {
@@ -293,7 +304,7 @@ describe('getPdfContent', () => {
             { text: 'Auchan', bold: true },
             { text: '32 Rue du Loup' },
             { text: '33000 Bordeaux' },
-            { text: 'Siret : 272 727 272 74124' },
+            { text: 'SIRET : 272 727 272 74124' },
           ],
           marginBottom: 36,
         },
@@ -392,6 +403,14 @@ describe('getPdfContent', () => {
         header: { fillColor: COPPER_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
+      footer: {
+        text: 'Auchan au capital social de 123 000,00 € - SIRET 272 727 272 74124',
+        italics: true,
+        fontSize: 8,
+        marginTop: 24,
+        marginRight: 16,
+        alignment: 'center',
+      },
     };
     const imageList = [
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
@@ -405,6 +424,7 @@ describe('getPdfContent', () => {
     formatPrice.onCall(4).returns('0,00 €');
     formatPrice.onCall(5).returns('1000,00 €');
     formatPrice.onCall(6).returns('0,00 €');
+    formatPrice.onCall(7).returns('123 000,00 €');
 
     const result = await CourseBill.getPdfContent(bill);
 
@@ -469,6 +489,14 @@ describe('getPdf', () => {
       styles: {
         header: { fillColor: COPPER_600, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
+      },
+      footer: {
+        text: 'Auchan au capital social de 123 000,00 € - SIRET 272 727 272 74124',
+        italics: true,
+        fontSize: 8,
+        marginTop: 24,
+        marginRight: 16,
+        alignment: 'center',
       },
     };
     const images = [{ url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' }];

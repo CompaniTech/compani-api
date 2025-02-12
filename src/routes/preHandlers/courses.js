@@ -1,4 +1,5 @@
 const Boom = require('@hapi/boom');
+const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const pick = require('lodash/pick');
@@ -44,6 +45,7 @@ const UserCompaniesHelper = require('../../helpers/userCompanies');
 const { checkVendorUserExistsAndHasRightRole } = require('./utils');
 
 const { language } = translate;
+const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 exports.checkAuthorization = (credentials, courseTrainerIds, companies, holding = null) => {
   const userVendorRole = get(credentials, 'role.vendor.name');
@@ -333,7 +335,7 @@ exports.authorizeTraineeAddition = async (req) => {
     const course = await Course
       .findOne(
         { _id: req.params._id },
-        { trainees: 1, type: 1, companies: 1, maxTrainees: 1, trainers: 1, hasCertifyingTest: 1 }
+        { trainees: 1, type: 1, companies: 1, maxTrainees: 1, trainers: 1, hasCertifyingTest: 1, tutors: 1 }
       )
       .lean();
 
@@ -341,6 +343,9 @@ exports.authorizeTraineeAddition = async (req) => {
 
     const traineeIsTrainer = UtilsHelper.doesArrayIncludeId(course.trainers, payload.trainee);
     if (traineeIsTrainer) throw Boom.forbidden(translate[language].courseTraineeIsTrainer);
+
+    const traineeIsTutor = UtilsHelper.doesArrayIncludeId(course.tutors, payload.trainee);
+    if (traineeIsTutor) throw Boom.forbidden(translate[language].courseTraineeIsTutor);
 
     const traineeAlreadyRegistered = course.trainees.some(t => UtilsHelper.areObjectIdsEquals(t, payload.trainee));
     if (traineeAlreadyRegistered) throw Boom.conflict(translate[language].courseTraineeAlreadyExists);
@@ -465,7 +470,7 @@ exports.authorizeGetCourse = async (req) => {
     const course = await Course
       .findOne(
         { _id: req.params._id },
-        { trainers: 1, format: 1, trainees: 1, companies: 1, accessRules: 1, holding: 1 }
+        { trainers: 1, format: 1, trainees: 1, companies: 1, accessRules: 1, holding: 1, tutors: 1 }
       )
       .lean();
     if (!course) throw Boom.notFound();
@@ -483,8 +488,9 @@ exports.authorizeGetCourse = async (req) => {
     if (isTOM || isAdminVendor) return null;
 
     const isTrainee = UtilsHelper.doesArrayIncludeId(course.trainees, credentials._id);
+    const isTutor = UtilsHelper.doesArrayIncludeId(course.tutors, credentials._id);
 
-    if (isTrainee) return null;
+    if (isTrainee || isTutor) return null;
 
     const isTrainerAndAuthorized = userVendorRole === TRAINER &&
       UtilsHelper.doesArrayIncludeId(course.trainers, credentials._id);
@@ -763,6 +769,44 @@ exports.authorizeTrainerDeletion = async (req) => {
 
   const trainerIsCourseTrainer = UtilsHelper.doesArrayIncludeId(course.trainers, params.trainerId);
   if (!trainerIsCourseTrainer) throw Boom.forbidden();
+
+  return null;
+};
+
+exports.authorizeTutorAddition = async (req) => {
+  const { params, payload } = req;
+
+  const course = await Course
+    .findOne({ _id: params._id }, { tutors: 1, trainees: 1, archivedAt: 1, companies: 1, subProgram: 1 })
+    .lean();
+  if (!course) throw Boom.notFound();
+  if (course.archivedAt) throw Boom.forbidden();
+
+  const isSingleCourse = UtilsHelper.doesArrayIncludeId(SINGLE_COURSES_SUBPROGRAM_IDS, course.subProgram);
+  if (!isSingleCourse) throw Boom.forbidden();
+
+  const user = await User.findOne({ _id: payload.tutor }).populate({ path: 'company' }).lean();
+  const userInCompany = UtilsHelper.doesArrayIncludeId(course.companies, user.company);
+  if (!userInCompany) throw Boom.forbidden();
+
+  const tutorIsTrainee = UtilsHelper.doesArrayIncludeId(course.trainees, payload.tutor);
+  if (tutorIsTrainee) throw Boom.forbidden(translate[language].courseTutorIsTrainee);
+
+  const tutorAlreadyInCourse = UtilsHelper.doesArrayIncludeId(get(course, 'tutors', []), payload.tutor);
+  if (tutorAlreadyInCourse) throw Boom.conflict(translate[language].courseTutorAlreadyAdded);
+
+  return null;
+};
+
+exports.authorizeTutorDeletion = async (req) => {
+  const { params } = req;
+
+  const course = await Course.findOne({ _id: params._id }, { tutors: 1, archivedAt: 1 }).lean();
+  if (!course) throw Boom.notFound();
+  if (course.archivedAt) throw Boom.forbidden();
+
+  const tutorIsCourseTutor = UtilsHelper.doesArrayIncludeId(course.tutors, params.tutorId);
+  if (!tutorIsCourseTutor) throw Boom.forbidden();
 
   return null;
 };

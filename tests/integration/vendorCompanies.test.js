@@ -45,6 +45,7 @@ describe('VENDOR COMPANY ROUTES - GET /vendorcompanies', () => {
           identity: { firstname: 'vendor_admin', lastname: 'SuperChef' },
           local: { email: 'vendor-admin@alenvi.io' },
         },
+        shareCapital: 1230000,
       });
     });
   });
@@ -79,6 +80,7 @@ describe('VENDOR COMPANY ROUTES - GET /vendorcompanies', () => {
           identity: { firstname: 'vendor_admin', lastname: 'SuperChef' },
           local: { email: 'vendor-admin@alenvi.io' },
         },
+        shareCapital: 1230000,
       });
     });
   });
@@ -131,6 +133,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
       { key: 'bic', value: 'BPCEFRPPXXX' },
       { key: 'activityDeclarationNumber', value: '10736353175' },
       { key: 'billingRepresentative', value: vendorAdmin._id },
+      { key: 'shareCapital', value: 3210000 },
     ];
     payloads.forEach((payload) => {
       it(`should update vendor company ${payload.key}`, async () => {
@@ -168,6 +171,10 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
       { key: 'iban', value: 'GD0314508000306574351512P33' },
       { key: 'bic', value: 'TJDKLK' },
       { key: 'activityDeclarationNumber', value: '' },
+      { key: 'shareCapital', value: '' },
+      { key: 'shareCapital', value: '123000€' },
+      { key: 'shareCapital', value: -200 },
+      { key: 'shareCapital', value: 0 },
     ];
     wrongValues.forEach((payload) => {
       it(`should not update vendor company ${payload.key} with wrong value`, async () => {

@@ -1,6 +1,7 @@
 const get = require('lodash/get');
 const uniqBy = require('lodash/uniqBy');
 const groupBy = require('lodash/groupBy');
+const pick = require('lodash/pick');
 const {
   NO_DATA,
   INTRA,
@@ -24,6 +25,9 @@ const {
   DAY,
   ESTIMATED_START_DATE_EDITION,
   E_LEARNING,
+  SELF_POSITIONNING,
+  START_COURSE,
+  END_COURSE,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -42,19 +46,20 @@ const CourseHistory = require('../models/CourseHistory');
 const Questionnaire = require('../models/Questionnaire');
 const CoursePayment = require('../models/CoursePayment');
 const ActivityHistory = require('../models/ActivityHistory');
+const Course = require('../models/Course');
 
 const getEndOfCourse = (slotsGroupedByDate, slotsToPlan) => {
-  if (slotsToPlan.length) return 'à planifier';
+  if (slotsToPlan.length) return '';
   if (slotsGroupedByDate.length) {
     const lastDate = slotsGroupedByDate.length - 1;
     const lastSlot = slotsGroupedByDate[lastDate].length - 1;
-    return CompaniDate(slotsGroupedByDate[lastDate][lastSlot].endDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`);
+    return CompaniDate(slotsGroupedByDate[lastDate][lastSlot].endDate).format(DD_MM_YYYY);
   }
   return '';
 };
 
 const getStartOfCourse = slotsGroupedByDate => (slotsGroupedByDate.length
-  ? CompaniDate(slotsGroupedByDate[0][0].startDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`)
+  ? CompaniDate(slotsGroupedByDate[0][0].startDate).format(DD_MM_YYYY)
   : '');
 
 const isSlotInInterval = (slot, startDate, endDate) => CompaniDate(slot.startDate).isAfter(startDate) &&
@@ -151,6 +156,77 @@ const formatTrainersName = courseTrainers => courseTrainers
   .map(trainer => UtilsHelper.formatIdentity(trainer.identity, 'FL'))
   .join(', ');
 
+const formatCourseForExport = async (course, courseQH, smsCount, asCount, estimatedStartDateHistory) => {
+  const slotsGroupedByDate = CourseHelper.groupSlotsByDate(course.slots);
+  const {
+    subscribedAttendances,
+    unsubscribedAttendances,
+    absences,
+    unsubscribedTrainees,
+    pastSlots,
+  } = getAttendancesCountInfos(course);
+
+  const expectactionQuestionnaireAnswers = courseQH
+    .filter(qh => qh.questionnaire.type === EXPECTATIONS)
+    .length;
+  const endQuestionnaireAnswers = courseQH
+    .filter(qh => qh.questionnaire.type === END_OF_COURSE)
+    .length;
+
+  const { isBilled, billsCountForExport, payerList, netInclTaxes, paid, total } = getBillsInfos(course);
+
+  const companiesName = course.companies.map(co => co.name).sort((a, b) => a.localeCompare(b)).toString();
+
+  const courseCompletion = await getCourseCompletion(course);
+
+  return {
+    Identifiant: course._id,
+    Type: course.type,
+    Payeur: payerList || '',
+    Structure: companiesName || '',
+    'Société mère': get(course, 'holding.name') || '',
+    Programme: get(course, 'subProgram.program.name') || '',
+    'Sous-Programme': get(course, 'subProgram.name') || '',
+    'Infos complémentaires': course.misc,
+    Intervenant·es: formatTrainersName(get(course, 'trainers', [])),
+    'Début de formation': getStartOfCourse(slotsGroupedByDate),
+    'Fin de formation': getEndOfCourse(slotsGroupedByDate, course.slotsToPlan),
+    'Chargé des opérations': UtilsHelper.formatIdentity(get(course, 'operationsRepresentative.identity') || '', 'FL'),
+    'Contact pour la formation': UtilsHelper.formatIdentity(get(course, 'contact.identity') || '', 'FL'),
+    'Nombre d\'inscrits': get(course, 'trainees.length'),
+    'Nombre de dates': slotsGroupedByDate.length,
+    'Nombre de créneaux': get(course, 'slots.length'),
+    'Nombre de créneaux à planifier': get(course, 'slotsToPlan.length'),
+    'Durée Totale': UtilsHelper.getTotalDurationForExport(course.slots),
+    'Nombre de SMS envoyés': smsCount,
+    'Nombre de personnes connectées à l\'app': course.trainees
+      .filter(trainee => trainee.firstMobileConnectionDate).length,
+    'Complétion eLearning moyenne': UtilsHelper.formatFloatForExport(courseCompletion),
+    'Nombre de réponses au questionnaire de recueil des attentes': expectactionQuestionnaireAnswers,
+    'Nombre de réponses au questionnaire de satisfaction': endQuestionnaireAnswers,
+    'Date de démarrage souhaitée': course.estimatedStartDate
+      ? CompaniDate(course.estimatedStartDate).format(DD_MM_YYYY)
+      : '',
+    'Première date de démarrage souhaitée': estimatedStartDateHistory
+      ? CompaniDate(estimatedStartDateHistory[0].update.estimatedStartDate.to).format(DD_MM_YYYY)
+      : '',
+    'Nombre de feuilles d\'émargement chargées': asCount,
+    'Nombre de présences': subscribedAttendances,
+    'Nombre d\'absences': absences,
+    'Nombre de stagiaires non prévus': unsubscribedTrainees,
+    'Nombre de présences non prévues': unsubscribedAttendances,
+    Avancement: getProgress(pastSlots, course),
+    Archivée: course.archivedAt ? 'Oui' : 'Non',
+    'Date d\'archivage': course.archivedAt ? CompaniDate(course.archivedAt).format(DD_MM_YYYY) : '',
+    'Nombre de factures': billsCountForExport,
+    Facturée: isBilled ? 'Oui' : 'Non',
+    'Montant facturé': UtilsHelper.formatFloatForExport(netInclTaxes),
+    'Montant réglé': UtilsHelper.formatFloatForExport(paid),
+    Solde: UtilsHelper.formatFloatForExport(total),
+    'Date de création': CompaniDate(course.createdAt).format(DD_MM_YYYY),
+  };
+};
+
 exports.exportCourseHistory = async (startDate, endDate, credentials) => {
   const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials);
 
@@ -187,76 +263,12 @@ exports.exportCourseHistory = async (startDate, endDate, credentials) => {
   const groupedEstimatedStartDateHistories = groupBy(estimatedStartDateHistories, 'course');
 
   for (const course of filteredCourses) {
-    const slotsGroupedByDate = CourseHelper.groupSlotsByDate(course.slots);
     const smsCount = (groupedSms[course._id] || []).length;
-    const attendanceSheets = (grouppedAttendanceSheets[course._id] || []).length;
-    const {
-      subscribedAttendances,
-      unsubscribedAttendances,
-      absences,
-      unsubscribedTrainees,
-      pastSlots,
-    } = getAttendancesCountInfos(course);
-
-    const courseQuestionnaireHistories = groupedCourseQuestionnaireHistories[course._id] || [];
+    const asCount = (grouppedAttendanceSheets[course._id] || []).length;
+    const courseQH = groupedCourseQuestionnaireHistories[course._id] || [];
     const estimatedStartDateHistory = groupedEstimatedStartDateHistories[course._id];
-    const expectactionQuestionnaireAnswers = courseQuestionnaireHistories
-      .filter(qh => qh.questionnaire.type === EXPECTATIONS)
-      .length;
-    const endQuestionnaireAnswers = courseQuestionnaireHistories
-      .filter(qh => qh.questionnaire.type === END_OF_COURSE)
-      .length;
 
-    const { isBilled, billsCountForExport, payerList, netInclTaxes, paid, total } = getBillsInfos(course);
-
-    const companiesName = course.companies.map(co => co.name).sort((a, b) => a.localeCompare(b)).toString();
-
-    const courseCompletion = await getCourseCompletion(course);
-
-    rows.push({
-      Identifiant: course._id,
-      Type: course.type,
-      Payeur: payerList || '',
-      Structure: companiesName || '',
-      Programme: get(course, 'subProgram.program.name') || '',
-      'Sous-Programme': get(course, 'subProgram.name') || '',
-      'Infos complémentaires': course.misc,
-      Intervenant·e: formatTrainersName(get(course, 'trainers', [])),
-      'Chargé des opérations': UtilsHelper.formatIdentity(get(course, 'operationsRepresentative.identity') || '', 'FL'),
-      'Contact pour la formation': UtilsHelper.formatIdentity(get(course, 'contact.identity') || '', 'FL'),
-      'Nombre d\'inscrits': get(course, 'trainees.length'),
-      'Nombre de dates': slotsGroupedByDate.length,
-      'Nombre de créneaux': get(course, 'slots.length'),
-      'Nombre de créneaux à planifier': get(course, 'slotsToPlan.length'),
-      'Durée Totale': UtilsHelper.getTotalDurationForExport(course.slots),
-      'Nombre de SMS envoyés': smsCount,
-      'Nombre de personnes connectées à l\'app': course.trainees
-        .filter(trainee => trainee.firstMobileConnectionDate).length,
-      'Complétion eLearning moyenne': UtilsHelper.formatFloatForExport(courseCompletion),
-      'Nombre de réponses au questionnaire de recueil des attentes': expectactionQuestionnaireAnswers,
-      'Nombre de réponses au questionnaire de satisfaction': endQuestionnaireAnswers,
-      'Date de démarrage souhaitée': course.estimatedStartDate
-        ? CompaniDate(course.estimatedStartDate).format(DD_MM_YYYY)
-        : '',
-      'Première date de démarrage souhaitée': estimatedStartDateHistory
-        ? CompaniDate(estimatedStartDateHistory[0].update.estimatedStartDate.to).format(DD_MM_YYYY)
-        : '',
-      'Début de formation': getStartOfCourse(slotsGroupedByDate),
-      'Fin de formation': getEndOfCourse(slotsGroupedByDate, course.slotsToPlan),
-      'Nombre de feuilles d\'émargement chargées': attendanceSheets,
-      'Nombre de présences': subscribedAttendances,
-      'Nombre d\'absences': absences,
-      'Nombre de stagiaires non prévus': unsubscribedTrainees,
-      'Nombre de présences non prévues': unsubscribedAttendances,
-      Avancement: getProgress(pastSlots, course),
-      Archivée: course.archivedAt ? 'Oui' : 'Non',
-      'Date d\'archivage': course.archivedAt ? CompaniDate(course.archivedAt).format(DD_MM_YYYY) : '',
-      'Nombre de factures': billsCountForExport,
-      Facturée: isBilled ? 'Oui' : 'Non',
-      'Montant facturé': UtilsHelper.formatFloatForExport(netInclTaxes),
-      'Montant réglé': UtilsHelper.formatFloatForExport(paid),
-      Solde: UtilsHelper.formatFloatForExport(total),
-    });
+    rows.push(await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory));
   }
 
   return [Object.keys(rows[0]), ...rows.map(d => Object.values(d))];
@@ -541,4 +553,152 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
     );
 
   return [Object.keys(rows[0]), ...rows.map(d => Object.values(d))];
+};
+
+exports.exportSelfPositionningQuestionnaireHistory = async (startDate, endDate, credentials) => {
+  const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
+
+  const slots = await CourseSlot
+    .find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } }, { course: 1 })
+    .lean();
+
+  const courses = await Course
+    .find(
+      { _id: { $in: [...new Set(slots.map(s => s.course))] } },
+      { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1 }
+    )
+    .populate({ path: 'slotsToPlan' })
+    .populate({ path: 'slots', select: 'startDate endDate' })
+    .populate({ path: 'subProgram', select: 'program name', populate: [{ path: 'program', select: 'name' }] })
+    .populate({ path: 'trainers', select: 'identity' })
+    .lean();
+
+  const filteredCourses = courses.filter((course) => {
+    if ((course.slotsToPlan || []).length) return false;
+
+    const slotsCount = course.slots.length;
+    const lastEndSlot = course.slots[slotsCount - 1].endDate;
+    return lastEndSlot && CompaniDate(lastEndSlot).isAfter(startDate) && CompaniDate(lastEndSlot).isBefore(endDate);
+  });
+
+  const courseIds = filteredCourses.map(c => c._id);
+  const questionnaireHistories = await QuestionnaireHistory
+    .find({ course: { $in: courseIds } }, { questionnaire: 1, course: 1, timeline: 1, questionnaireAnswersList: 1 })
+    .populate({ path: 'questionnaire', select: 'type' })
+    .populate({ path: 'questionnaireAnswersList.card' })
+    .setOptions({ isVendorUser })
+    .lean();
+
+  const qHistoriesGroupByCourse = groupBy(
+    questionnaireHistories.filter(qH => qH.questionnaire.type === SELF_POSITIONNING),
+    'course'
+  );
+
+  const rows = [];
+  for (const course of filteredCourses) {
+    const progressByCard = {};
+    const selfPositionningHistories = qHistoriesGroupByCourse[course._id];
+    if (!selfPositionningHistories) continue;
+
+    const {
+      startSelfPositionningHistories,
+      endSelfPositionningHistories,
+    } = selfPositionningHistories.reduce((acc, h) => {
+      if (h.timeline === START_COURSE) acc.startSelfPositionningHistories.push(h);
+      if (h.timeline === END_COURSE) acc.endSelfPositionningHistories.push(h);
+      return acc;
+    }, { startSelfPositionningHistories: [], endSelfPositionningHistories: [] });
+
+    const startSelfPositionningAnswers = startSelfPositionningHistories
+      .flatMap(h => h.questionnaireAnswersList.filter(a => a.card.template === SURVEY).map(q => q.answerList));
+
+    let startAnswersAverage;
+    if (startSelfPositionningAnswers.length) {
+      startAnswersAverage = NumbersHelper.divide(
+        startSelfPositionningAnswers.reduce((acc, val) => NumbersHelper.add(acc, val), 0),
+        startSelfPositionningAnswers.length
+      );
+    }
+
+    const endSelfPositionningAnswers = endSelfPositionningHistories
+      .flatMap(h => h.questionnaireAnswersList.filter(a => a.card.template === SURVEY).map(q => q.answerList));
+
+    let endAnswersAverage;
+    if (endSelfPositionningAnswers.length) {
+      endAnswersAverage = NumbersHelper.divide(
+        endSelfPositionningAnswers.reduce((acc, val) => NumbersHelper.add(acc, val), 0),
+        endSelfPositionningAnswers.length
+      );
+    }
+
+    const formattedStartAnswers = startSelfPositionningHistories
+      .flatMap(h => h.questionnaireAnswersList.map(q => pick(q, ['card', 'answerList'])));
+    const startAnswersByCard = groupBy(formattedStartAnswers, 'card.question');
+
+    const formattedEndAnswers = endSelfPositionningHistories
+      .flatMap(h => h.questionnaireAnswersList.map(q => pick(q, ['card', 'answerList'])));
+    const endAnswersByCard = groupBy(formattedEndAnswers, 'card.question');
+
+    for (const cardQuestion of Object.keys(startAnswersByCard)) {
+      const startHistories = startAnswersByCard[cardQuestion] || [];
+      const startAnswers = startHistories.flatMap(h => h.answerList);
+
+      let startAverage;
+      if (startAnswers.length) {
+        startAverage = NumbersHelper.divide(
+          startAnswers.reduce((acc, val) => NumbersHelper.add(acc, val), 0),
+          startAnswers.length
+        );
+      }
+
+      const endHistories = endAnswersByCard[cardQuestion] || [];
+      const endAnswers = endHistories.flatMap(h => h.answerList);
+
+      let endAverage;
+      if (endAnswers.length) {
+        endAverage = NumbersHelper.divide(
+          endAnswers.reduce((acc, val) => NumbersHelper.add(acc, val), 0),
+          endAnswers.length
+        );
+      }
+
+      if (startAverage && endAverage) progressByCard[cardQuestion] = NumbersHelper.subtract(endAverage, startAverage);
+    }
+
+    const { maxProgressQuestion, maxProgress, minProgressQuestion, minProgress } = Object.entries(progressByCard)
+      .reduce((acc, [question, value]) => ({
+        maxProgressQuestion: NumbersHelper.isGreaterThan(value, acc.maxProgress) ? question : acc.maxProgressQuestion,
+        maxProgress: NumbersHelper.isGreaterThan(value, acc.maxProgress) ? value : acc.maxProgress,
+        minProgressQuestion: NumbersHelper.isLessThan(value, acc.minProgress) ? question : acc.minProgressQuestion,
+        minProgress: NumbersHelper.isLessThan(value, acc.minProgress) ? value : acc.minProgress,
+      }), { maxProgressQuestion: '', maxProgress: -5, minProgressQuestion: '', minProgress: 5 });
+
+    rows.push({
+      'Id formation': course._id,
+      Programme: course.subProgram.program.name || '',
+      'Infos complémentaires': course.misc,
+      'Sous-programme': course.subProgram.name || '',
+      'Prénom Nom intervenant': formatTrainersName(course.trainers),
+      'Nombre d\'apprenants inscrits': course.trainees.length,
+      'Nombre de réponses au questionnaire de début': startSelfPositionningHistories.length,
+      'Moyenne de l’auto-positionnement de début': startAnswersAverage
+        ? UtilsHelper.formatFloatForExport(startAnswersAverage)
+        : '',
+      'Nombre de réponses au questionnaire de fin': endSelfPositionningHistories.length,
+      'Moyenne de l’auto-positionnement de fin': endAnswersAverage
+        ? UtilsHelper.formatFloatForExport(endAnswersAverage)
+        : '',
+      'Delta entre la moyenne de début et de fin': endAnswersAverage && startAnswersAverage
+        ? UtilsHelper.formatFloatForExport(NumbersHelper.subtract(endAnswersAverage, startAnswersAverage))
+        : '',
+      'Question ayant la plus grande progression': maxProgressQuestion,
+      'Progression maximale associée': maxProgressQuestion && UtilsHelper.formatFloatForExport(maxProgress),
+      'Question ayant la plus faible progression': minProgressQuestion,
+      'Progression minimale associée': minProgressQuestion && UtilsHelper.formatFloatForExport(minProgress),
+    });
+  }
+
+  return rows.length
+    ? [Object.keys(rows[0]), ...rows.map(d => Object.values(d))]
+    : [['Aucune donnée sur la période sélectionnée']];
 };

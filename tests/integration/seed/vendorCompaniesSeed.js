@@ -16,6 +16,7 @@ const vendorCompany = {
     location: { type: 'Point', coordinates: [2.377133, 48.801389] },
   },
   billingRepresentative: vendorAdmin._id,
+  shareCapital: 1230000,
 };
 
 const populateDB = async () => {

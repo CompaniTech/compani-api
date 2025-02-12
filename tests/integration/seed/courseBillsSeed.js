@@ -40,6 +40,7 @@ const vendorCompany = {
     zipCode: '33000',
     location: { type: 'Point', coordinates: [-0.573054, 44.837914] },
   },
+  shareCapital: 123000,
 };
 
 const companyWithoutAddress = {

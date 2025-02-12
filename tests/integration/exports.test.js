@@ -23,6 +23,7 @@ const {
   END_OF_COURSE,
   COURSE_BILL,
   COURSE_PAYMENT,
+  SELF_POSITIONNING,
 } = require('../../src/helpers/constants');
 const { getToken } = require('./helpers/authentication');
 const {
@@ -113,15 +114,15 @@ const vendorHistoryExportTypes = [
   {
     exportType: COURSE,
     expectedRows: [
-      '\ufeff"Identifiant";"Type";"Payeur";"Structure";"Programme";"Sous-Programme";"Infos complémentaires";"Intervenant·e";"Chargé des opérations";"Contact pour la formation";"Nombre d\'inscrits";"Nombre de dates";"Nombre de créneaux";"Nombre de créneaux à planifier";"Durée Totale";"Nombre de SMS envoyés";"Nombre de personnes connectées à l\'app";"Complétion eLearning moyenne";"Nombre de réponses au questionnaire de recueil des attentes";"Nombre de réponses au questionnaire de satisfaction";"Date de démarrage souhaitée";"Première date de démarrage souhaitée";"Début de formation";"Fin de formation";"Nombre de feuilles d\'émargement chargées";"Nombre de présences";"Nombre d\'absences";"Nombre de stagiaires non prévus";"Nombre de présences non prévues";"Avancement";"Archivée";"Date d\'archivage";"Nombre de factures";"Facturée";"Montant facturé";"Montant réglé";"Solde"',
-      `${coursesList[0]._id};"intra";"APA Paris";"Test SAS";"Program 1";"subProgram 1";"group 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;2;0;"4,00";2;1;"0,00";2;1;;;"01/05/2021 10:00:00";"01/05/2021 18:00:00";1;2;4;0;0;"1,00";"Oui";"08/07/2024";"1 sur 1";"Oui";"1200,00";"1150,00";"-50,00"`,
-      `${coursesList[5]._id};"intra";"APA Paris,Test SAS";"Test SAS";"Program 1";"subProgram 1";"group 6";"Gilles FORMATEUR";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;1;0;"2,00";0;1;"0,00";0;0;;;"12/04/2021 12:00:00";"12/04/2021 14:00:00";0;0;3;0;0;"1,00";"Non";;"2 sur 3";"Non";"880,00";"200,00";"-680,00"`,
-      `${coursesList[6]._id};"intra";;"Test SAS";"Program 1";"subProgram 1";"group 7";"Gilles FORMATEUR";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;"12/04/2021 12:00:00";"12/04/2021 14:00:00";0;0;0;0;0;"1,00";"Non";;"0 sur 0";"Non";;;`,
-      `${coursesList[1]._id};"inter_b2b";"APA Paris";"Test SAS,Un autre SAS";"Program 2";"subProgram 2";;"Gilles FORMATEUR";"Aline CONTACT-COM";"Aline CONTACT-COM";2;2;2;1;"4,00";1;0;"0,67";1;1;"01/01/2019";"24/10/2018";"01/02/2021 09:00:00";"à planifier";0;2;2;1;2;"0,67";"Non";;"2 sur 2";"Oui";"800,00";"300,00";"-500,00"`,
-      `${coursesList[2]._id};"inter_b2b";;"Test SAS,Test SAS withtout subscription,Un autre SAS";"Program 2";"subProgram 2";"group 3";"Gilles FORMATEUR";"Aline CONTACT-COM";"Aline CONTACT-COM";3;0;0;0;"0,00";0;0;"0,44";0;1;"12/01/2022";"12/01/2022";;;0;0;0;0;0;;"Non";;"0 sur 3";"Non";;;`,
-      `${coursesList[7]._id};"inter_b2b";;;"Program 1";"subProgram 1";"group 8";"Gilles FORMATEUR";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;"16/01/2021 11:00:00";"16/01/2021 13:00:00";0;0;0;0;0;"1,00";"Non";;"0 sur 0";"Non";;;`,
-      `${coursesList[3]._id};"intra";;"Test SAS";"Program 1";"subProgram 1";"group 4";"Gilles FORMATEUR";"Aline CONTACT-COM";"Aline CONTACT-COM";2;3;3;0;"11,00";0;1;"0,00";0;0;;;"01/02/2021 10:00:00";"10/02/2021 13:00:00";0;0;6;0;0;"1,00";"Non";;"0 sur 1";"Non";;;`,
-      `${coursesList[8]._id};"intra";;"Un autre SAS";"Program 1";"subProgram 1";"group 9";"Gilles FORMATEUR";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;1;;;"01/05/2021 16:00:00";"01/05/2021 18:00:00";0;1;0;0;0;"1,00";"Non";;"0 sur 1";"Non";;;`,
+      '\ufeff"Identifiant";"Type";"Payeur";"Structure";"Société mère";"Programme";"Sous-Programme";"Infos complémentaires";"Intervenant·es";"Début de formation";"Fin de formation";"Chargé des opérations";"Contact pour la formation";"Nombre d\'inscrits";"Nombre de dates";"Nombre de créneaux";"Nombre de créneaux à planifier";"Durée Totale";"Nombre de SMS envoyés";"Nombre de personnes connectées à l\'app";"Complétion eLearning moyenne";"Nombre de réponses au questionnaire de recueil des attentes";"Nombre de réponses au questionnaire de satisfaction";"Date de démarrage souhaitée";"Première date de démarrage souhaitée";"Nombre de feuilles d\'émargement chargées";"Nombre de présences";"Nombre d\'absences";"Nombre de stagiaires non prévus";"Nombre de présences non prévues";"Avancement";"Archivée";"Date d\'archivage";"Nombre de factures";"Facturée";"Montant facturé";"Montant réglé";"Solde";"Date de création"',
+      `${coursesList[0]._id};"intra";"APA Paris";"Test SAS";;"Program 1";"subProgram 1";"group 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;2;0;"4,00";2;1;"0,00";2;1;;;1;2;4;0;0;"1,00";"Oui";"08/07/2024";"1 sur 1";"Oui";"1200,00";"1150,00";"-50,00";"07/01/2018"`,
+      `${coursesList[5]._id};"intra";"APA Paris,Test SAS";"Test SAS";;"Program 1";"subProgram 1";"group 6";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;3;0;0;"1,00";"Non";;"2 sur 3";"Non";"880,00";"200,00";"-680,00";"07/01/2018"`,
+      `${coursesList[6]._id};"intra";;"Test SAS";;"Program 1";"subProgram 1";"group 7";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;"1,00";"Non";;"0 sur 0";"Non";;;;"07/01/2018"`,
+      `${coursesList[1]._id};"inter_b2b";"APA Paris";"Test SAS,Un autre SAS";;"Program 2";"subProgram 2";;"Gilles FORMATEUR";"01/02/2021";;"Aline CONTACT-COM";"Aline CONTACT-COM";2;2;2;1;"4,00";1;0;"0,67";1;1;"01/01/2019";"24/10/2018";0;2;2;1;2;"0,67";"Non";;"2 sur 2";"Oui";"800,00";"300,00";"-500,00";"07/01/2018"`,
+      `${coursesList[2]._id};"inter_b2b";;"Test SAS,Test SAS withtout subscription,Un autre SAS";;"Program 2";"subProgram 2";"group 3";"Gilles FORMATEUR";;;"Aline CONTACT-COM";"Aline CONTACT-COM";3;0;0;0;"0,00";0;0;"0,44";0;1;"12/01/2022";"12/01/2022";0;0;0;0;0;;"Non";;"0 sur 3";"Non";;;;"07/01/2018"`,
+      `${coursesList[7]._id};"intra_holding";;;"Société mère";"Program 1";"subProgram 1";"group 8";"Gilles FORMATEUR";"16/01/2021";"16/01/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;"1,00";"Non";;"0 sur 0";"Non";;;;"07/01/2018"`,
+      `${coursesList[3]._id};"intra";;"Test SAS";;"Program 1";"subProgram 1";"group 4";"Gilles FORMATEUR";"01/02/2021";"10/02/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";2;3;3;0;"11,00";0;1;"0,00";0;0;;;0;0;6;0;0;"1,00";"Non";;"0 sur 1";"Non";;;;"07/01/2018"`,
+      `${coursesList[8]._id};"intra";;"Un autre SAS";;"Program 1";"subProgram 1";"group 9";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;1;;;0;1;0;0;0;"1,00";"Non";;"0 sur 1";"Non";;;;"07/01/2018"`,
     ],
     query: 'startDate=2021-01-15T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
   },
@@ -173,6 +174,15 @@ const vendorHistoryExportTypes = [
       '"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";2;"Chèque";"200,00"',
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
+  },
+  {
+    exportType: SELF_POSITIONNING,
+    expectedRows: [
+      '\ufeff"Id formation";"Programme";"Infos complémentaires";"Sous-programme";"Prénom Nom intervenant";"Nombre d\'apprenants inscrits";"Nombre de réponses au questionnaire de début";"Moyenne de l’auto-positionnement de début";"Nombre de réponses au questionnaire de fin";"Moyenne de l’auto-positionnement de fin";"Delta entre la moyenne de début et de fin";"Question ayant la plus grande progression";"Progression maximale associée";"Question ayant la plus faible progression";"Progression minimale associée"',
+      `${coursesList[0]._id};"Program 1";"group 1";"subProgram 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";3;3;"3,22";2;"3,50";"0,28";"Je me sens capable de proposer une animation adaptée a tous les residents";"1,17";"Je me sens capable de cuisiner avec un groupe de residents";"-0,67"`,
+      `${coursesList[3]._id};"Program 1";"group 4";"subProgram 1";"Gilles FORMATEUR";2;2;"1,33";2;"3,83";"2,50";"Je me sens capable de faire la toilette d'un résident seule";"3,00";"Je me sens capable de cuisiner avec un groupe de residents";"2,00"`,
+    ],
+    query: 'startDate=2021-01-01T10:00:00.000Z&endDate=2021-05-05T10:00:00.000Z',
   },
 ];
 

@@ -310,6 +310,28 @@ const removeTrainer = async (req) => {
   }
 };
 
+const addTutor = async (req) => {
+  try {
+    await CoursesHelper.addTutor(req.params._id, req.payload);
+
+    return { message: translate[language].courseTutorAdded };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const removeTutor = async (req) => {
+  try {
+    await CoursesHelper.removeTutor(req.params._id, req.params.tutorId);
+
+    return { message: translate[language].courseTutorRemoved };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   list,
   create,
@@ -334,4 +356,6 @@ module.exports = {
   generateTrainingContract,
   addTrainer,
   removeTrainer,
+  addTutor,
+  removeTutor,
 };

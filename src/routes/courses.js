@@ -26,6 +26,8 @@ const {
   generateTrainingContract,
   addTrainer,
   removeTrainer,
+  addTutor,
+  removeTutor,
 } = require('../controllers/courseController');
 const { MESSAGE_TYPE } = require('../models/CourseSmsHistory');
 const { COURSE_TYPES, COURSE_FORMATS } = require('../models/Course');
@@ -53,6 +55,8 @@ const {
   authorizeGetCompletionCertificates,
   authorizeTrainerAddition,
   authorizeTrainerDeletion,
+  authorizeTutorAddition,
+  authorizeTutorDeletion,
 } = require('./preHandlers/courses');
 const {
   INTRA,
@@ -444,6 +448,33 @@ exports.plugin = {
         pre: [{ method: authorizeTrainerDeletion }],
       },
       handler: removeTrainer,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/{_id}/tutors',
+      options: {
+        auth: { scope: 'courses:create' },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          payload: Joi.object({ tutor: Joi.objectId().required() }),
+        },
+        pre: [{ method: authorizeTutorAddition }],
+      },
+      handler: addTutor,
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/{_id}/tutors/{tutorId}',
+      options: {
+        auth: { scope: 'courses:create' },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), tutorId: Joi.objectId().required() }),
+        },
+        pre: [{ method: authorizeTutorDeletion }],
+      },
+      handler: removeTutor,
     });
   },
 };
