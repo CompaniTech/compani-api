@@ -197,3 +197,14 @@ exports.getBalanceInfos = (courseCreditNote, amountPaid, netInclTaxes, totalBala
     ],
   ],
 });
+
+exports.getFooter = vendorCompany => ({
+  text:
+    `${vendorCompany.name} au capital social de ${UtilsHelper.formatPrice(vendorCompany.shareCapital)} `
+    + `- SIRET ${UtilsHelper.formatSiret(vendorCompany.siret || '')}`,
+  italics: true,
+  fontSize: 8,
+  marginTop: 24,
+  marginRight: 16,
+  alignment: 'center',
+});
