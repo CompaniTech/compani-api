@@ -1718,7 +1718,7 @@ describe('updateUser', () => {
 
   it('should update a user role', async () => {
     const payload = { role: new ObjectId() };
-    const payloadWithRole = { 'role.client': payload.role.toHexString() };
+    const payloadWithRole = { 'role.client': payload.role };
 
     roleFindById.returns(SinonMongoose.stubChainedQueries(
       { _id: payload.role, name: 'test', interface: 'client' },
