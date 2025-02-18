@@ -62,6 +62,7 @@ const {
   SURVEY,
   GLOBAL,
   MONTHLY,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const { auxiliaryRoleId, trainerRoleId, coachRoleId, clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
@@ -647,8 +648,8 @@ const coursesList = [
     _id: new ObjectId(),
     subProgram: subProgramsList[4]._id,
     contact: trainer._id,
-    misc: 'inter b2b session',
-    type: INTER_B2B,
+    misc: 'single course',
+    type: SINGLE,
     format: BLENDED,
     trainees: [traineeFromAuthFormerlyInOther._id],
     companies: [authCompany._id],
@@ -656,13 +657,15 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     tutors: [],
     certificateGenerationMode: MONTHLY,
+    maxTrainees: 1,
+    expectedBillsCount: 0,
   },
   { // 25 Single course with tutor already in course
     _id: new ObjectId(),
     subProgram: subProgramsList[4]._id,
     contact: trainer._id,
-    misc: 'inter b2b session',
-    type: INTER_B2B,
+    misc: 'single session',
+    type: SINGLE,
     format: BLENDED,
     trainees: [traineeFromAuthFormerlyInOther._id],
     companies: [authCompany._id],
@@ -670,6 +673,8 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     tutors: [noRole._id],
     certificateGenerationMode: MONTHLY,
+    maxTrainees: 1,
+    expectedBillsCount: 0,
   },
 ];
 
