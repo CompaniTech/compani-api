@@ -95,6 +95,7 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -877,12 +878,12 @@ describe('SEEDS VERIFICATION', () => {
           expect(someCompaniesAreDuplicated).toBeFalsy();
         });
 
-        it('should pass if intra courses have one and only one company', () => {
-          const everyIntraCourseHasCompany = courseList
-            .filter(course => course.type === INTRA)
+        it('should pass if intra or single courses have one and only one company', () => {
+          const everyIntraOrSingleCourseHasCompany = courseList
+            .filter(course => [INTRA, SINGLE].includes(course.type))
             .every(course => course.companies.length === 1);
 
-          expect(everyIntraCourseHasCompany).toBeTruthy();
+          expect(everyIntraOrSingleCourseHasCompany).toBeTruthy();
         });
 
         it('should pass if only intra_holding courses have a holding', () => {
@@ -929,10 +930,10 @@ describe('SEEDS VERIFICATION', () => {
           expect(noELearningCourseHasCertification).toBeTruthy();
         });
 
-        it('should pass if every blended course is intra or inter_b2b or intra_holding', () => {
+        it('should pass if every blended course is intra or inter_b2b or intra_holding or single', () => {
           const everyBlendedCourseHasGoodType = courseList
             .filter(course => course.format === BLENDED)
-            .every(course => [INTRA, INTER_B2B, INTRA_HOLDING].includes(course.type));
+            .every(course => [INTRA, INTER_B2B, INTRA_HOLDING, SINGLE].includes(course.type));
 
           expect(everyBlendedCourseHasGoodType).toBeTruthy();
         });
@@ -1049,10 +1050,10 @@ describe('SEEDS VERIFICATION', () => {
           expect(isArchiveDateAfterLastSlot).toBeTruthy();
         });
 
-        it('should pass if max trainees is defined only for intra or intra_holding courses', () => {
-          const isMaxTraineesDefinedForIntraCoursesOnly = courseList
-            .every(c => [INTRA, INTRA_HOLDING].includes(c.type) || !has(c, 'maxTrainees'));
-          expect(isMaxTraineesDefinedForIntraCoursesOnly).toBeTruthy();
+        it('should pass if max trainees is defined only for intra or intra_holding or single courses', () => {
+          const isMaxTraineesDefinedForIntraOrSingleCoursesOnly = courseList
+            .every(c => [INTRA, INTRA_HOLDING, SINGLE].includes(c.type) || !has(c, 'maxTrainees'));
+          expect(isMaxTraineesDefinedForIntraOrSingleCoursesOnly).toBeTruthy();
         });
 
         it('should pass if number of trainees is lower than max trainees', () => {
@@ -1061,9 +1062,9 @@ describe('SEEDS VERIFICATION', () => {
           expect(isNumberOfTraineesLowerThanMaxTrainees).toBeTruthy();
         });
 
-        it('should pass if expected bills count is defined only for intra courses', () => {
+        it('should pass if expected bills count is defined only for intra or single courses', () => {
           const isExpectedBillsCountDefinedForBlendedCoursesOnly = courseList
-            .every(c => c.type === INTRA || !has(c, 'expectedBillsCount'));
+            .every(c => [INTRA, SINGLE].includes(c.type) || !has(c, 'expectedBillsCount'));
           expect(isExpectedBillsCountDefinedForBlendedCoursesOnly).toBeTruthy();
         });
 
