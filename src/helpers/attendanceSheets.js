@@ -1,5 +1,6 @@
 const omit = require('lodash/omit');
 const get = require('lodash/get');
+const has = require('lodash/has');
 const AttendanceSheet = require('../models/AttendanceSheet');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
 const User = require('../models/User');
@@ -138,13 +139,17 @@ exports.delete = async (attendanceSheetId) => {
   await AttendanceSheet.deleteOne({ _id: attendanceSheet._id });
 
   if (attendanceSheet.signatures) {
-    const trainerPublicId = attendanceSheet.signatures.trainer.split('/').pop();
-    const traineePublicId = attendanceSheet.signatures.trainee.split('/').pop();
-    await Promise.all([
-      GCloudStorageHelper.deleteCourseFile(trainerPublicId),
-      GCloudStorageHelper.deleteCourseFile(traineePublicId),
-    ]);
+    const promises = [];
+    const { signatures } = attendanceSheet;
+    if (has(signatures, 'trainer')) {
+      promises.push(GCloudStorageHelper.deleteCourseFile(signatures.trainer.split('/').pop()));
+    }
+    if (has(signatures, 'trainee')) {
+      promises.push(GCloudStorageHelper.deleteCourseFile(signatures.trainee.split('/').pop()));
+    }
+
+    await Promise.all(promises);
   }
 
-  return GCloudStorageHelper.deleteCourseFile(attendanceSheet.file.publicId);
+  if (attendanceSheet.file) await GCloudStorageHelper.deleteCourseFile(attendanceSheet.file.publicId);
 };
