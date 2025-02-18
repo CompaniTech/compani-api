@@ -66,6 +66,7 @@ const {
   END_COURSE,
   DAY_D_MONTH_YEAR,
   MOBILE,
+  SINGLE,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
@@ -140,8 +141,8 @@ const listBlendedForCompany = async (query, origin) => {
   );
 
   // We sort courses by _id to have a consistent sort in the kanban even for two courses with same lastSlot's startDate
-  const intraCourses = courses
-    .filter(course => course.type === INTRA)
+  const intraOrSingleCourses = courses
+    .filter(course => [INTRA, SINGLE].includes(course.type))
     .sort((a, b) => UtilsHelper.sortStrings(a._id.toHexString(), b._id.toHexString()));
   const interOrIntraHoldingCourses = courses
     .filter(course => [INTER_B2B, INTRA_HOLDING].includes(course.type))
@@ -157,7 +158,7 @@ const listBlendedForCompany = async (query, origin) => {
   }
 
   return [
-    ...intraCourses,
+    ...intraOrSingleCourses,
     ...interOrIntraHoldingCourses
       .map(course => ({
         ...course,
