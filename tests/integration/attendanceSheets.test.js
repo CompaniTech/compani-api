@@ -1217,7 +1217,22 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       sinon.assert.calledOnce(deleteCourseFile);
     });
 
-    it('should delete an attendance sheet (with signatures)', async () => {
+    it('should delete an attendance sheet (with signatures but no file)', async () => {
+      const attendanceSheetId = attendanceSheetList[9]._id;
+      const attendanceSheetsLength = await AttendanceSheet.countDocuments();
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
+      expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
+      sinon.assert.calledTwice(deleteCourseFile);
+    });
+
+    it('should delete an attendance sheet (with both signatures and file)', async () => {
       const attendanceSheetId = attendanceSheetList[10]._id;
       const attendanceSheetsLength = await AttendanceSheet.countDocuments();
       const response = await app.inject({
