@@ -9,10 +9,11 @@ const {
   BLENDED,
   GLOBAL,
   MONTHLY,
+  SINGLE,
 } = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 
-const COURSE_TYPES = [INTRA, INTER_B2B, INTER_B2C, INTRA_HOLDING];
+const COURSE_TYPES = [INTRA, INTER_B2B, INTER_B2C, INTRA_HOLDING, SINGLE];
 const COURSE_FORMATS = [STRICTLY_E_LEARNING, BLENDED];
 const CERTIFICATE_GENERATION_MODE = [GLOBAL, MONTHLY];
 
@@ -23,7 +24,7 @@ const CourseSchema = mongoose.Schema({
     type: [mongoose.Schema.Types.ObjectId],
     default() { return (this.type === INTER_B2C ? undefined : []); },
     ref: 'Company',
-    validate(v) { return (this.type === INTRA ? Array.isArray(v) && !!v.length : true); },
+    validate(v) { return ([INTRA, SINGLE].includes(this.type) ? Array.isArray(v) && !!v.length : true); },
   },
   holding: {
     type: mongoose.Schema.Types.ObjectId,
@@ -44,8 +45,8 @@ const CourseSchema = mongoose.Schema({
   companyRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   estimatedStartDate: { type: Date },
   archivedAt: { type: Date },
-  maxTrainees: { type: Number, required() { return [INTRA, INTRA_HOLDING].includes(this.type); } },
-  expectedBillsCount: { type: Number, default() { return this.type === INTRA ? 0 : undefined; } },
+  maxTrainees: { type: Number, required() { return [INTRA, INTRA_HOLDING, SINGLE].includes(this.type); } },
+  expectedBillsCount: { type: Number, default() { return [INTRA, SINGLE].includes(this.type) ? 0 : undefined; } },
   hasCertifyingTest: { type: Boolean, default() { return this.format === BLENDED ? false : undefined; } },
   certifiedTrainees: {
     type: [mongoose.Schema.Types.ObjectId],
