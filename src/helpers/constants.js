@@ -134,6 +134,7 @@ module.exports = {
   // CUSTOMER ABSENCE
   LEAVE: 'leave',
   // CUSTOMER FUNDINGS
+  GLOBAL: 'global',
   MONTHLY: 'monthly',
   ONCE: 'once',
   HOURLY: 'hourly',
