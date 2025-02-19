@@ -45,7 +45,11 @@ const CourseSchema = mongoose.Schema({
   companyRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   estimatedStartDate: { type: Date },
   archivedAt: { type: Date },
-  maxTrainees: { type: Number, required() { return [INTRA, INTRA_HOLDING, SINGLE].includes(this.type); } },
+  maxTrainees: {
+    type: Number,
+    required() { return [INTRA, INTRA_HOLDING, SINGLE].includes(this.type); },
+    default() { return this.type === SINGLE ? 1 : undefined; },
+  },
   expectedBillsCount: { type: Number, default() { return [INTRA, SINGLE].includes(this.type) ? 0 : undefined; } },
   hasCertifyingTest: { type: Boolean, default() { return this.format === BLENDED ? false : undefined; } },
   certifiedTrainees: {
