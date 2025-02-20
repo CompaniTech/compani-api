@@ -1,6 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
-const { INTRA, INTER_B2B, WEBAPP, PUBLISHED, GROUP } = require('../../../src/helpers/constants');
+const { INTRA, INTER_B2B, WEBAPP, PUBLISHED, GROUP, GLOBAL } = require('../../../src/helpers/constants');
 const Company = require('../../../src/models/Company');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
@@ -101,6 +101,7 @@ const coursesList = [
     trainees: [auxiliary._id],
     expectedBillsCount: 1,
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 1 - linked to bill 1 and 7, linked to creditNote 0, expectedBillsCount is 2
     _id: new ObjectId(),
@@ -114,6 +115,7 @@ const coursesList = [
     trainees: [auxiliary._id],
     expectedBillsCount: 2,
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 2 - without bill, expectedBillsCount is 1
     _id: new ObjectId(),
@@ -127,6 +129,7 @@ const coursesList = [
     trainees: [traineeFromOtherCompany._id],
     expectedBillsCount: 1,
     companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 3 - linked to bill 2
     _id: new ObjectId(),
@@ -140,6 +143,7 @@ const coursesList = [
     trainees: [traineeFromAuthCompany._id],
     expectedBillsCount: 1,
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 4 - linked to bill 3
     _id: new ObjectId(),
@@ -153,6 +157,7 @@ const coursesList = [
     trainees: [traineeFromAuthCompany._id],
     expectedBillsCount: 1,
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 5 - linked to bill 4
     _id: new ObjectId(),
@@ -166,6 +171,7 @@ const coursesList = [
     trainees: [traineeFromAuthCompany._id],
     expectedBillsCount: 1,
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 6 - linked to bill 5
     _id: new ObjectId(),
@@ -179,6 +185,7 @@ const coursesList = [
     trainees: [],
     expectedBillsCount: 2,
     companies: [companyWithoutAddress._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 7 - linked to bill 6
     _id: new ObjectId(),
@@ -192,6 +199,7 @@ const coursesList = [
     trainees: [],
     expectedBillsCount: 1,
     companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 8 - linked to bill 7
     _id: new ObjectId(),
@@ -205,6 +213,7 @@ const coursesList = [
     trainees: [],
     expectedBillsCount: 1,
     companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 9 - inter without bill
     _id: new ObjectId(),
@@ -216,6 +225,7 @@ const coursesList = [
     contact: vendorAdmin._id,
     trainees: [traineeFromOtherCompany._id],
     companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 10 - without bill, expectedBillsCount is 0
     _id: new ObjectId(),
@@ -229,6 +239,7 @@ const coursesList = [
     contact: vendorAdmin._id,
     trainees: [traineeFromOtherCompany._id],
     expectedBillsCount: 0,
+    certificateGenerationMode: GLOBAL,
   },
   { // 11 - third company course
     _id: new ObjectId(),
@@ -242,6 +253,7 @@ const coursesList = [
     contact: vendorAdmin._id,
     trainees: [],
     expectedBillsCount: 1,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

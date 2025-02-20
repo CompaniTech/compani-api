@@ -54,7 +54,11 @@ const CourseSchema = mongoose.Schema({
   },
   salesRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   tutors: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
-  certificateGenerationMode: { type: String, required: true, enum: CERTIFICATE_GENERATION_MODE },
+  certificateGenerationMode: {
+    type: String,
+    required() { return this.format === BLENDED ? true : undefined; },
+    enum: CERTIFICATE_GENERATION_MODE,
+  },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {

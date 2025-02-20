@@ -27,6 +27,7 @@ const {
   PUBLISHED,
   E_LEARNING,
   ON_SITE,
+  GLOBAL,
 } = require('../../../src/helpers/constants');
 const {
   helperRoleId,
@@ -378,6 +379,7 @@ const coursesList = [
     trainees: [helperFromOtherCompany._id, usersSeedList[0]._id],
     companies: [otherCompany._id, authCompany._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
@@ -388,6 +390,7 @@ const coursesList = [
     trainees: [usersSeedList[0]._id],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),

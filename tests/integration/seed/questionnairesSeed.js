@@ -31,6 +31,7 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   INTRA,
+  GLOBAL,
 } = require('../../../src/helpers/constants');
 const { trainerRoleId } = require('../../seed/authRolesSeed');
 const { companyWithoutSubscription, authCompany } = require('../../seed/authCompaniesSeed');
@@ -146,6 +147,7 @@ const coursesList = [
     trainers: [courseTrainer._id],
     trainees: [traineeList[0]._id],
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
@@ -163,6 +165,7 @@ const coursesList = [
     trainers: [trainerAndCoach._id],
     trainees: [traineeList[0]._id],
     companies: [companyWithoutSubscription._id],
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
@@ -174,6 +177,7 @@ const coursesList = [
     maxTrainees: 4,
     trainees: [traineeList[0]._id],
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

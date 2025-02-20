@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { PAYMENT, DIRECT_DEBIT, INTRA, PUBLISHED, GROUP } = require('../../../src/helpers/constants');
+const { PAYMENT, DIRECT_DEBIT, INTRA, PUBLISHED, GROUP, GLOBAL } = require('../../../src/helpers/constants');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
@@ -28,6 +28,7 @@ const coursesList = [
     companies: [authCompany._id],
     expectedBillsCount: 2,
     maxTrainees: 2,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

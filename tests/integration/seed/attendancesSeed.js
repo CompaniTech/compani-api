@@ -16,6 +16,7 @@ const {
   TRAINEE_ADDITION,
   PUBLISHED,
   INTRA_HOLDING,
+  GLOBAL,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, vendorAdminRoleId } = require('../../seed/authRolesSeed');
@@ -142,6 +143,7 @@ const coursesList = [
     companies: [authCompany._id],
     trainers: [userList[0]._id, trainerAndCoach._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 1
     _id: new ObjectId(),
@@ -152,6 +154,7 @@ const coursesList = [
     companies: [authCompany._id],
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 2
     _id: new ObjectId(),
@@ -162,6 +165,7 @@ const coursesList = [
     companies: [otherCompany._id],
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 3 interb2b
     _id: new ObjectId(),
@@ -171,6 +175,7 @@ const coursesList = [
     companies: [otherCompany._id, authCompany._id],
     trainers: [userList[0]._id, trainerAndCoach._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 4 interb2b with only trainees from otherCompany
     _id: new ObjectId(),
@@ -180,6 +185,7 @@ const coursesList = [
     companies: [otherCompany._id],
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 5 archived
     _id: new ObjectId(),
@@ -191,6 +197,7 @@ const coursesList = [
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
     archivedAt: '2021-11-17T23:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 6 trainer is authTrainer
     _id: new ObjectId(),
@@ -200,6 +207,7 @@ const coursesList = [
     companies: [authCompany._id, companyWithoutSubscription._id],
     trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 7 no company linked
     _id: new ObjectId(),
@@ -209,6 +217,7 @@ const coursesList = [
     companies: [],
     trainers: [trainer._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 8 intra_holding no company
     _id: new ObjectId(),
@@ -220,6 +229,7 @@ const coursesList = [
     maxTrainees: 9,
     trainers: [trainer._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 9 intra_holding with companies
     _id: new ObjectId(),
@@ -231,6 +241,7 @@ const coursesList = [
     maxTrainees: 9,
     trainers: [trainer._id],
     operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

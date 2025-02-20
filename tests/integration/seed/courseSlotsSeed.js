@@ -12,7 +12,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const Attendance = require('../../../src/models/Attendance');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
 const { vendorAdmin, trainerAndCoach } = require('../../seed/authUsersSeed');
-const { WEBAPP, INTRA, PUBLISHED, LESSON, INTRA_HOLDING } = require('../../../src/helpers/constants');
+const { WEBAPP, INTRA, PUBLISHED, LESSON, INTRA_HOLDING, GLOBAL } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, auxiliaryRoleId } = require('../../seed/authRolesSeed');
 
@@ -102,6 +102,7 @@ const coursesList = [
     maxTrainees: 8,
     trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 1
     _id: new ObjectId(),
@@ -113,6 +114,7 @@ const coursesList = [
     maxTrainees: 8,
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 2
     _id: new ObjectId(),
@@ -125,6 +127,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-11-15T09:00:00',
+    certificateGenerationMode: GLOBAL,
   },
   { // 3
     _id: new ObjectId(),
@@ -136,6 +139,7 @@ const coursesList = [
     maxTrainees: 8,
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 4
     _id: new ObjectId(),
@@ -148,6 +152,7 @@ const coursesList = [
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 5 without companies
     _id: new ObjectId(),
@@ -160,6 +165,7 @@ const coursesList = [
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

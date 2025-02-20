@@ -29,6 +29,7 @@ const {
   PDF,
   OFFICIAL,
   CUSTOM,
+  GLOBAL,
 } = require('../../src/helpers/constants');
 const {
   populateDB,
@@ -103,6 +104,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         estimatedStartDate: '2022-05-31T08:00:00.000Z',
         hasCertifyingTest: true,
         salesRepresentative: trainerOrganisationManager._id,
+        certificateGenerationMode: GLOBAL,
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -141,6 +143,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         expectedBillsCount: 2,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -168,6 +171,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         subProgram: subProgramsList[0]._id,
         operationsRepresentative: vendorAdmin._id,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -193,6 +197,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         subProgram: subProgramsList[0]._id,
         operationsRepresentative: clientAdmin._id,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
       const response = await app.inject({
         method: 'POST',
@@ -214,6 +219,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         expectedBillsCount: 0,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
       const response = await app.inject({
         method: 'POST',
@@ -235,6 +241,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         expectedBillsCount: 0,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
       const response = await app.inject({
         method: 'POST',
@@ -256,6 +263,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         holding: new ObjectId(),
         maxTrainees: 2,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
 
       const response = await app.inject({
@@ -276,6 +284,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         salesRepresentative: clientAdmin._id,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
 
       const response = await app.inject({
@@ -296,6 +305,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         salesRepresentative: new ObjectId(),
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
 
       const response = await app.inject({
@@ -318,6 +328,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         expectedBillsCount: 0,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
       const response = await app.inject({
         method: 'POST',
@@ -339,6 +350,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         expectedBillsCount: 0,
         hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
       };
       const response = await app.inject({
         method: 'POST',

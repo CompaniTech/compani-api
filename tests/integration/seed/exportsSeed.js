@@ -92,6 +92,7 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  GLOBAL,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1234,6 +1235,7 @@ const coursesList = [
     companies: [authCompany._id],
     archivedAt: '2024-07-07T22:00:00.000Z',
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 1 with 2 bills
     _id: new ObjectId(),
@@ -1246,6 +1248,7 @@ const coursesList = [
     estimatedStartDate: '2019-01-01T08:00:00.000Z',
     companies: [authCompany._id, otherCompany._id],
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 2 without bills
     _id: new ObjectId(),
@@ -1259,6 +1262,7 @@ const coursesList = [
     estimatedStartDate: '2022-01-12T08:00:00.000Z',
     companies: [authCompany._id, otherCompany._id, companyWithoutSubscription._id],
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 3 with 1 bill
     _id: new ObjectId(),
@@ -1273,6 +1277,7 @@ const coursesList = [
     companies: [authCompany._id],
     expectedBillsCount: 1,
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 4 with 1 bill
     _id: new ObjectId(),
@@ -1287,6 +1292,7 @@ const coursesList = [
     trainees: [traineeList[0]._id, traineeList[2]._id],
     expectedBillsCount: 1,
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 5 with 3 bills and 1 creditNote
     _id: new ObjectId(),
@@ -1301,6 +1307,7 @@ const coursesList = [
     trainees: [traineeList[0]._id, traineeList[2]._id, traineeList[3]._id],
     expectedBillsCount: 3,
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 6 without bills
     _id: new ObjectId(),
@@ -1315,6 +1322,7 @@ const coursesList = [
     trainees: [],
     expectedBillsCount: 0,
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 7 without trainee
     _id: new ObjectId(),
@@ -1329,6 +1337,7 @@ const coursesList = [
     trainees: [],
     createdAt: '2018-01-07T22:00:00.000Z',
     maxTrainees: 8,
+    certificateGenerationMode: GLOBAL,
   },
   { // 8 intra with other Company
     _id: new ObjectId(),
@@ -1343,6 +1352,7 @@ const coursesList = [
     trainees: [traineeList[1]._id],
     companies: [otherCompany._id],
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

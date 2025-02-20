@@ -7,7 +7,15 @@ const SubProgram = require('../../../src/models/SubProgram');
 const User = require('../../../src/models/User');
 const { authCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
 const { trainerOrganisationManager } = require('../../seed/authUsersSeed');
-const { SLOT_CREATION, WEBAPP, INTRA, INTER_B2B, PUBLISHED, INTRA_HOLDING } = require('../../../src/helpers/constants');
+const {
+  SLOT_CREATION,
+  WEBAPP,
+  INTRA,
+  INTER_B2B,
+  PUBLISHED,
+  INTRA_HOLDING,
+  GLOBAL,
+} = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { vendorAdminRoleId, trainerRoleId } = require('../../seed/authRolesSeed');
 
@@ -53,6 +61,7 @@ const coursesList = [
     trainees: [],
     companies: [authCompany._id],
     operationsRepresentative: userList[1]._id,
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
@@ -64,6 +73,7 @@ const coursesList = [
     trainees: [],
     companies: [companyWithoutSubscription._id],
     operationsRepresentative: userList[1]._id,
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
@@ -75,6 +85,7 @@ const coursesList = [
     trainees: [],
     companies: [],
     operationsRepresentative: userList[1]._id,
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
@@ -88,6 +99,7 @@ const coursesList = [
     holding: authHolding._id,
     maxTrainees: 8,
     operationsRepresentative: userList[1]._id,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 
