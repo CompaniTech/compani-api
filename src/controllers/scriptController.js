@@ -3,9 +3,13 @@ const completionCertificateCreationJob = require('../jobs/completionCertificateC
 
 const completionCertificateCreation = async (req) => {
   try {
-    await completionCertificateCreationJob.completionCertificateCreation(req);
+    const { certificateCreated, errors } = await completionCertificateCreationJob.completionCertificateCreation(req);
 
-    return { message: 'Completion Certificate creation done' };
+    return {
+      message: `Completion Certificate creation : ${certificateCreated.length} certificats créés et
+        ${errors.length} erreurs`,
+      data: certificateCreated,
+    };
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);

@@ -1,5 +1,6 @@
 /* eslint-disable no-console */
 const groupBy = require('lodash/groupBy');
+const { Boom } = require('@hapi/boom');
 const get = require('lodash/get');
 const Course = require('../models/Course');
 const Attendance = require('../models/Attendance');
@@ -83,9 +84,11 @@ exports.completionCertificateCreation = async (req) => {
       }
     }
 
-    console.log(`${certificateCreated.length} certificats de réalisation créés pour ${month}`);
     await EmailHelper.completionCertificateCreationEmail(certificateCreated, errors, month);
+
+    return { certificateCreated, errors };
   } catch (e) {
     console.log('completionCertificateCreation', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
   }
 };
