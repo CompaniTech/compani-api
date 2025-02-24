@@ -105,3 +105,14 @@ exports.addTutor = async (courseId, tutorId) => {
     throw Boom.failedDependency(translate[language].emailNotSent);
   }
 };
+
+exports.completionCertificateCreationEmail = (certificateCreated, errors, month) => {
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: process.env.TECH_EMAILS,
+    subject: `Script création des certificats de réalisation pour le mois de ${month}`,
+    html: EmailOptionsHelper.completionCertificateCreationContent(certificateCreated, errors),
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+};

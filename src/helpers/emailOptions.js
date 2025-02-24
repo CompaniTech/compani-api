@@ -97,6 +97,16 @@ const addTutorContent = (tutorIdentity, learnerIdentity, courseName) => `<p>Bonj
   ${GooglePlayAndAppStoreButtons()}
 `;
 
+const completionCertificateCreationContent = (certificateCreated, errors) => {
+  let body = `<p>Script correctement exécuté. ${certificateCreated.length + errors.length} formations traitées.</p>`;
+
+  if (certificateCreated.length) body = body.concat(`<p>Certificat créé pour les formations suivantes : ${certificateCreated.join(', ')}</p>`);
+
+  if (errors.length) body = body.concat(`<p>Certificat à créer manuellement pour les formations suivantes : ${errors.join(', ')}</p>`);
+
+  return body;
+};
+
 module.exports = {
   baseWelcomeContent,
   trainerCustomContent,
@@ -105,4 +115,5 @@ module.exports = {
   verificationCodeEmail,
   welcomeTraineeContent,
   addTutorContent,
+  completionCertificateCreationContent,
 };

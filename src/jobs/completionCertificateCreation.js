@@ -1,12 +1,13 @@
 /* eslint-disable no-console */
 const groupBy = require('lodash/groupBy');
 const get = require('lodash/get');
-const { MONTHLY, MM_YYYY, MONTH } = require('../helpers/constants');
 const Course = require('../models/Course');
 const Attendance = require('../models/Attendance');
 const ActivityHistory = require('../models/ActivityHistory');
-const { CompaniDate } = require('../helpers/dates/companiDates');
 const CompletionCertificate = require('../models/CompletionCertificate');
+const { MONTHLY, MM_YYYY, MONTH } = require('../helpers/constants');
+const { CompaniDate } = require('../helpers/dates/companiDates');
+const EmailHelper = require('../helpers/email');
 
 exports.completionCertificateCreation = async (req) => {
   try {
@@ -56,27 +57,34 @@ exports.completionCertificateCreation = async (req) => {
       if (traineeActivityHistories.length) coursesWithAHOrAttendancesOnMonth.push(course);
     }
 
-    let certificateCreated = 0;
+    const certificateCreated = [];
+    const errors = [];
     for (const course of coursesWithAHOrAttendancesOnMonth) {
-      const hasCertificateForMonth = await CompletionCertificate.findOne({ course: course._id, month }).lean();
+      try {
+        const hasCertificateForMonth = await CompletionCertificate.findOne({ course: course._id, month }).lean();
 
-      if (hasCertificateForMonth) {
-        console.log(`Un certificat existe déjà pour la formation ${course._id} sur ${month}`);
-        continue;
-      }
+        if (hasCertificateForMonth) {
+          console.log(`Un certificat existe déjà pour la formation ${course._id} sur ${month}`);
+          continue;
+        }
 
-      if (course.trainees.length === 1) {
-        await CompletionCertificate.create({
-          course: course._id,
-          trainee: get(course, 'trainees[0]._id'),
-          month,
-        });
+        if (course.trainees.length === 1) {
+          await CompletionCertificate.create({
+            course: course._id,
+            trainee: get(course, 'trainees[0]._id'),
+            month,
+          });
 
-        certificateCreated += 1;
+          certificateCreated.push(course._id);
+        }
+      } catch (e) {
+        console.log('completionCertificateCreation', e);
+        errors.push(course._id);
       }
     }
 
-    console.log(`${certificateCreated} certificats de réalisation créés pour ${month}`);
+    console.log(`${certificateCreated.length} certificats de réalisation créés pour ${month}`);
+    await EmailHelper.completionCertificateCreationEmail(certificateCreated, errors, month);
   } catch (e) {
     console.log('completionCertificateCreation', e);
   }

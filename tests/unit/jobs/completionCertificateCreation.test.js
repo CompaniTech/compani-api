@@ -6,6 +6,7 @@ const Attendance = require('../../../src/models/Attendance');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const { INTER_B2B, MONTHLY } = require('../../../src/helpers/constants');
+const EmailHelper = require('../../../src/helpers/email');
 const CompletionCertificateCreationJob = require('../../../src/jobs/completionCertificateCreation');
 
 describe('completionCertificateCreation', () => {
@@ -14,6 +15,7 @@ describe('completionCertificateCreation', () => {
   let findActivityHistory;
   let findOneCompletionCertificate;
   let createCompletionCertificate;
+  let completionCertificateCreationEmail;
 
   beforeEach(() => {
     findCourse = sinon.stub(Course, 'find');
@@ -21,6 +23,7 @@ describe('completionCertificateCreation', () => {
     findActivityHistory = sinon.stub(ActivityHistory, 'find');
     findOneCompletionCertificate = sinon.stub(CompletionCertificate, 'findOne');
     createCompletionCertificate = sinon.stub(CompletionCertificate, 'create');
+    completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
   });
 
   afterEach(() => {
@@ -29,6 +32,7 @@ describe('completionCertificateCreation', () => {
     findActivityHistory.restore();
     findOneCompletionCertificate.restore();
     createCompletionCertificate.restore();
+    completionCertificateCreationEmail.restore();
   });
 
   it('should create completion certificates for courses with attendances or activity histories on month', async () => {
@@ -123,6 +127,7 @@ describe('completionCertificateCreation', () => {
     findActivityHistory.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     findOneCompletionCertificate.onCall(0).returns(SinonMongoose.stubChainedQueries(undefined, ['lean']));
     findOneCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries(undefined, ['lean']));
+    completionCertificateCreationEmail.returns({ msg: 'Script correctement exécuté.' });
 
     await CompletionCertificateCreationJob.completionCertificateCreation({ query: { month } });
 
@@ -171,5 +176,6 @@ describe('completionCertificateCreation', () => {
       createCompletionCertificate,
       { course: courseIds[1], trainee: traineeIds[1], month }
     );
+    sinon.assert.calledWithExactly(completionCertificateCreationEmail, courseIds, [], month);
   });
 });
