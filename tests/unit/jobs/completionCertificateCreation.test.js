@@ -125,8 +125,8 @@ describe('completionCertificateCreation', () => {
     findCourse.returns(SinonMongoose.stubChainedQueries(courses));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['populate', 'setOptions', 'lean']));
     findActivityHistory.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
-    findOneCompletionCertificate.onCall(0).returns(SinonMongoose.stubChainedQueries(undefined, ['lean']));
-    findOneCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries(undefined, ['lean']));
+    findOneCompletionCertificate.onCall(0).returns(SinonMongoose.stubChainedQueries(undefined, ['setOptions', 'lean']));
+    findOneCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries(undefined, ['setOptions', 'lean']));
     completionCertificateCreationEmail.returns({ msg: 'Script correctement exécuté.' });
 
     await CompletionCertificateCreationJob.completionCertificateCreation({ query: { month } });
@@ -160,12 +160,20 @@ describe('completionCertificateCreation', () => {
     );
     SinonMongoose.calledWithExactly(
       findOneCompletionCertificate,
-      [{ query: 'findOne', args: [{ course: courseIds[0], month }] }, { query: 'lean' }],
+      [
+        { query: 'findOne', args: [{ course: courseIds[0], month }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
       0
     );
     SinonMongoose.calledWithExactly(
       findOneCompletionCertificate,
-      [{ query: 'findOne', args: [{ course: courseIds[1], month }] }, { query: 'lean' }],
+      [
+        { query: 'findOne', args: [{ course: courseIds[1], month }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
       1
     );
     sinon.assert.calledWithExactly(

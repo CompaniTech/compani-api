@@ -62,7 +62,10 @@ exports.completionCertificateCreation = async (req) => {
     const errors = [];
     for (const course of coursesWithAHOrAttendancesOnMonth) {
       try {
-        const hasCertificateForMonth = await CompletionCertificate.findOne({ course: course._id, month }).lean();
+        const hasCertificateForMonth = await CompletionCertificate
+          .findOne({ course: course._id, month })
+          .setOptions({ isVendorUser: true })
+          .lean();
 
         if (hasCertificateForMonth) {
           console.log(`Un certificat existe déjà pour la formation ${course._id} sur ${month}`);

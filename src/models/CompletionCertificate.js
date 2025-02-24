@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { validateQuery } = require('./preHooks/validate');
 
 const CompletionCertificateSchema = mongoose.Schema({
   course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true, immutable: true },
@@ -10,5 +11,7 @@ const CompletionCertificateSchema = mongoose.Schema({
     validate: /^([0]{1}[1-9]{1}|[1]{1}[0-2]{1})-[2]{1}[0]{1}[0-9]{2}$/,
   },
 });
+
+CompletionCertificateSchema.pre('find', validateQuery);
 
 module.exports = mongoose.model('CompletionCertificate', CompletionCertificateSchema);
