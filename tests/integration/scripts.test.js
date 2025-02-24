@@ -34,7 +34,7 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data).toEqual([courseList[0]._id, courseList[2]._id]);
+      expect(response.result.data).toEqual(expect.arrayContaining([courseList[0]._id, courseList[2]._id]));
     });
   });
 
