@@ -1,8 +1,9 @@
 const { expect } = require('expect');
+const sinon = require('sinon');
 const app = require('../../server');
-const { populateDB } = require('./seed/scriptsSeed');
+const EmailHelper = require('../../src/helpers/email');
+const { populateDB, courseList } = require('./seed/scriptsSeed');
 const { getToken } = require('./helpers/authentication');
-const { courseList } = require('./seed/scriptsSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -12,11 +13,17 @@ describe('NODE ENV', () => {
 
 describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () => {
   let authToken;
+  let completionCertificateCreationEmail;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
+      completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
+    });
+
+    afterEach(() => {
+      completionCertificateCreationEmail.restore();
     });
 
     it('should send email for completion certificates', async () => {

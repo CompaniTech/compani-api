@@ -118,6 +118,7 @@ describe('validate', () => {
           'questionnaires:edit',
           'questionnaires:read',
           'questionnairehistories:edit',
+          'scripts:run',
           'trainermissions:edit',
           'trainermissions:read',
           `company-${companyId}`,
