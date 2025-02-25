@@ -113,7 +113,6 @@ const coursesList = [
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
     certificateGenerationMode: GLOBAL,
-
   },
   { // 2
     _id: new ObjectId(),
