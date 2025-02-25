@@ -1,6 +1,5 @@
 const get = require('lodash/get');
 const Course = require('../models/Course');
-const CourseSlot = require('../models/CourseSlot');
 const { WEBAPP, MOBILE, TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN } = require('../helpers/constants');
 
 exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Course
@@ -49,16 +48,14 @@ exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Cour
   ])
   .lean({ virtuals: populateVirtual });
 
-exports.findCoursesForExport = async (startDate, endDate, credentials) => {
-  const slots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } }).lean();
-  const courseIds = slots.map(slot => slot.course);
+exports.findCoursesForExport = async (courseIdsFromSlots, startDate, endDate, credentials) => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
 
   return Course
     .find(
       {
         $or: [
-          { _id: { $in: courseIds } },
+          { _id: { $in: courseIdsFromSlots } },
           { estimatedStartDate: { $lte: endDate, $gte: startDate }, archivedAt: { $exists: false } },
         ],
       }
@@ -92,5 +89,21 @@ exports.findCoursesForExport = async (startDate, endDate, credentials) => {
         { path: 'coursePayments', options: { isVendorUser }, select: 'netInclTaxes nature' },
       ],
     })
+    .lean()
+    .cursor();
+};
+
+exports.findCoursesIdsForExport = async (courseIdsFromSlots, startDate, endDate) => {
+  const courses = await Course
+    .find(
+      {
+        $or: [
+          { _id: { $in: courseIdsFromSlots } },
+          { estimatedStartDate: { $lte: endDate, $gte: startDate }, archivedAt: { $exists: false } },
+        ],
+      }
+    )
     .lean();
+
+  return courses.map(course => course._id);
 };
