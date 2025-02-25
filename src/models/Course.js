@@ -1,10 +1,20 @@
 const mongoose = require('mongoose');
 const mongooseLeanVirtuals = require('mongoose-lean-virtuals');
-const { INTRA, INTER_B2B, INTER_B2C, INTRA_HOLDING, STRICTLY_E_LEARNING, BLENDED } = require('../helpers/constants');
+const {
+  INTRA,
+  INTER_B2B,
+  INTER_B2C,
+  INTRA_HOLDING,
+  STRICTLY_E_LEARNING,
+  BLENDED,
+  GLOBAL,
+  MONTHLY,
+} = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 
 const COURSE_TYPES = [INTRA, INTER_B2B, INTER_B2C, INTRA_HOLDING];
 const COURSE_FORMATS = [STRICTLY_E_LEARNING, BLENDED];
+const CERTIFICATE_GENERATION_MODE = [GLOBAL, MONTHLY];
 
 const CourseSchema = mongoose.Schema({
   misc: { type: String },
@@ -44,6 +54,11 @@ const CourseSchema = mongoose.Schema({
   },
   salesRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   tutors: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
+  certificateGenerationMode: {
+    type: String,
+    required() { return this.format === BLENDED ? true : undefined; },
+    enum: CERTIFICATE_GENERATION_MODE,
+  },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {
@@ -88,3 +103,4 @@ CourseSchema.plugin(mongooseLeanVirtuals);
 module.exports = mongoose.model('Course', CourseSchema);
 module.exports.COURSE_TYPES = COURSE_TYPES;
 module.exports.COURSE_FORMATS = COURSE_FORMATS;
+module.exports.CERTIFICATE_GENERATION_MODE = CERTIFICATE_GENERATION_MODE;

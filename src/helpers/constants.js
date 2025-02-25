@@ -134,7 +134,6 @@ module.exports = {
   // CUSTOMER ABSENCE
   LEAVE: 'leave',
   // CUSTOMER FUNDINGS
-  MONTHLY: 'monthly',
   ONCE: 'once',
   HOURLY: 'hourly',
   FIXED: 'fixed',
@@ -648,4 +647,7 @@ module.exports = {
   UPLOAD: 'upload',
   GENERATION: 'generation',
   get CREATION_METHOD_TYPES() { return [this.UPLOAD, this.GENERATION]; },
+  // COMPLETION CERTIFICATE GENERATION MODE
+  GLOBAL: 'global',
+  MONTHLY: 'monthly',
 };

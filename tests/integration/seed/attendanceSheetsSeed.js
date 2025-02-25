@@ -16,6 +16,8 @@ const {
   MOBILE,
   PUBLISHED,
   INTRA_HOLDING,
+  GLOBAL,
+  MONTHLY,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -100,6 +102,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 1
     _id: new ObjectId(),
@@ -109,6 +112,7 @@ const coursesList = [
     companies: [authCompany._id, otherCompany._id, companyWithoutSubscription._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 2
     _id: new ObjectId(),
@@ -119,6 +123,7 @@ const coursesList = [
     companies: [authCompany._id],
     trainers: [userList[3]._id],
     operationsRepresentative: userList[0]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 3 - archived
     _id: new ObjectId(),
@@ -129,6 +134,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 4
     _id: new ObjectId(),
@@ -139,6 +145,7 @@ const coursesList = [
     companies: [otherCompany._id],
     trainers: [userList[3]._id],
     operationsRepresentative: userList[0]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 5
     _id: new ObjectId(),
@@ -150,6 +157,7 @@ const coursesList = [
     holding: otherHolding._id,
     trainers: [trainer._id],
     operationsRepresentative: userList[0]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 6
     _id: new ObjectId(),
@@ -161,6 +169,7 @@ const coursesList = [
     companies: [],
     holding: otherHolding._id,
     operationsRepresentative: userList[0]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 7 Single course
     _id: new ObjectId(),
@@ -170,6 +179,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
+    certificateGenerationMode: MONTHLY,
   },
   { // 8 Single course
     _id: new ObjectId(),
@@ -179,6 +189,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [userList[3]._id],
+    certificateGenerationMode: MONTHLY,
   },
 ];
 

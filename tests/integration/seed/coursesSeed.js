@@ -60,6 +60,8 @@ const {
   TRAINEE,
   TITLE_TEXT,
   SURVEY,
+  GLOBAL,
+  MONTHLY,
 } = require('../../../src/helpers/constants');
 const { auxiliaryRoleId, trainerRoleId, coachRoleId, clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
@@ -342,6 +344,7 @@ const coursesList = [
     contact: trainerAndCoach._id,
     expectedBillsCount: 3,
     hasCertifyingTest: true,
+    certificateGenerationMode: GLOBAL,
   },
   { // 1
     _id: new ObjectId(),
@@ -356,6 +359,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
     salesRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 2
     _id: new ObjectId(),
@@ -375,6 +379,7 @@ const coursesList = [
     ],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 3
     _id: new ObjectId(),
@@ -386,6 +391,7 @@ const coursesList = [
     companies: [otherCompany._id],
     operationsRepresentative: vendorAdmin._id,
     trainers: [trainerAndCoach._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 4 course without slots
     _id: new ObjectId(),
@@ -399,6 +405,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     hasCertifyingTest: true,
     certifiedTrainees: [traineeFromOtherCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 5 course with slots
     _id: new ObjectId(),
@@ -409,6 +416,7 @@ const coursesList = [
     trainees: [noRole._id],
     companies: [thirdCompany._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 6 course without trainees and slots
     _id: new ObjectId(),
@@ -428,6 +436,7 @@ const coursesList = [
     companies: [authCompany._id, thirdCompany._id],
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 8 eLearning course with access rules
     _id: new ObjectId(),
@@ -455,6 +464,7 @@ const coursesList = [
     companies: [otherCompany._id],
     contact: vendorAdmin._id,
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 11 course without authCompany in access rules (11ème position)
     _id: new ObjectId(),
@@ -473,6 +483,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
     trainers: [trainer._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 13 course without trainee
     _id: new ObjectId(),
@@ -484,6 +495,7 @@ const coursesList = [
     trainees: [],
     companies: [],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 14 archived course
     _id: new ObjectId(),
@@ -498,6 +510,7 @@ const coursesList = [
     archivedAt: '2021-01-01T00:00:00.000Z',
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     tutors: [traineeFromAuthFormerlyInOther._id],
+    certificateGenerationMode: MONTHLY,
   },
   { // 15 course billed INTRA without trainees and slots
     _id: new ObjectId(),
@@ -510,6 +523,7 @@ const coursesList = [
     trainees: [],
     companies: [authCompany._id],
     expectedBillsCount: 1,
+    certificateGenerationMode: GLOBAL,
   },
   { // 16 course without trainee and with slots to plan
     _id: new ObjectId(),
@@ -521,6 +535,7 @@ const coursesList = [
     trainees: [],
     companies: [],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 17 Intra course without slots
     _id: new ObjectId(),
@@ -541,6 +556,7 @@ const coursesList = [
     ],
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
   { // 18 archived inter b2b course
     _id: new ObjectId(),
@@ -553,6 +569,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-01-01T00:00:00.000Z',
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 19 course with billed and attended companies
     _id: new ObjectId(),
@@ -565,6 +582,7 @@ const coursesList = [
     companies: [authCompany._id, thirdCompany._id, otherCompany._id],
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 20 third company course
     _id: new ObjectId(),
@@ -579,6 +597,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     companyRepresentative: coachFromThirdCompany._id,
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
   { // 21 intra_holding course with companies, without trainees
     _id: new ObjectId(),
@@ -592,6 +611,7 @@ const coursesList = [
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 22 intra_holding course without companies
     _id: new ObjectId(),
@@ -606,6 +626,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     holding: otherHolding._id,
     companyRepresentative: holdingAdminFromOtherCompany._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 23 intra_holding course with companies and trainees
     _id: new ObjectId(),
@@ -620,6 +641,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     holding: otherHolding._id,
     companyRepresentative: holdingAdminFromOtherCompany._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 24 Single course
     _id: new ObjectId(),
@@ -633,6 +655,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     tutors: [],
+    certificateGenerationMode: MONTHLY,
   },
   { // 25 Single course with tutor already in course
     _id: new ObjectId(),
@@ -646,6 +669,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     tutors: [noRole._id],
+    certificateGenerationMode: MONTHLY,
   },
 ];
 

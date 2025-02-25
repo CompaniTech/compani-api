@@ -10,7 +10,7 @@ const CourseSlot = require('../../../src/models/CourseSlot');
 const User = require('../../../src/models/User');
 const { vendorAdmin } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { WEBAPP, INTRA, PUBLISHED, DRAFT } = require('../../../src/helpers/constants');
+const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL } = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 
 const tester = {
@@ -126,6 +126,7 @@ const coursesList = [{
   trainees: [],
   companies: [authCompany._id],
   operationsRepresentative: vendorAdmin._id,
+  certificateGenerationMode: GLOBAL,
 }];
 
 const courseSlotsList = [

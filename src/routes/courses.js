@@ -30,7 +30,7 @@ const {
   removeTutor,
 } = require('../controllers/courseController');
 const { MESSAGE_TYPE } = require('../models/CourseSmsHistory');
-const { COURSE_TYPES, COURSE_FORMATS } = require('../models/Course');
+const { COURSE_TYPES, COURSE_FORMATS, CERTIFICATE_GENERATION_MODE } = require('../models/Course');
 const {
   authorizeTraineeAddition,
   authorizeTraineeDeletion,
@@ -138,6 +138,7 @@ exports.plugin = {
               .when('type', { is: INTRA_HOLDING, then: Joi.required(), otherwise: Joi.forbidden() }),
             hasCertifyingTest: Joi.boolean().required(),
             salesRepresentative: Joi.objectId(),
+            certificateGenerationMode: Joi.string().required().valid(...CERTIFICATE_GENERATION_MODE),
           }),
         },
         auth: { scope: ['courses:create'] },

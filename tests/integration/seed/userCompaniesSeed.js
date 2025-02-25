@@ -22,6 +22,7 @@ const {
   PUBLISHED,
   TITLE_TEXT,
   SURVEY,
+  GLOBAL,
 } = require('../../../src/helpers/constants');
 const { auxiliaryRoleId, coachRoleId, trainingOrganisationManagerRoleId } = require('../../seed/authRolesSeed');
 const { vendorAdmin, trainerOrganisationManager, trainer } = require('../../seed/authUsersSeed');
@@ -259,6 +260,7 @@ const coursesList = [
     companyRepresentative: usersSeedList[1]._id,
     contact: trainer._id,
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 
