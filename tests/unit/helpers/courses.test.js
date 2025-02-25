@@ -64,6 +64,7 @@ const {
   SELF_POSITIONNING,
   EXPECTATIONS,
   DAY,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -82,6 +83,7 @@ describe('createCourse', () => {
   let findOneSubProgram;
   let createHistoryOnEstimatedStartDateEdition;
   let insertManyCourseSlot;
+  let findOneTrainee;
   const credentials = { _id: new ObjectId() };
 
   beforeEach(() => {
@@ -92,12 +94,14 @@ describe('createCourse', () => {
       'createHistoryOnEstimatedStartDateEdition'
     );
     insertManyCourseSlot = sinon.stub(CourseSlot, 'insertMany');
+    findOneTrainee = sinon.stub(User, 'findOne');
   });
   afterEach(() => {
     create.restore();
     findOneSubProgram.restore();
     createHistoryOnEstimatedStartDateEdition.restore();
     insertManyCourseSlot.restore();
+    findOneTrainee.restore();
   });
 
   it('should create an intra course', async () => {
@@ -130,7 +134,60 @@ describe('createCourse', () => {
     expect(result.type).toEqual(INTRA);
     expect(result.operationsRepresentative).toEqual(payload.operationsRepresentative);
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.notCalled(findOneTrainee);
     sinon.assert.calledOnceWithExactly(create, { ...omit(payload, 'company'), companies: [payload.company] });
+    sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
+    SinonMongoose.calledOnceWithExactly(
+      findOneSubProgram,
+      [
+        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1 }] },
+        { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should create a single course', async () => {
+    const steps = [
+      { _id: new ObjectId(), type: ON_SITE },
+    ];
+    const subProgram = { _id: new ObjectId(), steps };
+    const trainee = { _id: new ObjectId(), company: new ObjectId() };
+    const payload = {
+      misc: 'name',
+      subProgram: subProgram._id,
+      type: SINGLE,
+      maxTrainees: 1,
+      operationsRepresetative: new ObjectId(),
+      expectedBillsCount: '0',
+      trainee: trainee._id,
+    };
+
+    findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
+    create.returns({ ...omit(payload, 'company'), companies: [payload.company], format: 'blended' });
+    findOneTrainee.returns(SinonMongoose.stubChainedQueries(trainee));
+
+    const result = await CourseHelper.createCourse(payload, credentials);
+
+    const slots = [{ course: result._id, step: steps[0]._id }];
+
+    expect(result.misc).toEqual('name');
+    expect(result.subProgram).toEqual(payload.subProgram);
+    expect(result.format).toEqual('blended');
+    expect(result.type).toEqual(payload.type);
+    expect(result.operationsRepresetative).toEqual(payload.operationsRepresetative);
+    expect(result.expectedBillsCount).toEqual('0');
+    expect(result.trainee).toEqual(payload.trainee);
+    sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.calledOnceWithExactly(create, { ...payload, companies: [trainee.company] });
+    SinonMongoose.calledOnceWithExactly(
+      findOneTrainee,
+      [
+        { query: 'findOne', args: [{ _id: trainee._id }, { company: 1 }] },
+        { query: 'populate', args: [{ path: 'company' }] },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
@@ -164,6 +221,7 @@ describe('createCourse', () => {
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     sinon.assert.calledOnceWithExactly(create, payload);
     sinon.assert.notCalled(insertManyCourseSlot);
+    sinon.assert.notCalled(findOneTrainee);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -197,6 +255,7 @@ describe('createCourse', () => {
       credentials._id,
       '2022-12-10T12:00:00.000Z'
     );
+    sinon.assert.notCalled(findOneTrainee);
   });
 });
 
