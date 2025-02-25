@@ -7,7 +7,7 @@ const ActivityHistory = require('../../../src/models/ActivityHistory');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const { INTER_B2B, MONTHLY } = require('../../../src/helpers/constants');
 const EmailHelper = require('../../../src/helpers/email');
-const CompletionCertificateCreationJob = require('../../../src/jobs/completionCertificateCreation');
+const { completionCertificateCreationJob } = require('../../../src/jobs/completionCertificateCreation');
 
 describe('completionCertificateCreation', () => {
   let findCourse;
@@ -129,7 +129,7 @@ describe('completionCertificateCreation', () => {
     findOneCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries(undefined, ['setOptions', 'lean']));
     completionCertificateCreationEmail.returns({ msg: 'Script correctement exécuté.' });
 
-    await CompletionCertificateCreationJob.completionCertificateCreation({ query: { month } });
+    await completionCertificateCreationJob.method({ query: { month } });
 
     SinonMongoose.calledOnceWithExactly(
       findCourse,

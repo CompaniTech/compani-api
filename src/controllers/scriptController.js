@@ -1,9 +1,9 @@
 const Boom = require('@hapi/boom');
-const completionCertificateCreationJob = require('../jobs/completionCertificateCreation');
+const { completionCertificateCreationJob } = require('../jobs/completionCertificateCreation');
 
 const completionCertificateCreation = async (req) => {
   try {
-    const { certificateCreated, errors } = await completionCertificateCreationJob.completionCertificateCreation(req);
+    const { certificateCreated, errors } = await completionCertificateCreationJob.method(req);
 
     return {
       message: `Completion Certificate creation : ${certificateCreated.length} certificats créés et
