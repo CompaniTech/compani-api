@@ -368,6 +368,7 @@ describe('exportCourseHistory', () => {
   let findQuestionnaireHistory;
   let findCourseHistory;
   let findActivityHistory;
+  let nextStub;
 
   beforeEach(() => {
     findCourseSlot = sinon.stub(CourseSlot, 'find');
@@ -379,6 +380,7 @@ describe('exportCourseHistory', () => {
     findQuestionnaireHistory = sinon.stub(QuestionnaireHistory, 'find');
     findCourseHistory = sinon.stub(CourseHistory, 'find');
     findActivityHistory = sinon.stub(ActivityHistory, 'find');
+    nextStub = sinon.stub();
   });
 
   afterEach(() => {
@@ -395,7 +397,7 @@ describe('exportCourseHistory', () => {
 
   it('should return an empty array if no course', async () => {
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList, ['lean']));
-    findCourse.returns(SinonMongoose.stubChainedQueries([], ['select', 'populate', 'lean']));
+    findCourse.onCall(0).returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
     const result = await ExportHelper.exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
 
@@ -425,55 +427,6 @@ describe('exportCourseHistory', () => {
             ],
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt'] },
-        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'holding', select: 'name' }] },
-        {
-          query: 'populate',
-          args: [
-            {
-              path: 'subProgram',
-              select: 'name steps program',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
-            }],
-        },
-        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
-        { query: 'populate', args: [{ path: 'operationsRepresentative', select: 'identity' }] },
-        { query: 'populate', args: [{ path: 'contact', select: 'identity' }] },
-        {
-          query: 'populate',
-          args: [{
-            path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
-              path: 'attendances',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
-              },
-            },
-          }],
-        },
-        { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
-        { query: 'populate', args: [{ path: 'trainees', select: 'firstMobileConnectionDate' }] },
-        {
-          query: 'populate',
-          args: [{
-            path: 'bills',
-            select: 'payer billedAt mainFee billingPurchaseList',
-            options: { isVendorUser: has(credentials, 'role.vendor') },
-            populate: [
-              { path: 'payer.fundingOrganisation', select: 'name' },
-              { path: 'payer.company', select: 'name' },
-              { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') }, select: '_id' },
-              {
-                path: 'coursePayments',
-                select: 'netInclTaxes nature',
-                options: { isVendorUser: !!get(credentials, 'role.vendor') },
-              },
-            ],
-          }],
-        },
         { query: 'lean' },
       ]
     );
@@ -488,7 +441,14 @@ describe('exportCourseHistory', () => {
 
   it('should return an array with the header and 4 rows', async () => {
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList, ['lean']));
-    findCourse.returns(SinonMongoose.stubChainedQueries(courseList, ['select', 'populate', 'lean']));
+    findCourse.onCall(0).returns(SinonMongoose.stubChainedQueries(courseList, ['lean']));
+    findCourse.onCall(1).returns(SinonMongoose.stubChainedQueries({ next: nextStub }, ['select', 'populate', 'lean', 'cursor']));
+    nextStub.onCall(0).returns(courseList[0]);
+    nextStub.onCall(1).returns(courseList[1]);
+    nextStub.onCall(2).returns(courseList[2]);
+    nextStub.onCall(3).returns(courseList[3]);
+    nextStub.onCall(4).returns(courseList[4]);
+    nextStub.onCall(5).returns(null);
     findQuestionnaireHistory.returns(
       SinonMongoose.stubChainedQueries(questionnaireHistoriesList, ['select', 'populate', 'setOptions', 'lean'])
     );
@@ -779,7 +739,7 @@ describe('exportCourseHistory', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
       findCourse,
       [
         {
@@ -794,6 +754,13 @@ describe('exportCourseHistory', () => {
             ],
           }],
         },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledWithExactly(
+      findCourse,
+      [
+        { query: 'find', args: [{ _id: { $in: courseIdList } }] },
         { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt'] },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'holding', select: 'name' }] },
@@ -844,6 +811,7 @@ describe('exportCourseHistory', () => {
           }],
         },
         { query: 'lean' },
+        { query: 'cursor' },
       ]
     );
     SinonMongoose.calledOnceWithExactly(
@@ -1000,17 +968,20 @@ describe('exportCourseSlotHistory', () => {
   ];
 
   let findCourseSlot;
+  let nextStub;
 
   beforeEach(() => {
     findCourseSlot = sinon.stub(CourseSlot, 'find');
+    nextStub = sinon.stub();
   });
 
   afterEach(() => {
-    findCourseSlot.restore();
+    sinon.restore();
   });
 
   it('should return an empty array if no course slots', async () => {
-    findCourseSlot.returns(SinonMongoose.stubChainedQueries([]));
+    findCourseSlot.returns(SinonMongoose.stubChainedQueries({ next: nextStub }, ['populate', 'lean', 'cursor']));
+    nextStub.returns(null);
 
     const result = await ExportHelper
       .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
@@ -1037,12 +1008,17 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'lean' },
+        { query: 'cursor' },
       ]
     );
   });
 
   it('should return an array with the header and 4 rows', async () => {
-    findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList));
+    findCourseSlot.returns(SinonMongoose.stubChainedQueries({ next: nextStub }, ['populate', 'lean', 'cursor']));
+    nextStub.onCall(0).returns(courseSlotList[0]);
+    nextStub.onCall(1).returns(courseSlotList[1]);
+    nextStub.onCall(2).returns(courseSlotList[2]);
+    nextStub.onCall(3).returns(courseSlotList[3]);
 
     const result = await ExportHelper
       .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
@@ -1146,6 +1122,7 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'lean' },
+        { query: 'cursor' },
       ]
     );
   });

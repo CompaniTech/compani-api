@@ -232,7 +232,10 @@ exports.exportCourseHistory = async (startDate, endDate, credentials) => {
   const courseIdsFromSlots = slots.map(slot => slot.course);
 
   const courseIds = await CourseRepository.findCoursesIdsForExport(courseIdsFromSlots, startDate, endDate);
-  const cursor = await CourseRepository.findCoursesForExport(courseIdsFromSlots, startDate, endDate, credentials);
+
+  if (!courseIds.length) return [[NO_DATA]];
+
+  const cursor = await CourseRepository.findCoursesForExport(courseIds, credentials);
 
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
   const [questionnaireHistories, smsList, attendanceSheetList, estimatedStartDateHistories] = await Promise.all([
@@ -270,8 +273,6 @@ exports.exportCourseHistory = async (startDate, endDate, credentials) => {
 
     rows.push(await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory));
   }
-
-  if (!rows.length) return [[NO_DATA]];
 
   return [Object.keys(rows[0]), ...rows.map(d => Object.values(d))];
 };

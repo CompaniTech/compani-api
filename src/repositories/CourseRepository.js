@@ -48,18 +48,11 @@ exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Cour
   ])
   .lean({ virtuals: populateVirtual });
 
-exports.findCoursesForExport = async (courseIdsFromSlots, startDate, endDate, credentials) => {
+exports.findCoursesForExport = async (courseIds, credentials) => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
 
   return Course
-    .find(
-      {
-        $or: [
-          { _id: { $in: courseIdsFromSlots } },
-          { estimatedStartDate: { $lte: endDate, $gte: startDate }, archivedAt: { $exists: false } },
-        ],
-      }
-    )
+    .find({ _id: { $in: courseIds } })
     .select('_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt')
     .populate({ path: 'companies', select: 'name' })
     .populate({ path: 'holding', select: 'name' })
