@@ -39,6 +39,7 @@ const {
   PDF,
   OFFICIAL,
   MONTHLY,
+  SINGLE,
 } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
@@ -73,11 +74,12 @@ exports.checkAuthorization = (credentials, courseTrainerIds, companies, holding 
 exports.checkCompanyRepresentativeExists = async (req, course, isRofOrAdmin) => {
   const { credentials } = req.auth;
   const isIntraHoldingCourse = course.type === INTRA_HOLDING;
-  const isIntraCourse = course.type === INTRA;
+  const isIntraOrSingleCourse = course.type === INTRA || course.type === SINGLE;
   const isHoldingAdmin = get(req, 'auth.credentials.role.holding.name') === HOLDING_ADMIN;
   const hasAccessToCompany = course.companies.some(c => UtilsHelper.hasUserAccessToCompany(credentials, c));
   if (isIntraHoldingCourse && !(isRofOrAdmin || isHoldingAdmin)) throw Boom.forbidden();
-  if (isIntraCourse && !isRofOrAdmin && !hasAccessToCompany) throw Boom.forbidden();
+  if (isIntraOrSingleCourse && !isRofOrAdmin && !hasAccessToCompany) throw Boom.forbidden();
+  if (course.type === INTER_B2B) throw Boom.forbidden();
 
   const companyRepresentative = await User
     .findOne({ _id: req.payload.companyRepresentative }, { role: 1 })
@@ -87,9 +89,9 @@ exports.checkCompanyRepresentativeExists = async (req, course, isRofOrAdmin) => 
 
   if (![COACH, CLIENT_ADMIN].includes(get(companyRepresentative, 'role.client.name'))) throw Boom.forbidden();
 
-  const companyRepIsNotFromIntraCourseCompany = course.type === INTRA &&
-    !UtilsHelper.areObjectIdsEquals(companyRepresentative.company, course.companies[0]);
-  if (companyRepIsNotFromIntraCourseCompany) {
+  const companyRepIsNotFromIntraOrSingleCourseCompany = (course.type === INTRA || course.type === SINGLE) &&
+  !UtilsHelper.areObjectIdsEquals(companyRepresentative.company, course.companies[0]);
+  if (companyRepIsNotFromIntraOrSingleCourseCompany) {
     if (get(companyRepresentative, 'role.holding.name') !== HOLDING_ADMIN) throw Boom.forbidden();
 
     const companyRepresentativeHolding = await CompanyHolding
