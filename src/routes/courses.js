@@ -70,6 +70,7 @@ const {
   FORMAT_OPTIONS,
   CUSTOM,
   TYPE_OPTIONS,
+  SINGLE,
 } = require('../helpers/constants');
 const { dateToISOString } = require('./validations/utils');
 
@@ -132,13 +133,14 @@ exports.plugin = {
               .number()
               .integer()
               .min(0)
-              .when('type', { is: INTRA, then: Joi.required(), otherwise: Joi.forbidden() }),
+              .when('type', { is: Joi.valid(INTRA, SINGLE), then: Joi.required(), otherwise: Joi.forbidden() }),
             holding: Joi
               .objectId()
               .when('type', { is: INTRA_HOLDING, then: Joi.required(), otherwise: Joi.forbidden() }),
             hasCertifyingTest: Joi.boolean().required(),
             salesRepresentative: Joi.objectId(),
             certificateGenerationMode: Joi.string().required().valid(...CERTIFICATE_GENERATION_MODE),
+            trainee: Joi.objectId().when('type', { is: SINGLE, then: Joi.required(), otherwise: Joi.forbidden() }),
           }),
         },
         auth: { scope: ['courses:create'] },
