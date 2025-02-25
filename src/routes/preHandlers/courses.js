@@ -71,7 +71,7 @@ exports.checkAuthorization = (credentials, courseTrainerIds, companies, holding 
 exports.checkCompanyRepresentativeExists = async (req, course, isRofOrAdmin) => {
   const { credentials } = req.auth;
   const isIntraHoldingCourse = course.type === INTRA_HOLDING;
-  const isIntraOrSingleCourse = course.type === INTRA || course.type === SINGLE;
+  const isIntraOrSingleCourse = [INTRA, SINGLE].includes(course.type);
   const isHoldingAdmin = get(req, 'auth.credentials.role.holding.name') === HOLDING_ADMIN;
   const hasAccessToCompany = course.companies.some(c => UtilsHelper.hasUserAccessToCompany(credentials, c));
   if (isIntraHoldingCourse && !(isRofOrAdmin || isHoldingAdmin)) throw Boom.forbidden();
@@ -86,7 +86,7 @@ exports.checkCompanyRepresentativeExists = async (req, course, isRofOrAdmin) => 
 
   if (![COACH, CLIENT_ADMIN].includes(get(companyRepresentative, 'role.client.name'))) throw Boom.forbidden();
 
-  const companyRepIsNotFromIntraOrSingleCourseCompany = (course.type === INTRA || course.type === SINGLE) &&
+  const companyRepIsNotFromIntraOrSingleCourseCompany = [INTRA, SINGLE].includes(course.type) &&
   !UtilsHelper.areObjectIdsEquals(companyRepresentative.company, course.companies[0]);
   if (companyRepIsNotFromIntraOrSingleCourseCompany) {
     if (get(companyRepresentative, 'role.holding.name') !== HOLDING_ADMIN) throw Boom.forbidden();
@@ -235,7 +235,7 @@ exports.authorizeCourseEdit = async (req) => {
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
 
     const courseTrainerIds = get(course, 'trainers', []);
-    const companies = [INTRA, INTRA_HOLDING].includes(course.type) ? course.companies : [];
+    const companies = [INTRA, INTRA_HOLDING, SINGLE].includes(course.type) ? course.companies : [];
     const holding = course.type === INTRA_HOLDING ? course.holding : null;
     this.checkAuthorization(credentials, courseTrainerIds, companies, holding);
 
