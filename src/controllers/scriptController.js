@@ -6,8 +6,8 @@ const completionCertificateCreation = async (req) => {
     const { certificateCreated, errors } = await completionCertificateCreationJob.method(req);
 
     return {
-      message: `Completion Certificate creation : ${certificateCreated.length} certificats créés et
-        ${errors.length} erreurs`,
+      message: `Completion certificate creation : ${certificateCreated.length} certificates created and
+        ${errors.length} errors`,
       data: certificateCreated,
     };
   } catch (e) {

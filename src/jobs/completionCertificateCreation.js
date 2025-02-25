@@ -21,27 +21,27 @@ const completionCertificateCreationJob = {
           select: 'steps',
           populate: [{ path: 'steps', select: 'activities' }],
         })
+        .populate({ path: 'slots', select: 'startDate endDate' })
         .lean();
 
-      const courseIds = courses.map(c => c._id.toHexString());
-
-      const attendances = await Attendance.find({})
-        .populate({ path: 'courseSlot', select: 'startDate endDate course' })
-        .setOptions({ isVendorUser: true })
-        .lean();
       const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
       const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
 
-      const attendancesOnMonth = attendances.filter((a) => {
-        const { courseSlot: slot } = a;
+      const courseSlots = courses
+        .map((course) => {
+          const filteredSlots = course.slots.filter(s => !!s.startDate && CompaniDate(s.endDate).isBefore(endOfMonth) &&
+            CompaniDate(s.startDate).isAfter(startOfMonth));
 
-        const isAttendanceOnMonth = CompaniDate(slot.endDate).isBefore(endOfMonth) &&
-          CompaniDate(slot.startDate).isAfter(startOfMonth);
+          return filteredSlots.map(s => s._id);
+        })
+        .flat();
 
-        return isAttendanceOnMonth && courseIds.includes(slot.course.toHexString());
-      });
+      const attendances = await Attendance.find({ courseSlot: { $in: courseSlots } })
+        .populate({ path: 'courseSlot', select: 'startDate endDate course' })
+        .setOptions({ isVendorUser: true })
+        .lean();
 
-      const attendancesByCourse = groupBy(attendancesOnMonth, 'courseSlot.course');
+      const attendancesByCourse = groupBy(attendances, 'courseSlot.course');
       const coursesWithAHOrAttendancesOnMonth = [];
       for (const course of courses) {
         if ((attendancesByCourse[course._id] || []).length) {
@@ -52,7 +52,11 @@ const completionCertificateCreationJob = {
         const courseActivities = course.subProgram.steps.map(s => s.activities).flat();
         const courseTrainee = get(course, 'trainees[0]._id');
         const traineeActivityHistories = await ActivityHistory
-          .find({ activity: { $in: courseActivities }, user: courseTrainee })
+          .find({
+            activity: { $in: courseActivities },
+            user: courseTrainee,
+            date: { $gte: startOfMonth, $lte: endOfMonth },
+          })
           .lean();
 
         if (traineeActivityHistories.length) coursesWithAHOrAttendancesOnMonth.push(course);
@@ -63,7 +67,7 @@ const completionCertificateCreationJob = {
       for (const course of coursesWithAHOrAttendancesOnMonth) {
         try {
           const hasCertificateForMonth = await CompletionCertificate
-            .findOne({ course: course._id, month })
+            .countDocuments({ course: course._id, month })
             .setOptions({ isVendorUser: true })
             .lean();
 

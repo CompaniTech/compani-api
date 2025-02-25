@@ -98,7 +98,7 @@ const addTutorContent = (tutorIdentity, learnerIdentity, courseName) => `<p>Bonj
 `;
 
 const completionCertificateCreationContent = (certificateCreated, errors) => {
-  let body = `<p>Script correctement exécuté. ${certificateCreated.length + errors.length} formations traitées.</p>`;
+  let body = `<p>Script exécuté. ${certificateCreated.length + errors.length} formations traitées.</p>`;
 
   if (certificateCreated.length) body = body.concat(`<p>Certificat créé pour les formations suivantes : ${certificateCreated.join(', ')}</p>`);
 
