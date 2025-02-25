@@ -284,7 +284,7 @@ const getAddress = (slot) => {
 };
 
 exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
-  const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
+  const cursor = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
@@ -300,11 +300,12 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
         isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
       },
     })
-    .lean();
+    .lean()
+    .cursor();
 
   const rows = [];
 
-  for (const slot of courseSlots) {
+  for (let slot = await cursor.next(); slot != null; slot = await cursor.next()) {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
     const subscribedAttendances = slot.attendances
       .filter(attendance => UtilsHelper.doesArrayIncludeId(slot.course.trainees, attendance.trainee))
