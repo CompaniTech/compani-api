@@ -1701,7 +1701,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should update course', async () => {
+    it('should update course (intra)', async () => {
       const payload = {
         misc: 'new name',
         contact: vendorAdmin._id,
@@ -1730,6 +1730,29 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
         update: { estimatedStartDate: { from: '', to: '2022-05-31T08:00:00.000Z' } },
       });
       expect(historyCreated).toEqual(1);
+    });
+
+    it('should update course (single course)', async () => {
+      const payload = {
+        misc: ' new single course',
+        contact: trainer._id,
+        estimatedStartDate: '2024-11-12T10:00:00.000Z',
+        expectedBillsCount: 1,
+        hasCertifyingTest: true,
+        certifiedTrainees: [traineeFromAuthFormerlyInOther._id],
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[24]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const courseUpdated = await Course.countDocuments({ _id: coursesList[24]._id, ...payload });
+      expect(courseUpdated).toEqual(1);
     });
 
     it('should update company representative and set as contact directly for INTRA course', async () => {
