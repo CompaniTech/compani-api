@@ -442,7 +442,6 @@ describe('getLearnerList', () => {
     const learnerList = [
       {
         _id: users[0]._id,
-        activityHistoryCount: 1,
         lastActivityHistory: users[0].activityHistories[0],
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
@@ -450,7 +449,6 @@ describe('getLearnerList', () => {
       },
       {
         _id: users[1]._id,
-        activityHistoryCount: 1,
         lastActivityHistory: users[1].activityHistories[0],
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
@@ -505,7 +503,7 @@ describe('getLearnerList', () => {
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
         {
           query: 'populate',
-          args: [{ path: 'activityHistories', select: 'updatedAt', options: { sort: { updatedAt: -1 } } }],
+          args: [{ path: 'activityHistories', select: 'updatedAt', options: { limit: 1 } }],
         },
         {
           query: 'populate',
@@ -565,7 +563,6 @@ describe('getLearnerList', () => {
     const learnerList = [
       {
         _id: users[0]._id,
-        activityHistoryCount: 1,
         lastActivityHistory: users[0].activityHistories[0],
         blendedCoursesCount: 1,
         eLearningCoursesCount: 1,
@@ -573,7 +570,6 @@ describe('getLearnerList', () => {
       },
       {
         _id: users[1]._id,
-        activityHistoryCount: 1,
         lastActivityHistory: users[1].activityHistories[0],
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
@@ -650,7 +646,7 @@ describe('getLearnerList', () => {
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
         {
           query: 'populate',
-          args: [{ path: 'activityHistories', select: 'updatedAt', options: { sort: { updatedAt: -1 } } }],
+          args: [{ path: 'activityHistories', select: 'updatedAt', options: { limit: 1 } }],
         },
         {
           query: 'populate',
