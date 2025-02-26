@@ -51,25 +51,21 @@ const completionCertificateCreationJob = {
 
         const courseActivities = course.subProgram.steps.map(s => s.activities).flat();
         const courseTrainee = get(course, 'trainees[0]._id');
-        const traineeActivityHistories = await ActivityHistory
-          .find({
-            activity: { $in: courseActivities },
-            user: courseTrainee,
-            date: { $gte: startOfMonth, $lte: endOfMonth },
-          })
-          .lean();
 
-        if (traineeActivityHistories.length) coursesWithAHOrAttendancesOnMonth.push(course);
+        const traineeActivityHistories = await ActivityHistory.countDocuments({
+          activity: { $in: courseActivities },
+          user: courseTrainee,
+          date: { $gte: startOfMonth, $lte: endOfMonth },
+        });
+
+        if (traineeActivityHistories) coursesWithAHOrAttendancesOnMonth.push(course);
       }
 
       const certificateCreated = [];
       const errors = [];
       for (const course of coursesWithAHOrAttendancesOnMonth) {
         try {
-          const hasCertificateForMonth = await CompletionCertificate
-            .countDocuments({ course: course._id, month })
-            .setOptions({ isVendorUser: true })
-            .lean();
+          const hasCertificateForMonth = await CompletionCertificate.countDocuments({ course: course._id, month });
 
           if (hasCertificateForMonth) {
             server.log(`Un certificat existe déjà pour la formation ${course._id} sur ${month}`);

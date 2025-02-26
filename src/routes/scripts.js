@@ -2,6 +2,7 @@
 
 const Joi = require('joi');
 const { completionCertificateCreation } = require('../controllers/scriptController');
+const { monthValidation } = require('./validations/utils');
 
 exports.plugin = {
   name: 'routes-scripts',
@@ -12,7 +13,7 @@ exports.plugin = {
       options: {
         auth: { scope: ['scripts:run'] },
         validate: {
-          query: Joi.object({ month: Joi.string().required() }),
+          query: Joi.object({ month: monthValidation.required() }),
         },
       },
       handler: completionCertificateCreation,

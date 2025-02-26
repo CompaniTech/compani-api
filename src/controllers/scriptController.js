@@ -8,7 +8,7 @@ const completionCertificateCreation = async (req) => {
     return {
       message: `Completion certificate creation : ${certificateCreated.length} certificates created and
         ${errors.length} errors`,
-      data: certificateCreated,
+      data: { certificateCreated, errors },
     };
   } catch (e) {
     req.log('error', e);

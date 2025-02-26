@@ -34,7 +34,18 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data).toEqual(expect.arrayContaining([courseList[0]._id, courseList[2]._id]));
+      expect(response.result.data.certificateCreated)
+        .toEqual(expect.arrayContaining([courseList[0]._id, courseList[2]._id]));
+    });
+
+    it('should return 400 if month has wrong format', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/scripts/completioncertificates-generation?month=022025',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toEqual(400);
     });
   });
 

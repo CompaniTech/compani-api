@@ -1,5 +1,6 @@
 const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
+const { expect } = require('expect');
 const SinonMongoose = require('../sinonMongoose');
 const Course = require('../../../src/models/Course');
 const Attendance = require('../../../src/models/Attendance');
@@ -13,7 +14,7 @@ const { completionCertificateCreationJob } = require('../../../src/jobs/completi
 describe('completionCertificateCreation', () => {
   let findCourse;
   let findAttendance;
-  let findActivityHistory;
+  let countDocumentsActivityHistory;
   let countDocumentsCompletionCertificate;
   let createCompletionCertificate;
   let completionCertificateCreationEmail;
@@ -21,7 +22,7 @@ describe('completionCertificateCreation', () => {
   beforeEach(() => {
     findCourse = sinon.stub(Course, 'find');
     findAttendance = sinon.stub(Attendance, 'find');
-    findActivityHistory = sinon.stub(ActivityHistory, 'find');
+    countDocumentsActivityHistory = sinon.stub(ActivityHistory, 'countDocuments');
     countDocumentsCompletionCertificate = sinon.stub(CompletionCertificate, 'countDocuments');
     createCompletionCertificate = sinon.stub(CompletionCertificate, 'create');
     completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
@@ -30,7 +31,7 @@ describe('completionCertificateCreation', () => {
   afterEach(() => {
     findCourse.restore();
     findAttendance.restore();
-    findActivityHistory.restore();
+    countDocumentsActivityHistory.restore();
     countDocumentsCompletionCertificate.restore();
     createCompletionCertificate.restore();
     completionCertificateCreationEmail.restore();
@@ -127,13 +128,16 @@ describe('completionCertificateCreation', () => {
 
     findCourse.returns(SinonMongoose.stubChainedQueries(courses));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['populate', 'setOptions', 'lean']));
-    findActivityHistory.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
-    countDocumentsCompletionCertificate.onCall(0).returns(SinonMongoose.stubChainedQueries(0, ['setOptions', 'lean']));
-    countDocumentsCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries(0, ['setOptions', 'lean']));
+    countDocumentsActivityHistory.returns(activityHistories.length);
+    countDocumentsCompletionCertificate.onCall(0).returns(0);
+    countDocumentsCompletionCertificate.onCall(1).returns(0);
     completionCertificateCreationEmail.returns({ msg: 'Script correctement exécuté.' });
 
-    await completionCertificateCreationJob.method({ query: { month } });
+    // eslint-disable-next-line no-console
+    const server = { query: { month }, log: value => console.log(value) };
+    const res = await completionCertificateCreationJob.method(server);
 
+    expect(res.certificateCreated.length).toBe(2);
     SinonMongoose.calledOnceWithExactly(
       findCourse,
       [
@@ -156,35 +160,26 @@ describe('completionCertificateCreation', () => {
       ]
     );
     SinonMongoose.calledOnceWithExactly(
-      findActivityHistory,
+      countDocumentsActivityHistory,
       [
         {
-          query: 'find',
+          query: 'countDocuments',
           args: [{
             activity: { $in: activityIds },
             user: traineeIds[1],
             date: { $gte: startOfMonth, $lte: endOfMonth },
           }],
         },
-        { query: 'lean' },
       ]
     );
     SinonMongoose.calledWithExactly(
       countDocumentsCompletionCertificate,
-      [
-        { query: 'countDocuments', args: [{ course: courseIds[0], month }] },
-        { query: 'setOptions', args: [{ isVendorUser: true }] },
-        { query: 'lean' },
-      ],
+      [{ query: 'countDocuments', args: [{ course: courseIds[0], month }] }],
       0
     );
     SinonMongoose.calledWithExactly(
       countDocumentsCompletionCertificate,
-      [
-        { query: 'countDocuments', args: [{ course: courseIds[1], month }] },
-        { query: 'setOptions', args: [{ isVendorUser: true }] },
-        { query: 'lean' },
-      ],
+      [{ query: 'countDocuments', args: [{ course: courseIds[1], month }] }],
       1
     );
     sinon.assert.calledWithExactly(
