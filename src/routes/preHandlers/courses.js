@@ -264,7 +264,7 @@ exports.authorizeCourseEdit = async (req) => {
 
     if (has(payload, 'expectedBillsCount')) {
       if (!isRofOrAdmin) throw Boom.forbidden();
-      if (course.type !== INTRA) throw Boom.badRequest();
+      if (![INTRA, SINGLE].includes(course.type)) throw Boom.badRequest();
 
       const courseBills = await CourseBill.find({ course: course._id }, { courseCreditNote: 1 })
         .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
