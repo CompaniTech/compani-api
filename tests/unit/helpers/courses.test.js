@@ -157,14 +157,13 @@ describe('createCourse', () => {
       misc: 'name',
       subProgram: subProgram._id,
       type: SINGLE,
-      maxTrainees: 1,
-      operationsRepresetative: new ObjectId(),
+      operationsRepresentative: new ObjectId(),
       expectedBillsCount: '0',
       trainee: trainee._id,
     };
 
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
-    create.returns({ ...omit(payload, 'company'), companies: [payload.company], format: 'blended' });
+    create.returns({ ...omit(payload, 'company'), format: 'blended' });
     findOneTrainee.returns(SinonMongoose.stubChainedQueries(trainee));
 
     const result = await CourseHelper.createCourse(payload, credentials);
@@ -175,7 +174,7 @@ describe('createCourse', () => {
     expect(result.subProgram).toEqual(payload.subProgram);
     expect(result.format).toEqual('blended');
     expect(result.type).toEqual(payload.type);
-    expect(result.operationsRepresetative).toEqual(payload.operationsRepresetative);
+    expect(result.operationsRepresentative).toEqual(payload.operationsRepresentative);
     expect(result.expectedBillsCount).toEqual('0');
     expect(result.trainee).toEqual(payload.trainee);
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
@@ -183,7 +182,7 @@ describe('createCourse', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneTrainee,
       [
-        { query: 'findOne', args: [{ _id: trainee._id }, { company: 1 }] },
+        { query: 'findOne', args: [{ _id: trainee._id }] },
         { query: 'populate', args: [{ path: 'company' }] },
         { query: 'lean' },
       ]
