@@ -85,7 +85,7 @@ exports.createCourse = async (payload, credentials) => {
     : payload;
 
   if (payload.type === SINGLE) {
-    const trainee = await User.findOne({ _id: payload.trainee }, { company: 1 })
+    const trainee = await User.findOne({ _id: payload.trainee })
       .populate({ path: 'company' })
       .lean();
 
