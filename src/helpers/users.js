@@ -175,7 +175,7 @@ exports.getLearnerList = async (query, credentials) => {
   const learnerList = await User
     .find(userQuery, 'identity.firstname identity.lastname picture local.email', { autopopulate: false })
     .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
-    .populate(isDirectory && { path: 'activityHistories', select: 'updatedAt', options: { limit: 1 } })
+    .populate(isDirectory && { path: 'lastActivityHistory', select: 'updatedAt' })
     .populate({
       path: 'userCompanyList',
       populate: {
@@ -196,7 +196,7 @@ exports.getLearnerList = async (query, credentials) => {
 
   return learnerList.map(learner => ({
     ...omit(learner, 'activityHistories'),
-    lastActivityHistory: learner.activityHistories[0],
+    lastActivityHistory: learner.lastActivityHistory,
     eLearningCoursesCount: eLearningCoursesCountByTrainee[learner._id],
     blendedCoursesCount: blendedCoursesCountByTrainee[learner._id],
   }));

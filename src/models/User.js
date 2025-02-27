@@ -362,8 +362,14 @@ UserSchema.virtual(
 );
 
 UserSchema.virtual(
-  'activityHistories',
-  { ref: 'ActivityHistory', localField: '_id', foreignField: 'user', options: { sort: { updatedAt: -1 } } }
+  'lastActivityHistory',
+  {
+    ref: 'ActivityHistory',
+    localField: '_id',
+    foreignField: 'user',
+    options: { sort: { updatedAt: -1 } },
+    justOne: true,
+  }
 );
 
 UserSchema.virtual('company', { ref: 'UserCompany', localField: '_id', foreignField: 'user' });
