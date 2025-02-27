@@ -163,7 +163,7 @@ describe('createCourse', () => {
     };
 
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
-    create.returns({ ...omit(payload, 'company'), format: 'blended' });
+    create.returns({ ...payload, companies: [trainee.company], format: 'blended' });
     findOneTrainee.returns(SinonMongoose.stubChainedQueries(trainee));
 
     const result = await CourseHelper.createCourse(payload, credentials);
