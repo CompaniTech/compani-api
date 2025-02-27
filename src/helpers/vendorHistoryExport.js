@@ -228,14 +228,15 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
 };
 
 exports.exportCourseHistory = async (startDate, endDate, credentials) => {
-  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials);
+  const slots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } }).lean();
+  const courseIdsFromSlots = slots.map(slot => slot.course);
 
-  const filteredCourses = courses
-    .filter(course => !course.slots.length || course.slots.some(slot => isSlotInInterval(slot, startDate, endDate)));
+  const courseIds = await CourseRepository.findCoursesIdsForExport(courseIdsFromSlots, startDate, endDate);
 
-  if (!filteredCourses.length) return [[NO_DATA]];
+  if (!courseIds.length) return [[NO_DATA]];
 
-  const courseIds = filteredCourses.map(course => course._id);
+  const cursor = await CourseRepository.findCoursesForExport(courseIds, credentials);
+
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
   const [questionnaireHistories, smsList, attendanceSheetList, estimatedStartDateHistories] = await Promise.all([
     QuestionnaireHistory
@@ -262,7 +263,9 @@ exports.exportCourseHistory = async (startDate, endDate, credentials) => {
   const groupedCourseQuestionnaireHistories = groupBy(questionnaireHistories, 'course');
   const groupedEstimatedStartDateHistories = groupBy(estimatedStartDateHistories, 'course');
 
-  for (const course of filteredCourses) {
+  for (let course = await cursor.next(); course != null; course = await cursor.next()) {
+    if (course.slots.length && !course.slots.some(slot => isSlotInInterval(slot, startDate, endDate))) continue;
+
     const smsCount = (groupedSms[course._id] || []).length;
     const asCount = (grouppedAttendanceSheets[course._id] || []).length;
     const courseQH = groupedCourseQuestionnaireHistories[course._id] || [];
@@ -282,7 +285,7 @@ const getAddress = (slot) => {
 };
 
 exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
-  const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
+  const cursor = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
@@ -298,11 +301,12 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
         isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
       },
     })
-    .lean();
+    .lean()
+    .cursor();
 
   const rows = [];
 
-  for (const slot of courseSlots) {
+  for (let slot = await cursor.next(); slot != null; slot = await cursor.next()) {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
     const subscribedAttendances = slot.attendances
       .filter(attendance => UtilsHelper.doesArrayIncludeId(slot.course.trainees, attendance.trainee))
