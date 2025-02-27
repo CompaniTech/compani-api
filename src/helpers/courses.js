@@ -10,6 +10,7 @@ const set = require('lodash/set');
 const fs = require('fs');
 const os = require('os');
 const Boom = require('@hapi/boom');
+const JSZip = require('jszip');
 const { CompaniDate } = require('./dates/companiDates');
 const Company = require('../models/Company');
 const Course = require('../models/Course');
@@ -1154,8 +1155,15 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
     return ZipHelper.generateZip('certificats_pdf.zip', await Promise.all(promises));
   }
 
-  const promises = traineeList.map(t => generateCompletionCertificatePdf(courseData, attendances, t));
-  return ZipHelper.generateZip('attestations_pdf.zip', await Promise.all(promises));
+  const zip = new JSZip();
+  for (const trainee of traineeList) {
+    const pdf = await generateCompletionCertificatePdf(courseData, attendances, trainee);
+
+    // Stream PDF directly to zip without keeping everything in memory
+    zip.file(pdf.name, pdf.file);
+  }
+
+  return ZipHelper.generateZipNew('attestations_pdf.zip', zip);
 };
 
 exports.addAccessRule = async (courseId, payload) => Course.updateOne(
