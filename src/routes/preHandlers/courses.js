@@ -12,6 +12,7 @@ const CourseBill = require('../../models/CourseBill');
 const AttendanceSheet = require('../../models/AttendanceSheet');
 const SubProgram = require('../../models/SubProgram');
 const Holding = require('../../models/Holding');
+const UserCompany = require('../../models/UserCompany');
 const {
   TRAINER,
   INTRA,
@@ -144,6 +145,11 @@ exports.authorizeCourseCreation = async (req) => {
 
   if (get(req, 'payload.salesRepresentative')) {
     await checkVendorUserExistsAndHasRightRole(req.payload.salesRepresentative, true);
+  }
+
+  if (get(req, 'payload.trainee')) {
+    const isTraineeExists = await UserCompany.countDocuments({ user: req.payload.trainee });
+    if (!isTraineeExists) throw Boom.notFound();
   }
 
   return null;
