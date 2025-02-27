@@ -15,6 +15,7 @@ const { CompaniDate } = require('./dates/companiDates');
 const Company = require('../models/Company');
 const Course = require('../models/Course');
 const User = require('../models/User');
+const UserCompany = require('../models/UserCompany');
 const Questionnaire = require('../models/Questionnaire');
 const QuestionnaireHistory = require('../models/QuestionnaireHistory');
 const CourseSmsHistory = require('../models/CourseSmsHistory');
@@ -83,16 +84,14 @@ const CourseHistory = require('../models/CourseHistory');
 const { CompaniDuration } = require('./dates/companiDurations');
 
 exports.createCourse = async (payload, credentials) => {
-  const coursePayload = payload.company
+  let coursePayload = payload.company
     ? { ...omit(payload, 'company'), companies: [payload.company] }
     : payload;
 
   if (payload.type === SINGLE) {
-    const trainee = await User.findOne({ _id: payload.trainee })
-      .populate({ path: 'company' })
-      .lean();
+    const company = await UserCompany.findOne({ user: payload.trainee }, { company: 1 }).lean();
 
-    coursePayload.companies = [trainee.company];
+    coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
   }
 
   const course = await Course.create(coursePayload);
@@ -115,6 +114,10 @@ exports.createCourse = async (payload, credentials) => {
     .map(step => ({ course: course._id, step: step._id }));
 
   if (slots.length) await CourseSlot.insertMany(slots);
+
+  if (course.type === SINGLE) {
+    await exports.addTrainee(course._id, { trainee: payload.trainee }, credentials);
+  }
 
   return course;
 };
@@ -900,7 +903,7 @@ exports.addTrainee = async (courseId, payload, credentials) => {
       {
         course: courseId,
         traineeId: trainee._id,
-        company: course.type === INTRA ? course.companies[0] : payload.company,
+        company: [INTRA, SINGLE].includes(course.type) ? course.companies[0] : payload.company,
       },
       credentials._id
     ),
