@@ -156,4 +156,4 @@ const populateDB = async () => {
   ]);
 };
 
-module.exports = { populateDB, courseList };
+module.exports = { populateDB, courseList, userList };

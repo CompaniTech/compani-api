@@ -14,7 +14,7 @@ const { completionCertificateCreationJob } = require('../../../src/jobs/completi
 describe('completionCertificateCreation', () => {
   let findCourse;
   let findAttendance;
-  let countDocumentsActivityHistory;
+  let findActivityHistory;
   let countDocumentsCompletionCertificate;
   let createCompletionCertificate;
   let completionCertificateCreationEmail;
@@ -22,7 +22,7 @@ describe('completionCertificateCreation', () => {
   beforeEach(() => {
     findCourse = sinon.stub(Course, 'find');
     findAttendance = sinon.stub(Attendance, 'find');
-    countDocumentsActivityHistory = sinon.stub(ActivityHistory, 'countDocuments');
+    findActivityHistory = sinon.stub(ActivityHistory, 'find');
     countDocumentsCompletionCertificate = sinon.stub(CompletionCertificate, 'countDocuments');
     createCompletionCertificate = sinon.stub(CompletionCertificate, 'create');
     completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
@@ -31,7 +31,7 @@ describe('completionCertificateCreation', () => {
   afterEach(() => {
     findCourse.restore();
     findAttendance.restore();
-    countDocumentsActivityHistory.restore();
+    findActivityHistory.restore();
     countDocumentsCompletionCertificate.restore();
     createCompletionCertificate.restore();
     completionCertificateCreationEmail.restore();
@@ -55,7 +55,7 @@ describe('completionCertificateCreation', () => {
         hasCertifyingTest: false,
         companies: [{ _id: companyIds[0], name: 'Alenvi' }],
         trainers: [{ _id: new ObjectId(), identity: { lastname: 'For', firstname: 'Matrice' } }],
-        trainees: [{ _id: traineeIds[0], identity: { firstname: 'Franck', lastname: 'Moto' } }],
+        trainees: [traineeIds[0]],
         subProgram: {
           program: { name: 'program' },
           steps: [
@@ -85,7 +85,7 @@ describe('completionCertificateCreation', () => {
         hasCertifyingTest: false,
         companies: [{ _id: companyIds[1], name: 'Compani' }],
         trainers: [{ _id: new ObjectId(), identity: { lastname: 'For', firstname: 'Matrice' } }],
-        trainees: [{ _id: traineeIds[1], identity: { firstname: 'Franck', lastname: 'Moto' } }],
+        trainees: [traineeIds[1]],
         subProgram: {
           program: { name: 'program' },
           steps: [
@@ -111,7 +111,7 @@ describe('completionCertificateCreation', () => {
     ];
 
     const attendances = [{
-      user: traineeIds[0],
+      trainee: traineeIds[0],
       courseSlot: {
         _id: slotIds[0],
         startDate: '2025-02-12T10:00:00.000Z',
@@ -128,7 +128,7 @@ describe('completionCertificateCreation', () => {
 
     findCourse.returns(SinonMongoose.stubChainedQueries(courses));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['populate', 'setOptions', 'lean']));
-    countDocumentsActivityHistory.returns(activityHistories.length);
+    findActivityHistory.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     countDocumentsCompletionCertificate.onCall(0).returns(0);
     countDocumentsCompletionCertificate.onCall(1).returns(0);
     completionCertificateCreationEmail.returns({ msg: 'Script correctement exécuté.' });
@@ -160,26 +160,27 @@ describe('completionCertificateCreation', () => {
       ]
     );
     SinonMongoose.calledOnceWithExactly(
-      countDocumentsActivityHistory,
+      findActivityHistory,
       [
         {
-          query: 'countDocuments',
+          query: 'find',
           args: [{
             activity: { $in: activityIds },
-            user: traineeIds[1],
+            user: [traineeIds[1]],
             date: { $gte: startOfMonth, $lte: endOfMonth },
           }],
         },
+        { query: 'lean' },
       ]
     );
     SinonMongoose.calledWithExactly(
       countDocumentsCompletionCertificate,
-      [{ query: 'countDocuments', args: [{ course: courseIds[0], month }] }],
+      [{ query: 'countDocuments', args: [{ course: courseIds[0], trainee: traineeIds[0], month }] }],
       0
     );
     SinonMongoose.calledWithExactly(
       countDocumentsCompletionCertificate,
-      [{ query: 'countDocuments', args: [{ course: courseIds[1], month }] }],
+      [{ query: 'countDocuments', args: [{ course: courseIds[1], trainee: traineeIds[1], month }] }],
       1
     );
     sinon.assert.calledWithExactly(
@@ -190,6 +191,10 @@ describe('completionCertificateCreation', () => {
       createCompletionCertificate,
       { course: courseIds[1], trainee: traineeIds[1], month }
     );
-    sinon.assert.calledWithExactly(completionCertificateCreationEmail, courseIds, [], month);
+    sinon.assert.calledWithExactly(
+      completionCertificateCreationEmail,
+      [{ course: courseIds[0], trainee: traineeIds[0] }, { course: courseIds[1], trainee: traineeIds[1] }],
+      [],
+      month);
   });
 });

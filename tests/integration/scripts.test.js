@@ -2,7 +2,7 @@ const { expect } = require('expect');
 const sinon = require('sinon');
 const app = require('../../server');
 const EmailHelper = require('../../src/helpers/email');
-const { populateDB, courseList } = require('./seed/scriptsSeed');
+const { populateDB, courseList, userList } = require('./seed/scriptsSeed');
 const { getToken } = require('./helpers/authentication');
 
 describe('NODE ENV', () => {
@@ -35,7 +35,10 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.certificateCreated)
-        .toEqual(expect.arrayContaining([courseList[0]._id, courseList[2]._id]));
+        .toEqual(expect.arrayContaining([
+          { course: courseList[0]._id, trainee: userList[0]._id },
+          { course: courseList[2]._id, trainee: userList[2]._id },
+        ]));
     });
 
     it('should return 400 if month has wrong format', async () => {

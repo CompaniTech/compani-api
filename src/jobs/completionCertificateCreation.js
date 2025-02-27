@@ -1,5 +1,6 @@
 const groupBy = require('lodash/groupBy');
 const { Boom } = require('@hapi/boom');
+const { ObjectId } = require('mongodb');
 const Course = require('../models/Course');
 const Attendance = require('../models/Attendance');
 const ActivityHistory = require('../models/ActivityHistory');
@@ -46,7 +47,7 @@ const completionCertificateCreationJob = {
         if ((attendancesByCourse[course._id] || []).length) {
           const attendanceByTrainee = groupBy(attendancesByCourse[course._id], 'trainee');
           for (const trainee of Object.keys(attendanceByTrainee)) {
-            traineeCoursesWithAHOrAttendancesOnMonth.push({ course: course._id, trainee });
+            traineeCoursesWithAHOrAttendancesOnMonth.push({ course: course._id, trainee: new ObjectId(trainee) });
           }
           continue;
         }
@@ -62,7 +63,7 @@ const completionCertificateCreationJob = {
         if (traineesActivityHistories.length) {
           const activityHistoryByTrainee = groupBy(traineesActivityHistories, 'user');
           for (const trainee of Object.keys(activityHistoryByTrainee)) {
-            traineeCoursesWithAHOrAttendancesOnMonth.push({ course: course._id, trainee });
+            traineeCoursesWithAHOrAttendancesOnMonth.push({ course: course._id, trainee: new ObjectId(trainee) });
           }
         }
       }
