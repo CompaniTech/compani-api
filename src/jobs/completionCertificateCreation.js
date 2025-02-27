@@ -1,6 +1,5 @@
 const groupBy = require('lodash/groupBy');
 const { Boom } = require('@hapi/boom');
-const get = require('lodash/get');
 const Course = require('../models/Course');
 const Attendance = require('../models/Attendance');
 const ActivityHistory = require('../models/ActivityHistory');
@@ -42,48 +41,50 @@ const completionCertificateCreationJob = {
         .lean();
 
       const attendancesByCourse = groupBy(attendances, 'courseSlot.course');
-      const coursesWithAHOrAttendancesOnMonth = [];
+      const traineeCoursesWithAHOrAttendancesOnMonth = [];
       for (const course of courses) {
         if ((attendancesByCourse[course._id] || []).length) {
-          coursesWithAHOrAttendancesOnMonth.push(course);
+          const attendanceByTrainee = groupBy(attendancesByCourse[course._id], 'trainee');
+          for (const trainee of Object.keys(attendanceByTrainee)) {
+            traineeCoursesWithAHOrAttendancesOnMonth.push({ course: course._id, trainee });
+          }
           continue;
         }
 
         const courseActivities = course.subProgram.steps.map(s => s.activities).flat();
-        const courseTrainee = get(course, 'trainees[0]._id');
 
-        const traineeActivityHistories = await ActivityHistory.countDocuments({
+        const traineesActivityHistories = await ActivityHistory.find({
           activity: { $in: courseActivities },
-          user: courseTrainee,
+          user: course.trainees,
           date: { $gte: startOfMonth, $lte: endOfMonth },
-        });
+        }).lean();
 
-        if (traineeActivityHistories) coursesWithAHOrAttendancesOnMonth.push(course);
+        if (traineesActivityHistories.length) {
+          const activityHistoryByTrainee = groupBy(traineesActivityHistories, 'user');
+          for (const trainee of Object.keys(activityHistoryByTrainee)) {
+            traineeCoursesWithAHOrAttendancesOnMonth.push({ course: course._id, trainee });
+          }
+        }
       }
 
       const certificateCreated = [];
       const errors = [];
-      for (const course of coursesWithAHOrAttendancesOnMonth) {
+      for (const traineeCourse of traineeCoursesWithAHOrAttendancesOnMonth) {
+        const { course, trainee } = traineeCourse;
         try {
-          const hasCertificateForMonth = await CompletionCertificate.countDocuments({ course: course._id, month });
+          const hasCertificateForMonth = await CompletionCertificate.countDocuments({ course, trainee, month });
 
           if (hasCertificateForMonth) {
-            server.log(`Un certificat existe déjà pour la formation ${course._id} sur ${month}`);
+            server.log(`Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course} sur ${month}`);
             continue;
           }
 
-          if (course.trainees.length === 1) {
-            await CompletionCertificate.create({
-              course: course._id,
-              trainee: get(course, 'trainees[0]._id'),
-              month,
-            });
+          await CompletionCertificate.create({ course, trainee, month });
 
-            certificateCreated.push(course._id);
-          }
+          certificateCreated.push({ course, trainee });
         } catch (e) {
           server.log('completionCertificateCreation', e);
-          errors.push(course._id);
+          errors.push({ course, trainee });
         }
       }
 
