@@ -1,5 +1,4 @@
 const Boom = require('@hapi/boom');
-const pickBy = require('lodash/pickBy');
 const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
 const has = require('lodash/has');
@@ -38,7 +37,7 @@ const { CompaniDate } = require('./dates/companiDates');
 const { language } = translate;
 
 exports.formatQueryForUsersList = async (query) => {
-  const formattedQuery = pickBy(omit(query, ['role', 'company', 'holding', 'includeHoldingAdmins']));
+  const formattedQuery = {};
 
   if (query.role) {
     const roleNames = Array.isArray(query.role) ? query.role : [query.role];
@@ -82,6 +81,14 @@ exports.formatQueryForUsersList = async (query) => {
   if (query.holding) {
     const companies = await CompanyHolding.find({ holding: query.holding }, { company: 1 }).lean();
     const users = await UserCompany.find({ company: { $in: companies.map(c => c.company) } }, { user: 1 }).lean();
+
+    formattedQuery._id = { $in: users.map(u => u.user) };
+  }
+
+  if (query.withCompanyUsers) {
+    const users = await UserCompany
+      .find({ $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }] }, { user: 1 })
+      .lean();
 
     formattedQuery._id = { $in: users.map(u => u.user) };
   }
