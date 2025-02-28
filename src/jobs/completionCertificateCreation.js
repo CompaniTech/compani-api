@@ -57,13 +57,6 @@ const completionCertificateCreationJob = {
               continue;
             }
 
-            const certificateIsGonnaBeCreated = traineeCoursesWithAHOrAttendancesOnMonth.some(certificate =>
-              Object.entries(payload).every(([key, value]) => {
-                if (key === 'month') return certificate[key] === value;
-                return UtilsHelper.areObjectIdsEquals(certificate[key], value);
-              }));
-            if (certificateIsGonnaBeCreated) continue;
-
             traineeCoursesWithAHOrAttendancesOnMonth.push(payload);
           }
         }
