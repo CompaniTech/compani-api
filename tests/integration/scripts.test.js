@@ -27,17 +27,18 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
     });
 
     it('should send email for completion certificates', async () => {
+      const month = '02-2025';
       const response = await app.inject({
         method: 'GET',
-        url: '/scripts/completioncertificates-generation?month=02-2025',
+        url: `/scripts/completioncertificates-generation?month=${month}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.certificateCreated)
         .toEqual(expect.arrayContaining([
-          { course: courseList[0]._id, trainee: userList[0]._id },
-          { course: courseList[2]._id, trainee: userList[2]._id },
+          expect.objectContaining({ course: courseList[0]._id, trainee: userList[0]._id, month }),
+          expect.objectContaining({ course: courseList[2]._id, trainee: userList[2]._id, month }),
         ]));
     });
 
