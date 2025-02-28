@@ -319,3 +319,52 @@ describe('addTutor', () => {
     sinon.assert.calledWithExactly(addTutorContent, 'Bat MAN', '', 'Program 1');
   });
 });
+
+describe('completionCertificateCreationEmail', async () => {
+  let sendMail;
+  let sendinBlueTransporter;
+  let completionCertificateCreationContent;
+
+  beforeEach(() => {
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
+    sendMail = sinon.stub();
+    completionCertificateCreationContent = sinon.stub(EmailOptionsHelper, 'completionCertificateCreationContent');
+    process.env.TECH_EMAILS = 'tech@compani.fr';
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+    completionCertificateCreationContent.restore();
+    process.env.TECH_EMAILS = '';
+  });
+
+  it('should send an email to TECH_EMAILS after script has been executed', async () => {
+    const certificateCreated = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+    const errors = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+    const month = '01-2025';
+    const content = `<p>Script correctement exécuté. ${certificateCreated.length + errors.length}
+      formations traitées.</p>
+      <p>Certificat créé pour les formations suivantes : ${certificateCreated.join(', ')}</p>
+      <p>Certificat à créer manuellement pour les formations suivantes : ${errors.join(', ')}</p>`;
+    const sentObj = { msg: content };
+
+    completionCertificateCreationContent.returns(content);
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+
+    const result = await EmailHelper.completionCertificateCreationEmail(certificateCreated, errors, month);
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: 'tech@compani.fr',
+        subject: 'Script création des certificats de réalisation pour le mois de 01-2025',
+        html: content,
+      }
+    );
+    sinon.assert.calledWithExactly(completionCertificateCreationContent, certificateCreated, errors);
+  });
+});
