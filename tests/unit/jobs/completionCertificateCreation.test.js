@@ -16,7 +16,7 @@ describe('completionCertificateCreation', () => {
   let findAttendance;
   let findActivityHistory;
   let countDocumentsCompletionCertificate;
-  let createCompletionCertificate;
+  let createManyCompletionCertificate;
   let completionCertificateCreationEmail;
 
   beforeEach(() => {
@@ -24,7 +24,7 @@ describe('completionCertificateCreation', () => {
     findAttendance = sinon.stub(Attendance, 'find');
     findActivityHistory = sinon.stub(ActivityHistory, 'find');
     countDocumentsCompletionCertificate = sinon.stub(CompletionCertificate, 'countDocuments');
-    createCompletionCertificate = sinon.stub(CompletionCertificate, 'create');
+    createManyCompletionCertificate = sinon.stub(CompletionCertificate, 'insertMany');
     completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
   });
 
@@ -33,7 +33,7 @@ describe('completionCertificateCreation', () => {
     findAttendance.restore();
     findActivityHistory.restore();
     countDocumentsCompletionCertificate.restore();
-    createCompletionCertificate.restore();
+    createManyCompletionCertificate.restore();
     completionCertificateCreationEmail.restore();
   });
 
@@ -128,10 +128,15 @@ describe('completionCertificateCreation', () => {
 
     findCourse.returns(SinonMongoose.stubChainedQueries(courses));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['populate', 'setOptions', 'lean']));
-    findActivityHistory.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    findActivityHistory.onCall(0).returns(SinonMongoose.stubChainedQueries({}, ['lean']));
+    findActivityHistory.onCall(1).returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     countDocumentsCompletionCertificate.onCall(0).returns(0);
     countDocumentsCompletionCertificate.onCall(1).returns(0);
     completionCertificateCreationEmail.returns({ msg: 'Script correctement exécuté.' });
+    createManyCompletionCertificate.returns([
+      { course: courseIds[0], trainee: traineeIds[0], month },
+      { course: courseIds[1], trainee: traineeIds[1], month },
+    ]);
 
     // eslint-disable-next-line no-console
     const server = { query: { month }, log: value => console.log(value) };
@@ -159,19 +164,35 @@ describe('completionCertificateCreation', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
       findActivityHistory,
       [
         {
           query: 'find',
           args: [{
-            activity: { $in: activityIds },
+            activity: { $in: [activityIds[0], activityIds[1]] },
+            user: [traineeIds[0]],
+            date: { $gte: startOfMonth, $lte: endOfMonth },
+          }],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      findActivityHistory,
+      [
+        {
+          query: 'find',
+          args: [{
+            activity: { $in: [activityIds[0], activityIds[1], activityIds[2]] },
             user: [traineeIds[1]],
             date: { $gte: startOfMonth, $lte: endOfMonth },
           }],
         },
         { query: 'lean' },
-      ]
+      ],
+      1
     );
     SinonMongoose.calledWithExactly(
       countDocumentsCompletionCertificate,
@@ -184,16 +205,18 @@ describe('completionCertificateCreation', () => {
       1
     );
     sinon.assert.calledWithExactly(
-      createCompletionCertificate,
-      { course: courseIds[0], trainee: traineeIds[0], month }
-    );
-    sinon.assert.calledWithExactly(
-      createCompletionCertificate,
-      { course: courseIds[1], trainee: traineeIds[1], month }
+      createManyCompletionCertificate,
+      [
+        { course: courseIds[0], trainee: traineeIds[0], month },
+        { course: courseIds[1], trainee: traineeIds[1], month },
+      ]
     );
     sinon.assert.calledWithExactly(
       completionCertificateCreationEmail,
-      [{ course: courseIds[0], trainee: traineeIds[0] }, { course: courseIds[1], trainee: traineeIds[1] }],
+      [
+        { course: courseIds[0], trainee: traineeIds[0], month },
+        { course: courseIds[1], trainee: traineeIds[1], month },
+      ],
       [],
       month);
   });
