@@ -71,13 +71,13 @@ exports.checkAuthorization = (credentials, courseTrainerIds, companies, holding 
 
 exports.checkCompanyRepresentativeExists = async (req, course, isRofOrAdmin) => {
   const { credentials } = req.auth;
+  if (course.type === INTER_B2B) throw Boom.forbidden();
   const isIntraHoldingCourse = course.type === INTRA_HOLDING;
   const isIntraOrSingleCourse = [INTRA, SINGLE].includes(course.type);
   const isHoldingAdmin = get(req, 'auth.credentials.role.holding.name') === HOLDING_ADMIN;
   const hasAccessToCompany = course.companies.some(c => UtilsHelper.hasUserAccessToCompany(credentials, c));
   if (isIntraHoldingCourse && !(isRofOrAdmin || isHoldingAdmin)) throw Boom.forbidden();
   if (isIntraOrSingleCourse && !isRofOrAdmin && !hasAccessToCompany) throw Boom.forbidden();
-  if (course.type === INTER_B2B) throw Boom.forbidden();
 
   const companyRepresentative = await User
     .findOne({ _id: req.payload.companyRepresentative }, { role: 1 })
@@ -262,7 +262,7 @@ exports.authorizeCourseEdit = async (req) => {
 
     if (has(payload, 'expectedBillsCount')) {
       if (!isRofOrAdmin) throw Boom.forbidden();
-      if (![INTRA, SINGLE].includes(course.type)) throw Boom.badRequest();
+      if (course.type !== INTRA) throw Boom.badRequest();
 
       const courseBills = await CourseBill.find({ course: course._id }, { courseCreditNote: 1 })
         .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
