@@ -324,6 +324,34 @@ describe('formatQueryForUsersList', () => {
     sinon.assert.notCalled(findUserHolding);
     sinon.assert.notCalled(find);
   });
+
+  it('should return params with withCompanyUsers', async () => {
+    const users = [{ user: new ObjectId() }];
+    const query = { withCompanyUsers: true };
+
+    findUserCompany.returns(SinonMongoose.stubChainedQueries(users, ['lean']));
+
+    const result = await UsersHelper.formatQueryForUsersList(query);
+    expect(result).toEqual({ _id: { $in: users.map(u => u.user) } });
+
+    SinonMongoose.calledOnceWithExactly(
+      findUserCompany,
+      [
+        {
+          query: 'find',
+          args: [
+            { $or: [{ endDate: { $gt: '2022-12-21T16:00:00.000Z' } }, { endDate: { $exists: false } }] },
+            { user: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(find);
+    sinon.assert.notCalled(findOneCompanyHolding);
+    sinon.assert.notCalled(findUserHolding);
+    sinon.assert.notCalled(findCompanyHolding);
+  });
 });
 
 describe('getUsersList', () => {

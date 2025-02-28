@@ -29,6 +29,7 @@ const {
   PDF,
   OFFICIAL,
   CUSTOM,
+  SINGLE,
 } = require('../../src/helpers/constants');
 const {
   populateDB,
@@ -186,6 +187,31 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(courseSlotsCount).toEqual(1);
     });
 
+    it('should create single course', async () => {
+      const payload = {
+        misc: 'course',
+        type: SINGLE,
+        subProgram: subProgramsList[4]._id,
+        operationsRepresentative: vendorAdmin._id,
+        estimatedStartDate: '2022-05-31T08:00:00.000Z',
+        expectedBillsCount: 0,
+        hasCertifyingTest: false,
+        trainee: traineeFromOtherCompany._id,
+      };
+      const coursesCountBefore = await Course.countDocuments();
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const coursesCountAfter = await Course.countDocuments();
+      expect(coursesCountAfter).toEqual(coursesCountBefore + 1);
+    });
+
     it('should return 404 if invalid operationsRepresentative', async () => {
       const payload = {
         misc: 'course',
@@ -256,6 +282,28 @@ describe('COURSES ROUTES - POST /courses', () => {
         holding: new ObjectId(),
         maxTrainees: 2,
         hasCertifyingTest: false,
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if trainee does not exist', async () => {
+      const payload = {
+        misc: 'course',
+        type: SINGLE,
+        subProgram: subProgramsList[4]._id,
+        operationsRepresentative: vendorAdmin._id,
+        estimatedStartDate: '2022-05-31T08:00:00.000Z',
+        expectedBillsCount: 0,
+        hasCertifyingTest: false,
+        trainee: new ObjectId(),
       };
 
       const response = await app.inject({

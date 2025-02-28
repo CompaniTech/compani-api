@@ -642,6 +642,17 @@ describe('USERS ROUTES - GET /users', () => {
       expect(res.result.data.users.length).toBe(23);
     });
 
+    it('should get trainees with company', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/users?withCompanyUsers=${true}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.users.length).toBe(27);
+    });
+
     it('should get all coachs users from company, holding admins included, role as a string', async () => {
       const res = await app.inject({
         method: 'GET',
@@ -698,6 +709,17 @@ describe('USERS ROUTES - GET /users', () => {
 
       expect(res.statusCode).toBe(400);
     });
+
+    it('should return 400 if holding, company and withCompanyUsers in query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/users?holding=${authHolding._id}&company=${authCompany._id}&withCompanyUsers=${true}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 400 if includeHoldingAdmins and not company in query', async () => {
       const res = await app.inject({
         method: 'GET',
