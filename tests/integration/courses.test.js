@@ -31,6 +31,7 @@ const {
   CUSTOM,
   GLOBAL,
   MONTHLY,
+  SINGLE,
 } = require('../../src/helpers/constants');
 const {
   populateDB,
@@ -191,15 +192,17 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(courseSlotsCount).toEqual(1);
     });
 
-    it('should create single course with monthly certificate generation mode', async () => {
+    it('should create single course', async () => {
       const payload = {
         misc: 'course',
-        type: INTER_B2B,
+        type: SINGLE,
         subProgram: subProgramsList[4]._id,
         operationsRepresentative: vendorAdmin._id,
-        estimatedStartDate: '2024-10-22T08:00:00.000Z',
-        hasCertifyingTest: true,
+        estimatedStartDate: '2022-05-31T08:00:00.000Z',
+        expectedBillsCount: 0,
+        hasCertifyingTest: false,
         salesRepresentative: trainerOrganisationManager._id,
+        trainee: traineeFromOtherCompany._id,
         certificateGenerationMode: MONTHLY,
       };
       const coursesCountBefore = await Course.countDocuments();
@@ -211,22 +214,9 @@ describe('COURSES ROUTES - POST /courses', () => {
         payload,
       });
 
-      const createdCourseId = response.result.data.course._id;
-
       expect(response.statusCode).toBe(200);
       const coursesCountAfter = await Course.countDocuments();
       expect(coursesCountAfter).toEqual(coursesCountBefore + 1);
-      const courseSlotsCount = await CourseSlot
-        .countDocuments({ course: createdCourseId, step: { $in: subProgramsList[4].steps } });
-      expect(courseSlotsCount).toEqual(1);
-
-      const courseHistory = await CourseHistory.countDocuments({
-        course: createdCourseId,
-        'update.estimatedStartDate.to': '2024-10-22T08:00:00.000Z',
-        action: ESTIMATED_START_DATE_EDITION,
-      });
-
-      expect(courseHistory).toEqual(1);
     });
 
     it('should return 404 if invalid operationsRepresentative', async () => {
@@ -303,6 +293,28 @@ describe('COURSES ROUTES - POST /courses', () => {
         maxTrainees: 2,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if trainee does not exist', async () => {
+      const payload = {
+        misc: 'course',
+        type: SINGLE,
+        subProgram: subProgramsList[4]._id,
+        operationsRepresentative: vendorAdmin._id,
+        estimatedStartDate: '2022-05-31T08:00:00.000Z',
+        expectedBillsCount: 0,
+        hasCertifyingTest: false,
+        trainee: new ObjectId(),
       };
 
       const response = await app.inject({
