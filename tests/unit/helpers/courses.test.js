@@ -77,13 +77,15 @@ const CompletionCertificate = require('../../../src/data/pdf/completionCertifica
 const TrainingContractPdf = require('../../../src/data/pdf/trainingContract');
 const QuestionnaireHistory = require('../../../src/models/QuestionnaireHistory');
 const TrainerMission = require('../../../src/models/TrainerMission');
+const UserCompany = require('../../../src/models/UserCompany');
 
 describe('createCourse', () => {
   let create;
   let findOneSubProgram;
   let createHistoryOnEstimatedStartDateEdition;
   let insertManyCourseSlot;
-  let findOneTrainee;
+  let findOneUserCompany;
+  let addTrainee;
   const credentials = { _id: new ObjectId() };
 
   beforeEach(() => {
@@ -94,14 +96,16 @@ describe('createCourse', () => {
       'createHistoryOnEstimatedStartDateEdition'
     );
     insertManyCourseSlot = sinon.stub(CourseSlot, 'insertMany');
-    findOneTrainee = sinon.stub(User, 'findOne');
+    findOneUserCompany = sinon.stub(UserCompany, 'findOne');
+    addTrainee = sinon.stub(CourseHelper, 'addTrainee');
   });
   afterEach(() => {
     create.restore();
     findOneSubProgram.restore();
     createHistoryOnEstimatedStartDateEdition.restore();
     insertManyCourseSlot.restore();
-    findOneTrainee.restore();
+    findOneUserCompany.restore();
+    addTrainee.restore();
   });
 
   it('should create an intra course', async () => {
@@ -134,7 +138,7 @@ describe('createCourse', () => {
     expect(result.type).toEqual(INTRA);
     expect(result.operationsRepresentative).toEqual(payload.operationsRepresentative);
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
-    sinon.assert.notCalled(findOneTrainee);
+    sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.calledOnceWithExactly(create, { ...omit(payload, 'company'), companies: [payload.company] });
     sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
     SinonMongoose.calledOnceWithExactly(
@@ -148,46 +152,43 @@ describe('createCourse', () => {
   });
 
   it('should create a single course', async () => {
-    const steps = [
-      { _id: new ObjectId(), type: ON_SITE },
-    ];
+    const steps = [{ _id: new ObjectId(), type: ON_SITE }];
     const subProgram = { _id: new ObjectId(), steps };
-    const trainee = { _id: new ObjectId(), company: new ObjectId() };
+    const trainee = { _id: new ObjectId() };
+    const userCompany = { company: new ObjectId() };
     const payload = {
       misc: 'name',
       subProgram: subProgram._id,
       type: SINGLE,
       operationsRepresentative: new ObjectId(),
       expectedBillsCount: '0',
+      hasCertifyingTest: false,
       trainee: trainee._id,
     };
+    const course = {
+      _id: new ObjectId(),
+      ...omit(payload, ['trainee']),
+      companies: [userCompany.company],
+      format: 'blended',
+    };
+    const slots = [{ course: course._id, step: steps[0]._id }];
 
+    findOneUserCompany.returns(SinonMongoose.stubChainedQueries(userCompany, ['lean']));
+    create.returns(course);
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
-    create.returns({ ...payload, companies: [trainee.company], format: 'blended' });
-    findOneTrainee.returns(SinonMongoose.stubChainedQueries(trainee));
 
     const result = await CourseHelper.createCourse(payload, credentials);
 
-    const slots = [{ course: result._id, step: steps[0]._id }];
-
-    expect(result.misc).toEqual('name');
-    expect(result.subProgram).toEqual(payload.subProgram);
-    expect(result.format).toEqual('blended');
-    expect(result.type).toEqual(payload.type);
-    expect(result.operationsRepresentative).toEqual(payload.operationsRepresentative);
-    expect(result.expectedBillsCount).toEqual('0');
-    expect(result.trainee).toEqual(payload.trainee);
+    expect(result).toEqual(course);
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
-    sinon.assert.calledOnceWithExactly(create, { ...payload, companies: [trainee.company] });
     SinonMongoose.calledOnceWithExactly(
-      findOneTrainee,
+      findOneUserCompany,
       [
-        { query: 'findOne', args: [{ _id: trainee._id }] },
-        { query: 'populate', args: [{ path: 'company' }] },
+        { query: 'findOne', args: [{ user: trainee._id }, { company: 1 }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
+    sinon.assert.calledOnceWithExactly(create, { ...omit(payload, ['trainee']), companies: [userCompany.company] });
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -196,6 +197,8 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
+    sinon.assert.calledOnceWithExactly(addTrainee, course._id, { trainee: trainee._id }, credentials);
   });
 
   it('should create an inter course without steps', async () => {
@@ -220,7 +223,7 @@ describe('createCourse', () => {
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     sinon.assert.calledOnceWithExactly(create, payload);
     sinon.assert.notCalled(insertManyCourseSlot);
-    sinon.assert.notCalled(findOneTrainee);
+    sinon.assert.notCalled(findOneUserCompany);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -254,7 +257,7 @@ describe('createCourse', () => {
       credentials._id,
       '2022-12-10T12:00:00.000Z'
     );
-    sinon.assert.notCalled(findOneTrainee);
+    sinon.assert.notCalled(findOneUserCompany);
   });
 });
 
