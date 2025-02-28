@@ -100,9 +100,9 @@ const addTutorContent = (tutorIdentity, learnerIdentity, courseName) => `<p>Bonj
 const completionCertificateCreationContent = (certificateCreated, errors) => {
   let body = `<p>Script exécuté. ${certificateCreated.length + errors.length} certificats traités.</p>`;
 
-  if (certificateCreated.length) body = body.concat(`<p>Certificat créé pour les apprenants suivants : ${certificateCreated.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}<br/>`).join('\r\n')}</p>`);
+  if (certificateCreated.length) body = body.concat(`<p>Certificat créé pour les apprenants suivants :<br/> ${certificateCreated.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}<br/>`).join('\r\n')}</p>`);
 
-  if (errors.length) body = body.concat(`<p>Certificat à créer manuellement pour les apprenants suivants : ${errors.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}, mois: ${c.month}<br/>`).join('\r\n')}</p>`);
+  if (errors.length) body = body.concat(`<p>Certificat à créer manuellement pour les apprenants suivants :<br/> ${errors.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}, mois: ${c.month}<br/>`).join('\r\n')}</p>`);
 
   return body;
 };
