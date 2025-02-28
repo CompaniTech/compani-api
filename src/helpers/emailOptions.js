@@ -102,7 +102,7 @@ const completionCertificateCreationContent = (certificateCreated, errors) => {
 
   if (certificateCreated.length) body = body.concat(`<p>Certificat créé pour les apprenants suivants : ${certificateCreated.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}<br/>`).join('\r\n')}</p>`);
 
-  if (errors.length) body = body.concat(`<p>Certificat à créer manuellement pour les apprenants suivants : ${errors.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}<br/>`).join('\r\n')}</p>`);
+  if (errors.length) body = body.concat(`<p>Certificat à créer manuellement pour les apprenants suivants : ${errors.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}, mois: ${c.month}<br/>`).join('\r\n')}</p>`);
 
   return body;
 };

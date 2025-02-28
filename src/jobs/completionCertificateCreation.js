@@ -8,6 +8,7 @@ const CompletionCertificate = require('../models/CompletionCertificate');
 const { MONTHLY, MM_YYYY, MONTH } = require('../helpers/constants');
 const { CompaniDate } = require('../helpers/dates/companiDates');
 const EmailHelper = require('../helpers/email');
+const UtilsHelper = require('../helpers/utils');
 
 const completionCertificateCreationJob = {
   async method(server) {
@@ -47,9 +48,24 @@ const completionCertificateCreationJob = {
         if ((attendancesByCourse[course._id] || []).length) {
           const attendanceByTrainee = groupBy(attendancesByCourse[course._id], 'trainee');
           for (const trainee of Object.keys(attendanceByTrainee)) {
-            traineeCoursesWithAHOrAttendancesOnMonth.push({ course: course._id, trainee: new ObjectId(trainee) });
+            const payload = { course: course._id, trainee: new ObjectId(trainee), month };
+            const hasCertificateForMonth = await CompletionCertificate.countDocuments(payload);
+
+            if (hasCertificateForMonth) {
+              server.log(`Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
+                sur ${month}`);
+              continue;
+            }
+
+            const certificateIsGonnaBeCreated = traineeCoursesWithAHOrAttendancesOnMonth.some(certificate =>
+              Object.entries(payload).every(([key, value]) => {
+                if (key === 'month') return certificate[key] === value;
+                return UtilsHelper.areObjectIdsEquals(certificate[key], value);
+              }));
+            if (certificateIsGonnaBeCreated) continue;
+
+            traineeCoursesWithAHOrAttendancesOnMonth.push(payload);
           }
-          continue;
         }
 
         const courseActivities = course.subProgram.steps.map(s => s.activities).flat();
@@ -62,31 +78,39 @@ const completionCertificateCreationJob = {
 
         if (traineesActivityHistories.length) {
           const activityHistoryByTrainee = groupBy(traineesActivityHistories, 'user');
+
           for (const trainee of Object.keys(activityHistoryByTrainee)) {
-            traineeCoursesWithAHOrAttendancesOnMonth.push({ course: course._id, trainee: new ObjectId(trainee) });
+            const payload = { course: course._id, trainee: new ObjectId(trainee), month };
+            const hasCertificateForMonth = await CompletionCertificate.countDocuments(payload);
+
+            if (hasCertificateForMonth) {
+              server.log(`Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
+                sur ${month}`);
+              continue;
+            }
+
+            const certificateIsGonnaBeCreated = traineeCoursesWithAHOrAttendancesOnMonth.some(certificate =>
+              Object.entries(payload).every(([key, value]) => {
+                if (key === 'month') return certificate[key] === value;
+                return UtilsHelper.areObjectIdsEquals(certificate[key], value);
+              }));
+            if (certificateIsGonnaBeCreated) continue;
+
+            traineeCoursesWithAHOrAttendancesOnMonth.push(payload);
           }
         }
       }
 
       const certificateCreated = [];
       const errors = [];
-      for (const traineeCourse of traineeCoursesWithAHOrAttendancesOnMonth) {
-        const { course, trainee } = traineeCourse;
-        try {
-          const hasCertificateForMonth = await CompletionCertificate.countDocuments({ course, trainee, month });
+      try {
+        const res = await CompletionCertificate.insertMany(traineeCoursesWithAHOrAttendancesOnMonth);
 
-          if (hasCertificateForMonth) {
-            server.log(`Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course} sur ${month}`);
-            continue;
-          }
-
-          await CompletionCertificate.create({ course, trainee, month });
-
-          certificateCreated.push({ course, trainee });
-        } catch (e) {
-          server.log('completionCertificateCreation', e);
-          errors.push({ course, trainee });
-        }
+        certificateCreated.push(...res);
+      } catch (e) {
+        const { writeErrors } = e;
+        server.log('completionCertificateCreation', e);
+        errors.push(...writeErrors.map(error => error.err.op));
       }
 
       await EmailHelper.completionCertificateCreationEmail(certificateCreated, errors, month);
