@@ -2931,6 +2931,19 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       });
     });
 
+    it('should return 200 as user is coach and course type is single', async () => {
+      SmsHelperStub.returns('SMS SENT !');
+      authToken = await getToken('coach');
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[24]._id}/sms`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return 200 as user is the course trainer', async () => {
       SmsHelperStub.returns('SMS SENT !');
       authToken = await getTokenByCredentials(trainer.local);
