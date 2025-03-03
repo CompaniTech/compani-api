@@ -762,7 +762,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.traineeCourses.length).toEqual(7);
+      expect(response.result.data.courses.traineeCourses.length).toEqual(6);
     });
 
     it('should return 400 if no action', async () => {
@@ -1743,14 +1743,14 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       const response = await app.inject({
         method: 'PUT',
-        url: `/courses/${coursesList[24]._id}`,
+        url: `/courses/${coursesList[25]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload,
       });
 
       expect(response.statusCode).toBe(200);
 
-      const courseUpdated = await Course.countDocuments({ _id: coursesList[24]._id, ...payload });
+      const courseUpdated = await Course.countDocuments({ _id: coursesList[25]._id, ...payload });
       expect(courseUpdated).toEqual(1);
     });
 
@@ -5191,7 +5191,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
       const course = await Course.countDocuments({ _id: coursesList[24]._id, tutors: auxiliary._id });
       expect(course).toEqual(1);
       sinon.assert.calledOnceWithExactly(sendinBlueTransporter);
-      sinon.assert.calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Michel DRUCKER', 'program');
+      sinon.assert.calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Trainee WITHEXPOTOKEN', 'program');
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
@@ -5243,7 +5243,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
         method: 'PUT',
         url: `/courses/${coursesList[24]._id}/tutors`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { tutor: traineeFromAuthFormerlyInOther._id },
+        payload: { tutor: traineeFromAuthCompanyWithFormationExpoToken._id },
       });
 
       expect(response.statusCode).toBe(403);
