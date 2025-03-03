@@ -87,7 +87,12 @@ exports.createCourse = async (payload, credentials) => {
     : payload;
 
   if (payload.type === SINGLE) {
-    const company = await UserCompany.findOne({ user: payload.trainee }, { company: 1 }).lean();
+    const company = await UserCompany
+      .findOne(
+        { user: payload.trainee, $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }] },
+        { company: 1 }
+      )
+      .lean();
 
     coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
   }
