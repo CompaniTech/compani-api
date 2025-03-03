@@ -73,7 +73,6 @@ const traineeFromAuthFormerlyInOther = {
   _id: new ObjectId(),
   identity: { firstname: 'Michel', lastname: 'Drucker' },
   local: { email: 'traineeAuthFormerlyOther@alenvi.io', password: '123456!eR' },
-  contact: { phone: '0600000000' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -652,7 +651,7 @@ const coursesList = [
     misc: 'single course',
     type: SINGLE,
     format: BLENDED,
-    trainees: [traineeFromAuthFormerlyInOther._id],
+    trainees: [traineeFromAuthCompanyWithFormationExpoToken._id],
     companies: [authCompany._id],
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
