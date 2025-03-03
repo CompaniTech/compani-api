@@ -1294,4 +1294,5 @@ module.exports = {
   traineeFromAuthFormerlyInOther,
   clientAdminFromThirdCompany,
   traineeFromThirdCompany,
+  traineeWithoutCompany,
 };

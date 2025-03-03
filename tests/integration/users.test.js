@@ -710,10 +710,10 @@ describe('USERS ROUTES - GET /users', () => {
       expect(res.statusCode).toBe(400);
     });
 
-    it('should return 400 if holding, company and withCompanyUsers in query', async () => {
+    it('should return 400 if holding and withCompanyUsers in query', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/users?holding=${authHolding._id}&company=${authCompany._id}&withCompanyUsers=${true}`,
+        url: `/users?holding=${authHolding._id}&withCompanyUsers=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

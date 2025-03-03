@@ -59,6 +59,7 @@ describe('formatQueryForUsersList', () => {
     findCompanyHolding.restore();
     findOneCompanyHolding.restore();
     findUserHolding.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should returns params without role if no role in query', async () => {

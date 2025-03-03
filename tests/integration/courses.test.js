@@ -46,6 +46,7 @@ const {
   clientAdminFromThirdCompany,
   traineeFromThirdCompany,
   fourthCompany,
+  traineeWithoutCompany,
 } = require('./seed/coursesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const {
@@ -210,6 +211,15 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(response.statusCode).toBe(200);
       const coursesCountAfter = await Course.countDocuments();
       expect(coursesCountAfter).toEqual(coursesCountBefore + 1);
+      const courseWithTrainee = await Course
+        .countDocuments(
+          {
+            _id: response.result.data.course._id,
+            trainees: traineeFromOtherCompany._id,
+            companies: otherCompany._id,
+          }
+        );
+      expect(courseWithTrainee).toEqual(1);
     });
 
     it('should return 404 if invalid operationsRepresentative', async () => {
@@ -304,6 +314,27 @@ describe('COURSES ROUTES - POST /courses', () => {
         expectedBillsCount: 0,
         hasCertifyingTest: false,
         trainee: new ObjectId(),
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('shoul return 404 if trainee does not have company', async () => {
+      const payload = {
+        misc: 'course',
+        type: SINGLE,
+        subProgram: subProgramsList[4]._id,
+        operationsRepresentative: vendorAdmin._id,
+        expectedBillsCount: 1,
+        hasCertifyingTest: false,
+        trainee: traineeWithoutCompany._id,
       };
 
       const response = await app.inject({
