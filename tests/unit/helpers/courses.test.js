@@ -98,6 +98,7 @@ describe('createCourse', () => {
     insertManyCourseSlot = sinon.stub(CourseSlot, 'insertMany');
     findOneUserCompany = sinon.stub(UserCompany, 'findOne');
     addTrainee = sinon.stub(CourseHelper, 'addTrainee');
+    UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
   });
   afterEach(() => {
     create.restore();
@@ -106,6 +107,7 @@ describe('createCourse', () => {
     insertManyCourseSlot.restore();
     findOneUserCompany.restore();
     addTrainee.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should create an intra course', async () => {
@@ -154,7 +156,7 @@ describe('createCourse', () => {
   it('should create a single course', async () => {
     const steps = [{ _id: new ObjectId(), type: ON_SITE }];
     const subProgram = { _id: new ObjectId(), steps };
-    const trainee = { _id: new ObjectId() };
+    const traineeId = new ObjectId();
     const userCompany = { company: new ObjectId() };
     const payload = {
       misc: 'name',
@@ -163,7 +165,7 @@ describe('createCourse', () => {
       operationsRepresentative: new ObjectId(),
       expectedBillsCount: '0',
       hasCertifyingTest: false,
-      trainee: trainee._id,
+      trainee: traineeId,
     };
     const course = {
       _id: new ObjectId(),
@@ -184,7 +186,15 @@ describe('createCourse', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneUserCompany,
       [
-        { query: 'findOne', args: [{ user: trainee._id }, { company: 1 }] },
+        {
+          query: 'findOne',
+          args: [
+            {
+              user: traineeId,
+              $or: [{ endDate: { $gt: '2022-12-21T16:00:00.000Z' } }, { endDate: { $exists: false } }],
+            },
+            { company: 1 }],
+        },
         { query: 'lean' },
       ]
     );
@@ -198,7 +208,7 @@ describe('createCourse', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
-    sinon.assert.calledOnceWithExactly(addTrainee, course._id, { trainee: trainee._id }, credentials);
+    sinon.assert.calledOnceWithExactly(addTrainee, course._id, { trainee: traineeId }, credentials);
   });
 
   it('should create an inter course without steps', async () => {
