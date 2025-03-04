@@ -2102,7 +2102,8 @@ describe('getCourse', () => {
               },
               {
                 path: 'tutors',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+                  + 'firstMobileConnectionDate loginCode',
               },
               { path: 'slots', select: 'step startDate endDate address meetingLink' },
               { path: 'slotsToPlan', select: '_id step' },
@@ -2205,7 +2206,8 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'tutors',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+                    + 'firstMobileConnectionDate loginCode',
                 },
                 { path: 'slots', select: 'step startDate endDate address meetingLink' },
                 { path: 'slotsToPlan', select: '_id step' },
@@ -2307,7 +2309,8 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'tutors',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+                    + 'firstMobileConnectionDate loginCode',
                 },
                 { path: 'slots', select: 'step startDate endDate address meetingLink' },
                 { path: 'slotsToPlan', select: '_id step' },
@@ -2476,7 +2479,8 @@ describe('getCourse', () => {
               },
               {
                 path: 'tutors',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+                  + 'firstMobileConnectionDate loginCode',
               },
               { path: 'slots', select: 'step startDate endDate address meetingLink' },
               { path: 'slotsToPlan', select: '_id step' },
