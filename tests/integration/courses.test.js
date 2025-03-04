@@ -4621,6 +4621,17 @@ describe('COURSES ROUTES - PUT /courses/{_id}/companies', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if course is single', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[24]._id}/companies`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { company: otherCompany._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return a 403 if course is archived', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -4809,6 +4820,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/companies{companyId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courses/${intraCourseId}/companies/${authCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course is single', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[24]._id}/companies/${authCompany._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
