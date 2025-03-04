@@ -430,28 +430,26 @@ describe('getLearnerList', () => {
     const users = [
       {
         _id: new ObjectId(),
-        activityHistories: [{ _id: new ObjectId() }],
+        lastActivityHistory: { _id: new ObjectId() },
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: new ObjectId(),
-        activityHistories: [{ _id: new ObjectId() }],
+        lastActivityHistory: { _id: new ObjectId() },
         company: { name: 'Fontainebleau', holding: 'holding' },
       },
     ];
     const learnerList = [
       {
         _id: users[0]._id,
-        activityHistoryCount: 1,
-        lastActivityHistory: users[0].activityHistories[0],
+        lastActivityHistory: users[0].lastActivityHistory,
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: users[1]._id,
-        activityHistoryCount: 1,
-        lastActivityHistory: users[1].activityHistories[0],
+        lastActivityHistory: users[1].lastActivityHistory,
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Fontainebleau', holding: 'holding' },
@@ -503,10 +501,7 @@ describe('getLearnerList', () => {
           args: [{}, 'identity.firstname identity.lastname picture local.email', { autopopulate: false }],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        {
-          query: 'populate',
-          args: [{ path: 'activityHistories', select: 'updatedAt', options: { sort: { updatedAt: -1 } } }],
-        },
+        { query: 'populate', args: [{ path: 'lastActivityHistory', select: 'updatedAt' }] },
         {
           query: 'populate',
           args: [{
@@ -549,12 +544,12 @@ describe('getLearnerList', () => {
     const users = [
       {
         _id: new ObjectId(),
-        activityHistories: [{ _id: new ObjectId() }],
+        lastActivityHistory: { _id: new ObjectId() },
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: new ObjectId(),
-        activityHistories: [{ _id: new ObjectId() }],
+        lastActivityHistory: { _id: new ObjectId() },
         company: { name: 'Alenvi', holding: 'holding' },
       },
     ];
@@ -565,16 +560,14 @@ describe('getLearnerList', () => {
     const learnerList = [
       {
         _id: users[0]._id,
-        activityHistoryCount: 1,
-        lastActivityHistory: users[0].activityHistories[0],
+        lastActivityHistory: users[0].lastActivityHistory,
         blendedCoursesCount: 1,
         eLearningCoursesCount: 1,
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: users[1]._id,
-        activityHistoryCount: 1,
-        lastActivityHistory: users[1].activityHistories[0],
+        lastActivityHistory: users[1].lastActivityHistory,
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Alenvi', holding: 'holding' },
@@ -648,10 +641,7 @@ describe('getLearnerList', () => {
           ],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        {
-          query: 'populate',
-          args: [{ path: 'activityHistories', select: 'updatedAt', options: { sort: { updatedAt: -1 } } }],
-        },
+        { query: 'populate', args: [{ path: 'lastActivityHistory', select: 'updatedAt' }] },
         {
           query: 'populate',
           args: [{

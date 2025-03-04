@@ -850,7 +850,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const countUserInDB = userList.length + usersSeedList.length + usersFromDifferentCompanyList.length;
       expect(res.result.data.users.length).toEqual(countUserInDB);
       expect(res.result.data.users
-        .every(user => ['activityHistoryCount', 'lastActivityHistory', 'blendedCoursesCount', 'eLearningCoursesCount']
+        .every(user => ['lastActivityHistory', 'blendedCoursesCount', 'eLearningCoursesCount']
           .every(key => Object.keys(user).includes(key))
         )
       )
@@ -867,7 +867,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       expect(res.statusCode).toBe(200);
       expect(res.result.data.users.length).toBe(18);
       expect(res.result.data.users
-        .every(user => ['activityHistoryCount', 'lastActivityHistory', 'blendedCoursesCount', 'eLearningCoursesCount']
+        .every(user => ['lastActivityHistory', 'blendedCoursesCount', 'eLearningCoursesCount']
           .every(key => !Object.keys(user).includes(key))
         )
       )
