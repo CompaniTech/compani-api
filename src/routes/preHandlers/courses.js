@@ -1,5 +1,4 @@
 const Boom = require('@hapi/boom');
-const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const pick = require('lodash/pick');
@@ -49,7 +48,6 @@ const UserCompaniesHelper = require('../../helpers/userCompanies');
 const { checkVendorUserExistsAndHasRightRole } = require('./utils');
 
 const { language } = translate;
-const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 exports.checkAuthorization = (credentials, courseTrainerIds, companies, holding = null) => {
   const userVendorRole = get(credentials, 'role.vendor.name');
@@ -796,13 +794,12 @@ exports.authorizeTutorAddition = async (req) => {
   const { params, payload } = req;
 
   const course = await Course
-    .findOne({ _id: params._id }, { tutors: 1, trainees: 1, archivedAt: 1, companies: 1, subProgram: 1 })
+    .findOne({ _id: params._id }, { tutors: 1, trainees: 1, archivedAt: 1, companies: 1, type: 1 })
     .lean();
   if (!course) throw Boom.notFound();
   if (course.archivedAt) throw Boom.forbidden();
 
-  const isSingleCourse = UtilsHelper.doesArrayIncludeId(SINGLE_COURSES_SUBPROGRAM_IDS, course.subProgram);
-  if (!isSingleCourse) throw Boom.forbidden();
+  if (course.type !== SINGLE) throw Boom.forbidden();
 
   const user = await User.findOne({ _id: payload.tutor }).populate({ path: 'company' }).lean();
   const userInCompany = UtilsHelper.doesArrayIncludeId(course.companies, user.company);
