@@ -7139,28 +7139,54 @@ describe('removeTrainer', () => {
 
 describe('addTutor', () => {
   let courseUpdateOne;
+  let userFindOne;
+  let userUpdateOne;
   let emailAddTutor;
 
   beforeEach(() => {
     courseUpdateOne = sinon.stub(Course, 'updateOne');
+    userFindOne = sinon.stub(User, 'findOne');
+    userUpdateOne = sinon.stub(User, 'updateOne');
     emailAddTutor = sinon.stub(EmailHelper, 'addTutor');
   });
 
   afterEach(() => {
     courseUpdateOne.restore();
+    userFindOne.restore();
+    userUpdateOne.restore();
     emailAddTutor.restore();
   });
 
-  it('should add tutor to course', async () => {
+  it('should add tutor to course (without connection infos)', async () => {
     const tutorId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', tutors: [new ObjectId()] };
     const payload = { tutor: tutorId };
+    const tutor = { _id: tutorId };
 
     emailAddTutor.returns('email sent');
+    userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['lean']));
 
     const result = await CourseHelper.addTutor(course._id, payload);
 
     expect(result).toEqual('email sent');
+    sinon.assert.calledOnce(userUpdateOne);
+    sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $addToSet: { tutors: tutorId } });
+    sinon.assert.calledOnceWithExactly(emailAddTutor, course._id, tutorId);
+  });
+
+  it('should add tutor to course (with connection infos)', async () => {
+    const tutorId = new ObjectId();
+    const course = { _id: new ObjectId(), misc: 'Test', tutors: [new ObjectId()] };
+    const payload = { tutor: tutorId };
+    const tutor = { _id: tutorId, firstMobileConnectionDate: '2022-12-10T12:00:00.000Z' };
+
+    emailAddTutor.returns('email sent');
+    userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['lean']));
+
+    const result = await CourseHelper.addTutor(course._id, payload);
+
+    expect(result).toEqual('email sent');
+    sinon.assert.notCalled(userUpdateOne);
     sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $addToSet: { tutors: tutorId } });
     sinon.assert.calledOnceWithExactly(emailAddTutor, course._id, tutorId);
   });
