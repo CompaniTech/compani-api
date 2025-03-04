@@ -638,7 +638,7 @@ exports.authorizeCourseCompanyAddition = async (req) => {
 
   const course = await Course.findOne({ _id: req.params._id }, { type: 1, companies: 1, holding: 1 }).lean();
 
-  if (course.type === INTRA) throw Boom.forbidden();
+  if ([INTRA, SINGLE].includes(course.type)) throw Boom.forbidden();
 
   const isAlreadyLinked = UtilsHelper.doesArrayIncludeId(course.companies, req.payload.company);
   if (isAlreadyLinked) throw Boom.conflict(translate[language].courseCompanyAlreadyExists);
@@ -677,7 +677,9 @@ exports.authorizeCourseCompanyDeletion = async (req) => {
     })
     .lean();
 
-  if (course.type === INTRA || !UtilsHelper.doesArrayIncludeId(course.companies, companyId)) throw Boom.forbidden();
+  if ([INTRA, SINGLE].includes(course.type) || !UtilsHelper.doesArrayIncludeId(course.companies, companyId)) {
+    throw Boom.forbidden();
+  }
 
   if (course.type === INTRA_HOLDING) {
     const isHoldingAdminFromCourse = holdingRole === HOLDING_ADMIN &&
