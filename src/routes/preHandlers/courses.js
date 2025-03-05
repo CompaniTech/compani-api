@@ -350,6 +350,8 @@ exports.authorizeTraineeAddition = async (req) => {
       )
       .lean();
 
+    if (course.type === SINGLE) throw Boom.forbidden();
+
     if (course.trainees.length + 1 > course.maxTrainees) throw Boom.forbidden(translate[language].maxTraineesReached);
 
     const traineeIsTrainer = UtilsHelper.doesArrayIncludeId(course.trainers, payload.trainee);
@@ -412,6 +414,8 @@ exports.authorizeTraineeDeletion = async (req) => {
   const course = await Course
     .findOne({ _id: req.params._id }, { type: 1, trainees: 1, certificateGenerationMode: 1 })
     .lean();
+
+  if (course.type === SINGLE) throw Boom.forbidden();
 
   if (!UtilsHelper.doesArrayIncludeId(course.trainees, req.params.traineeId)) throw Boom.forbidden();
 
