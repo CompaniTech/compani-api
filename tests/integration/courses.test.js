@@ -3299,6 +3299,17 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if course type is single', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[24]._id}/trainees`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { trainee: traineeFromAuthFormerlyInOther._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 404 if user is no longer in company', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -3782,6 +3793,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainees/{traineeId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courses/${archivedCourse.toHexString()}/trainees/${traineeId.toHexString()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course type is single', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[24]._id}/trainees/${traineeFromAuthCompanyWithFormationExpoToken._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
