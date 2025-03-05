@@ -48,7 +48,6 @@ const {
   clientAdminFromThirdCompany,
   traineeFromThirdCompany,
   fourthCompany,
-  traineeWithoutCompany,
 } = require('./seed/coursesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const {
@@ -70,6 +69,7 @@ const {
   holdingAdminFromOtherCompany,
   trainerOrganisationManager,
   auxiliary,
+  userList,
 } = require('../seed/authUsersSeed');
 const EmailOptionsHelper = require('../../src/helpers/emailOptions');
 const NodemailerHelper = require('../../src/helpers/nodemailer');
@@ -346,7 +346,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         expectedBillsCount: 1,
         hasCertifyingTest: false,
-        trainee: traineeWithoutCompany._id,
+        trainee: userList[8]._id,
         certificateGenerationMode: MONTHLY,
       };
 

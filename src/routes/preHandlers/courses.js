@@ -150,7 +150,10 @@ exports.authorizeCourseCreation = async (req) => {
   }
 
   if (get(req, 'payload.trainee')) {
-    const isTraineeExists = await UserCompany.countDocuments({ user: req.payload.trainee });
+    const isTraineeExists = await UserCompany.countDocuments({
+      user: req.payload.trainee,
+      $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
+    });
     if (!isTraineeExists) throw Boom.notFound();
   }
 
