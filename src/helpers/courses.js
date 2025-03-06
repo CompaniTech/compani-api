@@ -1317,6 +1317,15 @@ exports.removeTrainer = async (courseId, trainerId) => {
 exports.addTutor = async (courseId, payload) => {
   await Course.updateOne({ _id: courseId }, { $addToSet: { tutors: payload.tutor } });
 
+  const tutor = await User
+    .findOne({ _id: payload.tutor }, { firstMobileConnectionDate: 1, loginCode: 1 })
+    .lean();
+
+  if (!(tutor.firstMobileConnectionDate || tutor.loginCode)) {
+    const loginCode = String(Math.floor(Math.random() * 9000 + 1000));
+    await User.updateOne({ _id: payload.tutor }, { loginCode });
+  }
+
   return EmailHelper.addTutor(courseId, payload.tutor);
 };
 
