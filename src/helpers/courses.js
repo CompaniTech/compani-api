@@ -63,6 +63,7 @@ const {
   OFFICIAL,
   SHORT_DURATION_H_MM,
   END_COURSE,
+  DAY_D_MONTH_YEAR,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
@@ -342,7 +343,7 @@ exports.getCourseProgress = (steps) => {
   };
 };
 
-exports.formatCourseWithProgress = (course, shouldComputePresence = false) => {
+exports.formatCourseWithProgress = (course, shouldComputePresence = false, shouldformatSlots = false) => {
   const steps = course.subProgram.steps
     .map((step) => {
       const slots = course.slots.filter(slot => UtilsHelper.areObjectIdsEquals(slot.step._id, step._id));
@@ -352,6 +353,11 @@ exports.formatCourseWithProgress = (course, shouldComputePresence = false) => {
 
   return {
     ...course,
+    ...shouldformatSlots && {
+      slots: [...new Set(
+        course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
+      )],
+    },
     subProgram: { ...course.subProgram, steps },
     progress: exports.getCourseProgress(steps),
   };
@@ -659,12 +665,20 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
   if (isTrainer || isTutor) {
     return {
       ...course,
+      slots: [...new Set(
+        course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
+      )],
       subProgram: {
         ...course.subProgram,
-        steps: course.subProgram.steps.map(step => ({
-          ...step,
-          activities: step.activities.map(activity => ({ ...omit(activity, 'activityHistories') })),
-        })),
+        steps: course.subProgram.steps.map((step) => {
+          const slots = course.slots.filter(slot => UtilsHelper.areObjectIdsEquals(slot.step._id, step._id));
+
+          return {
+            ...step,
+            slots,
+            activities: step.activities.map(activity => ({ ...omit(activity, 'activityHistories') })),
+          };
+        }),
       },
     };
   }
@@ -674,10 +688,10 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     const areLastSlotAttendancesValidated = !!(lastSlot &&
       await Attendance.countDocuments({ courseSlot: lastSlot._id }));
 
-    return { ...exports.formatCourseWithProgress(course), areLastSlotAttendancesValidated };
+    return { ...exports.formatCourseWithProgress(course, false, true), areLastSlotAttendancesValidated };
   }
 
-  return exports.formatCourseWithProgress(course);
+  return exports.formatCourseWithProgress(course, false, true);
 };
 
 exports.updateCourse = async (courseId, payload, credentials) => {
