@@ -6,6 +6,8 @@ const { language } = translate;
 
 const getCompletionCertificates = async (req) => {
   try {
+    console.log('req.query', req.query);
+
     await CompletionCertificatesHelper.getCompletionCertificates(req.query);
 
     return { message: translate[language].completionCertificateDone };
