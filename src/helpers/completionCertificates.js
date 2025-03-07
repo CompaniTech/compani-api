@@ -1,11 +1,10 @@
 const CompletionCertificate = require('../models/CompletionCertificate');
 
 exports.getCompletionCertificates = async (query) => {
-  const { months } = query;
+  const months = Array.isArray(query.months) ? query.months : [query.months];
 
-  console.log('helper months:', months);
-
-  const completionCertificates = await CompletionCertificate.find({ month: { $in: months } }, { course: 1, trainee: 1 })
+  const completionCertificates = await CompletionCertificate
+    .find({ month: { $in: months } }, { course: 1, trainee: 1, month: 1 })
     .populate({
       path: 'course',
       select: 'companies subProgram misc',
@@ -15,9 +14,8 @@ exports.getCompletionCertificates = async (query) => {
       ],
     })
     .populate({ path: 'trainee', select: 'identity' })
+    .setOptions({ isVendorUser: true })
     .lean();
-
-console.log('Completion Certificates', completionCertificates);
 
   return completionCertificates;
 };
