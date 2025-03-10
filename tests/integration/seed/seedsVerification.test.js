@@ -12,6 +12,7 @@ const Card = require('../../../src/models/Card');
 const Company = require('../../../src/models/Company');
 const CompanyHolding = require('../../../src/models/CompanyHolding');
 const CompanyLinkRequest = require('../../../src/models/CompanyLinkRequest');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Contract = require('../../../src/models/Contract');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
@@ -103,6 +104,7 @@ const cardsSeed = require('./cardsSeed');
 const categoriesSeed = require('./categoriesSeed');
 const companiesSeed = require('./companiesSeed');
 const companyLinkRequestsSeed = require('./companyLinkRequestsSeed');
+const completionCertificatesSeed = require('./completionCertificatesSeed');
 const courseBillsSeed = require('./courseBillsSeed');
 const courseBillingItemsSeed = require('./courseBillingItemsSeed');
 const courseCreditNotesSeed = require('./courseCreditNotesSeed');
@@ -136,6 +138,7 @@ const seedList = [
   { label: 'CATEGORY', value: categoriesSeed },
   { label: 'COMPANY', value: companiesSeed },
   { label: 'COMPANYLINKREQUEST', value: companyLinkRequestsSeed },
+  { label: 'COMPLETIONCERTIFICATES', value: completionCertificatesSeed },
   { label: 'COURSE', value: coursesSeed },
   { label: 'COURSEBILL', value: courseBillsSeed },
   { label: 'COURSEBILLINGITEM', value: courseBillingItemsSeed },
@@ -691,6 +694,24 @@ describe('SEEDS VERIFICATION', () => {
               UserCompaniesHelper.getCurrentAndFutureCompanies(get(request.user, 'userCompanyList')).length
             );
           expect(doUsersAlreadyHaveCompany).toBeFalsy();
+        });
+      });
+
+      describe('Collection CompletionCertificate', () => {
+        let completionCertificates;
+        before(async () => {
+          completionCertificates = await CompletionCertificate
+            .find()
+            .populate({ path: 'course', select: 'trainees' })
+            .setOptions({ isVendorUser: true })
+            .lean();
+        });
+
+        it('should pass if trainee is registered to course', () => {
+          const traineeIsRegisteredToCourse = completionCertificates
+            .every(cc => UtilsHelper.doesArrayIncludeId(cc.course.trainees, cc.trainee));
+
+          expect(traineeIsRegisteredToCourse).toBeTruthy();
         });
       });
 
