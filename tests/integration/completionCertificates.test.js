@@ -28,6 +28,16 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       expect(response.statusCode).toBe(200);
       expect(response.result.data.completionCertificates.length).toBe(2);
     });
+
+    it('should return 400 if month has wrong format', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/completioncertificates?months=12_2024',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
   });
 
   describe('Other roles', () => {
