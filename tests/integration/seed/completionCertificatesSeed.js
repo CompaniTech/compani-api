@@ -12,8 +12,6 @@ const { vendorAdminRoleId, trainerRoleId } = require('../../seed/authRolesSeed')
 const { trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 
-const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
-
 const userList = [
   { // 0
     _id: new ObjectId(),
@@ -61,15 +59,18 @@ const userCompanyList = [
   { _id: new ObjectId(), user: userList[3]._id, company: otherCompany._id },
 ];
 
-const stepList = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 }];
+const stepList = [
+  { _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), type: 'on_site', name: 'autre étape', status: PUBLISHED, theoreticalDuration: 60 },
+];
 
 const subProgramList = [
   { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[0]._id], status: PUBLISHED },
-  { _id: SINGLE_COURSES_SUBPROGRAM_IDS[0], name: 'Subprogram 2', steps: [stepList[0]._id], status: PUBLISHED },
+  { _id: new ObjectId(), name: 'Subprogram 2', steps: [stepList[1]._id], status: PUBLISHED },
 ];
 
 const courseList = [
-  { // 0 Single course
+  { // 0 Course with monthly certificateGenerationMode
     _id: new ObjectId(),
     subProgram: subProgramList[1]._id,
     type: INTER_B2B,
