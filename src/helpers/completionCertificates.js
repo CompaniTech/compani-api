@@ -1,6 +1,6 @@
 const CompletionCertificate = require('../models/CompletionCertificate');
 
-exports.getCompletionCertificates = async (query) => {
+exports.list = async (query) => {
   const months = Array.isArray(query.months) ? query.months : [query.months];
 
   const completionCertificates = await CompletionCertificate

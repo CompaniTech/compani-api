@@ -1,7 +1,7 @@
 'use-strict';
 
 const Joi = require('joi');
-const { getCompletionCertificates } = require('../controllers/completionCertificatesController');
+const { list } = require('../controllers/completionCertificatesController');
 const { monthValidation } = require('./validations/utils');
 
 exports.plugin = {
@@ -18,7 +18,7 @@ exports.plugin = {
           }),
         },
       },
-      handler: getCompletionCertificates,
+      handler: list,
     });
   },
 };

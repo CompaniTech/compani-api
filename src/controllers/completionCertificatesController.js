@@ -4,14 +4,14 @@ const CompletionCertificatesHelper = require('../helpers/completionCertificates'
 
 const { language } = translate;
 
-const getCompletionCertificates = async (req) => {
+const list = async (req) => {
   try {
-    const completionCertificates = await CompletionCertificatesHelper.getCompletionCertificates(req.query);
+    const completionCertificates = await CompletionCertificatesHelper.list(req.query);
 
-    return { message: translate[language].completionCertificateDone, data: { completionCertificates } };
+    return { message: translate[language].completionCertificatesFound, data: { completionCertificates } };
   } catch (e) {
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
   }
 };
 
-module.exports = { getCompletionCertificates };
+module.exports = { list };

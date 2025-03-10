@@ -7,7 +7,7 @@ const CompletionCertificate = require('../../../src/models/CompletionCertificate
 const CompletionCertificatesHelper = require('../../../src/helpers/completionCertificates');
 const { VENDOR_ROLES } = require('../../../src/helpers/constants');
 
-describe('getCompletionCertificates', () => {
+describe('list', () => {
   let findCompletionCertificates;
 
   beforeEach(() => {
@@ -18,33 +18,74 @@ describe('getCompletionCertificates', () => {
     findCompletionCertificates.restore();
   });
 
-  it('should get completion certificates by month', async () => {
-    const query = { months: ['06_2024'] };
-    const credentials = {
-      _id: new ObjectId(),
-      role: { vendor: { name: 'vendor_admin' } },
-    };
+  it('should get completion certificates by month (months is an array)', async () => {
+    const query = { months: ['06_2024', '07_2024'] };
+    const credentials = { _id: new ObjectId(), role: { vendor: { name: 'training_organisation_manager' } } };
 
     const trainee = { identity: { firstname: 'Pop', lastname: 'CORN' } };
-    const completionCertificate = [
+    const completionCertificates = [
       {
-        course: [{
-          companies: [{ name: 'Alenvi' }],
-          subProgram: { program: { name: 'program' } },
-          misc: 'course',
-        }],
-        trainee: trainee.identity,
+        course: [{ companies: [{ name: 'Alenvi' }], subProgram: { program: { name: 'program' } }, misc: 'course' }],
+        trainee,
+        month: '06_2024',
+      },
+      {
+        course: [{ companies: [{ name: 'Alenvi' }], subProgram: { program: { name: 'program' } }, misc: 'course' }],
+        trainee,
+        month: '07_2024',
+      },
+    ];
+
+    findCompletionCertificates.returns(
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+    );
+
+    const result = await CompletionCertificatesHelper.list(query);
+
+    expect(result).toEqual(completionCertificates);
+
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificates,
+      [
+        { query: 'find', args: [{ month: { $in: ['06_2024', '07_2024'] } }, { course: 1, trainee: 1, month: 1 }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'companies subProgram misc',
+            populate: [
+              { path: 'companies', select: 'name' },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+            ],
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
+        { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should get completion certificates by month (months is a string)', async () => {
+    const query = { months: '06_2024' };
+    const credentials = { _id: new ObjectId(), role: { vendor: { name: 'training_organisation_manager' } } };
+
+    const trainee = { identity: { firstname: 'Pop', lastname: 'CORN' } };
+    const completionCertificates = [
+      {
+        course: [{ companies: [{ name: 'Alenvi' }], subProgram: { program: { name: 'program' } }, misc: 'course' }],
+        trainee,
         month: '06_2024',
       },
     ];
 
     findCompletionCertificates.returns(
-      SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
 
-    const result = await CompletionCertificatesHelper.getCompletionCertificates(query);
+    const result = await CompletionCertificatesHelper.list(query);
 
-    expect(result).toEqual(completionCertificate);
+    expect(result).toEqual(completionCertificates);
 
     SinonMongoose.calledOnceWithExactly(
       findCompletionCertificates,
@@ -57,11 +98,7 @@ describe('getCompletionCertificates', () => {
             select: 'companies subProgram misc',
             populate: [
               { path: 'companies', select: 'name' },
-              {
-                path: 'subProgram',
-                select: 'program',
-                populate: { path: 'program', select: 'name' },
-              },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
             ],
           }],
         },
