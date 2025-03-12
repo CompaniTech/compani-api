@@ -67,8 +67,6 @@ const {
 const { auxiliaryRoleId, trainerRoleId, coachRoleId, clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 
-const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
-
 const traineeFromAuthFormerlyInOther = {
   _id: new ObjectId(),
   identity: { firstname: 'Michel', lastname: 'Drucker' },
@@ -315,7 +313,7 @@ const subProgramsList = [
   { _id: new ObjectId(), name: 'sous-programme 2', steps: [stepList[1]._id, stepList[2]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 3', steps: [stepList[1]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 4 (non publié)', steps: [stepList[1]._id, stepList[2]._id] },
-  { _id: SINGLE_COURSES_SUBPROGRAM_IDS[0], name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
+  { _id: new ObjectId(), name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
 ];
 
 const programsList = [
@@ -505,7 +503,7 @@ const coursesList = [
     trainers: [trainer._id],
     trainees: [coach._id, helper._id, clientAdmin._id],
     companies: [authCompany._id],
-    type: INTRA,
+    type: SINGLE,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-01-01T00:00:00.000Z',
