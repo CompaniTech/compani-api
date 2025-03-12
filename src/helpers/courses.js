@@ -344,9 +344,10 @@ exports.getCourseProgress = (steps) => {
 };
 
 exports.formatCourseWithProgress = (course, shouldComputePresence = false, shouldformatSlots = false) => {
+  const slotsGroupedByStep = groupBy(course.slots, 'step._id');
   const steps = course.subProgram.steps
     .map((step) => {
-      const slots = course.slots.filter(slot => UtilsHelper.areObjectIdsEquals(slot.step._id, step._id));
+      const slots = slotsGroupedByStep[step._id] || [];
 
       return { ...step, slots, progress: StepsHelper.getProgress(step, slots, shouldComputePresence) };
     });
@@ -663,6 +664,8 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
   const courseTutorIds = course.tutors ? course.tutors.map(tutor => tutor._id) : [];
   const isTutor = UtilsHelper.doesArrayIncludeId(courseTutorIds, credentials._id);
   if (isTrainer || isTutor) {
+    const slotsGroupedByStep = groupBy(course.slots, 'step._id');
+
     return {
       ...course,
       slots: [...new Set(
@@ -671,7 +674,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       subProgram: {
         ...course.subProgram,
         steps: course.subProgram.steps.map((step) => {
-          const slots = course.slots.filter(slot => UtilsHelper.areObjectIdsEquals(slot.step._id, step._id));
+          const slots = slotsGroupedByStep[step._id] || [];
 
           return {
             ...step,
