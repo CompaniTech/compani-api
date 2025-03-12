@@ -13,6 +13,7 @@ const Category = require('../../../src/models/Category');
 const Company = require('../../../src/models/Company');
 const CompanyHolding = require('../../../src/models/CompanyHolding');
 const CompanyLinkRequest = require('../../../src/models/CompanyLinkRequest');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const ContractNumber = require('../../../src/models/ContractNumber');
 const Contract = require('../../../src/models/Contract');
 const CourseHistory = require('../../../src/models/CourseHistory');
@@ -103,6 +104,7 @@ const deleteNonAuthenticationSeeds = async () => {
       company: { $nin: [authCompany._id, otherCompany._id, companyWithoutSubscription._id] },
     }),
     CompanyLinkRequest.deleteMany(),
+    CompletionCertificate.deleteMany(),
     ContractNumber.deleteMany(),
     Contract.deleteMany(),
     CourseHistory.deleteMany(),

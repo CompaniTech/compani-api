@@ -10,6 +10,7 @@ exports.routes = [
   { plugin: require('./categories'), routes: { prefix: '/categories' } },
   { plugin: require('./companies'), routes: { prefix: '/companies' } },
   { plugin: require('./companyLinkRequests'), routes: { prefix: '/companylinkrequests' } },
+  { plugin: require('./completionCertificates'), routes: { prefix: '/completioncertificates' } },
   { plugin: require('./courseBills'), routes: { prefix: '/coursebills' } },
   { plugin: require('./courseBillingItems'), routes: { prefix: '/coursebillingitems' } },
   { plugin: require('./courseCreditNotes'), routes: { prefix: '/coursecreditnotes' } },
