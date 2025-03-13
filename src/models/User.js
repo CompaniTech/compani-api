@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const Joi = require('joi');
 const moment = require('moment');
 const get = require('lodash/get');
-const { PHONE_VALIDATION } = require('./utils');
+const { PHONE_VALIDATION, COUNTRY_CODE_VALIDATION } = require('./utils');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
 const { identitySchemaDefinition } = require('./schemaDefinitions/identity');
 const driveResourceSchemaDefinition = require('./schemaDefinitions/driveResource');
@@ -104,6 +104,7 @@ const UserSchema = mongoose.Schema({
   contact: {
     address: { type: mongoose.Schema(addressSchemaDefinition, { id: false, _id: false }) },
     phone: { type: String, validate: PHONE_VALIDATION },
+    countryCode: { type: String, validate: COUNTRY_CODE_VALIDATION },
   },
   mentor: { type: String },
   contracts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contract' }],
