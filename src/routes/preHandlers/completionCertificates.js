@@ -5,7 +5,7 @@ exports.authorizeGetCompletionCertificates = async (req) => {
   const { course } = req.query;
 
   if (course) {
-    const courseExists = await Course.countDocuments({ _id: course }, { limit: 1 });
+    const courseExists = await Course.countDocuments({ _id: course });
     if (!courseExists) throw Boom.notFound();
   }
 

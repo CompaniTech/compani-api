@@ -61,6 +61,16 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if both months and course are defined', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=02-2025&course=${courseList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 404 if course does not exist', async () => {
       const response = await app.inject({
         method: 'GET',
