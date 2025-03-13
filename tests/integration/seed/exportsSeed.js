@@ -199,6 +199,7 @@ const auxiliaryList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0123456789',
+      countryCode: '+33',
     },
     role: { client: auxiliaryRoleId },
     local: { email: 'export_auxiliary_1@alenvi.io' },
@@ -229,6 +230,7 @@ const auxiliaryList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0123456789',
+      countryCode: '+33',
     },
     role: { client: auxiliaryRoleId },
     local: { email: 'export_auxiliary_2@alenvi.io' },
@@ -312,6 +314,7 @@ const customersList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     subscriptions: [
       {
@@ -360,6 +363,7 @@ const customersList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     followUp: { situation: 'nursing_home' },
     stoppedAt: '2021-06-10T22:00:00.000Z',
@@ -378,6 +382,7 @@ const customersList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     followUp: { situation: 'home' },
   },
@@ -394,6 +399,7 @@ const customersList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0123456789',
+      countryCode: '+33',
     },
     subscriptions: [{
       _id: customerSubscriptionId,
@@ -1044,7 +1050,7 @@ const creditNotesList = [
 
 const user = {
   _id: new ObjectId(),
-  contact: { phone: '0123456789' },
+  contact: { phone: '0123456789', countryCode: '+33' },
   identity: { firstname: 'test', lastname: 'Toto' },
   local: { email: 'toto@alenvi.io' },
   refreshToken: uuidv4(),

@@ -58,7 +58,7 @@ const traineeFromAuthCompany = {
   identity: { firstname: 'Fred', lastname: 'Astaire' },
   local: { email: 'traineeAuthCompany@alenvi.io' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -68,7 +68,7 @@ const traineeFromOtherCompany = {
   identity: { firstname: 'Tom', lastname: 'de Savoie' },
   local: { email: 'tomdesavoie@alenvi.io' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856752' },
+  contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };

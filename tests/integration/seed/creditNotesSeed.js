@@ -71,6 +71,7 @@ const creditNoteCustomer = {
       location: { type: 'Point', coordinates: [2.377133, 48.801389] },
     },
     phone: '0612345678',
+    countryCode: '+33',
   },
   payment: {
     bankAccountOwner: 'Lance Amstrong',
@@ -129,6 +130,7 @@ const archivedCustomer = {
       location: { type: 'Point', coordinates: [2.377133, 48.801389] },
     },
     phone: '0612345678',
+    countryCode: '+33',
   },
   payment: {
     bankAccountOwner: 'Gérard Chivé',
@@ -361,6 +363,7 @@ const otherCompanyCustomer = {
       location: { type: 'Point', coordinates: [2.377133, 48.801389] },
     },
     phone: '0623675432',
+    countryCode: '+33',
   },
   payment: {
     bankAccountOwner: 'Jean Bonbeurre',

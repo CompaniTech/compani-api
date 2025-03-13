@@ -18,7 +18,7 @@ const tester = {
   identity: { firstname: 'tester', lastname: 'without role' },
   refreshToken: uuidv4(),
   local: { email: 'tester.withoutrole@compani.fr', password: 'zxcvbnm' },
-  contact: { phone: '0798640728' },
+  contact: { phone: '0798640728', countryCode: '+33' },
   origin: WEBAPP,
 };
 
