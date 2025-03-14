@@ -2003,6 +2003,66 @@ describe('formatCourseWithProgress', () => {
       { ...course.subProgram.steps[1], slots: course.slots, progress: { live: 1 } },
     ]);
   });
+
+  it('should format course with formatted slots', async () => {
+    const stepId = new ObjectId();
+    const course = {
+      misc: 'name',
+      _id: new ObjectId(),
+      subProgram: {
+        steps: [{
+          _id: new ObjectId(),
+          activities: [{ activityHistories: [{}, {}] }],
+          name: 'Développement personnel full stack',
+          type: 'e_learning',
+          areActivitiesValid: false,
+        },
+        {
+          _id: stepId,
+          activities: [],
+          name: 'Développer des équipes agiles et autonomes',
+          type: 'on_site',
+          areActivitiesValid: true,
+        },
+        ],
+      },
+      slots: [{
+        startDate: '2020-11-03T09:00:00.000Z',
+        endDate: '2020-11-03T12:00:00.000Z',
+        step: { _id: stepId },
+        attendances: [],
+      }, {
+        startDate: '2020-11-04T09:00:00.000Z',
+        endDate: '2020-11-04T16:01:00.000Z',
+        step: { _id: stepId },
+        attendances: [],
+      }],
+    };
+    getProgress.onCall(0).returns({ eLearning: 1 });
+    getProgress.onCall(1).returns({ live: 1 });
+    getCourseProgress.returns({ eLearning: 1, live: 1 });
+
+    const result = await CourseHelper.formatCourseWithProgress(course, false, true);
+
+    expect(result).toMatchObject({
+      ...course,
+      slots: ['Mar. 3 nov. 2020', 'Mer. 4 nov. 2020'],
+      subProgram: {
+        ...course.subProgram,
+        steps: [
+          { ...course.subProgram.steps[0], progress: { eLearning: 1 } },
+          { ...course.subProgram.steps[1], progress: { live: 1 } },
+        ],
+      },
+      progress: { eLearning: 1, live: 1 },
+    });
+    sinon.assert.calledWithExactly(getProgress.getCall(0), course.subProgram.steps[0], [], false);
+    sinon.assert.calledWithExactly(getProgress.getCall(1), course.subProgram.steps[1], course.slots, false);
+    sinon.assert.calledWithExactly(getCourseProgress.getCall(0), [
+      { ...course.subProgram.steps[0], slots: [], progress: { eLearning: 1 } },
+      { ...course.subProgram.steps[1], slots: course.slots, progress: { live: 1 } },
+    ]);
+  });
 });
 
 describe('getCourse', () => {
@@ -2618,7 +2678,7 @@ describe('getCourse', () => {
         ]
       );
 
-      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, false, true);
       sinon.assert.notCalled(attendanceCountDocuments);
     });
 
@@ -2785,7 +2845,7 @@ describe('getCourse', () => {
         ]
       );
 
-      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, false, true);
       sinon.assert.calledOnceWithExactly(attendanceCountDocuments, { courseSlot: lastSlotId });
     });
 
@@ -2952,7 +3012,7 @@ describe('getCourse', () => {
         ]
       );
 
-      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, false, true);
       sinon.assert.calledOnceWithExactly(attendanceCountDocuments, { courseSlot: lastSlotId });
     });
 
@@ -2964,6 +3024,7 @@ describe('getCourse', () => {
         company: { _id: authCompanyId },
       };
       const courseId = new ObjectId();
+      const stepId = new ObjectId();
       const course = {
         _id: courseId,
         subProgram: {
@@ -2976,6 +3037,7 @@ describe('getCourse', () => {
             theoreticalDuration: 'PT1800S',
           },
           {
+            _id: stepId,
             activities: [],
             name: 'Développer des équipes agiles et autonomes',
             type: 'on_site',
@@ -2984,7 +3046,7 @@ describe('getCourse', () => {
           },
           ],
         },
-        slots: [{ startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+        slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
         trainers: [{ _id: loggedUser._id }],
       };
 
@@ -3004,15 +3066,17 @@ describe('getCourse', () => {
             theoreticalDuration: 'PT1800S',
           },
           {
+            _id: stepId,
             activities: [],
             name: 'Développer des équipes agiles et autonomes',
             type: 'on_site',
             areActivitiesValid: true,
             theoreticalDuration: 'PT12600S',
+            slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
           },
           ],
         },
-        slots: [{ startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+        slots: ['Mar. 3 nov. 2020'],
         trainers: [{ _id: loggedUser._id }],
       });
 
@@ -3087,6 +3151,7 @@ describe('getCourse', () => {
         company: { _id: authCompanyId },
       };
       const courseId = new ObjectId();
+      const stepId = new ObjectId();
       const course = {
         _id: courseId,
         subProgram: {
@@ -3099,6 +3164,7 @@ describe('getCourse', () => {
             theoreticalDuration: 'PT1800S',
           },
           {
+            _id: stepId,
             activities: [],
             name: 'Développer des équipes agiles et autonomes',
             type: 'on_site',
@@ -3107,7 +3173,7 @@ describe('getCourse', () => {
           },
           ],
         },
-        slots: [{ startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+        slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
         tutors: [{ _id: loggedUser._id }],
       };
 
@@ -3132,10 +3198,11 @@ describe('getCourse', () => {
             type: 'on_site',
             areActivitiesValid: true,
             theoreticalDuration: 'PT12600S',
+            slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
           },
           ],
         },
-        slots: [{ startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+        slots: ['Mar. 3 nov. 2020'],
         tutors: [{ _id: loggedUser._id }],
       });
 
