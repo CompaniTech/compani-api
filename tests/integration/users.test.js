@@ -767,7 +767,8 @@ describe('USERS ROUTES - GET /users', () => {
 });
 
 describe('USERS ROUTES - GET /users/exists', () => {
-  const fieldsToPick = ['_id', 'local.email', 'identity.firstname', 'identity.lastname', 'contact.phone', 'role'];
+  const fieldsToPick =
+    ['_id', 'local.email', 'identity.firstname', 'identity.lastname', 'contact.phone', 'contact.countryCode', 'role'];
   let authToken;
   beforeEach(populateDB);
 

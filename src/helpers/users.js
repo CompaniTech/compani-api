@@ -236,7 +236,7 @@ exports.userExists = async (email, credentials) => {
   const targetUser = await User
     .findOne(
       { 'local.email': email },
-      { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 }
+      { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 }
     )
     .populate({ path: 'company' })
     .populate({ path: 'userCompanyList', options: { sort: { startDate: 1 } } })
@@ -267,7 +267,8 @@ exports.userExists = async (email, credentials) => {
       userCompanyList = [UtilsHelper.getLastVersion(targetUser.userCompanyList, 'startDate')];
     }
 
-    const userFieldsToPick = ['_id', 'local.email', 'identity.firstname', 'identity.lastname', 'contact.phone', 'role'];
+    const userFieldsToPick =
+      ['_id', 'local.email', 'identity.firstname', 'identity.lastname', 'contact.phone', 'contact.countryCode', 'role'];
     return {
       exists: true,
       user: {

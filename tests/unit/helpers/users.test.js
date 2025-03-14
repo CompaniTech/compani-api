@@ -1186,7 +1186,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1211,7 +1211,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': nonExistantEmail },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1235,7 +1235,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1269,7 +1269,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1299,7 +1299,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1324,7 +1324,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1349,7 +1349,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1366,7 +1366,7 @@ describe('userExists', () => {
     const userWithEndingCompany = {
       _id: userId,
       local: { email: 'test@compani.fr', password: 'notshow' },
-      contact: { phone: '0987654321' },
+      contact: { phone: '0987654321', countryCode: '+33' },
       identity: { firstname: 'test', lastname: 'test' },
       role: { client: roleId },
       mentor: 'mentor',
@@ -1384,7 +1384,7 @@ describe('userExists', () => {
     expect(res.user).toEqual({
       _id: userId,
       local: { email: 'test@compani.fr' },
-      contact: { phone: '0987654321' },
+      contact: { phone: '0987654321', countryCode: '+33' },
       identity: { firstname: 'test', lastname: 'test' },
       role: { client: roleId },
       userCompanyList: [{ company, startDate: '2024-01-01T00:00:00.000Z', endDate: '2045-01-01T00:00:00.000Z' }],
@@ -1397,7 +1397,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1422,7 +1422,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1465,7 +1465,7 @@ describe('createUser', () => {
     const payload = {
       identity: { lastname: 'Test' },
       local: { email: 'toto@test.com' },
-      contact: { phone: '0606060606' },
+      contact: { phone: '0606060606', countryCode: '+33' },
       origin: WEBAPP,
     };
 
