@@ -363,7 +363,7 @@ describe('SEEDS VERIFICATION', () => {
           expect(everyCompanyExists).toBeTruthy();
         });
 
-        it('should pass if every company is rattached to course on intra/inter b2b/single', () => {
+        it('should pass if every company is attached to course on intra/inter b2b/single', () => {
           const everyCompanyIsInCourse = attendanceList
             .every(a => a.courseSlot.course.type === INTRA_HOLDING ||
               UtilsHelper.doesArrayIncludeId(a.courseSlot.course.companies, a.company._id));
@@ -400,10 +400,10 @@ describe('SEEDS VERIFICATION', () => {
 
           expect(everyIntraOrIntraHoldingAttendanceSheetHasDate).toBeTruthy();
 
-          const someInterAttendanceSheetHasDate = attendanceSheetList
+          const someInterOrSingleAttendanceSheetHasDate = attendanceSheetList
             .some(a => [INTER_B2B, SINGLE].includes(a.course.type) && a.date);
 
-          expect(someInterAttendanceSheetHasDate).toBeFalsy();
+          expect(someInterOrSingleAttendanceSheetHasDate).toBeFalsy();
         });
 
         it('should pass if only inter or single courses have trainee in attendance sheet', () => {
