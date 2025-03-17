@@ -64,6 +64,7 @@ const {
   SHORT_DURATION_H_MM,
   END_COURSE,
   DAY_D_MONTH_YEAR,
+  MOBILE,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
@@ -179,6 +180,37 @@ const formatQuery = (query, credentials) => {
   return formattedQuery;
 };
 
+const formatCourseStep = (stepId, courseId, courseName, courseMisc, courseSteps, stepSlots) => {
+  const nextSlot = stepSlots.find(slot => CompaniDate().isBefore(slot.endDate));
+  const slotsSorted = stepSlots.sort(DatesUtilsHelper.ascendingSortBy('endDate'));
+  const stepIndex = courseSteps.map(step => step._id.toHexString()).indexOf(stepId);
+
+  return {
+    name: courseName,
+    misc: courseMisc,
+    stepIndex,
+    firstSlot: nextSlot.endDate,
+    type: nextSlot.step.type,
+    slots: slotsSorted.map(s => s.endDate),
+    _id: slotsSorted[0]._id,
+    progress: courseSteps[stepIndex].progress,
+    courseId,
+  };
+};
+
+const formatCourseStepsList = (course) => {
+  if (course.subProgram.isStrictlyELearning) return [];
+
+  const courseName = get(course, 'subProgram.program.name');
+  const courseMisc = course.misc || '';
+  const courseSteps = get(course, 'subProgram.steps');
+  const stepSlots = groupBy(course.slots.filter(s => get(s, 'step._id')), s => s.step._id);
+
+  return Object.keys(stepSlots)
+    .filter(stepId => !!stepSlots[stepId].find(slot => CompaniDate().isBefore(slot.endDate)))
+    .map(stepId => formatCourseStep(stepId, course._id, courseName, courseMisc, courseSteps, stepSlots[stepId]));
+};
+
 const listForOperations = async (query, origin, credentials) => {
   if (query.company && query.format === STRICTLY_E_LEARNING) {
     return listStrictlyElearningForCompany(query, origin);
@@ -193,10 +225,20 @@ const listForOperations = async (query, origin, credentials) => {
       .map(course => ({ ...course, totalTheoreticalDuration: exports.getTotalTheoreticalDuration(course) }));
   }
 
+  if (origin === MOBILE) {
+    return {
+      courses: courses.sort((a, b) => UtilsHelper.sortStrings(a._id.toHexString(), b._id.toHexString())),
+      nextSteps: courses.map(formatCourseStepsList)
+        .flat()
+        .filter(step => step.slots && step.slots.length)
+        .sort(DatesUtilsHelper.ascendingSortBy('firstSlot')),
+    };
+  }
+
   return courses.sort((a, b) => UtilsHelper.sortStrings(a._id.toHexString(), b._id.toHexString()));
 };
 
-const listForPedagogy = async (query, credentials) => {
+const listForPedagogy = async (query, origin, credentials) => {
   const traineeOrTutorId = query.trainee || get(credentials, '_id');
   const shouldQueryCompanies = !!query.holding || !!query.company;
   const companies = [];
@@ -296,18 +338,38 @@ const listForPedagogy = async (query, credentials) => {
   }
 
   const shouldComputePresence = true;
-  return {
-    tutorCourses,
-    traineeCourses: filteredTraineeCourses
-      .map(course => exports.formatCourseWithProgress(course, shouldComputePresence)),
-  };
+
+  const formattedTraineeCourses = filteredTraineeCourses
+    .map(course => exports.formatCourseWithProgress(course, shouldComputePresence));
+
+  if (origin === MOBILE) {
+    const onGoing = [];
+    const achieved = [];
+
+    formattedTraineeCourses.forEach((course) => {
+      let progress = 0;
+      if (course.format === STRICTLY_E_LEARNING) progress = course.progress.eLearning || 0;
+      else progress = course.progress.blended || 0;
+      if (progress < 1) onGoing.push(course);
+      else achieved.push(course);
+    });
+    return {
+      tutorCourses,
+      traineeCourses: { onGoing, achieved },
+      nextSteps: onGoing.map(formatCourseStepsList)
+        .flat()
+        .filter(step => step.slots && step.slots.length)
+        .sort(DatesUtilsHelper.ascendingSortBy('firstSlot')),
+    };
+  }
+  return { tutorCourses, traineeCourses: formattedTraineeCourses };
 };
 
 exports.list = async (query, credentials) => {
   const filteredQuery = omit(query, ['origin', 'action']);
   return query.action === OPERATIONS
     ? listForOperations(filteredQuery, query.origin, credentials)
-    : listForPedagogy(filteredQuery, credentials);
+    : listForPedagogy(filteredQuery, query.origin, credentials);
 };
 
 exports.getCourseProgress = (steps) => {
