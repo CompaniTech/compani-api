@@ -1834,6 +1834,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
         contact: trainer._id,
         estimatedStartDate: '2024-11-12T10:00:00.000Z',
         hasCertifyingTest: true,
+        expectedBillsCount: 3,
         certifiedTrainees: [traineeFromAuthFormerlyInOther._id],
       };
 
