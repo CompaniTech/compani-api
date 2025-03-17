@@ -1,6 +1,15 @@
 const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
-const { INTRA, INTER_B2B, WEBAPP, PUBLISHED, GROUP, GLOBAL } = require('../../../src/helpers/constants');
+const {
+  INTRA,
+  INTER_B2B,
+  WEBAPP,
+  PUBLISHED,
+  GROUP,
+  GLOBAL,
+  SINGLE,
+  TRAINEE,
+} = require('../../../src/helpers/constants');
 const Company = require('../../../src/models/Company');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
@@ -255,6 +264,20 @@ const coursesList = [
     expectedBillsCount: 1,
     certificateGenerationMode: GLOBAL,
   },
+  { // 12 - single course, expectedBillsCount is 2
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 3',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [traineeFromOtherCompany._id],
+    expectedBillsCount: 2,
+    companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
+  },
 ];
 
 const courseFundingOrganisationList = [
@@ -403,6 +426,17 @@ const courseBillsList = [
     number: 'FACT-00008',
     billingPurchaseList: [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 9, count: 1 },
+    ],
+  },
+  { // 12
+    _id: new ObjectId(),
+    course: coursesList[12]._id,
+    companies: [otherCompany._id],
+    mainFee: { price: 120, count: 1, countUnit: TRAINEE },
+    payer: { company: otherCompany._id },
+    billingPurchaseList: [
+      { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 90, count: 1 },
+      { _id: new ObjectId(), billingItem: billingItemList[1]._id, price: 400, count: 1 },
     ],
   },
 ];
