@@ -517,6 +517,17 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if course is SINGLE and count is not 1', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        payload: { ...payload, course: coursesList[12]._id, mainFee: { price: 120, count: 2, countUnit: TRAINEE } },
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 400 if no company', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -879,6 +890,17 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
         method: 'PUT',
         url: `/coursebills/${courseBillsList[12]._id}`,
         payload: { countUnit: GROUP },
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if course is single and count is not 1', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[12]._id}`,
+        payload: { count: 2 },
         headers: { 'x-access-token': authToken },
       });
 
