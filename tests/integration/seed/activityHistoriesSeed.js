@@ -20,8 +20,11 @@ const {
   MULTIPLE_CHOICE_QUESTION,
   ORDER_THE_SEQUENCE,
   FILL_THE_GAPS,
+  INTER_B2B,
+  GLOBAL,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
+const { noRole } = require('../../seed/authUsersSeed');
 const { vendorAdminRoleId } = require('../../seed/authRolesSeed');
 const { authCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
 
@@ -30,7 +33,7 @@ const userList = [
     _id: new ObjectId(),
     identity: { firstname: 'operations', lastname: 'representative' },
     refreshToken: uuidv4(),
-    local: { email: 'operationsrep@compani.fr' },
+    local: { email: 'operationsrep@compani.fr', password: '654321!eR' },
     role: { vendor: vendorAdminRoleId },
     origin: WEBAPP,
   },
@@ -165,6 +168,16 @@ const coursesList = [
     type: INTER_B2C,
     trainees: [userList[1]._id],
     format: STRICTLY_E_LEARNING,
+  },
+  {
+    _id: new ObjectId(),
+    subProgram: subProgramsList[0]._id,
+    type: INTER_B2B,
+    tutors: [noRole._id],
+    companies: [authCompany._id],
+    trainees: [],
+    certificateGenerationMode: GLOBAL,
+    operationsRepresentative: userList[0]._id,
   },
 ];
 

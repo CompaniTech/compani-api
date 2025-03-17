@@ -5,6 +5,7 @@ const app = require('../../server');
 const { populateDB, activitiesList, userList, cardsList, activityHistories } = require('./seed/activityHistoriesSeed');
 const { getTokenByCredentials, getToken } = require('./helpers/authentication');
 const ActivityHistory = require('../../src/models/ActivityHistory');
+const { noRole } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -42,6 +43,21 @@ describe('ACTIVITY HISTORIES ROUTES - POST /activityhistories', () => {
         method: 'POST',
         url: '/activityhistories',
         payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const activityHistoriesCount = await ActivityHistory.countDocuments();
+      expect(activityHistoriesCount).toEqual(activityHistories.length + 1);
+    });
+
+    it('should create activityHistory if user is course tutor', async () => {
+      authToken = await getTokenByCredentials(noRole.local);
+      const response = await app.inject({
+        method: 'POST',
+        url: '/activityhistories',
+        payload: { user: noRole._id, activity: activitiesList[0]._id, score: 9 },
         headers: { 'x-access-token': authToken },
       });
 
@@ -95,17 +111,6 @@ describe('ACTIVITY HISTORIES ROUTES - POST /activityhistories', () => {
       expect(response.statusCode).toBe(200);
     });
 
-    it('should return a 404 if user doesn\'t exist', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/activityhistories',
-        payload: { ...payload, user: new ObjectId() },
-        headers: { 'x-access-token': authToken },
-      });
-
-      expect(response.statusCode).toBe(404);
-    });
-
     it('should return a 404 if activity doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -118,6 +123,7 @@ describe('ACTIVITY HISTORIES ROUTES - POST /activityhistories', () => {
     });
 
     it('should return a 404 if user doesn\'t follow course where activity', async () => {
+      authToken = await getTokenByCredentials(userList[0].local);
       const response = await app.inject({
         method: 'POST',
         url: '/activityhistories',
@@ -126,6 +132,18 @@ describe('ACTIVITY HISTORIES ROUTES - POST /activityhistories', () => {
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return a 403 if activity user is not logged user', async () => {
+      authToken = await getTokenByCredentials(userList[0].local);
+      const response = await app.inject({
+        method: 'POST',
+        url: '/activityhistories',
+        payload: { user: userList[1]._id, activity: activitiesList[0]._id, score: 9 },
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 400 if questionnaire answer without card', async () => {
