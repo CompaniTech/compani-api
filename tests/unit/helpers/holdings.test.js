@@ -94,7 +94,7 @@ describe('getById', () => {
         { query: 'populate', args: [{ path: 'companies', populate: { path: 'company', select: 'name' } }] },
         {
           query: 'populate',
-          args: [{ path: 'users', populate: { path: 'user', select: 'identity local.email contact.phone' } }],
+          args: [{ path: 'users', populate: { path: 'user', select: 'identity local.email contact' } }],
         },
         { query: 'lean', args: [] }]
     );

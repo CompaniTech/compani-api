@@ -258,7 +258,7 @@ describe('getProgram', () => {
         },
         {
           query: 'populate',
-          args: [{ path: 'testers', select: 'identity.firstname identity.lastname local.email contact.phone' }],
+          args: [{ path: 'testers', select: 'identity.firstname identity.lastname local.email contact' }],
         },
         { query: 'populate', args: ['categories'] },
         { query: 'lean', args: [{ virtuals: true }] },
