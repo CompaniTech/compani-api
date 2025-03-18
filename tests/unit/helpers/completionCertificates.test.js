@@ -25,12 +25,20 @@ describe('list', () => {
     const trainee = { identity: { firstname: 'Pop', lastname: 'CORN' } };
     const completionCertificates = [
       {
-        course: { companies: [{ name: 'Alenvi' }], subProgram: { program: { name: 'program' } }, misc: 'course' },
+        course: {
+          companies: [{ name: 'Alenvi', holding: { name: 'Alenvi' } }],
+          subProgram: { program: { name: 'program' } },
+          misc: 'course',
+        },
         trainee,
         month: '06_2024',
       },
       {
-        course: { companies: [{ name: 'Alenvi' }], subProgram: { program: { name: 'program' } }, misc: 'course' },
+        course: {
+          companies: [{ name: 'Alenvi', holding: { name: 'Alenvi' } }],
+          subProgram: { program: { name: 'program' } },
+          misc: 'course',
+        },
         trainee,
         month: '07_2024',
       },
@@ -55,7 +63,7 @@ describe('list', () => {
               path: 'course',
               select: 'companies subProgram misc',
               populate: [
-                { path: 'companies', select: 'name' },
+                { path: 'companies', select: 'name', populate: { path: 'holding', select: 'name' } },
                 { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               ],
             },
@@ -75,7 +83,11 @@ describe('list', () => {
     const trainee = { identity: { firstname: 'Pop', lastname: 'CORN' } };
     const completionCertificates = [
       {
-        course: { companies: [{ name: 'Alenvi' }], subProgram: { program: { name: 'program' } }, misc: 'course' },
+        course: {
+          companies: [{ name: 'Alenvi', holding: { name: 'Alenvi' } }],
+          subProgram: { program: { name: 'program' } },
+          misc: 'course',
+        },
         trainee,
         month: '06_2024',
       },
@@ -100,7 +112,7 @@ describe('list', () => {
               path: 'course',
               select: 'companies subProgram misc',
               populate: [
-                { path: 'companies', select: 'name' },
+                { path: 'companies', select: 'name', populate: { path: 'holding', select: 'name' } },
                 { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               ],
             },
