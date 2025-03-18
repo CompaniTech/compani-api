@@ -7,7 +7,7 @@ const CompletionCertificate = require('../../../src/models/CompletionCertificate
 const CompletionCertificatesHelper = require('../../../src/helpers/completionCertificates');
 const { VENDOR_ROLES } = require('../../../src/helpers/constants');
 
-describe('list #tag', () => {
+describe('list', () => {
   let findCompletionCertificates;
 
   beforeEach(() => {
