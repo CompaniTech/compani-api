@@ -7,7 +7,7 @@ const CompletionCertificate = require('../../../src/models/CompletionCertificate
 const CompletionCertificatesHelper = require('../../../src/helpers/completionCertificates');
 const { VENDOR_ROLES } = require('../../../src/helpers/constants');
 
-describe('list', () => {
+describe('list #tag', () => {
   let findCompletionCertificates;
 
   beforeEach(() => {
@@ -63,7 +63,11 @@ describe('list', () => {
               path: 'course',
               select: 'companies subProgram misc',
               populate: [
-                { path: 'companies', select: 'name', populate: { path: 'holding', select: 'name' } },
+                {
+                  path: 'companies',
+                  select: 'name',
+                  populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+                },
                 { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               ],
             },
@@ -112,7 +116,11 @@ describe('list', () => {
               path: 'course',
               select: 'companies subProgram misc',
               populate: [
-                { path: 'companies', select: 'name', populate: { path: 'holding', select: 'name' } },
+                {
+                  path: 'companies',
+                  select: 'name',
+                  populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+                },
                 { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               ],
             },
