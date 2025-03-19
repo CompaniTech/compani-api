@@ -339,20 +339,24 @@ const listForPedagogy = async (query, origin, credentials) => {
 
   const shouldComputePresence = true;
 
+  const onGoing = [];
+  const achieved = [];
   const formattedTraineeCourses = filteredTraineeCourses
-    .map(course => exports.formatCourseWithProgress(course, shouldComputePresence));
+    .map((course) => {
+      let progress = 0;
+      const courseWithProgress = exports.formatCourseWithProgress(course, shouldComputePresence);
+
+      if (origin === MOBILE) {
+        if (courseWithProgress.format === STRICTLY_E_LEARNING) progress = courseWithProgress.progress.eLearning || 0;
+        else progress = courseWithProgress.progress.blended || 0;
+        if (progress < 1) onGoing.push(courseWithProgress);
+        else achieved.push(courseWithProgress);
+      }
+
+      return courseWithProgress;
+    });
 
   if (origin === MOBILE) {
-    const onGoing = [];
-    const achieved = [];
-
-    formattedTraineeCourses.forEach((course) => {
-      let progress = 0;
-      if (course.format === STRICTLY_E_LEARNING) progress = course.progress.eLearning || 0;
-      else progress = course.progress.blended || 0;
-      if (progress < 1) onGoing.push(course);
-      else achieved.push(course);
-    });
     return {
       tutorCourses,
       traineeCourses: { onGoing, achieved },
