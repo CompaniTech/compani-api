@@ -1765,6 +1765,21 @@ describe('updateUser', () => {
     sinon.assert.calledOnceWithExactly(userUpdateOne, { _id: userId }, { $set: { 'role.holding': holdingRole._id } });
     sinon.assert.notCalled(roleFindById);
   });
+
+  it('should remove a user phone', async () => {
+    const payload = { contact: { phone: '', countryCode: '' } };
+
+    await UsersHelper.updateUser(userId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      userUpdateOne,
+      { _id: userId },
+      { $set: {}, $unset: { 'contact.phone': '', 'contact.countryCode': '' } }
+    );
+    sinon.assert.notCalled(roleFindById);
+    sinon.assert.notCalled(userHoldingCreate);
+    sinon.assert.notCalled(roleFindOne);
+  });
 });
 
 describe('uploadPicture', () => {

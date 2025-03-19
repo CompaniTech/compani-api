@@ -312,7 +312,8 @@ exports.createUser = async (userPayload, credentials) => {
 };
 
 const formatUpdatePayload = async (updatedUser) => {
-  const payload = omit(updatedUser, ['role', 'company', 'holding']);
+  let payload = omit(updatedUser, ['role', 'company', 'holding']);
+  let payloadToUnset = {};
 
   if (updatedUser.role) {
     const role = await Role.findById(updatedUser.role, { name: 1, interface: 1 }).lean();
@@ -326,8 +327,13 @@ const formatUpdatePayload = async (updatedUser) => {
 
     payload.role = { holding: role._id };
   }
+  const removePhone = has(updatedUser, 'contact.phone') && updatedUser.contact.phone === '';
+  if (removePhone) {
+    payloadToUnset = { $unset: { 'contact.phone': '', 'contact.countryCode': '' } };
+    payload = omit(payload, 'contact');
+  }
 
-  return payload;
+  return { $set: UtilsHelper.flatQuery(payload), ...payloadToUnset };
 };
 
 exports.updateUser = async (userId, userPayload) => {
@@ -341,8 +347,7 @@ exports.updateUser = async (userId, userPayload) => {
   }
 
   if (userPayload.holding) await UserHolding.create({ user: userId, holding: userPayload.holding });
-
-  await User.updateOne({ _id: userId }, { $set: UtilsHelper.flatQuery(payload) });
+  await User.updateOne({ _id: userId }, payload);
 };
 
 exports.removeUser = async (user, credentials) => {
