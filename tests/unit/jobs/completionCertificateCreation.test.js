@@ -110,16 +110,28 @@ describe('completionCertificateCreation', () => {
       },
     ];
 
-    const attendances = [{
-      trainee: traineeIds[0],
-      courseSlot: {
-        _id: slotIds[0],
-        startDate: '2025-02-12T10:00:00.000Z',
-        endDate: '2025-02-12T12:00:00.000Z',
-        course: courseIds[0],
+    const attendances = [
+      {
+        trainee: traineeIds[0],
+        courseSlot: {
+          _id: slotIds[0],
+          startDate: '2025-02-12T10:00:00.000Z',
+          endDate: '2025-02-12T12:00:00.000Z',
+          course: courseIds[0],
+        },
+        company: companyIds[0],
       },
-      company: companyIds[0],
-    }];
+      {
+        trainee: new ObjectId(),
+        courseSlot: {
+          _id: slotIds[0],
+          startDate: '2025-02-12T10:00:00.000Z',
+          endDate: '2025-02-12T12:00:00.000Z',
+          course: courseIds[0],
+        },
+        company: companyIds[0],
+      },
+    ];
 
     const activityHistories = [
       { activity: activityIds[1], user: traineeIds[1] },

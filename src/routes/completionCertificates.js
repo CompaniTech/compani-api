@@ -3,6 +3,7 @@
 const Joi = require('joi');
 const { list } = require('../controllers/completionCertificatesController');
 const { monthValidation } = require('./validations/utils');
+const { authorizeGetCompletionCertificates } = require('./preHandlers/completionCertificates');
 
 exports.plugin = {
   name: 'routes-completion-certificates',
@@ -15,8 +16,10 @@ exports.plugin = {
         validate: {
           query: Joi.object({
             months: Joi.alternatives().try(Joi.array().items(monthValidation).min(1), monthValidation),
-          }),
+            course: Joi.objectId(),
+          }).xor('months', 'course'),
         },
+        pre: [{ method: authorizeGetCompletionCertificates }],
       },
       handler: list,
     });

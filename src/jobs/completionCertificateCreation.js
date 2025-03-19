@@ -1,5 +1,5 @@
 const groupBy = require('lodash/groupBy');
-const { Boom } = require('@hapi/boom');
+const Boom = require('@hapi/boom');
 const { ObjectId } = require('mongodb');
 const Course = require('../models/Course');
 const Attendance = require('../models/Attendance');
@@ -48,6 +48,8 @@ const completionCertificateCreationJob = {
         if ((attendancesByCourse[course._id] || []).length) {
           const attendanceByTrainee = groupBy(attendancesByCourse[course._id], 'trainee');
           for (const trainee of Object.keys(attendanceByTrainee)) {
+            if (!UtilsHelper.doesArrayIncludeId(course.trainees, trainee)) continue;
+
             const payload = { course: course._id, trainee: new ObjectId(trainee), month };
             const hasCertificateForMonth = await CompletionCertificate.countDocuments(payload);
 
