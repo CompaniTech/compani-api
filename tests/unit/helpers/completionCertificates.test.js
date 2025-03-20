@@ -7,7 +7,7 @@ const CompletionCertificate = require('../../../src/models/CompletionCertificate
 const CompletionCertificatesHelper = require('../../../src/helpers/completionCertificates');
 const { VENDOR_ROLES } = require('../../../src/helpers/constants');
 
-describe('list', () => {
+describe('list #tag', () => {
   let findCompletionCertificates;
 
   beforeEach(() => {
@@ -26,7 +26,7 @@ describe('list', () => {
     const completionCertificates = [
       {
         course: {
-          companies: [{ name: 'Alenvi', holding: { name: 'Alenvi' } }],
+          companies: [{ name: 'Alenvi', holding: { name: 'Adef Résidencess' } }],
           subProgram: { program: { name: 'program' } },
           misc: 'course',
         },
@@ -35,7 +35,7 @@ describe('list', () => {
       },
       {
         course: {
-          companies: [{ name: 'Alenvi', holding: { name: 'Alenvi' } }],
+          companies: [{ name: 'Alenvi' }],
           subProgram: { program: { name: 'program' } },
           misc: 'course',
         },
