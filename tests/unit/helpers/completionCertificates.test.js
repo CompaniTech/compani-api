@@ -26,7 +26,7 @@ describe('list', () => {
     const completionCertificates = [
       {
         course: {
-          companies: [{ name: 'Alenvi', holding: { name: 'Adef Résidencess' } }],
+          companies: [{ name: 'Pepsi', holding: { name: 'Coca Cola' } }],
           subProgram: { program: { name: 'program' } },
           misc: 'course',
         },
@@ -35,7 +35,7 @@ describe('list', () => {
       },
       {
         course: {
-          companies: [{ name: 'Alenvi' }],
+          companies: [{ name: 'Orangina' }],
           subProgram: { program: { name: 'program' } },
           misc: 'course',
         },
@@ -88,7 +88,7 @@ describe('list', () => {
     const completionCertificates = [
       {
         course: {
-          companies: [{ name: 'Alenvi', holding: { name: 'Alenvi' } }],
+          companies: [{ name: 'Pepsi', holding: { name: 'Coca Cola' } }],
           subProgram: { program: { name: 'program' } },
           misc: 'course',
         },
