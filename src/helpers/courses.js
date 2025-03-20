@@ -180,35 +180,33 @@ const formatQuery = (query, credentials) => {
   return formattedQuery;
 };
 
-const formatCourseStep = (stepId, courseId, courseName, courseMisc, courseSteps, stepSlots) => {
-  const nextSlot = stepSlots.find(slot => CompaniDate().isBefore(slot.endDate));
-  const slotsSorted = stepSlots.sort(DatesUtilsHelper.ascendingSortBy('endDate'));
-  const stepIndex = courseSteps.map(step => step._id.toHexString()).indexOf(stepId);
-
-  return {
-    name: courseName,
-    misc: courseMisc,
-    stepIndex,
-    firstSlot: nextSlot.endDate,
-    type: nextSlot.step.type,
-    slots: slotsSorted.map(s => s.endDate),
-    _id: slotsSorted[0]._id,
-    progress: courseSteps[stepIndex].progress,
-    courseId,
-  };
-};
-
 const formatCourseStepsList = (course) => {
   if (course.subProgram.isStrictlyELearning) return [];
 
   const courseName = get(course, 'subProgram.program.name');
   const courseMisc = course.misc || '';
   const courseSteps = get(course, 'subProgram.steps');
-  const stepSlots = groupBy(course.slots.filter(s => get(s, 'step._id')), s => s.step._id);
+  const stepSlotsList = groupBy(course.slots.filter(s => get(s, 'step._id')), s => s.step._id);
 
-  return Object.keys(stepSlots)
-    .filter(stepId => !!stepSlots[stepId].find(slot => CompaniDate().isBefore(slot.endDate)))
-    .map(stepId => formatCourseStep(stepId, course._id, courseName, courseMisc, courseSteps, stepSlots[stepId]));
+  return Object.entries(stepSlotsList)
+    .filter(([, stepSlots]) => !!stepSlots.find(slot => CompaniDate().isBefore(slot.endDate)))
+    .map(([stepId, stepSlots]) => {
+      const nextSlot = stepSlots.find(slot => CompaniDate().isBefore(slot.endDate));
+      const slotsSorted = stepSlots.sort(DatesUtilsHelper.ascendingSortBy('endDate'));
+      const stepIndex = courseSteps.map(step => step._id.toHexString()).indexOf(stepId);
+
+      return {
+        name: courseName,
+        misc: courseMisc,
+        stepIndex,
+        firstSlot: nextSlot.endDate,
+        type: nextSlot.step.type,
+        slots: slotsSorted.map(s => s.endDate),
+        _id: slotsSorted[0]._id,
+        progress: courseSteps[stepIndex].progress,
+        courseId: course._id,
+      };
+    });
 };
 
 const listForOperations = async (query, origin, credentials) => {
