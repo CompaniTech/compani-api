@@ -4413,7 +4413,7 @@ describe('sendSMS', () => {
     sinon.assert.calledWith(
       sendStub.getCall(0),
       {
-        recipient: `+33${trainees[0].contact.phone.substring(1)}`,
+        recipient: '+33 1 23 45 67 89',
         sender: 'Compani',
         content: payload.content,
         tag: COURSE_SMS,
@@ -4422,7 +4422,7 @@ describe('sendSMS', () => {
     sinon.assert.calledWithExactly(
       sendStub.getCall(1),
       {
-        recipient: `+33${trainees[1].contact.phone.substring(1)}`,
+        recipient: '+33 9 87 65 43 21',
         sender: 'Compani',
         content: payload.content,
         tag: COURSE_SMS,

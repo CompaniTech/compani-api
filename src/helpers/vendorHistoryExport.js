@@ -391,7 +391,7 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
       'Prénom Nom répondant(e)': UtilsHelper.formatIdentity(get(qHistory, 'user.identity') || '', 'FL'),
       'Mail répondant(e)': get(qHistory, 'user.local.email'),
       'Numéro de tél répondant(e)': get(qHistory, 'user.contact.phone')
-        ? `${qHistory.user.contact.countryCode} ${qHistory.user.contact.phone.substring(1)}`
+        ? `${UtilsHelper.formatPhone(qHistory.user.contact)}`
         : '',
       ...questionsAnswers,
     };

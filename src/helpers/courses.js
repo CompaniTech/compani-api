@@ -840,7 +840,7 @@ exports.sendSMS = async (courseId, payload, credentials) => {
     if (!get(trainee, 'contact.phone')) missingPhones.push(trainee._id);
     else {
       promises.push(SmsHelper.send({
-        recipient: `${trainee.contact.countryCode}${trainee.contact.phone.substring(1)}`,
+        recipient: `${UtilsHelper.formatPhone(trainee.contact)}`,
         sender: 'Compani',
         content: payload.content,
         tag: COURSE_SMS,
@@ -1271,10 +1271,7 @@ exports.formatCourseForConvocationPdf = (course) => {
   const contact = {
     formattedIdentity: UtilsHelper.formatIdentity(get(course, 'contact.identity'), 'FL'),
     email: get(course, 'contact.local.email'),
-    formattedPhone: get(course, 'contact.contact.phone')
-      ? `${get(course, 'contact.contact.countryCode')} `
-      + `${UtilsHelper.formatPhoneNumber(course.contact.contact.phone.substring(1))}`
-      : '',
+    formattedPhone: get(course, 'contact.contact.phone') ? UtilsHelper.formatPhone(course.contact.contact) : '',
   };
   const formattedTrainers = course.trainers.map(trainer => ({
     ...trainer,

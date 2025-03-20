@@ -1320,7 +1320,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
         WEBAPP,
         'ZIZOU',
         'zizou@2027.com',
-        '+33 600000000',
+        '+33 6 00 00 00 00',
         'Ouai oklm',
         '5',
         'Oui,Peut être',
