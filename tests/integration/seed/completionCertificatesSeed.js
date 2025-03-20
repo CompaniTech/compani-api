@@ -46,7 +46,13 @@ const completionCertificateList = [
   { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '01-2025' },
   { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '02-2025' },
   { _id: new ObjectId(), course: courseList[1]._id, trainee: auxiliary._id, month: '01-2025' },
-  { _id: new ObjectId(), course: courseList[1]._id, trainee: auxiliary._id, month: '02-2025' },
+  {
+    _id: new ObjectId(),
+    course: courseList[1]._id,
+    trainee: auxiliary._id,
+    month: '02-2025',
+    file: { publicId: 'certif1', link: 'https://test.com/certif1' },
+  },
 ];
 
 const populateDB = async () => {
@@ -60,4 +66,4 @@ const populateDB = async () => {
   ]);
 };
 
-module.exports = { populateDB, courseList };
+module.exports = { populateDB, courseList, completionCertificateList };

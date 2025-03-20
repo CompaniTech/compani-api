@@ -2,7 +2,7 @@ const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const app = require('../../server');
 const { getToken } = require('./helpers/authentication');
-const { populateDB, courseList } = require('./seed/completionCertificatesSeed');
+const { populateDB, courseList, completionCertificateList } = require('./seed/completionCertificatesSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -94,6 +94,68 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/completioncertificates?months=02-2025',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should generate completion certificates file', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/completioncertificates/${completionCertificateList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.completionCertificates.length).toBe(2);
+    });
+
+    it('should return 404 if completion certificate does not exist', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/completioncertificates/${new ObjectId()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 409 if file already exists', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/completioncertificates/${completionCertificateList[4]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'trainer', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/completioncertificates/${completionCertificateList[0]._id}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
 
