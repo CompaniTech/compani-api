@@ -312,28 +312,28 @@ exports.createUser = async (userPayload, credentials) => {
 };
 
 const formatUpdatePayload = async (updatedUser) => {
-  let payload = omit(updatedUser, ['role', 'company', 'holding']);
+  let payloadToSet = omit(updatedUser, ['role', 'company', 'holding']);
   let payloadToUnset = {};
 
   if (updatedUser.role) {
     const role = await Role.findById(updatedUser.role, { name: 1, interface: 1 }).lean();
     if (!role) throw Boom.badRequest(translate[language].unknownRole);
 
-    payload.role = { [role.interface]: role._id.toHexString() };
+    payloadToSet.role = { [role.interface]: role._id.toHexString() };
   }
 
   if (updatedUser.holding) {
     const role = await Role.findOne({ name: HOLDING_ADMIN }).lean();
 
-    payload.role = { holding: role._id };
+    payloadToSet.role = { holding: role._id };
   }
   const removePhone = has(updatedUser, 'contact.phone') && updatedUser.contact.phone === '';
   if (removePhone) {
     payloadToUnset = { $unset: { 'contact.phone': '', 'contact.countryCode': '' } };
-    payload = omit(payload, 'contact');
+    payloadToSet = omit(payloadToSet, 'contact');
   }
 
-  return { $set: UtilsHelper.flatQuery(payload), ...payloadToUnset };
+  return { $set: UtilsHelper.flatQuery(payloadToSet), ...payloadToUnset };
 };
 
 exports.updateUser = async (userId, userPayload) => {
