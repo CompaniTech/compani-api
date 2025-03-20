@@ -840,7 +840,7 @@ exports.sendSMS = async (courseId, payload, credentials) => {
     if (!get(trainee, 'contact.phone')) missingPhones.push(trainee._id);
     else {
       promises.push(SmsHelper.send({
-        recipient: `${UtilsHelper.formatPhone(trainee.contact)}`,
+        recipient: `${trainee.contact.countryCode}${trainee.contact.phone.substring(1)}`,
         sender: 'Compani',
         content: payload.content,
         tag: COURSE_SMS,

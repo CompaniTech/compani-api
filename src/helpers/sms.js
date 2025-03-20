@@ -1,19 +1,19 @@
 const axios = require('axios');
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
-const UtilsHelper = require('./utils');
 const { PASSWORD_SMS } = require('./constants');
 
 exports.sendVerificationCodeSms = async (contact, code) => {
+  const { phone, countryCode } = contact;
   await exports.send({
     tag: PASSWORD_SMS,
     content: `Votre code Compani : ${code}.`
       + ' Veuillez utiliser ce code, valable une heure, pour confirmer votre identité.',
-    recipient: `${UtilsHelper.formatPhone(contact)}`,
+    recipient: `${countryCode}${phone.substring(1)}`,
     sender: 'Compani',
   });
 
-  return contact;
+  return { phone, countryCode };
 };
 
 /**

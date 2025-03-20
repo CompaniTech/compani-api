@@ -2697,7 +2697,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33 9 87 65 43 21',
+          recipient: '+33987654321',
           sender: 'Compani',
           content: payload.content,
           tag: COURSE_SMS,
@@ -2722,7 +2722,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33 9 87 65 43 21',
+          recipient: '+33987654321',
           sender: 'Compani',
           content: 'test',
           tag: COURSE_SMS,
@@ -2750,7 +2750,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33 9 87 65 43 21',
+          recipient: '+33987654321',
           sender: 'Compani',
           content: 'Ceci est un test',
           tag: COURSE_SMS,

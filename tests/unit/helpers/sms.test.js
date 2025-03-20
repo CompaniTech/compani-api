@@ -22,7 +22,7 @@ describe('sendVerificationCodeSms', () => {
         tag: PASSWORD_SMS,
         content: 'Votre code Compani : 1234.'
           + ' Veuillez utiliser ce code, valable une heure, pour confirmer votre identité.',
-        recipient: '+33 9 87 65 43 21',
+        recipient: '+33987654321',
         sender: 'Compani',
       }
     );
