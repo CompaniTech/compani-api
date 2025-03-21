@@ -199,7 +199,7 @@ const formatCourseStepsList = (course) => {
         name: courseName,
         misc: courseMisc,
         stepIndex,
-        firstSlot: nextSlot.endDate,
+        nextSlot: nextSlot.endDate,
         type: nextSlot.step.type,
         slots: slotsSorted.map(s => s.endDate),
         _id: slotsSorted[0]._id,
@@ -229,7 +229,7 @@ const listForOperations = async (query, origin, credentials) => {
       nextSteps: courses.map(formatCourseStepsList)
         .flat()
         .filter(step => step.slots && step.slots.length)
-        .sort(DatesUtilsHelper.ascendingSortBy('firstSlot')),
+        .sort(DatesUtilsHelper.ascendingSortBy('nextSlot')),
     };
   }
 
@@ -361,7 +361,7 @@ const listForPedagogy = async (query, origin, credentials) => {
       nextSteps: onGoing.map(formatCourseStepsList)
         .flat()
         .filter(step => step.slots && step.slots.length)
-        .sort(DatesUtilsHelper.ascendingSortBy('firstSlot')),
+        .sort(DatesUtilsHelper.ascendingSortBy('nextSlot')),
     };
   }
   return { tutorCourses, traineeCourses: formattedTraineeCourses };

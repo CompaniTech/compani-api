@@ -1518,7 +1518,7 @@ describe('list', () => {
             name: 'program 1',
             misc: 'program',
             stepIndex: 1,
-            firstSlot: '2025-03-04T17:00:00.000Z',
+            nextSlot: '2025-03-04T17:00:00.000Z',
             type: ON_SITE,
             _id: slotId,
             slots: ['2019-11-06T12:00:00.000Z', '2025-03-04T17:00:00.000Z'],
