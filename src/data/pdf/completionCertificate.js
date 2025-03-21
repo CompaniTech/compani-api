@@ -176,7 +176,16 @@ const defineCheckbox = (xPos, yPos, label, isLargeProgramName, isChecked = false
 };
 
 exports.getOfficialPdfContent = async (data) => {
-  const { trainee, programName, startDate, endDate, date, duration } = data;
+  const {
+    trainee,
+    programName,
+    startDate,
+    endDate,
+    date,
+    duration = { eLearning: '0h', total: '0h' },
+    isVAEISubProgram = false,
+    certificateGenerationModeIsMonthly = false,
+  } = data;
   const isLargeProgramName = programName.length > 60;
   const hasELearningStep = duration.eLearning !== '0h';
 
@@ -225,10 +234,11 @@ exports.getOfficialPdfContent = async (data) => {
       marginLeft: 4,
       marginBottom: 4,
     },
-    ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, true),
+    ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, !isVAEISubProgram),
     ...defineCheckbox(59, 324, ' bilan de compétences', isLargeProgramName),
     ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName),
     ...defineCheckbox(59, 361, ' action de formation par apprentissage', isLargeProgramName),
+    ...defineCheckbox(59, 380, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
     {
       text: [
         { text: 'qui s\'est déroulée du ', bold: true },
@@ -245,16 +255,27 @@ exports.getOfficialPdfContent = async (data) => {
         {
           text: [
             { text: 'pour une durée de ', bold: true },
-            (hasELearningStep
-              ? {
+            ...(certificateGenerationModeIsMonthly
+              ? [{
+                text: `${trainee.attendanceDuration} d’accompagnement à distance et en présentiel, et
+                  ${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani.
+                ${isVAEISubProgram ? 'Ce certificat est lié à une facture de frais pédagogiques.' : ''}`,
+                italic: true,
+              }]
+              : []),
+            ...(!certificateGenerationModeIsMonthly && hasELearningStep
+              ? [{
                 text: `${trainee.totalDuration} en formation (dont ${trainee.attendanceDuration} en présentiel et `
                 + `${trainee.eLearningDuration} en e-learning) sur ${duration.total} prévues. `,
                 italics: true,
-              }
-              : {
+              }]
+              : []),
+            ...(!certificateGenerationModeIsMonthly && !hasELearningStep
+              ? [{
                 text: `${trainee.attendanceDuration} en formation présentielle sur ${duration.total} prévues. `,
                 italics: true,
-              }),
+              }]
+              : []),
           ],
         },
         { text: '2', fontSize: 8, bold: true },
@@ -268,7 +289,6 @@ exports.getOfficialPdfContent = async (data) => {
       + 'durée de 3 ans à compter de la fin de l\'année du dernier paiement. En cas de cofinancement des fonds '
       + 'européens la durée de conservation est étendue conformément aux obligations conventionnelles spécifiques.',
       alignment: 'justify',
-      bold: true,
     },
   ];
 
@@ -278,39 +298,40 @@ exports.getOfficialPdfContent = async (data) => {
         [
           {
             text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-            absolutePosition: { x: 35, y: 530 },
+            absolutePosition: { x: 35, y: 550 },
             marginLeft: 46,
           },
           {
             text: [{ text: 'Le : ', bold: true }, { text: `${date}`, italics: true }],
-            absolutePosition: { x: 35, y: 550 },
+            absolutePosition: { x: 35, y: 570 },
             marginLeft: 46,
           },
         ],
         [
           {
-            canvas: [{ type: 'rect', x: 0, y: 0, w: 260, h: 180, r: 0 }],
-            absolutePosition: { y: 535 },
+            canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
+            absolutePosition: { y: 555 },
             alignment: 'right',
           },
           {
             text: 'Cachet et signature du responsable du \n dispensateur de formation',
             marginTop: 6,
             alignment: 'center',
+            fontSize: 10,
           },
           {
             text: 'Thibault de Saint Blancard, Directeur Compani',
             bold: true,
             marginTop: 6,
             alignment: 'center',
-            fontSize: 12,
+            fontSize: 10,
           },
-          { image: signature, width: 130, absolutePosition: { x: 380, y: 595 } },
+          { image: signature, width: 125, absolutePosition: { x: 380, y: 618 } },
         ],
       ],
       marginLeft: 40,
       marginRight: 40,
-      absolutePosition: { x: 35, y: 535 },
+      absolutePosition: { x: 37, y: 565 },
     },
     {
       text: [
@@ -325,12 +346,11 @@ exports.getOfficialPdfContent = async (data) => {
               + 'et le temps estimé pour les réaliser.',
         },
       ],
-      absolutePosition: { x: 35, y: 745 },
+      absolutePosition: { x: 37, y: 755 },
       marginLeft: 40,
       marginRight: 40,
       marginTop: 8,
-      fontSize: 12,
-      bold: true,
+      fontSize: 11,
     },
   ];
 

@@ -1,10 +1,16 @@
+const { ObjectId } = require('mongodb');
+const get = require('lodash/get');
+const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const CompletionCertificate = require('../models/CompletionCertificate');
 const Attendance = require('../models/Attendance');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
-const { MM_YYYY, MONTH, DD_MM_YYYY, E_LEARNING, SHORT_DURATION_H_MM } = require('./constants');
+const { MM_YYYY, MONTH, DD_MM_YYYY, E_LEARNING, SHORT_DURATION_H_MM, OFFICIAL } = require('./constants');
 const UtilsHelper = require('./utils');
 const CoursesHelper = require('./courses');
+const GCloudStorageHelper = require('./gCloudStorage');
+
+const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 exports.list = async (query) => {
   const { months, course } = query;
@@ -63,39 +69,66 @@ exports.generate = async (req) => {
           },
         ],
       },
-      { path: 'trainee', select: 'identity' },
+      {
+        path: 'trainee',
+        select: 'identity',
+        populate: { path: 'company', populate: { path: 'company', select: 'name' } },
+      },
     ])
     .setOptions({ isVendorUser: true })
     .lean();
 
-  const startOfMonth = CompaniDate(completionCertificate.month, MM_YYYY).startOf(MONTH).format(DD_MM_YYYY);
-  const endOfMonth = CompaniDate(completionCertificate.month, MM_YYYY).endOf(MONTH).format(DD_MM_YYYY);
-  const traineeId = completionCertificate.trainee._id;
+  const { course, month, trainee } = completionCertificate;
 
-  const courseSlotIdsOnMonth = completionCertificate.course.slots
+  const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).format(DD_MM_YYYY);
+  const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).format(DD_MM_YYYY);
+
+  const courseSlotIdsOnMonth = course.slots
     .filter(slot => CompaniDate(slot.startDate).isSameOrAfter(CompaniDate(startOfMonth, DD_MM_YYYY)) &&
       CompaniDate(slot.endDate).isSameOrBefore(CompaniDate(endOfMonth, DD_MM_YYYY)))
     .map(s => s._id);
 
   const attendances = await Attendance
-    .find({ trainee: traineeId, courseSlot: { $in: courseSlotIdsOnMonth } })
+    .find({ trainee: trainee._id, courseSlot: { $in: courseSlotIdsOnMonth } })
     .setOptions({ isVendorUser: true })
     .lean();
 
   const slotsWithAttendanceIds = attendances.map(a => a.courseSlot);
 
-  const slotsWithAttendance = completionCertificate.course.slots
+  const slotsWithAttendance = course.slots
     .filter(slot => UtilsHelper.doesArrayIncludeId(slotsWithAttendanceIds, slot._id));
 
   const traineePresence = UtilsHelper.getTotalDuration(slotsWithAttendance);
 
-  const eLearningSteps = completionCertificate.course.subProgram.steps.filter(step => step.type === E_LEARNING);
+  const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
   const dates = {
     startDate: CompaniDate(startOfMonth, DD_MM_YYYY).toISO(),
     endDate: CompaniDate(endOfMonth, DD_MM_YYYY).toISO(),
   };
 
-  const eLearningDuration = CoursesHelper.getELearningDuration(eLearningSteps, traineeId, dates);
+  const eLearningDuration = CoursesHelper.getELearningDuration(eLearningSteps, trainee._id, dates);
 
   const formattedELearningDuration = CompaniDuration(eLearningDuration).format(SHORT_DURATION_H_MM);
+
+  const traineeIdentity = UtilsHelper.formatIdentity(trainee.identity, 'FL');
+  const data = {
+    trainee: {
+      identity: traineeIdentity,
+      attendanceDuration: traineePresence,
+      eLearningDuration: formattedELearningDuration,
+      companyName: trainee.company.name,
+    },
+    startDate: startOfMonth,
+    endDate: endOfMonth,
+    date: CompaniDate().format(DD_MM_YYYY),
+    isVAEISubProgram: UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, course.subProgram._id),
+    certificateGenerationModeIsMonthly: true,
+    programName: get(course, 'subProgram.program.name').toUpperCase() || '',
+  };
+
+  const pdf = await CompletionCertificatePdf.getPdf(data, OFFICIAL);
+  const fileName = `certificat_realisation_${traineeIdentity}_${month}`;
+  const fileUploaded = await GCloudStorageHelper.uploadCourseFile({ fileName, file: pdf });
+
+  await CompletionCertificate.updateOne({ _id: completionCertificateId }, { file: fileUploaded });
 };
