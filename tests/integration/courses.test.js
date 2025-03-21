@@ -710,9 +710,9 @@ describe('COURSES ROUTES - GET /courses', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const coursesAsTrainee = response.result.data.courses.traineeCourses;
-    const coursesAsTutor = response.result.data.courses.tutorCourses;
-    expect(coursesAsTrainee.length).toBe(2);
+    const { traineeCourses, tutorCourses: coursesAsTutor } = response.result.data.courses;
+    const coursesAsTraineeCount = traineeCourses.onGoing.length + traineeCourses.achieved.length;
+    expect(coursesAsTraineeCount).toBe(2);
     expect(coursesAsTutor.length).toBe(1);
   });
 
@@ -909,10 +909,10 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(16);
+      expect(response.result.data.courses.courses.length).toEqual(16);
 
       const course =
-         response.result.data.courses.find(c => UtilsHelper.areObjectIdsEquals(coursesList[2]._id, c._id));
+         response.result.data.courses.courses.find(c => UtilsHelper.areObjectIdsEquals(coursesList[2]._id, c._id));
       expect(course).toEqual(expect.objectContaining({
         misc: 'second session',
         companies: [

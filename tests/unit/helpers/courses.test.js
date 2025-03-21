@@ -245,6 +245,7 @@ describe('list', () => {
     getTotalTheoreticalDurationSpy = sinon.spy(CourseHelper, 'getTotalTheoreticalDuration');
     formatCourseWithProgress = sinon.stub(CourseHelper, 'formatCourseWithProgress');
     getCompanyAtCourseRegistrationList = sinon.stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
+    UtilsMock.mockCurrentDate('2025-03-03T15:00:00.000Z');
   });
 
   afterEach(() => {
@@ -254,6 +255,7 @@ describe('list', () => {
     getTotalTheoreticalDurationSpy.restore();
     formatCourseWithProgress.restore();
     getCompanyAtCourseRegistrationList.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   describe('OPERATIONS', () => {
@@ -623,7 +625,7 @@ describe('list', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -641,7 +643,7 @@ describe('list', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -669,7 +671,7 @@ describe('list', () => {
               },
               progress: {
                 eLearning: 1,
-                live: 1,
+                blended: 1,
                 presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
               },
             }
@@ -883,7 +885,7 @@ describe('list', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -901,7 +903,7 @@ describe('list', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -934,7 +936,7 @@ describe('list', () => {
               },
               progress: {
                 eLearning: 1,
-                live: 1,
+                blended: 1,
                 presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
               },
             }
@@ -1165,7 +1167,7 @@ describe('list', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -1183,7 +1185,7 @@ describe('list', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -1216,7 +1218,7 @@ describe('list', () => {
               },
               progress: {
                 eLearning: 1,
-                live: 1,
+                blended: 1,
                 presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
               },
             }
@@ -1310,6 +1312,7 @@ describe('list', () => {
     it('should return courses for loggedUser (as trainee)', async () => {
       const traineeOrTutorId = credentials._id;
       const stepId = new ObjectId();
+      const slotId = new ObjectId();
       const courseIds = [new ObjectId(), new ObjectId()];
       const coursesList = [
         {
@@ -1333,18 +1336,31 @@ describe('list', () => {
               areActivitiesValid: true,
             },
             ],
+            program: { name: 'program 0' },
           },
           slots: [
             {
               startDate: '2020-11-03T09:00:00.000Z',
               endDate: '2020-11-03T12:00:00.000Z',
-              step: stepId,
+              step: {
+                _id: stepId,
+                activities: [],
+                name: 'Développer des équipes agiles et autonomes',
+                type: 'on_site',
+                areActivitiesValid: true,
+              },
               attendances: [{ _id: new ObjectId() }],
             },
             {
               startDate: '2020-11-04T09:01:00.000Z',
               endDate: '2020-11-04T16:01:00.000Z',
-              step: stepId,
+              step: {
+                _id: stepId,
+                activities: [],
+                name: 'Développer des équipes agiles et autonomes',
+                type: 'on_site',
+                areActivitiesValid: true,
+              },
               attendances: [],
             },
           ],
@@ -1369,18 +1385,32 @@ describe('list', () => {
               type: 'on_site',
               areActivitiesValid: true,
             }],
+            program: { name: 'program 1' },
           },
           slots: [
             {
+              _id: slotId,
               startDate: '2019-11-06T09:00:00.000Z',
               endDate: '2019-11-06T12:00:00.000Z',
-              step: stepId,
+              step: {
+                _id: stepId,
+                activities: [],
+                name: 'Enjailler son équipe autonome',
+                type: 'on_site',
+                areActivitiesValid: true,
+              },
               attendances: [{ _id: new ObjectId() }],
             },
             {
-              startDate: '2019-12-22T09:00:00.000Z',
-              endDate: '2019-12-22T16:01:00.000Z',
-              step: stepId,
+              startDate: CompaniDate().add('P1D').toISO(),
+              endDate: CompaniDate().add('P1DT2H').toISO(),
+              step: {
+                _id: stepId,
+                activities: [],
+                name: 'Enjailler son équipe autonome',
+                type: 'on_site',
+                areActivitiesValid: true,
+              },
               attendances: [],
             },
           ],
@@ -1399,14 +1429,14 @@ describe('list', () => {
             { ...coursesList[0].subProgram.steps[0], progress: { eLearning: 1 } },
             {
               ...coursesList[0].subProgram.steps[1],
-              progress: { live: 1, presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } } },
+              progress: { live: 1, presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 600 } } },
             },
           ],
         },
         progress: {
           eLearning: 1,
-          live: 1,
-          presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
+          blended: 1,
+          presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 600 } },
         },
       });
       formatCourseWithProgress.onCall(1).returns({
@@ -1417,14 +1447,17 @@ describe('list', () => {
             { ...coursesList[1].subProgram.steps[0], progress: { eLearning: 1 } },
             {
               ...coursesList[1].subProgram.steps[1],
-              progress: { live: 1, presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } } },
+              progress: {
+                live: 0.5,
+                presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 300 } },
+              },
             },
           ],
         },
         progress: {
           eLearning: 1,
-          live: 1,
-          presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
+          blended: 0.5,
+          presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 300 } },
         },
       });
 
@@ -1432,9 +1465,9 @@ describe('list', () => {
 
       expect(result).toMatchObject({
         tutorCourses: [],
-        traineeCourses: coursesList.map(
-          course => (
-            {
+        traineeCourses: {
+          achieved: [coursesList[0]].map(
+            course => ({
               ...course,
               subProgram: {
                 ...course.subProgram,
@@ -1444,19 +1477,55 @@ describe('list', () => {
                     ...course.subProgram.steps[1],
                     progress: {
                       live: 1,
-                      presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
+                      presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 600 } },
                     },
                   },
                 ],
               },
               progress: {
                 eLearning: 1,
-                live: 1,
-                presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
+                blended: 1,
+                presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 600 } },
               },
-            }
-          )
-        ),
+            })
+          ),
+          onGoing: [coursesList[1]].map(
+            course => ({
+              ...course,
+              subProgram: {
+                ...course.subProgram,
+                steps: [
+                  { ...course.subProgram.steps[0], progress: { eLearning: 1 } },
+                  {
+                    ...course.subProgram.steps[1],
+                    progress: {
+                      live: 0.5,
+                      presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 300 } },
+                    },
+                  },
+                ],
+              },
+              progress: {
+                eLearning: 1,
+                blended: 0.5,
+                presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 300 } },
+              },
+            })
+          ),
+        },
+        nextSteps: [
+          {
+            name: 'program 1',
+            misc: 'program',
+            stepIndex: 1,
+            nextSlot: '2025-03-04T17:00:00.000Z',
+            type: ON_SITE,
+            _id: slotId,
+            slots: ['2019-11-06T12:00:00.000Z', '2025-03-04T17:00:00.000Z'],
+            progress: { live: 0.5, presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 300 } } },
+            courseId: courseIds[1],
+          },
+        ],
       });
 
       SinonMongoose.calledWithExactly(
@@ -1614,7 +1683,7 @@ describe('list', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -1623,27 +1692,31 @@ describe('list', () => {
 
       expect(result).toMatchObject({
         tutorCourses: [coursesList[0]],
-        traineeCourses: [{
-          ...coursesList[1],
-          subProgram: {
-            ...coursesList[1].subProgram,
-            steps: [
-              { ...coursesList[1].subProgram.steps[0], progress: { eLearning: 1 } },
-              {
-                ...coursesList[1].subProgram.steps[1],
-                progress: {
-                  live: 1,
-                  presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
+        traineeCourses: {
+          onGoing: [],
+          achieved: [{
+            ...coursesList[1],
+            subProgram: {
+              ...coursesList[1].subProgram,
+              steps: [
+                { ...coursesList[1].subProgram.steps[0], progress: { eLearning: 1 } },
+                {
+                  ...coursesList[1].subProgram.steps[1],
+                  progress: {
+                    live: 1,
+                    presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
+                  },
                 },
-              },
-            ],
-          },
-          progress: {
-            eLearning: 1,
-            live: 1,
-            presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-          },
-        }],
+              ],
+            },
+            progress: {
+              eLearning: 1,
+              blended: 1,
+              presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
+            },
+          }],
+        },
+        nextSteps: [],
       });
 
       SinonMongoose.calledWithExactly(
@@ -1909,7 +1982,7 @@ describe('formatCourseWithProgress', () => {
     });
     getCourseProgress.returns({
       eLearning: 1,
-      live: 1,
+      blended: 1,
       presence: { attendanceDuration: { minutes: 0 }, maxDuration: { minutes: 601 } },
     });
 
@@ -1929,7 +2002,7 @@ describe('formatCourseWithProgress', () => {
       },
       progress: {
         eLearning: 1,
-        live: 1,
+        blended: 1,
         presence: { attendanceDuration: { minutes: 0 }, maxDuration: { minutes: 601 } },
       },
     });
@@ -1981,7 +2054,7 @@ describe('formatCourseWithProgress', () => {
     };
     getProgress.onCall(0).returns({ eLearning: 1 });
     getProgress.onCall(1).returns({ live: 1 });
-    getCourseProgress.returns({ eLearning: 1, live: 1 });
+    getCourseProgress.returns({ eLearning: 1, blended: 1 });
 
     const result = await CourseHelper.formatCourseWithProgress(course);
 
@@ -1994,7 +2067,7 @@ describe('formatCourseWithProgress', () => {
           { ...course.subProgram.steps[1], progress: { live: 1 } },
         ],
       },
-      progress: { eLearning: 1, live: 1 },
+      progress: { eLearning: 1, blended: 1 },
     });
     sinon.assert.calledWithExactly(getProgress.getCall(0), course.subProgram.steps[0], [], false);
     sinon.assert.calledWithExactly(getProgress.getCall(1), course.subProgram.steps[1], course.slots, false);
@@ -2040,7 +2113,7 @@ describe('formatCourseWithProgress', () => {
     };
     getProgress.onCall(0).returns({ eLearning: 1 });
     getProgress.onCall(1).returns({ live: 1 });
-    getCourseProgress.returns({ eLearning: 1, live: 1 });
+    getCourseProgress.returns({ eLearning: 1, blended: 1 });
 
     const result = await CourseHelper.formatCourseWithProgress(course, false, true);
 
@@ -2054,7 +2127,7 @@ describe('formatCourseWithProgress', () => {
           { ...course.subProgram.steps[1], progress: { live: 1 } },
         ],
       },
-      progress: { eLearning: 1, live: 1 },
+      progress: { eLearning: 1, blended: 1 },
     });
     sinon.assert.calledWithExactly(getProgress.getCall(0), course.subProgram.steps[0], [], false);
     sinon.assert.calledWithExactly(getProgress.getCall(1), course.subProgram.steps[1], course.slots, false);
@@ -2755,7 +2828,7 @@ describe('getCourse', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -2780,7 +2853,7 @@ describe('getCourse', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -2922,7 +2995,7 @@ describe('getCourse', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
@@ -2947,7 +3020,7 @@ describe('getCourse', () => {
         },
         progress: {
           eLearning: 1,
-          live: 1,
+          blended: 1,
           presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
         },
       });
