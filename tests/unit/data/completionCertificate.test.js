@@ -323,7 +323,7 @@ describe('getCustomPdfContent', () => {
   });
 });
 
-describe('getOfficialPdfContent #tag', () => {
+describe('getOfficialPdfContent', () => {
   let downloadImages;
 
   beforeEach(() => {
@@ -409,6 +409,16 @@ describe('getOfficialPdfContent #tag', () => {
         marginBottom: 4,
         marginLeft: 32,
       },
+      // Checkbox 5
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 380 } },
+      {
+        text: [
+          { text: '', position: { x: 59, y: 380 }, marginRight: 4 },
+          { text: [{ text: ' action de VAE Inversée' }, { text: '', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 32,
+      },
     ];
 
     const body = [
@@ -478,7 +488,6 @@ describe('getOfficialPdfContent #tag', () => {
         + 'durée de 3 ans à compter de la fin de l\'année du dernier paiement. En cas de cofinancement des fonds '
         + 'européens la durée de conservation est étendue conformément aux obligations conventionnelles spécifiques.',
         alignment: 'justify',
-        bold: true,
       },
     ];
 
@@ -488,39 +497,40 @@ describe('getOfficialPdfContent #tag', () => {
           [
             {
               text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-              absolutePosition: { x: 35, y: 530 },
+              absolutePosition: { x: 35, y: 550 },
               marginLeft: 46,
             },
             {
               text: [{ text: 'Le : ', bold: true }, { text: '22/03/2022', italics: true }],
-              absolutePosition: { x: 35, y: 550 },
+              absolutePosition: { x: 35, y: 570 },
               marginLeft: 46,
             },
           ],
           [
             {
-              canvas: [{ type: 'rect', x: 0, y: 0, w: 260, h: 180, r: 0 }],
-              absolutePosition: { y: 535 },
+              canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
+              absolutePosition: { y: 555 },
               alignment: 'right',
             },
             {
               text: 'Cachet et signature du responsable du \n dispensateur de formation',
               marginTop: 6,
               alignment: 'center',
+              fontSize: 10,
             },
             {
               text: 'Thibault de Saint Blancard, Directeur Compani',
               bold: true,
               marginTop: 6,
               alignment: 'center',
-              fontSize: 12,
+              fontSize: 10,
             },
-            { image: paths[0], width: 130, absolutePosition: { x: 380, y: 595 } },
+            { image: paths[0], width: 125, absolutePosition: { x: 380, y: 618 } },
           ],
         ],
         marginLeft: 40,
         marginRight: 40,
-        absolutePosition: { x: 35, y: 535 },
+        absolutePosition: { x: 37, y: 565 },
       },
       {
         text: [
@@ -535,12 +545,11 @@ describe('getOfficialPdfContent #tag', () => {
                 + 'et le temps estimé pour les réaliser.',
           },
         ],
-        absolutePosition: { x: 35, y: 745 },
+        absolutePosition: { x: 37, y: 755 },
         marginLeft: 40,
         marginRight: 40,
         marginTop: 8,
-        fontSize: 12,
-        bold: true,
+        fontSize: 11,
       },
     ];
 
@@ -632,6 +641,16 @@ describe('getOfficialPdfContent #tag', () => {
         marginBottom: 4,
         marginLeft: 32,
       },
+      // Checkbox 5
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 380 } },
+      {
+        text: [
+          { text: '', position: { x: 59, y: 380 }, marginRight: 4 },
+          { text: [{ text: ' action de VAE Inversée' }, { text: '', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 32,
+      },
     ];
 
     const body = [
@@ -698,7 +717,6 @@ describe('getOfficialPdfContent #tag', () => {
         + 'durée de 3 ans à compter de la fin de l\'année du dernier paiement. En cas de cofinancement des fonds '
         + 'européens la durée de conservation est étendue conformément aux obligations conventionnelles spécifiques.',
         alignment: 'justify',
-        bold: true,
       },
     ];
 
@@ -708,39 +726,40 @@ describe('getOfficialPdfContent #tag', () => {
           [
             {
               text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-              absolutePosition: { x: 35, y: 530 },
+              absolutePosition: { x: 35, y: 550 },
               marginLeft: 46,
             },
             {
               text: [{ text: 'Le : ', bold: true }, { text: '22/03/2022', italics: true }],
-              absolutePosition: { x: 35, y: 550 },
+              absolutePosition: { x: 35, y: 570 },
               marginLeft: 46,
             },
           ],
           [
             {
-              canvas: [{ type: 'rect', x: 0, y: 0, w: 260, h: 180, r: 0 }],
-              absolutePosition: { y: 535 },
+              canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
+              absolutePosition: { y: 555 },
               alignment: 'right',
             },
             {
               text: 'Cachet et signature du responsable du \n dispensateur de formation',
               marginTop: 6,
               alignment: 'center',
+              fontSize: 10,
             },
             {
               text: 'Thibault de Saint Blancard, Directeur Compani',
               bold: true,
               marginTop: 6,
               alignment: 'center',
-              fontSize: 12,
+              fontSize: 10,
             },
-            { image: paths[0], width: 130, absolutePosition: { x: 380, y: 595 } },
+            { image: paths[0], width: 125, absolutePosition: { x: 380, y: 618 } },
           ],
         ],
         marginLeft: 40,
         marginRight: 40,
-        absolutePosition: { x: 35, y: 535 },
+        absolutePosition: { x: 37, y: 565 },
       },
       {
         text: [
@@ -755,12 +774,11 @@ describe('getOfficialPdfContent #tag', () => {
                 + 'et le temps estimé pour les réaliser.',
           },
         ],
-        absolutePosition: { x: 35, y: 745 },
+        absolutePosition: { x: 37, y: 755 },
         marginLeft: 40,
         marginRight: 40,
         marginTop: 8,
-        fontSize: 12,
-        bold: true,
+        fontSize: 11,
       },
     ];
 
