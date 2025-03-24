@@ -2723,6 +2723,7 @@ describe('getCourse', () => {
       };
       const course = {
         _id: new ObjectId(),
+        type: INTER_B2C,
         subProgram: {
           isStrictlyELearning: true,
           steps: [{
@@ -2818,7 +2819,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -2838,6 +2839,7 @@ describe('getCourse', () => {
       const lastSlotId = new ObjectId();
       const course = {
         _id: new ObjectId(),
+        type: INTRA,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -2974,7 +2976,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -2994,6 +2996,7 @@ describe('getCourse', () => {
       const lastSlotId = new ObjectId();
       const course = {
         _id: new ObjectId(),
+        type: INTRA,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3130,7 +3133,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3150,6 +3153,7 @@ describe('getCourse', () => {
       const stepId = new ObjectId();
       const course = {
         _id: courseId,
+        type: INTRA,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3260,7 +3264,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3279,6 +3283,7 @@ describe('getCourse', () => {
       const stepId = new ObjectId();
       const course = {
         _id: courseId,
+        type: INTRA,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3392,7 +3397,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
