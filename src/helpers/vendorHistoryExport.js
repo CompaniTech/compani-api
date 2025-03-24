@@ -28,6 +28,7 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  SINGLE,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -104,7 +105,7 @@ const getBillsInfos = (course) => {
     }
     : { netInclTaxes: '', paid: '', total: '' };
 
-  if (course.type === INTRA) {
+  if ([INTRA, SINGLE].includes(course.type)) {
     const billsCountForExport = `${validatedBillsWithoutCreditNote.length} sur ${course.expectedBillsCount}`;
     const isBilled = !!course.expectedBillsCount &&
       validatedBillsWithoutCreditNote.length === course.expectedBillsCount;
