@@ -16,3 +16,12 @@ exports.generateZip = (zipName, fileList = []) => new Promise((resolve, reject) 
     .on('finish', () => resolve({ zipPath: tmpOutputPath, zipName }))
     .on('error', err => reject(err));
 });
+
+exports.generateZipNew = (zipName, zip) => new Promise((resolve, reject) => {
+  const tmpOutputPath = path.join(os.tmpdir(), zipName);
+
+  const stream = zip.generateNodeStream({ type: 'nodebuffer', streamFiles: true });
+  stream.pipe(fs.createWriteStream(tmpOutputPath))
+    .on('finish', () => resolve({ zipPath: tmpOutputPath, zipName }))
+    .on('error', err => reject(err));
+});
