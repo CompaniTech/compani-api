@@ -15,7 +15,11 @@ exports.list = async (query) => {
           path: 'course',
           select: 'companies subProgram misc',
           populate: [
-            { path: 'companies', select: 'name' },
+            {
+              path: 'companies',
+              select: 'name',
+              populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+            },
             { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
           ],
         }]
