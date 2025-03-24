@@ -323,7 +323,7 @@ describe('getCustomPdfContent', () => {
   });
 });
 
-describe('getOfficialPdfContent', () => {
+describe('getOfficialPdfContent #tag', () => {
   let downloadImages;
 
   beforeEach(() => {

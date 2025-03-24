@@ -16,7 +16,7 @@ const list = async (req) => {
 
 const update = async (req) => {
   try {
-    await CompletionCertificatesHelper.generate(req);
+    await CompletionCertificatesHelper.generate(req.params._id);
 
     return { message: translate[language].completionCertificateUpdated };
   } catch (e) {

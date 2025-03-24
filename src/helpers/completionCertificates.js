@@ -20,7 +20,7 @@ exports.list = async (query) => {
     : { month: { $in: Array.isArray(months) ? months : [months] } };
 
   const completionCertificates = await CompletionCertificate
-    .find(findQuery, { course: 1, trainee: 1, month: 1 })
+    .find(findQuery)
     .populate([
       ...(months
         ? [{
@@ -44,9 +44,7 @@ exports.list = async (query) => {
   return completionCertificates;
 };
 
-exports.generate = async (req) => {
-  const { _id: completionCertificateId } = req.params;
-
+exports.generate = async (completionCertificateId) => {
   const completionCertificate = await CompletionCertificate
     .findOne({ _id: completionCertificateId })
     .populate([
