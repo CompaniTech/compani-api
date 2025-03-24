@@ -737,7 +737,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
-    .select('_id misc format')
+    .select('_id misc format type')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
