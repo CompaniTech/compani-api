@@ -61,7 +61,7 @@ describe('list', () => {
     SinonMongoose.calledOnceWithExactly(
       findCompletionCertificates,
       [
-        { query: 'find', args: [{ month: { $in: ['06_2024', '07_2024'] } }, { course: 1, trainee: 1, month: 1 }] },
+        { query: 'find', args: [{ month: { $in: ['06_2024', '07_2024'] } }] },
         {
           query: 'populate',
           args: [[
@@ -114,7 +114,7 @@ describe('list', () => {
     SinonMongoose.calledOnceWithExactly(
       findCompletionCertificates,
       [
-        { query: 'find', args: [{ month: { $in: ['06_2024'] } }, { course: 1, trainee: 1, month: 1 }] },
+        { query: 'find', args: [{ month: { $in: ['06_2024'] } }] },
         {
           query: 'populate',
           args: [[
@@ -179,7 +179,7 @@ describe('list', () => {
     SinonMongoose.calledOnceWithExactly(
       findCompletionCertificates,
       [
-        { query: 'find', args: [{ course: courseId }, { course: 1, trainee: 1, month: 1 }] },
+        { query: 'find', args: [{ course: courseId }] },
         { query: 'populate', args: [[{ path: 'trainee', select: 'identity' }]] },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
@@ -197,6 +197,7 @@ describe('generate', () => {
   let updateOne;
   let getTotalDuration;
   let getELearningDuration;
+  const VAEI_SUBPROGRAM_IDS = new ObjectId();
 
   beforeEach(() => {
     findOneCompletionCeritificate = sinon.stub(CompletionCertificate, 'findOne');
@@ -208,6 +209,7 @@ describe('generate', () => {
     UtilsMock.mockCurrentDate('2025-03-24T10:00:00.000Z');
     getTotalDuration = sinon.stub(UtilsHelper, 'getTotalDuration');
     getELearningDuration = sinon.stub(CoursesHelper, 'getELearningDuration');
+    process.env.VAEI_SUBPROGRAM_IDS = VAEI_SUBPROGRAM_IDS;
   });
 
   afterEach(() => {
@@ -220,6 +222,7 @@ describe('generate', () => {
     UtilsMock.unmockCurrentDate();
     getTotalDuration.restore();
     getELearningDuration.restore();
+    process.env.VAEI_SUBPROGRAM_IDS = '';
   });
 
   it('should generate completion certificate', async () => {

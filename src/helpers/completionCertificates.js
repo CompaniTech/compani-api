@@ -10,8 +10,6 @@ const UtilsHelper = require('./utils');
 const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
 
-const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
-
 exports.list = async (query) => {
   const { months, course } = query;
 
@@ -45,6 +43,8 @@ exports.list = async (query) => {
 };
 
 exports.generate = async (completionCertificateId) => {
+  const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
+
   const completionCertificate = await CompletionCertificate
     .findOne({ _id: completionCertificateId })
     .populate([
