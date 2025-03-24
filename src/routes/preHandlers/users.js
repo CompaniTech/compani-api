@@ -109,7 +109,6 @@ exports.authorizeUserUpdate = async (req) => {
     checkUpdateAndCreateRestrictions(req.payload);
   }
 
-  if (get(req.payload, 'contact.countryCode') && !get(req.payload, 'contact.phone')) throw Boom.badData();
   if (get(req.payload, 'contact.phone') && !get(req.payload, 'contact.countryCode')) throw Boom.badData();
 
   return null;

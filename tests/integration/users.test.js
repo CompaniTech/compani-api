@@ -1199,7 +1199,11 @@ describe('USERS ROUTES - PUT /users/:id', () => {
 
     it('should update the user', async () => {
       const userId = usersSeedList[0]._id.toHexString();
-      const updatePayload = { identity: { firstname: 'Riri' }, local: { email: 'riri@alenvi.io' } };
+      const updatePayload = {
+        identity: { firstname: 'Riri' },
+        local: { email: 'riri@alenvi.io' },
+        contact: { phone: '', countryCode: '' },
+      };
       const res = await app.inject({
         method: 'PUT',
         url: `/users/${userId}`,
@@ -1209,8 +1213,13 @@ describe('USERS ROUTES - PUT /users/:id', () => {
 
       expect(res.statusCode).toBe(200);
 
-      const userCount = await User
-        .countDocuments({ _id: userId, 'identity.firstname': 'Riri', 'local.email': 'riri@alenvi.io' });
+      const userCount = await User.countDocuments({
+        _id: userId,
+        'identity.firstname': 'Riri',
+        'local.email': 'riri@alenvi.io',
+        'contact.phone': { $exists: false },
+        'contact.countryCode': { $exists: false },
+      });
       expect(userCount).toEqual(1);
     });
 
@@ -1293,18 +1302,18 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
-        payload: { contact: { countryCode: '33' } },
+        payload: { contact: { countryCode: '+33' } },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return  400 if phone and countryCode but only one is empty', async () => {
+    it('should return  400 if countryCode is empty but not phone', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
-        payload: { contact: { phone: '', countryCode: '+33' } },
+        payload: { contact: { phone: '0987654321', countryCode: '' } },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -1513,7 +1522,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       const updatePayload = {
         identity: { firstname: 'Riri' },
         local: { email: 'riri@alenvi.io' },
-        contact: { phone: '', countryCode: '' },
+        contact: { phone: '', countryCode: '+33' },
       };
 
       const response = await app.inject({
@@ -1524,7 +1533,12 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const userUpdated = await User.countDocuments({ _id: usersSeedList[12]._id, 'identity.firstname': 'Riri' });
+      const userUpdated = await User.countDocuments({
+        _id: usersSeedList[12]._id,
+        'identity.firstname': 'Riri',
+        'contact.phone': { $exists: false },
+        'contact.countryCode': { $exists: false },
+      });
       expect(userUpdated).toBeTruthy();
     });
 
