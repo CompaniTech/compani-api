@@ -257,9 +257,9 @@ exports.getOfficialPdfContent = async (data) => {
             { text: 'pour une durée de ', bold: true },
             ...(certificateGenerationModeIsMonthly
               ? [{
-                text: `${trainee.attendanceDuration} d’accompagnement à distance et en présentiel, et
-                  ${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani.
-                ${isVAEISubProgram ? 'Ce certificat est lié à une facture de frais pédagogiques.' : ''}`,
+                text: `${trainee.attendanceDuration} d’accompagnement à distance et en présentiel, et`
+                 + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani.`
+                + `${isVAEISubProgram ? 'Ce certificat est lié à une facture de frais pédagogiques.' : ''}`,
                 italic: true,
               }]
               : []),
