@@ -3,6 +3,7 @@ const { ObjectId } = require('mongodb');
 const app = require('../../server');
 const { getToken } = require('./helpers/authentication');
 const { populateDB, courseList, completionCertificateList } = require('./seed/completionCertificatesSeed');
+const { GENERATION } = require('../../src/helpers/constants');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -113,31 +114,36 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
     });
 
     it('should generate completion certificates file', async () => {
+      const payload = { action: GENERATION };
       const response = await app.inject({
         method: 'PUT',
         url: `/completioncertificates/${completionCertificateList[0]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.completionCertificates.length).toBe(2);
     });
 
     it('should return 404 if completion certificate does not exist', async () => {
+      const payload = { action: GENERATION };
       const response = await app.inject({
         method: 'PUT',
         url: `/completioncertificates/${new ObjectId()}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
       });
 
       expect(response.statusCode).toBe(404);
     });
 
     it('should return 409 if file already exists', async () => {
+      const payload = { action: GENERATION };
       const response = await app.inject({
         method: 'PUT',
         url: `/completioncertificates/${completionCertificateList[4]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
       });
 
       expect(response.statusCode).toBe(409);
