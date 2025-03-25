@@ -121,7 +121,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
       uploadCourseFile.restore();
     });
 
-    it('should generate completion certificates file #tag', async () => {
+    it('should generate completion certificates file', async () => {
       const completionCertificateId = completionCertificateList[0]._id;
       const payload = { action: GENERATION };
       uploadCourseFile.returns({ publicId: '1234', link: 'https://test.com/completionCertificate.pdf' });
@@ -132,7 +132,6 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload,
       });
-      console.log('ca pete', response);
 
       expect(response.statusCode).toBe(200);
       const completionCertificateUpdated = await CompletionCertificate
