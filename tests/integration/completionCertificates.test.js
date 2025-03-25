@@ -1,9 +1,12 @@
 const { expect } = require('expect');
+const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
+const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const app = require('../../server');
 const { getToken } = require('./helpers/authentication');
 const { populateDB, courseList, completionCertificateList } = require('./seed/completionCertificatesSeed');
 const { GENERATION } = require('../../src/helpers/constants');
+const CompletionCertificate = require('../../src/models/CompletionCertificate');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -106,23 +109,35 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
 
 describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', () => {
   let authToken;
+  let uploadCourseFile;
   beforeEach(populateDB);
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
+      uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
+    });
+    afterEach(() => {
+      uploadCourseFile.restore();
     });
 
     it('should generate completion certificates file', async () => {
+      const completionCertificateId = completionCertificateList[0]._id;
       const payload = { action: GENERATION };
+      uploadCourseFile.returns({ publicId: '1234', link: 'https://test.com/completionCertificate.pdf' });
+
       const response = await app.inject({
         method: 'PUT',
-        url: `/completioncertificates/${completionCertificateList[0]._id}`,
+        url: `/completioncertificates/${completionCertificateId}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload,
       });
 
       expect(response.statusCode).toBe(200);
+      const completionCertificateUpdated = await CompletionCertificate
+        .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
+      expect(completionCertificateUpdated).toEqual(1);
+      sinon.assert.calledOnce(uploadCourseFile);
     });
 
     it('should return 404 if completion certificate does not exist', async () => {
