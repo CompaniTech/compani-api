@@ -132,10 +132,11 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload,
       });
+      console.log('ca pete', response);
 
       expect(response.statusCode).toBe(200);
       const completionCertificateUpdated = await CompletionCertificate
-        .countDocuments({ _id: completionCertificateId });
+        .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
       expect(completionCertificateUpdated).toEqual(1);
       sinon.assert.calledOnce(uploadCourseFile);
     });
