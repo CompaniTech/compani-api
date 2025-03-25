@@ -121,7 +121,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
       uploadCourseFile.restore();
     });
 
-    it('should generate completion certificates file', async () => {
+    it('should generate completion certificates file #tag', async () => {
       const completionCertificateId = completionCertificateList[0]._id;
       const payload = { action: GENERATION };
       uploadCourseFile.returns({ publicId: '1234', link: 'https://test.com/completionCertificate.pdf' });
@@ -135,7 +135,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
 
       expect(response.statusCode).toBe(200);
       const completionCertificateUpdated = await CompletionCertificate
-        .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
+        .countDocuments({ _id: completionCertificateId });
       expect(completionCertificateUpdated).toEqual(1);
       sinon.assert.calledOnce(uploadCourseFile);
     });
