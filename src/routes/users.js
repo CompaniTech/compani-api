@@ -174,10 +174,17 @@ exports.plugin = {
               socialSecurityNumber: Joi.number(),
             }),
             contact: Joi.object().keys({
-              phone: phoneNumberValidation.allow('', null),
-              countryCode: countryCodeValidation.allow('', null),
+              phone: Joi.when(
+                'countryCode',
+                {
+                  is: Joi.exist(),
+                  then: phoneNumberValidation.allow('', null).required(),
+                  otherwise: phoneNumberValidation.allow('', null),
+                }
+              ),
+              countryCode: countryCodeValidation,
               address: addressValidation,
-            }).and('phone', 'countryCode'),
+            }),
             biography: Joi.string().allow(''),
             holding: Joi.objectId(),
           }).required(),

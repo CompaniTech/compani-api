@@ -1767,7 +1767,7 @@ describe('updateUser', () => {
   });
 
   it('should remove a user phone', async () => {
-    const payload = { contact: { phone: '', countryCode: '' } };
+    const payload = { contact: { phone: '' } };
 
     await UsersHelper.updateUser(userId, payload);
 

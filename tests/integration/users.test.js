@@ -1202,7 +1202,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       const updatePayload = {
         identity: { firstname: 'Riri' },
         local: { email: 'riri@alenvi.io' },
-        contact: { phone: '', countryCode: '' },
+        contact: { phone: '0987654321', countryCode: '+33' },
       };
       const res = await app.inject({
         method: 'PUT',
@@ -1217,8 +1217,8 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         _id: userId,
         'identity.firstname': 'Riri',
         'local.email': 'riri@alenvi.io',
-        'contact.phone': { $exists: false },
-        'contact.countryCode': { $exists: false },
+        'contact.phone': '0987654321',
+        'contact.countryCode': '+33',
       });
       expect(userCount).toEqual(1);
     });
@@ -1299,17 +1299,26 @@ describe('USERS ROUTES - PUT /users/:id', () => {
     });
 
     it('should return 400 if phone and countryCode are not together', async () => {
-      const response = await app.inject({
+      const countryCodeResponse = await app.inject({
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
         payload: { contact: { countryCode: '+33' } },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
-      expect(response.statusCode).toBe(400);
+      expect(countryCodeResponse.statusCode).toBe(400);
+
+      const phoneResponse = await app.inject({
+        method: 'PUT',
+        url: `/users/${usersSeedList[0]._id}`,
+        payload: { contact: { phone: '0987654321' } },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(phoneResponse.statusCode).toBe(400);
     });
 
-    it('should return  400 if countryCode is empty but not phone', async () => {
+    it('should return  400 if country code is empty', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
@@ -1317,7 +1326,26 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
-      expect(response.statusCode).toBe(422);
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should remove user phone', async () => {
+      const userId = usersSeedList[0]._id.toHexString();
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { contact: { phone: '' } },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const userCount = await User.countDocuments({
+        _id: userId,
+        'contact.phone': { $exists: false },
+        'contact.countryCode': { $exists: false },
+      });
+      expect(userCount).toEqual(1);
     });
 
     it('should not update a user if title is not correct', async () => {
