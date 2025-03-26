@@ -711,6 +711,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       populate: { path: 'step', select: 'type' },
       options: { sort: { startDate: 1 } },
     })
+    .populate({ path: 'slotsToPlan', select: '_id' })
     .populate({ path: 'trainers', select: 'identity.firstname identity.lastname biography picture' })
     .populate({ path: 'tutors', select: 'identity.firstname identity.lastname picture' })
     .populate({ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' })
@@ -727,7 +728,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
   const isTrainer = UtilsHelper.doesArrayIncludeId(courseTrainerIds, credentials._id);
   const courseTutorIds = course.tutors ? course.tutors.map(tutor => tutor._id) : [];
   const isTutor = UtilsHelper.doesArrayIncludeId(courseTutorIds, credentials._id);
-  if (isTrainer || isTutor) {
+  if (isTrainer) {
     const slotsGroupedByStep = groupBy(course.slots, 'step._id');
 
     return {
@@ -752,7 +753,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
 
   if (!course.subProgram.isStrictlyELearning) {
     const lastSlot = course.slots[course.slots.length - 1];
-    const areLastSlotAttendancesValidated = !!(lastSlot &&
+    const areLastSlotAttendancesValidated = !!(!isTutor && !get(course, 'slotsToPlan.length') && lastSlot &&
       await Attendance.countDocuments({ courseSlot: lastSlot._id }));
 
     return { ...exports.formatCourseWithProgress(course, false, true), areLastSlotAttendancesValidated };

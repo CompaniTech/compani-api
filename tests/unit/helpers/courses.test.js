@@ -2728,6 +2728,7 @@ describe('getCourse', () => {
               },
             ],
           },
+          { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
           {
             query: 'populate',
             args: [{ path: 'trainers', select: 'identity.firstname identity.lastname biography picture' }],
@@ -2802,6 +2803,7 @@ describe('getCourse', () => {
             attendances: [],
           },
         ],
+        slotsToPlan: [],
         trainers: [
           { _id: new ObjectId(), identity: { firstname: 'Paul', lastName: 'Durand' }, biography: 'voici ma bio' },
         ],
@@ -2812,25 +2814,18 @@ describe('getCourse', () => {
 
       formatCourseWithProgress.returns({
         ...course,
-        areLastSlotAttendancesValidated: false,
         subProgram: {
           ...course.subProgram,
           steps: [
             { ...course.subProgram.steps[0], progress: { eLearning: 1 } },
             {
               ...course.subProgram.steps[1],
-              progress: {
-                live: 1,
-                presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-              },
+              progress: { live: 1 },
             },
           ],
         },
-        progress: {
-          eLearning: 1,
-          blended: 1,
-          presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-        },
+        progress: { eLearning: 1, blended: 1 },
+        slots: ['Mar. 3 nov. 2020', 'Mer. 4 nov. 2020'],
       });
 
       const result = await CourseHelper.getCourse({ action: PEDAGOGY }, { _id: course._id }, loggedUser);
@@ -2844,18 +2839,12 @@ describe('getCourse', () => {
             { ...course.subProgram.steps[0], progress: { eLearning: 1 } },
             {
               ...course.subProgram.steps[1],
-              progress: {
-                live: 1,
-                presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-              },
+              progress: { live: 1 },
             },
           ],
         },
-        progress: {
-          eLearning: 1,
-          blended: 1,
-          presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-        },
+        progress: { eLearning: 1, blended: 1 },
+        slots: ['Mar. 3 nov. 2020', 'Mer. 4 nov. 2020'],
       });
 
       SinonMongoose.calledOnceWithExactly(
@@ -2895,6 +2884,7 @@ describe('getCourse', () => {
               },
             ],
           },
+          { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
           {
             query: 'populate',
             args: [{ path: 'trainers', select: 'identity.firstname identity.lastname biography picture' }],
@@ -2969,6 +2959,7 @@ describe('getCourse', () => {
             attendances: [{ _id: new ObjectId() }],
           },
         ],
+        slotsToPlan: [],
         trainers: [
           { _id: new ObjectId(), identity: { firstname: 'Paul', lastName: 'Durand' }, biography: 'voici ma bio' },
         ],
@@ -2979,25 +2970,18 @@ describe('getCourse', () => {
 
       formatCourseWithProgress.returns({
         ...course,
-        areLastSlotAttendancesValidated: true,
         subProgram: {
           ...course.subProgram,
           steps: [
             { ...course.subProgram.steps[0], progress: { eLearning: 1 } },
             {
               ...course.subProgram.steps[1],
-              progress: {
-                live: 1,
-                presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-              },
+              progress: { live: 1 },
             },
           ],
         },
-        progress: {
-          eLearning: 1,
-          blended: 1,
-          presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-        },
+        progress: { eLearning: 1, blended: 1 },
+        slots: ['Mar. 3 nov. 2020', 'Mer. 4 nov. 2020'],
       });
 
       const result = await CourseHelper.getCourse({ action: PEDAGOGY }, { _id: course._id }, loggedUser);
@@ -3011,18 +2995,12 @@ describe('getCourse', () => {
             { ...course.subProgram.steps[0], progress: { eLearning: 1 } },
             {
               ...course.subProgram.steps[1],
-              progress: {
-                live: 1,
-                presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-              },
+              progress: { live: 1 },
             },
           ],
         },
-        progress: {
-          eLearning: 1,
-          blended: 1,
-          presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 601 } },
-        },
+        progress: { eLearning: 1, blended: 1 },
+        slots: ['Mar. 3 nov. 2020', 'Mer. 4 nov. 2020'],
       });
 
       SinonMongoose.calledOnceWithExactly(
@@ -3062,6 +3040,7 @@ describe('getCourse', () => {
               },
             ],
           },
+          { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
           {
             query: 'populate',
             args: [{ path: 'trainers', select: 'identity.firstname identity.lastname biography picture' }],
@@ -3120,6 +3099,7 @@ describe('getCourse', () => {
           ],
         },
         slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+        slotsToPlan: [],
         trainers: [{ _id: loggedUser._id }],
       };
 
@@ -3190,6 +3170,7 @@ describe('getCourse', () => {
               },
             ],
           },
+          { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
           {
             query: 'populate',
             args: [{ path: 'trainers', select: 'identity.firstname identity.lastname biography picture' }],
@@ -3247,34 +3228,39 @@ describe('getCourse', () => {
           ],
         },
         slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+        slotsToPlan: [],
         tutors: [{ _id: loggedUser._id }],
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
 
+      formatCourseWithProgress.returns({
+        ...course,
+        subProgram: {
+          ...course.subProgram,
+          steps: [
+            { ...course.subProgram.steps[0], progress: { eLearning: 1 } },
+            { ...course.subProgram.steps[1], progress: { live: 1 } },
+          ],
+        },
+        progress: { eLearning: 1, blended: 1 },
+        slots: ['Mar. 3 nov. 2020'],
+        tutors: [{ _id: loggedUser._id }],
+      });
+
       const result = await CourseHelper.getCourse({ action: PEDAGOGY }, { _id: course._id }, loggedUser);
 
       expect(result).toMatchObject({
-        _id: courseId,
+        ...course,
+        areLastSlotAttendancesValidated: false,
         subProgram: {
-          isStrictlyELearning: false,
-          steps: [{
-            activities: [{ }],
-            name: 'Développement personnel full stack',
-            type: 'e_learning',
-            areActivitiesValid: false,
-            theoreticalDuration: 'PT1800S',
-          },
-          {
-            activities: [],
-            name: 'Développer des équipes agiles et autonomes',
-            type: 'on_site',
-            areActivitiesValid: true,
-            theoreticalDuration: 'PT12600S',
-            slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
-          },
+          ...course.subProgram,
+          steps: [
+            { ...course.subProgram.steps[0], progress: { eLearning: 1 } },
+            { ...course.subProgram.steps[1], progress: { live: 1 } },
           ],
         },
+        progress: { eLearning: 1, blended: 1 },
         slots: ['Mar. 3 nov. 2020'],
         tutors: [{ _id: loggedUser._id }],
       });
@@ -3316,6 +3302,7 @@ describe('getCourse', () => {
               },
             ],
           },
+          { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
           {
             query: 'populate',
             args: [{ path: 'trainers', select: 'identity.firstname identity.lastname biography picture' }],
@@ -3339,7 +3326,7 @@ describe('getCourse', () => {
         ]
       );
 
-      sinon.assert.notCalled(formatCourseWithProgress);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, false, true);
       sinon.assert.notCalled(attendanceCountDocuments);
     });
   });
