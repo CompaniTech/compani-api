@@ -1048,9 +1048,9 @@ exports.getELearningDuration = (steps, traineeId, { startDate, endDate } = {}) =
         .map(a => ({
           ...a,
           activityHistories: a.activityHistories.filter(aH =>
-            UtilsHelper.areObjectIdsEquals(aH.user, traineeId) && (!!startDate && !!endDate
-              ? CompaniDate(aH.date).isSameOrAfter(startDate) && CompaniDate(aH.date).isSameOrBefore(endDate)
-              : true)
+            UtilsHelper.areObjectIdsEquals(aH.user, traineeId) &&
+            (!(startDate || endDate) ||
+              (CompaniDate(aH.date).isSameOrAfter(startDate) && CompaniDate(aH.date).isSameOrBefore(endDate)))
           ),
         }));
       return { theoreticalDuration: step.theoreticalDuration, activities };

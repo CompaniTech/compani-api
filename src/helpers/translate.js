@@ -370,7 +370,7 @@ module.exports = {
     traineeMustBeRegisteredInAnotherGroup: 'L\'apprenant doit être inscrit dans un autre groupe de cette formation.',
     completionCertificatesFound: 'Certificats de réalisation mensuels trouvés.',
     completionCertificateAlreadyGenerated: 'Certificats de réalisation déjà générés.',
-    completionCertificateUpdated: 'Certificats de réalisation modifiés',
+    completionCertificateUpdated: 'Certificats de réalisation modifiés.',
     /* Course bill */
     courseBillsFound: 'Factures de la formation trouvées.',
     courseBillsNotFound: 'Factures de la formation non trouvées.',

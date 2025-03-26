@@ -50,7 +50,7 @@ exports.generate = async (completionCertificateId) => {
     .populate([
       {
         path: 'course',
-        select: 'companies subProgram slots',
+        select: 'subProgram slots',
         populate: [
           { path: 'slots', select: 'startDate endDate' },
           {
@@ -78,12 +78,12 @@ exports.generate = async (completionCertificateId) => {
 
   const { course, month, trainee } = completionCertificate;
 
-  const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).format(DD_MM_YYYY);
-  const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).format(DD_MM_YYYY);
+  const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
+  const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
 
   const courseSlotIdsOnMonth = course.slots
-    .filter(slot => CompaniDate(slot.startDate).isSameOrAfter(CompaniDate(startOfMonth, DD_MM_YYYY)) &&
-      CompaniDate(slot.endDate).isSameOrBefore(CompaniDate(endOfMonth, DD_MM_YYYY)))
+    .filter(slot => CompaniDate(slot.startDate).isSameOrAfter(startOfMonth) &&
+      CompaniDate(slot.endDate).isSameOrBefore(endOfMonth))
     .map(s => s._id);
 
   const attendances = await Attendance
@@ -100,8 +100,8 @@ exports.generate = async (completionCertificateId) => {
 
   const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
   const dates = {
-    startDate: CompaniDate(startOfMonth, DD_MM_YYYY).toISO(),
-    endDate: CompaniDate(endOfMonth, DD_MM_YYYY).toISO(),
+    startDate: startOfMonth,
+    endDate: endOfMonth,
   };
 
   const eLearningDuration = CoursesHelper.getELearningDuration(eLearningSteps, trainee._id, dates);
@@ -116,8 +116,8 @@ exports.generate = async (completionCertificateId) => {
       eLearningDuration: formattedELearningDuration,
       companyName: trainee.company.name,
     },
-    startDate: startOfMonth,
-    endDate: endOfMonth,
+    startDate: CompaniDate(startOfMonth).format(DD_MM_YYYY),
+    endDate: CompaniDate(endOfMonth).format(DD_MM_YYYY),
     date: CompaniDate().format(DD_MM_YYYY),
     isVAEISubProgram: UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, course.subProgram._id),
     certificateGenerationModeIsMonthly: true,

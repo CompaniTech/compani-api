@@ -35,9 +35,7 @@ exports.plugin = {
         auth: { scope: ['completioncertificates:edit'] },
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
-          payload: Joi.object({
-            action: Joi.string().valid(GENERATION).required(),
-          }),
+          payload: Joi.object({ action: Joi.string().valid(GENERATION).required() }),
         },
         pre: [{ method: authorizeCompletionCertificateEdit }],
       },
