@@ -2217,7 +2217,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'companyRepresentative',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               {
                 path: 'subProgram',
@@ -2235,25 +2235,25 @@ describe('getCourse', () => {
               },
               {
                 path: 'tutors',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+                select: 'identity.firstname identity.lastname contact local.email picture.link '
                   + 'firstMobileConnectionDate loginCode',
               },
               { path: 'slots', select: 'step startDate endDate address meetingLink' },
               { path: 'slotsToPlan', select: '_id step' },
               {
                 path: 'trainers',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               { path: 'accessRules', select: 'name' },
               {
                 path: 'operationsRepresentative',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               {
                 path: 'salesRepresentative',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
-              { path: 'contact', select: 'identity.firstname identity.lastname contact.phone' },
+              { path: 'contact', select: 'identity.firstname identity.lastname contact' },
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
             ]],
           },
@@ -2319,7 +2319,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'companyRepresentative',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
                 {
                   path: 'subProgram',
@@ -2339,25 +2339,25 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'tutors',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+                  select: 'identity.firstname identity.lastname contact local.email picture.link '
                     + 'firstMobileConnectionDate loginCode',
                 },
                 { path: 'slots', select: 'step startDate endDate address meetingLink' },
                 { path: 'slotsToPlan', select: '_id step' },
                 {
                   path: 'trainers',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
                 { path: 'accessRules', select: 'name' },
                 {
                   path: 'operationsRepresentative',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
                 {
                   path: 'salesRepresentative',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
-                { path: 'contact', select: 'identity.firstname identity.lastname contact.phone' },
+                { path: 'contact', select: 'identity.firstname identity.lastname contact' },
               ]],
           },
           { query: 'lean' },
@@ -2422,7 +2422,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'companyRepresentative',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
                 {
                   path: 'subProgram',
@@ -2442,25 +2442,25 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'tutors',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+                  select: 'identity.firstname identity.lastname contact local.email picture.link '
                     + 'firstMobileConnectionDate loginCode',
                 },
                 { path: 'slots', select: 'step startDate endDate address meetingLink' },
                 { path: 'slotsToPlan', select: '_id step' },
                 {
                   path: 'trainers',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
                 { path: 'accessRules', select: 'name' },
                 {
                   path: 'operationsRepresentative',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
                 {
                   path: 'salesRepresentative',
-                  select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                  select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
-                { path: 'contact', select: 'identity.firstname identity.lastname contact.phone' },
+                { path: 'contact', select: 'identity.firstname identity.lastname contact' },
               ]],
           },
           { query: 'lean' },
@@ -2519,7 +2519,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'companyRepresentative',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               {
                 path: 'subProgram',
@@ -2594,7 +2594,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'companyRepresentative',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               {
                 path: 'subProgram',
@@ -2612,25 +2612,25 @@ describe('getCourse', () => {
               },
               {
                 path: 'tutors',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+                select: 'identity.firstname identity.lastname contact local.email picture.link '
                   + 'firstMobileConnectionDate loginCode',
               },
               { path: 'slots', select: 'step startDate endDate address meetingLink' },
               { path: 'slotsToPlan', select: '_id step' },
               {
                 path: 'trainers',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               { path: 'accessRules', select: 'name' },
               {
                 path: 'operationsRepresentative',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               {
                 path: 'salesRepresentative',
-                select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+                select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
-              { path: 'contact', select: 'identity.firstname identity.lastname contact.phone' },
+              { path: 'contact', select: 'identity.firstname identity.lastname contact' },
             ]],
           },
           { query: 'lean' },
@@ -2735,7 +2735,7 @@ describe('getCourse', () => {
           { query: 'populate', args: [{ path: 'tutors', select: 'identity.firstname identity.lastname picture' }] },
           {
             query: 'populate',
-            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact.phone local.email' }],
+            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' }],
           },
           {
             query: 'populate',
@@ -2902,7 +2902,7 @@ describe('getCourse', () => {
           { query: 'populate', args: [{ path: 'tutors', select: 'identity.firstname identity.lastname picture' }] },
           {
             query: 'populate',
-            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact.phone local.email' }],
+            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' }],
           },
           {
             query: 'populate',
@@ -3069,7 +3069,7 @@ describe('getCourse', () => {
           { query: 'populate', args: [{ path: 'tutors', select: 'identity.firstname identity.lastname picture' }] },
           {
             query: 'populate',
-            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact.phone local.email' }],
+            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' }],
           },
           {
             query: 'populate',
@@ -3197,7 +3197,7 @@ describe('getCourse', () => {
           { query: 'populate', args: [{ path: 'tutors', select: 'identity.firstname identity.lastname picture' }] },
           {
             query: 'populate',
-            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact.phone local.email' }],
+            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' }],
           },
           {
             query: 'populate',
@@ -3323,7 +3323,7 @@ describe('getCourse', () => {
           { query: 'populate', args: [{ path: 'tutors', select: 'identity.firstname identity.lastname picture' }] },
           {
             query: 'populate',
-            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact.phone local.email' }],
+            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' }],
           },
           {
             query: 'populate',
@@ -4356,8 +4356,16 @@ describe('deleteCourse', () => {
 describe('sendSMS', () => {
   const courseId = new ObjectId();
   const trainees = [
-    { contact: { phone: '0123456789' }, identity: { firstname: 'non', lasname: 'ok' }, _id: 'qwertyuio' },
-    { contact: { phone: '0987654321' }, identity: { firstname: 'test', lasname: 'ok' }, _id: 'asdfghjkl' },
+    {
+      contact: { countryCode: '+33', phone: '0123456789' },
+      identity: { firstname: 'non', lasname: 'ok' },
+      _id: 'qwertyuio',
+    },
+    {
+      contact: { countryCode: '+33', phone: '0987654321' },
+      identity: { firstname: 'test', lasname: 'ok' },
+      _id: 'asdfghjkl',
+    },
     { contact: {}, identity: { firstname: 'test', lasname: 'ko' }, _id: 'poiuytrewq' },
   ];
   const payload = { content: 'Ceci est un test.' };
@@ -4405,7 +4413,7 @@ describe('sendSMS', () => {
     sinon.assert.calledWith(
       sendStub.getCall(0),
       {
-        recipient: `+33${trainees[0].contact.phone.substring(1)}`,
+        recipient: '+33123456789',
         sender: 'Compani',
         content: payload.content,
         tag: COURSE_SMS,
@@ -4414,7 +4422,7 @@ describe('sendSMS', () => {
     sinon.assert.calledWithExactly(
       sendStub.getCall(1),
       {
-        recipient: `+33${trainees[1].contact.phone.substring(1)}`,
+        recipient: '+33987654321',
         sender: 'Compani',
         content: payload.content,
         tag: COURSE_SMS,
@@ -6651,7 +6659,7 @@ describe('formatCourseForConvocationPdf', () => {
       ],
       contact: {
         identity: { firstname: 'Pika', lastname: 'CHU' },
-        contact: { phone: '0123456789' },
+        contact: { countryCode: '+33', phone: '0123456789' },
         local: { email: 'pikachu@coucou.fr' },
       },
       slots: [
@@ -6695,7 +6703,7 @@ describe('formatCourseForConvocationPdf', () => {
         { identity: { firstname: 'Ash', lastname: 'Ketchum' }, formattedIdentity: 'Ash KETCHUM' },
         { identity: { firstname: 'Toto', lastname: 'Tata' }, formattedIdentity: 'Toto TATA' },
       ],
-      contact: { formattedIdentity: 'Pika CHU', formattedPhone: '01 23 45 67 89', email: 'pikachu@coucou.fr' },
+      contact: { formattedIdentity: 'Pika CHU', formattedPhone: '+33 1 23 45 67 89', email: 'pikachu@coucou.fr' },
       slots: [
         { date: '12/10/2020', hours: '13:30 - 14:30', address: '3 rue T' },
         { date: '14/10/2020', hours: '18:30 - 20:30', meetingLink: 'http://eelslap.com/' },
@@ -6755,7 +6763,7 @@ describe('generateConvocationPdf', () => {
           { identity: { firstname: 'Ash', lastname: 'Ketchum' }, biography: 'Bio' },
           { identity: { firstname: 'Toto', lastname: 'Tata' } },
         ],
-        contact: { phone: '0123456789' },
+        contact: { countryCode: '+33', phone: '0123456789' },
         slots: [{
           startDate: '2020-10-12T12:30:00.000+01:00',
           endDate: '2020-10-12T13:30:00.000+01:00',
@@ -6771,8 +6779,7 @@ describe('generateConvocationPdf', () => {
         { identity: { firstname: 'Ash', lastname: 'Ketchum' }, formattedIdentity: 'Ash KETCHUM', biography: 'Bio' },
         { identity: { firstname: 'Toto', lastname: 'Tata' }, formattedIdentity: 'Toto TATA' },
       ],
-      contact: { phone: '0123456789' },
-      contactPhoneNumber: '01 23 45 67 89',
+      contact: { formattedPhone: '+33 1 23 45 67 89' },
       slots: [{
         startDay: '12 oct. 2020',
         hours: '13:30 - 14:30',
@@ -6801,7 +6808,7 @@ describe('generateConvocationPdf', () => {
       { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
       {
         query: 'populate',
-        args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact.phone local.email' }],
+        args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' }],
       },
       { query: 'populate', args: [{ path: 'trainers', select: 'identity.firstname identity.lastname biography' }] },
       { query: 'lean' },
@@ -6815,7 +6822,7 @@ describe('generateConvocationPdf', () => {
           { identity: { firstname: 'Ash', lastname: 'Ketchum' }, biography: 'Bio' },
           { identity: { firstname: 'Toto', lastname: 'Tata' } },
         ],
-        contact: { phone: '0123456789' },
+        contact: { countryCode: '+33', phone: '0123456789' },
         slots: [{
           startDate: '2020-10-12T12:30:00.000+01:00',
           endDate: '2020-10-12T13:30:00.000+01:00',
@@ -6832,8 +6839,7 @@ describe('generateConvocationPdf', () => {
           { identity: { firstname: 'Ash', lastname: 'Ketchum' }, formattedIdentity: 'Ash KETCHUM', biography: 'Bio' },
           { identity: { firstname: 'Toto', lastname: 'Tata' }, formattedIdentity: 'Toto TATA' },
         ],
-        contact: { phone: '0123456789' },
-        contactPhoneNumber: '01 23 45 67 89',
+        contact: { formattedPhone: '+33 1 23 45 67 89' },
         slots: [{
           startDay: '12 oct. 2020',
           hours: '13:30 - 14:30',

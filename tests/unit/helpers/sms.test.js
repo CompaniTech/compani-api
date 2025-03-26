@@ -13,9 +13,9 @@ describe('sendVerificationCodeSms', () => {
   });
 
   it('shoud sent sms with verification code', async () => {
-    const result = await SmsHelper.sendVerificationCodeSms('0987654321', '1234');
+    const result = await SmsHelper.sendVerificationCodeSms({ phone: '0987654321', countryCode: '+33' }, '1234');
 
-    expect(result).toEqual({ phone: '0987654321' });
+    expect(result).toEqual({ phone: '0987654321', countryCode: '+33' });
     sinon.assert.calledOnceWithExactly(
       send,
       {

@@ -23,7 +23,7 @@ const {
   addTester,
   removeTester,
 } = require('../controllers/programController');
-const { formDataPayload, phoneNumberValidation } = require('./validations/utils');
+const { formDataPayload, phoneNumberValidation, countryCodeValidation } = require('./validations/utils');
 
 exports.plugin = {
   name: 'routes-programs',
@@ -175,7 +175,10 @@ exports.plugin = {
           payload: Joi.object({
             identity: Joi.object().keys({ firstname: Joi.string().allow(''), lastname: Joi.string() }),
             local: Joi.object().keys({ email: Joi.string().email().required() }).required(),
-            contact: Joi.object().keys({ phone: phoneNumberValidation }),
+            contact: Joi
+              .object()
+              .keys({ phone: phoneNumberValidation, countryCode: countryCodeValidation })
+              .and('phone', 'countryCode'),
           }),
         },
         auth: { scope: ['programs:edit'] },

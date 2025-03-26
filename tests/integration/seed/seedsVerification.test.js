@@ -2424,6 +2424,20 @@ describe('SEEDS VERIFICATION', () => {
 
           expect(everyUserWithFirstMobileConnectionDateAlsoHasMode).toBeTruthy();
         });
+
+        it('should pass if every user who has phone also has countryCode', () => {
+          const everyUserWithPhoneAlsoHasCountryCode = userList
+            .filter(u => get(u, 'contact.phone'))
+            .every(u => get(u, 'contact.countryCode'));
+
+          expect(everyUserWithPhoneAlsoHasCountryCode).toBeTruthy();
+
+          const everyUserWithCountryCodeAlsoHasPhone = userList
+            .filter(u => get(u, 'contact.countryCode'))
+            .every(u => get(u, 'contact.phone'));
+
+          expect(everyUserWithCountryCodeAlsoHasPhone).toBeTruthy();
+        });
       });
 
       describe('Collection UserCompany', () => {

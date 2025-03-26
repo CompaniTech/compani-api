@@ -365,7 +365,7 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
             { path: 'trainers', select: 'identity' },
           ],
         },
-        { path: 'user', select: 'identity local.email contact.phone' },
+        { path: 'user', select: 'identity local.email contact' },
         { path: 'company', select: 'name' },
         { path: 'questionnaireAnswersList.card', select: 'qcAnswers' },
       ],
@@ -390,7 +390,9 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
       'Origine de réponse': qHistory.origin,
       'Prénom Nom répondant(e)': UtilsHelper.formatIdentity(get(qHistory, 'user.identity') || '', 'FL'),
       'Mail répondant(e)': get(qHistory, 'user.local.email'),
-      'Numéro de tél répondant(e)': get(qHistory, 'user.contact.phone') || '',
+      'Numéro de tél répondant(e)': get(qHistory, 'user.contact.phone')
+        ? `${UtilsHelper.formatPhone(qHistory.user.contact)}`
+        : '',
       ...questionsAnswers,
     };
 

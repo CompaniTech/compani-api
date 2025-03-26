@@ -108,6 +108,7 @@ const billCustomerList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     payment: {
       bankAccountOwner: 'Lance Amstrong',
@@ -150,6 +151,7 @@ const billCustomerList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     subscriptions: [{
       _id: new ObjectId(),
@@ -180,6 +182,7 @@ const billCustomerList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     subscriptions: [{
       _id: new ObjectId(),
@@ -213,6 +216,7 @@ const billCustomerList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     subscriptions: [{
       _id: new ObjectId(),
@@ -635,6 +639,7 @@ const customerFromOtherCompany = {
       location: { type: 'Point', coordinates: [2.377133, 48.801389] },
     },
     phone: '0612345678',
+    countryCode: '+33',
   },
 };
 

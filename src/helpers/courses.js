@@ -446,7 +446,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       },
       {
         path: 'companyRepresentative',
-        select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+        select: 'identity.firstname identity.lastname contact local.email picture.link',
       },
       {
         path: 'subProgram',
@@ -471,25 +471,25 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
         ? [
           {
             path: 'tutors',
-            select: 'identity.firstname identity.lastname contact.phone local.email picture.link '
+            select: 'identity.firstname identity.lastname contact local.email picture.link '
               + 'firstMobileConnectionDate loginCode',
           },
           { path: 'slots', select: 'step startDate endDate address meetingLink' },
           { path: 'slotsToPlan', select: '_id step' },
           {
             path: 'trainers',
-            select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+            select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
           { path: 'accessRules', select: 'name' },
           {
             path: 'operationsRepresentative',
-            select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+            select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
           {
             path: 'salesRepresentative',
-            select: 'identity.firstname identity.lastname contact.phone local.email picture.link',
+            select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
-          { path: 'contact', select: 'identity.firstname identity.lastname contact.phone' },
+          { path: 'contact', select: 'identity.firstname identity.lastname contact' },
           ...(isRofOrAdmin
             ? [{ path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } }]
             : []),
@@ -713,7 +713,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     })
     .populate({ path: 'trainers', select: 'identity.firstname identity.lastname biography picture' })
     .populate({ path: 'tutors', select: 'identity.firstname identity.lastname picture' })
-    .populate({ path: 'contact', select: 'identity.firstname identity.lastname contact.phone local.email' })
+    .populate({ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' })
     .populate({
       path: 'attendanceSheets',
       match: { trainee: credentials._id },
@@ -840,7 +840,7 @@ exports.sendSMS = async (courseId, payload, credentials) => {
     if (!get(trainee, 'contact.phone')) missingPhones.push(trainee._id);
     else {
       promises.push(SmsHelper.send({
-        recipient: `+33${trainee.contact.phone.substring(1)}`,
+        recipient: `${trainee.contact.countryCode}${trainee.contact.phone.substring(1)}`,
         sender: 'Compani',
         content: payload.content,
         tag: COURSE_SMS,
@@ -1271,7 +1271,7 @@ exports.formatCourseForConvocationPdf = (course) => {
   const contact = {
     formattedIdentity: UtilsHelper.formatIdentity(get(course, 'contact.identity'), 'FL'),
     email: get(course, 'contact.local.email'),
-    formattedPhone: UtilsHelper.formatPhoneNumber(get(course, 'contact.contact.phone')),
+    formattedPhone: get(course, 'contact.contact.phone') ? UtilsHelper.formatPhone(course.contact.contact) : '',
   };
   const formattedTrainers = course.trainers.map(trainer => ({
     ...trainer,
@@ -1290,7 +1290,7 @@ exports.generateConvocationPdf = async (courseId) => {
     })
     .populate({ path: 'slots', select: 'startDate endDate address meetingLink' })
     .populate({ path: 'slotsToPlan', select: '_id' })
-    .populate({ path: 'contact', select: 'identity.firstname identity.lastname contact.phone local.email' })
+    .populate({ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' })
     .populate({ path: 'trainers', select: 'identity.firstname identity.lastname biography' })
     .lean();
 

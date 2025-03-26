@@ -148,7 +148,7 @@ const vendorHistoryExportTypes = [
     expectedRows: [
       '\ufeff"Id formation";"Programme";"Sous-programme";"Prénom Nom intervenant·e";"Structure";"Date de réponse";"Origine de réponse";"Prénom Nom répondant(e)";"Mail répondant(e)";"Numéro de tél répondant(e)";"Où est Charlie ?";"Comment gagner 100 euros par heure sans travailler ?";"Combien coûte une chocolatine ?"',
       `${coursesList[0]._id};"Program 1";"subProgram 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"Test SAS";"20/01/2021 11:31:37";"webapp";"Jacques TRAINEE";"trainee1@compani.fr";;"dans ton couloir";"3";"15 euros"`,
-      `${coursesList[2]._id};"Program 2";"subProgram 2";"Gilles FORMATEUR";"Test SAS withtout subscription";"10/12/2021 21:30:04";"mobile";"Lulu UIUI";"export_auxiliary_1@alenvi.io";"0123456789";;;"15 euros"`,
+      `${coursesList[2]._id};"Program 2";"subProgram 2";"Gilles FORMATEUR";"Test SAS withtout subscription";"10/12/2021 21:30:04";"mobile";"Lulu UIUI";"export_auxiliary_1@alenvi.io";"+33 1 23 45 67 89";;;"15 euros"`,
       `${coursesList[8]._id};"Program 1";"subProgram 1";"Gilles FORMATEUR";"Un autre SAS";"27/01/2021 21:31:04";"mobile";"Paul TRAINEE";"trainee2@compani.fr";;;;"15 centimes,15 euros"`,
     ],
     query: 'startDate=2021-01-15T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',

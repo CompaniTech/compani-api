@@ -81,7 +81,7 @@ const traineeFromOtherCompany = {
   identity: { firstname: 'Fred', lastname: 'Astaire' },
   local: { email: 'traineeOtherCompany@alenvi.io', password: '123456!eR' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -91,7 +91,7 @@ const traineeFromAuthCompanyWithFormationExpoToken = {
   identity: { firstname: 'Trainee', lastname: 'WithExpoToken' },
   local: { email: 'traineeWithExpoToken@alenvi.io' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
   formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
@@ -101,7 +101,7 @@ const traineeFormerlyInAuthCompany = {
   _id: new ObjectId(),
   identity: { firstname: 'Trainee', lastname: 'Formerly In Auth Company' },
   local: { email: 'trainee-formerly-in-auth-company@alenvi.io' },
-  contact: { phone: '0121212121' },
+  contact: { phone: '0121212121', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -110,7 +110,7 @@ const traineeComingUpInAuthCompany = {
   _id: new ObjectId(),
   identity: { firstname: 'Trainee', lastname: 'Coming Up In Auth Company' },
   local: { email: 'trainee-coming-up-in-auth-company@alenvi.io' },
-  contact: { phone: '0121212121' },
+  contact: { phone: '0121212121', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -129,7 +129,7 @@ const traineeFromThirdCompany = {
   identity: { firstname: 'Fred', lastname: 'Subscription' },
   local: { email: 'trainee_third_company@alenvi.io', password: '123456!eR' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856752' },
+  contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -139,7 +139,7 @@ const coachFromThirdCompany = {
   identity: { firstname: 'Manon', lastname: 'Subscription' },
   local: { email: 'coach_third_company@alenvi.io', password: '123456!eR' },
   role: { client: coachRoleId },
-  contact: { phone: '0734856752' },
+  contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -149,7 +149,7 @@ const clientAdminFromThirdCompany = {
   identity: { firstname: 'Sophie', lastname: 'Subscription' },
   local: { email: 'admin_third_company@alenvi.io', password: '123456!eR' },
   role: { client: clientAdminRoleId },
-  contact: { phone: '0734856752' },
+  contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -168,7 +168,7 @@ const coachFromOtherCompany = {
   identity: { firstname: 'Zoe', lastname: 'Zebu' },
   local: { email: 'coachOtherCompany@alenvi.io', password: '123456!eR' },
   role: { client: coachRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };

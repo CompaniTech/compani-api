@@ -5,6 +5,7 @@ const {
   SIRET_VALIDATION,
   IBAN_VALIDATION,
   BIC_VALIDATION,
+  COUNTRY_CODE_VALIDATION,
 } = require('../../models/utils');
 const { CompaniDuration, ISO_DURATION_VALIDATION } = require('../../helpers/dates/companiDurations');
 const { PT0S } = require('../../helpers/constants');
@@ -38,6 +39,7 @@ const durationPositive = Joi.string().regex(ISO_DURATION_VALIDATION).custom((val
 
 const monthValidation = Joi.string().regex(MONTH_VALIDATION);
 const phoneNumberValidation = Joi.string().regex(PHONE_VALIDATION);
+const countryCodeValidation = Joi.string().regex(COUNTRY_CODE_VALIDATION);
 
 const addressValidation = Joi.object().keys({
   street: Joi.string().required(),
@@ -78,6 +80,7 @@ const bicValidation = Joi.string().regex(BIC_VALIDATION);
 module.exports = {
   monthValidation,
   phoneNumberValidation,
+  countryCodeValidation,
   addressValidation,
   objectIdOrArray,
   stringOrArray,

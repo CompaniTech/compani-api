@@ -17,5 +17,5 @@ exports.update = async (holdingId, payload) => {
 exports.getById = async holdingId => Holding
   .findOne({ _id: holdingId }, { _id: 1, name: 1 })
   .populate({ path: 'companies', populate: { path: 'company', select: 'name' } })
-  .populate({ path: 'users', populate: { path: 'user', select: 'identity local.email contact.phone' } })
+  .populate({ path: 'users', populate: { path: 'user', select: 'identity local.email contact' } })
   .lean();

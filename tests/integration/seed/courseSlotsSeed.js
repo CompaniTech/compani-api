@@ -30,7 +30,7 @@ const traineeFromOtherCompany = {
   identity: { firstname: 'fdsdsdf', lastname: 'sdfds' },
   local: { email: 'traineeOtherCompany@alenvi.fr' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };

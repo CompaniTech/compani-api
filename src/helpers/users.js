@@ -236,7 +236,7 @@ exports.userExists = async (email, credentials) => {
   const targetUser = await User
     .findOne(
       { 'local.email': email },
-      { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 }
+      { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 }
     )
     .populate({ path: 'company' })
     .populate({ path: 'userCompanyList', options: { sort: { startDate: 1 } } })
@@ -267,7 +267,8 @@ exports.userExists = async (email, credentials) => {
       userCompanyList = [UtilsHelper.getLastVersion(targetUser.userCompanyList, 'startDate')];
     }
 
-    const userFieldsToPick = ['_id', 'local.email', 'identity.firstname', 'identity.lastname', 'contact.phone', 'role'];
+    const userFieldsToPick =
+      ['_id', 'local.email', 'identity.firstname', 'identity.lastname', 'contact.phone', 'contact.countryCode', 'role'];
     return {
       exists: true,
       user: {
@@ -311,22 +312,28 @@ exports.createUser = async (userPayload, credentials) => {
 };
 
 const formatUpdatePayload = async (updatedUser) => {
-  const payload = omit(updatedUser, ['role', 'company', 'holding']);
+  let payloadToSet = omit(updatedUser, ['role', 'company', 'holding']);
+  let payloadToUnset = {};
 
   if (updatedUser.role) {
     const role = await Role.findById(updatedUser.role, { name: 1, interface: 1 }).lean();
     if (!role) throw Boom.badRequest(translate[language].unknownRole);
 
-    payload.role = { [role.interface]: role._id.toHexString() };
+    payloadToSet.role = { [role.interface]: role._id.toHexString() };
   }
 
   if (updatedUser.holding) {
     const role = await Role.findOne({ name: HOLDING_ADMIN }).lean();
 
-    payload.role = { holding: role._id };
+    payloadToSet.role = { holding: role._id };
+  }
+  const removePhone = has(updatedUser, 'contact.phone') && updatedUser.contact.phone === '';
+  if (removePhone) {
+    payloadToUnset = { $unset: { 'contact.phone': '', 'contact.countryCode': '' } };
+    payloadToSet = omit(payloadToSet, 'contact');
   }
 
-  return payload;
+  return { $set: UtilsHelper.flatQuery(payloadToSet), ...payloadToUnset };
 };
 
 exports.updateUser = async (userId, userPayload) => {
@@ -340,8 +347,7 @@ exports.updateUser = async (userId, userPayload) => {
   }
 
   if (userPayload.holding) await UserHolding.create({ user: userId, holding: userPayload.holding });
-
-  await User.updateOne({ _id: userId }, { $set: UtilsHelper.flatQuery(payload) });
+  await User.updateOne({ _id: userId }, payload);
 };
 
 exports.removeUser = async (user, credentials) => {
