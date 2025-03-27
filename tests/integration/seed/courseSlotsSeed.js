@@ -10,11 +10,22 @@ const User = require('../../../src/models/User');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const Attendance = require('../../../src/models/Attendance');
+const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
 const { vendorAdmin, trainerAndCoach } = require('../../seed/authUsersSeed');
-const { WEBAPP, INTRA, PUBLISHED, LESSON, INTRA_HOLDING, GLOBAL } = require('../../../src/helpers/constants');
+const {
+  WEBAPP,
+  INTRA,
+  PUBLISHED,
+  LESSON,
+  INTRA_HOLDING,
+  GLOBAL,
+  INTER_B2B,
+} = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, auxiliaryRoleId } = require('../../seed/authRolesSeed');
+
+const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 const trainer = {
   _id: new ObjectId(),
@@ -78,7 +89,7 @@ const stepsList = [
 
 const subProgramsList = [
   {
-    _id: new ObjectId(),
+    _id: SINGLE_COURSES_SUBPROGRAM_IDS[0],
     name: 'sous-programme A',
     steps: [stepsList[0]._id, stepsList[1]._id, stepsList[4]._id],
     status: PUBLISHED,
@@ -110,8 +121,7 @@ const coursesList = [
     trainees: [traineeFromOtherCompany._id],
     companies: [otherCompany._id],
     misc: 'team formation',
-    type: INTRA,
-    maxTrainees: 8,
+    type: INTER_B2B,
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
@@ -260,6 +270,13 @@ const courseSlotsList = [
     course: coursesList[5]._id,
     step: stepsList[0]._id,
   },
+  { // 12 slot with attendance sheet
+    _id: new ObjectId(),
+    startDate: '2020-05-10T09:00:00',
+    endDate: '2020-05-10T12:00:00',
+    course: coursesList[1]._id,
+    step: stepsList[0]._id,
+  },
 ];
 
 const attendance = {
@@ -267,6 +284,17 @@ const attendance = {
   trainee: traineeFromOtherCompany._id,
   courseSlot: courseSlotsList[4]._id,
   company: otherCompany._id,
+};
+
+const attendanceSheet = {
+  _id: new ObjectId(),
+  course: coursesList[1]._id,
+  file: { publicId: 'mon upload', link: 'www.test.com' },
+  trainee: traineeFromOtherCompany._id,
+  companies: [otherCompany._id],
+  slots: [courseSlotsList[12]._id],
+  origin: WEBAPP,
+  trainer: trainer._id,
 };
 
 const populateDB = async () => {
@@ -282,6 +310,7 @@ const populateDB = async () => {
     Step.create(stepsList),
     User.create([trainer, traineeFromOtherCompany]),
     Attendance.create(attendance),
+    AttendanceSheet.create(attendanceSheet),
     UserCompany.create(userCompanies),
   ]);
 };
