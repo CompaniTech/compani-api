@@ -1049,8 +1049,7 @@ exports.getELearningDuration = (steps, traineeId, { startDate, endDate } = {}) =
           ...a,
           activityHistories: a.activityHistories.filter(aH =>
             UtilsHelper.areObjectIdsEquals(aH.user, traineeId) &&
-            (!(startDate || endDate) ||
-              (CompaniDate(aH.date).isSameOrAfter(startDate) && CompaniDate(aH.date).isSameOrBefore(endDate)))
+            (!(startDate || endDate) || (CompaniDate(aH.date).isSameOrBetween(startDate, endDate)))
           ),
         }));
       return { theoreticalDuration: step.theoreticalDuration, activities };

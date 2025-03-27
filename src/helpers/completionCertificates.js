@@ -82,9 +82,7 @@ exports.generate = async (completionCertificateId) => {
   const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
 
   const courseSlotIdsOnMonth = course.slots
-    .filter(slot => CompaniDate(slot.startDate).isSameOrAfter(startOfMonth) &&
-      CompaniDate(slot.endDate).isSameOrBefore(endOfMonth))
-    .map(s => s._id);
+    .filter(slot => CompaniDate(slot.startDate).isSameOrBetween(startOfMonth, endOfMonth)).map(s => s._id);
 
   const attendances = await Attendance
     .find({ trainee: trainee._id, courseSlot: { $in: courseSlotIdsOnMonth } })
