@@ -631,7 +631,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[0]._id,
-        'intra',
+        'Intra',
         'APA Paris',
         'Test SAS',
         '',
@@ -672,7 +672,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[1]._id,
-        'inter_b2b',
+        'Inter B2B',
         'APA Paris',
         'Autre structure,Test SAS',
         '',
@@ -713,7 +713,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[2]._id,
-        'intra_holding',
+        'Intra société mère',
         '',
         '',
         'Société mère',
@@ -754,7 +754,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[3]._id,
-        'intra',
+        'Intra',
         'Alenvi,APA Paris,Compani Test',
         'Test SAS',
         '',
@@ -795,7 +795,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[4]._id,
-        'inter_b2b',
+        'Inter B2B',
         'APA Paris',
         'Autre structure',
         '',
@@ -836,7 +836,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[5]._id,
-        'single',
+        'Individuelle',
         'APA Paris,Compani Test',
         'Test SAS',
         '',
