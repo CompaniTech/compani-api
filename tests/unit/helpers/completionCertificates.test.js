@@ -289,7 +289,7 @@ describe('generate', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies subProgram slots',
+              select: 'subProgram slots',
               populate: [
                 { path: 'slots', select: 'startDate endDate' },
                 {
@@ -329,7 +329,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(getELearningDuration,
       [stepList[0]],
       traineeId,
-      { startDate: '2025-02-28T23:00:00.000Z', endDate: '2025-03-30T22:00:00.000Z' }
+      { startDate: '2025-02-28T23:00:00.000Z', endDate: '2025-03-31T21:59:59.999Z' }
     );
     sinon.assert.calledOnceWithExactly(formatIdentity, { firstname: 'Jean', lastname: 'Saitrien' }, 'FL');
     sinon.assert.calledOnceWithExactly(
