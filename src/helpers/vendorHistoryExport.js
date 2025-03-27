@@ -29,6 +29,7 @@ const {
   START_COURSE,
   END_COURSE,
   SINGLE,
+  COURSE_TYPES,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -182,7 +183,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
 
   return {
     Identifiant: course._id,
-    Type: course.type,
+    Type: COURSE_TYPES[course.type],
     Payeur: payerList || '',
     Structure: companiesName || '',
     'Société mère': get(course, 'holding.name') || '',
