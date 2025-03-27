@@ -1922,7 +1922,7 @@ describe('SEEDS VERIFICATION', () => {
             .find()
             .populate({ path: 'user', select: 'id', populate: { path: 'userCompanyList' } })
             .populate({ path: 'company', select: 'id' })
-            .populate({ path: 'course', select: 'id' })
+            .populate({ path: 'course', select: 'id type companies' })
             .populate({
               path: 'questionnaire',
               select: '_id cards status type',
@@ -2098,12 +2098,16 @@ describe('SEEDS VERIFICATION', () => {
             .find({ company: { $in: companies }, course: { $in: courses }, action: COMPANY_ADDITION })
             .lean();
           const everyCompanyIsLinkedToCourse = questionnaireHistoryList
-            .every(qh => histories
-              .some(
-                history => UtilsHelper.areObjectIdsEquals(history.company, qh.company._id) &&
-                  UtilsHelper.areObjectIdsEquals(history.course, qh.course._id)
-              )
-            );
+            .every((qh) => {
+              if ([SINGLE, INTRA].includes(qh.course.type)) {
+                return UtilsHelper.areObjectIdsEquals(qh.company._id, qh.course.companies[0]);
+              }
+              return histories
+                .some(
+                  history => UtilsHelper.areObjectIdsEquals(history.company, qh.company._id) &&
+                    UtilsHelper.areObjectIdsEquals(history.course, qh.course._id)
+                );
+            });
           expect(everyCompanyIsLinkedToCourse).toBeTruthy();
         });
 
