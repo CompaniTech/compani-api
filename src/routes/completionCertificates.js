@@ -1,11 +1,12 @@
 'use-strict';
 
 const Joi = require('joi');
-const { list, update } = require('../controllers/completionCertificatesController');
+const { list, update, create } = require('../controllers/completionCertificatesController');
 const { monthValidation } = require('./validations/utils');
 const {
   authorizeGetCompletionCertificates,
   authorizeCompletionCertificateEdit,
+  authorizeCompletionCertificateCreation,
 } = require('./preHandlers/completionCertificates');
 const { GENERATION } = require('../helpers/constants');
 
@@ -40,6 +41,23 @@ exports.plugin = {
         pre: [{ method: authorizeCompletionCertificateEdit }],
       },
       handler: update,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/',
+      options: {
+        auth: { scope: ['completioncertificates:create'] },
+        validate: {
+          payload: Joi.object({
+            trainee: Joi.objectId().required(),
+            course: Joi.objectId().required(),
+            month: Joi.objectId().valid(monthValidation).required(),
+          }),
+        },
+        pre: [{ method: authorizeCompletionCertificateCreation }],
+      },
+      handler: create,
     });
   },
 };

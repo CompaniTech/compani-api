@@ -3,6 +3,7 @@ const get = require('lodash/get');
 const Course = require('../../models/Course');
 const CompletionCertificate = require('../../models/CompletionCertificate');
 const translate = require('../../helpers/translate');
+const UtilsHelper = require('../../helpers/utils');
 
 const { language } = translate;
 
@@ -26,6 +27,16 @@ exports.authorizeCompletionCertificateEdit = async (req) => {
   if (get(completionCertificate, 'file.link')) {
     throw Boom.conflict(translate[language].completionCertificateAlreadyGenerated);
   }
+
+  return null;
+};
+
+exports.authorizeCompletionCertificateCreation = async (req) => {
+  const { trainee, course, month } = req.payload;
+
+  if (!course) throw Boom.notFound();
+
+  if (!course.trainees.some(t => UtilsHelper.areObjectIdsEquals(t, trainee))) throw Boom.forbidden();
 
   return null;
 };
