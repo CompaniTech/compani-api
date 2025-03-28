@@ -389,7 +389,7 @@ describe('generate', () => {
     );
     sinon.assert.calledOnceWithExactly(
       uploadCourseFile,
-      { fileName: 'certificat_realisation_Jean SAITRIEN_03-2025', file: 'pdf' }
+      { fileName: 'certificat_realisation_Jean SAITRIEN_03-2025', file: 'pdf', contentType: 'application/pdf' }
     );
     sinon.assert.calledOnceWithExactly(
       updateOne,

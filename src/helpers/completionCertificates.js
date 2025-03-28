@@ -136,7 +136,8 @@ exports.generate = async (completionCertificateId) => {
 
   const pdf = await CompletionCertificatePdf.getPdf(data, OFFICIAL);
   const fileName = `certificat_realisation_${traineeIdentity}_${month}`;
-  const fileUploaded = await GCloudStorageHelper.uploadCourseFile({ fileName, file: pdf });
+  const fileUploaded = await GCloudStorageHelper
+    .uploadCourseFile({ fileName, file: pdf, contentType: 'application/pdf' });
 
   await CompletionCertificate.updateOne({ _id: completionCertificateId }, { file: fileUploaded });
 };
