@@ -4,6 +4,7 @@ const CourseSlot = require('../../models/CourseSlot');
 const Course = require('../../models/Course');
 const Step = require('../../models/Step');
 const Attendance = require('../../models/Attendance');
+const AttendanceSheet = require('../../models/AttendanceSheet');
 const translate = require('../../helpers/translate');
 const { checkAuthorization } = require('./courses');
 const { E_LEARNING, ON_SITE, REMOTE, INTRA, INTRA_HOLDING } = require('../../helpers/constants');
@@ -41,7 +42,8 @@ const checkPayload = async (courseSlot, payload) => {
 
   if (!hasOneDate) {
     const attendances = await Attendance.countDocuments({ courseSlot: courseSlot._id });
-    if (attendances) throw Boom.forbidden(translate[language].courseSlotWithAttendances);
+    const attendanceSheets = await AttendanceSheet.countDocuments({ slots: courseSlot._id });
+    if (attendances || attendanceSheets) throw Boom.forbidden(translate[language].courseSlotWithAttendances);
   }
 
   if (hasOneDate) {
