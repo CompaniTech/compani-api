@@ -1,4 +1,16 @@
+const { ObjectId } = require('mongodb');
+const get = require('lodash/get');
+const groupBy = require('lodash/groupBy');
+const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const CompletionCertificate = require('../models/CompletionCertificate');
+const ActivityHistory = require('../models/ActivityHistory');
+const Attendance = require('../models/Attendance');
+const { CompaniDate } = require('./dates/companiDates');
+const { CompaniDuration } = require('./dates/companiDurations');
+const { MM_YYYY, MONTH, DD_MM_YYYY, E_LEARNING, SHORT_DURATION_H_MM, OFFICIAL } = require('./constants');
+const UtilsHelper = require('./utils');
+const CoursesHelper = require('./courses');
+const GCloudStorageHelper = require('./gCloudStorage');
 
 exports.list = async (query) => {
   const { months, course } = query;
@@ -8,7 +20,7 @@ exports.list = async (query) => {
     : { month: { $in: Array.isArray(months) ? months : [months] } };
 
   const completionCertificates = await CompletionCertificate
-    .find(findQuery, { course: 1, trainee: 1, month: 1 })
+    .find(findQuery)
     .populate([
       ...(months
         ? [{
@@ -30,4 +42,102 @@ exports.list = async (query) => {
     .lean();
 
   return completionCertificates;
+};
+
+exports.generate = async (completionCertificateId) => {
+  const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
+
+  const completionCertificate = await CompletionCertificate
+    .findOne({ _id: completionCertificateId })
+    .populate([
+      {
+        path: 'course',
+        select: 'subProgram slots',
+        populate: [
+          { path: 'slots', select: 'startDate endDate' },
+          {
+            path: 'subProgram',
+            select: 'program steps',
+            populate: [
+              { path: 'program', select: 'name' },
+              {
+                path: 'steps',
+                select: 'activities type theoreticalDuration',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: 'trainee',
+        select: 'identity',
+        populate: { path: 'company', populate: { path: 'company', select: 'name' } },
+      },
+    ])
+    .setOptions({ isVendorUser: true })
+    .lean();
+
+  const { course, month, trainee } = completionCertificate;
+
+  const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
+  const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
+
+  const courseSlotIdsOnMonth = course.slots
+    .filter(slot => CompaniDate(slot.startDate).isSameOrBetween(startOfMonth, endOfMonth)).map(s => s._id);
+
+  const attendances = await Attendance
+    .find({ trainee: trainee._id, courseSlot: { $in: courseSlotIdsOnMonth } })
+    .setOptions({ isVendorUser: true })
+    .lean();
+
+  const slotsWithAttendanceIds = attendances.map(a => a.courseSlot);
+
+  const slotsWithAttendance = course.slots
+    .filter(slot => UtilsHelper.doesArrayIncludeId(slotsWithAttendanceIds, slot._id));
+
+  const traineePresence = UtilsHelper.getTotalDuration(slotsWithAttendance);
+
+  const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
+
+  const activitiesIds = eLearningSteps.flatMap(s => s.activities);
+  const activityHistories = await ActivityHistory
+    .find({ activity: { $in: activitiesIds }, user: trainee._id })
+    .lean();
+  const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
+
+  const eLearningStepsWithAH = eLearningSteps
+    .map(s => ({
+      ...s,
+      activities: s.activities
+        .map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
+    }));
+
+  const dates = { startDate: startOfMonth, endDate: endOfMonth };
+
+  const eLearningDuration = CoursesHelper.getELearningDuration(eLearningStepsWithAH, trainee._id, dates);
+
+  const formattedELearningDuration = CompaniDuration(eLearningDuration).format(SHORT_DURATION_H_MM);
+
+  const traineeIdentity = UtilsHelper.formatIdentity(trainee.identity, 'FL');
+  const data = {
+    trainee: {
+      identity: traineeIdentity,
+      attendanceDuration: traineePresence,
+      eLearningDuration: formattedELearningDuration,
+      companyName: trainee.company.name,
+    },
+    startDate: CompaniDate(startOfMonth).format(DD_MM_YYYY),
+    endDate: CompaniDate(endOfMonth).format(DD_MM_YYYY),
+    date: CompaniDate().format(DD_MM_YYYY),
+    isVAEISubProgram: UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, course.subProgram._id),
+    certificateGenerationModeIsMonthly: true,
+    programName: get(course, 'subProgram.program.name').toUpperCase() || '',
+  };
+
+  const pdf = await CompletionCertificatePdf.getPdf(data, OFFICIAL);
+  const fileName = `certificat_realisation_${traineeIdentity}_${month}`;
+  const fileUploaded = await GCloudStorageHelper
+    .uploadCourseFile({ fileName, file: pdf, contentType: 'application/pdf' });
+
+  await CompletionCertificate.updateOne({ _id: completionCertificateId }, { file: fileUploaded });
 };

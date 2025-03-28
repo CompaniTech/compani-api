@@ -1042,15 +1042,17 @@ const getELearningStepInfos = (step) => {
   return { progress: stepProgress };
 };
 
-const getELearningDuration = (steps, traineeId) => {
+exports.getELearningDuration = (steps, traineeId, { startDate, endDate } = {}) => {
   const formattedSteps = steps
     .map((step) => {
       const activities = step.activities
         .map(a => ({
           ...a,
-          activityHistories: a.activityHistories.filter(aH => UtilsHelper.areObjectIdsEquals(aH.user, traineeId)),
+          activityHistories: a.activityHistories.filter(aH =>
+            UtilsHelper.areObjectIdsEquals(aH.user, traineeId) &&
+            (!(startDate || endDate) || (CompaniDate(aH.date).isSameOrBetween(startDate, endDate)))
+          ),
         }));
-
       return { theoreticalDuration: step.theoreticalDuration, activities };
     });
 
@@ -1072,7 +1074,7 @@ const getTraineeInformations = (trainee, courseAttendances, steps, companiesName
 
   const attendanceDuration = UtilsHelper.getTotalDuration(traineeSlots, false);
 
-  const eLearningDuration = getELearningDuration(steps, trainee._id);
+  const eLearningDuration = exports.getELearningDuration(steps, trainee._id);
 
   const totalDuration = CompaniDuration(attendanceDuration)
     .add(CompaniDuration(eLearningDuration))

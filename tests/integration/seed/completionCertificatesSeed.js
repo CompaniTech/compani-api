@@ -3,6 +3,7 @@ const Course = require('../../../src/models/Course');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
+const Program = require('../../../src/models/Program');
 const { INTER_B2B, PUBLISHED, MONTHLY } = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 const { trainer, trainerAndCoach, noRole, trainerOrganisationManager, auxiliary } = require('../../seed/authUsersSeed');
@@ -16,6 +17,10 @@ const stepList = [
 const subProgramList = [
   { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[0]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'Subprogram 2', steps: [stepList[1]._id], status: PUBLISHED },
+];
+
+const programsList = [
+  { _id: new ObjectId(), name: 'Program 1', subPrograms: [subProgramList[0]._id, subProgramList[1]._id] },
 ];
 
 const courseList = [
@@ -46,7 +51,13 @@ const completionCertificateList = [
   { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '01-2025' },
   { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '02-2025' },
   { _id: new ObjectId(), course: courseList[1]._id, trainee: auxiliary._id, month: '01-2025' },
-  { _id: new ObjectId(), course: courseList[1]._id, trainee: auxiliary._id, month: '02-2025' },
+  {
+    _id: new ObjectId(),
+    course: courseList[1]._id,
+    trainee: auxiliary._id,
+    month: '02-2025',
+    file: { publicId: 'certif1', link: 'https://test.com/certif1' },
+  },
 ];
 
 const populateDB = async () => {
@@ -57,7 +68,8 @@ const populateDB = async () => {
     CompletionCertificate.create(completionCertificateList),
     Step.create(stepList),
     SubProgram.create(subProgramList),
+    Program.create(programsList),
   ]);
 };
 
-module.exports = { populateDB, courseList };
+module.exports = { populateDB, courseList, completionCertificateList };
