@@ -935,8 +935,8 @@ describe('getOfficialPdfContent', () => {
             text: [
               { text: 'pour une durée de ', bold: true },
               {
-                text: '4h30 d’accompagnement à distance et en présentiel, et'
-                + '1h30 d’enseignement à distance sur l’application Compani.'
+                text: '4h30 d’accompagnement à distance et en présentiel, et '
+                + '1h30 d’enseignement à distance sur l’application Compani. '
                 + 'Ce certificat est lié à une facture de frais pédagogiques.',
                 italic: true,
               },

@@ -1,9 +1,9 @@
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
-const { groupBy } = require('lodash');
+const groupBy = require('lodash/groupBy');
 const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const CompletionCertificate = require('../models/CompletionCertificate');
-const ActivityHistories = require('../models/ActivityHistory');
+const ActivityHistory = require('../models/ActivityHistory');
 const Attendance = require('../models/Attendance');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -99,9 +99,9 @@ exports.generate = async (completionCertificateId) => {
 
   const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
 
-  const activitiesIds = eLearningSteps.map(s => s.activities).flat();
-  const activityHistories = await ActivityHistories
-    .find({ activities: { $in: activitiesIds }, user: trainee._id })
+  const activitiesIds = eLearningSteps.flatMap(s => s.activities);
+  const activityHistories = await ActivityHistory
+    .find({ activity: { $in: activitiesIds }, user: trainee._id })
     .lean();
   const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
 

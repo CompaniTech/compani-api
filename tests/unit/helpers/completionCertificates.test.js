@@ -357,12 +357,13 @@ describe('generate', () => {
     SinonMongoose.calledOnceWithExactly(
       findActivityHistories,
       [
-        { query: 'find', args: [{ activities: { $in: activitiesIds }, user: traineeId }] },
+        { query: 'find', args: [{ activity: { $in: activitiesIds }, user: traineeId }] },
         { query: 'lean' },
       ]
     );
     sinon.assert.calledOnceWithExactly(getTotalDuration, [slotList[1]]);
-    sinon.assert.calledOnceWithExactly(getELearningDuration,
+    sinon.assert.calledOnceWithExactly(
+      getELearningDuration,
       eLearningStepsWithAH,
       traineeId,
       { startDate: '2025-02-28T23:00:00.000Z', endDate: '2025-03-31T21:59:59.999Z' }
