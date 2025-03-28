@@ -1,5 +1,6 @@
 const path = require('path');
 const get = require('lodash/get');
+const pick = require('lodash/pick');
 const has = require('lodash/has');
 const isEmpty = require('lodash/isEmpty');
 const omit = require('lodash/omit');
@@ -1190,6 +1191,7 @@ const generateCompletionCertificateAllWord = async (courseData, attendances, tra
 
 exports.generateCompletionCertificates = async (courseId, credentials, query) => {
   const { format, type } = query;
+  const isVendorUser = VENDOR_ROLES.includes(get(credentials, 'role.vendor.name'));
 
   const courseTrainees = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
 
@@ -1201,7 +1203,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals' },
+          { path: 'program', select: 'name learningGoals subPrograms' },
           {
             path: 'steps',
             select: 'type theoreticalDuration',
@@ -1219,27 +1221,63 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
   const attendances = await Attendance
     .find({ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } })
     .populate({ path: 'courseSlot', select: 'startDate endDate' })
-    .setOptions({ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) })
+    .setOptions({ isVendorUser })
     .lean();
+
+  const courseCompanies = course.companies.map(c => c._id);
+
+  const coursesWithSameProgram = await Course
+    .find({
+      _id: { $ne: courseId },
+      format: BLENDED,
+      subProgram: { $in: get(course, 'subProgram.program.subPrograms') },
+      companies: course.companies,
+    })
+    .populate({
+      path: 'slots',
+      select: 'attendances startDate endDate',
+      populate: {
+        path: 'attendances',
+        match: {
+          ...(courseCompanies.length && { company: { $in: courseCompanies } }),
+          ...(courseTrainees.trainees.length && { trainee: { $in: courseTrainees.trainees } }),
+        },
+        options: { isVendorUser },
+      },
+    })
+    .lean();
+
+  const unsubscribedAttendances = coursesWithSameProgram.map(c => c.slots
+    .map((slot) => {
+      const { attendances: attendanceList } = slot;
+      if (!attendanceList) return {};
+
+      return attendanceList
+        .filter(a => UtilsHelper.doesArrayIncludeId(courseTrainees.trainees, a.trainee) &&
+          !UtilsHelper.doesArrayIncludeId(c.trainees, a.trainee))
+        .map(a => ({ ...pick(a, ['trainee', 'company']), courseSlot: pick(slot, ['startDate', 'endDate']) }));
+    }));
+
+  const allAttendances = [...attendances, ...unsubscribedAttendances.flat(2)];
 
   const courseData = exports.formatCourseForDocuments(course, type);
   if (format === PDF) {
     const trainee = course.trainees.find(t => UtilsHelper.areObjectIdsEquals(t._id, credentials._id));
 
-    return generateCompletionCertificatePdf(courseData, attendances, trainee);
+    return generateCompletionCertificatePdf(courseData, allAttendances, trainee);
   }
 
   const traineeList = await getTraineeList(course, credentials);
   if (format === ALL_WORD) {
-    return generateCompletionCertificateAllWord(courseData, attendances, traineeList, type, courseId);
+    return generateCompletionCertificateAllWord(courseData, allAttendances, traineeList, type, courseId);
   }
 
   if (type === OFFICIAL) {
-    const promises = traineeList.map(t => generateOfficialCompletionCertificatePdf(courseData, attendances, t));
+    const promises = traineeList.map(t => generateOfficialCompletionCertificatePdf(courseData, allAttendances, t));
     return ZipHelper.generateZip('certificats_pdf.zip', await Promise.all(promises));
   }
 
-  const promises = traineeList.map(t => generateCompletionCertificatePdf(courseData, attendances, t));
+  const promises = traineeList.map(t => generateCompletionCertificatePdf(courseData, allAttendances, t));
   return ZipHelper.generateZip('attestations_pdf.zip', await Promise.all(promises));
 };
 
