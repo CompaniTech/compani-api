@@ -1,7 +1,9 @@
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
+const { groupBy } = require('lodash');
 const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const CompletionCertificate = require('../models/CompletionCertificate');
+const ActivityHistories = require('../models/ActivityHistory');
 const Attendance = require('../models/Attendance');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -61,7 +63,6 @@ exports.generate = async (completionCertificateId) => {
               {
                 path: 'steps',
                 select: 'activities type theoreticalDuration',
-                populate: { path: 'activities', populate: { path: 'activityHistories' } },
               },
             ],
           },
@@ -97,12 +98,23 @@ exports.generate = async (completionCertificateId) => {
   const traineePresence = UtilsHelper.getTotalDuration(slotsWithAttendance);
 
   const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
-  const dates = {
-    startDate: startOfMonth,
-    endDate: endOfMonth,
-  };
 
-  const eLearningDuration = CoursesHelper.getELearningDuration(eLearningSteps, trainee._id, dates);
+  const activitiesIds = eLearningSteps.map(s => s.activities).flat();
+  const activityHistories = await ActivityHistories
+    .find({ activities: { $in: activitiesIds }, user: trainee._id })
+    .lean();
+  const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
+
+  const eLearningStepsWithAH = eLearningSteps
+    .map(s => ({
+      ...s,
+      activities: s.activities
+        .map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
+    }));
+
+  const dates = { startDate: startOfMonth, endDate: endOfMonth };
+
+  const eLearningDuration = CoursesHelper.getELearningDuration(eLearningStepsWithAH, trainee._id, dates);
 
   const formattedELearningDuration = CompaniDuration(eLearningDuration).format(SHORT_DURATION_H_MM);
 

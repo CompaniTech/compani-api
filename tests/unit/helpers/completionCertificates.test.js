@@ -12,6 +12,7 @@ const CompletionCertificatePdf = require('../../../src/data/pdf/completionCertif
 const { VENDOR_ROLES, OFFICIAL } = require('../../../src/helpers/constants');
 const UtilsHelper = require('../../../src/helpers/utils');
 const UtilsMock = require('../../utilsMock');
+const ActivityHistory = require('../../../src/models/ActivityHistory');
 
 describe('list', () => {
   let findCompletionCertificates;
@@ -195,6 +196,7 @@ describe('generate', () => {
   let getPdf;
   let uploadCourseFile;
   let updateOne;
+  let findActivityHistories;
   let getTotalDuration;
   let getELearningDuration;
   const VAEI_SUBPROGRAM_IDS = new ObjectId();
@@ -207,6 +209,7 @@ describe('generate', () => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     updateOne = sinon.stub(CompletionCertificate, 'updateOne');
     UtilsMock.mockCurrentDate('2025-03-24T10:00:00.000Z');
+    findActivityHistories = sinon.stub(ActivityHistory, 'find');
     getTotalDuration = sinon.stub(UtilsHelper, 'getTotalDuration');
     getELearningDuration = sinon.stub(CoursesHelper, 'getELearningDuration');
     process.env.VAEI_SUBPROGRAM_IDS = VAEI_SUBPROGRAM_IDS;
@@ -220,6 +223,7 @@ describe('generate', () => {
     uploadCourseFile.restore();
     updateOne.restore();
     UtilsMock.unmockCurrentDate();
+    findActivityHistories.restore();
     getTotalDuration.restore();
     getELearningDuration.restore();
     process.env.VAEI_SUBPROGRAM_IDS = '';
@@ -235,15 +239,34 @@ describe('generate', () => {
       { _id: new ObjectId(), startDate: '2025-03-14T10:00:00.000Z', endDate: '2025-03-14T14:00:00.000Z' },
       { _id: new ObjectId(), startDate: '2025-03-20T10:00:00.000Z', endDate: '2025-03-20T14:00:00.000Z' },
     ];
-    const stepList = [
+    const activitiesIds = [new ObjectId(), new ObjectId()];
+    const activityHistories = [
       {
-        activities: [
-          { activityHistories: [{ _id: new ObjectId(), date: '2025-03-12T12:33:12.000Z', user: traineeId }] },
-        ],
+        _id: new ObjectId(),
+        activity: activitiesIds[0],
+        user: traineeId,
+      },
+      {
+        _id: new ObjectId(),
+        activity: activitiesIds[1],
+        user: traineeId,
+      },
+    ];
+    const eLearningStepsWithAH = [
+      {
         type: 'e_learning',
         theoreticalDuration: '3h30',
+        activities: [
+          {
+            _id: activitiesIds[0],
+            activityHistories: [activityHistories[0]],
+          },
+          {
+            _id: activitiesIds[1],
+            activityHistories: [activityHistories[1]],
+          },
+        ],
       },
-      { activities: [{ _id: new ObjectId() }], type: 'on_site' },
     ];
     const completionCertificate = {
       _id: completionCertificateId,
@@ -252,7 +275,13 @@ describe('generate', () => {
         subProgram: {
           _id: new ObjectId(),
           program: { name: 'program' },
-          steps: stepList,
+          steps: [
+            {
+              type: 'e_learning',
+              theoreticalDuration: '3h30',
+              activities: [activitiesIds[0], activitiesIds[1]],
+            },
+          ],
         },
       },
       month,
@@ -273,6 +302,7 @@ describe('generate', () => {
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns('4h00');
+    findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getELearningDuration.returns('PT3H30M');
     formatIdentity.returns('Jean SAITRIEN');
     getPdf.returns('pdf');
@@ -300,7 +330,6 @@ describe('generate', () => {
                     {
                       path: 'steps',
                       select: 'activities type theoreticalDuration',
-                      populate: { path: 'activities', populate: { path: 'activityHistories' } },
                     },
                   ],
                 },
@@ -325,9 +354,16 @@ describe('generate', () => {
         { query: 'lean' },
       ]
     );
+    SinonMongoose.calledOnceWithExactly(
+      findActivityHistories,
+      [
+        { query: 'find', args: [{ activities: { $in: activitiesIds }, user: traineeId }] },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.calledOnceWithExactly(getTotalDuration, [slotList[1]]);
     sinon.assert.calledOnceWithExactly(getELearningDuration,
-      [stepList[0]],
+      eLearningStepsWithAH,
       traineeId,
       { startDate: '2025-02-28T23:00:00.000Z', endDate: '2025-03-31T21:59:59.999Z' }
     );

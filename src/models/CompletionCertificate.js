@@ -10,7 +10,10 @@ const CompletionCertificateSchema = mongoose.Schema({
     immutable: true,
     validate: /^([0]{1}[1-9]{1}|[1]{1}[0-2]{1})-[2]{1}[0]{1}[0-9]{2}$/,
   },
-  file: { publicId: { type: String }, link: { type: String, trim: true } },
+  file: {
+    publicId: { type: String, required() { return !!this.file.link; } },
+    link: { type: String, trim: true, required() { return !!this.file.publicId; } },
+  },
 }, { timestamps: true });
 
 CompletionCertificateSchema.pre('find', validateQuery);
