@@ -6,9 +6,11 @@ const SubProgram = require('../../../src/models/SubProgram');
 const Step = require('../../../src/models/Step');
 const Activity = require('../../../src/models/Activity');
 const Course = require('../../../src/models/Course');
+const UserCompany = require('../../../src/models/UserCompany');
 const SubProgramHelper = require('../../../src/helpers/subPrograms');
 const NotificationHelper = require('../../../src/helpers/notifications');
 const SinonMongoose = require('../sinonMongoose');
+const UtilsMock = require('../../utilsMock');
 
 describe('addSubProgram', () => {
   let updateOne;
@@ -43,6 +45,7 @@ describe('updatedSubProgram', () => {
   let findOneAndUpdate;
   let stepUpdateManyStub;
   let activityUpdateManyStub;
+  let userCompanyFind;
   let courseCreateStub;
   let sendNewElearningCourseNotification;
 
@@ -51,8 +54,10 @@ describe('updatedSubProgram', () => {
     findOneAndUpdate = sinon.stub(SubProgram, 'findOneAndUpdate');
     stepUpdateManyStub = sinon.stub(Step, 'updateMany');
     activityUpdateManyStub = sinon.stub(Activity, 'updateMany');
+    userCompanyFind = sinon.stub(UserCompany, 'find');
     courseCreateStub = sinon.stub(Course, 'create');
     sendNewElearningCourseNotification = sinon.stub(NotificationHelper, 'sendNewElearningCourseNotification');
+    UtilsMock.mockCurrentDate('2025-03-31T14:00:00.000Z');
   });
 
   afterEach(() => {
@@ -60,8 +65,10 @@ describe('updatedSubProgram', () => {
     findOneAndUpdate.restore();
     stepUpdateManyStub.restore();
     activityUpdateManyStub.restore();
+    userCompanyFind.restore();
     courseCreateStub.restore();
     sendNewElearningCourseNotification.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should update a subProgram name', async () => {
@@ -73,6 +80,7 @@ describe('updatedSubProgram', () => {
     sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgram._id }, { $set: payload });
     sinon.assert.notCalled(stepUpdateManyStub);
     sinon.assert.notCalled(activityUpdateManyStub);
+    sinon.assert.notCalled(userCompanyFind);
     sinon.assert.notCalled(courseCreateStub);
     sinon.assert.notCalled(sendNewElearningCourseNotification);
   });
@@ -117,6 +125,7 @@ describe('updatedSubProgram', () => {
         ]
       );
       sinon.assert.notCalled(courseCreateStub);
+      sinon.assert.notCalled(userCompanyFind);
       sinon.assert.notCalled(sendNewElearningCourseNotification);
     });
 
@@ -170,7 +179,12 @@ describe('updatedSubProgram', () => {
         courseCreateStub,
         { subProgram: subProgram._id, type: 'inter_b2c', format: 'strictly_e_learning', accessRules: [] }
       );
-      sinon.assert.calledWithExactly(sendNewElearningCourseNotification, course._id);
+      sinon.assert.calledWithExactly(
+        sendNewElearningCourseNotification,
+        course._id,
+        { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
+      );
+      sinon.assert.notCalled(userCompanyFind);
     });
 
     it('should create course with restricted access if subProgram is strictly e-learning and payload has accessCompany',
@@ -200,7 +214,11 @@ describe('updatedSubProgram', () => {
           accessRules: [payload.accessCompany],
         };
 
+        const userIds = [new ObjectId(), new ObjectId()];
+        const userCompanies = [{ user: userIds[0] }, { user: userIds[1] }];
+
         findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedSubProgram));
+        userCompanyFind.returns(SinonMongoose.stubChainedQueries(userCompanies, ['lean']));
         stepUpdateManyStub.returns({ activities });
         courseCreateStub.returns(course);
 
@@ -233,7 +251,27 @@ describe('updatedSubProgram', () => {
             accessRules: [payload.accessCompany],
           }
         );
-        sinon.assert.notCalled(sendNewElearningCourseNotification);
+        SinonMongoose.calledOnceWithExactly(
+          userCompanyFind,
+          [
+            {
+              query: 'find',
+              args: [
+                {
+                  company: payload.accessCompany,
+                  $or: [{ endDate: { $gt: '2025-03-31T14:00:00.000Z' } }, { endDate: { $exists: false } }],
+                },
+                { user: 1 },
+              ],
+            },
+            { query: 'lean' },
+          ]
+        );
+        sinon.assert.calledWithExactly(
+          sendNewElearningCourseNotification,
+          course._id,
+          { _id: { $in: userIds }, formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
+        );
       });
   });
 });

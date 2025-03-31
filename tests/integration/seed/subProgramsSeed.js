@@ -8,6 +8,7 @@ const Course = require('../../../src/models/Course');
 const Card = require('../../../src/models/Card');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const User = require('../../../src/models/User');
+const UserCompany = require('../../../src/models/UserCompany');
 const { vendorAdmin } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL } = require('../../../src/helpers/constants');
@@ -20,6 +21,22 @@ const tester = {
   local: { email: 'tester.withoutrole@compani.fr', password: 'zxcvbnm' },
   contact: { phone: '0798640728', countryCode: '+33' },
   origin: WEBAPP,
+};
+
+const userFromAuthCompany = {
+  _id: new ObjectId(),
+  identity: { firstname: 'user', lastname: 'fromAuth' },
+  refreshToken: uuidv4(),
+  local: { email: 'user.fromAuth@authuserseed.fr', password: 'fdsf5P56D' },
+  origin: WEBAPP,
+  formationExpoTokenList: ['ExponentPushToken[1234]'],
+};
+
+const userCompany = {
+  _id: new ObjectId(),
+  user: userFromAuthCompany._id,
+  company: authCompany._id,
+  startDate: '2025-01-31T09:00:00.000Z',
 };
 
 const cardsList = [
@@ -150,7 +167,8 @@ const populateDB = async () => {
     Program.create(programsList),
     Step.create(stepsList),
     SubProgram.create(subProgramsList),
-    User.create(tester),
+    User.create([tester, userFromAuthCompany]),
+    UserCompany.create(userCompany),
   ]);
 };
 
