@@ -145,6 +145,8 @@ module.exports = {
     completionCertificatesFound: 'Completion certificates found.',
     completionCertificateAlreadyGenerated: 'Completion certificates already create.',
     completionCertificateUpdated: 'Completion certificates updated.',
+    completionCertificatesAlreadyExist: 'Completion certificates already exist.',
+    completionCertificatesCreated: 'Completion certificates created.',
     /* Course bill */
     courseBillsFound: 'Course bills found.',
     courseBillsNotFound: 'Course bills not found.',
@@ -371,6 +373,9 @@ module.exports = {
     completionCertificatesFound: 'Certificats de réalisation mensuels trouvés.',
     completionCertificateAlreadyGenerated: 'Certificats de réalisation déjà générés.',
     completionCertificateUpdated: 'Certificats de réalisation modifiés.',
+    completionCertificatesAlreadyExist: 'Certificats de réalisation déjà existant.',
+    completionCertificatesCreated: 'Certificats de réalisation créé.',
+
     /* Course bill */
     courseBillsFound: 'Factures de la formation trouvées.',
     courseBillsNotFound: 'Factures de la formation non trouvées.',

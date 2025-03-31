@@ -24,4 +24,14 @@ const update = async (req) => {
   }
 };
 
-module.exports = { list, update };
+const create = async (req) => {
+  try {
+    await CompletionCertificatesHelper.create(req.payload);
+
+    return { message: translate[language].completionCertificatesCreated };
+  } catch (e) {
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { list, update, create };

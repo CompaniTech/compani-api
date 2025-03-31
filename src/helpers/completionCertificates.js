@@ -141,3 +141,7 @@ exports.generate = async (completionCertificateId) => {
 
   await CompletionCertificate.updateOne({ _id: completionCertificateId }, { file: fileUploaded });
 };
+
+exports.create = async (payload) => {
+  const { trainee, course, month } = payload;
+};
