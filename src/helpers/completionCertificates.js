@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
+const pick = require('lodash/pick');
 const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const CompletionCertificate = require('../models/CompletionCertificate');
 const ActivityHistory = require('../models/ActivityHistory');
@@ -52,14 +53,14 @@ exports.generate = async (completionCertificateId) => {
     .populate([
       {
         path: 'course',
-        select: 'subProgram slots',
+        select: 'subProgram slots companies trainees',
         populate: [
           { path: 'slots', select: 'startDate endDate' },
           {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name' },
+              { path: 'program', select: 'name subPrograms' },
               {
                 path: 'steps',
                 select: 'activities type theoreticalDuration',
@@ -95,7 +96,13 @@ exports.generate = async (completionCertificateId) => {
   const slotsWithAttendance = course.slots
     .filter(slot => UtilsHelper.doesArrayIncludeId(slotsWithAttendanceIds, slot._id));
 
-  const traineePresence = UtilsHelper.getTotalDuration(slotsWithAttendance);
+  const unsubscribedAttendances = await CoursesHelper.getUnsubscribedAttendances(
+    { ...pick(course, ['_id', 'trainees', 'companies']), subPrograms: get(course, 'subProgram.program.subPrograms') },
+    true
+  );
+  const slotsWithUnsubscribedAttendance = unsubscribedAttendances.map(a => a.courseSlot);
+
+  const traineePresence = UtilsHelper.getTotalDuration([...slotsWithAttendance, ...slotsWithUnsubscribedAttendance]);
 
   const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
 

@@ -1189,6 +1189,42 @@ const generateCompletionCertificateAllWord = async (courseData, attendances, tra
   return ZipHelper.generateZip(fileName, await Promise.all(promises));
 };
 
+exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
+  const coursesWithSameProgram = await Course
+    .find({
+      _id: { $ne: course._id },
+      format: BLENDED,
+      subProgram: { $in: course.subPrograms },
+      companies: course.companies,
+    })
+    .populate({
+      path: 'slots',
+      select: 'attendances startDate endDate',
+      populate: {
+        path: 'attendances',
+        match: {
+          ...(course.companies.length && { company: { $in: course.companies } }),
+          ...(course.trainees.length && { trainee: { $in: course.trainees } }),
+        },
+        options: { isVendorUser },
+      },
+    })
+    .lean();
+
+  const unsubscribedAttendances = coursesWithSameProgram.map(c => c.slots
+    .map((slot) => {
+      const { attendances: attendanceList } = slot;
+      if (!attendanceList) return {};
+
+      return attendanceList
+        .filter(a => UtilsHelper.doesArrayIncludeId(course.trainees, a.trainee) &&
+          !UtilsHelper.doesArrayIncludeId(c.trainees, a.trainee))
+        .map(a => ({ ...pick(a, ['trainee', 'company']), courseSlot: pick(slot, ['startDate', 'endDate']) }));
+    }));
+
+  return unsubscribedAttendances.flat(2);
+};
+
 exports.generateCompletionCertificates = async (courseId, credentials, query) => {
   const { format, type } = query;
   const isVendorUser = VENDOR_ROLES.includes(get(credentials, 'role.vendor.name'));
@@ -1224,41 +1260,17 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
     .setOptions({ isVendorUser })
     .lean();
 
-  const courseCompanies = course.companies.map(c => c._id);
+  const unsubscribedAttendances = await exports.getUnsubscribedAttendances(
+    {
+      _id: courseId,
+      companies: course.companies.map(c => c._id),
+      trainees: courseTrainees.trainees,
+      subPrograms: get(course, 'subProgram.program.subPrograms'),
+    },
+    isVendorUser
+  );
 
-  const coursesWithSameProgram = await Course
-    .find({
-      _id: { $ne: courseId },
-      format: BLENDED,
-      subProgram: { $in: get(course, 'subProgram.program.subPrograms') },
-      companies: course.companies,
-    })
-    .populate({
-      path: 'slots',
-      select: 'attendances startDate endDate',
-      populate: {
-        path: 'attendances',
-        match: {
-          ...(courseCompanies.length && { company: { $in: courseCompanies } }),
-          ...(courseTrainees.trainees.length && { trainee: { $in: courseTrainees.trainees } }),
-        },
-        options: { isVendorUser },
-      },
-    })
-    .lean();
-
-  const unsubscribedAttendances = coursesWithSameProgram.map(c => c.slots
-    .map((slot) => {
-      const { attendances: attendanceList } = slot;
-      if (!attendanceList) return {};
-
-      return attendanceList
-        .filter(a => UtilsHelper.doesArrayIncludeId(courseTrainees.trainees, a.trainee) &&
-          !UtilsHelper.doesArrayIncludeId(c.trainees, a.trainee))
-        .map(a => ({ ...pick(a, ['trainee', 'company']), courseSlot: pick(slot, ['startDate', 'endDate']) }));
-    }));
-
-  const allAttendances = [...attendances, ...unsubscribedAttendances.flat(2)];
+  const allAttendances = [...attendances, ...unsubscribedAttendances];
 
   const courseData = exports.formatCourseForDocuments(course, type);
   if (format === PDF) {
