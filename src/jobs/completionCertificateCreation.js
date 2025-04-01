@@ -9,9 +9,9 @@ const ActivityHistory = require('../models/ActivityHistory');
 const CompletionCertificate = require('../models/CompletionCertificate');
 const { MONTHLY, MM_YYYY, MONTH } = require('../helpers/constants');
 const { CompaniDate } = require('../helpers/dates/companiDates');
+const CoursesHelper = require('../helpers/courses');
 const EmailHelper = require('../helpers/email');
 const UtilsHelper = require('../helpers/utils');
-const CoursesHelper = require('../helpers/courses');
 
 const completionCertificateCreationJob = {
   async method(server) {
