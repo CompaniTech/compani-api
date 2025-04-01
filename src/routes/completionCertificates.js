@@ -52,7 +52,7 @@ exports.plugin = {
           payload: Joi.object({
             trainee: Joi.objectId().required(),
             course: Joi.objectId().required(),
-            month: Joi.objectId().valid(monthValidation).required(),
+            month: monthValidation.required(),
           }),
         },
         pre: [{ method: authorizeCompletionCertificateCreation }],

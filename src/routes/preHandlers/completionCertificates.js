@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const ActivityHistory = require('../../models/ActivityHistory');
+const Attendance = require('../../models/Attendance');
 const Course = require('../../models/Course');
 const CompletionCertificate = require('../../models/CompletionCertificate');
 const translate = require('../../helpers/translate');
@@ -35,8 +36,24 @@ exports.authorizeCompletionCertificateEdit = async (req) => {
 };
 
 exports.authorizeCompletionCertificateCreation = async (req) => {
-  const { trainee, course, month } = req.payload;
+  const { trainee, course: courseId, month } = req.payload;
 
+  const course = await Course.findOne({ _id: courseId })
+    .populate({
+      path: 'slots',
+      select: 'startDate endDate',
+    })
+    .populate({
+      path: 'subProgram',
+      select: 'steps',
+      populate: [
+        {
+          path: 'steps',
+          select: 'type activities',
+        },
+      ],
+    })
+    .lean();
   if (!course) throw Boom.notFound();
 
   if (!course.trainees.some(t => UtilsHelper.areObjectIdsEquals(t, trainee))) throw Boom.forbidden();
@@ -44,24 +61,36 @@ exports.authorizeCompletionCertificateCreation = async (req) => {
   const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
   const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
 
-  const courseSlots = course.slots
+  const courseSlotsIds = course.slots
     .filter(slot => CompaniDate(slot.startDate).isSameOrBetween(startOfMonth, endOfMonth))
     .map(s => s._id);
+
+  const attendances = await Attendance.find({ trainee, courseSlot: { $in: courseSlotsIds } })
+    .setOptions({ isVendorUser: true })
+    .lean();
+
+  const slotsWithAttendanceIds = attendances.map(a => a.courseSlot);
+
+  const slotWithAttendance = course.slots
+    .filter(slot => UtilsHelper.doesArrayIncludeId(slotsWithAttendanceIds, slot._id));
 
   const courseSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
 
   const activitiesIds = courseSteps.flatMap(s => s.activities);
   const activityHistories = await ActivityHistory.find({
     activity: { $in: activitiesIds },
-    user: trainee._id,
+    user: trainee,
     date: { $gte: startOfMonth, $lte: endOfMonth },
-  }).lean();
+  })
+    .lean();
 
-  if (!courseSlots.length || !activityHistories) throw Boom.forbidden();
+  if (!slotWithAttendance.length || !activityHistories.length) throw Boom.forbidden();
 
-  const completionCertificates = await CompletionCertificate.find({ trainee: 1, course: 1, month: 1 }).lean();
+  const completionCertificate = await CompletionCertificate.findOne({ trainee, course: courseId, month })
+    .setOptions({ isVendorUser: true })
+    .lean();
 
-  if (get(completionCertificates, 'file.link')) {
+  if (completionCertificate) {
     throw Boom.conflict(translate[language].completionCertificatesAlreadyExist);
   }
 
