@@ -5423,7 +5423,7 @@ describe('generateCompletionCertificates', () => {
         trainees: traineesIds,
         misc: 'Bonjour je suis une formation',
         trainer: new ObjectId(),
-        companies: [companyId, otherCompanyId],
+        companies: { $in: [companyId, otherCompanyId] },
       },
       ['lean']
     ));
@@ -5577,7 +5577,7 @@ describe('generateCompletionCertificates', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: [companyId, otherCompanyId],
+            companies: { $in: [companyId, otherCompanyId] },
           }],
         },
         {
@@ -5824,7 +5824,7 @@ describe('generateCompletionCertificates', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: [companyId, otherCompanyId],
+            companies: { $in: [companyId, otherCompanyId] },
           }],
         },
         {
@@ -6108,7 +6108,7 @@ describe('generateCompletionCertificates', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: [companyId, otherCompanyId],
+            companies: { $in: [companyId, otherCompanyId] },
           }],
         },
         {
@@ -6375,7 +6375,7 @@ describe('generateCompletionCertificates', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: [companyId, otherCompanyId],
+            companies: { $in: [companyId, otherCompanyId] },
           }],
         },
         {
@@ -6589,7 +6589,7 @@ describe('generateCompletionCertificates', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: course.companies,
+            companies: { $in: course.companies },
           }],
         },
         {
@@ -6763,7 +6763,7 @@ describe('generateCompletionCertificates', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: [companyId],
+            companies: { $in: [companyId] },
           }],
         },
         {

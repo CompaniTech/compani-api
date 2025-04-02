@@ -405,7 +405,7 @@ describe('generate', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: [companyId],
+            companies: { $in: [companyId] },
           }],
         },
         {

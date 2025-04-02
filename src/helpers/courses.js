@@ -1195,7 +1195,7 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
       _id: { $ne: course._id },
       format: BLENDED,
       subProgram: { $in: course.subPrograms },
-      companies: course.companies,
+      companies: { $in: course.companies },
     })
     .populate({
       path: 'slots',

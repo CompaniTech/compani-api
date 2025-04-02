@@ -210,7 +210,7 @@ describe('completionCertificateCreation', () => {
             _id: { $ne: courseIds[0] },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: [companyIds[0]],
+            companies: { $in: [companyIds[0]] },
           }],
         },
         {
@@ -238,7 +238,7 @@ describe('completionCertificateCreation', () => {
             _id: { $ne: courseIds[1] },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: [companyIds[1]],
+            companies: { $in: [companyIds[1]] },
           }],
         },
         {
