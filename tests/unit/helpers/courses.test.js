@@ -595,6 +595,38 @@ describe('list', () => {
       sinon.assert.notCalled(formatCourseWithProgress);
       sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
     });
+
+    it('should return several types courses', async () => {
+      const coursesList = [
+        { _id: new ObjectId(), misc: 'name', type: INTRA },
+        { _id: new ObjectId(), misc: 'program', type: INTER_B2B },
+      ];
+
+      findCourseAndPopulate.returns(coursesList);
+
+      const query = {
+        format: 'blended',
+        action: 'operations',
+        origin: 'webapp',
+        type: [INTRA, INTER_B2B],
+      };
+      const result = await CourseHelper.list(query, credentials);
+
+      expect(result).toMatchObject(coursesList);
+      sinon.assert.calledOnceWithExactly(
+        findCourseAndPopulate,
+        {
+          format: 'blended',
+          type: { $in: [INTRA, INTER_B2B] },
+        },
+        'webapp'
+      );
+      sinon.assert.notCalled(getTotalTheoreticalDurationSpy);
+      sinon.assert.notCalled(userFindOne);
+      sinon.assert.notCalled(find);
+      sinon.assert.notCalled(formatCourseWithProgress);
+      sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    });
   });
 
   describe('PEDAGOGY', () => {
