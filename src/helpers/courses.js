@@ -195,6 +195,8 @@ const formatQuery = (query, credentials) => {
 
   if (has(query, 'trainer')) set(formattedQuery, 'trainers', query.trainer);
 
+  if (Array.isArray(query.type)) set(formattedQuery, 'type', { $in: query.type });
+
   return formattedQuery;
 };
 
