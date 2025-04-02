@@ -1,4 +1,6 @@
 const groupBy = require('lodash/groupBy');
+const get = require('lodash/get');
+const pick = require('lodash/pick');
 const Boom = require('@hapi/boom');
 const { ObjectId } = require('mongodb');
 const Course = require('../models/Course');
@@ -7,6 +9,7 @@ const ActivityHistory = require('../models/ActivityHistory');
 const CompletionCertificate = require('../models/CompletionCertificate');
 const { MONTHLY, MM_YYYY, MONTH } = require('../helpers/constants');
 const { CompaniDate } = require('../helpers/dates/companiDates');
+const CoursesHelper = require('../helpers/courses');
 const EmailHelper = require('../helpers/email');
 const UtilsHelper = require('../helpers/utils');
 
@@ -19,8 +22,8 @@ const completionCertificateCreationJob = {
         .find({ archivedAt: { $exists: false }, certificateGenerationMode: MONTHLY })
         .populate({
           path: 'subProgram',
-          select: 'steps',
-          populate: [{ path: 'steps', select: 'activities' }],
+          select: 'steps subProgram',
+          populate: [{ path: 'steps', select: 'activities' }, { path: 'program', select: 'subPrograms' }],
         })
         .populate({ path: 'slots', select: 'startDate endDate' })
         .lean();
@@ -37,16 +40,25 @@ const completionCertificateCreationJob = {
         })
         .flat();
 
-      const attendances = await Attendance.find({ courseSlot: { $in: courseSlots } })
+      const attendanceList = await Attendance.find({ courseSlot: { $in: courseSlots } })
         .populate({ path: 'courseSlot', select: 'startDate endDate course' })
         .setOptions({ isVendorUser: true })
         .lean();
 
-      const attendancesByCourse = groupBy(attendances, 'courseSlot.course');
+      const attendancesByCourse = groupBy(attendanceList, 'courseSlot.course');
       const traineeCoursesWithAHOrAttendancesOnMonth = [];
       for (const course of courses) {
-        if ((attendancesByCourse[course._id] || []).length) {
-          const attendanceByTrainee = groupBy(attendancesByCourse[course._id], 'trainee');
+        const unsubscribedAttendances = await CoursesHelper.getUnsubscribedAttendances(
+          {
+            ...pick(course, ['_id', 'trainees', 'companies']),
+            subPrograms: get(course, 'subProgram.program.subPrograms'),
+          },
+          true
+        );
+
+        const attendances = [...(attendancesByCourse[course._id] || []), ...unsubscribedAttendances];
+        if (attendances.length) {
+          const attendanceByTrainee = groupBy(attendances, 'trainee');
           for (const trainee of Object.keys(attendanceByTrainee)) {
             if (!UtilsHelper.doesArrayIncludeId(course.trainees, trainee)) continue;
 

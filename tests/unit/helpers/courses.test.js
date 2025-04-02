@@ -5277,6 +5277,7 @@ describe('formatCourseForDocuments', () => {
 
 describe('generateCompletionCertificates', () => {
   let courseFindOne;
+  let courseFind;
   let attendanceFind;
   let formatCourseForDocuments;
   let formatIdentity;
@@ -5290,6 +5291,7 @@ describe('generateCompletionCertificates', () => {
   let getCompanyAtCourseRegistrationList;
   beforeEach(() => {
     courseFindOne = sinon.stub(Course, 'findOne');
+    courseFind = sinon.stub(Course, 'find');
     attendanceFind = sinon.stub(Attendance, 'find');
     formatCourseForDocuments = sinon.stub(CourseHelper, 'formatCourseForDocuments');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
@@ -5306,6 +5308,7 @@ describe('generateCompletionCertificates', () => {
   });
   afterEach(() => {
     courseFindOne.restore();
+    courseFind.restore();
     attendanceFind.restore();
     formatCourseForDocuments.restore();
     formatIdentity.restore();
@@ -5320,7 +5323,8 @@ describe('generateCompletionCertificates', () => {
     getCompanyAtCourseRegistrationList.restore();
   });
 
-  it('should download custom completion certificates from webapp (word with eLearning)', async () => {
+  it(`should download custom completion certificates from webapp (word with eLearning and
+      unsubscribed attendances)`, async () => {
     const companyId = new ObjectId();
     const otherCompanyId = new ObjectId();
 
@@ -5334,6 +5338,7 @@ describe('generateCompletionCertificates', () => {
     const readable2 = new PassThrough();
     const readable3 = new PassThrough();
     const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const subProgramIds = [new ObjectId(), new ObjectId()];
     const course = {
       trainees: [
         { _id: traineesIds[0], identity: { lastname: 'trainee 1' } },
@@ -5344,7 +5349,12 @@ describe('generateCompletionCertificates', () => {
       trainer: new ObjectId(),
       companies: [companyId, otherCompanyId],
       subProgram: {
-        program: { learningGoals: 'Apprendre', name: 'nom du programme' },
+        _id: subProgramIds[0],
+        program: {
+          learningGoals: 'Apprendre',
+          name: 'nom du programme',
+          subPrograms: [subProgramIds[0], subProgramIds[1]],
+        },
         steps: [
           {
             type: E_LEARNING,
@@ -5373,20 +5383,52 @@ describe('generateCompletionCertificates', () => {
         trainee: traineesIds[1],
         courseSlot: { startDate: '2022-01-18T07:00:00.000Z', endDate: '2022-01-18T09:30:00.000Z' },
       },
+      {
+        company: otherCompanyId,
+        trainee: traineesIds[2],
+        courseSlot: { startDate: '2022-01-22T07:00:00.000Z', endDate: '2022-01-22T09:30:00.000Z' },
+      },
     ];
+    const coursesWithSameProgram = [{
+      _id: new ObjectId(),
+      format: BLENDED,
+      subProgram: {
+        _id: subProgramIds[1],
+        program: {
+          learningGoals: 'Apprendre',
+          name: 'nom du programme',
+          subPrograms: [subProgramIds[0], subProgramIds[1]],
+        },
+      },
+      trainees: [],
+      companies: [otherCompanyId],
+      slots: [
+        {
+          startDate: '2022-01-22T07:00:00.000Z',
+          endDate: '2022-01-22T09:30:00.000Z',
+          attendances: [attendances[3]],
+        },
+      ],
+    }];
     const query = { format: ALL_WORD, type: CUSTOM };
 
-    attendanceFind.returns(SinonMongoose.stubChainedQueries(attendances, ['populate', 'setOptions', 'lean']));
+    attendanceFind.returns(
+      SinonMongoose.stubChainedQueries(
+        [attendances[0], attendances[1], attendances[2]],
+        ['populate', 'setOptions', 'lean']
+      )
+    );
     courseFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(
       {
         trainees: traineesIds,
         misc: 'Bonjour je suis une formation',
         trainer: new ObjectId(),
-        companies: [companyId, otherCompanyId],
+        companies: { $in: [companyId, otherCompanyId] },
       },
       ['lean']
     ));
     courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
+    courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     getCompanyAtCourseRegistrationList.returns([
       { trainee: traineesIds[0], company: companyId },
       { trainee: traineesIds[1], company: companyId },
@@ -5415,7 +5457,7 @@ describe('generateCompletionCertificates', () => {
     formatIdentity.onCall(2).returns('trainee 3');
     getTotalDuration.onCall(0).returns('PT23400S');
     getTotalDuration.onCall(1).returns('PT9000S');
-    getTotalDuration.onCall(2).returns('PT0S');
+    getTotalDuration.onCall(2).returns('PT9000S');
     createReadStream.onCall(0).returns(readable1);
     createReadStream.onCall(1).returns(readable2);
     createReadStream.onCall(2).returns(readable3);
@@ -5432,7 +5474,7 @@ describe('generateCompletionCertificates', () => {
       false
     );
     sinon.assert.calledWithExactly(getTotalDuration.getCall(1), [attendances[2].courseSlot], false);
-    sinon.assert.calledWithExactly(getTotalDuration.getCall(2), [], false);
+    sinon.assert.calledWithExactly(getTotalDuration.getCall(2), [attendances[3].courseSlot], false);
     sinon.assert.calledWithExactly(
       createDocx.getCall(0),
       '/path/certificate_template.docx',
@@ -5468,7 +5510,7 @@ describe('generateCompletionCertificates', () => {
         programName: 'nom du programme',
         startDate: '2022-01-18T07:00:00.000Z',
         endDate: '2022-01-21T13:30:00.000Z',
-        trainee: { identity: 'trainee 3', attendanceDuration: '0h', eLearningDuration: '0h', totalDuration: '0h' },
+        trainee: { identity: 'trainee 3', attendanceDuration: '2h30', eLearningDuration: '0h', totalDuration: '2h30' },
         date: '20/01/2020',
       }
     );
@@ -5508,7 +5550,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals' },
+              { path: 'program', select: 'name learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -5525,6 +5567,36 @@ describe('generateCompletionCertificates', () => {
         { query: 'lean' },
       ],
       1
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: [companyId, otherCompanyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: {
+                company: { $in: [companyId, otherCompanyId] },
+                trainee: { $in: traineesIds },
+              },
+              options: { isVendorUser: true },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
@@ -5563,6 +5635,7 @@ describe('generateCompletionCertificates', () => {
     const readable2 = new PassThrough();
     const readable3 = new PassThrough();
     const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const subProgramIds = [new ObjectId(), new ObjectId()];
     const course = {
       trainees: [
         { _id: traineesIds[0], identity: { lastname: 'trainee 1' } },
@@ -5573,7 +5646,8 @@ describe('generateCompletionCertificates', () => {
       trainer: new ObjectId(),
       companies: [companyId, otherCompanyId],
       subProgram: {
-        program: { learningGoals: 'Apprendre', name: 'nom du programme' },
+        _id: subProgramIds[0],
+        program: { learningGoals: 'Apprendre', name: 'nom du programme', subPrograms: subProgramIds },
         steps: [],
       },
       slots: [
@@ -5608,6 +5682,7 @@ describe('generateCompletionCertificates', () => {
       ['lean']
     ));
     courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
+    courseFind.returns(SinonMongoose.stubChainedQueries([]));
     getCompanyAtCourseRegistrationList.returns([
       { trainee: traineesIds[0], company: companyId },
       { trainee: traineesIds[1], company: companyId },
@@ -5722,7 +5797,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals' },
+              { path: 'program', select: 'name learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -5739,6 +5814,36 @@ describe('generateCompletionCertificates', () => {
         { query: 'lean' },
       ],
       1
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: [companyId, otherCompanyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: {
+                company: { $in: [companyId, otherCompanyId] },
+                trainee: { $in: traineesIds },
+              },
+              options: { isVendorUser: true },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
@@ -5778,6 +5883,7 @@ describe('generateCompletionCertificates', () => {
     const readable2 = new PassThrough();
     const readable3 = new PassThrough();
     const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const subProgramIds = [new ObjectId(), new ObjectId()];
     const course = {
       trainees: [
         { _id: traineesIds[0], identity: { lastname: 'trainee 1' } },
@@ -5788,7 +5894,8 @@ describe('generateCompletionCertificates', () => {
       trainer: new ObjectId(),
       companies: companies.map(c => c._id),
       subProgram: {
-        program: { learningGoals: 'Objectifs', name: 'nom du programme' },
+        _id: subProgramIds[0],
+        program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
         steps: [
           {
             type: E_LEARNING,
@@ -5840,6 +5947,7 @@ describe('generateCompletionCertificates', () => {
       ['lean']
     ));
     courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
+    courseFind.returns(SinonMongoose.stubChainedQueries([]));
     getCompanyAtCourseRegistrationList.returns([
       { trainee: traineesIds[0], company: companyId },
       { trainee: traineesIds[1], company: companyId },
@@ -5973,7 +6081,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals' },
+              { path: 'program', select: 'name learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -5990,6 +6098,36 @@ describe('generateCompletionCertificates', () => {
         { query: 'lean' },
       ],
       1
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: [companyId, otherCompanyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: {
+                company: { $in: [companyId, otherCompanyId] },
+                trainee: { $in: traineesIds },
+              },
+              options: { isVendorUser: true },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
@@ -6029,6 +6167,7 @@ describe('generateCompletionCertificates', () => {
     const readable2 = new PassThrough();
     const readable3 = new PassThrough();
     const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const subProgramIds = [new ObjectId(), new ObjectId()];
     const course = {
       trainees: [
         { _id: traineesIds[0], identity: { lastname: 'trainee 1' } },
@@ -6038,7 +6177,11 @@ describe('generateCompletionCertificates', () => {
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
       companies: companies.map(c => c._id),
-      subProgram: { program: { learningGoals: 'Objectifs', name: 'nom du programme' }, steps: [] },
+      subProgram: {
+        _id: subProgramIds[0],
+        program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
+        steps: [],
+      },
       slots: [
         { startDate: '2022-01-18T07:00:00.000Z', endDate: '2022-01-18T10:00:00.000Z' },
         { startDate: '2022-01-21T12:00:00.000Z', endDate: '2022-01-21T13:30:00.000Z' },
@@ -6071,6 +6214,7 @@ describe('generateCompletionCertificates', () => {
       ['lean']
     ));
     courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
+    courseFind.returns(SinonMongoose.stubChainedQueries([]));
     getCompanyAtCourseRegistrationList.returns([
       { trainee: traineesIds[0], company: companyId },
       { trainee: traineesIds[1], company: companyId },
@@ -6204,7 +6348,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals' },
+              { path: 'program', select: 'name learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -6221,6 +6365,36 @@ describe('generateCompletionCertificates', () => {
         { query: 'lean' },
       ],
       1
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: [companyId, otherCompanyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: {
+                company: { $in: [companyId, otherCompanyId] },
+                trainee: { $in: traineesIds },
+              },
+              options: { isVendorUser: true },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
@@ -6256,7 +6430,7 @@ describe('generateCompletionCertificates', () => {
     };
     const courseId = new ObjectId();
     const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
-
+    const subProgramIds = [new ObjectId(), new ObjectId()];
     const course = {
       _id: courseId,
       trainees: [
@@ -6267,7 +6441,8 @@ describe('generateCompletionCertificates', () => {
       misc: 'Bonjour je suis une formation',
       companies: [companyId, new ObjectId(), otherCompanyId],
       subProgram: {
-        program: { learningGoals: 'Apprendre plein de trucs cool', name: 'un programme' },
+        _id: subProgramIds[0],
+        program: { learningGoals: 'Apprendre plein de trucs cool', name: 'un programme', subPrograms: subProgramIds },
         steps: [{
           type: E_LEARNING,
           theoreticalDuration: 'PT3600S',
@@ -6309,6 +6484,7 @@ describe('generateCompletionCertificates', () => {
       ['lean']
     ));
     courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
+    courseFind.returns(SinonMongoose.stubChainedQueries([]));
     formatCourseForDocuments.returns({
       duration: { onSite: '6h30', eLearning: '1h', total: '7h30' },
       learningGoals: 'Apprendre plein de trucs cool',
@@ -6386,7 +6562,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals' },
+              { path: 'program', select: 'name learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -6403,6 +6579,36 @@ describe('generateCompletionCertificates', () => {
         { query: 'lean' },
       ],
       1
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: course.companies },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: {
+                company: { $in: course.companies },
+                trainee: { $in: traineesIds },
+              },
+              options: { isVendorUser: false },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
@@ -6428,6 +6634,7 @@ describe('generateCompletionCertificates', () => {
     const credentials = { _id: new ObjectId(), company: { _id: companyId } };
     const courseId = new ObjectId();
     const traineesIds = [credentials._id, new ObjectId()];
+    const subProgramIds = [new ObjectId(), new ObjectId()];
 
     const course = {
       trainees: [
@@ -6438,7 +6645,8 @@ describe('generateCompletionCertificates', () => {
       misc: 'Bonjour je suis une formation',
       companies: [companyId],
       subProgram: {
-        program: { learningGoals: 'Apprendre', name: 'nom du programme' },
+        _id: subProgramIds[0],
+        program: { learningGoals: 'Apprendre', name: 'nom du programme', subPrograms: subProgramIds },
         steps: [{
           type: E_LEARNING,
           theoreticalDuration: 'PT7200S',
@@ -6487,6 +6695,7 @@ describe('generateCompletionCertificates', () => {
       endDate: '2022-01-21T13:30:00.000Z',
       steps: course.subProgram.steps,
     });
+    courseFind.returns(SinonMongoose.stubChainedQueries([]));
     formatIdentity.onCall(0).returns('trainee 1');
     getTotalDuration.onCall(0).returns('PT16200S');
     getPdf.returns('pdf');
@@ -6527,7 +6736,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals' },
+              { path: 'program', select: 'name learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -6544,6 +6753,36 @@ describe('generateCompletionCertificates', () => {
         { query: 'lean' },
       ],
       1
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: [companyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: {
+                company: { $in: [companyId] },
+                trainee: { $in: traineesIds },
+              },
+              options: { isVendorUser: false },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,

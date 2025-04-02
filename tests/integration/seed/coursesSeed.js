@@ -1235,6 +1235,12 @@ const attendanceList = [
     courseSlot: slots[16]._id,
     company: authCompany._id,
   },
+  {
+    _id: new ObjectId(),
+    trainee: auxiliary._id,
+    courseSlot: slots[0]._id,
+    company: authCompany._id,
+  },
 ];
 
 const attendanceSheetList = [
