@@ -178,11 +178,12 @@ describe('sendNewElearningCourseNotification', () => {
       misc: 'skusku',
       slots: [{ startDate: '2020-01-02' }],
     };
+    const query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
     userFind.returns(SinonMongoose.stubChainedQueries(trainees, ['lean']));
 
-    await NotificationHelper.sendNewElearningCourseNotification(courseId);
+    await NotificationHelper.sendNewElearningCourseNotification(courseId, query);
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
@@ -236,11 +237,12 @@ describe('sendNewElearningCourseNotification', () => {
       misc: 'skusku',
       slots: [{ startDate: '2020-01-02' }],
     };
+    const query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
     userFind.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
-    await NotificationHelper.sendNewElearningCourseNotification(courseId);
+    await NotificationHelper.sendNewElearningCourseNotification(courseId, query);
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,

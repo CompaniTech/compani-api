@@ -45,16 +45,11 @@ exports.sendBlendedCourseRegistrationNotification = async (trainee, courseId) =>
   await Promise.all(notifications);
 };
 
-exports.sendNewElearningCourseNotification = async (courseId) => {
+exports.sendNewElearningCourseNotification = async (courseId, query) => {
   const course = await Course.findOne({ _id: courseId })
     .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
     .lean();
-  const trainees = await User
-    .find(
-      { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } },
-      'formationExpoTokenList'
-    )
-    .lean();
+  const trainees = await User.find(query, 'formationExpoTokenList').lean();
 
   const courseName = getCourseName(course);
 
