@@ -25,7 +25,7 @@ exports.authorizeGetCourseHistories = async (req) => {
     ? get(credentials, 'holding.companies')
     : [get(credentials, 'company._id')];
   const isIntraOrSingleAndIncludesUserCompany = await Course
-    .countDocuments({ _id: courseId, type: [INTRA, SINGLE], companies: { $in: companies } });
+    .countDocuments({ _id: courseId, type: { $in: [INTRA, SINGLE] }, companies: { $in: companies } });
 
   const isIntraHoldingOnUserHolding = await Course
     .countDocuments({ _id: courseId, type: INTRA_HOLDING, holding: get(credentials, 'holding._id') });
