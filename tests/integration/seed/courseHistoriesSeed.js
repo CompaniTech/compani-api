@@ -107,7 +107,6 @@ const coursesList = [
     subProgram: subProgramsList[0]._id,
     misc: 'first session',
     type: SINGLE,
-    maxTrainees: 8,
     trainers: [userList[0]._id, userList[2]._id],
     trainees: [],
     companies: [authCompany._id],
