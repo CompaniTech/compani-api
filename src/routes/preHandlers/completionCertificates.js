@@ -58,6 +58,14 @@ exports.authorizeCompletionCertificateCreation = async (req) => {
 
   if (!course.trainees.some(t => UtilsHelper.areObjectIdsEquals(t, trainee))) throw Boom.forbidden();
 
+  const completionCertificate = await CompletionCertificate.findOne({ trainee, course: courseId, month })
+    .setOptions({ isVendorUser: true })
+    .lean();
+
+  if (completionCertificate) {
+    throw Boom.conflict(translate[language].completionCertificatesAlreadyExist);
+  }
+
   const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
   const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
 
@@ -84,14 +92,8 @@ exports.authorizeCompletionCertificateCreation = async (req) => {
   })
     .lean();
 
-  if (!slotWithAttendance.length || !activityHistories.length) throw Boom.forbidden();
-
-  const completionCertificate = await CompletionCertificate.findOne({ trainee, course: courseId, month })
-    .setOptions({ isVendorUser: true })
-    .lean();
-
-  if (completionCertificate) {
-    throw Boom.conflict(translate[language].completionCertificatesAlreadyExist);
+  if (!slotWithAttendance.length && !activityHistories.length) {
+    throw Boom.forbidden(translate[language].completionCertificateError);
   }
 
   return null;
