@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const Activity = require('../../../src/models/Activity');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Attendance = require('../../../src/models/Attendance');
+const Card = require('../../../src/models/Card');
 const Course = require('../../../src/models/Course');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
@@ -181,6 +182,7 @@ const populateDB = async () => {
     Activity.create(activityList),
     ActivityHistory.create(activityHistoryList),
     Attendance.create(attendancesList),
+    Card.create(cardsList),
     Course.create(courseList),
     CourseSlot.create(slotsList),
     CompletionCertificate.create(completionCertificateList),
