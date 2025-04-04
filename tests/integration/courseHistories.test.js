@@ -11,7 +11,7 @@ describe('NODE ENV', () => {
   });
 });
 
-describe('COURSE HISTORIES ROUTES - GET /coursehistories', () => {
+describe('COURSE HISTORIES ROUTES - GET /coursehistories #tag', () => {
   let authToken;
   beforeEach(populateDB);
 
