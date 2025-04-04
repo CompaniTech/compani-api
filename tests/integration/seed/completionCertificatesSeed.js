@@ -19,7 +19,6 @@ const {
   holdingAdminFromAuthCompany,
 } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const Attendance = require('../../../src/models/Attendance');
 
 const cardsList = [
   { _id: new ObjectId(), template: 'transition', title: 'ceci est un titre' },
@@ -109,6 +108,34 @@ const slotsList = [
     course: courseList[2],
     step: stepList[1]._id,
   },
+  { // 2
+    _id: new ObjectId(),
+    startDate: '2025-03-20T10:00:00.000Z',
+    endDate: '2025-03-20T14:00:00.000Z',
+    course: courseList[1]._id,
+    step: stepList[2]._id,
+  },
+  { // 3
+    _id: new ObjectId(),
+    startDate: '2025-03-21T10:00:00.000Z',
+    endDate: '2025-03-21T14:00:00.000Z',
+    course: courseList[1]._id,
+    step: stepList[2]._id,
+  },
+  { // 4
+    _id: new ObjectId(),
+    startDate: '2025-02-21T10:00:00.000Z',
+    endDate: '2025-02-21T14:00:00.000Z',
+    course: courseList[1]._id,
+    step: stepList[2]._id,
+  },
+  { // 5 without attendance
+    _id: new ObjectId(),
+    startDate: '2024-12-21T10:00:00.000Z',
+    endDate: '2024-12-21T14:00:00.000Z',
+    course: courseList[1]._id,
+    step: stepList[2]._id,
+  },
 ];
 
 const attendancesList = [
@@ -119,40 +146,6 @@ const attendancesList = [
     trainee: holdingAdminFromAuthCompany._id,
     company: authCompany._id,
   },
-];
-
-const slotsList = [
-  { // 0
-    _id: new ObjectId(),
-    startDate: '2025-03-20T10:00:00.000Z',
-    endDate: '2025-03-20T14:00:00.000Z',
-    course: courseList[1]._id,
-    step: stepList[2]._id,
-  },
-  { // 1
-    _id: new ObjectId(),
-    startDate: '2025-03-21T10:00:00.000Z',
-    endDate: '2025-03-21T14:00:00.000Z',
-    course: courseList[1]._id,
-    step: stepList[2]._id,
-  },
-  { // 2
-    _id: new ObjectId(),
-    startDate: '2025-02-21T10:00:00.000Z',
-    endDate: '2025-02-21T14:00:00.000Z',
-    course: courseList[1]._id,
-    step: stepList[2]._id,
-  },
-  { // 3 without attendance
-    _id: new ObjectId(),
-    startDate: '2024-12-21T10:00:00.000Z',
-    endDate: '2024-12-21T14:00:00.000Z',
-    course: courseList[1]._id,
-    step: stepList[2]._id,
-  },
-];
-
-const attendancesList = [
   {
     _id: new ObjectId(),
     trainee: auxiliary._id,
