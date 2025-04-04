@@ -1,6 +1,7 @@
 const { ObjectId } = require('mongodb');
 const Activity = require('../../../src/models/Activity');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
+const Attendance = require('../../../src/models/Attendance');
 const Course = require('../../../src/models/Course');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
@@ -9,7 +10,14 @@ const SubProgram = require('../../../src/models/SubProgram');
 const Program = require('../../../src/models/Program');
 const { INTER_B2B, PUBLISHED, MONTHLY, VIDEO, E_LEARNING } = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
-const { trainer, trainerAndCoach, noRole, trainerOrganisationManager, auxiliary } = require('../../seed/authUsersSeed');
+const {
+  trainer,
+  trainerAndCoach,
+  noRole,
+  trainerOrganisationManager,
+  auxiliary,
+  holdingAdminFromAuthCompany,
+} = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const Attendance = require('../../../src/models/Attendance');
 
@@ -58,7 +66,7 @@ const courseList = [
     _id: new ObjectId(),
     subProgram: subProgramList[1]._id,
     type: INTER_B2B,
-    trainees: [noRole._id],
+    trainees: [noRole._id, holdingAdminFromAuthCompany._id],
     companies: [authCompany._id],
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id, trainerAndCoach._id],
@@ -73,6 +81,43 @@ const courseList = [
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
+  },
+  { // 2 Course with monthly certificateGenerationMode and same subProgram as courseList[0]
+    _id: new ObjectId(),
+    subProgram: subProgramList[1]._id,
+    type: INTER_B2B,
+    trainees: [auxiliary._id],
+    companies: [authCompany._id],
+    operationsRepresentative: trainerOrganisationManager._id,
+    trainers: [trainer._id],
+    certificateGenerationMode: MONTHLY,
+  },
+];
+
+const slotsList = [
+  { // 0
+    _id: new ObjectId(),
+    startDate: '2020-01-20T10:00:00.000Z',
+    endDate: '2020-01-20T14:00:00.000Z',
+    course: courseList[0],
+    step: stepList[1]._id,
+  },
+  { // 1
+    _id: new ObjectId(),
+    startDate: '2020-01-21T10:00:00.000Z',
+    endDate: '2020-01-21T14:00:00.000Z',
+    course: courseList[2],
+    step: stepList[1]._id,
+  },
+];
+
+const attendancesList = [
+  { _id: new ObjectId(), courseSlot: slotsList[0]._id, trainee: noRole._id, company: authCompany._id },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[1]._id,
+    trainee: holdingAdminFromAuthCompany._id,
+    company: authCompany._id,
   },
 ];
 

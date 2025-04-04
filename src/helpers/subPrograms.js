@@ -3,7 +3,9 @@ const SubProgram = require('../models/SubProgram');
 const Step = require('../models/Step');
 const Activity = require('../models/Activity');
 const Course = require('../models/Course');
+const UserCompany = require('../models/UserCompany');
 const { INTER_B2C, STRICTLY_E_LEARNING, DRAFT } = require('./constants');
+const { CompaniDate } = require('./dates/companiDates');
 const NotificationHelper = require('./notifications');
 
 exports.addSubProgram = async (programId, payload) => {
@@ -26,7 +28,20 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       format: STRICTLY_E_LEARNING,
       accessRules: payload.accessCompany ? [payload.accessCompany] : [],
     });
-    if (!payload.accessCompany) await NotificationHelper.sendNewElearningCourseNotification(course._id);
+    const query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
+    if (payload.accessCompany) {
+      const userCompanies = await UserCompany
+        .find(
+          {
+            company: payload.accessCompany,
+            $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
+          },
+          { user: 1 }
+        ).lean();
+      const userIds = userCompanies.map(u => u.user);
+      query._id = { $in: userIds };
+    }
+    await NotificationHelper.sendNewElearningCourseNotification(course._id, query);
   }
 
   await Step.updateMany({ _id: { $in: subProgram.steps.map(step => step._id) } }, { status: payload.status });
