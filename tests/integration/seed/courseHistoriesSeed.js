@@ -15,6 +15,7 @@ const {
   PUBLISHED,
   INTRA_HOLDING,
   GLOBAL,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { vendorAdminRoleId, trainerRoleId } = require('../../seed/authRolesSeed');
@@ -98,6 +99,18 @@ const coursesList = [
     companies: [authCompany._id],
     holding: authHolding._id,
     maxTrainees: 8,
+    operationsRepresentative: userList[1]._id,
+    certificateGenerationMode: GLOBAL,
+  },
+  {
+    _id: new ObjectId(),
+    subProgram: subProgramsList[0]._id,
+    misc: 'first session',
+    type: SINGLE,
+    maxTrainees: 8,
+    trainers: [userList[0]._id, userList[2]._id],
+    trainees: [],
+    companies: [authCompany._id],
     operationsRepresentative: userList[1]._id,
     certificateGenerationMode: GLOBAL,
   },
