@@ -69,9 +69,10 @@ exports.authorizeCompletionCertificateCreation = async (req) => {
   const completionCertificate = await CompletionCertificate.countDocuments({ trainee, course: courseId, month });
   if (completionCertificate) throw Boom.conflict(translate[language].completionCertificatesAlreadyExist);
 
-  const slotsWithAttendance = course.slots.map(s => s.attendances).flat();
-  const activityHistories = course.subProgram.steps.map(s => s.activities.map(a => a.activityHistories)).flat(5);
-  if (!slotsWithAttendance.length && !activityHistories.length) {
+  const hasSlotsWithAttendance = course.slots.some(s => s.attendances.length);
+  const hasActivityHistories = course.subProgram.steps.some(s => s.activities.some(a => a.activityHistories.length));
+
+  if (!hasSlotsWithAttendance && !hasActivityHistories) {
     throw Boom.forbidden(translate[language].completionCertificateError);
   }
 

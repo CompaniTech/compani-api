@@ -110,7 +110,6 @@ describe('validate', () => {
           'vendorcompanies:edit',
           'completioncertificates:read',
           'completioncertificates:edit',
-          'completioncertificates:create',
           'coursebills:edit',
           'courses:create',
           'exports:read',

@@ -47,7 +47,7 @@ exports.plugin = {
       method: 'POST',
       path: '/',
       options: {
-        auth: { scope: ['completioncertificates:create'] },
+        auth: { scope: ['completioncertificates:edit'] },
         validate: {
           payload: Joi.object({
             trainee: Joi.objectId().required(),
