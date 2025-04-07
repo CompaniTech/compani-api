@@ -97,8 +97,8 @@ const courseList = [
 const slotsList = [
   { // 0
     _id: new ObjectId(),
-    startDate: '2020-01-20T10:00:00.000Z',
-    endDate: '2020-01-20T14:00:00.000Z',
+    startDate: '2024-04-20T10:00:00.000Z',
+    endDate: '2024-04-20T14:00:00.000Z',
     course: courseList[0],
     step: stepList[1]._id,
   },
@@ -151,12 +151,6 @@ const attendancesList = [
     _id: new ObjectId(),
     trainee: auxiliary._id,
     courseSlot: slotsList[1]._id,
-    company: authCompany._id,
-  },
-  {
-    _id: new ObjectId(),
-    trainee: auxiliary._id,
-    courseSlot: slotsList[2]._id,
     company: authCompany._id,
   },
 ];

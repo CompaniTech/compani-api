@@ -5,7 +5,7 @@ const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const app = require('../../server');
 const { getToken } = require('./helpers/authentication');
 const { populateDB, courseList, completionCertificateList } = require('./seed/completionCertificatesSeed');
-const { auxiliary } = require('../seed/authUsersSeed');
+const { auxiliary, noRole } = require('../seed/authUsersSeed');
 const { GENERATION } = require('../../src/helpers/constants');
 const CompletionCertificate = require('../../src/models/CompletionCertificate');
 
@@ -196,8 +196,23 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should create completion certificates', async () => {
+    it('should create completion certificates if trainee has activity history on month', async () => {
       const payload = { trainee: auxiliary._id, course: courseList[1]._id, month: '03-2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/completioncertificates',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const completionCertificateCreated = await CompletionCertificate.countDocuments(payload);
+      expect(completionCertificateCreated).toEqual(1);
+    });
+
+    it('should create completion certificates if trainee has attendance on month', async () => {
+      const payload = { trainee: noRole._id, course: courseList[0]._id, month: '04-2024' };
 
       const response = await app.inject({
         method: 'POST',
@@ -237,7 +252,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 if there is not slot and activity history for trainee', async () => {
+    it('should return 403 if there is no slot nor activity history for trainee', async () => {
       const payload = { trainee: auxiliary._id, course: courseList[1]._id, month: '12-2024' };
 
       const response = await app.inject({
