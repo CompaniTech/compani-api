@@ -71,6 +71,7 @@ const {
   CUSTOM,
   TYPE_OPTIONS,
   SINGLE,
+  STRICTLY_E_LEARNING,
 } = require('../helpers/constants');
 const { dateToISOString } = require('./validations/utils');
 
@@ -104,6 +105,11 @@ exports.plugin = {
             holding: Joi.objectId().when('origin', { is: MOBILE, then: Joi.forbidden() }),
             format: Joi.string().valid(...COURSE_FORMATS),
             isArchived: Joi.boolean(),
+            type: Joi
+              .alternatives()
+              .try(Joi.array().items(Joi.string().valid(...COURSE_TYPES)), Joi.string().valid(...COURSE_TYPES))
+              .when('action', { is: PEDAGOGY, then: Joi.forbidden() })
+              .when('format', { is: STRICTLY_E_LEARNING, then: Joi.forbidden() }),
           }).oxor('company', 'holding'),
         },
         pre: [{ method: authorizeGetList }],

@@ -1,7 +1,7 @@
 const get = require('lodash/get');
 const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
-const { WEBAPP, MOBILE, TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN } = require('../helpers/constants');
+const { WEBAPP, MOBILE, TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN, SINGLE } = require('../helpers/constants');
 
 exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Course
   .find(
@@ -35,9 +35,9 @@ exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Cour
     ...(origin === WEBAPP
       ? [
         { path: 'trainers', select: 'identity' },
-        ...(query.accessRules ? [{
+        ...(query.accessRules || query.type === SINGLE ? [{
           path: 'trainees',
-          select: '_id company',
+          select: '_id company identity',
           populate: { path: 'company', populate: { path: 'company', select: 'name' } },
         }] : []
         ),
