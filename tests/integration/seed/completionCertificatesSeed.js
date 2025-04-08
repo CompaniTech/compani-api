@@ -1,12 +1,15 @@
 const { ObjectId } = require('mongodb');
+const Activity = require('../../../src/models/Activity');
+const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Attendance = require('../../../src/models/Attendance');
+const Card = require('../../../src/models/Card');
 const Course = require('../../../src/models/Course');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const Program = require('../../../src/models/Program');
-const { INTER_B2B, PUBLISHED, MONTHLY } = require('../../../src/helpers/constants');
+const { INTER_B2B, PUBLISHED, MONTHLY, VIDEO, E_LEARNING } = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 const {
   trainer,
@@ -18,14 +21,40 @@ const {
 } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 
+const cardsList = [
+  { _id: new ObjectId(), template: 'transition', title: 'ceci est un titre' },
+];
+
+const activityList = [{
+  _id: new ObjectId(),
+  name: 'great activity',
+  type: VIDEO,
+  cards: [cardsList[0]._id],
+  status: PUBLISHED,
+}];
+
+const activityHistoryList = [
+  { _id: new ObjectId(), activity: activityList[0]._id, user: auxiliary._id, date: '2025-03-25T10:05:32.582Z' },
+  { _id: new ObjectId(), activity: activityList[0]._id, user: auxiliary._id, date: '2025-02-21T10:05:32.582Z' },
+];
+
 const stepList = [
   { _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 },
   { _id: new ObjectId(), type: 'on_site', name: 'autre étape', status: PUBLISHED, theoreticalDuration: 60 },
+  {
+    _id: new ObjectId(),
+    type: E_LEARNING,
+    name: 'étape',
+    status: PUBLISHED,
+    activities: [activityList[0]._id],
+    theoreticalDuration: 60,
+  },
 ];
 
 const subProgramList = [
   { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[0]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'Subprogram 2', steps: [stepList[1]._id], status: PUBLISHED },
+  { _id: new ObjectId(), name: 'Subprogram 3', steps: [stepList[2]._id], status: PUBLISHED },
 ];
 
 const programsList = [
@@ -45,7 +74,7 @@ const courseList = [
   },
   { // 1 Course with monthly certificateGenerationMode
     _id: new ObjectId(),
-    subProgram: subProgramList[0]._id,
+    subProgram: subProgramList[2]._id,
     type: INTER_B2B,
     trainees: [auxiliary._id],
     companies: [authCompany._id],
@@ -68,8 +97,8 @@ const courseList = [
 const slotsList = [
   { // 0
     _id: new ObjectId(),
-    startDate: '2020-01-20T10:00:00.000Z',
-    endDate: '2020-01-20T14:00:00.000Z',
+    startDate: '2024-04-20T10:00:00.000Z',
+    endDate: '2024-04-20T14:00:00.000Z',
     course: courseList[0],
     step: stepList[1]._id,
   },
@@ -80,6 +109,34 @@ const slotsList = [
     course: courseList[2],
     step: stepList[1]._id,
   },
+  { // 2
+    _id: new ObjectId(),
+    startDate: '2025-03-20T10:00:00.000Z',
+    endDate: '2025-03-20T14:00:00.000Z',
+    course: courseList[1]._id,
+    step: stepList[2]._id,
+  },
+  { // 3
+    _id: new ObjectId(),
+    startDate: '2025-03-21T10:00:00.000Z',
+    endDate: '2025-03-21T14:00:00.000Z',
+    course: courseList[1]._id,
+    step: stepList[2]._id,
+  },
+  { // 4
+    _id: new ObjectId(),
+    startDate: '2025-02-21T10:00:00.000Z',
+    endDate: '2025-02-21T14:00:00.000Z',
+    course: courseList[1]._id,
+    step: stepList[2]._id,
+  },
+  { // 5 without attendance
+    _id: new ObjectId(),
+    startDate: '2024-12-21T10:00:00.000Z',
+    endDate: '2024-12-21T14:00:00.000Z',
+    course: courseList[1]._id,
+    step: stepList[2]._id,
+  },
 ];
 
 const attendancesList = [
@@ -88,6 +145,12 @@ const attendancesList = [
     _id: new ObjectId(),
     courseSlot: slotsList[1]._id,
     trainee: holdingAdminFromAuthCompany._id,
+    company: authCompany._id,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: auxiliary._id,
+    courseSlot: slotsList[1]._id,
     company: authCompany._id,
   },
 ];
@@ -110,7 +173,10 @@ const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
   await Promise.all([
+    Activity.create(activityList),
+    ActivityHistory.create(activityHistoryList),
     Attendance.create(attendancesList),
+    Card.create(cardsList),
     Course.create(courseList),
     CourseSlot.create(slotsList),
     CompletionCertificate.create(completionCertificateList),

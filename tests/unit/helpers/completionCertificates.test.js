@@ -459,3 +459,23 @@ describe('generate', () => {
     );
   });
 });
+
+describe('create', () => {
+  let create;
+
+  beforeEach(() => {
+    create = sinon.stub(CompletionCertificate, 'create');
+  });
+
+  afterEach(() => {
+    create.restore();
+  });
+
+  it('should add completion certificate', async () => {
+    const payload = { trainee: new ObjectId(), course: new ObjectId(), month: '03-2025' };
+
+    await CompletionCertificatesHelper.create(payload);
+
+    sinon.assert.calledOnceWithExactly(create, payload);
+  });
+});

@@ -3,6 +3,9 @@ const get = require('lodash/get');
 const Course = require('../../models/Course');
 const CompletionCertificate = require('../../models/CompletionCertificate');
 const translate = require('../../helpers/translate');
+const UtilsHelper = require('../../helpers/utils');
+const { CompaniDate } = require('../../helpers/dates/companiDates');
+const { MM_YYYY, MONTH } = require('../../helpers/constants');
 
 const { language } = translate;
 
@@ -25,6 +28,52 @@ exports.authorizeCompletionCertificateEdit = async (req) => {
 
   if (get(completionCertificate, 'file.link')) {
     throw Boom.conflict(translate[language].completionCertificateAlreadyGenerated);
+  }
+
+  return null;
+};
+
+exports.authorizeCompletionCertificateCreation = async (req) => {
+  const { trainee, course: courseId, month } = req.payload;
+
+  const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
+  const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
+
+  const course = await Course.findOne({ _id: courseId })
+    .populate({
+      path: 'slots',
+      select: 'startDate endDate',
+      match: { startDate: { $gte: startOfMonth, $lte: endOfMonth } },
+      populate: { path: 'attendances', options: { isVendorUser: true }, match: { trainee } },
+    })
+    .populate({
+      path: 'subProgram',
+      select: 'steps',
+      populate: {
+        path: 'steps',
+        select: 'type activities',
+        populate: {
+          path: 'activities',
+          populate: {
+            path: 'activityHistories',
+            match: { user: trainee, date: { $gte: startOfMonth, $lte: endOfMonth } },
+          },
+        },
+      },
+    })
+    .lean();
+  if (!course) throw Boom.notFound();
+
+  if (!course.trainees.some(t => UtilsHelper.areObjectIdsEquals(t, trainee))) throw Boom.forbidden();
+
+  const completionCertificate = await CompletionCertificate.countDocuments({ trainee, course: courseId, month });
+  if (completionCertificate) throw Boom.conflict(translate[language].completionCertificatesAlreadyExist);
+
+  const hasSlotsWithAttendance = course.slots.some(s => s.attendances.length);
+  const hasActivityHistories = course.subProgram.steps.some(s => s.activities.some(a => a.activityHistories.length));
+
+  if (!hasSlotsWithAttendance && !hasActivityHistories) {
+    throw Boom.forbidden(translate[language].completionCertificateError);
   }
 
   return null;
