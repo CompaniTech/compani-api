@@ -101,7 +101,7 @@ const courseList = [
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
-    archivedAt: '2025-04-01T00:00:00.000Z',
+    archivedAt: '2025-04-06T00:00:00.000Z',
   },
 ];
 
