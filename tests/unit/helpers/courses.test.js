@@ -2227,9 +2227,7 @@ describe('getCourse', () => {
                   {
                     path: 'steps',
                     select: 'name type theoreticalDuration',
-                    populate: {
-                      path: 'activities', select: 'name type', populate: { path: 'activityHistories', select: 'user' },
-                    },
+                    populate: { path: 'activities', select: 'name type' },
                   },
                 ],
               },
@@ -2329,11 +2327,7 @@ describe('getCourse', () => {
                     {
                       path: 'steps',
                       select: 'name type theoreticalDuration',
-                      populate: {
-                        path: 'activities',
-                        select: 'name type',
-                        populate: { path: 'activityHistories', select: 'user' },
-                      },
+                      populate: { path: 'activities', select: 'name type' },
                     },
                   ],
                 },
@@ -2432,11 +2426,7 @@ describe('getCourse', () => {
                     {
                       path: 'steps',
                       select: 'name type theoreticalDuration',
-                      populate: {
-                        path: 'activities',
-                        select: 'name type',
-                        populate: { path: 'activityHistories', select: 'user' },
-                      },
+                      populate: { path: 'activities', select: 'name type' },
                     },
                   ],
                 },
@@ -2604,9 +2594,7 @@ describe('getCourse', () => {
                   {
                     path: 'steps',
                     select: 'name type theoreticalDuration',
-                    populate: {
-                      path: 'activities', select: 'name type', populate: { path: 'activityHistories', select: 'user' },
-                    },
+                    populate: { path: 'activities', select: 'name type' },
                   },
                 ],
               },
@@ -3920,14 +3908,20 @@ describe('getQuestionnaireAnswers', () => {
       },
     };
 
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+    findOneCourse.onCall(0).returns(SinonMongoose.stubChainedQueries({ trainees: [userId] }, ['lean']));
+    findOneCourse.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
     formatActivity.onCall(0).returns({ followUp: [followUps[0]] });
     formatActivity.onCall(1).returns({ followUp: [followUps[1]] });
 
     const result = await CourseHelper.getQuestionnaireAnswers(courseId);
 
     expect(result).toMatchObject(followUps);
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
+      findOneCourse,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }],
+      0
+    );
+    SinonMongoose.calledWithExactly(
       findOneCourse,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
@@ -3943,6 +3937,7 @@ describe('getQuestionnaireAnswers', () => {
                 path: 'activities',
                 populate: {
                   path: 'activityHistories',
+                  match: { user: { $in: [userId] } },
                   populate: { path: 'questionnaireAnswersList.card', select: '-createdAt -updatedAt' },
                 },
               },
@@ -3950,7 +3945,8 @@ describe('getQuestionnaireAnswers', () => {
           }],
         },
         { query: 'lean' },
-      ]
+      ],
+      1
     );
     sinon.assert.calledWithExactly(formatActivity.getCall(0), activities[0]);
     sinon.assert.calledWithExactly(formatActivity.getCall(1), activities[1]);
@@ -3973,14 +3969,20 @@ describe('getQuestionnaireAnswers', () => {
       },
     };
 
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+    findOneCourse.onCall(0).returns(SinonMongoose.stubChainedQueries({ trainees: [userId] }, ['lean']));
+    findOneCourse.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
     formatActivity.onCall(0).returns({ followUp: [] });
     formatActivity.onCall(1).returns({ followUp: [] });
 
     const result = await CourseHelper.getQuestionnaireAnswers(courseId);
 
     expect(result).toMatchObject([]);
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
+      findOneCourse,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }],
+      0
+    );
+    SinonMongoose.calledWithExactly(
       findOneCourse,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
@@ -3996,6 +3998,7 @@ describe('getQuestionnaireAnswers', () => {
                 path: 'activities',
                 populate: {
                   path: 'activityHistories',
+                  match: { user: { $in: [userId] } },
                   populate: { path: 'questionnaireAnswersList.card', select: '-createdAt -updatedAt' },
                 },
               },
@@ -4003,7 +4006,8 @@ describe('getQuestionnaireAnswers', () => {
           }],
         },
         { query: 'lean' },
-      ]
+      ],
+      1
     );
     sinon.assert.calledWithExactly(formatActivity.getCall(0), activities[0]);
     sinon.assert.calledWithExactly(formatActivity.getCall(1), activities[1]);
@@ -4020,12 +4024,18 @@ describe('getQuestionnaireAnswers', () => {
       subProgram: {},
     };
 
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+    findOneCourse.onCall(0).returns(SinonMongoose.stubChainedQueries({ trainees: [userId] }, ['lean']));
+    findOneCourse.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
 
     const result = await CourseHelper.getQuestionnaireAnswers(courseId);
 
     expect(result).toMatchObject([]);
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
+      findOneCourse,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }],
+      0
+    );
+    SinonMongoose.calledWithExactly(
       findOneCourse,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
@@ -4041,6 +4051,7 @@ describe('getQuestionnaireAnswers', () => {
                 path: 'activities',
                 populate: {
                   path: 'activityHistories',
+                  match: { user: { $in: [userId] } },
                   populate: { path: 'questionnaireAnswersList.card', select: '-createdAt -updatedAt' },
                 },
               },
@@ -4048,7 +4059,8 @@ describe('getQuestionnaireAnswers', () => {
           }],
         },
         { query: 'lean' },
-      ]
+      ],
+      1
     );
     sinon.assert.notCalled(formatActivity);
   });

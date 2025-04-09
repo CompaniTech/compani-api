@@ -458,11 +458,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             ? [{
               path: 'steps',
               select: 'name type theoreticalDuration',
-              populate: {
-                path: 'activities',
-                select: 'name type',
-                populate: { path: 'activityHistories', select: 'user' },
-              },
+              populate: { path: 'activities', select: 'name type' },
             }]
             : [{ path: 'steps', select: 'name' }]
           ),
@@ -632,6 +628,7 @@ exports.getCourseFollowUp = async (course, query, credentials) => {
 };
 
 exports.getQuestionnaireAnswers = async (courseId) => {
+  const courseTrainees = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
   const course = await Course.findOne({ _id: courseId })
     .populate({
       path: 'subProgram',
@@ -644,6 +641,7 @@ exports.getQuestionnaireAnswers = async (courseId) => {
             path: 'activities',
             populate: {
               path: 'activityHistories',
+              match: { user: { $in: courseTrainees.trainees } },
               populate: { path: 'questionnaireAnswersList.card', select: '-createdAt -updatedAt' },
             },
           },
