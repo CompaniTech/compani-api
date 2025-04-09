@@ -148,6 +148,7 @@ module.exports = {
     completionCertificatesAlreadyExist: 'Completion certificate already exist for this trainee and month.',
     completionCertificatesCreated: 'Completion certificates created.',
     completionCertificateError: 'No attendance or activity history for the trainee this month.',
+    completionCertificateDeleted: 'Completion certificate deleted.',
     /* Course bill */
     courseBillsFound: 'Course bills found.',
     courseBillsNotFound: 'Course bills not found.',
@@ -377,6 +378,7 @@ module.exports = {
     completionCertificatesAlreadyExist: 'Un certificat de réalisation existe déjà pour cet apprenant et ce mois.',
     completionCertificatesCreated: 'Certificats de réalisation créé.',
     completionCertificateError: 'Erreur : l\'apprenant n\'a ni émargé un créneau ni réalisé une activité sur le mois.',
+    completionCertificateDeleted: 'Certificat de réalisation supprimé.',
     /* Course bill */
     courseBillsFound: 'Factures de la formation trouvées.',
     courseBillsNotFound: 'Factures de la formation non trouvées.',

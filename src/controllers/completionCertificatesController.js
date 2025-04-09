@@ -34,4 +34,14 @@ const create = async (req) => {
   }
 };
 
-module.exports = { list, update, create };
+const removeFile = async (req) => {
+  try {
+    await CompletionCertificatesHelper.deleteFile(req.params._id);
+
+    return { message: translate[language].completionCertificateDeleted };
+  } catch (e) {
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { list, update, create, removeFile };

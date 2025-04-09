@@ -479,3 +479,40 @@ describe('create', () => {
     sinon.assert.calledOnceWithExactly(create, payload);
   });
 });
+
+describe('deleteFile', () => {
+  let findOne;
+  let updateOne;
+  let deleteCourseFile;
+  beforeEach(() => {
+    findOne = sinon.stub(CompletionCertificate, 'findOne');
+    updateOne = sinon.stub(CompletionCertificate, 'updateOne');
+    deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+  });
+  afterEach(() => {
+    findOne.restore();
+    updateOne.restore();
+    deleteCourseFile.restore();
+  });
+
+  it('should remove the file of a completion certificat', async () => {
+    const completionCertificateId = new ObjectId();
+    const completionCertificate = {
+      _id: completionCertificateId,
+      trainee: new ObjectId(),
+      course: new ObjectId(),
+      month: '03-2025',
+      file: { publicId: 'completionCertificateTest', link: 'test/completionCertificateTest' },
+    };
+    findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['lean']));
+
+    await CompletionCertificatesHelper.deleteFile(completionCertificateId);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: completionCertificateId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: completionCertificateId }, { $unset: { file: '' } });
+    sinon.assert.calledOnceWithExactly(deleteCourseFile, 'completionCertificateTest');
+  });
+});

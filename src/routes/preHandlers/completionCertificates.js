@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
+const has = require('lodash/has');
 const Course = require('../../models/Course');
 const CompletionCertificate = require('../../models/CompletionCertificate');
 const translate = require('../../helpers/translate');
@@ -75,6 +76,21 @@ exports.authorizeCompletionCertificateCreation = async (req) => {
   if (!hasSlotsWithAttendance && !hasActivityHistories) {
     throw Boom.forbidden(translate[language].completionCertificateError);
   }
+
+  return null;
+};
+
+exports.authorizeCompletionCertificateFileDeletion = async (req) => {
+  const completionCertificate = await CompletionCertificate
+    .findOne({ _id: req.params._id })
+    .populate({ path: 'course', select: 'archivedAt' })
+    .lean();
+
+  if (!completionCertificate) throw Boom.notFound();
+
+  if (completionCertificate.course.archivedAt) throw Boom.forbidden();
+
+  if (!has(completionCertificate, 'file.publicId')) throw Boom.forbidden();
 
   return null;
 };
