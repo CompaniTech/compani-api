@@ -3679,6 +3679,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainees/{traineeId}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if trainee is linked to completion certificate', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[2]._id.toHexString()}/trainees/${auxiliary._id.toHexString()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('HOLDING_ADMIN', () => {

@@ -7,6 +7,7 @@ const Course = require('../../models/Course');
 const User = require('../../models/User');
 const CourseSlot = require('../../models/CourseSlot');
 const Company = require('../../models/Company');
+const CompletionCertificate = require('../../models/CompletionCertificate');
 const CompanyHolding = require('../../models/CompanyHolding');
 const CourseBill = require('../../models/CourseBill');
 const AttendanceSheet = require('../../models/AttendanceSheet');
@@ -36,6 +37,7 @@ const {
   ALL_WORD,
   PDF,
   OFFICIAL,
+  MONTHLY,
 } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
@@ -398,7 +400,9 @@ exports.authorizeTraineeAddition = async (req) => {
 
 exports.authorizeTraineeDeletion = async (req) => {
   const vendorRole = get(req, 'auth.credentials.role.vendor.name');
-  const course = await Course.findOne({ _id: req.params._id }, { type: 1, trainees: 1 }).lean();
+  const course = await Course
+    .findOne({ _id: req.params._id }, { type: 1, trainees: 1, certificateGenerationMode: 1 })
+    .lean();
 
   if (!UtilsHelper.doesArrayIncludeId(course.trainees, req.params.traineeId)) throw Boom.forbidden();
 
@@ -416,6 +420,11 @@ exports.authorizeTraineeDeletion = async (req) => {
     const isTraineeFromCompany = UtilsHelper
       .areObjectIdsEquals(get(req, 'auth.credentials.company._id'), companiesAtRegistration);
     if (isCoachOrAdmin && !isTraineeFromCompany && !(isRofOrAdmin || hasHoldingRole)) throw Boom.notFound();
+  }
+  if (course.certificateGenerationMode === MONTHLY) {
+    const completionCertificatesCount = await CompletionCertificate
+      .countDocuments({ course: course._id, trainee: req.params.traineeId });
+    if (completionCertificatesCount) throw Boom.forbidden(translate[language].traineeLinkedToCompletionCertificate);
   }
 
   return null;
