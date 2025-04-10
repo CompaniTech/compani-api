@@ -279,3 +279,84 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
     });
   });
 });
+
+describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/file', () => {
+  let authToken;
+  let deleteCourseFile;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+      deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+    });
+    afterEach(() => {
+      deleteCourseFile.restore();
+    });
+
+    it('should delete completion certificate (with file)', async () => {
+      const completionCertificateId = completionCertificateList[4]._id;
+      const completionCertificatesCountBefore = await CompletionCertificate
+        .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
+      expect(completionCertificatesCountBefore).toEqual(1);
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/completioncertificates/${completionCertificateId}/file`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const completionCertificatesCountAfter = await CompletionCertificate
+        .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
+      expect(completionCertificatesCountAfter).toEqual(0);
+      sinon.assert.calledOnce(deleteCourseFile);
+    });
+
+    it('should return 404 if completion certificate does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/completioncertificates/${new ObjectId()}/file`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if course is archived', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/completioncertificates/${completionCertificateList[5]._id}/file`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if completion certificate has no file', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/completioncertificates/${completionCertificateList[0]._id}/file`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [{ name: 'trainer', expectedCode: 403 }, { name: 'client_admin', expectedCode: 403 }];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'DELETE',
+          url: `/completioncertificates/${completionCertificateList[4]._id}/file`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});

@@ -1,12 +1,13 @@
 'use-strict';
 
 const Joi = require('joi');
-const { list, update, create } = require('../controllers/completionCertificatesController');
+const { list, update, create, removeFile } = require('../controllers/completionCertificatesController');
 const { monthValidation } = require('./validations/utils');
 const {
   authorizeGetCompletionCertificates,
   authorizeCompletionCertificateEdit,
   authorizeCompletionCertificateCreation,
+  authorizeCompletionCertificateFileDeletion,
 } = require('./preHandlers/completionCertificates');
 const { GENERATION } = require('../helpers/constants');
 
@@ -58,6 +59,17 @@ exports.plugin = {
         pre: [{ method: authorizeCompletionCertificateCreation }],
       },
       handler: create,
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/{_id}/file',
+      options: {
+        auth: { scope: ['completioncertificates:edit'] },
+        validate: { params: Joi.object({ _id: Joi.objectId().required() }) },
+        pre: [{ method: authorizeCompletionCertificateFileDeletion }],
+      },
+      handler: removeFile,
     });
   },
 };

@@ -92,6 +92,17 @@ const courseList = [
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
   },
+  { // 3 Archived course with monthly certificateGenerationMode
+    _id: new ObjectId(),
+    subProgram: subProgramList[2]._id,
+    type: INTER_B2B,
+    trainees: [auxiliary._id],
+    companies: [authCompany._id],
+    operationsRepresentative: trainerOrganisationManager._id,
+    trainers: [trainer._id],
+    certificateGenerationMode: MONTHLY,
+    archivedAt: '2025-04-06T00:00:00.000Z',
+  },
 ];
 
 const slotsList = [
@@ -137,6 +148,13 @@ const slotsList = [
     course: courseList[1]._id,
     step: stepList[2]._id,
   },
+  { // 6
+    _id: new ObjectId(),
+    startDate: '2025-04-03T10:00:00.000Z',
+    endDate: '2025-04-03T14:00:00.000Z',
+    course: courseList[3]._id,
+    step: stepList[2]._id,
+  },
 ];
 
 const attendancesList = [
@@ -147,12 +165,8 @@ const attendancesList = [
     trainee: holdingAdminFromAuthCompany._id,
     company: authCompany._id,
   },
-  {
-    _id: new ObjectId(),
-    trainee: auxiliary._id,
-    courseSlot: slotsList[1]._id,
-    company: authCompany._id,
-  },
+  { _id: new ObjectId(), trainee: auxiliary._id, courseSlot: slotsList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), trainee: auxiliary._id, courseSlot: slotsList[6]._id, company: authCompany._id },
 ];
 
 const completionCertificateList = [
@@ -167,6 +181,7 @@ const completionCertificateList = [
     month: '02-2025',
     file: { publicId: 'certif1', link: 'https://test.com/certif1' },
   },
+  { _id: new ObjectId(), course: courseList[3]._id, trainee: auxiliary._id, month: '04-2025' },
 ];
 
 const populateDB = async () => {

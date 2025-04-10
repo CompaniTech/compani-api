@@ -150,3 +150,10 @@ exports.generate = async (completionCertificateId) => {
 };
 
 exports.create = async payload => CompletionCertificate.create(payload);
+
+exports.deleteFile = async (completionCertificateId) => {
+  const completionCertificate = await CompletionCertificate.findOne({ _id: completionCertificateId }).lean();
+  await CompletionCertificate.updateOne({ _id: completionCertificateId }, { $unset: { file: '' } });
+
+  await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
+};
