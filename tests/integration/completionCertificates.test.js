@@ -295,21 +295,25 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
     });
 
     it('should delete completion certificate (with file)', async () => {
-      const completionCertificatesCount = await CompletionCertificate.countDocuments({ file: { $exists: true } });
+      const completionCertificateId = completionCertificateList[4]._id;
+      const completionCertificatesCount = await CompletionCertificate
+        .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
+      expect(completionCertificatesCount).toEqual(1);
 
       const response = await app.inject({
         method: 'DELETE',
-        url: `/completioncertificates/${completionCertificateList[4]._id}/file`,
+        url: `/completioncertificates/${completionCertificateId}/file`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
-      const completionCertificatesCountAfter = await CompletionCertificate.countDocuments({ file: { $exists: true } });
-      expect(completionCertificatesCountAfter).toEqual(completionCertificatesCount - 1);
+      const completionCertificatesCountAfter = await CompletionCertificate
+        .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
+      expect(completionCertificatesCountAfter).toEqual(0);
       sinon.assert.calledOnce(deleteCourseFile);
     });
 
-    it('should return 404 if completionCertificate does not exist', async () => {
+    it('should return 404 if completion certificate does not exist', async () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/completioncertificates/${new ObjectId()}/file`,

@@ -60,6 +60,7 @@ exports.plugin = {
       },
       handler: create,
     });
+
     server.route({
       method: 'DELETE',
       path: '/{_id}/file',

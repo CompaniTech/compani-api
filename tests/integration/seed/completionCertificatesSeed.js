@@ -92,7 +92,7 @@ const courseList = [
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
   },
-  { // 3 Course with monthly certificateGenerationMode
+  { // 3 Archived course with monthly certificateGenerationMode
     _id: new ObjectId(),
     subProgram: subProgramList[2]._id,
     type: INTER_B2B,
