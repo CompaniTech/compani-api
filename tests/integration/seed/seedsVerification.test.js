@@ -95,6 +95,7 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  MONTHLY,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -702,7 +703,7 @@ describe('SEEDS VERIFICATION', () => {
         before(async () => {
           completionCertificates = await CompletionCertificate
             .find()
-            .populate({ path: 'course', select: 'trainees' })
+            .populate({ path: 'course', select: 'trainees certificateGenerationMode' })
             .setOptions({ isVendorUser: true })
             .lean();
         });
@@ -712,6 +713,13 @@ describe('SEEDS VERIFICATION', () => {
             .every(cc => UtilsHelper.doesArrayIncludeId(cc.course.trainees, cc.trainee));
 
           expect(traineeIsRegisteredToCourse).toBeTruthy();
+        });
+
+        it('should pass if course has monthly certificate generation', () => {
+          const courseCertificateGenerationIsMonthly = completionCertificates
+            .every(cc => cc.course.certificateGenerationMode === MONTHLY);
+
+          expect(courseCertificateGenerationIsMonthly).toBeTruthy();
         });
       });
 

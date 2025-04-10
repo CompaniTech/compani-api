@@ -298,6 +298,18 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 as trying to update dates and course slot has attendance sheet', async () => {
+      const payload = { startDate: '2020-03-04T09:00:00', endDate: '2020-03-04T11:00:00' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[12]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 as trying to remove dates and course slot has attendance sheet', async () => {
       const payload = { startDate: '', endDate: '' };
       const response = await app.inject({

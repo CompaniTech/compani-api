@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
 const Company = require('../../../src/models/Company');
 const CompanyHolding = require('../../../src/models/CompanyHolding');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Course = require('../../../src/models/Course');
 const Program = require('../../../src/models/Program');
 const SubProgram = require('../../../src/models/SubProgram');
@@ -379,7 +380,7 @@ const coursesList = [
     ],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
-    certificateGenerationMode: GLOBAL,
+    certificateGenerationMode: MONTHLY,
   },
   { // 3
     _id: new ObjectId(),
@@ -1272,6 +1273,10 @@ const companyHoldingList = [
   { _id: new ObjectId(), holding: authHolding._id, company: fourthCompany._id },
 ];
 
+const completionCertificateList = [
+  { _id: new ObjectId(), month: '03-2020', trainee: auxiliary._id, course: coursesList[2]._id },
+];
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
@@ -1283,6 +1288,7 @@ const populateDB = async () => {
     Card.create(cardsList),
     Company.create(fourthCompany),
     CompanyHolding.create(companyHoldingList),
+    CompletionCertificate.create(completionCertificateList),
     Course.create(coursesList),
     CourseBill.create(courseBillsList),
     CourseBillsNumber.create(courseBillNumber),
