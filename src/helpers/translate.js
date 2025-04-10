@@ -142,7 +142,7 @@ module.exports = {
     courseQuestionnairesFound: 'Questionnaires found.',
     courseAttendanceNotGenerated: 'Failed to download attendance sheet, no on-site slot.',
     traineeMustBeRegisteredInAnotherGroup: 'Trainee must be registered in another group.',
-    traineeLinkedToCompletionCertificate: 'This trainee is linked to a completion certificate.',
+    traineeLinkedToCompletionCertificate: 'Deletion forbidden : this trainee is linked to a completion certificate.',
     completionCertificatesFound: 'Completion certificates found.',
     completionCertificateAlreadyGenerated: 'Completion certificates already create.',
     completionCertificateUpdated: 'Completion certificates updated.',
@@ -372,7 +372,8 @@ module.exports = {
     courseQuestionnairesFound: 'Questionnaires trouvés.',
     courseAttendanceNotGenerated: 'Erreur lors du téléchargement, la formation ne contient pas de créneau présentiel.',
     traineeMustBeRegisteredInAnotherGroup: 'L\'apprenant doit être inscrit dans un autre groupe de cette formation.',
-    traineeLinkedToCompletionCertificate: 'L\'apprenant est relié à un certificat de réalisation.',
+    traineeLinkedToCompletionCertificate: 'Suppression impossible : l\'apprenant est relié à un certificat de '
+      + 'réalisation.',
     completionCertificatesFound: 'Certificats de réalisation mensuels trouvés.',
     completionCertificateAlreadyGenerated: 'Certificats de réalisation déjà générés.',
     completionCertificateUpdated: 'Certificats de réalisation modifiés.',
@@ -452,8 +453,7 @@ module.exports = {
     trainingContractsFound: 'Conventions de formation trouvées',
     trainingContractsNotFound: 'Conventions de formation non trouvées',
     trainingContractDeleted: 'Convention de formation supprimée',
-    trainingContractAlreadyExists: 'Une convention associée à cette formation existe déjà pour cette '
-      + 'structure.',
+    trainingContractAlreadyExists: 'Une convention associée à cette formation existe déjà pour cette structure.',
     /* TrainerMissions */
     trainerMissionCreated: 'Ordre de mission créé',
     trainerMissionAlreadyExist: 'Il existe déjà un ordre de mission pour une des formations.',
