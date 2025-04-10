@@ -46,7 +46,10 @@ exports.list = async (query) => {
 };
 
 exports.generate = async (completionCertificateId) => {
-  const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
+  const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+  const REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS
+    .split(',')
+    .map(id => new ObjectId(id));
 
   const completionCertificate = await CompletionCertificate
     .findOne({ _id: completionCertificateId })
@@ -121,7 +124,12 @@ exports.generate = async (completionCertificateId) => {
 
   const dates = { startDate: startOfMonth, endDate: endOfMonth };
 
-  const eLearningDuration = CoursesHelper.getELearningDuration(eLearningStepsWithAH, trainee._id, dates);
+  let eLearningDuration = {};
+  if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, course.subProgram._id)) {
+    eLearningDuration = CoursesHelper.getRealELearningDuration(eLearningStepsWithAH, trainee._id, dates);
+  } else {
+    eLearningDuration = CoursesHelper.getELearningDuration(eLearningStepsWithAH, trainee._id, dates);
+  }
 
   const formattedELearningDuration = CompaniDuration(eLearningDuration).format(SHORT_DURATION_H_MM);
 
