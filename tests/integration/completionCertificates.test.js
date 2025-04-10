@@ -296,9 +296,9 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
 
     it('should delete completion certificate (with file)', async () => {
       const completionCertificateId = completionCertificateList[4]._id;
-      const completionCertificatesCount = await CompletionCertificate
+      const completionCertificatesCountBefore = await CompletionCertificate
         .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
-      expect(completionCertificatesCount).toEqual(1);
+      expect(completionCertificatesCountBefore).toEqual(1);
 
       const response = await app.inject({
         method: 'DELETE',
