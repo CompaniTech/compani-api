@@ -2330,9 +2330,7 @@ describe('getCourse', () => {
                   {
                     path: 'steps',
                     select: 'name type theoreticalDuration',
-                    populate: {
-                      path: 'activities', select: 'name type', populate: { path: 'activityHistories', select: 'user' },
-                    },
+                    populate: { path: 'activities', select: 'name type' },
                   },
                 ],
               },
@@ -2432,11 +2430,7 @@ describe('getCourse', () => {
                     {
                       path: 'steps',
                       select: 'name type theoreticalDuration',
-                      populate: {
-                        path: 'activities',
-                        select: 'name type',
-                        populate: { path: 'activityHistories', select: 'user' },
-                      },
+                      populate: { path: 'activities', select: 'name type' },
                     },
                   ],
                 },
@@ -2535,11 +2529,7 @@ describe('getCourse', () => {
                     {
                       path: 'steps',
                       select: 'name type theoreticalDuration',
-                      populate: {
-                        path: 'activities',
-                        select: 'name type',
-                        populate: { path: 'activityHistories', select: 'user' },
-                      },
+                      populate: { path: 'activities', select: 'name type' },
                     },
                   ],
                 },
@@ -2707,9 +2697,7 @@ describe('getCourse', () => {
                   {
                     path: 'steps',
                     select: 'name type theoreticalDuration',
-                    populate: {
-                      path: 'activities', select: 'name type', populate: { path: 'activityHistories', select: 'user' },
-                    },
+                    populate: { path: 'activities', select: 'name type' },
                   },
                 ],
               },
@@ -3709,11 +3697,7 @@ describe('getCourseFollowUp', () => {
                 populate: {
                   path: 'activities',
                   select: 'name type',
-                  populate: {
-                    path: 'activityHistories',
-                    match: { user: { $in: trainees } },
-                    populate: { path: 'questionnaireAnswersList.card', select: '-createdAt -updatedAt' },
-                  },
+                  populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
                 },
               },
             ],
@@ -3787,11 +3771,7 @@ describe('getCourseFollowUp', () => {
                 populate: {
                   path: 'activities',
                   select: 'name type',
-                  populate: {
-                    path: 'activityHistories',
-                    match: { user: { $in: trainees } },
-                    populate: { path: 'questionnaireAnswersList.card', select: '-createdAt -updatedAt' },
-                  },
+                  populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
                 },
               },
             ],
@@ -3883,11 +3863,7 @@ describe('getCourseFollowUp', () => {
                 populate: {
                   path: 'activities',
                   select: 'name type',
-                  populate: {
-                    path: 'activityHistories',
-                    match: { user: { $in: trainees } },
-                    populate: { path: 'questionnaireAnswersList.card', select: '-createdAt -updatedAt' },
-                  },
+                  populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
                 },
               },
             ],
@@ -3964,11 +3940,7 @@ describe('getCourseFollowUp', () => {
                 populate: {
                   path: 'activities',
                   select: 'name type',
-                  populate: {
-                    path: 'activityHistories',
-                    match: { user: { $in: trainees } },
-                    populate: { path: 'questionnaireAnswersList.card', select: '-createdAt -updatedAt' },
-                  },
+                  populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
                 },
               },
             ],
