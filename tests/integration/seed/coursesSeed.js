@@ -63,11 +63,10 @@ const {
   SURVEY,
   GLOBAL,
   MONTHLY,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const { auxiliaryRoleId, trainerRoleId, coachRoleId, clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
-
-const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 const traineeFromAuthFormerlyInOther = {
   _id: new ObjectId(),
@@ -315,7 +314,7 @@ const subProgramsList = [
   { _id: new ObjectId(), name: 'sous-programme 2', steps: [stepList[1]._id, stepList[2]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 3', steps: [stepList[1]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 4 (non publié)', steps: [stepList[1]._id, stepList[2]._id] },
-  { _id: SINGLE_COURSES_SUBPROGRAM_IDS[0], name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
+  { _id: new ObjectId(), name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
 ];
 
 const programsList = [
@@ -505,7 +504,7 @@ const coursesList = [
     trainers: [trainer._id],
     trainees: [coach._id, helper._id, clientAdmin._id],
     companies: [authCompany._id],
-    type: INTRA,
+    type: SINGLE,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-01-01T00:00:00.000Z',
@@ -648,22 +647,24 @@ const coursesList = [
     _id: new ObjectId(),
     subProgram: subProgramsList[4]._id,
     contact: trainer._id,
-    misc: 'inter b2b session',
-    type: INTER_B2B,
+    misc: 'single course',
+    type: SINGLE,
     format: BLENDED,
-    trainees: [traineeFromAuthFormerlyInOther._id],
+    trainees: [traineeFromAuthCompanyWithFormationExpoToken._id],
     companies: [authCompany._id],
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     tutors: [],
     certificateGenerationMode: MONTHLY,
+    maxTrainees: 1,
+    expectedBillsCount: 0,
   },
   { // 25 Single course with tutor already in course
     _id: new ObjectId(),
     subProgram: subProgramsList[4]._id,
     contact: trainer._id,
-    misc: 'inter b2b session',
-    type: INTER_B2B,
+    misc: 'single session',
+    type: SINGLE,
     format: BLENDED,
     trainees: [traineeFromAuthFormerlyInOther._id],
     companies: [authCompany._id],
@@ -671,6 +672,8 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     tutors: [noRole._id],
     certificateGenerationMode: MONTHLY,
+    maxTrainees: 1,
+    expectedBillsCount: 0,
   },
 ];
 
@@ -1221,6 +1224,13 @@ const slots = [
     course: coursesList[23]._id,
     step: stepList[0]._id,
   },
+  { // 19
+    _id: new ObjectId(),
+    startDate: '2020-03-07T08:00:00.000Z',
+    endDate: '2020-03-07T10:00:00.000Z',
+    course: coursesList[24]._id,
+    step: stepList[0]._id,
+  },
 ];
 
 const attendanceList = [
@@ -1325,4 +1335,5 @@ module.exports = {
   traineeFromAuthFormerlyInOther,
   clientAdminFromThirdCompany,
   traineeFromThirdCompany,
+  traineeWithoutCompany,
 };

@@ -93,6 +93,17 @@ describe('COURSE HISTORIES ROUTES - GET /coursehistories', () => {
       expect(response.statusCode).toEqual(403);
     });
 
+    it('should return 403 as user is holding admin and course is not from user holding (single)', async () => {
+      authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
+      const response = await app.inject({
+        method: 'GET',
+        url: `/coursehistories?course=${coursesList[4]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toEqual(403);
+    });
+
     it('should return 403 as user is holding admin and course is not from user holding (intra_holding)', async () => {
       authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
       const response = await app.inject({

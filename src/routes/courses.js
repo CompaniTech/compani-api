@@ -70,6 +70,8 @@ const {
   FORMAT_OPTIONS,
   CUSTOM,
   TYPE_OPTIONS,
+  SINGLE,
+  STRICTLY_E_LEARNING,
 } = require('../helpers/constants');
 const { dateToISOString } = require('./validations/utils');
 
@@ -103,6 +105,11 @@ exports.plugin = {
             holding: Joi.objectId().when('origin', { is: MOBILE, then: Joi.forbidden() }),
             format: Joi.string().valid(...COURSE_FORMATS),
             isArchived: Joi.boolean(),
+            type: Joi
+              .alternatives()
+              .try(Joi.array().items(Joi.string().valid(...COURSE_TYPES)), Joi.string().valid(...COURSE_TYPES))
+              .when('action', { is: PEDAGOGY, then: Joi.forbidden() })
+              .when('format', { is: STRICTLY_E_LEARNING, then: Joi.forbidden() }),
           }).oxor('company', 'holding'),
         },
         pre: [{ method: authorizeGetList }],
@@ -132,13 +139,14 @@ exports.plugin = {
               .number()
               .integer()
               .min(0)
-              .when('type', { is: INTRA, then: Joi.required(), otherwise: Joi.forbidden() }),
+              .when('type', { is: Joi.valid(INTRA, SINGLE), then: Joi.required(), otherwise: Joi.forbidden() }),
             holding: Joi
               .objectId()
               .when('type', { is: INTRA_HOLDING, then: Joi.required(), otherwise: Joi.forbidden() }),
             hasCertifyingTest: Joi.boolean().required(),
             salesRepresentative: Joi.objectId(),
             certificateGenerationMode: Joi.string().required().valid(...CERTIFICATE_GENERATION_MODE),
+            trainee: Joi.objectId().when('type', { is: SINGLE, then: Joi.required(), otherwise: Joi.forbidden() }),
           }),
         },
         auth: { scope: ['courses:create'] },

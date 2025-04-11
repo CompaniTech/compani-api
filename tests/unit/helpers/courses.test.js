@@ -64,6 +64,7 @@ const {
   SELF_POSITIONNING,
   EXPECTATIONS,
   DAY,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -76,12 +77,15 @@ const CompletionCertificate = require('../../../src/data/pdf/completionCertifica
 const TrainingContractPdf = require('../../../src/data/pdf/trainingContract');
 const QuestionnaireHistory = require('../../../src/models/QuestionnaireHistory');
 const TrainerMission = require('../../../src/models/TrainerMission');
+const UserCompany = require('../../../src/models/UserCompany');
 
 describe('createCourse', () => {
   let create;
   let findOneSubProgram;
   let createHistoryOnEstimatedStartDateEdition;
   let insertManyCourseSlot;
+  let findOneUserCompany;
+  let addTrainee;
   const credentials = { _id: new ObjectId() };
 
   beforeEach(() => {
@@ -92,12 +96,18 @@ describe('createCourse', () => {
       'createHistoryOnEstimatedStartDateEdition'
     );
     insertManyCourseSlot = sinon.stub(CourseSlot, 'insertMany');
+    findOneUserCompany = sinon.stub(UserCompany, 'findOne');
+    addTrainee = sinon.stub(CourseHelper, 'addTrainee');
+    UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
   });
   afterEach(() => {
     create.restore();
     findOneSubProgram.restore();
     createHistoryOnEstimatedStartDateEdition.restore();
     insertManyCourseSlot.restore();
+    findOneUserCompany.restore();
+    addTrainee.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should create an intra course', async () => {
@@ -130,6 +140,7 @@ describe('createCourse', () => {
     expect(result.type).toEqual(INTRA);
     expect(result.operationsRepresentative).toEqual(payload.operationsRepresentative);
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.calledOnceWithExactly(create, { ...omit(payload, 'company'), companies: [payload.company] });
     sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
     SinonMongoose.calledOnceWithExactly(
@@ -140,6 +151,64 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
+  });
+
+  it('should create a single course', async () => {
+    const steps = [{ _id: new ObjectId(), type: ON_SITE }];
+    const subProgram = { _id: new ObjectId(), steps };
+    const traineeId = new ObjectId();
+    const userCompany = { company: new ObjectId() };
+    const payload = {
+      misc: 'name',
+      subProgram: subProgram._id,
+      type: SINGLE,
+      operationsRepresentative: new ObjectId(),
+      expectedBillsCount: '0',
+      hasCertifyingTest: false,
+      trainee: traineeId,
+    };
+    const course = {
+      _id: new ObjectId(),
+      ...omit(payload, ['trainee']),
+      companies: [userCompany.company],
+      format: 'blended',
+    };
+    const slots = [{ course: course._id, step: steps[0]._id }];
+
+    findOneUserCompany.returns(SinonMongoose.stubChainedQueries(userCompany, ['lean']));
+    create.returns(course);
+    findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
+
+    const result = await CourseHelper.createCourse(payload, credentials);
+
+    expect(result).toEqual(course);
+    sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    SinonMongoose.calledOnceWithExactly(
+      findOneUserCompany,
+      [
+        {
+          query: 'findOne',
+          args: [
+            {
+              user: traineeId,
+              $or: [{ endDate: { $gt: '2022-12-21T16:00:00.000Z' } }, { endDate: { $exists: false } }],
+            },
+            { company: 1 }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(create, { ...omit(payload, ['trainee']), companies: [userCompany.company] });
+    SinonMongoose.calledOnceWithExactly(
+      findOneSubProgram,
+      [
+        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1 }] },
+        { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
+    sinon.assert.calledOnceWithExactly(addTrainee, course._id, { trainee: traineeId }, credentials);
   });
 
   it('should create an inter course without steps', async () => {
@@ -164,6 +233,7 @@ describe('createCourse', () => {
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     sinon.assert.calledOnceWithExactly(create, payload);
     sinon.assert.notCalled(insertManyCourseSlot);
+    sinon.assert.notCalled(findOneUserCompany);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -197,6 +267,7 @@ describe('createCourse', () => {
       credentials._id,
       '2022-12-10T12:00:00.000Z'
     );
+    sinon.assert.notCalled(findOneUserCompany);
   });
 });
 
@@ -515,6 +586,38 @@ describe('list', () => {
           format: 'blended',
           archivedAt: { $exists: false },
           $or: [{ companies: { $in: credentials.holding.companies } }, { holding: credentials.holding._id }],
+        },
+        'webapp'
+      );
+      sinon.assert.notCalled(getTotalTheoreticalDurationSpy);
+      sinon.assert.notCalled(userFindOne);
+      sinon.assert.notCalled(find);
+      sinon.assert.notCalled(formatCourseWithProgress);
+      sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    });
+
+    it('should return several types courses', async () => {
+      const coursesList = [
+        { _id: new ObjectId(), misc: 'name', type: INTRA },
+        { _id: new ObjectId(), misc: 'program', type: INTER_B2B },
+      ];
+
+      findCourseAndPopulate.returns(coursesList);
+
+      const query = {
+        format: 'blended',
+        action: 'operations',
+        origin: 'webapp',
+        type: [INTRA, INTER_B2B],
+      };
+      const result = await CourseHelper.list(query, credentials);
+
+      expect(result).toMatchObject(coursesList);
+      sinon.assert.calledOnceWithExactly(
+        findCourseAndPopulate,
+        {
+          format: 'blended',
+          type: { $in: [INTRA, INTER_B2B] },
         },
         'webapp'
       );
@@ -2652,6 +2755,7 @@ describe('getCourse', () => {
       };
       const course = {
         _id: new ObjectId(),
+        type: INTER_B2C,
         subProgram: {
           isStrictlyELearning: true,
           steps: [{
@@ -2747,7 +2851,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -2767,6 +2871,7 @@ describe('getCourse', () => {
       const lastSlotId = new ObjectId();
       const course = {
         _id: new ObjectId(),
+        type: INTRA,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -2903,7 +3008,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -2923,6 +3028,7 @@ describe('getCourse', () => {
       const lastSlotId = new ObjectId();
       const course = {
         _id: new ObjectId(),
+        type: INTRA,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3059,7 +3165,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3079,6 +3185,7 @@ describe('getCourse', () => {
       const stepId = new ObjectId();
       const course = {
         _id: courseId,
+        type: INTRA,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3189,7 +3296,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3208,6 +3315,7 @@ describe('getCourse', () => {
       const stepId = new ObjectId();
       const course = {
         _id: courseId,
+        type: INTRA,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3321,7 +3429,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format'] },
+          { query: 'select', args: ['_id misc format type'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );

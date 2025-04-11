@@ -1,5 +1,4 @@
 const Boom = require('@hapi/boom');
-const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const pick = require('lodash/pick');
@@ -13,6 +12,7 @@ const CourseBill = require('../../models/CourseBill');
 const AttendanceSheet = require('../../models/AttendanceSheet');
 const SubProgram = require('../../models/SubProgram');
 const Holding = require('../../models/Holding');
+const UserCompany = require('../../models/UserCompany');
 const {
   TRAINER,
   INTRA,
@@ -38,6 +38,7 @@ const {
   PDF,
   OFFICIAL,
   MONTHLY,
+  SINGLE,
 } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
@@ -47,7 +48,6 @@ const UserCompaniesHelper = require('../../helpers/userCompanies');
 const { checkVendorUserExistsAndHasRightRole } = require('./utils');
 
 const { language } = translate;
-const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 exports.checkAuthorization = (credentials, courseTrainerIds, companies, holding = null) => {
   const userVendorRole = get(credentials, 'role.vendor.name');
@@ -71,12 +71,13 @@ exports.checkAuthorization = (credentials, courseTrainerIds, companies, holding 
 
 exports.checkCompanyRepresentativeExists = async (req, course, isRofOrAdmin) => {
   const { credentials } = req.auth;
+  if (course.type === INTER_B2B) throw Boom.forbidden();
   const isIntraHoldingCourse = course.type === INTRA_HOLDING;
-  const isIntraCourse = course.type === INTRA;
+  const isIntraOrSingleCourse = [INTRA, SINGLE].includes(course.type);
   const isHoldingAdmin = get(req, 'auth.credentials.role.holding.name') === HOLDING_ADMIN;
   const hasAccessToCompany = course.companies.some(c => UtilsHelper.hasUserAccessToCompany(credentials, c));
   if (isIntraHoldingCourse && !(isRofOrAdmin || isHoldingAdmin)) throw Boom.forbidden();
-  if (isIntraCourse && !isRofOrAdmin && !hasAccessToCompany) throw Boom.forbidden();
+  if (isIntraOrSingleCourse && !isRofOrAdmin && !hasAccessToCompany) throw Boom.forbidden();
 
   const companyRepresentative = await User
     .findOne({ _id: req.payload.companyRepresentative }, { role: 1 })
@@ -86,9 +87,9 @@ exports.checkCompanyRepresentativeExists = async (req, course, isRofOrAdmin) => 
 
   if (![COACH, CLIENT_ADMIN].includes(get(companyRepresentative, 'role.client.name'))) throw Boom.forbidden();
 
-  const companyRepIsNotFromIntraCourseCompany = course.type === INTRA &&
-    !UtilsHelper.areObjectIdsEquals(companyRepresentative.company, course.companies[0]);
-  if (companyRepIsNotFromIntraCourseCompany) {
+  const companyRepIsNotFromIntraOrSingleCourseCompany = [INTRA, SINGLE].includes(course.type) &&
+  !UtilsHelper.areObjectIdsEquals(companyRepresentative.company, course.companies[0]);
+  if (companyRepIsNotFromIntraOrSingleCourseCompany) {
     if (get(companyRepresentative, 'role.holding.name') !== HOLDING_ADMIN) throw Boom.forbidden();
 
     const companyRepresentativeHolding = await CompanyHolding
@@ -146,6 +147,14 @@ exports.authorizeCourseCreation = async (req) => {
 
   if (get(req, 'payload.salesRepresentative')) {
     await checkVendorUserExistsAndHasRightRole(req.payload.salesRepresentative, true);
+  }
+
+  if (get(req, 'payload.trainee')) {
+    const isTraineeExists = await UserCompany.countDocuments({
+      user: req.payload.trainee,
+      $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
+    });
+    if (!isTraineeExists) throw Boom.notFound();
   }
 
   return null;
@@ -235,7 +244,7 @@ exports.authorizeCourseEdit = async (req) => {
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
 
     const courseTrainerIds = get(course, 'trainers', []);
-    const companies = [INTRA, INTRA_HOLDING].includes(course.type) ? course.companies : [];
+    const companies = [INTRA, INTRA_HOLDING, SINGLE].includes(course.type) ? course.companies : [];
     const holding = course.type === INTRA_HOLDING ? course.holding : null;
     this.checkAuthorization(credentials, courseTrainerIds, companies, holding);
 
@@ -256,7 +265,7 @@ exports.authorizeCourseEdit = async (req) => {
 
     if (has(payload, 'expectedBillsCount')) {
       if (!isRofOrAdmin) throw Boom.forbidden();
-      if (course.type !== INTRA) throw Boom.badRequest();
+      if (![INTRA, SINGLE].includes(course.type)) throw Boom.badRequest();
 
       const courseBills = await CourseBill.find({ course: course._id }, { courseCreditNote: 1 })
         .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
@@ -341,6 +350,8 @@ exports.authorizeTraineeAddition = async (req) => {
       )
       .lean();
 
+    if (course.type === SINGLE) throw Boom.forbidden();
+
     if (course.trainees.length + 1 > course.maxTrainees) throw Boom.forbidden(translate[language].maxTraineesReached);
 
     const traineeIsTrainer = UtilsHelper.doesArrayIncludeId(course.trainers, payload.trainee);
@@ -403,6 +414,8 @@ exports.authorizeTraineeDeletion = async (req) => {
   const course = await Course
     .findOne({ _id: req.params._id }, { type: 1, trainees: 1, certificateGenerationMode: 1 })
     .lean();
+
+  if (course.type === SINGLE) throw Boom.forbidden();
 
   if (!UtilsHelper.doesArrayIncludeId(course.trainees, req.params.traineeId)) throw Boom.forbidden();
 
@@ -592,7 +605,7 @@ const canAccessSms = (course, credentials) => {
   if (course.type === INTRA_HOLDING && !(userVendorRole || userHoldingRole)) throw Boom.forbidden();
 
   const courseTrainerIds = get(course, 'trainers') || [];
-  const companies = [INTRA, INTRA_HOLDING].includes(course.type) ? course.companies : [];
+  const companies = [INTRA, INTRA_HOLDING, SINGLE].includes(course.type) ? course.companies : [];
   const holding = course.type === INTRA_HOLDING ? course.holding : null;
   this.checkAuthorization(credentials, courseTrainerIds, companies, holding);
 
@@ -639,7 +652,7 @@ exports.authorizeCourseCompanyAddition = async (req) => {
 
   const course = await Course.findOne({ _id: req.params._id }, { type: 1, companies: 1, holding: 1 }).lean();
 
-  if (course.type === INTRA) throw Boom.forbidden();
+  if ([INTRA, SINGLE].includes(course.type)) throw Boom.forbidden();
 
   const isAlreadyLinked = UtilsHelper.doesArrayIncludeId(course.companies, req.payload.company);
   if (isAlreadyLinked) throw Boom.conflict(translate[language].courseCompanyAlreadyExists);
@@ -678,7 +691,9 @@ exports.authorizeCourseCompanyDeletion = async (req) => {
     })
     .lean();
 
-  if (course.type === INTRA || !UtilsHelper.doesArrayIncludeId(course.companies, companyId)) throw Boom.forbidden();
+  if ([INTRA, SINGLE].includes(course.type) || !UtilsHelper.doesArrayIncludeId(course.companies, companyId)) {
+    throw Boom.forbidden();
+  }
 
   if (course.type === INTRA_HOLDING) {
     const isHoldingAdminFromCourse = holdingRole === HOLDING_ADMIN &&
@@ -786,13 +801,12 @@ exports.authorizeTutorAddition = async (req) => {
   const { params, payload } = req;
 
   const course = await Course
-    .findOne({ _id: params._id }, { tutors: 1, trainees: 1, archivedAt: 1, companies: 1, subProgram: 1 })
+    .findOne({ _id: params._id }, { tutors: 1, trainees: 1, archivedAt: 1, companies: 1, type: 1 })
     .lean();
   if (!course) throw Boom.notFound();
   if (course.archivedAt) throw Boom.forbidden();
 
-  const isSingleCourse = UtilsHelper.doesArrayIncludeId(SINGLE_COURSES_SUBPROGRAM_IDS, course.subProgram);
-  if (!isSingleCourse) throw Boom.forbidden();
+  if (course.type !== SINGLE) throw Boom.forbidden();
 
   const user = await User.findOne({ _id: payload.tutor }).populate({ path: 'company' }).lean();
   const userInCompany = UtilsHelper.doesArrayIncludeId(course.companies, user.company);

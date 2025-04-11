@@ -28,6 +28,8 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  SINGLE,
+  COURSE_TYPES,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -104,7 +106,7 @@ const getBillsInfos = (course) => {
     }
     : { netInclTaxes: '', paid: '', total: '' };
 
-  if (course.type === INTRA) {
+  if ([INTRA, SINGLE].includes(course.type)) {
     const billsCountForExport = `${validatedBillsWithoutCreditNote.length} sur ${course.expectedBillsCount}`;
     const isBilled = !!course.expectedBillsCount &&
       validatedBillsWithoutCreditNote.length === course.expectedBillsCount;
@@ -181,7 +183,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
 
   return {
     Identifiant: course._id,
-    Type: course.type,
+    Type: COURSE_TYPES[course.type],
     Payeur: payerList || '',
     Structure: companiesName || '',
     'Société mère': get(course, 'holding.name') || '',

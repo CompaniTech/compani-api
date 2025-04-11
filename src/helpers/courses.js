@@ -15,6 +15,7 @@ const { CompaniDate } = require('./dates/companiDates');
 const Company = require('../models/Company');
 const Course = require('../models/Course');
 const User = require('../models/User');
+const UserCompany = require('../models/UserCompany');
 const Questionnaire = require('../models/Questionnaire');
 const QuestionnaireHistory = require('../models/QuestionnaireHistory');
 const CourseSmsHistory = require('../models/CourseSmsHistory');
@@ -66,6 +67,7 @@ const {
   END_COURSE,
   DAY_D_MONTH_YEAR,
   MOBILE,
+  SINGLE,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
@@ -82,9 +84,20 @@ const CourseHistory = require('../models/CourseHistory');
 const { CompaniDuration } = require('./dates/companiDurations');
 
 exports.createCourse = async (payload, credentials) => {
-  const coursePayload = payload.company
+  let coursePayload = payload.company
     ? { ...omit(payload, 'company'), companies: [payload.company] }
     : payload;
+
+  if (payload.type === SINGLE) {
+    const company = await UserCompany
+      .findOne(
+        { user: payload.trainee, $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }] },
+        { company: 1 }
+      )
+      .lean();
+
+    coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
+  }
 
   const course = await Course.create(coursePayload);
 
@@ -106,6 +119,10 @@ exports.createCourse = async (payload, credentials) => {
     .map(step => ({ course: course._id, step: step._id }));
 
   if (slots.length) await CourseSlot.insertMany(slots);
+
+  if (course.type === SINGLE) {
+    await exports.addTrainee(course._id, { trainee: payload.trainee }, credentials);
+  }
 
   return course;
 };
@@ -140,8 +157,8 @@ const listBlendedForCompany = async (query, origin) => {
   );
 
   // We sort courses by _id to have a consistent sort in the kanban even for two courses with same lastSlot's startDate
-  const intraCourses = courses
-    .filter(course => course.type === INTRA)
+  const intraOrSingleCourses = courses
+    .filter(course => [INTRA, SINGLE].includes(course.type))
     .sort((a, b) => UtilsHelper.sortStrings(a._id.toHexString(), b._id.toHexString()));
   const interOrIntraHoldingCourses = courses
     .filter(course => [INTER_B2B, INTRA_HOLDING].includes(course.type))
@@ -157,7 +174,7 @@ const listBlendedForCompany = async (query, origin) => {
   }
 
   return [
-    ...intraCourses,
+    ...intraOrSingleCourses,
     ...interOrIntraHoldingCourses
       .map(course => ({
         ...course,
@@ -177,6 +194,8 @@ const formatQuery = (query, credentials) => {
   }
 
   if (has(query, 'trainer')) set(formattedQuery, 'trainers', query.trainer);
+
+  if (Array.isArray(query.type)) set(formattedQuery, 'type', { $in: query.type });
 
   return formattedQuery;
 };
@@ -722,7 +741,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
-    .select('_id misc format')
+    .select('_id misc format type')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
@@ -891,7 +910,7 @@ exports.addTrainee = async (courseId, payload, credentials) => {
       {
         course: courseId,
         traineeId: trainee._id,
-        company: course.type === INTRA ? course.companies[0] : payload.company,
+        company: [INTRA, SINGLE].includes(course.type) ? course.companies[0] : payload.company,
       },
       credentials._id
     ),

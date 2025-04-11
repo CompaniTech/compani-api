@@ -1,5 +1,4 @@
 const { expect } = require('expect');
-const { ObjectId } = require('mongodb');
 const groupBy = require('lodash/groupBy');
 const get = require('lodash/get');
 const has = require('lodash/has');
@@ -96,6 +95,7 @@ const {
   START_COURSE,
   END_COURSE,
   MONTHLY,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -363,7 +363,7 @@ describe('SEEDS VERIFICATION', () => {
           expect(everyCompanyExists).toBeTruthy();
         });
 
-        it('should pass if every company is rattached to course on intra/inter b2b', () => {
+        it('should pass if every company is attached to course on intra/inter b2b/single', () => {
           const everyCompanyIsInCourse = attendanceList
             .every(a => a.courseSlot.course.type === INTRA_HOLDING ||
               UtilsHelper.doesArrayIncludeId(a.courseSlot.course.companies, a.company._id));
@@ -396,18 +396,19 @@ describe('SEEDS VERIFICATION', () => {
 
         it('should pass if only intra and intra holding courses have date in attendance sheet', () => {
           const everyIntraOrIntraHoldingAttendanceSheetHasDate = attendanceSheetList
-            .every(a => a.course.type === INTER_B2B || a.date);
+            .every(a => [SINGLE, INTER_B2B].includes(a.course.type) || a.date);
 
           expect(everyIntraOrIntraHoldingAttendanceSheetHasDate).toBeTruthy();
 
-          const someInterAttendanceSheetHasDate = attendanceSheetList
-            .some(a => a.course.type === INTER_B2B && a.date);
+          const someInterOrSingleAttendanceSheetHasDate = attendanceSheetList
+            .some(a => [INTER_B2B, SINGLE].includes(a.course.type) && a.date);
 
-          expect(someInterAttendanceSheetHasDate).toBeFalsy();
+          expect(someInterOrSingleAttendanceSheetHasDate).toBeFalsy();
         });
 
-        it('should pass if only inter courses have trainee in attendance sheet', () => {
-          const everyTraineeExists = attendanceSheetList.every(a => a.course.type === INTRA || a.trainee);
+        it('should pass if only inter or single courses have trainee in attendance sheet', () => {
+          const everyTraineeExists = attendanceSheetList
+            .every(a => [INTRA, INTRA_HOLDING].includes(a.course.type) || a.trainee);
 
           expect(everyTraineeExists).toBeTruthy();
 
@@ -418,18 +419,11 @@ describe('SEEDS VERIFICATION', () => {
         });
 
         it('should pass if only single courses have slots in attendance sheet', () => {
-          const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS
-            .split(';').map(id => new ObjectId(id));
-
-          const everySingleASHasSlots = attendanceSheetList
-            .every(a => !UtilsHelper.doesArrayIncludeId(SINGLE_COURSES_SUBPROGRAM_IDS, a.course.subProgram) ||
-              a.slots);
+          const everySingleASHasSlots = attendanceSheetList.every(a => a.course.type !== SINGLE || a.slots);
 
           expect(everySingleASHasSlots).toBeTruthy();
 
-          const someNonSingleASHasSlots = attendanceSheetList
-            .some(a => !UtilsHelper.doesArrayIncludeId(SINGLE_COURSES_SUBPROGRAM_IDS, a.course.subProgram) &&
-              a.slots);
+          const someNonSingleASHasSlots = attendanceSheetList.some(a => a.course.type !== SINGLE && a.slots);
 
           expect(someNonSingleASHasSlots).toBeFalsy();
         });
@@ -454,11 +448,8 @@ describe('SEEDS VERIFICATION', () => {
         });
 
         it('should pass if attendance sheet slots are course slots', () => {
-          const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS
-            .split(';').map(id => new ObjectId(id));
-
           const everySheetDateIsSlotDate = attendanceSheetList
-            .filter(a => UtilsHelper.doesArrayIncludeId(SINGLE_COURSES_SUBPROGRAM_IDS, a.course.subProgram))
+            .filter(a => a.course.type === SINGLE)
             .every((a) => {
               const slotsIds = a.course.slots.map(slot => slot._id);
 
@@ -798,10 +789,10 @@ describe('SEEDS VERIFICATION', () => {
           expect(isEveryCertifiedTraineeAttachedToCourse).toBeTruthy();
         });
 
-        it('should pass if companyRepresentative is defined in intra or intra_holding course only', () => {
-          const isCompanyRepresentativeOnlyInIntraCourses = courseList
-            .every(c => !c.companyRepresentative || [INTRA, INTRA_HOLDING].includes(c.type));
-          expect(isCompanyRepresentativeOnlyInIntraCourses).toBeTruthy();
+        it('should pass if companyRepresentative is defined in intra or intra_holding or single course only', () => {
+          const isCompanyRepresentativeOnlyInIntraOrSingleCourses = courseList
+            .every(c => !c.companyRepresentative || [INTRA, INTRA_HOLDING, SINGLE].includes(c.type));
+          expect(isCompanyRepresentativeOnlyInIntraOrSingleCourses).toBeTruthy();
         });
 
         it('should pass if companyRepresentative has good role', () => {
@@ -818,9 +809,9 @@ describe('SEEDS VERIFICATION', () => {
           expect(areCompanyRepresentativesHoldingAdmin).toBeTruthy();
         });
 
-        it('should pass if companyRepresentative is in good company (intra courses)', () => {
+        it('should pass if companyRepresentative is in good company (intra and single courses)', () => {
           const areCoursesAndCompanyRepresentativesInSameCompany = courseList
-            .filter(c => c.type === INTRA)
+            .filter(c => [SINGLE, INTRA].includes(c.type))
             .every(c => !c.companyRepresentative ||
               UtilsHelper.areObjectIdsEquals(c.companyRepresentative.company, c.companies[0]._id));
           expect(areCoursesAndCompanyRepresentativesInSameCompany).toBeTruthy();
@@ -885,12 +876,12 @@ describe('SEEDS VERIFICATION', () => {
           expect(someCompaniesAreDuplicated).toBeFalsy();
         });
 
-        it('should pass if intra courses have one and only one company', () => {
-          const everyIntraCourseHasCompany = courseList
-            .filter(course => course.type === INTRA)
+        it('should pass if intra or single courses have one and only one company', () => {
+          const everyIntraOrSingleCourseHasCompany = courseList
+            .filter(course => [INTRA, SINGLE].includes(course.type))
             .every(course => course.companies.length === 1);
 
-          expect(everyIntraCourseHasCompany).toBeTruthy();
+          expect(everyIntraOrSingleCourseHasCompany).toBeTruthy();
         });
 
         it('should pass if only intra_holding courses have a holding', () => {
@@ -937,10 +928,10 @@ describe('SEEDS VERIFICATION', () => {
           expect(noELearningCourseHasCertification).toBeTruthy();
         });
 
-        it('should pass if every blended course is intra or inter_b2b or intra_holding', () => {
+        it('should pass if every blended course is intra or inter_b2b or intra_holding or single', () => {
           const everyBlendedCourseHasGoodType = courseList
             .filter(course => course.format === BLENDED)
-            .every(course => [INTRA, INTER_B2B, INTRA_HOLDING].includes(course.type));
+            .every(course => [INTRA, INTER_B2B, INTRA_HOLDING, SINGLE].includes(course.type));
 
           expect(everyBlendedCourseHasGoodType).toBeTruthy();
         });
@@ -1057,10 +1048,10 @@ describe('SEEDS VERIFICATION', () => {
           expect(isArchiveDateAfterLastSlot).toBeTruthy();
         });
 
-        it('should pass if max trainees is defined only for intra or intra_holding courses', () => {
-          const isMaxTraineesDefinedForIntraCoursesOnly = courseList
-            .every(c => [INTRA, INTRA_HOLDING].includes(c.type) || !has(c, 'maxTrainees'));
-          expect(isMaxTraineesDefinedForIntraCoursesOnly).toBeTruthy();
+        it('should pass if max trainees is defined only for intra or intra_holding or single courses', () => {
+          const isMaxTraineesDefinedForIntraOrSingleCoursesOnly = courseList
+            .every(c => [INTRA, INTRA_HOLDING, SINGLE].includes(c.type) || !has(c, 'maxTrainees'));
+          expect(isMaxTraineesDefinedForIntraOrSingleCoursesOnly).toBeTruthy();
         });
 
         it('should pass if number of trainees is lower than max trainees', () => {
@@ -1069,9 +1060,9 @@ describe('SEEDS VERIFICATION', () => {
           expect(isNumberOfTraineesLowerThanMaxTrainees).toBeTruthy();
         });
 
-        it('should pass if expected bills count is defined only for intra courses', () => {
+        it('should pass if expected bills count is defined only for intra or single courses', () => {
           const isExpectedBillsCountDefinedForBlendedCoursesOnly = courseList
-            .every(c => c.type === INTRA || !has(c, 'expectedBillsCount'));
+            .every(c => [INTRA, SINGLE].includes(c.type) || !has(c, 'expectedBillsCount'));
           expect(isExpectedBillsCountDefinedForBlendedCoursesOnly).toBeTruthy();
         });
 
@@ -1939,7 +1930,7 @@ describe('SEEDS VERIFICATION', () => {
             .find()
             .populate({ path: 'user', select: 'id', populate: { path: 'userCompanyList' } })
             .populate({ path: 'company', select: 'id' })
-            .populate({ path: 'course', select: 'id' })
+            .populate({ path: 'course', select: 'id type companies' })
             .populate({
               path: 'questionnaire',
               select: '_id cards status type',
@@ -2115,12 +2106,16 @@ describe('SEEDS VERIFICATION', () => {
             .find({ company: { $in: companies }, course: { $in: courses }, action: COMPANY_ADDITION })
             .lean();
           const everyCompanyIsLinkedToCourse = questionnaireHistoryList
-            .every(qh => histories
-              .some(
-                history => UtilsHelper.areObjectIdsEquals(history.company, qh.company._id) &&
-                  UtilsHelper.areObjectIdsEquals(history.course, qh.course._id)
-              )
-            );
+            .every((qh) => {
+              if ([SINGLE, INTRA].includes(qh.course.type)) {
+                return UtilsHelper.areObjectIdsEquals(qh.company._id, qh.course.companies[0]);
+              }
+              return histories
+                .some(
+                  history => UtilsHelper.areObjectIdsEquals(history.company, qh.company._id) &&
+                    UtilsHelper.areObjectIdsEquals(history.course, qh.course._id)
+                );
+            });
           expect(everyCompanyIsLinkedToCourse).toBeTruthy();
         });
 

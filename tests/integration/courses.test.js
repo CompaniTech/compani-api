@@ -31,6 +31,7 @@ const {
   CUSTOM,
   GLOBAL,
   MONTHLY,
+  SINGLE,
 } = require('../../src/helpers/constants');
 const {
   populateDB,
@@ -68,6 +69,7 @@ const {
   holdingAdminFromOtherCompany,
   trainerOrganisationManager,
   auxiliary,
+  userList,
 } = require('../seed/authUsersSeed');
 const EmailOptionsHelper = require('../../src/helpers/emailOptions');
 const NodemailerHelper = require('../../src/helpers/nodemailer');
@@ -191,15 +193,17 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(courseSlotsCount).toEqual(1);
     });
 
-    it('should create single course with monthly certificate generation mode', async () => {
+    it('should create single course', async () => {
       const payload = {
         misc: 'course',
-        type: INTER_B2B,
+        type: SINGLE,
         subProgram: subProgramsList[4]._id,
         operationsRepresentative: vendorAdmin._id,
-        estimatedStartDate: '2024-10-22T08:00:00.000Z',
-        hasCertifyingTest: true,
+        estimatedStartDate: '2022-05-31T08:00:00.000Z',
+        expectedBillsCount: 0,
+        hasCertifyingTest: false,
         salesRepresentative: trainerOrganisationManager._id,
+        trainee: traineeFromOtherCompany._id,
         certificateGenerationMode: MONTHLY,
       };
       const coursesCountBefore = await Course.countDocuments();
@@ -211,22 +215,18 @@ describe('COURSES ROUTES - POST /courses', () => {
         payload,
       });
 
-      const createdCourseId = response.result.data.course._id;
-
       expect(response.statusCode).toBe(200);
       const coursesCountAfter = await Course.countDocuments();
       expect(coursesCountAfter).toEqual(coursesCountBefore + 1);
-      const courseSlotsCount = await CourseSlot
-        .countDocuments({ course: createdCourseId, step: { $in: subProgramsList[4].steps } });
-      expect(courseSlotsCount).toEqual(1);
-
-      const courseHistory = await CourseHistory.countDocuments({
-        course: createdCourseId,
-        'update.estimatedStartDate.to': '2024-10-22T08:00:00.000Z',
-        action: ESTIMATED_START_DATE_EDITION,
-      });
-
-      expect(courseHistory).toEqual(1);
+      const courseWithTrainee = await Course
+        .countDocuments(
+          {
+            _id: response.result.data.course._id,
+            trainees: traineeFromOtherCompany._id,
+            companies: otherCompany._id,
+          }
+        );
+      expect(courseWithTrainee).toEqual(1);
     });
 
     it('should return 404 if invalid operationsRepresentative', async () => {
@@ -303,6 +303,51 @@ describe('COURSES ROUTES - POST /courses', () => {
         maxTrainees: 2,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if trainee does not exist', async () => {
+      const payload = {
+        misc: 'course',
+        type: SINGLE,
+        subProgram: subProgramsList[4]._id,
+        operationsRepresentative: vendorAdmin._id,
+        estimatedStartDate: '2022-05-31T08:00:00.000Z',
+        expectedBillsCount: 0,
+        hasCertifyingTest: false,
+        trainee: new ObjectId(),
+        certificateGenerationMode: MONTHLY,
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('shoul return 404 if trainee does not have company', async () => {
+      const payload = {
+        misc: 'course',
+        type: SINGLE,
+        subProgram: subProgramsList[4]._id,
+        operationsRepresentative: vendorAdmin._id,
+        expectedBillsCount: 1,
+        hasCertifyingTest: false,
+        trainee: userList[8]._id,
+        certificateGenerationMode: MONTHLY,
       };
 
       const response = await app.inject({
@@ -794,6 +839,28 @@ describe('COURSES ROUTES - GET /courses', () => {
       expect(response.result.data.courses.length).toEqual(2);
     });
 
+    it('should get intra and inter b2b courses only (type is array)', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses?action=operations&origin=webapp&type=intra&type=inter_b2b',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courses.length).toEqual(16);
+    });
+
+    it('should get single courses only (type is string)', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses?action=operations&origin=webapp&type=single',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courses.length).toEqual(3);
+    });
+
     it('should get strictly e-learning courses (ops webapp)', async () => {
       const response = await app.inject({
         method: 'GET',
@@ -813,7 +880,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.traineeCourses.length).toEqual(7);
+      expect(response.result.data.courses.traineeCourses.length).toEqual(6);
     });
 
     it('should return 400 if no action', async () => {
@@ -840,6 +907,26 @@ describe('COURSES ROUTES - GET /courses', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/courses?action=operations&origin=webapp&isArchived=false',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if query type for pedagogy action', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses?action=pedagogy&origin=mobile&type=single',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if query type for strictly elearning format', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses?action=operations&origin=webapp&format=strictly_e_learning&type=single',
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -1752,7 +1839,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should update course', async () => {
+    it('should update course (intra)', async () => {
       const payload = {
         misc: 'new name',
         contact: vendorAdmin._id,
@@ -1781,6 +1868,45 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
         update: { estimatedStartDate: { from: '', to: '2022-05-31T08:00:00.000Z' } },
       });
       expect(historyCreated).toEqual(1);
+    });
+
+    it('should update course (single course)', async () => {
+      const payload = {
+        misc: ' new single course',
+        contact: trainer._id,
+        estimatedStartDate: '2024-11-12T10:00:00.000Z',
+        hasCertifyingTest: true,
+        expectedBillsCount: 3,
+        certifiedTrainees: [traineeFromAuthFormerlyInOther._id],
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[25]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const courseUpdated = await Course.countDocuments({ _id: coursesList[25]._id, ...payload });
+      expect(courseUpdated).toEqual(1);
+    });
+
+    it('should update company representative on single course', async () => {
+      const payload = { companyRepresentative: coach._id };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[25]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const courseUpdated = await Course.countDocuments({ _id: coursesList[25]._id, ...payload });
+      expect(courseUpdated).toEqual(1);
     });
 
     it('should update company representative and set as contact directly for INTRA course', async () => {
@@ -2216,6 +2342,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if try to add company representative to inter_b2b course', async () => {
+      const payload = { companyRepresentative: holdingAdminFromOtherCompany._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[4]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
     });
   });
 
@@ -2932,6 +3070,19 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       });
     });
 
+    it('should return 200 as user is coach and course type is single', async () => {
+      SmsHelperStub.returns('SMS SENT !');
+      authToken = await getToken('coach');
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[24]._id}/sms`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return 200 as user is the course trainer', async () => {
       SmsHelperStub.returns('SMS SENT !');
       authToken = await getTokenByCredentials(trainer.local);
@@ -3186,6 +3337,17 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
         url: `/courses/${coursesList[3]._id}/trainees`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: { trainee: traineeFromAuthCompanyWithFormationExpoToken._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course type is single', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[24]._id}/trainees`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { trainee: traineeFromAuthFormerlyInOther._id },
       });
 
       expect(response.statusCode).toBe(403);
@@ -3684,6 +3846,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainees/{traineeId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courses/${coursesList[2]._id.toHexString()}/trainees/${auxiliary._id.toHexString()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course type is single', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[24]._id}/trainees/${traineeFromAuthCompanyWithFormationExpoToken._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -4523,6 +4695,17 @@ describe('COURSES ROUTES - PUT /courses/{_id}/companies', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if course is single', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[24]._id}/companies`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { company: otherCompany._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return a 403 if course is archived', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -4711,6 +4894,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/companies{companyId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courses/${intraCourseId}/companies/${authCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course is single', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[24]._id}/companies/${authCompany._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -5189,7 +5382,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
       const course = await Course.countDocuments({ _id: coursesList[24]._id, tutors: auxiliary._id });
       expect(course).toEqual(1);
       sinon.assert.calledOnceWithExactly(sendinBlueTransporter);
-      sinon.assert.calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Michel DRUCKER', 'program');
+      sinon.assert.calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Trainee WITHEXPOTOKEN', 'program');
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
@@ -5241,7 +5434,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
         method: 'PUT',
         url: `/courses/${coursesList[24]._id}/tutors`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { tutor: traineeFromAuthFormerlyInOther._id },
+        payload: { tutor: traineeFromAuthCompanyWithFormationExpoToken._id },
       });
 
       expect(response.statusCode).toBe(403);

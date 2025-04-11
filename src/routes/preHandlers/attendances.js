@@ -14,6 +14,7 @@ const {
   COACH,
   INTRA_HOLDING,
   BLENDED,
+  SINGLE,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const translate = require('../../helpers/translate');
@@ -124,6 +125,8 @@ exports.authorizeAttendanceCreation = async (req) => {
     if (attendance) throw Boom.conflict();
 
     const isTraineeRegistered = UtilsHelper.doesArrayIncludeId(course.trainees, req.payload.trainee);
+
+    if (course.type === SINGLE && !isTraineeRegistered) throw Boom.forbidden();
 
     const traineeUserCompany = await UserCompany
       .findOne({

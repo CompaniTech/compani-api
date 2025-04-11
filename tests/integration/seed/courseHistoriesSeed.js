@@ -6,7 +6,7 @@ const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const User = require('../../../src/models/User');
 const { authCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
-const { trainerOrganisationManager } = require('../../seed/authUsersSeed');
+const { trainerOrganisationManager, auxiliary } = require('../../seed/authUsersSeed');
 const {
   SLOT_CREATION,
   WEBAPP,
@@ -15,6 +15,7 @@ const {
   PUBLISHED,
   INTRA_HOLDING,
   GLOBAL,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { vendorAdminRoleId, trainerRoleId } = require('../../seed/authRolesSeed');
@@ -98,6 +99,17 @@ const coursesList = [
     companies: [authCompany._id],
     holding: authHolding._id,
     maxTrainees: 8,
+    operationsRepresentative: userList[1]._id,
+    certificateGenerationMode: GLOBAL,
+  },
+  {
+    _id: new ObjectId(),
+    subProgram: subProgramsList[0]._id,
+    misc: 'first session',
+    type: SINGLE,
+    trainers: [userList[0]._id, userList[2]._id],
+    trainees: [auxiliary._id],
+    companies: [authCompany._id],
     operationsRepresentative: userList[1]._id,
     certificateGenerationMode: GLOBAL,
   },

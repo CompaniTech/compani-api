@@ -1,5 +1,5 @@
 const Boom = require('@hapi/boom');
-const { get, omit } = require('lodash');
+const { get, omit, has } = require('lodash');
 const Company = require('../../models/Company');
 const Course = require('../../models/Course');
 const CourseBill = require('../../models/CourseBill');
@@ -14,6 +14,7 @@ const {
   INTRA,
   GROUP,
   TRAINEE,
+  SINGLE,
 } = require('../../helpers/constants');
 
 const { language } = translate;
@@ -26,9 +27,14 @@ exports.authorizeCourseBillCreation = async (req) => {
     companiesIds.every(c => UtilsHelper.doesArrayIncludeId(course.companies, c));
   if (!everyCompanyBelongsToCourse) throw Boom.notFound();
 
-  if (course.type === INTRA) {
+  if ([INTRA, SINGLE].includes(course.type)) {
     if (!course.expectedBillsCount) throw Boom.conflict();
-    if (mainFee.countUnit !== GROUP) throw Boom.badRequest();
+    if (course.type === INTRA && mainFee.countUnit !== GROUP) throw Boom.badRequest();
+    if (course.type === SINGLE) {
+      const hasWrongCountUnit = mainFee.countUnit !== TRAINEE;
+      const hasWrongQuantity = mainFee.count !== 1;
+      if (hasWrongCountUnit || hasWrongQuantity) throw Boom.badRequest();
+    }
 
     const courseBills = await CourseBill.find({ course: course._id }, { courseCreditNote: 1 })
       .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
@@ -86,6 +92,11 @@ exports.authorizeCourseBillUpdate = async (req) => {
     .lean();
   if (!courseBill) throw Boom.notFound();
   if (courseBill.course.type === INTRA && get(req.payload, 'mainFee.countUnit') === TRAINEE) throw Boom.badRequest();
+  if (courseBill.course.type === SINGLE) {
+    const hasWrongCountUnit = get(req.payload, 'mainFee.countUnit') === GROUP;
+    const hasWrongQuantity = has(req.payload, 'mainFee.count') && req.payload.mainFee.count !== 1;
+    if (hasWrongCountUnit || hasWrongQuantity) throw Boom.badRequest();
+  }
   if (req.payload.payer) {
     if (req.payload.payer.fundingOrganisation) {
       const courseFundingOrganisationExists = await CourseFundingOrganisation

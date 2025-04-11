@@ -93,6 +93,7 @@ const {
   START_COURSE,
   END_COURSE,
   GLOBAL,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1360,6 +1361,21 @@ const coursesList = [
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
   },
+  { // 9 single
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'single',
+    trainers: [trainer._id],
+    operationsRepresentative: operationsRepresentative._id,
+    contact: operationsRepresentative._id,
+    expectedBillsCount: 1,
+    trainees: [traineeList[1]._id],
+    companies: [otherCompany._id],
+    createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: MONTHLY,
+  },
 ];
 
 const courseFundingOrganisation = {
@@ -1676,6 +1692,15 @@ const courseSlotList = [
   { // 11
     _id: new ObjectId(),
     course: coursesList[8]._id,
+    step: stepList[1]._id,
+    startDate: '2021-05-01T14:00:00.000Z',
+    endDate: '2021-05-01T16:00:00.000Z',
+    meetingLink: 'https://meet.google.com',
+    createdAt: '2020-12-12T10:00:01.000Z',
+  },
+  { // 12
+    _id: new ObjectId(),
+    course: coursesList[9]._id,
     step: stepList[1]._id,
     startDate: '2021-05-01T14:00:00.000Z',
     endDate: '2021-05-01T16:00:00.000Z',
@@ -2215,11 +2240,11 @@ const courseHistoriesList = [
   },
   {
     _id: new ObjectId(),
-    course: coursesList[8]._id,
-    action: COMPANY_ADDITION,
+    course: coursesList[9]._id,
+    action: TRAINEE_ADDITION,
     createdBy: operationsRepresentative._id,
+    trainee: traineeList[1]._id,
     company: otherCompany._id,
-    createdAt: '2022-01-12T08:00:00.000Z',
   },
 ];
 

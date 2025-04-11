@@ -362,6 +362,15 @@ module.exports = {
   INTER_B2B: 'inter_b2b',
   INTER_B2C: 'inter_b2c',
   INTRA_HOLDING: 'intra_holding',
+  SINGLE: 'single',
+  get COURSE_TYPES() {
+    return {
+      [this.INTRA]: 'Intra',
+      [this.INTRA_HOLDING]: 'Intra société mère',
+      [this.INTER_B2B]: 'Inter B2B',
+      [this.SINGLE]: 'Individuelle',
+    };
+  },
   BLENDED: 'blended',
   STRICTLY_E_LEARNING: 'strictly_e_learning',
   CONVOCATION: 'convocation',

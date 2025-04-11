@@ -17,6 +17,7 @@ const {
   PUBLISHED,
   INTRA_HOLDING,
   GLOBAL,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, vendorAdminRoleId } = require('../../seed/authRolesSeed');
@@ -148,8 +149,8 @@ const coursesList = [
   { // 1
     _id: new ObjectId(),
     subProgram: subProgramList[0]._id,
-    type: INTRA,
-    maxTrainees: 8,
+    type: SINGLE,
+    maxTrainees: 1,
     trainees: [traineeList[0]._id],
     companies: [authCompany._id],
     trainers: [userList[0]._id],
@@ -314,6 +315,13 @@ const slotsList = [
     startDate: '2020-01-25T10:00:00.000Z',
     endDate: '2020-01-25T14:00:00.000Z',
     course: coursesList[9],
+    step: steps[0]._id,
+  },
+  { // 10
+    _id: new ObjectId(),
+    startDate: '2020-01-25T10:00:00.000Z',
+    endDate: '2020-01-25T14:00:00.000Z',
+    course: coursesList[1],
     step: steps[0]._id,
   },
 ];

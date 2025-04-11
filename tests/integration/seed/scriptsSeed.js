@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { WEBAPP, PUBLISHED, INTER_B2B, MONTHLY, GLOBAL, INTRA, VIDEO } = require('../../../src/helpers/constants');
+const { WEBAPP, PUBLISHED, MONTHLY, GLOBAL, INTRA, VIDEO, SINGLE } = require('../../../src/helpers/constants');
 const User = require('../../../src/models/User');
 const Course = require('../../../src/models/Course');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -14,8 +14,6 @@ const { vendorAdmin } = require('../../seed/authUsersSeed');
 const Activity = require('../../../src/models/Activity');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Card = require('../../../src/models/Card');
-
-const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 const userList = [
   { // 0
@@ -69,7 +67,7 @@ const userCompanyList = [
 
 const subProgramList = [
   {
-    _id: SINGLE_COURSES_SUBPROGRAM_IDS[0],
+    _id: new ObjectId(),
     name: 'Subprogram 2',
     steps: [stepList[0]._id, stepList[2]._id],
     status: PUBLISHED,
@@ -81,7 +79,7 @@ const courseList = [
   { // 0 - single course
     _id: new ObjectId(),
     subProgram: subProgramList[0]._id,
-    type: INTER_B2B,
+    type: SINGLE,
     maxTrainees: 8,
     trainees: [userList[0]._id],
     companies: [authCompany._id],
@@ -103,7 +101,7 @@ const courseList = [
   { // 2 - single course
     _id: new ObjectId(),
     subProgram: subProgramList[0]._id,
-    type: INTER_B2B,
+    type: SINGLE,
     maxTrainees: 8,
     trainees: [userList[2]._id],
     companies: [otherCompany._id],

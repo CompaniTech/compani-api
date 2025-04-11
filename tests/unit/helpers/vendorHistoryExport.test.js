@@ -28,6 +28,7 @@ const {
   MOBILE,
   INTRA_HOLDING,
   SELF_POSITIONNING,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
@@ -83,7 +84,7 @@ describe('exportCourseHistory', () => {
   ];
   const operationsRepresentative = { _id: new ObjectId(), identity: { firstname: 'Aline', lastname: 'Contact-Com' } };
 
-  const courseIdList = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+  const courseIdList = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
 
   const courseSlotList = [
     {
@@ -122,6 +123,13 @@ describe('exportCourseHistory', () => {
     {
       _id: new ObjectId(),
       course: courseIdList[4],
+      startDate: '2021-02-09T08:00:00.000Z',
+      endDate: '2021-02-09T10:00:00.000Z',
+      attendances: [{ trainee: traineeList[0]._id }],
+    },
+    {
+      _id: new ObjectId(),
+      course: courseIdList[5],
       startDate: '2021-02-09T08:00:00.000Z',
       endDate: '2021-02-09T10:00:00.000Z',
       attendances: [{ trainee: traineeList[0]._id }],
@@ -330,6 +338,62 @@ describe('exportCourseHistory', () => {
         },
       ],
     },
+    // 5
+    {
+      _id: courseIdList[5],
+      type: SINGLE,
+      companies: [company],
+      subProgram: subProgramList[0],
+      misc: 'Trainee 1',
+      trainers: [trainersList[0]],
+      operationsRepresentative,
+      contact: operationsRepresentative,
+      trainees: [traineeList[0]],
+      slotsToPlan: [],
+      slots: [courseSlotList[6]],
+      expectedBillsCount: 3,
+      createdAt: '2018-01-07T17:33:55.000Z',
+      bills: [
+        {
+          course: courseIdList[5],
+          mainFee: { price: 120, count: 1 },
+          company,
+          payer: { name: 'APA Paris' },
+          billedAt: '2022-03-08T00:00:00.000Z',
+          number: 'FACT-00010',
+          courseCreditNote: { courseBill: new ObjectId() },
+          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+        },
+        {
+          course: courseIdList[5],
+          mainFee: { price: 120, count: 1 },
+          company,
+          payer: { name: 'APA Paris' },
+          billedAt: '2022-03-08T00:00:00.000Z',
+          number: 'FACT-00011',
+          courseCreditNote: null,
+          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT }],
+        },
+        {
+          course: courseIdList[5],
+          mainFee: { price: 200, count: 1 },
+          company,
+          payer: { name: 'Compani Test' },
+          billedAt: '2022-03-08T00:00:00.000Z',
+          number: 'FACT-00012',
+          courseCreditNote: null,
+        },
+        { // non-validated invoice
+          course: courseIdList[5],
+          mainFee: { price: 120, count: 2 },
+          company,
+          payer: { name: 'Test' },
+          number: 'FACT-00014',
+          courseCreditNote: null,
+          coursePayments: [],
+        },
+      ],
+    },
   ];
 
   const questionnaireList = [
@@ -498,11 +562,13 @@ describe('exportCourseHistory', () => {
     groupSlotsByDate.onCall(2).returns([]);
     groupSlotsByDate.onCall(3).returns([]);
     groupSlotsByDate.onCall(4).returns([[courseSlotList[5]]]);
+    groupSlotsByDate.onCall(5).returns([[courseSlotList[6]]]);
     getTotalDurationForExport.onCall(0).returns('4,00');
     getTotalDurationForExport.onCall(1).returns('4,00');
     getTotalDurationForExport.onCall(2).returns('0,00');
     getTotalDurationForExport.onCall(3).returns('0,00');
     getTotalDurationForExport.onCall(4).returns('2,00');
+    getTotalDurationForExport.onCall(5).returns('2,00');
     findCourseSmsHistory.returns(SinonMongoose.stubChainedQueries(
       [{ course: courseList[0]._id }, { course: courseList[0]._id }, { course: courseList[1]._id }],
       ['select', 'lean']
@@ -516,6 +582,7 @@ describe('exportCourseHistory', () => {
     findActivityHistory.onCall(2).returns(SinonMongoose.stubChainedQueries([], ['lean']));
     findActivityHistory.onCall(3).returns(SinonMongoose.stubChainedQueries([], ['lean']));
     findActivityHistory.onCall(4).returns(SinonMongoose.stubChainedQueries([], ['lean']));
+    findActivityHistory.onCall(5).returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
     const result = await ExportHelper
       .exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
@@ -564,7 +631,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[0]._id,
-        'intra',
+        'Intra',
         'APA Paris',
         'Test SAS',
         '',
@@ -605,7 +672,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[1]._id,
-        'inter_b2b',
+        'Inter B2B',
         'APA Paris',
         'Autre structure,Test SAS',
         '',
@@ -646,7 +713,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[2]._id,
-        'intra_holding',
+        'Intra société mère',
         '',
         '',
         'Société mère',
@@ -687,7 +754,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[3]._id,
-        'intra',
+        'Intra',
         'Alenvi,APA Paris,Compani Test',
         'Test SAS',
         '',
@@ -728,7 +795,7 @@ describe('exportCourseHistory', () => {
       ],
       [
         courseList[4]._id,
-        'inter_b2b',
+        'Inter B2B',
         'APA Paris',
         'Autre structure',
         '',
@@ -767,7 +834,47 @@ describe('exportCourseHistory', () => {
         '-110,00',
         '07/01/2018',
       ],
-
+      [
+        courseList[5]._id,
+        'Individuelle',
+        'APA Paris,Compani Test',
+        'Test SAS',
+        '',
+        'Program 1',
+        'subProgram 1',
+        'Trainee 1',
+        'Gilles FORMATEUR',
+        '09/02/2021',
+        '09/02/2021',
+        'Aline CONTACT-COM',
+        'Aline CONTACT-COM',
+        1,
+        1,
+        1,
+        0,
+        '2,00',
+        0,
+        1,
+        '0,00',
+        0,
+        0,
+        '',
+        '',
+        0,
+        1,
+        0,
+        0,
+        0,
+        '1,00',
+        'Non',
+        '',
+        '2 sur 3',
+        'Non',
+        '320,00',
+        '110,00',
+        '-210,00',
+        '07/01/2018',
+      ],
     ]);
     SinonMongoose.calledOnceWithExactly(
       findCourseSlot,
