@@ -4,7 +4,6 @@ const has = require('lodash/has');
 const pick = require('lodash/pick');
 const Course = require('../../models/Course');
 const User = require('../../models/User');
-const CourseSlot = require('../../models/CourseSlot');
 const Company = require('../../models/Company');
 const CompletionCertificate = require('../../models/CompletionCertificate');
 const CompanyHolding = require('../../models/CompanyHolding');
@@ -23,7 +22,6 @@ const {
   TRAINING_ORGANISATION_MANAGER,
   STRICTLY_E_LEARNING,
   BLENDED,
-  ON_SITE,
   MOBILE,
   OTHER,
   OPERATIONS,
@@ -590,11 +588,9 @@ exports.authorizeGetAttendanceSheets = async (req) => {
   const { credentials } = req.auth;
   const userVendorRole = get(credentials, 'role.vendor.name');
 
-  const slots = await CourseSlot.find({ course: req.params._id }).populate({ path: 'step', select: 'type' }).lean();
-  if (!slots.some(s => s.step.type === ON_SITE)) throw Boom.notFound(translate[language].courseAttendanceNotGenerated);
-
-  const course = await Course.findOne({ _id: req.params._id }, { type: 1 }).lean();
-  if (course.type === INTER_B2B && !userVendorRole) throw Boom.forbidden();
+  const course = await Course.findOne({ _id: req.params._id }, { type: 1, format: 1 }).lean();
+  if (!course) throw Boom.notFound();
+  if (course.format === STRICTLY_E_LEARNING || (course.type === INTER_B2B && !userVendorRole)) throw Boom.forbidden();
 
   return null;
 };

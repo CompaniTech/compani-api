@@ -4861,19 +4861,23 @@ describe('formatIntraCourseForPdf', () => {
       type: INTRA,
     };
 
-    getTotalDuration.returns('8h');
-    groupSlotsByDate.returns([[{
-      startDate: '2020-03-20T09:00:00',
-      endDate: '2020-03-20T11:00:00',
-      address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-      step: { type: 'on_site' },
-    }], [
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
-    ]]);
+    getTotalDuration.returns('9h30');
+    groupSlotsByDate.returns([
+      [{
+        startDate: '2020-03-20T09:00:00',
+        endDate: '2020-03-20T11:00:00',
+        address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
+        step: { type: 'on_site' },
+      }], [
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
+        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+      ],
+      [{ startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } }],
+    ]);
     formatIntraCourseSlotsForPdf.onCall(0).returns({ startHour: 'slot1' });
     formatIntraCourseSlotsForPdf.onCall(1).returns({ startHour: 'slot2' });
     formatIntraCourseSlotsForPdf.onCall(2).returns({ startHour: 'slot3' });
+    formatIntraCourseSlotsForPdf.onCall(3).returns({ startHour: 'slot4' });
 
     const result = CourseHelper.formatIntraCourseForPdf(course);
 
@@ -4882,7 +4886,7 @@ describe('formatIntraCourseForPdf', () => {
         {
           course: {
             name: 'programme - des infos en plus',
-            duration: '8h',
+            duration: '9h30',
             company: 'alenvi',
             trainer: '',
             type: INTRA,
@@ -4894,7 +4898,7 @@ describe('formatIntraCourseForPdf', () => {
         {
           course: {
             name: 'programme - des infos en plus',
-            duration: '8h',
+            duration: '9h30',
             company: 'alenvi',
             trainer: '',
             type: INTRA,
@@ -4902,7 +4906,20 @@ describe('formatIntraCourseForPdf', () => {
           address: '',
           slots: [{ startHour: 'slot2' }, { startHour: 'slot3' }],
           date: '12/04/2020',
-        }],
+        },
+        {
+          course: {
+            name: 'programme - des infos en plus',
+            duration: '9h30',
+            company: 'alenvi',
+            trainer: '',
+            type: INTRA,
+          },
+          address: '',
+          slots: [{ startHour: 'slot4' }],
+          date: '14/04/2020',
+        },
+      ],
     });
     sinon.assert.calledOnceWithExactly(getTotalDuration, course.slots);
     sinon.assert.notCalled(formatIdentity);
@@ -4915,11 +4932,13 @@ describe('formatIntraCourseForPdf', () => {
       },
       { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
       { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+      { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } },
     ]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(0), course.slots[0]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(1), course.slots[1]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(2), course.slots[2]);
-    sinon.assert.callCount(formatIntraCourseSlotsForPdf, 3);
+    sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(3), course.slots[3]);
+    sinon.assert.callCount(formatIntraCourseSlotsForPdf, 4);
   });
 
   it('should format course for pdf (intra_holding)', () => {
@@ -4936,7 +4955,6 @@ describe('formatIntraCourseForPdf', () => {
         },
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
         { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } },
       ],
       companies: [{ name: 'alenvi' }, { name: 'biens communs' }],
       type: INTRA_HOLDING,
@@ -5034,7 +5052,7 @@ describe('formatInterCourseForPdf', () => {
         { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
         { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-15T11:30:00', step: { type: 'remote' } },
+        { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00', step: { type: 'remote' } },
       ],
       misc: 'des infos en plus',
       trainers: [
@@ -5050,12 +5068,13 @@ describe('formatInterCourseForPdf', () => {
     const sortedSlots = [
       { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
       { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
+      { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00', step: { type: 'remote' } },
       { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
     ];
     formatInterCourseSlotsForPdf.returns('slot');
     formatIdentity.onCall(0).returns('trainee 1');
     formatIdentity.onCall(1).returns('trainee 2');
-    getTotalDuration.returns('7h');
+    getTotalDuration.returns('9h30');
     getCompanyAtCourseRegistrationList
       .returns([{ trainee: traineeIds[0], company: companyId }, { trainee: traineeIds[1], company: companyId }]);
     findCompanies.returns(SinonMongoose.stubChainedQueries([{ _id: companyId, name: 'alenvi' }], ['lean']));
@@ -5069,11 +5088,11 @@ describe('formatInterCourseForPdf', () => {
           registrationCompany: 'alenvi',
           course: {
             name: 'programme de formation - des infos en plus',
-            slots: ['slot', 'slot', 'slot'],
+            slots: ['slot', 'slot', 'slot', 'slot'],
             trainer: '',
             firstDate: '20/03/2020',
             lastDate: '21/04/2020',
-            duration: '7h',
+            duration: '9h30',
           },
         },
         {
@@ -5081,11 +5100,11 @@ describe('formatInterCourseForPdf', () => {
           registrationCompany: 'alenvi',
           course: {
             name: 'programme de formation - des infos en plus',
-            slots: ['slot', 'slot', 'slot'],
+            slots: ['slot', 'slot', 'slot', 'slot'],
             trainer: '',
             firstDate: '20/03/2020',
             lastDate: '21/04/2020',
-            duration: '7h',
+            duration: '9h30',
           },
         },
       ],
@@ -5098,7 +5117,7 @@ describe('formatInterCourseForPdf', () => {
       { key: COURSE, value: course._id },
       { key: TRAINEE, value: course.trainees }
     );
-    sinon.assert.callCount(formatInterCourseSlotsForPdf, 3);
+    sinon.assert.callCount(formatInterCourseSlotsForPdf, 4);
     SinonMongoose.calledOnceWithExactly(
       findCompanies,
       [
@@ -5115,7 +5134,6 @@ describe('formatInterCourseForPdf', () => {
         { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
         { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-15T11:30:00', step: { type: 'remote' } },
       ],
       misc: 'des infos en plus',
       trainers: [{ identity: { lastname: 'MasterClass' } }],
