@@ -140,7 +140,6 @@ module.exports = {
     courseAccessRuleAdded: 'Access rule added.',
     courseAccessRuleDeleted: 'Access rule deleted.',
     courseQuestionnairesFound: 'Questionnaires found.',
-    courseAttendanceNotGenerated: 'Failed to download attendance sheet, no on-site slot.',
     traineeMustBeRegisteredInAnotherGroup: 'Trainee must be registered in another group.',
     traineeLinkedToCompletionCertificate: 'Deletion forbidden : this trainee is linked to a completion certificate.',
     completionCertificatesFound: 'Completion certificates found.',
@@ -371,7 +370,6 @@ module.exports = {
     courseAccessRuleAdded: 'Règle d\'accès ajoutée.',
     courseAccessRuleDeleted: 'Règle d\'accès supprimée.',
     courseQuestionnairesFound: 'Questionnaires trouvés.',
-    courseAttendanceNotGenerated: 'Erreur lors du téléchargement, la formation ne contient pas de créneau présentiel.',
     traineeMustBeRegisteredInAnotherGroup: 'L\'apprenant doit être inscrit dans un autre groupe de cette formation.',
     traineeLinkedToCompletionCertificate: 'Suppression impossible : l\'apprenant est relié à un certificat de '
       + 'réalisation.',

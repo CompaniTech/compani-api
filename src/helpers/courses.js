@@ -952,8 +952,7 @@ exports.formatIntraCourseForPdf = (course) => {
     type: course.type,
   };
 
-  const filteredSlots = course.slots.filter(slot => slot.step.type === ON_SITE);
-  const slotsGroupedByDate = exports.groupSlotsByDate(filteredSlots);
+  const slotsGroupedByDate = exports.groupSlotsByDate(course.slots);
 
   return {
     dates: slotsGroupedByDate.map(groupedSlots => ({
@@ -968,19 +967,17 @@ exports.formatIntraCourseForPdf = (course) => {
 exports.formatInterCourseForPdf = async (course) => {
   const possibleMisc = course.misc ? ` - ${course.misc}` : '';
   const name = course.subProgram.program.name + possibleMisc;
-  const filteredSlots = course.slots
-    ? course.slots.filter(slot => slot.step.type === ON_SITE).sort(DatesUtilsHelper.ascendingSortBy('startDate'))
-    : [];
+  const sortedSlots = course.slots ? course.slots.sort(DatesUtilsHelper.ascendingSortBy('startDate')) : [];
 
   const courseData = {
     name,
-    slots: filteredSlots.map(exports.formatInterCourseSlotsForPdf),
+    slots: sortedSlots.map(exports.formatInterCourseSlotsForPdf),
     trainer: course.trainers.length === 1 ? UtilsHelper.formatIdentity(course.trainers[0].identity, 'FL') : '',
-    firstDate: filteredSlots.length ? CompaniDate(filteredSlots[0].startDate).format(DD_MM_YYYY) : '',
-    lastDate: filteredSlots.length
-      ? CompaniDate(filteredSlots[filteredSlots.length - 1].startDate).format(DD_MM_YYYY)
+    firstDate: sortedSlots.length ? CompaniDate(sortedSlots[0].startDate).format(DD_MM_YYYY) : '',
+    lastDate: sortedSlots.length
+      ? CompaniDate(sortedSlots[sortedSlots.length - 1].startDate).format(DD_MM_YYYY)
       : '',
-    duration: UtilsHelper.getTotalDuration(filteredSlots),
+    duration: UtilsHelper.getTotalDuration(sortedSlots),
   };
 
   const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper

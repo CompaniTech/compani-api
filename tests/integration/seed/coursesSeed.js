@@ -64,6 +64,9 @@ const {
   GLOBAL,
   MONTHLY,
   SINGLE,
+  E_LEARNING,
+  ON_SITE,
+  REMOTE,
 } = require('../../../src/helpers/constants');
 const { auxiliaryRoleId, trainerRoleId, coachRoleId, clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
@@ -297,16 +300,16 @@ const activitiesHistory = [
 ];
 
 const stepList = [
-  { _id: new ObjectId(), name: 'etape', type: 'on_site', activities: [], status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), name: 'etape', type: ON_SITE, activities: [], status: PUBLISHED, theoreticalDuration: 60 },
   {
     _id: new ObjectId(),
     name: 'etape',
-    type: 'e_learning',
+    type: E_LEARNING,
     activities: activitiesList.map(a => a._id),
     theoreticalDuration: 60,
     status: PUBLISHED,
   },
-  { _id: new ObjectId(), name: 'etape', type: 'remote', activities: [], status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), name: 'etape', type: REMOTE, activities: [], status: PUBLISHED, theoreticalDuration: 60 },
 ];
 
 const subProgramsList = [
@@ -324,9 +327,10 @@ const programsList = [
     learningGoals: 'on est là',
     image: { link: 'belle/url', publicId: '12345' },
     description: 'Ceci est une description',
-    subPrograms: [subProgramsList[0]._id, subProgramsList[4]._id],
+    subPrograms: [subProgramsList[0]._id, subProgramsList[4]._id, subProgramsList[1]._id],
   },
   { _id: new ObjectId(), name: 'training program', image: { link: 'belle/url', publicId: '12345' } },
+  { _id: new ObjectId(), name: 'programme e_learning', subPrograms: [subProgramsList[2]._id, subProgramsList[3]._id] },
 ];
 
 const coursesList = [
@@ -338,6 +342,7 @@ const coursesList = [
     trainees: [coach._id, helper._id, clientAdmin._id, vendorAdmin._id],
     companies: [authCompany._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     companyRepresentative: trainerAndCoach._id,
@@ -355,6 +360,7 @@ const coursesList = [
     trainees: [traineeFromOtherCompany._id, traineeFromAuthFormerlyInOther._id],
     companies: [otherCompany._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
@@ -368,6 +374,7 @@ const coursesList = [
     misc: 'second session',
     trainers: [trainer._id, trainerAndCoach._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     trainees: [
       coach._id,
@@ -386,6 +393,7 @@ const coursesList = [
     subProgram: subProgramsList[0]._id,
     misc: 'second team formation',
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 1,
     trainees: [traineeFromOtherCompany._id],
     companies: [otherCompany._id],
@@ -460,6 +468,7 @@ const coursesList = [
     trainers: [trainerAndCoach._id],
     misc: 'inter_b2b',
     type: INTER_B2B,
+    format: BLENDED,
     trainees: [traineeFromOtherCompany._id],
     companies: [otherCompany._id],
     contact: vendorAdmin._id,
@@ -479,6 +488,7 @@ const coursesList = [
     subProgram: subProgramsList[1]._id,
     misc: 'inter_b2b',
     type: INTER_B2B,
+    format: BLENDED,
     trainees: [],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
@@ -505,6 +515,7 @@ const coursesList = [
     trainees: [coach._id, helper._id, clientAdmin._id],
     companies: [authCompany._id],
     type: SINGLE,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-01-01T00:00:00.000Z',
@@ -545,6 +556,7 @@ const coursesList = [
     misc: 'third session',
     trainers: [trainer._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     trainees: [
       coach._id,
@@ -566,6 +578,7 @@ const coursesList = [
     trainees: [coach._id, helper._id, clientAdmin._id],
     companies: [authCompany._id],
     type: INTER_B2B,
+    format: BLENDED,
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-01-01T00:00:00.000Z',
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
@@ -593,6 +606,7 @@ const coursesList = [
     trainees: [traineeFromThirdCompany._id],
     companies: [thirdCompany._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     companyRepresentative: coachFromThirdCompany._id,
@@ -608,6 +622,7 @@ const coursesList = [
     trainees: [],
     companies: [authCompany._id],
     type: INTRA_HOLDING,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
@@ -622,6 +637,7 @@ const coursesList = [
     trainees: [],
     companies: [],
     type: INTRA_HOLDING,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: otherHolding._id,
@@ -637,6 +653,7 @@ const coursesList = [
     trainees: [traineeFromThirdCompany._id, traineeFromOtherCompany._id],
     companies: [otherCompany._id, thirdCompany._id],
     type: INTRA_HOLDING,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: otherHolding._id,
@@ -1230,6 +1247,11 @@ const slots = [
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[24]._id,
     step: stepList[0]._id,
+  },
+  { // 20
+    _id: new ObjectId(),
+    course: coursesList[12]._id,
+    step: stepList[2]._id,
   },
 ];
 

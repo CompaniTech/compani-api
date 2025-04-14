@@ -789,7 +789,7 @@ describe('COURSES ROUTES - GET /courses', () => {
           program: {
             _id: programsList[0]._id,
             name: programsList[0].name,
-            subPrograms: [expect.any(ObjectId), expect.any(ObjectId)],
+            subPrograms: [expect.any(ObjectId), expect.any(ObjectId), expect.any(ObjectId)],
           },
         },
         trainers: [pick(trainerAndCoach, ['_id', 'identity.firstname', 'identity.lastname'])],
@@ -1012,7 +1012,7 @@ describe('COURSES ROUTES - GET /courses', () => {
             name: programsList[0].name,
             image: programsList[0].image,
             description: programsList[0].description,
-            subPrograms: [expect.any(ObjectId), expect.any(ObjectId)],
+            subPrograms: [expect.any(ObjectId), expect.any(ObjectId), expect.any(ObjectId)],
           },
         }),
         slots: [{
@@ -4009,7 +4009,7 @@ describe('COURSES ROUTES - GET /{_id}/attendance-sheets', () => {
   let authToken;
   const intraCourseIdFromAuthCompany = coursesList[2]._id;
   const interCourseIdFromAuthCompany = coursesList[5]._id;
-  const courseIdWithoutOnSiteSlotFromAuth = coursesList[12]._id;
+  const courseIdWithRemoteSlotFromAuth = coursesList[12]._id;
   const courseIdFromOtherCompany = coursesList[1]._id;
   beforeEach(populateDB);
 
@@ -4048,6 +4048,16 @@ describe('COURSES ROUTES - GET /{_id}/attendance-sheets', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should return 200 if remote slots', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdWithRemoteSlotFromAuth}/attendance-sheets`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return 404 if course does not exist', async () => {
       const invalidId = (new ObjectId()).toHexString();
       const response = await app.inject({
@@ -4059,15 +4069,14 @@ describe('COURSES ROUTES - GET /{_id}/attendance-sheets', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return a 404 if no on-site slot', async () => {
+    it('should return 403 if course is strictly e_learning', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${courseIdWithoutOnSiteSlotFromAuth}/attendance-sheets`,
+        url: `/courses/${coursesList[8]._id}/attendance-sheets`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
-      expect(response.statusCode).toBe(404);
-      expect(response.result.message).toBeDefined();
+      expect(response.statusCode).toBe(403);
     });
   });
 
