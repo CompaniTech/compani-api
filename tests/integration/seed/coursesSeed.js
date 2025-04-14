@@ -330,7 +330,7 @@ const programsList = [
     subPrograms: [subProgramsList[0]._id, subProgramsList[4]._id, subProgramsList[1]._id],
   },
   { _id: new ObjectId(), name: 'training program', image: { link: 'belle/url', publicId: '12345' } },
-  { _id: new ObjectId(), name: 'programme e_learning', subPrograms: [subProgramsList[2]._id] },
+  { _id: new ObjectId(), name: 'programme e_learning', subPrograms: [subProgramsList[2]._id, subProgramsList[3]._id] },
 ];
 
 const coursesList = [
