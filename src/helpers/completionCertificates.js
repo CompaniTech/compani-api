@@ -115,19 +115,20 @@ exports.generate = async (completionCertificateId) => {
     .lean();
   const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
 
-  const eLearningStepsWithAH = eLearningSteps
-    .map(s => ({
-      ...s,
-      activities: s.activities
-        .map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
-    }));
-
   const dates = { startDate: startOfMonth, endDate: endOfMonth };
 
   let eLearningDuration = {};
   if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, course.subProgram._id)) {
-    eLearningDuration = CoursesHelper.getRealELearningDuration(eLearningStepsWithAH, trainee._id, dates);
+    const filteredActivityHistories = activityHistories
+      .filter(aH => (CompaniDate(aH.date).isSameOrBetween(dates.startDate, dates.endDate)));
+    eLearningDuration = CoursesHelper.getRealELearningDuration(filteredActivityHistories);
   } else {
+    const eLearningStepsWithAH = eLearningSteps
+      .map(s => ({
+        ...s,
+        activities: s.activities
+          .map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
+      }));
     eLearningDuration = CoursesHelper.getELearningDuration(eLearningStepsWithAH, trainee._id, dates);
   }
 

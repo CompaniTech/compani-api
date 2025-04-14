@@ -484,28 +484,14 @@ describe('generate', () => {
         activity: activitiesIds[0],
         user: traineeId,
         duration: 'PT100S',
+        date: '2025-03-20T10:00:00.000Z',
       },
       {
         _id: new ObjectId(),
         activity: activitiesIds[1],
         user: traineeId,
         duration: 'PT100S',
-      },
-    ];
-    const eLearningStepsWithAH = [
-      {
-        type: 'e_learning',
-        theoreticalDuration: '3h30',
-        activities: [
-          {
-            _id: activitiesIds[0],
-            activityHistories: [activityHistories[0]],
-          },
-          {
-            _id: activitiesIds[1],
-            activityHistories: [activityHistories[1]],
-          },
-        ],
+        date: '2025-02-20T10:00:00.000Z',
       },
     ];
     const subProgramIds = [REAL_ELEARNING_DURATION_SUBPROGRAM_ID, new ObjectId()];
@@ -658,12 +644,7 @@ describe('generate', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(
-      getRealELearningDuration,
-      eLearningStepsWithAH,
-      traineeId,
-      { startDate: '2025-02-28T23:00:00.000Z', endDate: '2025-03-31T21:59:59.999Z' }
-    );
+    sinon.assert.calledOnceWithExactly(getRealELearningDuration, [activityHistories[0]]);
     sinon.assert.calledOnceWithExactly(formatIdentity, { firstname: 'Jean', lastname: 'Saitrien' }, 'FL');
     sinon.assert.calledOnceWithExactly(
       getPdf,

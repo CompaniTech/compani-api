@@ -6925,11 +6925,14 @@ describe('generateCompletionCertificates', () => {
               {
                 _id: new ObjectId(),
                 activityHistories: [
-                  { user: traineesIds[0], duration: 'PT100S' },
-                  { user: traineesIds[1], duration: 'PT100S' },
+                  { _id: new ObjectId(), user: traineesIds[0], duration: 'PT100S' },
+                  { _id: new ObjectId(), user: traineesIds[1], duration: 'PT100S' },
                 ],
               },
-              { _id: new ObjectId(), activityHistories: [{ user: traineesIds[0], duration: 'PT100S' }] },
+              {
+                _id: new ObjectId(),
+                activityHistories: [{ _id: new ObjectId(), user: traineesIds[0], duration: 'PT100S' }],
+              },
             ],
           },
           {
@@ -6939,8 +6942,8 @@ describe('generateCompletionCertificates', () => {
               {
                 _id: new ObjectId(),
                 activityHistories: [
-                  { user: traineesIds[0], duration: 'PT100S' },
-                  { user: traineesIds[1], duration: 'PT100S' },
+                  { _id: new ObjectId(), user: traineesIds[0], duration: 'PT100S' },
+                  { _id: new ObjectId(), user: traineesIds[1], duration: 'PT100S' },
                 ],
               },
               {

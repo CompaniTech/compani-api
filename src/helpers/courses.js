@@ -3,6 +3,7 @@ const path = require('path');
 const get = require('lodash/get');
 const pick = require('lodash/pick');
 const has = require('lodash/has');
+const uniqBy = require('lodash/uniqBy');
 const isEmpty = require('lodash/isEmpty');
 const omit = require('lodash/omit');
 const groupBy = require('lodash/groupBy');
@@ -1079,17 +1080,9 @@ exports.getELearningDuration = (steps, traineeId, { startDate, endDate } = {}) =
   return eLearningDuration;
 };
 
-exports.getRealELearningDuration = (steps, traineeId, { startDate, endDate } = {}) => {
-  const activityHistories = steps
-    .flatMap(s => s.activities
-      .flatMap(a => a.activityHistories
-        .filter(aH => UtilsHelper.areObjectIdsEquals(aH.user, traineeId) &&
-          (!(startDate || endDate) || (CompaniDate(aH.date).isSameOrBetween(startDate, endDate)))
-        )
-        .map(ah => ah.duration)
-      ));
-
+exports.getRealELearningDuration = (activityHistories) => {
   const eLearningDuration = activityHistories
+    .map(ah => ah.duration)
     .reduce((acc, val) => acc.add(CompaniDuration(val)), CompaniDuration());
 
   return eLearningDuration;
@@ -1110,7 +1103,16 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
 
   let eLearningDuration = {};
   if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, subProgramId)) {
-    eLearningDuration = exports.getRealELearningDuration(steps, trainee._id);
+    const activityHistories = uniqBy(
+      steps
+        .flatMap(s => s.activities
+          .flatMap(a => a.activityHistories
+            .filter(aH => UtilsHelper.areObjectIdsEquals(aH.user, trainee._id))
+          )
+        ),
+      '_id'
+    );
+    eLearningDuration = exports.getRealELearningDuration(activityHistories);
   } else {
     eLearningDuration = exports.getELearningDuration(steps, trainee._id);
   }
