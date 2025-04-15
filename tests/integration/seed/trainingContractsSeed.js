@@ -7,7 +7,7 @@ const TrainingContract = require('../../../src/models/TrainingContract');
 const { authCompany, otherCompany, companyWithoutSubscription, otherHolding } = require('../../seed/authCompaniesSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { vendorAdmin, helper, clientAdmin, coach, trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
-const { INTRA, INTER_B2B, PUBLISHED, INTRA_HOLDING } = require('../../../src/helpers/constants');
+const { INTRA, INTER_B2B, PUBLISHED, INTRA_HOLDING, GLOBAL } = require('../../../src/helpers/constants');
 
 const steps = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 }];
 
@@ -35,6 +35,7 @@ const courseList = [
     companyRepresentative: trainerAndCoach._id,
     contact: trainerAndCoach._id,
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
   { // 1
     _id: new ObjectId(),
@@ -49,6 +50,7 @@ const courseList = [
     companyRepresentative: trainerAndCoach._id,
     contact: trainerAndCoach._id,
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
   { // 2
     _id: new ObjectId(),
@@ -61,6 +63,7 @@ const courseList = [
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
   { // 3 archived course
     _id: new ObjectId(),
@@ -72,6 +75,7 @@ const courseList = [
     type: INTER_B2B,
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2023-01-03T14:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 4 intra_holding course
     _id: new ObjectId(),
@@ -85,6 +89,7 @@ const courseList = [
     holding: otherHolding._id,
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2023-01-03T14:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

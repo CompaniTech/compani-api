@@ -28,6 +28,8 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  SINGLE,
+  COURSE_TYPES,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -104,7 +106,7 @@ const getBillsInfos = (course) => {
     }
     : { netInclTaxes: '', paid: '', total: '' };
 
-  if (course.type === INTRA) {
+  if ([INTRA, SINGLE].includes(course.type)) {
     const billsCountForExport = `${validatedBillsWithoutCreditNote.length} sur ${course.expectedBillsCount}`;
     const isBilled = !!course.expectedBillsCount &&
       validatedBillsWithoutCreditNote.length === course.expectedBillsCount;
@@ -181,7 +183,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
 
   return {
     Identifiant: course._id,
-    Type: course.type,
+    Type: COURSE_TYPES[course.type],
     Payeur: payerList || '',
     Structure: companiesName || '',
     'Société mère': get(course, 'holding.name') || '',
@@ -365,7 +367,7 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
             { path: 'trainers', select: 'identity' },
           ],
         },
-        { path: 'user', select: 'identity local.email contact.phone' },
+        { path: 'user', select: 'identity local.email contact' },
         { path: 'company', select: 'name' },
         { path: 'questionnaireAnswersList.card', select: 'qcAnswers' },
       ],
@@ -390,7 +392,9 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
       'Origine de réponse': qHistory.origin,
       'Prénom Nom répondant(e)': UtilsHelper.formatIdentity(get(qHistory, 'user.identity') || '', 'FL'),
       'Mail répondant(e)': get(qHistory, 'user.local.email'),
-      'Numéro de tél répondant(e)': get(qHistory, 'user.contact.phone') || '',
+      'Numéro de tél répondant(e)': get(qHistory, 'user.contact.phone')
+        ? `${UtilsHelper.formatPhone(qHistory.user.contact)}`
+        : '',
       ...questionsAnswers,
     };
 
@@ -408,6 +412,7 @@ const formatCommonInfos = (bill, netInclTaxes) => {
   return {
     'Id formation': bill.course._id,
     Formation: courseName,
+    Programme: bill.course.subProgram.program.name,
     Structure: bill.companies.map(c => c.name).join(', '),
     Payeur: bill.payer.name,
     'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),

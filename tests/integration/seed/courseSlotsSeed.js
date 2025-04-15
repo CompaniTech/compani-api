@@ -10,9 +10,18 @@ const User = require('../../../src/models/User');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const Attendance = require('../../../src/models/Attendance');
+const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
 const { vendorAdmin, trainerAndCoach } = require('../../seed/authUsersSeed');
-const { WEBAPP, INTRA, PUBLISHED, LESSON, INTRA_HOLDING } = require('../../../src/helpers/constants');
+const {
+  WEBAPP,
+  INTRA,
+  PUBLISHED,
+  LESSON,
+  INTRA_HOLDING,
+  GLOBAL,
+  SINGLE,
+} = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, auxiliaryRoleId } = require('../../seed/authRolesSeed');
 
@@ -30,7 +39,7 @@ const traineeFromOtherCompany = {
   identity: { firstname: 'fdsdsdf', lastname: 'sdfds' },
   local: { email: 'traineeOtherCompany@alenvi.fr' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -102,6 +111,7 @@ const coursesList = [
     maxTrainees: 8,
     trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 1
     _id: new ObjectId(),
@@ -109,10 +119,12 @@ const coursesList = [
     trainees: [traineeFromOtherCompany._id],
     companies: [otherCompany._id],
     misc: 'team formation',
-    type: INTRA,
-    maxTrainees: 8,
+    type: SINGLE,
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
+    maxTrainees: 1,
+    expectedBills: 0,
   },
   { // 2
     _id: new ObjectId(),
@@ -125,6 +137,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-11-15T09:00:00',
+    certificateGenerationMode: GLOBAL,
   },
   { // 3
     _id: new ObjectId(),
@@ -136,6 +149,7 @@ const coursesList = [
     maxTrainees: 8,
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 4
     _id: new ObjectId(),
@@ -148,6 +162,7 @@ const coursesList = [
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 5 without companies
     _id: new ObjectId(),
@@ -160,6 +175,7 @@ const coursesList = [
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 
@@ -254,6 +270,13 @@ const courseSlotsList = [
     course: coursesList[5]._id,
     step: stepsList[0]._id,
   },
+  { // 12 slot with attendance sheet
+    _id: new ObjectId(),
+    startDate: '2020-05-10T09:00:00',
+    endDate: '2020-05-10T12:00:00',
+    course: coursesList[1]._id,
+    step: stepsList[0]._id,
+  },
 ];
 
 const attendance = {
@@ -261,6 +284,17 @@ const attendance = {
   trainee: traineeFromOtherCompany._id,
   courseSlot: courseSlotsList[4]._id,
   company: otherCompany._id,
+};
+
+const attendanceSheet = {
+  _id: new ObjectId(),
+  course: coursesList[1]._id,
+  file: { publicId: 'mon upload', link: 'www.test.com' },
+  trainee: traineeFromOtherCompany._id,
+  companies: [otherCompany._id],
+  slots: [courseSlotsList[12]._id],
+  origin: WEBAPP,
+  trainer: trainer._id,
 };
 
 const populateDB = async () => {
@@ -276,6 +310,7 @@ const populateDB = async () => {
     Step.create(stepsList),
     User.create([trainer, traineeFromOtherCompany]),
     Attendance.create(attendance),
+    AttendanceSheet.create(attendanceSheet),
     UserCompany.create(userCompanies),
   ]);
 };

@@ -92,6 +92,8 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  GLOBAL,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -198,6 +200,7 @@ const auxiliaryList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0123456789',
+      countryCode: '+33',
     },
     role: { client: auxiliaryRoleId },
     local: { email: 'export_auxiliary_1@alenvi.io' },
@@ -228,6 +231,7 @@ const auxiliaryList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0123456789',
+      countryCode: '+33',
     },
     role: { client: auxiliaryRoleId },
     local: { email: 'export_auxiliary_2@alenvi.io' },
@@ -311,6 +315,7 @@ const customersList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     subscriptions: [
       {
@@ -359,6 +364,7 @@ const customersList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     followUp: { situation: 'nursing_home' },
     stoppedAt: '2021-06-10T22:00:00.000Z',
@@ -377,6 +383,7 @@ const customersList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0612345678',
+      countryCode: '+33',
     },
     followUp: { situation: 'home' },
   },
@@ -393,6 +400,7 @@ const customersList = [
         location: { type: 'Point', coordinates: [2.377133, 48.801389] },
       },
       phone: '0123456789',
+      countryCode: '+33',
     },
     subscriptions: [{
       _id: customerSubscriptionId,
@@ -1043,7 +1051,7 @@ const creditNotesList = [
 
 const user = {
   _id: new ObjectId(),
-  contact: { phone: '0123456789' },
+  contact: { phone: '0123456789', countryCode: '+33' },
   identity: { firstname: 'test', lastname: 'Toto' },
   local: { email: 'toto@alenvi.io' },
   refreshToken: uuidv4(),
@@ -1234,6 +1242,7 @@ const coursesList = [
     companies: [authCompany._id],
     archivedAt: '2024-07-07T22:00:00.000Z',
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 1 with 2 bills
     _id: new ObjectId(),
@@ -1246,6 +1255,7 @@ const coursesList = [
     estimatedStartDate: '2019-01-01T08:00:00.000Z',
     companies: [authCompany._id, otherCompany._id],
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 2 without bills
     _id: new ObjectId(),
@@ -1259,6 +1269,7 @@ const coursesList = [
     estimatedStartDate: '2022-01-12T08:00:00.000Z',
     companies: [authCompany._id, otherCompany._id, companyWithoutSubscription._id],
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 3 with 1 bill
     _id: new ObjectId(),
@@ -1273,6 +1284,7 @@ const coursesList = [
     companies: [authCompany._id],
     expectedBillsCount: 1,
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 4 with 1 bill
     _id: new ObjectId(),
@@ -1287,6 +1299,7 @@ const coursesList = [
     trainees: [traineeList[0]._id, traineeList[2]._id],
     expectedBillsCount: 1,
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 5 with 3 bills and 1 creditNote
     _id: new ObjectId(),
@@ -1301,6 +1314,7 @@ const coursesList = [
     trainees: [traineeList[0]._id, traineeList[2]._id, traineeList[3]._id],
     expectedBillsCount: 3,
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 6 without bills
     _id: new ObjectId(),
@@ -1315,6 +1329,7 @@ const coursesList = [
     trainees: [],
     expectedBillsCount: 0,
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 7 without trainee
     _id: new ObjectId(),
@@ -1329,6 +1344,7 @@ const coursesList = [
     trainees: [],
     createdAt: '2018-01-07T22:00:00.000Z',
     maxTrainees: 8,
+    certificateGenerationMode: GLOBAL,
   },
   { // 8 intra with other Company
     _id: new ObjectId(),
@@ -1343,6 +1359,22 @@ const coursesList = [
     trainees: [traineeList[1]._id],
     companies: [otherCompany._id],
     createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
+  },
+  { // 9 single
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'single',
+    trainers: [trainer._id],
+    operationsRepresentative: operationsRepresentative._id,
+    contact: operationsRepresentative._id,
+    expectedBillsCount: 1,
+    trainees: [traineeList[1]._id],
+    companies: [otherCompany._id],
+    createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: MONTHLY,
   },
 ];
 
@@ -1660,6 +1692,15 @@ const courseSlotList = [
   { // 11
     _id: new ObjectId(),
     course: coursesList[8]._id,
+    step: stepList[1]._id,
+    startDate: '2021-05-01T14:00:00.000Z',
+    endDate: '2021-05-01T16:00:00.000Z',
+    meetingLink: 'https://meet.google.com',
+    createdAt: '2020-12-12T10:00:01.000Z',
+  },
+  { // 12
+    _id: new ObjectId(),
+    course: coursesList[9]._id,
     step: stepList[1]._id,
     startDate: '2021-05-01T14:00:00.000Z',
     endDate: '2021-05-01T16:00:00.000Z',
@@ -2199,11 +2240,11 @@ const courseHistoriesList = [
   },
   {
     _id: new ObjectId(),
-    course: coursesList[8]._id,
-    action: COMPANY_ADDITION,
+    course: coursesList[9]._id,
+    action: TRAINEE_ADDITION,
     createdBy: operationsRepresentative._id,
+    trainee: traineeList[1]._id,
     company: otherCompany._id,
-    createdAt: '2022-01-12T08:00:00.000Z',
   },
 ];
 

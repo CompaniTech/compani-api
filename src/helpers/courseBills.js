@@ -1,5 +1,4 @@
 const get = require('lodash/get');
-const flat = require('flat');
 const omit = require('lodash/omit');
 const NumbersHelper = require('./numbers');
 const CourseBill = require('../models/CourseBill');
@@ -129,7 +128,7 @@ exports.updateCourseBill = async (courseBillId, payload) => {
     else if (get(payload, 'payer.fundingOrganisation')) payloadToUnset['payer.company'] = '';
 
     formattedPayload = {
-      ...(Object.keys(payloadToSet).length && { $set: flat(payloadToSet, { safe: true }) }),
+      ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
       ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
     };
   }

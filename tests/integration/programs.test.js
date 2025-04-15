@@ -766,7 +766,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const payload = {
         identity: { lastname: 'test', firstname: 'test' },
         local: { email: 'test@alenvi.io' },
-        contact: { phone: '0123456789' },
+        contact: { countryCode: '+33', phone: '0123456789' },
       };
 
       const response = await app.inject({
@@ -782,7 +782,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
     });
 
     it('should add an existing user as tester to a program', async () => {
-      const payload = pick(coach, ['local.email', 'identity.firstname', 'identity.lastname', 'contact.phone']);
+      const payload = pick(coach, ['local.email', 'identity.firstname', 'identity.lastname', 'contact']);
 
       const response = await app.inject({
         method: 'POST',
@@ -797,7 +797,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
     });
 
     it('should return a 404 if program does not exist', async () => {
-      const payload = pick(coach, ['local.email', 'identity.firstname', 'identity.lastname', 'contact.phone']);
+      const payload = pick(coach, ['local.email', 'identity.firstname', 'identity.lastname', 'contact']);
 
       const response = await app.inject({
         method: 'POST',
@@ -812,7 +812,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
     it('should return a 400 if missing email', async () => {
       const payload = {
         identity: { lastname: 'test', firstname: 'test' },
-        contact: { phone: '0123456789' },
+        contact: { countryCode: '+33', phone: '0123456789' },
       };
 
       const response = await app.inject({
@@ -829,7 +829,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const payload = {
         identity: { firstname: 'test' },
         local: { email: 'test@alenvi.io' },
-        contact: { phone: '0123456789' },
+        contact: { countryCode: '+33', phone: '0123456789' },
       };
 
       const response = await app.inject({
@@ -846,6 +846,23 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const payload = {
         identity: { firstname: 'test', lastname: 'oiuy' },
         local: { email: 'test@alenvi.io' },
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: `/programs/${programsList[0]._id}/testers`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return a 400 if country code is missing', async () => {
+      const payload = {
+        identity: { firstname: 'test', lastname: 'oiuy' },
+        local: { email: 'test@alenvi.io' },
+        contact: { phone: '0987654321' },
       };
 
       const response = await app.inject({
@@ -880,7 +897,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
     const payload = {
       identity: { lastname: 'test', firstname: 'test' },
       local: { email: 'test@alenvi.io' },
-      contact: { phone: '0123456789' },
+      contact: { countryCode: '+33', phone: '0123456789' },
     };
 
     roles.forEach((role) => {

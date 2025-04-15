@@ -1,10 +1,12 @@
 const { expect } = require('expect');
+const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const omit = require('lodash/omit');
 const app = require('../../server');
 const SubProgram = require('../../src/models/SubProgram');
 const Course = require('../../src/models/Course');
 const Step = require('../../src/models/Step');
+const NotificationHelper = require('../../src/helpers/notifications');
 const UtilsHelper = require('../../src/helpers/utils');
 const { populateDB, subProgramsList, stepsList, tester } = require('./seed/subProgramsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
@@ -18,9 +20,17 @@ describe('NODE ENV', () => {
 
 describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
   let authToken;
+  let sendNewElearningCourseNotification;
   beforeEach(populateDB);
   const blendedSubProgramId = subProgramsList[0]._id;
   const eLearningSubProgramId = subProgramsList[1]._id;
+
+  beforeEach(() => {
+    sendNewElearningCourseNotification = sinon.stub(NotificationHelper, 'sendNotificationToUser');
+  });
+  afterEach(() => {
+    sendNewElearningCourseNotification.restore();
+  });
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {

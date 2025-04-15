@@ -2,6 +2,7 @@ const { v4: uuidv4 } = require('uuid');
 const { ObjectId } = require('mongodb');
 const Company = require('../../../src/models/Company');
 const CompanyHolding = require('../../../src/models/CompanyHolding');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Course = require('../../../src/models/Course');
 const Program = require('../../../src/models/Program');
 const SubProgram = require('../../../src/models/SubProgram');
@@ -60,11 +61,15 @@ const {
   TRAINEE,
   TITLE_TEXT,
   SURVEY,
+  GLOBAL,
+  MONTHLY,
+  SINGLE,
+  E_LEARNING,
+  ON_SITE,
+  REMOTE,
 } = require('../../../src/helpers/constants');
 const { auxiliaryRoleId, trainerRoleId, coachRoleId, clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
-
-const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 const traineeFromAuthFormerlyInOther = {
   _id: new ObjectId(),
@@ -79,7 +84,7 @@ const traineeFromOtherCompany = {
   identity: { firstname: 'Fred', lastname: 'Astaire' },
   local: { email: 'traineeOtherCompany@alenvi.io', password: '123456!eR' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -89,7 +94,7 @@ const traineeFromAuthCompanyWithFormationExpoToken = {
   identity: { firstname: 'Trainee', lastname: 'WithExpoToken' },
   local: { email: 'traineeWithExpoToken@alenvi.io' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
   formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
@@ -99,7 +104,7 @@ const traineeFormerlyInAuthCompany = {
   _id: new ObjectId(),
   identity: { firstname: 'Trainee', lastname: 'Formerly In Auth Company' },
   local: { email: 'trainee-formerly-in-auth-company@alenvi.io' },
-  contact: { phone: '0121212121' },
+  contact: { phone: '0121212121', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -108,7 +113,7 @@ const traineeComingUpInAuthCompany = {
   _id: new ObjectId(),
   identity: { firstname: 'Trainee', lastname: 'Coming Up In Auth Company' },
   local: { email: 'trainee-coming-up-in-auth-company@alenvi.io' },
-  contact: { phone: '0121212121' },
+  contact: { phone: '0121212121', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -127,7 +132,7 @@ const traineeFromThirdCompany = {
   identity: { firstname: 'Fred', lastname: 'Subscription' },
   local: { email: 'trainee_third_company@alenvi.io', password: '123456!eR' },
   role: { client: auxiliaryRoleId },
-  contact: { phone: '0734856752' },
+  contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -137,7 +142,7 @@ const coachFromThirdCompany = {
   identity: { firstname: 'Manon', lastname: 'Subscription' },
   local: { email: 'coach_third_company@alenvi.io', password: '123456!eR' },
   role: { client: coachRoleId },
-  contact: { phone: '0734856752' },
+  contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -147,7 +152,7 @@ const clientAdminFromThirdCompany = {
   identity: { firstname: 'Sophie', lastname: 'Subscription' },
   local: { email: 'admin_third_company@alenvi.io', password: '123456!eR' },
   role: { client: clientAdminRoleId },
-  contact: { phone: '0734856752' },
+  contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -166,7 +171,7 @@ const coachFromOtherCompany = {
   identity: { firstname: 'Zoe', lastname: 'Zebu' },
   local: { email: 'coachOtherCompany@alenvi.io', password: '123456!eR' },
   role: { client: coachRoleId },
-  contact: { phone: '0734856751' },
+  contact: { phone: '0734856751', countryCode: '+33' },
   refreshToken: uuidv4(),
   origin: WEBAPP,
 };
@@ -295,16 +300,16 @@ const activitiesHistory = [
 ];
 
 const stepList = [
-  { _id: new ObjectId(), name: 'etape', type: 'on_site', activities: [], status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), name: 'etape', type: ON_SITE, activities: [], status: PUBLISHED, theoreticalDuration: 60 },
   {
     _id: new ObjectId(),
     name: 'etape',
-    type: 'e_learning',
+    type: E_LEARNING,
     activities: activitiesList.map(a => a._id),
     theoreticalDuration: 60,
     status: PUBLISHED,
   },
-  { _id: new ObjectId(), name: 'etape', type: 'remote', activities: [], status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), name: 'etape', type: REMOTE, activities: [], status: PUBLISHED, theoreticalDuration: 60 },
 ];
 
 const subProgramsList = [
@@ -312,7 +317,7 @@ const subProgramsList = [
   { _id: new ObjectId(), name: 'sous-programme 2', steps: [stepList[1]._id, stepList[2]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 3', steps: [stepList[1]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 4 (non publié)', steps: [stepList[1]._id, stepList[2]._id] },
-  { _id: SINGLE_COURSES_SUBPROGRAM_IDS[0], name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
+  { _id: new ObjectId(), name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
 ];
 
 const programsList = [
@@ -322,9 +327,10 @@ const programsList = [
     learningGoals: 'on est là',
     image: { link: 'belle/url', publicId: '12345' },
     description: 'Ceci est une description',
-    subPrograms: [subProgramsList[0]._id, subProgramsList[4]._id],
+    subPrograms: [subProgramsList[0]._id, subProgramsList[4]._id, subProgramsList[1]._id],
   },
   { _id: new ObjectId(), name: 'training program', image: { link: 'belle/url', publicId: '12345' } },
+  { _id: new ObjectId(), name: 'programme e_learning', subPrograms: [subProgramsList[2]._id, subProgramsList[3]._id] },
 ];
 
 const coursesList = [
@@ -336,12 +342,14 @@ const coursesList = [
     trainees: [coach._id, helper._id, clientAdmin._id, vendorAdmin._id],
     companies: [authCompany._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     companyRepresentative: trainerAndCoach._id,
     contact: trainerAndCoach._id,
     expectedBillsCount: 3,
     hasCertifyingTest: true,
+    certificateGenerationMode: GLOBAL,
   },
   { // 1
     _id: new ObjectId(),
@@ -352,10 +360,12 @@ const coursesList = [
     trainees: [traineeFromOtherCompany._id, traineeFromAuthFormerlyInOther._id],
     companies: [otherCompany._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
     salesRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 2
     _id: new ObjectId(),
@@ -364,6 +374,7 @@ const coursesList = [
     misc: 'second session',
     trainers: [trainer._id, trainerAndCoach._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     trainees: [
       coach._id,
@@ -375,17 +386,20 @@ const coursesList = [
     ],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: MONTHLY,
   },
   { // 3
     _id: new ObjectId(),
     subProgram: subProgramsList[0]._id,
     misc: 'second team formation',
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 1,
     trainees: [traineeFromOtherCompany._id],
     companies: [otherCompany._id],
     operationsRepresentative: vendorAdmin._id,
     trainers: [trainerAndCoach._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 4 course without slots
     _id: new ObjectId(),
@@ -399,6 +413,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     hasCertifyingTest: true,
     certifiedTrainees: [traineeFromOtherCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 5 course with slots
     _id: new ObjectId(),
@@ -409,6 +424,7 @@ const coursesList = [
     trainees: [noRole._id],
     companies: [thirdCompany._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 6 course without trainees and slots
     _id: new ObjectId(),
@@ -428,6 +444,7 @@ const coursesList = [
     companies: [authCompany._id, thirdCompany._id],
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 8 eLearning course with access rules
     _id: new ObjectId(),
@@ -451,10 +468,12 @@ const coursesList = [
     trainers: [trainerAndCoach._id],
     misc: 'inter_b2b',
     type: INTER_B2B,
+    format: BLENDED,
     trainees: [traineeFromOtherCompany._id],
     companies: [otherCompany._id],
     contact: vendorAdmin._id,
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 11 course without authCompany in access rules (11ème position)
     _id: new ObjectId(),
@@ -469,10 +488,12 @@ const coursesList = [
     subProgram: subProgramsList[1]._id,
     misc: 'inter_b2b',
     type: INTER_B2B,
+    format: BLENDED,
     trainees: [],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
     trainers: [trainer._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 13 course without trainee
     _id: new ObjectId(),
@@ -484,6 +505,7 @@ const coursesList = [
     trainees: [],
     companies: [],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 14 archived course
     _id: new ObjectId(),
@@ -492,12 +514,14 @@ const coursesList = [
     trainers: [trainer._id],
     trainees: [coach._id, helper._id, clientAdmin._id],
     companies: [authCompany._id],
-    type: INTRA,
+    type: SINGLE,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-01-01T00:00:00.000Z',
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     tutors: [traineeFromAuthFormerlyInOther._id],
+    certificateGenerationMode: MONTHLY,
   },
   { // 15 course billed INTRA without trainees and slots
     _id: new ObjectId(),
@@ -510,6 +534,7 @@ const coursesList = [
     trainees: [],
     companies: [authCompany._id],
     expectedBillsCount: 1,
+    certificateGenerationMode: GLOBAL,
   },
   { // 16 course without trainee and with slots to plan
     _id: new ObjectId(),
@@ -521,6 +546,7 @@ const coursesList = [
     trainees: [],
     companies: [],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 17 Intra course without slots
     _id: new ObjectId(),
@@ -530,6 +556,7 @@ const coursesList = [
     misc: 'third session',
     trainers: [trainer._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     trainees: [
       coach._id,
@@ -541,6 +568,7 @@ const coursesList = [
     ],
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
   { // 18 archived inter b2b course
     _id: new ObjectId(),
@@ -550,9 +578,11 @@ const coursesList = [
     trainees: [coach._id, helper._id, clientAdmin._id],
     companies: [authCompany._id],
     type: INTER_B2B,
+    format: BLENDED,
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-01-01T00:00:00.000Z',
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
   },
   { // 19 course with billed and attended companies
     _id: new ObjectId(),
@@ -565,6 +595,7 @@ const coursesList = [
     companies: [authCompany._id, thirdCompany._id, otherCompany._id],
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 20 third company course
     _id: new ObjectId(),
@@ -575,10 +606,12 @@ const coursesList = [
     trainees: [traineeFromThirdCompany._id],
     companies: [thirdCompany._id],
     type: INTRA,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     companyRepresentative: coachFromThirdCompany._id,
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
   { // 21 intra_holding course with companies, without trainees
     _id: new ObjectId(),
@@ -589,9 +622,11 @@ const coursesList = [
     trainees: [],
     companies: [authCompany._id],
     type: INTRA_HOLDING,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 22 intra_holding course without companies
     _id: new ObjectId(),
@@ -602,10 +637,12 @@ const coursesList = [
     trainees: [],
     companies: [],
     type: INTRA_HOLDING,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: otherHolding._id,
     companyRepresentative: holdingAdminFromOtherCompany._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 23 intra_holding course with companies and trainees
     _id: new ObjectId(),
@@ -616,36 +653,44 @@ const coursesList = [
     trainees: [traineeFromThirdCompany._id, traineeFromOtherCompany._id],
     companies: [otherCompany._id, thirdCompany._id],
     type: INTRA_HOLDING,
+    format: BLENDED,
     maxTrainees: 8,
     operationsRepresentative: vendorAdmin._id,
     holding: otherHolding._id,
     companyRepresentative: holdingAdminFromOtherCompany._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 24 Single course
     _id: new ObjectId(),
     subProgram: subProgramsList[4]._id,
     contact: trainer._id,
-    misc: 'inter b2b session',
-    type: INTER_B2B,
+    misc: 'single course',
+    type: SINGLE,
     format: BLENDED,
-    trainees: [traineeFromAuthFormerlyInOther._id],
+    trainees: [traineeFromAuthCompanyWithFormationExpoToken._id],
     companies: [authCompany._id],
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     tutors: [],
+    certificateGenerationMode: MONTHLY,
+    maxTrainees: 1,
+    expectedBillsCount: 0,
   },
   { // 25 Single course with tutor already in course
     _id: new ObjectId(),
     subProgram: subProgramsList[4]._id,
     contact: trainer._id,
-    misc: 'inter b2b session',
-    type: INTER_B2B,
+    misc: 'single session',
+    type: SINGLE,
     format: BLENDED,
     trainees: [traineeFromAuthFormerlyInOther._id],
     companies: [authCompany._id],
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     tutors: [noRole._id],
+    certificateGenerationMode: MONTHLY,
+    maxTrainees: 1,
+    expectedBillsCount: 0,
   },
 ];
 
@@ -1196,6 +1241,18 @@ const slots = [
     course: coursesList[23]._id,
     step: stepList[0]._id,
   },
+  { // 19
+    _id: new ObjectId(),
+    startDate: '2020-03-07T08:00:00.000Z',
+    endDate: '2020-03-07T10:00:00.000Z',
+    course: coursesList[24]._id,
+    step: stepList[0]._id,
+  },
+  { // 20
+    _id: new ObjectId(),
+    course: coursesList[12]._id,
+    step: stepList[2]._id,
+  },
 ];
 
 const attendanceList = [
@@ -1209,6 +1266,12 @@ const attendanceList = [
     _id: new ObjectId(),
     trainee: traineeFromAuthCompanyWithFormationExpoToken._id,
     courseSlot: slots[16]._id,
+    company: authCompany._id,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: auxiliary._id,
+    courseSlot: slots[0]._id,
     company: authCompany._id,
   },
 ];
@@ -1242,6 +1305,10 @@ const companyHoldingList = [
   { _id: new ObjectId(), holding: authHolding._id, company: fourthCompany._id },
 ];
 
+const completionCertificateList = [
+  { _id: new ObjectId(), month: '03-2020', trainee: auxiliary._id, course: coursesList[2]._id },
+];
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
@@ -1253,6 +1320,7 @@ const populateDB = async () => {
     Card.create(cardsList),
     Company.create(fourthCompany),
     CompanyHolding.create(companyHoldingList),
+    CompletionCertificate.create(completionCertificateList),
     Course.create(coursesList),
     CourseBill.create(courseBillsList),
     CourseBillsNumber.create(courseBillNumber),
@@ -1289,4 +1357,5 @@ module.exports = {
   traineeFromAuthFormerlyInOther,
   clientAdminFromThirdCompany,
   traineeFromThirdCompany,
+  traineeWithoutCompany,
 };

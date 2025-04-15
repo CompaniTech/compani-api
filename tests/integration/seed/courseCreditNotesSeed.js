@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { INTRA, INTER_B2B, PUBLISHED, TRAINEE, GROUP } = require('../../../src/helpers/constants');
+const { INTRA, INTER_B2B, PUBLISHED, TRAINEE, GROUP, GLOBAL } = require('../../../src/helpers/constants');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
 const Course = require('../../../src/models/Course');
@@ -47,6 +47,7 @@ const coursesList = [
     contact: vendorAdmin._id,
     trainees: [auxiliary._id],
     companies: [authCompany._id, companyWithoutSubscription._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 1 - linked to bill 0 1
     _id: new ObjectId(),
@@ -60,6 +61,7 @@ const coursesList = [
     trainees: [auxiliary._id],
     companies: [authCompany._id],
     expectedBillsCount: 2,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

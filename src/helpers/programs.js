@@ -56,7 +56,7 @@ exports.getProgram = async (programId) => {
         ],
       },
     })
-    .populate({ path: 'testers', select: 'identity.firstname identity.lastname local.email contact.phone' })
+    .populate({ path: 'testers', select: 'identity.firstname identity.lastname local.email contact' })
     .populate('categories')
     .lean({ virtuals: true });
 

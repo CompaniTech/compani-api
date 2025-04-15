@@ -90,10 +90,10 @@ exports.forgotPassword = async (payload) => {
 
     if (type === EMAIL) return EmailHelper.sendVerificationCodeEmail(email, verification.code);
 
-    const user = await User.findOne({ 'local.email': email }, { 'contact.phone': 1 }).lean();
+    const user = await User.findOne({ 'local.email': email }, { contact: 1 }).lean();
     if (!get(user, 'contact.phone')) throw Boom.conflict();
 
-    return SmsHelper.sendVerificationCodeSms(user.contact.phone, verification.code);
+    return SmsHelper.sendVerificationCodeSms(user.contact, verification.code);
   }
 
   const passwordToken = await exports.generatePasswordToken(email, 3600000);

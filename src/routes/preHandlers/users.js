@@ -58,6 +58,7 @@ const trainerUpdatesForbiddenKeys = (req, user) => {
     'identity.firstname',
     'identity.lastname',
     'contact.phone',
+    'contact.countryCode',
     'local.email',
     'userCompanyStartDate',
   ];
@@ -108,6 +109,8 @@ exports.authorizeUserUpdate = async (req) => {
     checkUpdateAndCreateRestrictions(req.payload);
   }
 
+  if (get(req.payload, 'contact.phone') && !get(req.payload, 'contact.countryCode')) throw Boom.badRequest();
+
   return null;
 };
 
@@ -146,6 +149,7 @@ const checkUpdateAndCreateRestrictions = (payload) => {
     'identity.firstname',
     'identity.lastname',
     'contact.phone',
+    'contact.countryCode',
     'local.email',
     'local.password',
     'origin',

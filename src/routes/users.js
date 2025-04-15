@@ -37,6 +37,7 @@ const {
   phoneNumberValidation,
   expoTokenValidation,
   objectIdOrArray,
+  countryCodeValidation,
 } = require('./validations/utils');
 const { formDataPayload, dateToISOString } = require('./validations/utils');
 
@@ -67,9 +68,10 @@ exports.plugin = {
               title: Joi.string().valid(...CIVILITY_OPTIONS),
             }),
             contact: Joi.object().keys({
-              phone: phoneNumberValidation.allow('', null),
+              phone: phoneNumberValidation,
+              countryCode: countryCodeValidation,
               address: addressValidation,
-            }),
+            }).and('phone', 'countryCode'),
           }).required(),
         },
         pre: [{ method: authorizeUserCreation }],
@@ -87,11 +89,12 @@ exports.plugin = {
             role: [Joi.array().items(Joi.string().valid(...USER_ROLE_LIST)), Joi.string().valid(...USER_ROLE_LIST)],
             company: Joi.objectId(),
             holding: Joi.objectId(),
+            withCompanyUsers: Joi.boolean(),
             includeHoldingAdmins: Joi.when(
               'company',
               { is: Joi.exist(), then: Joi.boolean(), otherwise: Joi.forbidden() }
             ),
-          }).oxor('company', 'holding'),
+          }).oxor('company', 'holding', 'withCompanyUsers'),
         },
         pre: [{ method: authorizeUsersGet }],
       },
@@ -171,7 +174,18 @@ exports.plugin = {
               birthCity: Joi.string(),
               socialSecurityNumber: Joi.number(),
             }),
-            contact: Joi.object().keys({ phone: phoneNumberValidation.allow('', null), address: addressValidation }),
+            contact: Joi.object().keys({
+              phone: Joi.when(
+                'countryCode',
+                {
+                  is: Joi.exist(),
+                  then: phoneNumberValidation.allow('', null).required(),
+                  otherwise: phoneNumberValidation.allow('', null),
+                }
+              ),
+              countryCode: countryCodeValidation,
+              address: addressValidation,
+            }),
             biography: Joi.string().allow(''),
             holding: Joi.objectId(),
           }).required(),

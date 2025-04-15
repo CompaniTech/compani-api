@@ -30,6 +30,7 @@ const {
   END_COURSE,
   START_COURSE,
   MULTIPLE_CHOICE_QUESTION,
+  GLOBAL,
 } = require('../../../src/helpers/constants');
 const { authCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
 
@@ -104,6 +105,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     trainees: [questionnaireHistoriesUsersList[0], questionnaireHistoriesUsersList[2]],
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
@@ -114,6 +116,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     trainees: [questionnaireHistoriesUsersList[1]],
     companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
   },
 ];
 

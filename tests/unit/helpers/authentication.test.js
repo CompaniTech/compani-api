@@ -447,28 +447,28 @@ describe('forgotPassword', () => {
 
   it('should send a code verification if origin mobile and type phone', async () => {
     const email = 'toto@toto.com';
-    const user = { local: { email: 'toto@toto.com' }, contact: { phone: '0687654321' } };
+    const user = { local: { email: 'toto@toto.com' }, contact: { phone: '0687654321', countryCode: '+33' } };
     codeVerification.returns(0.1111);
     identityVerificationFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries({ email, code: '1999' }, ['lean']));
     identityVerificationCreate.returns(null);
     userFindOne.returns(SinonMongoose.stubChainedQueries(user, ['lean']));
-    sendVerificationCodeSms.returns({ phone: '0687654321' });
+    sendVerificationCodeSms.returns({ phone: '0687654321', countryCode: '+33' });
 
     const result = await AuthenticationHelper.forgotPassword({ email, origin: MOBILE, type: PHONE });
 
-    expect(result).toEqual({ phone: '0687654321' });
+    expect(result).toEqual({ phone: '0687654321', countryCode: '+33' });
     sinon.assert.notCalled(sendVerificationCodeEmail);
     sinon.assert.notCalled(forgotPasswordEmail);
     sinon.assert.notCalled(generatePasswordTokenStub);
     sinon.assert.notCalled(identityVerificationCreate);
-    sinon.assert.calledOnceWithExactly(sendVerificationCodeSms, '0687654321', '1999');
+    sinon.assert.calledOnceWithExactly(sendVerificationCodeSms, { phone: '0687654321', countryCode: '+33' }, '1999');
     SinonMongoose.calledOnceWithExactly(
       identityVerificationFindOneAndUpdate,
       [{ query: 'findOneAndUpdate', args: [{ email }, { $set: { code: '1999' } }, { new: true }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
-      [{ query: 'findOne', args: [{ 'local.email': 'toto@toto.com' }, { 'contact.phone': 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ 'local.email': 'toto@toto.com' }, { contact: 1 }] }, { query: 'lean' }]
     );
   });
 
@@ -481,7 +481,6 @@ describe('forgotPassword', () => {
         .returns(SinonMongoose.stubChainedQueries({ email, code: '1999' }, ['lean']));
       identityVerificationCreate.returns(null);
       userFindOne.returns(SinonMongoose.stubChainedQueries(user, ['lean']));
-      sendVerificationCodeSms.returns({ phone: '06P87654321' });
 
       await AuthenticationHelper.forgotPassword({ email, origin: MOBILE, type: PHONE });
     } catch (e) {
@@ -493,7 +492,7 @@ describe('forgotPassword', () => {
       );
       SinonMongoose.calledOnceWithExactly(
         userFindOne,
-        [{ query: 'findOne', args: [{ 'local.email': 'toto@toto.com' }, { 'contact.phone': 1 }] }, { query: 'lean' }]
+        [{ query: 'findOne', args: [{ 'local.email': 'toto@toto.com' }, { contact: 1 }] }, { query: 'lean' }]
       );
       sinon.assert.notCalled(sendVerificationCodeSms);
     }

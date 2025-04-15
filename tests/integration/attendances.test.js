@@ -213,6 +213,17 @@ describe('ATTENDANCES ROUTES - POST /attendances', () => {
 
         expect(response.statusCode).toBe(403);
       });
+
+    it('should return 403 if single course and trainee is not registered', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendances',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { trainee: traineeList[3]._id, courseSlot: slotsList[10]._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {

@@ -28,6 +28,8 @@ module.exports = {
   HH_MM: 'T',
   HH_MM_SS: 'HH:mm:ss',
   UPLOAD_DATE_FORMAT: 'yyyyLLddHHmmss',
+  MM_YYYY: 'LL-yyyy',
+  DAY_D_MONTH_YEAR: 'ccc d LLL yyyy',
   // DATE INDEX
   MONDAY: 0,
   TUESDAY: 1,
@@ -134,7 +136,6 @@ module.exports = {
   // CUSTOMER ABSENCE
   LEAVE: 'leave',
   // CUSTOMER FUNDINGS
-  MONTHLY: 'monthly',
   ONCE: 'once',
   HOURLY: 'hourly',
   FIXED: 'fixed',
@@ -361,6 +362,15 @@ module.exports = {
   INTER_B2B: 'inter_b2b',
   INTER_B2C: 'inter_b2c',
   INTRA_HOLDING: 'intra_holding',
+  SINGLE: 'single',
+  get COURSE_TYPES() {
+    return {
+      [this.INTRA]: 'Intra',
+      [this.INTRA_HOLDING]: 'Intra société mère',
+      [this.INTER_B2B]: 'Inter B2B',
+      [this.SINGLE]: 'Individuelle',
+    };
+  },
   BLENDED: 'blended',
   STRICTLY_E_LEARNING: 'strictly_e_learning',
   CONVOCATION: 'convocation',
@@ -648,4 +658,7 @@ module.exports = {
   UPLOAD: 'upload',
   GENERATION: 'generation',
   get CREATION_METHOD_TYPES() { return [this.UPLOAD, this.GENERATION]; },
+  // COMPLETION CERTIFICATE GENERATION MODE
+  GLOBAL: 'global',
+  MONTHLY: 'monthly',
 };

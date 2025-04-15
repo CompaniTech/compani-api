@@ -1,5 +1,4 @@
 const Boom = require('@hapi/boom');
-const pickBy = require('lodash/pickBy');
 const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
 const has = require('lodash/has');
@@ -38,7 +37,7 @@ const { CompaniDate } = require('./dates/companiDates');
 const { language } = translate;
 
 exports.formatQueryForUsersList = async (query) => {
-  const formattedQuery = pickBy(omit(query, ['role', 'company', 'holding', 'includeHoldingAdmins']));
+  const formattedQuery = {};
 
   if (query.role) {
     const roleNames = Array.isArray(query.role) ? query.role : [query.role];
@@ -82,6 +81,14 @@ exports.formatQueryForUsersList = async (query) => {
   if (query.holding) {
     const companies = await CompanyHolding.find({ holding: query.holding }, { company: 1 }).lean();
     const users = await UserCompany.find({ company: { $in: companies.map(c => c.company) } }, { user: 1 }).lean();
+
+    formattedQuery._id = { $in: users.map(u => u.user) };
+  }
+
+  if (query.withCompanyUsers) {
+    const users = await UserCompany
+      .find({ $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }] }, { user: 1 })
+      .lean();
 
     formattedQuery._id = { $in: users.map(u => u.user) };
   }
@@ -175,11 +182,7 @@ exports.getLearnerList = async (query, credentials) => {
   const learnerList = await User
     .find(userQuery, 'identity.firstname identity.lastname picture local.email', { autopopulate: false })
     .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
-    .populate(isDirectory && {
-      path: 'activityHistories',
-      select: 'updatedAt',
-      options: { sort: { updatedAt: -1 } },
-    })
+    .populate(isDirectory && { path: 'lastActivityHistory', select: 'updatedAt' })
     .populate({
       path: 'userCompanyList',
       populate: {
@@ -200,8 +203,7 @@ exports.getLearnerList = async (query, credentials) => {
 
   return learnerList.map(learner => ({
     ...omit(learner, 'activityHistories'),
-    activityHistoryCount: learner.activityHistories.length,
-    lastActivityHistory: learner.activityHistories[0],
+    lastActivityHistory: learner.lastActivityHistory,
     eLearningCoursesCount: eLearningCoursesCountByTrainee[learner._id],
     blendedCoursesCount: blendedCoursesCountByTrainee[learner._id],
   }));
@@ -241,7 +243,7 @@ exports.userExists = async (email, credentials) => {
   const targetUser = await User
     .findOne(
       { 'local.email': email },
-      { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 }
+      { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 }
     )
     .populate({ path: 'company' })
     .populate({ path: 'userCompanyList', options: { sort: { startDate: 1 } } })
@@ -272,7 +274,8 @@ exports.userExists = async (email, credentials) => {
       userCompanyList = [UtilsHelper.getLastVersion(targetUser.userCompanyList, 'startDate')];
     }
 
-    const userFieldsToPick = ['_id', 'local.email', 'identity.firstname', 'identity.lastname', 'contact.phone', 'role'];
+    const userFieldsToPick =
+      ['_id', 'local.email', 'identity.firstname', 'identity.lastname', 'contact.phone', 'contact.countryCode', 'role'];
     return {
       exists: true,
       user: {
@@ -316,22 +319,28 @@ exports.createUser = async (userPayload, credentials) => {
 };
 
 const formatUpdatePayload = async (updatedUser) => {
-  const payload = omit(updatedUser, ['role', 'company', 'holding']);
+  let payloadToSet = omit(updatedUser, ['role', 'company', 'holding']);
+  let payloadToUnset = {};
 
   if (updatedUser.role) {
     const role = await Role.findById(updatedUser.role, { name: 1, interface: 1 }).lean();
     if (!role) throw Boom.badRequest(translate[language].unknownRole);
 
-    payload.role = { [role.interface]: role._id.toHexString() };
+    payloadToSet.role = { [role.interface]: role._id.toHexString() };
   }
 
   if (updatedUser.holding) {
     const role = await Role.findOne({ name: HOLDING_ADMIN }).lean();
 
-    payload.role = { holding: role._id };
+    payloadToSet.role = { holding: role._id };
+  }
+  const removePhone = has(updatedUser, 'contact.phone') && updatedUser.contact.phone === '';
+  if (removePhone) {
+    payloadToUnset = { $unset: { 'contact.phone': '', 'contact.countryCode': '' } };
+    payloadToSet = omit(payloadToSet, 'contact');
   }
 
-  return payload;
+  return { $set: UtilsHelper.flatQuery(payloadToSet), ...payloadToUnset };
 };
 
 exports.updateUser = async (userId, userPayload) => {
@@ -345,8 +354,7 @@ exports.updateUser = async (userId, userPayload) => {
   }
 
   if (userPayload.holding) await UserHolding.create({ user: userId, holding: userPayload.holding });
-
-  await User.updateOne({ _id: userId }, { $set: flat(payload) });
+  await User.updateOne({ _id: userId }, payload);
 };
 
 exports.removeUser = async (user, credentials) => {

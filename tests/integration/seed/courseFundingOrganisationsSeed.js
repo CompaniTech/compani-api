@@ -6,7 +6,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const CourseFundingOrganisation = require('../../../src/models/CourseFundingOrganisation');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { authCompany } = require('../../seed/authCompaniesSeed');
-const { INTRA, PUBLISHED, GROUP } = require('../../../src/helpers/constants');
+const { INTRA, PUBLISHED, GROUP, GLOBAL } = require('../../../src/helpers/constants');
 const { trainer, vendorAdmin, auxiliary } = require('../../seed/authUsersSeed');
 
 const courseFundingOrganisationsList = [
@@ -31,6 +31,7 @@ const coursesList = [
     trainees: [auxiliary._id],
     companies: [authCompany._id],
     expectedBillsCount: 1,
+    certificateGenerationMode: GLOBAL,
   },
 ];
 const courseBills = [

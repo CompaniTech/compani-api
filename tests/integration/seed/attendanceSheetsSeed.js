@@ -16,14 +16,15 @@ const {
   MOBILE,
   PUBLISHED,
   INTRA_HOLDING,
+  GLOBAL,
+  MONTHLY,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const UserCompany = require('../../../src/models/UserCompany');
 const User = require('../../../src/models/User');
 const { vendorAdminRoleId, trainerRoleId } = require('../../seed/authRolesSeed');
 const { trainerOrganisationManager, trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
-
-const SINGLE_COURSES_SUBPROGRAM_IDS = process.env.SINGLE_COURSES_SUBPROGRAM_IDS.split(';').map(id => new ObjectId(id));
 
 const userList = [
   { // 0
@@ -83,7 +84,7 @@ const steps = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: P
 
 const subProgramList = [
   { _id: new ObjectId(), name: 'Subprogram 1', steps: [steps[0]._id], status: PUBLISHED },
-  { _id: SINGLE_COURSES_SUBPROGRAM_IDS[0], name: 'Subprogram 2', steps: [steps[0]._id], status: PUBLISHED },
+  { _id: new ObjectId(), name: 'Subprogram 2', steps: [steps[0]._id], status: PUBLISHED },
 ];
 
 const programsList = [
@@ -100,6 +101,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 1
     _id: new ObjectId(),
@@ -109,6 +111,7 @@ const coursesList = [
     companies: [authCompany._id, otherCompany._id, companyWithoutSubscription._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 2
     _id: new ObjectId(),
@@ -119,6 +122,7 @@ const coursesList = [
     companies: [authCompany._id],
     trainers: [userList[3]._id],
     operationsRepresentative: userList[0]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 3 - archived
     _id: new ObjectId(),
@@ -129,6 +133,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id],
+    certificateGenerationMode: GLOBAL,
   },
   { // 4
     _id: new ObjectId(),
@@ -139,6 +144,7 @@ const coursesList = [
     companies: [otherCompany._id],
     trainers: [userList[3]._id],
     operationsRepresentative: userList[0]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 5
     _id: new ObjectId(),
@@ -150,6 +156,7 @@ const coursesList = [
     holding: otherHolding._id,
     trainers: [trainer._id],
     operationsRepresentative: userList[0]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 6
     _id: new ObjectId(),
@@ -161,24 +168,27 @@ const coursesList = [
     companies: [],
     holding: otherHolding._id,
     operationsRepresentative: userList[0]._id,
+    certificateGenerationMode: GLOBAL,
   },
   { // 7 Single course
     _id: new ObjectId(),
     subProgram: subProgramList[1]._id,
-    type: INTER_B2B,
+    type: SINGLE,
     trainees: [userList[1]._id],
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
+    certificateGenerationMode: MONTHLY,
   },
   { // 8 Single course
     _id: new ObjectId(),
     subProgram: subProgramList[1]._id,
-    type: INTER_B2B,
+    type: SINGLE,
     trainees: [userList[1]._id],
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [userList[3]._id],
+    certificateGenerationMode: MONTHLY,
   },
 ];
 

@@ -279,6 +279,17 @@ describe('formatFloatForExport', () => {
   });
 });
 
+describe('flatQuery', () => {
+  it('should return flatten object', () => {
+    const payerId = new ObjectId();
+    const payload = { card: { text: 'text' }, payer: { company: payerId } };
+
+    const result = UtilsHelper.flatQuery(payload);
+
+    expect(result).toEqual({ 'card.text': 'text', 'payer.company': payerId });
+  });
+});
+
 describe('areObjectIdsEquals', () => {
   it('should return true if object ids are the same', () => {
     const id1 = new ObjectId();
@@ -605,6 +616,7 @@ describe('getDurationForExport', () => {
 describe('getKeysOf2DepthObject', () => {
   it('should return keys of 1 depth object', () => {
     const nestedObject = {
+      _id: new ObjectId(),
       starter: 3,
       dish: 2,
       dessert: 6,
@@ -613,7 +625,7 @@ describe('getKeysOf2DepthObject', () => {
 
     const result = UtilsHelper.getKeysOf2DepthObject(nestedObject);
 
-    expect(result).toEqual(['starter', 'dish', 'dessert', 'drink']);
+    expect(result).toEqual(['_id', 'starter', 'dish', 'dessert', 'drink']);
   });
 
   it('should return keys of 2 depth object', () => {

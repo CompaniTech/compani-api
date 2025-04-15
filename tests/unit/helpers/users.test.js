@@ -59,6 +59,7 @@ describe('formatQueryForUsersList', () => {
     findCompanyHolding.restore();
     findOneCompanyHolding.restore();
     findUserHolding.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should returns params without role if no role in query', async () => {
@@ -324,6 +325,34 @@ describe('formatQueryForUsersList', () => {
     sinon.assert.notCalled(findUserHolding);
     sinon.assert.notCalled(find);
   });
+
+  it('should return params with withCompanyUsers', async () => {
+    const users = [{ user: new ObjectId() }];
+    const query = { withCompanyUsers: true };
+
+    findUserCompany.returns(SinonMongoose.stubChainedQueries(users, ['lean']));
+
+    const result = await UsersHelper.formatQueryForUsersList(query);
+    expect(result).toEqual({ _id: { $in: users.map(u => u.user) } });
+
+    SinonMongoose.calledOnceWithExactly(
+      findUserCompany,
+      [
+        {
+          query: 'find',
+          args: [
+            { $or: [{ endDate: { $gt: '2022-12-21T16:00:00.000Z' } }, { endDate: { $exists: false } }] },
+            { user: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(find);
+    sinon.assert.notCalled(findOneCompanyHolding);
+    sinon.assert.notCalled(findUserHolding);
+    sinon.assert.notCalled(findCompanyHolding);
+  });
 });
 
 describe('getUsersList', () => {
@@ -430,28 +459,26 @@ describe('getLearnerList', () => {
     const users = [
       {
         _id: new ObjectId(),
-        activityHistories: [{ _id: new ObjectId() }],
+        lastActivityHistory: { _id: new ObjectId() },
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: new ObjectId(),
-        activityHistories: [{ _id: new ObjectId() }],
+        lastActivityHistory: { _id: new ObjectId() },
         company: { name: 'Fontainebleau', holding: 'holding' },
       },
     ];
     const learnerList = [
       {
         _id: users[0]._id,
-        activityHistoryCount: 1,
-        lastActivityHistory: users[0].activityHistories[0],
+        lastActivityHistory: users[0].lastActivityHistory,
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: users[1]._id,
-        activityHistoryCount: 1,
-        lastActivityHistory: users[1].activityHistories[0],
+        lastActivityHistory: users[1].lastActivityHistory,
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Fontainebleau', holding: 'holding' },
@@ -503,10 +530,7 @@ describe('getLearnerList', () => {
           args: [{}, 'identity.firstname identity.lastname picture local.email', { autopopulate: false }],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        {
-          query: 'populate',
-          args: [{ path: 'activityHistories', select: 'updatedAt', options: { sort: { updatedAt: -1 } } }],
-        },
+        { query: 'populate', args: [{ path: 'lastActivityHistory', select: 'updatedAt' }] },
         {
           query: 'populate',
           args: [{
@@ -549,12 +573,12 @@ describe('getLearnerList', () => {
     const users = [
       {
         _id: new ObjectId(),
-        activityHistories: [{ _id: new ObjectId() }],
+        lastActivityHistory: { _id: new ObjectId() },
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: new ObjectId(),
-        activityHistories: [{ _id: new ObjectId() }],
+        lastActivityHistory: { _id: new ObjectId() },
         company: { name: 'Alenvi', holding: 'holding' },
       },
     ];
@@ -565,16 +589,14 @@ describe('getLearnerList', () => {
     const learnerList = [
       {
         _id: users[0]._id,
-        activityHistoryCount: 1,
-        lastActivityHistory: users[0].activityHistories[0],
+        lastActivityHistory: users[0].lastActivityHistory,
         blendedCoursesCount: 1,
         eLearningCoursesCount: 1,
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: users[1]._id,
-        activityHistoryCount: 1,
-        lastActivityHistory: users[1].activityHistories[0],
+        lastActivityHistory: users[1].lastActivityHistory,
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Alenvi', holding: 'holding' },
@@ -648,10 +670,7 @@ describe('getLearnerList', () => {
           ],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        {
-          query: 'populate',
-          args: [{ path: 'activityHistories', select: 'updatedAt', options: { sort: { updatedAt: -1 } } }],
-        },
+        { query: 'populate', args: [{ path: 'lastActivityHistory', select: 'updatedAt' }] },
         {
           query: 'populate',
           args: [{
@@ -1196,7 +1215,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1221,7 +1240,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': nonExistantEmail },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1245,7 +1264,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1279,7 +1298,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1309,7 +1328,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1334,7 +1353,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1359,7 +1378,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1376,7 +1395,7 @@ describe('userExists', () => {
     const userWithEndingCompany = {
       _id: userId,
       local: { email: 'test@compani.fr', password: 'notshow' },
-      contact: { phone: '0987654321' },
+      contact: { phone: '0987654321', countryCode: '+33' },
       identity: { firstname: 'test', lastname: 'test' },
       role: { client: roleId },
       mentor: 'mentor',
@@ -1394,7 +1413,7 @@ describe('userExists', () => {
     expect(res.user).toEqual({
       _id: userId,
       local: { email: 'test@compani.fr' },
-      contact: { phone: '0987654321' },
+      contact: { phone: '0987654321', countryCode: '+33' },
       identity: { firstname: 'test', lastname: 'test' },
       role: { client: roleId },
       userCompanyList: [{ company, startDate: '2024-01-01T00:00:00.000Z', endDate: '2045-01-01T00:00:00.000Z' }],
@@ -1407,7 +1426,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1432,7 +1451,7 @@ describe('userExists', () => {
           query: 'findOne',
           args: [
             { 'local.email': email },
-            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, 'contact.phone': 1 },
+            { role: 1, 'local.email': 1, 'identity.firstname': 1, 'identity.lastname': 1, contact: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'company' }] },
@@ -1475,7 +1494,7 @@ describe('createUser', () => {
     const payload = {
       identity: { lastname: 'Test' },
       local: { email: 'toto@test.com' },
-      contact: { phone: '0606060606' },
+      contact: { phone: '0606060606', countryCode: '+33' },
       origin: WEBAPP,
     };
 
@@ -1718,7 +1737,7 @@ describe('updateUser', () => {
 
   it('should update a user role', async () => {
     const payload = { role: new ObjectId() };
-    const payloadWithRole = { 'role.client': payload.role.toHexString() };
+    const payloadWithRole = { 'role.client': payload.role };
 
     roleFindById.returns(SinonMongoose.stubChainedQueries(
       { _id: payload.role, name: 'test', interface: 'client' },
@@ -1774,6 +1793,21 @@ describe('updateUser', () => {
     );
     sinon.assert.calledOnceWithExactly(userUpdateOne, { _id: userId }, { $set: { 'role.holding': holdingRole._id } });
     sinon.assert.notCalled(roleFindById);
+  });
+
+  it('should remove a user phone', async () => {
+    const payload = { contact: { phone: '' } };
+
+    await UsersHelper.updateUser(userId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      userUpdateOne,
+      { _id: userId },
+      { $set: {}, $unset: { 'contact.phone': '', 'contact.countryCode': '' } }
+    );
+    sinon.assert.notCalled(roleFindById);
+    sinon.assert.notCalled(userHoldingCreate);
+    sinon.assert.notCalled(roleFindOne);
   });
 });
 

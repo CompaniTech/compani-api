@@ -619,7 +619,28 @@ describe('delete', () => {
     );
   });
 
-  it('should remove an attendance sheet (with signatures)', async () => {
+  it('should remove an attendance sheet (with one signature)', async () => {
+    const attendanceSheetId = new ObjectId();
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      signatures: {
+        trainer: 'gcs.com/bucket/media-trainer_signature_abcde_course_67890',
+      },
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
+
+    await attendanceSheetHelper.delete(attendanceSheetId);
+
+    sinon.assert.calledOnceWithExactly(deleteCourseFile, 'media-trainer_signature_abcde_course_67890');
+    sinon.assert.calledOnceWithExactly(deleteOne, { _id: attendanceSheetId });
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
+    );
+  });
+
+  it('should remove an attendance sheet (with both signatures and file)', async () => {
     const attendanceSheetId = new ObjectId();
     const attendanceSheet = {
       _id: attendanceSheetId,

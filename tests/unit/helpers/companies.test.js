@@ -50,8 +50,9 @@ describe('createCompany', () => {
     ));
     createCompany.returns(createdCompany);
 
-    await CompanyHelper.createCompany(payload);
+    const result = await CompanyHelper.createCompany(payload);
 
+    expect(result).toMatchObject(createdCompany);
     sinon.assert.notCalled(updateHolding);
     sinon.assert.calledOnceWithExactly(createFolderForCompanyStub, payload.name);
     sinon.assert.calledWithExactly(createFolderStub.getCall(0), 'direct debits', '1234567890');
@@ -90,8 +91,9 @@ describe('createCompany', () => {
     ));
     createCompany.returns(company);
 
-    await CompanyHelper.createCompany(payload);
+    const result = await CompanyHelper.createCompany(payload);
 
+    expect(result).toMatchObject(company);
     sinon.assert.calledOnceWithExactly(createFolderForCompanyStub, payload.name);
     sinon.assert.calledWithExactly(createFolderStub.getCall(0), 'direct debits', '1234567890');
     sinon.assert.calledWithExactly(createFolderStub.getCall(1), 'customers', '1234567890');

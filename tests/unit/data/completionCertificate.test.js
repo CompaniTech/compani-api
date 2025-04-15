@@ -409,6 +409,16 @@ describe('getOfficialPdfContent', () => {
         marginBottom: 4,
         marginLeft: 32,
       },
+      // Checkbox 5
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 380 } },
+      {
+        text: [
+          { text: '', position: { x: 59, y: 380 }, marginRight: 4 },
+          { text: [{ text: ' action de VAE Inversée' }, { text: '', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 32,
+      },
     ];
 
     const body = [
@@ -478,7 +488,6 @@ describe('getOfficialPdfContent', () => {
         + 'durée de 3 ans à compter de la fin de l\'année du dernier paiement. En cas de cofinancement des fonds '
         + 'européens la durée de conservation est étendue conformément aux obligations conventionnelles spécifiques.',
         alignment: 'justify',
-        bold: true,
       },
     ];
 
@@ -488,39 +497,40 @@ describe('getOfficialPdfContent', () => {
           [
             {
               text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-              absolutePosition: { x: 35, y: 530 },
+              absolutePosition: { x: 35, y: 550 },
               marginLeft: 46,
             },
             {
               text: [{ text: 'Le : ', bold: true }, { text: '22/03/2022', italics: true }],
-              absolutePosition: { x: 35, y: 550 },
+              absolutePosition: { x: 35, y: 570 },
               marginLeft: 46,
             },
           ],
           [
             {
-              canvas: [{ type: 'rect', x: 0, y: 0, w: 260, h: 180, r: 0 }],
-              absolutePosition: { y: 535 },
+              canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
+              absolutePosition: { y: 555 },
               alignment: 'right',
             },
             {
               text: 'Cachet et signature du responsable du \n dispensateur de formation',
               marginTop: 6,
               alignment: 'center',
+              fontSize: 10,
             },
             {
               text: 'Thibault de Saint Blancard, Directeur Compani',
               bold: true,
               marginTop: 6,
               alignment: 'center',
-              fontSize: 12,
+              fontSize: 10,
             },
-            { image: paths[0], width: 130, absolutePosition: { x: 380, y: 595 } },
+            { image: paths[0], width: 125, absolutePosition: { x: 380, y: 618 } },
           ],
         ],
         marginLeft: 40,
         marginRight: 40,
-        absolutePosition: { x: 35, y: 535 },
+        absolutePosition: { x: 37, y: 565 },
       },
       {
         text: [
@@ -535,12 +545,11 @@ describe('getOfficialPdfContent', () => {
                 + 'et le temps estimé pour les réaliser.',
           },
         ],
-        absolutePosition: { x: 35, y: 745 },
+        absolutePosition: { x: 37, y: 755 },
         marginLeft: 40,
         marginRight: 40,
         marginTop: 8,
-        fontSize: 12,
-        bold: true,
+        fontSize: 11,
       },
     ];
 
@@ -632,6 +641,16 @@ describe('getOfficialPdfContent', () => {
         marginBottom: 4,
         marginLeft: 32,
       },
+      // Checkbox 5
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 380 } },
+      {
+        text: [
+          { text: '', position: { x: 59, y: 380 }, marginRight: 4 },
+          { text: [{ text: ' action de VAE Inversée' }, { text: '', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 32,
+      },
     ];
 
     const body = [
@@ -698,7 +717,6 @@ describe('getOfficialPdfContent', () => {
         + 'durée de 3 ans à compter de la fin de l\'année du dernier paiement. En cas de cofinancement des fonds '
         + 'européens la durée de conservation est étendue conformément aux obligations conventionnelles spécifiques.',
         alignment: 'justify',
-        bold: true,
       },
     ];
 
@@ -708,39 +726,40 @@ describe('getOfficialPdfContent', () => {
           [
             {
               text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-              absolutePosition: { x: 35, y: 530 },
+              absolutePosition: { x: 35, y: 550 },
               marginLeft: 46,
             },
             {
               text: [{ text: 'Le : ', bold: true }, { text: '22/03/2022', italics: true }],
-              absolutePosition: { x: 35, y: 550 },
+              absolutePosition: { x: 35, y: 570 },
               marginLeft: 46,
             },
           ],
           [
             {
-              canvas: [{ type: 'rect', x: 0, y: 0, w: 260, h: 180, r: 0 }],
-              absolutePosition: { y: 535 },
+              canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
+              absolutePosition: { y: 555 },
               alignment: 'right',
             },
             {
               text: 'Cachet et signature du responsable du \n dispensateur de formation',
               marginTop: 6,
               alignment: 'center',
+              fontSize: 10,
             },
             {
               text: 'Thibault de Saint Blancard, Directeur Compani',
               bold: true,
               marginTop: 6,
               alignment: 'center',
-              fontSize: 12,
+              fontSize: 10,
             },
-            { image: paths[0], width: 130, absolutePosition: { x: 380, y: 595 } },
+            { image: paths[0], width: 125, absolutePosition: { x: 380, y: 618 } },
           ],
         ],
         marginLeft: 40,
         marginRight: 40,
-        absolutePosition: { x: 35, y: 535 },
+        absolutePosition: { x: 37, y: 565 },
       },
       {
         text: [
@@ -755,12 +774,247 @@ describe('getOfficialPdfContent', () => {
                 + 'et le temps estimé pour les réaliser.',
           },
         ],
-        absolutePosition: { x: 35, y: 745 },
+        absolutePosition: { x: 37, y: 755 },
         marginLeft: 40,
         marginRight: 40,
         marginTop: 8,
-        fontSize: 12,
-        bold: true,
+        fontSize: 11,
+      },
+    ];
+
+    const pdf = {
+      content: [header, body, footer].flat(),
+      defaultStyle: { font: 'Calibri', fontSize: 14 },
+      pageMargins: [40, 40, 40, 40],
+      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+    };
+    expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
+    expect(result.images).toEqual(paths);
+
+    sinon.assert.calledOnceWithExactly(downloadImages, imageList);
+  });
+
+  it('shoult format and return official pdf content for VAEI courses', async () => {
+    const data = {
+      duration: { onSite: '3h', eLearning: '1h30', total: '4h30' },
+      programName: 'Programme',
+      startDate: '01/02/2025',
+      endDate: '28/02/2025',
+      trainee: {
+        identity: 'Jean SAITRIEN',
+        attendanceDuration: '4h30',
+        companyName: 'structure',
+        eLearningDuration: '1h30',
+      },
+      date: '26/03/2025',
+      isVAEISubProgram: true,
+      certificateGenerationModeIsMonthly: true,
+    };
+
+    const imageList = [
+      { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
+      { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
+      { url: 'https://storage.googleapis.com/compani-main/logo_ministere_travail.png', name: 'ministere_travail.png' },
+    ];
+
+    const paths = [
+      'src/data/pdf/tmp/signature.png',
+      'src/data/pdf/tmp/compani.png',
+      'src/data/pdf/tmp/ministere_travail.png',
+    ];
+    downloadImages.returns(paths);
+
+    const result = await CompletionCertificate.getOfficialPdfContent(data);
+
+    const header = [
+      { columns: [{ image: paths[2], width: 60 }, {}, { image: paths[1], width: 130 }], marginBottom: 24 },
+      { text: 'CERTIFICAT DE RÉALISATION', style: 'title', alignment: 'center', marginBottom: 24 },
+    ];
+
+    const checkBoxSection = [
+      // Checkbox 1
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 306 } },
+      {
+        text: [
+          { text: '', position: { x: 59, y: 306 }, marginRight: 4 },
+          { text: [{ text: ' action de formation' }, { text: '', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 32,
+      },
+      // Checkbox 2
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 324 } },
+      {
+        text: [
+          { text: '', position: { x: 59, y: 324 }, marginRight: 4 },
+          { text: [{ text: ' bilan de compétences' }, { text: '', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 32,
+      },
+      // Checkbox 3
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 343 } },
+      {
+        text: [
+          { text: '', position: { x: 59, y: 343 }, marginRight: 4 },
+          { text: [{ text: ' action de VAE' }, { text: '', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 32,
+      },
+      // Checkbox 4
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 361 } },
+      {
+        text: [
+          { text: '', position: { x: 59, y: 361 }, marginRight: 4 },
+          { text: [{ text: ' action de formation par apprentissage' }, { text: '', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 32,
+      },
+      // Checkbox 5
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 380 } },
+      {
+        text: [
+          { text: '√', position: { x: 59, y: 380 }, marginRight: 4 },
+          { text: [{ text: ' action de VAE Inversée' }, { text: ' 1', fontSize: 8, bold: true }] },
+        ],
+        marginBottom: 4,
+        marginLeft: 20,
+      },
+    ];
+
+    const body = [
+      {
+        text: [
+          { text: 'Je soussigné ', bold: true },
+          { text: 'Thibault de Saint Blancard ', italics: true },
+          {
+            text: 'représentant légal du dispensateur de l\'action concourant au développement des compétences ',
+            bold: true,
+          },
+          { text: 'COMPANI', italics: true },
+        ],
+      },
+      { text: 'atteste que :', bold: true, marginTop: 4, marginBottom: 8 },
+      {
+        text: [{ text: 'Mme/M. ', bold: true }, { text: 'Jean SAITRIEN', italics: true }],
+        marginLeft: 4,
+        marginBottom: 8,
+      },
+      {
+        text: [{ text: 'salarié(e) de l\'entreprise ', bold: true }, { text: 'structure', italics: true }],
+        marginLeft: 4,
+        marginBottom: 8,
+      },
+      {
+        text: [{ text: 'a suivi l\'action ', bold: true }, { text: 'Programme', italics: true }],
+        marginLeft: 4,
+        marginBottom: 8,
+      },
+      {
+        text: [{ text: 'Nature de l\'action concourant au développement des compétences :', bold: true }],
+        marginLeft: 4,
+        marginBottom: 4,
+      },
+      ...checkBoxSection,
+      {
+        text: [
+          { text: 'qui s\'est déroulée du ', bold: true },
+          { text: '01/02/2025 ', italics: true },
+          { text: 'au ', bold: true },
+          { text: '28/02/2025', italics: true },
+        ],
+        marginLeft: 4,
+        marginBottom: 8,
+        marginTop: 4,
+      },
+      {
+        text: [
+          {
+            text: [
+              { text: 'pour une durée de ', bold: true },
+              {
+                text: '4h30 d’accompagnement à distance et en présentiel, et '
+                + '1h30 d’enseignement à distance sur l’application Compani. '
+                + 'Ce certificat est lié à une facture de frais pédagogiques.',
+                italic: true,
+              },
+            ],
+          },
+          { text: '2', fontSize: 8, bold: true },
+        ],
+        marginBottom: 8,
+        marginLeft: 4,
+      },
+      {
+        text: 'Sans préjudice des délais imposés par les règles fiscales, comptables ou commerciales, je m\'engage à '
+        + 'conserver l\'ensemble des pièces justificatives qui ont permis d\'établir le présent certificat pendant une '
+        + 'durée de 3 ans à compter de la fin de l\'année du dernier paiement. En cas de cofinancement des fonds '
+        + 'européens la durée de conservation est étendue conformément aux obligations conventionnelles spécifiques.',
+        alignment: 'justify',
+      },
+    ];
+
+    const footer = [
+      {
+        columns: [
+          [
+            {
+              text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
+              absolutePosition: { x: 35, y: 550 },
+              marginLeft: 46,
+            },
+            {
+              text: [{ text: 'Le : ', bold: true }, { text: '26/03/2025', italics: true }],
+              absolutePosition: { x: 35, y: 570 },
+              marginLeft: 46,
+            },
+          ],
+          [
+            {
+              canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
+              absolutePosition: { y: 555 },
+              alignment: 'right',
+            },
+            {
+              text: 'Cachet et signature du responsable du \n dispensateur de formation',
+              marginTop: 6,
+              alignment: 'center',
+              fontSize: 10,
+            },
+            {
+              text: 'Thibault de Saint Blancard, Directeur Compani',
+              bold: true,
+              marginTop: 6,
+              alignment: 'center',
+              fontSize: 10,
+            },
+            { image: paths[0], width: 125, absolutePosition: { x: 380, y: 618 } },
+          ],
+        ],
+        marginLeft: 40,
+        marginRight: 40,
+        absolutePosition: { x: 37, y: 565 },
+      },
+      {
+        text: [
+          { text: '1 ', fontSize: 8 },
+          {
+            text: 'Lorsque l\'action est mise en œuvre dans le cadre d\'un projet de transition professionnelle, '
+              + 'le certificat de réalisation doit être transmis mensuellement. \n',
+          },
+          { text: '2 ', fontSize: 8 },
+          {
+            text: 'Dans le cadre des formations à distance prendre en compte la réalisation des activités pédagogiques '
+                + 'et le temps estimé pour les réaliser.',
+          },
+        ],
+        absolutePosition: { x: 37, y: 755 },
+        marginLeft: 40,
+        marginRight: 40,
+        marginTop: 8,
+        fontSize: 11,
       },
     ];
 

@@ -27,6 +27,7 @@ const {
   PUBLISHED,
   E_LEARNING,
   ON_SITE,
+  GLOBAL,
 } = require('../../../src/helpers/constants');
 const {
   helperRoleId,
@@ -130,7 +131,7 @@ const usersSeedList = [
     role: { client: auxiliaryRoleId },
     refreshToken: uuidv4(),
     administrative: { certificates: [{ driveId: '1234567890' }], driveFolder: { driveId: '0987654321' } },
-    contact: { phone: '0987654321' },
+    contact: { phone: '0987654321', countryCode: '+33' },
     contracts: [contractId],
     establishment: establishmentList[0]._id,
     picture: { publicId: 'a/public/id', link: 'https://the.complete.com/link/to/the/picture/storage/location' },
@@ -236,7 +237,7 @@ const usersSeedList = [
     identity: { firstname: 'norole', lastname: 'no_company' },
     refreshToken: uuidv4(),
     local: { email: 'norole.nocompany@userseed.fr', password: 'fdsf5P56D' },
-    contact: { phone: '0798640728' },
+    contact: { phone: '0798640728', countryCode: '+33' },
     picture: { link: 'qwertyuio', pictureId: 'poiuytrew' },
     origin: MOBILE,
     formationExpoTokenList: ['ExponentPushToken[jeSuisUnIdExpo]'],
@@ -378,6 +379,7 @@ const coursesList = [
     trainees: [helperFromOtherCompany._id, usersSeedList[0]._id],
     companies: [otherCompany._id, authCompany._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
@@ -388,6 +390,7 @@ const coursesList = [
     trainees: [usersSeedList[0]._id],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
   },
   {
     _id: new ObjectId(),
