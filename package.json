@@ -79,6 +79,6 @@
     "eslint-plugin-mocha": "~10.5.0",
     "expect": "~29.7.0",
     "mocha": "~11.1.0",
-    "sinon": "~19.0.2"
+    "sinon": "~20.0.0"
   }
 }
