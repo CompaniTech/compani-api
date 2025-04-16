@@ -790,10 +790,10 @@
   dependencies:
     "@types/yargs-parser" "*"
 
-"@xmldom/xmldom@^0.9.7":
-  version "0.9.7"
-  resolved "https://registry.yarnpkg.com/@xmldom/xmldom/-/xmldom-0.9.7.tgz#f21bebdcde4af682a810062b14585c89bb7fab07"
-  integrity sha512-syvR8iIJjpTZ/stv7l89UAViwGFh6lbheeOaqSxkYx9YNmIVvPTRH+CT/fpykFtUx5N+8eSMDRvggF9J8GEPzQ==
+"@xmldom/xmldom@^0.9.8":
+  version "0.9.8"
+  resolved "https://registry.yarnpkg.com/@xmldom/xmldom/-/xmldom-0.9.8.tgz#1471e82bdff9e8f20ee8bbe60d4ffa8a516e78d8"
+  integrity sha512-p96FSY54r+WJ50FIOsCOjyj/wavs8921hG5+kVMmZgKcvIKxMXHTrjNJvRgWa/zuX3B6t2lijLNFaOyuxUH+2A==
 
 abort-controller@^3.0.0:
   version "3.0.0"
@@ -1551,12 +1551,12 @@ doctrine@^2.1.0:
   dependencies:
     esutils "^2.0.2"
 
-docxtemplater@~3.59.0:
-  version "3.59.0"
-  resolved "https://registry.yarnpkg.com/docxtemplater/-/docxtemplater-3.59.0.tgz#cdc27489e10eaded480a55b84bf46d6a7dfa85ef"
-  integrity sha512-46dxsTIt8ox6I0lA46JTC1gy4VuXQ+0obGXa+Z5d0IEn570SgR0fNSqS9W915QxDoAJw+VtC1UDVwh13A0ad6A==
+docxtemplater@~3.61.1:
+  version "3.61.1"
+  resolved "https://registry.yarnpkg.com/docxtemplater/-/docxtemplater-3.61.1.tgz#40c85c63ad9c9eac2c07b26a02e859c35b4d4a88"
+  integrity sha512-4jmFfD4IjrJM8AakMf0ke+KLGPf1aW9Y0HTQSGx9TdrL3h5xQqLh44u7AZjuZH6J4ZfKbyz56RLSnSIqpT/CmQ==
   dependencies:
-    "@xmldom/xmldom" "^0.9.7"
+    "@xmldom/xmldom" "^0.9.8"
 
 dotenv@~16.4.7:
   version "16.4.7"
