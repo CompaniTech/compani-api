@@ -1337,10 +1337,8 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
 };
 
 exports.addAccessRule = async (courseId, payload) => {
-  await Course.updateOne(
-    { _id: courseId },
-    { $push: { accessRules: payload.company } }
-  );
+  await Course.updateOne({ _id: courseId }, { $push: { accessRules: payload.company } });
+
   const userCompanies = await UserCompany
     .find(
       {
@@ -1349,6 +1347,7 @@ exports.addAccessRule = async (courseId, payload) => {
       },
       { user: 1 }
     ).lean();
+
   const userIds = userCompanies.map(u => u.user);
   const query = { _id: { $in: userIds }, formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
 
