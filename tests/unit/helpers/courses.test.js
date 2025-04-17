@@ -7219,20 +7219,52 @@ describe('generateCompletionCertificates', () => {
 
 describe('addAccessRule', () => {
   let updateOne;
+  let userCompanyFind;
+  let sendNewElearningCourseNotification;
+
   beforeEach(() => {
     updateOne = sinon.stub(Course, 'updateOne');
+    userCompanyFind = sinon.stub(UserCompany, 'find');
+    sendNewElearningCourseNotification = sinon.stub(NotificationHelper, 'sendNewElearningCourseNotification');
   });
   afterEach(() => {
     updateOne.restore();
+    userCompanyFind.restore();
+    sendNewElearningCourseNotification.restore();
   });
 
   it('should add access rule to course', async () => {
     const courseId = new ObjectId();
+    const userIds = [new ObjectId(), new ObjectId()];
     const payload = { company: new ObjectId() };
-
+    const userCompanies = [
+      { user: userIds[0], company: payload.company },
+      { user: userIds[1], company: payload.company },
+    ];
+    userCompanyFind.returns(SinonMongoose.stubChainedQueries(userCompanies, ['lean']));
     await CourseHelper.addAccessRule(courseId, payload);
 
     sinon.assert.calledOnceWithExactly(updateOne, { _id: courseId }, { $push: { accessRules: payload.company } });
+    SinonMongoose.calledOnceWithExactly(
+      userCompanyFind,
+      [
+        {
+          query: 'find',
+          args: [
+            {
+              company: payload.company,
+              $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
+            },
+            { user: 1 }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      sendNewElearningCourseNotification,
+      courseId,
+      { _id: { $in: userIds }, formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
+    );
   });
 });
 
