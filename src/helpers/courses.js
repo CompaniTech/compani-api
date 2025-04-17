@@ -1336,10 +1336,23 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
   return ZipHelper.generateZip('attestations_pdf.zip', await Promise.all(promises));
 };
 
-exports.addAccessRule = async (courseId, payload) => Course.updateOne(
-  { _id: courseId },
-  { $push: { accessRules: payload.company } }
-);
+exports.addAccessRule = async (courseId, payload) => {
+  await Course.updateOne({ _id: courseId }, { $push: { accessRules: payload.company } });
+
+  const userCompanies = await UserCompany
+    .find(
+      {
+        company: payload.company,
+        $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
+      },
+      { user: 1 }
+    ).lean();
+
+  const userIds = userCompanies.map(u => u.user);
+  const query = { _id: { $in: userIds }, formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
+
+  await NotificationHelper.sendNewElearningCourseNotification(courseId, query);
+};
 
 exports.deleteAccessRule = async (courseId, accessRuleId) => Course.updateOne(
   { _id: courseId },
