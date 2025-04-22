@@ -15,7 +15,7 @@ const plugins = [
       jobs: [
         {
           name: 'completionCertificateCreation',
-          time: '0 0 5 22 * *',
+          time: '0 0 5 5 * *',
           request: {
             method: 'GET',
             url: `/scripts/completioncertificates-generation?month=${CompaniDate().format(MM_YYYY)}`,
