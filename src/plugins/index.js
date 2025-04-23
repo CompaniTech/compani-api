@@ -22,7 +22,7 @@ const plugins = [
             auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
           },
           onComplete: completionCertificateCreationJob.onComplete,
-          env: 'development',
+          env: 'production',
         },
       ],
     },

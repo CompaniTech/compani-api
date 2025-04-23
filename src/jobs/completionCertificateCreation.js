@@ -66,7 +66,7 @@ const completionCertificateCreationJob = {
             const hasCertificateForMonth = await CompletionCertificate.countDocuments(payload);
 
             if (hasCertificateForMonth) {
-              server.log(`Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
+              server.log(['cron'], `Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
                 sur ${month}`);
               continue;
             }
@@ -91,7 +91,7 @@ const completionCertificateCreationJob = {
             const hasCertificateForMonth = await CompletionCertificate.countDocuments(payload);
 
             if (hasCertificateForMonth) {
-              server.log(`Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
+              server.log(['cron'], `Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
                 sur ${month}`);
               continue;
             }
@@ -120,7 +120,7 @@ const completionCertificateCreationJob = {
         errors.push(...writeErrors.map(error => error.err.op));
       }
 
-      return { certificateCreated, errors, month };
+      return { certificateCreated, errors, month: CompaniDate(month, MM_YYYY).format('MMMM yyyy') };
     } catch (e) {
       server.log(['cron', 'method'], e);
       return Boom.isBoom(e) ? e : Boom.badImplementation(e);
