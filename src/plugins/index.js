@@ -18,7 +18,7 @@ const plugins = [
           time: '0 0 5 5 * *',
           request: {
             method: 'GET',
-            url: `/scripts/completioncertificates-generation?month=${CompaniDate().format(MM_YYYY)}`,
+            url: `/scripts/completioncertificates-generation?month=${CompaniDate().subtract('P1M').format(MM_YYYY)}`,
             auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
           },
           onComplete: completionCertificateCreationJob.onComplete,
