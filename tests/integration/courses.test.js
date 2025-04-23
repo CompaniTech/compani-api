@@ -147,6 +147,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         expectedBillsCount: 2,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        prices: { global: 1200 },
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -205,6 +206,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         salesRepresentative: trainerOrganisationManager._id,
         trainee: traineeFromOtherCompany._id,
         certificateGenerationMode: MONTHLY,
+        prices: { global: 1000, trainerFees: 200 },
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -705,6 +707,79 @@ describe('COURSES ROUTES - POST /courses', () => {
 
         expect(response.statusCode).toBe(400);
       });
+    });
+
+    const wrongValues = [-200, 0, '200€'];
+    wrongValues.forEach((param) => {
+      it(`should return 400 as price has wrong value : ${param}`, async () => {
+        const payload = {
+          misc: 'course',
+          type: INTRA,
+          maxTrainees: 12,
+          company: authCompany._id,
+          subProgram: subProgramsList[0]._id,
+          operationsRepresentative: vendorAdmin._id,
+          expectedBillsCount: 2,
+          hasCertifyingTest: false,
+          certificateGenerationMode: GLOBAL,
+        };
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/courses',
+          payload: { ...payload, prices: { global: param } },
+          headers: { 'x-access-token': authToken },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+    });
+
+    it('should return 400 if trainer fees without global price', async () => {
+      const payload = {
+        misc: 'course',
+        type: INTRA,
+        maxTrainees: 12,
+        company: authCompany._id,
+        subProgram: subProgramsList[0]._id,
+        operationsRepresentative: vendorAdmin._id,
+        expectedBillsCount: 2,
+        hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
+        prices: { trainerFees: 200 },
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if price but wrong type', async () => {
+      const payload = {
+        misc: 'course',
+        type: INTER_B2B,
+        subProgram: subProgramsList[0]._id,
+        operationsRepresentative: vendorAdmin._id,
+        estimatedStartDate: '2022-05-31T08:00:00.000Z',
+        hasCertifyingTest: true,
+        salesRepresentative: trainerOrganisationManager._id,
+        certificateGenerationMode: GLOBAL,
+        prices: { global: 200 },
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 

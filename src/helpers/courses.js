@@ -101,6 +101,17 @@ exports.createCourse = async (payload, credentials) => {
     coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
   }
 
+  if (payload.prices) {
+    coursePayload = {
+      ...coursePayload,
+      prices: [{
+        global: payload.prices.global,
+        ...payload.prices.trainerFees && { trainerFees: payload.prices.trainerFees },
+        company: coursePayload.companies[0],
+      }],
+    };
+  }
+
   const course = await Course.create(coursePayload);
 
   if (course.estimatedStartDate) {

@@ -147,6 +147,18 @@ exports.plugin = {
             salesRepresentative: Joi.objectId(),
             certificateGenerationMode: Joi.string().required().valid(...CERTIFICATE_GENERATION_MODE),
             trainee: Joi.objectId().when('type', { is: SINGLE, then: Joi.required(), otherwise: Joi.forbidden() }),
+            prices: Joi
+              .object({
+                global: Joi.number().positive().when('trainerFees', { is: Joi.exist(), then: Joi.required() }),
+                trainerFees: Joi.number().positive(),
+              })
+              .when(
+                'type',
+                {
+                  is: Joi.string().valid(...COURSE_TYPES.filter(val => ![INTRA, SINGLE].includes(val))),
+                  then: Joi.forbidden(),
+                }
+              ),
           }),
         },
         auth: { scope: ['courses:create'] },
