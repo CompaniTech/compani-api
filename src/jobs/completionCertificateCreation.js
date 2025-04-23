@@ -120,12 +120,23 @@ const completionCertificateCreationJob = {
         errors.push(...writeErrors.map(error => error.err.op));
       }
 
+      return { certificateCreated, errors, month: CompaniDate(month, MM_YYYY).format('MMMM yyyy') };
+    } catch (e) {
+      server.log(['cron', 'method'], e);
+      return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+    }
+  },
+  async onComplete(server, { certificateCreated, errors, month }) {
+    try {
+      server.log(['cron'], 'CompletionCertificateCreation OK');
+      if (errors && errors.length) server.log(['error', 'cron', 'oncomplete'], errors);
+
       await EmailHelper.completionCertificateCreationEmail(certificateCreated, errors, month);
 
-      return { certificateCreated, errors };
+      server.log(['cron', 'oncomplete'], 'Completion certificate creation : email envoyé.');
     } catch (e) {
-      server.log('completionCertificateCreation', e);
-      return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+      server.log(e);
+      server.log(['cron', 'oncomplete'], 'CompletionCertificateCreation ERROR');
     }
   },
 };
