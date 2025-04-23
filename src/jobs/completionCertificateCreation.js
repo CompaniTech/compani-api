@@ -66,7 +66,7 @@ const completionCertificateCreationJob = {
             const hasCertificateForMonth = await CompletionCertificate.countDocuments(payload);
 
             if (hasCertificateForMonth) {
-              server.log(['cron'], `Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
+              server.log(`Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
                 sur ${month}`);
               continue;
             }
@@ -91,7 +91,7 @@ const completionCertificateCreationJob = {
             const hasCertificateForMonth = await CompletionCertificate.countDocuments(payload);
 
             if (hasCertificateForMonth) {
-              server.log(['cron'], `Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
+              server.log(`Un certificat existe déjà pour l'apprenant ${trainee} de la formation ${course._id}
                 sur ${month}`);
               continue;
             }
