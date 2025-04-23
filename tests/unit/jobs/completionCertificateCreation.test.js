@@ -11,13 +11,12 @@ const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const EmailHelper = require('../../../src/helpers/email');
 const { completionCertificateCreationJob } = require('../../../src/jobs/completionCertificateCreation');
 
-describe('completionCertificateCreation', () => {
+describe('method', () => {
   let findCourse;
   let findAttendance;
   let findActivityHistory;
   let countDocumentsCompletionCertificate;
   let createManyCompletionCertificate;
-  let completionCertificateCreationEmail;
 
   beforeEach(() => {
     findCourse = sinon.stub(Course, 'find');
@@ -25,7 +24,6 @@ describe('completionCertificateCreation', () => {
     findActivityHistory = sinon.stub(ActivityHistory, 'find');
     countDocumentsCompletionCertificate = sinon.stub(CompletionCertificate, 'countDocuments');
     createManyCompletionCertificate = sinon.stub(CompletionCertificate, 'insertMany');
-    completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
   });
 
   afterEach(() => {
@@ -34,7 +32,6 @@ describe('completionCertificateCreation', () => {
     findActivityHistory.restore();
     countDocumentsCompletionCertificate.restore();
     createManyCompletionCertificate.restore();
-    completionCertificateCreationEmail.restore();
   });
 
   it('should create completion certificates for courses with attendances or activity histories on month', async () => {
@@ -170,7 +167,6 @@ describe('completionCertificateCreation', () => {
     countDocumentsCompletionCertificate.onCall(0).returns(0);
     countDocumentsCompletionCertificate.onCall(1).returns(0);
     countDocumentsCompletionCertificate.onCall(2).returns(0);
-    completionCertificateCreationEmail.returns({ msg: 'Script correctement exécuté.' });
     createManyCompletionCertificate.returns([
       { course: courseIds[0], trainee: traineeIds[0], month },
       { course: courseIds[0], trainee: traineeIds[2], month },
@@ -319,14 +315,35 @@ describe('completionCertificateCreation', () => {
         { course: courseIds[1], trainee: traineeIds[1], month },
       ]
     );
-    sinon.assert.calledWithExactly(
-      completionCertificateCreationEmail,
-      [
-        { course: courseIds[0], trainee: traineeIds[0], month },
-        { course: courseIds[0], trainee: traineeIds[2], month },
-        { course: courseIds[1], trainee: traineeIds[1], month },
-      ],
-      [],
-      month);
+  });
+});
+
+describe('onComplete', () => {
+  let completionCertificateCreationEmail;
+  let serverLogStub;
+  // eslint-disable-next-line no-console
+  const server = { log: value => console.log(value) };
+
+  beforeEach(() => {
+    completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
+    serverLogStub = sinon.stub(server, 'log');
+  });
+
+  afterEach(() => {
+    completionCertificateCreationEmail.restore();
+    serverLogStub.restore();
+  });
+
+  it('should send an email after completion certificates creation', async () => {
+    const month = '02_2025';
+    const certificateCreated = [
+      { course: new ObjectId(), trainee: new ObjectId(), month },
+      { course: new ObjectId(), trainee: new ObjectId(), month },
+      { course: new ObjectId(), trainee: new ObjectId(), month },
+    ];
+    const errors = [];
+
+    await completionCertificateCreationJob.onComplete(server, { certificateCreated, errors, month });
+    sinon.assert.calledOnceWithExactly(completionCertificateCreationEmail, certificateCreated, errors, month);
   });
 });

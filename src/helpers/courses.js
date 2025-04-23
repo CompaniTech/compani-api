@@ -1343,7 +1343,7 @@ exports.addAccessRule = async (courseId, payload) => {
     .find(
       {
         company: payload.company,
-        $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
+        $or: [{ endDate: { $gt: CompaniDate().endOf(DAY).toISO() } }, { endDate: { $exists: false } }],
       },
       { user: 1 }
     ).lean();
