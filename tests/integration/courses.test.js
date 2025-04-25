@@ -166,7 +166,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(courseSlotsCount).toEqual(1);
     });
 
-    it('should create intra_holding course', async () => {
+    it('should create intra_holding course #tag', async () => {
       const payload = {
         misc: 'course',
         type: INTRA_HOLDING,
@@ -176,6 +176,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        prices: [{ trainerFees: 200, global: 400 }],
       };
       const coursesCountBefore = await Course.countDocuments();
 

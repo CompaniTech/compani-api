@@ -72,6 +72,7 @@ const {
   TYPE_OPTIONS,
   SINGLE,
   STRICTLY_E_LEARNING,
+  INTER_B2B,
 } = require('../helpers/constants');
 const { dateToISOString } = require('./validations/utils');
 
@@ -155,7 +156,7 @@ exports.plugin = {
               .when(
                 'type',
                 {
-                  is: Joi.string().valid(...COURSE_TYPES.filter(val => ![INTRA, SINGLE].includes(val))),
+                  is: Joi.string().valid(...COURSE_TYPES.filter(val => [INTER_B2B, INTRA_HOLDING].includes(val))),
                   then: Joi.forbidden(),
                 }
               ),
