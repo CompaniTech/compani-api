@@ -136,7 +136,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(courseHistory).toEqual(1);
     });
 
-    it('should create intra course #tag', async () => {
+    it('should create intra course', async () => {
       const payload = {
         misc: 'course',
         type: INTRA,
@@ -194,7 +194,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(courseSlotsCount).toEqual(1);
     });
 
-    it('should create single course #tag', async () => {
+    it('should create single course', async () => {
       const payload = {
         misc: 'course',
         type: SINGLE,
