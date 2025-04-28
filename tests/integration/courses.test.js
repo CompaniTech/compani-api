@@ -136,7 +136,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(courseHistory).toEqual(1);
     });
 
-    it('should create intra course', async () => {
+    it('should create intra course #tag', async () => {
       const payload = {
         misc: 'course',
         type: INTRA,
@@ -147,7 +147,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         expectedBillsCount: 2,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
-        prices: { global: 1200, trainerFees: 200 },
+        prices: { global: 1200 },
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -194,7 +194,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       expect(courseSlotsCount).toEqual(1);
     });
 
-    it('should create single course', async () => {
+    it('should create single course #tag', async () => {
       const payload = {
         misc: 'course',
         type: SINGLE,
@@ -206,7 +206,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         salesRepresentative: trainerOrganisationManager._id,
         trainee: traineeFromOtherCompany._id,
         certificateGenerationMode: MONTHLY,
-        prices: { global: 1000, trainerFees: 200 },
+        prices: { global: 1000 },
       };
       const coursesCountBefore = await Course.countDocuments();
 

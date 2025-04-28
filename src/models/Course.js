@@ -71,9 +71,7 @@ const CourseSchema = mongoose.Schema({
       company: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Company',
-        required() {
-          return !!this.trainerFees || !!this.global;
-        },
+        required() { return !!this.trainerFees || !!this.global; },
       },
     }
     )],
