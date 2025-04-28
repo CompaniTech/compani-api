@@ -66,9 +66,15 @@ const CourseSchema = mongoose.Schema({
   },
   prices: {
     type: [mongoose.Schema({
-      trainerFees: { type: Number, required() { return !!this.global; } },
+      trainerFees: { type: Number },
       global: { type: Number, required() { return !!this.trainerFees; } },
-      company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
+      company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company',
+        required() {
+          return !!this.trainerFees || !!this.global;
+        },
+      },
     }
     )],
     default: undefined,

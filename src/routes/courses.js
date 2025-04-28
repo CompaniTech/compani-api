@@ -153,13 +153,7 @@ exports.plugin = {
                 global: Joi.number().positive().when('trainerFees', { is: Joi.exist(), then: Joi.required() }),
                 trainerFees: Joi.number().positive(),
               })
-              .when(
-                'type',
-                {
-                  is: Joi.string().valid(...COURSE_TYPES.filter(val => [INTER_B2B, INTRA_HOLDING].includes(val))),
-                  then: Joi.forbidden(),
-                }
-              ),
+              .when('type', { is: [INTER_B2B, INTRA_HOLDING], then: Joi.forbidden() }),
           }),
         },
         auth: { scope: ['courses:create'] },
