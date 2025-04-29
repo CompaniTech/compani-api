@@ -64,6 +64,21 @@ const CourseSchema = mongoose.Schema({
     required() { return this.format === BLENDED ? true : undefined; },
     enum: CERTIFICATE_GENERATION_MODE,
   },
+  prices: {
+    type: [mongoose.Schema({
+      trainerFees: { type: Number },
+      global: { type: Number, required() { return !!this.trainerFees; } },
+      company: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company',
+        required() { return !!this.trainerFees || !!this.global; },
+      },
+    }
+    )],
+    default: undefined,
+    _id: false,
+    id: false,
+  },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {

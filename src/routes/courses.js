@@ -72,6 +72,7 @@ const {
   TYPE_OPTIONS,
   SINGLE,
   STRICTLY_E_LEARNING,
+  INTER_B2B,
 } = require('../helpers/constants');
 const { dateToISOString } = require('./validations/utils');
 
@@ -147,6 +148,12 @@ exports.plugin = {
             salesRepresentative: Joi.objectId(),
             certificateGenerationMode: Joi.string().required().valid(...CERTIFICATE_GENERATION_MODE),
             trainee: Joi.objectId().when('type', { is: SINGLE, then: Joi.required(), otherwise: Joi.forbidden() }),
+            prices: Joi
+              .object({
+                global: Joi.number().positive().when('trainerFees', { is: Joi.exist(), then: Joi.required() }),
+                trainerFees: Joi.number().positive(),
+              })
+              .when('type', { is: [INTER_B2B, INTRA_HOLDING], then: Joi.forbidden() }),
           }),
         },
         auth: { scope: ['courses:create'] },

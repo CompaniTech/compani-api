@@ -124,6 +124,7 @@ describe('createCourse', () => {
       type: INTRA,
       maxTrainees: 12,
       operationsRepresentative: new ObjectId(),
+      prices: { global: 1200, trainerFees: 200 },
     };
 
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
@@ -141,7 +142,14 @@ describe('createCourse', () => {
     expect(result.operationsRepresentative).toEqual(payload.operationsRepresentative);
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     sinon.assert.notCalled(findOneUserCompany);
-    sinon.assert.calledOnceWithExactly(create, { ...omit(payload, 'company'), companies: [payload.company] });
+    sinon.assert.calledOnceWithExactly(
+      create,
+      {
+        ...omit(payload, 'company'),
+        companies: [payload.company],
+        prices: [{ global: 1200, trainerFees: 200, company: payload.company }],
+      }
+    );
     sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
@@ -166,6 +174,7 @@ describe('createCourse', () => {
       expectedBillsCount: '0',
       hasCertifyingTest: false,
       trainee: traineeId,
+      prices: { global: 1200 },
     };
     const course = {
       _id: new ObjectId(),
@@ -198,7 +207,14 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(create, { ...omit(payload, ['trainee']), companies: [userCompany.company] });
+    sinon.assert.calledOnceWithExactly(
+      create,
+      {
+        ...omit(payload, ['trainee']),
+        companies: [userCompany.company],
+        prices: [{ global: 1200, company: userCompany.company }],
+      }
+    );
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
