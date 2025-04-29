@@ -206,7 +206,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         salesRepresentative: trainerOrganisationManager._id,
         trainee: traineeFromOtherCompany._id,
         certificateGenerationMode: MONTHLY,
-        prices: { global: 1000 },
+        prices: { global: 1000, trainerFees: 200 },
       };
       const coursesCountBefore = await Course.countDocuments();
 
