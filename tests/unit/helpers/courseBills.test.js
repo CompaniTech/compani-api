@@ -501,7 +501,10 @@ describe('updateCourseBill', () => {
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: courseBillId },
-      { $set: { billedAt: payload.billedAt, number: `FACT-${lastBillNumber.seq.toString().padStart(5, '0')}` } }
+      {
+        $set: { billedAt: payload.billedAt, number: `FACT-${lastBillNumber.seq.toString().padStart(5, '0')}` },
+        $unset: { maturityDate: '' },
+      }
     );
   });
 });
