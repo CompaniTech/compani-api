@@ -540,6 +540,17 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if no maturityDate', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { 'x-access-token': authToken },
+        payload: { ...payload, maturityDate: '' },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 404 as course doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'POST',

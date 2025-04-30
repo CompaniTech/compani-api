@@ -408,6 +408,7 @@ describe('create', () => {
       companies: [new ObjectId(), new ObjectId()],
       mainFee: { price: 120, count: 1 },
       payer: { fundingOrganisation: new ObjectId() },
+      maturityDate: '2022-03-08T00:00:00.000Z',
     };
     await CourseBillHelper.create(payload);
 
