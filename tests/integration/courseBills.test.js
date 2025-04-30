@@ -541,11 +541,18 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
     });
 
     it('should return 400 if no maturityDate', async () => {
+      const payloadWithoutMaturityDate = {
+        course: coursesList[2]._id,
+        companies: [otherCompany._id],
+        mainFee: { price: 120, count: 1, countUnit: GROUP, description: 'test' },
+        payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+      };
+
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills',
         headers: { 'x-access-token': authToken },
-        payload: { ...payload, maturityDate: '' },
+        payload: payloadWithoutMaturityDate,
       });
 
       expect(response.statusCode).toBe(400);
