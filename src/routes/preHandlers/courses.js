@@ -274,6 +274,16 @@ exports.authorizeCourseEdit = async (req) => {
       if (courseBillsWithoutCreditNote.length > payload.expectedBillsCount) throw Boom.conflict();
     }
 
+    const courseBills = await CourseBill.find({ course: course._id, companies: payload.prices.company })
+      .setOptions({ isVendorUser: true })
+      .lean();
+
+    if (courseBills.length && payload.prices) throw Boom.forbidden();
+
+    if (has(payload, 'prices.trainerFees') && !has(payload, 'prices.global')) throw Boom.forbidden();
+
+    if (has(payload, 'prices.company') && !course.companies.includes(payload.prices.company)) throw Boom.forbidden();
+
     const archivedAt = get(req, 'payload.archivedAt');
     if (archivedAt || unarchiveCourse) {
       if (!isRofOrAdmin) return Boom.forbidden();

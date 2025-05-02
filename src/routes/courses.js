@@ -239,6 +239,14 @@ exports.plugin = {
             hasCertifyingTest: Joi.boolean(),
             certifiedTrainees: Joi.array().items(Joi.objectId()),
             salesRepresentative: Joi.objectId().allow(''),
+            prices: Joi.object({
+              company: Joi.objectId().required()
+                .when('trainerFees', { is: Joi.exist(), then: Joi.required() })
+                .when('global', { is: Joi.exist(), then: Joi.required() }),
+              trainerFees: Joi.number().positive().allow(''),
+              global: Joi.number().positive(),
+            }),
+
           }),
         },
         pre: [{ method: authorizeCourseEdit }],

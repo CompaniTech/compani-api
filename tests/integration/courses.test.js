@@ -2430,6 +2430,43 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if there is companies and price', async () => {
+      const payload = { prices: { company: authCompany._id, trainerFees: 300, global: 1200 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if trainerFees exist and not global', async () => {
+      const payload = { prices: { company: authCompany._id, trainerFees: 200 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if prices company in payload is not include in companies course', async () => {
+      const payload = { prices: { company: otherCompany._id, trainerFees: 200, global: 1200 } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('TRAINER', () => {
