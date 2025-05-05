@@ -115,6 +115,7 @@ exports.updateCourseBill = async (courseBillId, payload) => {
 
     formattedPayload = {
       $set: { billedAt: payload.billedAt, number: `FACT-${lastBillNumber.seq.toString().padStart(5, '0')}` },
+      $unset: { maturityDate: '' },
     };
   } else {
     let payloadToSet = payload;

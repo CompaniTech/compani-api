@@ -376,6 +376,7 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
     companies: [otherCompany._id],
     mainFee: { price: 120, count: 1, countUnit: GROUP, description: 'test' },
     payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+    maturityDate: '2025-04-29T22:00:00.000+00:00',
   };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -444,6 +445,7 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
       'mainFee.count',
       'payer',
       'mainFee.countUnit',
+      'maturityDate',
     ];
     missingParams.forEach((param) => {
       it(`should return 400 as ${param} is missing`, async () => {

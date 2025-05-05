@@ -64,6 +64,7 @@ exports.plugin = {
               company: Joi.objectId(),
               fundingOrganisation: Joi.objectId(),
             }).xor('company', 'fundingOrganisation').required(),
+            maturityDate: requiredDateToISOString,
           }),
         },
         pre: [{ method: authorizeCourseBillCreation }],
