@@ -229,7 +229,9 @@ const checkInterlocutors = async (payload, course, isRofOrAdmin, req) => {
 
 exports.authorizeCourseEdit = async (req) => {
   try {
+    console.log('je passe en 1er ici -------');
     const { auth: { credentials }, payload, params } = req;
+    console.log('je passe ici ---- ');
     const course = await Course
       .findOne({ _id: params._id })
       .populate({ path: 'slots', select: 'startDate endDate' })
@@ -237,6 +239,8 @@ exports.authorizeCourseEdit = async (req) => {
       .populate({ path: 'contact' })
       .lean();
     if (!course) throw Boom.notFound();
+
+    console.log('course', course);
 
     const unarchiveCourse = has(payload, 'archivedAt') && payload.archivedAt === '';
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
@@ -279,11 +283,13 @@ exports.authorizeCourseEdit = async (req) => {
         .setOptions({ isVendorUser: true })
         .lean();
 
+      console.log(payload.prices.company, course.companies);
+
       if (courseBills.length) throw Boom.forbidden();
 
       if (has(payload, 'prices.trainerFees') && !has(payload, 'prices.global')) throw Boom.forbidden();
 
-      if (has(payload, 'prices.company') && !course.companies.includes(payload.prices.company)) throw Boom.forbidden();
+      if (has(payload, 'prices.company') && !UtilsHelper.doesArrayIncludeId(course.companies, payload.prices.company)) throw Boom.forbidden();
     }
 
     const archivedAt = get(req, 'payload.archivedAt');

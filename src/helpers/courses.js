@@ -813,18 +813,21 @@ exports.updateCourse = async (courseId, payload, credentials) => {
 
   if (payload.prices) {
     const course = await Course.findOne({ _id: courseId }, { prices: 1 }).lean();
-    const companyCoursePrices = course.prices
-      .find(price => UtilsHelper.areObjectIdsEquals(price.company, payload.prices.company));
+    const companyCoursePrices = course.prices ? course.prices
+      .find(price => UtilsHelper.areObjectIdsEquals(price.company, payload.prices.company)) : [];
+    console.log(companyCoursePrices);
     if (!companyCoursePrices.length) {
       setFields = { ...omit(setFields, 'prices'), $push: { prices: payload.prices } };
     } else {
       if (payload.prices.global) {
         setFields = {
-          ...omit(setFields, 'prices'),
-          prices: course.prices
-            .map(p => (UtilsHelper.areObjectIdsEquals(p.company, payload.prices.company)
-              ? { ...p, global: payload.prices.global }
-              : p)),
+          $set: {
+            ...omit(setFields, 'prices'),
+            prices: course.prices
+              .map(p => (UtilsHelper.areObjectIdsEquals(p.company, payload.prices.company)
+                ? { ...p, global: payload.prices.global }
+                : p)),
+          },
         };
       }
       if (payload.prices.trainerFees) {
@@ -837,6 +840,9 @@ exports.updateCourse = async (courseId, payload, credentials) => {
         };
       }
     }
+    await Course.updateOne({ _id: courseId }, setFields);
+
+    setFields = {};
   }
 
   const formattedPayload = {

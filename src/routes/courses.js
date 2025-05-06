@@ -246,7 +246,6 @@ exports.plugin = {
               trainerFees: Joi.number().positive().allow(''),
               global: Joi.number().positive(),
             }),
-
           }),
         },
         pre: [{ method: authorizeCourseEdit }],
