@@ -387,6 +387,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
+    prices: [{ company: authCompany._id, global: 200 }],
   },
   { // 3
     _id: new ObjectId(),
@@ -400,6 +401,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     trainers: [trainerAndCoach._id],
     certificateGenerationMode: GLOBAL,
+    prices: [{ company: otherCompany._id, global: 200, trainerFees: 10 }],
   },
   { // 4 course without slots
     _id: new ObjectId(),

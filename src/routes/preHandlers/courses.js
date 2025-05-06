@@ -229,9 +229,7 @@ const checkInterlocutors = async (payload, course, isRofOrAdmin, req) => {
 
 exports.authorizeCourseEdit = async (req) => {
   try {
-    console.log('je passe en 1er ici -------');
     const { auth: { credentials }, payload, params } = req;
-    console.log('je passe ici ---- ');
     const course = await Course
       .findOne({ _id: params._id })
       .populate({ path: 'slots', select: 'startDate endDate' })
@@ -239,8 +237,6 @@ exports.authorizeCourseEdit = async (req) => {
       .populate({ path: 'contact' })
       .lean();
     if (!course) throw Boom.notFound();
-
-    console.log('course', course);
 
     const unarchiveCourse = has(payload, 'archivedAt') && payload.archivedAt === '';
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
@@ -279,17 +275,20 @@ exports.authorizeCourseEdit = async (req) => {
     }
 
     if (has(payload, 'prices')) {
+      if (!isRofOrAdmin) throw Boom.forbidden();
+
       const courseBills = await CourseBill.find({ course: course._id, companies: get(payload, 'prices.company') })
         .setOptions({ isVendorUser: true })
         .lean();
 
-      console.log(payload.prices.company, course.companies);
-
       if (courseBills.length) throw Boom.forbidden();
 
-      if (has(payload, 'prices.trainerFees') && !has(payload, 'prices.global')) throw Boom.forbidden();
+      const globalPriceExist = payload.prices.global ||
+      (course.prices &&
+        course.prices.find(p => UtilsHelper.areObjectIdsEquals(p.company, payload.prices.company)).global);
+      if (has(payload, 'prices.trainerFees') && !globalPriceExist) throw Boom.forbidden();
 
-      if (has(payload, 'prices.company') && !UtilsHelper.doesArrayIncludeId(course.companies, payload.prices.company)) throw Boom.forbidden();
+      if (!UtilsHelper.doesArrayIncludeId(course.companies, payload.prices.company)) throw Boom.forbidden();
     }
 
     const archivedAt = get(req, 'payload.archivedAt');

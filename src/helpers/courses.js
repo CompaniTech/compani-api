@@ -790,6 +790,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
 exports.updateCourse = async (courseId, payload, credentials) => {
   let setFields = payload;
   let unsetFields = {};
+  let pushFields = {};
 
   if (has(payload, 'certifiedTrainees') && !payload.certifiedTrainees.length) {
     setFields = omit(setFields, 'certifiedTrainees');
@@ -813,41 +814,33 @@ exports.updateCourse = async (courseId, payload, credentials) => {
 
   if (payload.prices) {
     const course = await Course.findOne({ _id: courseId }, { prices: 1 }).lean();
-    const companyCoursePrices = course.prices ? course.prices
-      .find(price => UtilsHelper.areObjectIdsEquals(price.company, payload.prices.company)) : [];
-    console.log(companyCoursePrices);
-    if (!companyCoursePrices.length) {
-      setFields = { ...omit(setFields, 'prices'), $push: { prices: payload.prices } };
+    const courseAlreadyHasPriceForCompany = course.prices && course.prices
+      .find(price => UtilsHelper.areObjectIdsEquals(price.company, payload.prices.company));
+    if (!courseAlreadyHasPriceForCompany) {
+      pushFields = { prices: payload.prices };
+      setFields = { ...omit(setFields, 'prices') };
     } else {
-      if (payload.prices.global) {
-        setFields = {
-          $set: {
-            ...omit(setFields, 'prices'),
-            prices: course.prices
-              .map(p => (UtilsHelper.areObjectIdsEquals(p.company, payload.prices.company)
-                ? { ...p, global: payload.prices.global }
-                : p)),
-          },
-        };
-      }
-      if (payload.prices.trainerFees) {
-        setFields = {
-          ...omit(setFields, 'prices'),
-          prices: course.prices
-            .map(p => (UtilsHelper.areObjectIdsEquals(p.company, payload.prices.company)
-              ? { ...p, trainerFees: payload.prices.trainerFees }
-              : p)),
-        };
-      }
+      setFields = {
+        ...setFields,
+        prices: course.prices.map((p) => {
+          let price = p;
+          if (UtilsHelper.areObjectIdsEquals(p.company, payload.prices.company)) {
+            if (payload.prices.global) price = { ...price, global: payload.prices.global };
+            if (has(payload.prices, 'trainerFees')) {
+              if (payload.prices.trainerFees) price = { ...price, trainerFees: payload.prices.trainerFees };
+              else price = { ...omit(price, 'trainerFees') };
+            }
+          }
+          return price;
+        }),
+      };
     }
-    await Course.updateOne({ _id: courseId }, setFields);
-
-    setFields = {};
   }
 
   const formattedPayload = {
     ...(!isEmpty(setFields) && { $set: { ...setFields } }),
     ...(!isEmpty(unsetFields) && { $unset: { ...unsetFields } }),
+    ...(!isEmpty(pushFields) && { $push: { ...pushFields } }),
   };
 
   const courseFromDb = await Course.findOneAndUpdate({ _id: courseId }, formattedPayload).lean();

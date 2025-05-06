@@ -2,6 +2,7 @@
 
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
+const has = require('lodash/has');
 const {
   list,
   create,
@@ -240,12 +241,18 @@ exports.plugin = {
             certifiedTrainees: Joi.array().items(Joi.objectId()),
             salesRepresentative: Joi.objectId().allow(''),
             prices: Joi.object({
-              company: Joi.objectId().required()
-                .when('trainerFees', { is: Joi.exist(), then: Joi.required() })
-                .when('global', { is: Joi.exist(), then: Joi.required() }),
               trainerFees: Joi.number().positive().allow(''),
               global: Joi.number().positive(),
-            }),
+              company: Joi.objectId(),
+            })
+              .with('trainerFees', 'company')
+              .with('global', 'company')
+              .custom((value, helpers) => {
+                if (value.company && !has(value, 'trainerFees') && !has(value, 'global')) {
+                  return helpers.error('any.invalid', { message: 'company must not be present alone' });
+                }
+                return value;
+              }),
           }),
         },
         pre: [{ method: authorizeCourseEdit }],
