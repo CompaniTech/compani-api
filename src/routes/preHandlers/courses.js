@@ -278,8 +278,7 @@ exports.authorizeCourseEdit = async (req) => {
       const { global, company } = payload.prices;
       if (!isRofOrAdmin) throw Boom.forbidden();
 
-      const courseBills = await CourseBill
-        .countDocuments({ course: course._id, companies: get(payload, 'prices.company') });
+      const courseBills = await CourseBill.countDocuments({ course: course._id, companies: company });
 
       if (courseBills) throw Boom.forbidden();
 
@@ -287,7 +286,7 @@ exports.authorizeCourseEdit = async (req) => {
         (course.prices && course.prices.find(p => UtilsHelper.areObjectIdsEquals(p.company, company)).global);
       if (has(payload, 'prices.trainerFees') && !globalPriceExist) throw Boom.forbidden();
 
-      if (!UtilsHelper.doesArrayIncludeId(course.companies, payload.prices.company)) throw Boom.forbidden();
+      if (!UtilsHelper.doesArrayIncludeId(course.companies, company)) throw Boom.forbidden();
     }
 
     const archivedAt = get(req, 'payload.archivedAt');

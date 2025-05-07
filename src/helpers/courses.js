@@ -827,8 +827,9 @@ exports.updateCourse = async (courseId, payload, credentials) => {
           if (UtilsHelper.areObjectIdsEquals(p.company, payload.prices.company)) {
             if (payload.prices.global) price = { ...price, global: payload.prices.global };
             if (has(payload.prices, 'trainerFees')) {
-              if (payload.prices.trainerFees) price = { ...price, trainerFees: payload.prices.trainerFees };
-              else price = { ...omit(price, 'trainerFees') };
+              price = payload.prices.trainerFees
+                ? { ...price, trainerFees: payload.prices.trainerFees }
+                : { ...omit(price, 'trainerFees') };
             }
           }
           return price;
