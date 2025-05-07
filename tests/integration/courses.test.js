@@ -2182,6 +2182,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(course).toBe(1);
     });
 
+    it('should update price of a billed single course', async () => {
+      const payload = { prices: { company: authCompany._id, trainerFees: 300 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[24]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     const payloads = [
       { misc: 'new name' },
       { contact: vendorAdmin._id },
@@ -2514,7 +2526,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 if update price of a billed course', async () => {
+    it('should return 403 if update price of a billed course (non single)', async () => {
       const payload = { prices: { company: authCompany._id, trainerFees: 300 } };
       const response = await app.inject({
         method: 'PUT',

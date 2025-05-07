@@ -280,7 +280,7 @@ exports.authorizeCourseEdit = async (req) => {
 
       const courseBills = await CourseBill.countDocuments({ course: course._id, companies: company });
 
-      if (courseBills) throw Boom.forbidden();
+      if (courseBills && course.type !== SINGLE) throw Boom.forbidden();
 
       const globalPriceExist = global ||
         (course.prices && course.prices.find(p => UtilsHelper.areObjectIdsEquals(p.company, company)).global);
