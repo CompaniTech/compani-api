@@ -304,6 +304,7 @@ const courseBillsList = [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 90, count: 1 },
       { _id: new ObjectId(), billingItem: billingItemList[1]._id, price: 400, count: 1 },
     ],
+    maturityDate: '2025-04-29T22:00:00.000+00:00',
   },
   { // 1 - with funder and mainFee description
     _id: new ObjectId(),

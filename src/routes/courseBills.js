@@ -23,7 +23,7 @@ const {
   authorizeBillPdfGet,
   authorizeCourseBillDeletion,
 } = require('./preHandlers/courseBills');
-const { requiredDateToISOString } = require('./validations/utils');
+const { requiredDateToISOString, dateToISOString } = require('./validations/utils');
 
 exports.plugin = {
   name: 'routes-course-bills',
@@ -91,6 +91,7 @@ exports.plugin = {
                 countUnit: Joi.string().valid(GROUP, TRAINEE),
                 description: Joi.string().allow(''),
               }),
+              maturityDate: dateToISOString,
             }),
             Joi.object({ billedAt: requiredDateToISOString })
           ),

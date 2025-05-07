@@ -736,6 +736,29 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(countAfter).toBeTruthy();
     });
 
+    it('should update maturityDate on course bill', async () => {
+      const countBefore = await CourseBill.countDocuments({
+        _id: courseBillsList[0]._id,
+        maturityDate: '2025-04-29T22:00:00.000+00:00',
+      });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { maturityDate: '2025-05-02T22:00:00.000+00:00' },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const countAfter = await CourseBill.countDocuments({
+        _id: courseBillsList[0]._id,
+        maturityDate: '2025-05-02T22:00:00.000+00:00',
+      });
+      expect(countBefore).toBeTruthy();
+      expect(countAfter).toBeTruthy();
+    });
+
     it('should add main fee description to course bill', async () => {
       const countBefore = await CourseBill.countDocuments({
         _id: courseBillsList[0]._id,
