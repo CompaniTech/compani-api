@@ -4382,9 +4382,7 @@ describe('updateCourse', () => {
   it('should push new price for company', async () => {
     const courseId = new ObjectId();
     const companyId = new ObjectId();
-    const courseFromDb = {
-      _id: courseId,
-    };
+    const courseFromDb = { _id: courseId };
     const payload = { prices: { company: companyId, global: 2500, trainerFees: 300 } };
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
@@ -4397,7 +4395,8 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
-      courseFindOne, [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
     );
 
     SinonMongoose.calledOnceWithExactly(
@@ -4412,10 +4411,7 @@ describe('updateCourse', () => {
   it('should update price for company', async () => {
     const courseId = new ObjectId();
     const companyId = new ObjectId();
-    const courseFromDb = {
-      _id: courseId,
-      prices: [{ company: companyId, global: 2000, trainerFees: 200 }],
-    };
+    const courseFromDb = { _id: courseId, prices: [{ company: companyId, global: 2000, trainerFees: 200 }] };
     const payload = { prices: { company: companyId, global: 2500, trainerFees: '' } };
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
@@ -4427,7 +4423,8 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
-      courseFindOne, [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
     );
 
     SinonMongoose.calledOnceWithExactly(
