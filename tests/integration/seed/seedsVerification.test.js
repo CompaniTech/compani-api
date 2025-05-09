@@ -1079,6 +1079,22 @@ describe('SEEDS VERIFICATION', () => {
 
           expect(everyUserExists).toBeTruthy();
         });
+
+        it('should pass if company price is in company', () => {
+          const everyPriceCompanyIsInCourse = courseList
+            .filter(course => course.format === BLENDED)
+            .every(course => get(course, 'prices', [])
+              .every(price => !!UtilsHelper.doesArrayIncludeId(course.companies.map(c => c._id), price.company)));
+          expect(everyPriceCompanyIsInCourse).toBeTruthy();
+        });
+
+        it('should pass if course price always contains global price', () => {
+          const everyCoursePriceHasGlobalPrice = courseList
+            .filter(course => course.format === BLENDED)
+            .every(course => get(course, 'prices', [])
+              .every(price => !!price.global));
+          expect(everyCoursePriceHasGlobalPrice).toBeTruthy();
+        });
       });
 
       describe('Collection CourseBill', () => {

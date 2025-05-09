@@ -4205,6 +4205,7 @@ describe('getTraineesWithElearningProgress', () => {
 describe('updateCourse', () => {
   let courseFindOneAndUpdate;
   let createHistoryOnEstimatedStartDateEdition;
+  let courseFindOne;
   const credentials = { _id: new ObjectId() };
   beforeEach(() => {
     courseFindOneAndUpdate = sinon.stub(Course, 'findOneAndUpdate');
@@ -4212,10 +4213,12 @@ describe('updateCourse', () => {
       CourseHistoriesHelper,
       'createHistoryOnEstimatedStartDateEdition'
     );
+    courseFindOne = sinon.stub(Course, 'findOne');
   });
   afterEach(() => {
     courseFindOneAndUpdate.restore();
     createHistoryOnEstimatedStartDateEdition.restore();
+    courseFindOne.restore();
   });
 
   it('should update a field in intra course', async () => {
@@ -4370,6 +4373,66 @@ describe('updateCourse', () => {
         {
           query: 'findOneAndUpdate',
           args: [{ _id: courseId }, { $unset: { salesRepresentative: '' } }],
+        },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should push new price for company', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const courseFromDb = { _id: courseId };
+    const payload = { prices: { company: companyId, global: 2500, trainerFees: 300 } };
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(
+      { ...courseFromDb, prices: [{ company: companyId, global: 2500, trainerFees: 300 }] },
+      ['lean']
+    ));
+
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: courseId }, { $push: payload }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should update price for company', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const courseFromDb = { _id: courseId, prices: [{ company: companyId, global: 2000, trainerFees: 200 }] };
+    const payload = { prices: { company: companyId, global: 2500, trainerFees: '' } };
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(
+      { ...courseFromDb, prices: [{ company: companyId, global: 2500 }] },
+      ['lean']
+    ));
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [{ _id: courseId }, { $set: { prices: [{ company: companyId, global: 2500 }] } }],
         },
         { query: 'lean' },
       ]

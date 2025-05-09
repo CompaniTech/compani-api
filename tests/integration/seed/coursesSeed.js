@@ -387,6 +387,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
+    prices: [{ company: authCompany._id, global: 200 }],
   },
   { // 3
     _id: new ObjectId(),
@@ -400,6 +401,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     trainers: [trainerAndCoach._id],
     certificateGenerationMode: GLOBAL,
+    prices: [{ company: otherCompany._id, global: 200, trainerFees: 10 }],
   },
   { // 4 course without slots
     _id: new ObjectId(),
@@ -675,6 +677,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     maxTrainees: 1,
     expectedBillsCount: 0,
+    prices: [{ global: 1600, company: authCompany._id }],
   },
   { // 25 Single course with tutor already in course
     _id: new ObjectId(),
@@ -765,9 +768,19 @@ const courseBillsList = [
     number: 'FACT-00007',
     payer: { company: authCompany._id },
   },
+  {
+    _id: new ObjectId(),
+    course: coursesList[24]._id,
+    mainFee: { price: 1600, count: 1, description: 'Bonjour', countUnit: TRAINEE },
+    companies: [authCompany._id],
+    billingPurchaseList: [],
+    billedAt: '2022-04-20T09:00:00.000Z',
+    number: 'FACT-00008',
+    payer: { company: authCompany._id },
+  },
 ];
 
-const courseBillNumber = { _id: new ObjectId(), seq: 7 };
+const courseBillNumber = { _id: new ObjectId(), seq: 8 };
 
 const courseCreditNoteList = [
   {
