@@ -1482,7 +1482,7 @@ exports.removeCourseCompany = async (courseId, companyId, credentials) => {
   const trainingContract = await TrainingContract.findOne({ course: courseId, company: companyId }, { _id: 1 }).lean();
 
   return Promise.all([
-    Course.updateOne({ _id: courseId }, { $pull: { companies: companyId } }),
+    Course.updateOne({ _id: courseId }, { $pull: { companies: companyId, prices: { company: companyId } } }),
     CourseHistoriesHelper.createHistoryOnCompanyDeletion({ course: courseId, company: companyId }, credentials._id),
     ...trainingContract ? [TrainingContractsHelper.delete(trainingContract._id)] : [],
   ]);

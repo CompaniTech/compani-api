@@ -5108,8 +5108,11 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/companies{companyId}', () => {
       });
       expect(courseHistory).toEqual(1);
 
-      const course = await Course.countDocuments({ _id: interb2bCourseId, companies: thirdCompany._id });
-      expect(course).toEqual(0);
+      const courseWithCompany = await Course.countDocuments({ _id: interb2bCourseId, companies: thirdCompany._id });
+      const courseWithPrice = await Course
+        .countDocuments({ _id: interb2bCourseId, prices: { company: thirdCompany._id } });
+      expect(courseWithCompany).toEqual(0);
+      expect(courseWithPrice).toEqual(0);
     });
 
     it('should remove company from intra_holding course even if has attendances', async () => {
