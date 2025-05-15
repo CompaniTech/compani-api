@@ -111,14 +111,14 @@ exports.create = async (payload) => {
     const course = await Course.findOne({ _id: payload.course }, { prices: 1 }).lean();
     const trainerFees = (course.prices || []).reduce((acc, price) => {
       if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
-        return acc + price.trainerFees;
+        return NumbersHelper.add(acc, price.trainerFees);
       }
       return acc;
     }, 0);
 
     if (trainerFees) {
       const trainerFeesPayload = {
-        price: (payload.mainFee.percentage * trainerFees) / 100,
+        price: NumbersHelper.oldDivide(NumbersHelper.oldMultiply(payload.mainFee.percentage, trainerFees), 100),
         count: 1,
         percentage: payload.mainFee.percentage,
         billingItem: process.env.TRAINER_FEES_BILLING_ITEM,

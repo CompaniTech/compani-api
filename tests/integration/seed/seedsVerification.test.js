@@ -42,6 +42,7 @@ const { ascendingSort } = require('../../../src/helpers/dates');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const { CompaniDuration } = require('../../../src/helpers/dates/companiDurations');
 const { descendingSortBy, ascendingSortBy } = require('../../../src/helpers/dates/utils');
+const NumbersHelper = require('../../../src/helpers/numbers');
 const UtilsHelper = require('../../../src/helpers/utils');
 const UserCompaniesHelper = require('../../../src/helpers/userCompanies');
 const {
@@ -1102,7 +1103,7 @@ describe('SEEDS VERIFICATION', () => {
         before(async () => {
           courseBillList = await CourseBill
             .find()
-            .populate({ path: 'course', select: 'type format companies type expectedBillsCount', transform })
+            .populate({ path: 'course', select: 'type format companies type expectedBillsCount prices', transform })
             .populate({ path: 'companies', transform })
             .populate({ path: 'payer.company', transform })
             .populate({ path: 'payer.fundingOrganisation', transform })
@@ -1210,6 +1211,46 @@ describe('SEEDS VERIFICATION', () => {
             });
 
           expect(everyBillCountIsLowerThanExpected).toBeTruthy();
+        });
+
+        it('should pass if price is consistent with percentage and course price', () => {
+          const everyBillPriceIsConsistent = courseBillList
+            .filter(bill => bill.mainFee.percentage)
+            .every((bill) => {
+              const coursePrice = bill.course.prices.reduce((acc, price) => {
+                if (UtilsHelper.doesArrayIncludeId(bill.companies.map(c => c._id), price.company)) {
+                  return NumbersHelper.add(acc, price.global);
+                }
+                return acc;
+              }, 0);
+
+              return NumbersHelper.multiply(bill.mainFee.price, bill.mainFee.count)
+                === NumbersHelper.divide(NumbersHelper.multiply(coursePrice, bill.mainFee.percentage), 100);
+            });
+
+          expect(everyBillPriceIsConsistent).toBeTruthy();
+        });
+
+        it('should pass if trainer fees are consistent with percentage and course trainer fees', () => {
+          const everyBillPriceIsConsistent = courseBillList
+            .filter(bill => bill.mainFee.percentage)
+            .every((bill) => {
+              const courseTrainerFees = bill.course.prices.reduce((acc, p) => {
+                if (p.trainerFees && UtilsHelper.doesArrayIncludeId(bill.companies.map(c => c._id), p.company)) {
+                  return NumbersHelper.add(acc, p.trainerFees);
+                }
+                return acc;
+              }, 0);
+
+              const trainerFeeBillinItem = bill.billingPurchaseList.find(purchase => UtilsHelper
+                .areObjectIdsEquals(purchase.billingItem._id, process.env.TRAINER_FEES_BILLING_ITEM)
+              );
+
+              return NumbersHelper.multiply(trainerFeeBillinItem.price, trainerFeeBillinItem.count) === NumbersHelper
+                .divide(NumbersHelper.multiply(courseTrainerFees, trainerFeeBillinItem.percentage), 100);
+            });
+
+          expect(everyBillPriceIsConsistent).toBeTruthy();
         });
       });
 
