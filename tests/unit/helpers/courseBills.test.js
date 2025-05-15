@@ -3,6 +3,7 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const has = require('lodash/has');
 const get = require('lodash/get');
+const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
 const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
@@ -393,16 +394,24 @@ describe('list', () => {
 
 describe('create', () => {
   let create;
+  let findOneCourse;
+  let addBillingPurchase;
 
   beforeEach(() => {
     create = sinon.stub(CourseBill, 'create');
+    findOneCourse = sinon.stub(Course, 'findOne');
+    addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
+    process.env.TRAINER_FEES_BILLING_ITEM = '1234567890';
   });
 
   afterEach(() => {
     create.restore();
+    findOneCourse.restore();
+    addBillingPurchase.restore();
+    process.env.TRAINER_FEES_BILLING_ITEM = '1234567890';
   });
 
-  it('should create a course bill', async () => {
+  it('should create a course bill (without percentage)', async () => {
     const payload = {
       course: new ObjectId(),
       companies: [new ObjectId(), new ObjectId()],
@@ -413,6 +422,72 @@ describe('create', () => {
     await CourseBillHelper.create(payload);
 
     sinon.assert.calledOnceWithExactly(create, payload);
+    sinon.assert.notCalled(findOneCourse);
+    sinon.assert.notCalled(addBillingPurchase);
+  });
+
+  it('should create a course bill (with percentage)', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const course = {
+      _id: courseId,
+      prices: [{ company: companyId, global: 1200 }],
+    };
+    const payload = {
+      course: courseId,
+      companies: [companyId, new ObjectId()],
+      mainFee: { price: 120, count: 1, percentage: 10 },
+      payer: { fundingOrganisation: new ObjectId() },
+      maturityDate: '2022-03-08T00:00:00.000Z',
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    await CourseBillHelper.create(payload);
+
+    sinon.assert.calledOnceWithExactly(create, payload);
+    sinon.assert.notCalled(addBillingPurchase);
+    SinonMongoose.calledOnceWithExactly(
+      findOneCourse,
+      [
+        { query: 'findOne', args: [{ _id: payload.course }, { prices: 1 }] },
+        { query: 'lean', args: [] },
+      ]
+    );
+  });
+
+  it('should create a course bill (with percentage and trainer fees)', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const course = {
+      _id: courseId,
+      prices: [{ company: companyId, global: 1200, trainerFees: 120 }],
+    };
+    const courseBill = { _id: new ObjectId() };
+    const payload = {
+      course: courseId,
+      companies: [companyId, new ObjectId()],
+      mainFee: { price: 120, count: 1, percentage: 10 },
+      payer: { fundingOrganisation: new ObjectId() },
+      maturityDate: '2022-03-08T00:00:00.000Z',
+    };
+
+    create.returns(courseBill);
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    await CourseBillHelper.create(payload);
+
+    sinon.assert.calledOnceWithExactly(create, payload);
+    SinonMongoose.calledOnceWithExactly(
+      findOneCourse,
+      [
+        { query: 'findOne', args: [{ _id: payload.course }, { prices: 1 }] },
+        { query: 'lean', args: [] },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      addBillingPurchase,
+      courseBill._id,
+      { price: 12, count: 1, percentage: 10, billingItem: '1234567890' }
+    );
   });
 });
 
