@@ -291,7 +291,7 @@ const coursesList = [
     companies: [otherCompany._id, companyWithoutSubscription._id, authCompany._id],
     certificateGenerationMode: GLOBAL,
     prices: [
-      { company: otherCompany._id, global: 1200, trainerFee: 120 },
+      { company: otherCompany._id, global: 1200, trainerFees: 120 },
       { company: authCompany._id, global: 2000 },
     ],
   },
