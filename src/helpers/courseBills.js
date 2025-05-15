@@ -1,6 +1,7 @@
 const get = require('lodash/get');
 const omit = require('lodash/omit');
 const NumbersHelper = require('./numbers');
+const Course = require('../models/Course');
 const CourseBill = require('../models/CourseBill');
 const CourseBillsNumber = require('../models/CourseBillsNumber');
 const BalanceHelper = require('./balances');
@@ -103,7 +104,29 @@ exports.list = async (query, credentials) => {
   return balance(query.company, credentials);
 };
 
-exports.create = async payload => CourseBill.create(payload);
+exports.create = async (payload) => {
+  const courseBill = await CourseBill.create(payload);
+
+  if (payload.mainFee.percentage) {
+    const course = await Course.findOne({ _id: payload.course }, { prices: 1 }).lean();
+    const trainerFees = (course.prices || []).reduce((acc, price) => {
+      if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
+        return acc + price.trainerFees;
+      }
+      return acc;
+    }, 0);
+
+    if (trainerFees) {
+      const trainerFeesPayload = {
+        price: (payload.mainFee.percentage * trainerFees) / 100,
+        count: 1,
+        percentage: payload.mainFee.percentage,
+        billingItem: process.env.TRAINER_FEES_BILLING_ITEM,
+      };
+      await exports.addBillingPurchase(courseBill._id, trainerFeesPayload);
+    }
+  }
+};
 
 exports.updateCourseBill = async (courseBillId, payload) => {
   let formattedPayload = {};
