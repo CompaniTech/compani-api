@@ -120,6 +120,7 @@ exports.authorizeCourseBillUpdate = async (req) => {
     .populate({ path: 'course', select: 'type' })
     .lean();
   if (!courseBill) throw Boom.notFound();
+  if (!courseBill.mainFee.percentage && has(req.payload, 'mainFee.percentage')) throw Boom.forbidden();
   if (courseBill.course.type === INTRA && get(req.payload, 'mainFee.countUnit') === TRAINEE) throw Boom.badRequest();
   if (courseBill.course.type === SINGLE) {
     const hasWrongCountUnit = get(req.payload, 'mainFee.countUnit') === GROUP;

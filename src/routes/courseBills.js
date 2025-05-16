@@ -88,6 +88,7 @@ exports.plugin = {
               }).oxor('company', 'fundingOrganisation'),
               mainFee: Joi.object({
                 price: Joi.number().positive(),
+                percentage: Joi.number().positive().integer().max(100),
                 count: Joi.number().positive().integer(),
                 countUnit: Joi.string().valid(GROUP, TRAINEE),
                 description: Joi.string().allow(''),
