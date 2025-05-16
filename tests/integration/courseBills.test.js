@@ -891,6 +891,31 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(countAfter).toBeTruthy();
     });
 
+    it('should update percentage on course bill', async () => {
+      const countBefore = await CourseBill.countDocuments({
+        _id: courseBillsList[13]._id,
+        mainFee: { price: 120, count: 1, countUnit: TRAINEE, percentage: 10 },
+        billingPurchaseList: { $elemMatch: { price: 12, count: 1, percentage: 10 } },
+      });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[13]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 } },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const countAfter = await CourseBill.countDocuments({
+        _id: courseBillsList[13]._id,
+        mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 },
+        billingPurchaseList: { $elemMatch: { price: 24, count: 1, percentage: 20 } },
+      });
+      expect(countBefore).toBeTruthy();
+      expect(countAfter).toBeTruthy();
+    });
+
     it('should invoice course bill', async () => {
       const isBilledBefore = await CourseBill.countDocuments({ number: 'FACT-00009' });
       expect(isBilledBefore).toBeFalsy();
@@ -930,7 +955,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(isUpdated).toBeTruthy();
     });
 
-    const wrongValuesMainFee = { price: 120, count: 1, description: 'lorem ipsum' };
+    const wrongValuesMainFee = { price: 120, count: 1, description: 'lorem ipsum', percentage: 10 };
     const wrongValues = [
       { key: 'price', value: -200 },
       { key: 'price', value: 0 },
@@ -939,13 +964,18 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       { key: 'count', value: 0 },
       { key: 'count', value: 1.23 },
       { key: 'count', value: '1x' },
+      { key: 'percentage', value: -20 },
+      { key: 'percentage', value: 0 },
+      { key: 'percentage', value: 10.5 },
+      { key: 'percentage', value: 105 },
+      { key: 'percentage', value: '10%' },
       { key: 'countUnit', value: '' },
     ];
     wrongValues.forEach((param) => {
       it(`should return 400 as ${param.key} has wrong value : ${param.value}`, async () => {
         const response = await app.inject({
           method: 'PUT',
-          url: `/coursebills/${courseBillsList[1]._id}`,
+          url: `/coursebills/${courseBillsList[13]._id}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: { mainFee: { ...wrongValuesMainFee, [param.key]: param.value } },
         });
@@ -1063,6 +1093,17 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
       expect(response.result.message).toEqual('L\'adresse de la structure cliente est manquante.');
+    });
+
+    it('should return 403 if update percentage on course bill without percentage', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[12]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 } },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 403 if adding payer on validated bill', async () => {
