@@ -1,5 +1,6 @@
 const get = require('lodash/get');
 const omit = require('lodash/omit');
+const { ObjectId } = require('mongodb');
 const NumbersHelper = require('./numbers');
 const Course = require('../models/Course');
 const CourseBill = require('../models/CourseBill');
@@ -121,7 +122,7 @@ exports.create = async (payload) => {
         price: NumbersHelper.oldDivide(NumbersHelper.oldMultiply(payload.mainFee.percentage, trainerFees), 100),
         count: 1,
         percentage: payload.mainFee.percentage,
-        billingItem: process.env.TRAINER_FEES_BILLING_ITEM,
+        billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
       };
       await exports.addBillingPurchase(courseBill._id, trainerFeesPayload);
     }

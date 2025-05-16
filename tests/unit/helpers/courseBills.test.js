@@ -396,19 +396,20 @@ describe('create', () => {
   let create;
   let findOneCourse;
   let addBillingPurchase;
+  const TRAINER_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
     create = sinon.stub(CourseBill, 'create');
     findOneCourse = sinon.stub(Course, 'findOne');
     addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
-    process.env.TRAINER_FEES_BILLING_ITEM = '1234567890';
+    process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
   });
 
   afterEach(() => {
     create.restore();
     findOneCourse.restore();
     addBillingPurchase.restore();
-    process.env.TRAINER_FEES_BILLING_ITEM = '1234567890';
+    process.env.TRAINER_FEES_BILLING_ITEM = '';
   });
 
   it('should create a course bill (without percentage)', async () => {
@@ -486,7 +487,7 @@ describe('create', () => {
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
       courseBill._id,
-      { price: 12, count: 1, percentage: 10, billingItem: '1234567890' }
+      { price: 12, count: 1, percentage: 10, billingItem: TRAINER_FEES_BILLING_ITEM }
     );
   });
 });
