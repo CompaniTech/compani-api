@@ -1289,6 +1289,9 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
   const billingPurchaseId = courseBillsList[0].billingPurchaseList[0]._id;
   const courseBillInvoicedId = courseBillsList[2]._id;
   const billingPurchaseInvoicedId = courseBillsList[2].billingPurchaseList[0]._id;
+  const billWithPercentageId = courseBillsList[13]._id;
+  const trainerFeesWithPercentageId = courseBillsList[13].billingPurchaseList[0]._id;
+
   const payload = { price: 22, count: 2, description: 'café du midi' };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -1358,6 +1361,27 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       expect(courseBillAfter).toBeTruthy();
     });
 
+    it('should update description of trainer fees with percentage', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { price: 12, count: 1, description: 'description' },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const courseBillAfter = await CourseBill.countDocuments({
+        _id: billWithPercentageId,
+        'billingPurchaseList._id': trainerFeesWithPercentageId,
+        'billingPurchaseList.price': 12,
+        'billingPurchaseList.count': 1,
+        'billingPurchaseList.percentage': 10,
+        'billingPurchaseList.description': 'description',
+      });
+      expect(courseBillAfter).toBeTruthy();
+    });
+
     const wrongValues = [
       { key: 'price', value: -200 },
       { key: 'price', value: 0 },
@@ -1413,6 +1437,19 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${courseBillInvoicedId}/billingpurchases/${billingPurchaseInvoicedId}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: set(forbiddenUpdatesPayload, param.key, param.value),
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+    });
+
+    forbiddenUpdates.forEach((param) => {
+      it(`should return 403 if updating ${param.key} of trainer fees with percentage`, async () => {
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: set(forbiddenUpdatesPayload, param.key, param.value),
         });
@@ -1477,6 +1514,19 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}/billingpurchases/{billi
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursebills/${courseBillsList[2]._id}/billingpurchases/${courseBillsList[2].billingPurchaseList[0]._id}`,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course trainer fees with percentage', async () => {
+      const billWithPercentageId = courseBillsList[13]._id;
+      const trainerFeesWithPercentageId = courseBillsList[13].billingPurchaseList[0]._id;
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
         headers: { 'x-access-token': authToken },
       });
 
