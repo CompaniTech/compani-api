@@ -79,7 +79,9 @@ exports.authorizeCourseBillCreation = async (req) => {
         .filter(bill => UtilsHelper.doesArrayIncludeId(bill.companies, company))
         .reduce((acc, bill) => acc + bill.mainFee.percentage, 0);
 
-      if (billedPercentageSum + mainFee.percentage > 100) throw Boom.conflict();
+      if (billedPercentageSum + mainFee.percentage > 100) {
+        throw Boom.conflict(translate[language].sumCourseBillsPercentageGreaterThan100);
+      }
     }
   }
 
