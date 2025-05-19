@@ -467,6 +467,16 @@ const courseBillsList = [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 12, count: 1, percentage: 10 },
     ],
   },
+  { // 14
+    _id: new ObjectId(),
+    course: coursesList[13]._id,
+    companies: [otherCompany._id],
+    mainFee: { price: 360, count: 1, countUnit: TRAINEE, percentage: 30 },
+    payer: { company: otherCompany._id },
+    billingPurchaseList: [
+      { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 36, count: 1, percentage: 30 },
+    ],
+  },
 ];
 
 const courseCreditNoteList = [
