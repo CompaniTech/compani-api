@@ -154,6 +154,27 @@ exports.authorizeCourseBillUpdate = async (req) => {
     if (areFieldsChanged) throw Boom.forbidden();
   }
 
+  if (get(req.payload, 'mainFee.percentage')) {
+    const existingCourseBills = await CourseBill
+      .find({
+        _id: { $ne: courseBill._id },
+        course: courseBill.course._id,
+        companies: { $in: courseBill.companies },
+        'mainFee.percentage': { $exists: true },
+      })
+      .lean();
+
+    for (const company of courseBill.companies) {
+      const billedPercentageSum = existingCourseBills
+        .filter(bill => UtilsHelper.doesArrayIncludeId(bill.companies, company))
+        .reduce((acc, bill) => acc + bill.mainFee.percentage, 0);
+
+      if (billedPercentageSum + req.payload.mainFee.percentage > 100) {
+        throw Boom.conflict(translate[language].sumCourseBillsPercentageGreaterThan100);
+      }
+    }
+  }
+
   return null;
 };
 
