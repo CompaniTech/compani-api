@@ -99,7 +99,7 @@ describe('createCompany', () => {
     sinon.assert.calledWithExactly(createFolderStub.getCall(1), 'customers', '1234567890');
     sinon.assert.calledWithExactly(createFolderStub.getCall(2), 'auxiliaries', '1234567890');
     sinon.assert.calledOnceWithExactly(createCompany, { ...formattedPayload, prefixNumber: 346 });
-    sinon.assert.calledOnceWithExactly(updateHolding, payload.holding, { company: company._id });
+    sinon.assert.calledOnceWithExactly(updateHolding, payload.holding, { companies: [company._id] });
     SinonMongoose.calledOnceWithExactly(
       find,
       [
