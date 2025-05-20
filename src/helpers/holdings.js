@@ -9,7 +9,10 @@ exports.list = async () => Holding
   .lean();
 
 exports.update = async (holdingId, payload) => {
-  if (payload.company) return CompanyHolding.create({ holding: holdingId, company: payload.company });
+  if (payload.companies) {
+    const companies = payload.companies.map(companyId => ({ holding: holdingId, company: companyId }));
+    return CompanyHolding.insertMany(companies);
+  }
 
   return null;
 };

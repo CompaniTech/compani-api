@@ -143,7 +143,7 @@ describe('HOLDINGS ROUTES - GET /holdings', () => {
 
 describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
   let authToken;
-  const payload = { company: company._id };
+  const payload = { companies: [company._id] };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(populateDB);
@@ -170,7 +170,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        payload: { company: otherCompany._id },
+        payload: { companies: [otherCompany._id] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -192,7 +192,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        payload: { company: new ObjectId() },
+        payload: { companies: [new ObjectId()] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

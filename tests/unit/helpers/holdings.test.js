@@ -52,21 +52,21 @@ describe('list', () => {
 });
 
 describe('update', () => {
-  let create;
+  let insertMany;
   beforeEach(() => {
-    create = sinon.stub(CompanyHolding, 'create');
+    insertMany = sinon.stub(CompanyHolding, 'insertMany');
   });
   afterEach(() => {
-    create.restore();
+    insertMany.restore();
   });
 
   it('should link a company to a holding', async () => {
     const holdingId = new ObjectId();
-    const payload = { company: new ObjectId() };
+    const payload = { companies: [new ObjectId()] };
 
     await HoldingHelper.update(holdingId, payload);
 
-    sinon.assert.calledOnceWithExactly(create, { holding: holdingId, company: payload.company });
+    sinon.assert.calledOnceWithExactly(insertMany, [{ holding: holdingId, company: payload.companies[0] }]);
   });
 });
 
