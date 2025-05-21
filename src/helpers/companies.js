@@ -25,7 +25,7 @@ exports.createCompany = async (companyPayload) => {
   });
 
   if (companyPayload.holding) {
-    await HoldingHelper.update(companyPayload.holding, { company: company._id });
+    await HoldingHelper.update(companyPayload.holding, { companies: [company._id] });
   }
 
   return company;

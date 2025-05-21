@@ -3,7 +3,7 @@ const { ObjectId } = require('mongodb');
 const app = require('../../server');
 const CompanyHolding = require('../../src/models/CompanyHolding');
 const Holding = require('../../src/models/Holding');
-const { populateDB, holdings, company } = require('./seed/holdingsSeed');
+const { populateDB, holdings, companies } = require('./seed/holdingsSeed');
 const { getToken } = require('./helpers/authentication');
 const { authCompany, otherCompany, authHolding } = require('../seed/authCompaniesSeed');
 
@@ -143,7 +143,7 @@ describe('HOLDINGS ROUTES - GET /holdings', () => {
 
 describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
   let authToken;
-  const payload = { company: company._id };
+  const payload = { companies: [companies[0]._id] };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(populateDB);
@@ -166,11 +166,26 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       expect(companyHoldingsCount).toEqual(companyHoldingsBefore + 1);
     });
 
+    it('should link some companies to a holding', async () => {
+      const companyHoldingsBefore = await CompanyHolding.countDocuments({ holding: holdings[0]._id });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/holdings/${holdings[0]._id}`,
+        payload: { companies: [companies[0]._id, companies[1]._id] },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const companyHoldingsCount = await CompanyHolding.countDocuments({ holding: holdings[0]._id });
+      expect(companyHoldingsCount).toEqual(companyHoldingsBefore + 2);
+    });
+
     it('should return 403 if company is linked to other holding', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        payload: { company: otherCompany._id },
+        payload: { companies: [companies[0]._id, otherCompany._id] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -192,11 +207,33 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        payload: { company: new ObjectId() },
+        payload: { companies: [companies[0]._id, new ObjectId()] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return a 400 if there is no companies in payload', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/holdings/${holdings[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { companies: [] },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return a 400 if there is no companies field in payload', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/holdings/${holdings[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: {},
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 
