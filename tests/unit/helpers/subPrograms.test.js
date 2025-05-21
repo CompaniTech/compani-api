@@ -189,7 +189,7 @@ describe('updatedSubProgram', () => {
 
     it('should create course with restricted access if subProgram is strictly e-learning and payload has accessCompany',
       async () => {
-        const payload = { status: 'published', accessCompany: new ObjectId() };
+        const payload = { status: 'published', accessCompanies: [new ObjectId()] };
         const subProgram = {
           _id: new ObjectId(),
           name: 'non',
@@ -211,7 +211,7 @@ describe('updatedSubProgram', () => {
           subProgram: subProgram._id,
           type: 'inter_b2c',
           format: 'strictly_e_learning',
-          accessRules: [payload.accessCompany],
+          accessRules: [payload.accessCompanies],
         };
 
         const userIds = [new ObjectId(), new ObjectId()];
@@ -248,7 +248,7 @@ describe('updatedSubProgram', () => {
             subProgram: subProgram._id,
             type: 'inter_b2c',
             format: 'strictly_e_learning',
-            accessRules: [payload.accessCompany],
+            accessRules: [payload.accessCompanies],
           }
         );
         SinonMongoose.calledOnceWithExactly(
@@ -258,7 +258,7 @@ describe('updatedSubProgram', () => {
               query: 'find',
               args: [
                 {
-                  company: payload.accessCompany,
+                  company: payload.accessCompanies,
                   $or: [{ endDate: { $gt: '2025-03-31T14:00:00.000Z' } }, { endDate: { $exists: false } }],
                 },
                 { user: 1 },

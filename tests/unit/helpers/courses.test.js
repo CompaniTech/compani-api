@@ -7315,15 +7315,15 @@ describe('addAccessRule', () => {
   it('should add access rule to course', async () => {
     const courseId = new ObjectId();
     const userIds = [new ObjectId(), new ObjectId()];
-    const payload = { company: new ObjectId() };
+    const payload = { companies: [new ObjectId(), new ObjectId()] };
     const userCompanies = [
-      { user: userIds[0], company: payload.company },
-      { user: userIds[1], company: payload.company },
+      { user: userIds[0], company: payload.companies[0] },
+      { user: userIds[1], company: payload.companies[1] },
     ];
     userCompanyFind.returns(SinonMongoose.stubChainedQueries(userCompanies, ['lean']));
     await CourseHelper.addAccessRule(courseId, payload);
 
-    sinon.assert.calledOnceWithExactly(updateOne, { _id: courseId }, { $push: { accessRules: payload.company } });
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: courseId }, { $addToSet: { accessRules: payload.companies } });
     SinonMongoose.calledOnceWithExactly(
       userCompanyFind,
       [
@@ -7331,7 +7331,7 @@ describe('addAccessRule', () => {
           query: 'find',
           args: [
             {
-              company: payload.company,
+              company: payload.companies,
               $or: [{ endDate: { $gt: CompaniDate().endOf(DAY).toISO() } }, { endDate: { $exists: false } }],
             },
             { user: 1 }],

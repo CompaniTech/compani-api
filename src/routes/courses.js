@@ -381,7 +381,7 @@ exports.plugin = {
       path: '/{_id}/accessrules',
       options: {
         validate: {
-          payload: Joi.object({ company: Joi.string().required() }),
+          payload: Joi.object({ companies: Joi.array().items(Joi.objectId()).required().min(1) }),
         },
         auth: { scope: ['programs:edit'] },
         pre: [{ method: authorizeAccessRuleAddition }],

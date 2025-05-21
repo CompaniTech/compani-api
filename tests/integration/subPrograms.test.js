@@ -80,7 +80,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should publish strictly e-learning subProgram, and create 100% e-learning course with accessRules',
       async () => {
-        const payload = { status: 'published', accessCompany: authCompany._id };
+        const payload = { status: 'published', accessCompanies: [authCompany._id] };
         const response = await app.inject({
           method: 'PUT',
           url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
@@ -96,14 +96,14 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         const countCourse = await Course.countDocuments({
           subProgram: eLearningSubProgramId,
           format: 'strictly_e_learning',
-          accessRules: [payload.accessCompany],
+          accessRules: [payload.accessCompanies],
         });
         expect(countCourse).toBe(1);
       });
 
     it('should publish with empty onSite step', async () => {
       const subProgramId = subProgramsList[7]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -118,7 +118,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 403 trying to publish with empty eLearning step', async () => {
       const subProgramId = subProgramsList[5]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -131,7 +131,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 403 trying to publish with empty activity', async () => {
       const subProgramId = subProgramsList[6]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -144,7 +144,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 403 trying to publish on_site step with empty theoreticalDuration', async () => {
       const subProgramId = subProgramsList[8]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -157,7 +157,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 403 trying to publish elearning step with empty theoreticalDuration', async () => {
       const subProgramId = subProgramsList[9]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -170,7 +170,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 400 if user tries to publish strictly e-learning subProgram with wrong accessCompany',
       async () => {
-        const payload = { status: 'published', accessCompany: new ObjectId() };
+        const payload = { status: 'published', accessCompanies: [new ObjectId()] };
         const response = await app.inject({
           method: 'PUT',
           url: `/subprograms/${eLearningSubProgramId.toHexString()}`,

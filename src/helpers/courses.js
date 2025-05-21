@@ -1376,12 +1376,12 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
 };
 
 exports.addAccessRule = async (courseId, payload) => {
-  await Course.updateOne({ _id: courseId }, { $push: { accessRules: payload.company } });
+  await Course.updateOne({ _id: courseId }, { $addToSet: { accessRules: payload.companies } });
 
   const userCompanies = await UserCompany
     .find(
       {
-        company: payload.company,
+        company: payload.companies,
         $or: [{ endDate: { $gt: CompaniDate().endOf(DAY).toISO() } }, { endDate: { $exists: false } }],
       },
       { user: 1 }
