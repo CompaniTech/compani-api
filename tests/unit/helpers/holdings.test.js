@@ -62,11 +62,15 @@ describe('update', () => {
 
   it('should link a company to a holding', async () => {
     const holdingId = new ObjectId();
-    const payload = { companies: [new ObjectId()] };
+    const payload = { companies: [new ObjectId(), new ObjectId()] };
 
     await HoldingHelper.update(holdingId, payload);
 
-    sinon.assert.calledOnceWithExactly(insertMany, [{ holding: holdingId, company: payload.companies[0] }]);
+    sinon.assert.calledOnceWithExactly(insertMany,
+      [
+        { holding: holdingId, company: payload.companies[0] },
+        { holding: holdingId, company: payload.companies[1] },
+      ]);
   });
 });
 

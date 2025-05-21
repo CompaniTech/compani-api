@@ -20,14 +20,11 @@ exports.authorizeHoldingUpdate = async (req) => {
   const holding = await Holding.countDocuments({ _id: req.params._id });
   if (!holding) throw Boom.notFound();
 
-  if (req.payload.companies) {
-    const companiesIds = Array.isArray(req.payload.companies) ? req.payload.companies : [req.payload.companies];
-    const companies = await Company.countDocuments({ _id: { $in: companiesIds } });
-    if (companies !== companiesIds.length) throw Boom.notFound();
+  const companiesCount = await Company.countDocuments({ _id: { $in: req.payload.companies } });
+  if (companiesCount !== req.payload.companies.length) throw Boom.notFound();
 
-    const companyHolding = await CompanyHolding.countDocuments({ company: { $in: companiesIds } });
-    if (companyHolding > 0) throw Boom.forbidden();
-  }
+  const companiesHoldingCount = await CompanyHolding.countDocuments({ company: { $in: req.payload.companies } });
+  if (companiesHoldingCount) throw Boom.forbidden();
 
   return null;
 };
