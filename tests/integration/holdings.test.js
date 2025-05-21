@@ -172,7 +172,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        payload: { companies: [payload.companies[0], companies[1]._id] },
+        payload: { companies: [companies[0]._id, companies[1]._id] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -185,7 +185,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        payload: { companies: [payload.companies[0], otherCompany._id] },
+        payload: { companies: [companies[0]._id, otherCompany._id] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -207,7 +207,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        payload: { companies: [new ObjectId(), new ObjectId()] },
+        payload: { companies: [companies[0]._id, new ObjectId()] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -225,12 +225,12 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return a 400 if there is no companies', async () => {
+    it('should return a 400 if there is no companies field in payload', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { },
+        payload: {},
       });
 
       expect(response.statusCode).toBe(400);
