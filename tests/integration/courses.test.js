@@ -4698,7 +4698,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should return 200 if a company is in payload', async () => {
+    it('should add a company to access rules', async () => {
       const response = await app.inject({
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
@@ -4711,7 +4711,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       expect(course).toBe(1);
     });
 
-    it('should return 200 if some companies is in payload', async () => {
+    it('should add several companies to access rules', async () => {
       const response = await app.inject({
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
@@ -4720,7 +4720,9 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const course = await Course.countDocuments({ _id: coursesList[8]._id, accessRules: otherCompany._id });
+      const course = await Course.countDocuments(
+        { _id: coursesList[8]._id, accessRules: { $all: [otherCompany._id, thirdCompany._id] } }
+      );
       expect(course).toBe(1);
     });
 
@@ -4751,10 +4753,21 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { companies: [new ObjectId(), new ObjectId()] },
+        payload: { companies: [otherCompany._id, new ObjectId()] },
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 400 if there is no company in accessRules', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[8]._id}/accessrules`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { companies: [] },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 
