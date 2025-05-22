@@ -55,6 +55,7 @@ exports.plugin = {
             course: Joi.objectId().required(),
             mainFee: Joi.object({
               price: Joi.number().positive().required(),
+              percentage: Joi.number().positive().integer().max(100),
               count: Joi.number().positive().integer().required(),
               countUnit: Joi.string().required().valid(GROUP, TRAINEE),
               description: Joi.string().allow(''),
