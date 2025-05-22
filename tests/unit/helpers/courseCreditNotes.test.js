@@ -90,12 +90,13 @@ describe('generateCreditNotePdf', () => {
       siret: '27272727274124',
     };
 
+    const companyId = new ObjectId();
     const creditNote = {
       _id: creditNoteId,
       misc: 'motif',
       number: 'AV-00001',
       date: '2022-03-09T00:00:00.000Z',
-      companies: [new ObjectId()],
+      companies: [companyId],
       courseBill: {
         _id: new ObjectId(),
         course: {
@@ -133,6 +134,7 @@ describe('generateCreditNotePdf', () => {
       {
         number: 'AV-00001',
         date: '09/03/2022',
+        companies: [{ _id: companyId }],
         misc: 'motif',
         courseBill: { number: 'FACT-00001', date: '08/03/2022' },
         vendorCompany,
@@ -154,7 +156,7 @@ describe('generateCreditNotePdf', () => {
               populate: [
                 {
                   path: 'course',
-                  select: 'subProgram',
+                  select: 'subProgram prices',
                   populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
                 },
                 { path: 'payer.fundingOrganisation', select: 'name address' },
