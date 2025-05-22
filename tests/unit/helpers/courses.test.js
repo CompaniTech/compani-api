@@ -7331,7 +7331,7 @@ describe('addAccessRule', () => {
           query: 'find',
           args: [
             {
-              company: payload.companies,
+              company: { $in: payload.companies },
               $or: [{ endDate: { $gt: CompaniDate().endOf(DAY).toISO() } }, { endDate: { $exists: false } }],
             },
             { user: 1 }],

@@ -248,7 +248,7 @@ describe('updatedSubProgram', () => {
             subProgram: subProgram._id,
             type: 'inter_b2c',
             format: 'strictly_e_learning',
-            accessRules: [payload.accessCompanies],
+            accessRules: payload.accessCompanies,
           }
         );
         SinonMongoose.calledOnceWithExactly(
@@ -258,7 +258,7 @@ describe('updatedSubProgram', () => {
               query: 'find',
               args: [
                 {
-                  company: payload.accessCompanies,
+                  company: { $in: payload.accessCompanies },
                   $or: [{ endDate: { $gt: '2025-03-31T14:00:00.000Z' } }, { endDate: { $exists: false } }],
                 },
                 { user: 1 },
