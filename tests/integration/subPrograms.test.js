@@ -96,7 +96,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         const countCourse = await Course.countDocuments({
           subProgram: eLearningSubProgramId,
           format: 'strictly_e_learning',
-          accessRules: [payload.accessCompanies],
+          accessRules: payload.accessCompanies,
         });
         expect(countCourse).toBe(1);
       });
@@ -284,7 +284,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return a 400 if there is no accessCompanies', async () => {
+    it('should return 400 if accessCompanies in payload is empty', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${eLearningSubProgramId.toHexString()}`,

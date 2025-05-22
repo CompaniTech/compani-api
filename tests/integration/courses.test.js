@@ -4742,7 +4742,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { companies: [authCompany._id] },
+        payload: { companies: [authCompany._id, thirdCompany._id] },
       });
 
       expect(response.statusCode).toBe(409);
@@ -4759,7 +4759,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 400 if there is no company in accessRules', async () => {
+    it('should return 400 if accessRules in payload is empty', async () => {
       const response = await app.inject({
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
