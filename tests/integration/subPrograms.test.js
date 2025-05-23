@@ -435,7 +435,7 @@ describe('SUBPROGRAMS ROUTES - POST /subprograms/{_id}/step', () => {
   });
 });
 
-describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/step', () => {
+describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
   let authToken;
   beforeEach(populateDB);
 
@@ -444,12 +444,12 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/step', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should attache step to subProgram', async () => {
+    it('should attach one step to subProgram', async () => {
       const subProgramId = subProgramsList[0]._id;
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
-        payload: { steps: stepsList[3]._id },
+        payload: { steps: [stepsList[3]._id] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -459,11 +459,28 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/step', () => {
       expect(subProgramUpdated).toBeTruthy();
     });
 
+    it('should attach several step to subProgram', async () => {
+      const subProgramId = subProgramsList[0]._id;
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[0]._id}/steps`,
+        payload: { steps: [stepsList[3]._id, stepsList[4]._id] },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const subProgramUpdated = await SubProgram.countDocuments(
+        { _id: subProgramId, steps: { $all: [stepsList[3]._id, stepsList[4]._id] } }
+      );
+      expect(subProgramUpdated).toBeTruthy();
+    });
+
     it('should return a 404 if subProgram does not exist', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${new ObjectId()}/steps`,
-        payload: { steps: stepsList[0]._id },
+        payload: { steps: [stepsList[0]._id] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -474,7 +491,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/step', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
-        payload: { steps: new ObjectId() },
+        payload: { steps: [stepsList[3]._id, new ObjectId()] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -485,7 +502,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/step', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
-        payload: { steps: stepsList[0]._id },
+        payload: { steps: [stepsList[0]._id, stepsList[2]._id] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

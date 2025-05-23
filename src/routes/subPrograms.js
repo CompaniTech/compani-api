@@ -66,7 +66,7 @@ exports.plugin = {
       options: {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
-          payload: Joi.object({ steps: Joi.objectId().required() }),
+          payload: Joi.object({ steps: Joi.array().items(Joi.objectId()).required().min(1) }),
         },
         auth: { scope: ['programs:edit'] },
         pre: [
