@@ -194,7 +194,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 404 if user tries to publish strictly e-learning subProgram with wrong accessCompany',
       async () => {
-        const payload = { status: 'published', accessCompanies: [new ObjectId()] };
+        const payload = { status: 'published', accessCompanies: [new ObjectId(), otherCompany._id] };
         const response = await app.inject({
           method: 'PUT',
           url: `/subprograms/${eLearningSubProgramId.toHexString()}`,

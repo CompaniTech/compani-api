@@ -211,7 +211,7 @@ describe('updatedSubProgram', () => {
           subProgram: subProgram._id,
           type: 'inter_b2c',
           format: 'strictly_e_learning',
-          accessRules: [payload.accessCompanies],
+          accessRules: payload.accessCompanies,
         };
 
         const userIds = [new ObjectId(), new ObjectId()];
