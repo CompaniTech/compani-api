@@ -115,6 +115,7 @@ exports.authorizeStepReuse = async (req) => {
 
   // const stepsAlreadyAttached = UtilsHelper.doesArrayIncludeId(subProgram.steps, steps);
   const stepsAlreadyAttached = steps.some(stepId => UtilsHelper.doesArrayIncludeId(subProgram.steps, stepId));
+  console.log('stepAlreadyAttached', stepsAlreadyAttached);
   if (stepsAlreadyAttached) throw Boom.forbidden();
 
   return null;
