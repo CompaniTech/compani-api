@@ -409,7 +409,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should attach step to subProgram', async () => {
+    it('should attach one step to subProgram', async () => {
       const subProgramId = subProgramsList[0]._id;
       const response = await app.inject({
         method: 'PUT',
@@ -424,7 +424,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
       expect(subProgramUpdated).toBeTruthy();
     });
 
-    it('should attach step to subProgram', async () => {
+    it('should attach several step to subProgram', async () => {
       const subProgramId = subProgramsList[0]._id;
       const response = await app.inject({
         method: 'PUT',
@@ -463,7 +463,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return a 403 if step is already attached to subProgram #tag', async () => {
+    it('should return a 403 if step is already attached to subProgram', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
