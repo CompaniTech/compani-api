@@ -409,7 +409,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should attache step to subProgram', async () => {
+    it('should attach step to subProgram', async () => {
       const subProgramId = subProgramsList[0]._id;
       const response = await app.inject({
         method: 'PUT',
@@ -421,6 +421,23 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
       expect(response.statusCode).toBe(200);
 
       const subProgramUpdated = await SubProgram.countDocuments({ _id: subProgramId, steps: stepsList[3]._id });
+      expect(subProgramUpdated).toBeTruthy();
+    });
+
+    it('should attach step to subProgram', async () => {
+      const subProgramId = subProgramsList[0]._id;
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[0]._id}/steps`,
+        payload: { steps: [stepsList[3]._id, stepsList[4]._id] },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const subProgramUpdated = await SubProgram.countDocuments(
+        { _id: subProgramId, steps: { $all: [stepsList[3]._id, stepsList[4]._id] } }
+      );
       expect(subProgramUpdated).toBeTruthy();
     });
 
@@ -439,18 +456,18 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
-        payload: { steps: [new ObjectId(), new ObjectId()] },
+        payload: { steps: [stepsList[3]._id, new ObjectId()] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return a 403 if step is already attached to subProgram', async () => {
+    it('should return a 403 if step is already attached to subProgram #tag', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
-        payload: { steps: [stepsList[0]._id] },
+        payload: { steps: [stepsList[0]._id, stepsList[2]._id] },
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
