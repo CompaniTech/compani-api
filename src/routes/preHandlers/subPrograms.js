@@ -113,9 +113,7 @@ exports.authorizeStepReuse = async (req) => {
   const stepsExist = await Step.countDocuments({ _id: { $in: steps } });
   if (!stepsExist) throw Boom.notFound();
 
-  // const stepsAlreadyAttached = UtilsHelper.doesArrayIncludeId(subProgram.steps, steps);
   const stepsAlreadyAttached = steps.some(stepId => UtilsHelper.doesArrayIncludeId(subProgram.steps, stepId));
-  console.log('stepAlreadyAttached', stepsAlreadyAttached);
   if (stepsAlreadyAttached) throw Boom.forbidden();
 
   return null;
