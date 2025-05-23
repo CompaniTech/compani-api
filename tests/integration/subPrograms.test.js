@@ -10,7 +10,7 @@ const NotificationHelper = require('../../src/helpers/notifications');
 const UtilsHelper = require('../../src/helpers/utils');
 const { populateDB, subProgramsList, stepsList, tester } = require('./seed/subProgramsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
-const { authCompany } = require('../seed/authCompaniesSeed');
+const { authCompany, otherCompany } = require('../seed/authCompaniesSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -80,7 +80,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should publish strictly e-learning subProgram, and create 100% e-learning course with accessRules',
       async () => {
-        const payload = { status: 'published', accessCompany: authCompany._id };
+        const payload = { status: 'published', accessCompanies: [authCompany._id] };
         const response = await app.inject({
           method: 'PUT',
           url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
@@ -96,14 +96,38 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         const countCourse = await Course.countDocuments({
           subProgram: eLearningSubProgramId,
           format: 'strictly_e_learning',
-          accessRules: [payload.accessCompany],
+          accessRules: payload.accessCompanies,
         });
         expect(countCourse).toBe(1);
       });
 
+    it('should publish strictly e-learning subProgram, '
+      + 'and create 100% e-learning course with several companies in accessRules',
+    async () => {
+      const payload = { status: 'published', accessCompanies: [authCompany._id, otherCompany._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
+        payload,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const subProgramUpdated = !!await SubProgram
+        .countDocuments({ _id: eLearningSubProgramId, status: 'published' });
+      expect(subProgramUpdated).toBeTruthy();
+      const countCourse = await Course.countDocuments({
+        subProgram: eLearningSubProgramId,
+        format: 'strictly_e_learning',
+        accessRules: payload.accessCompanies,
+      });
+      expect(countCourse).toBe(1);
+    });
+
     it('should publish with empty onSite step', async () => {
       const subProgramId = subProgramsList[7]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -118,7 +142,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 403 trying to publish with empty eLearning step', async () => {
       const subProgramId = subProgramsList[5]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -131,7 +155,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 403 trying to publish with empty activity', async () => {
       const subProgramId = subProgramsList[6]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -144,7 +168,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 403 trying to publish on_site step with empty theoreticalDuration', async () => {
       const subProgramId = subProgramsList[8]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -157,7 +181,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should return a 403 trying to publish elearning step with empty theoreticalDuration', async () => {
       const subProgramId = subProgramsList[9]._id;
-      const payload = { status: 'published', accessCompany: authCompany._id };
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramId.toHexString()}`,
@@ -168,9 +192,9 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return a 400 if user tries to publish strictly e-learning subProgram with wrong accessCompany',
+    it('should return a 404 if user tries to publish strictly e-learning subProgram with wrong accessCompany',
       async () => {
-        const payload = { status: 'published', accessCompany: new ObjectId() };
+        const payload = { status: 'published', accessCompanies: [new ObjectId(), otherCompany._id] };
         const response = await app.inject({
           method: 'PUT',
           url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
@@ -178,7 +202,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
 
-        expect(response.statusCode).toBe(400);
+        expect(response.statusCode).toBe(404);
       });
 
     it('should return 400 if setting status to draft ', async () => {
@@ -255,6 +279,17 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         url: `/subprograms/${subProgramsList[1]._id.toHexString()}`,
         payload,
         headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if accessCompanies in payload is empty', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { accessCompanies: [] },
       });
 
       expect(response.statusCode).toBe(400);

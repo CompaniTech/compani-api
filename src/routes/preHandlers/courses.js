@@ -557,11 +557,12 @@ exports.authorizeAccessRuleAddition = async (req) => {
   const course = await Course.findById(req.params._id, 'accessRules').lean();
   if (!course) throw Boom.notFound();
 
-  const accessRuleAlreadyExist = UtilsHelper.doesArrayIncludeId(course.accessRules, req.payload.company);
+  const accessRuleAlreadyExist = req.payload.companies
+    .some(companyId => UtilsHelper.doesArrayIncludeId(course.accessRules, companyId));
   if (accessRuleAlreadyExist) throw Boom.conflict();
 
-  const companyExists = await Company.countDocuments({ _id: req.payload.company });
-  if (!companyExists) throw Boom.notFound();
+  const companiesExists = await Company.countDocuments({ _id: { $in: req.payload.companies } });
+  if (companiesExists !== req.payload.companies.length) throw Boom.notFound();
 
   return null;
 };

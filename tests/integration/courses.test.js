@@ -4698,16 +4698,31 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should return 200', async () => {
+    it('should add a company to access rules', async () => {
       const response = await app.inject({
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { company: otherCompany._id },
+        payload: { companies: [otherCompany._id] },
       });
 
       expect(response.statusCode).toBe(200);
       const course = await Course.countDocuments({ _id: coursesList[8]._id, accessRules: otherCompany._id });
+      expect(course).toBe(1);
+    });
+
+    it('should add several companies to access rules', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[8]._id}/accessrules`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { companies: [otherCompany._id, thirdCompany._id] },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const course = await Course.countDocuments(
+        { _id: coursesList[8]._id, accessRules: { $all: [otherCompany._id, thirdCompany._id] } }
+      );
       expect(course).toBe(1);
     });
 
@@ -4716,7 +4731,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
         method: 'POST',
         url: `/courses/${new ObjectId()}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { company: otherCompany._id },
+        payload: { companies: [otherCompany._id, thirdCompany._id] },
       });
 
       expect(response.statusCode).toBe(404);
@@ -4727,7 +4742,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { company: authCompany._id },
+        payload: { companies: [authCompany._id, thirdCompany._id] },
       });
 
       expect(response.statusCode).toBe(409);
@@ -4738,10 +4753,21 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { company: new ObjectId() },
+        payload: { companies: [otherCompany._id, new ObjectId()] },
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 400 if accessRules in payload is empty', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[8]._id}/accessrules`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { companies: [] },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 

@@ -58,9 +58,9 @@ exports.authorizeSubProgramUpdate = async (req) => {
   }
 
   if (req.payload.status === PUBLISHED && subProgram.isStrictlyELearning) {
-    if (req.payload.accessCompany) {
-      const company = await Company.countDocuments({ _id: req.payload.accessCompany });
-      if (!company) throw Boom.badRequest();
+    if (req.payload.accessCompanies) {
+      const companies = await Company.countDocuments({ _id: { $in: req.payload.accessCompanies } });
+      if (companies !== req.payload.accessCompanies.length) throw Boom.notFound();
     }
 
     const prog = await Program.findOne({ _id: subProgram.program._id })
