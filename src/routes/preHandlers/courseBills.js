@@ -22,10 +22,19 @@ const { language } = translate;
 exports.authorizeCourseBillCreation = async (req) => {
   const { course: courseId, companies: companiesIds, payer, mainFee } = req.payload;
 
-  const course = await Course.findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1 }).lean();
+  const course = await Course
+    .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1 })
+    .lean();
   const everyCompanyBelongsToCourse = course &&
     companiesIds.every(c => UtilsHelper.doesArrayIncludeId(course.companies, c));
   if (!everyCompanyBelongsToCourse) throw Boom.notFound();
+
+  if (course.type !== SINGLE) {
+    const companiesHavePrice = companiesIds
+      .some(c => (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)));
+
+    if (companiesHavePrice && !mainFee.percentage) throw Boom.badRequest();
+  }
 
   if ([INTRA, SINGLE].includes(course.type)) {
     if (!course.expectedBillsCount) throw Boom.conflict();
@@ -53,6 +62,26 @@ exports.authorizeCourseBillCreation = async (req) => {
     } else {
       const company = await Company.countDocuments({ _id: payer.company }, { limit: 1 });
       if (!company) throw Boom.notFound();
+    }
+  }
+
+  if (mainFee.percentage) {
+    if (course.type === SINGLE) throw Boom.forbidden();
+    if (companiesIds.some(c => !(course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)))) {
+      throw Boom.forbidden();
+    }
+    const existingCourseBills = await CourseBill
+      .find({ course: course._id, companies: { $in: companiesIds }, 'mainFee.percentage': { $exists: true } })
+      .lean();
+
+    for (const company of companiesIds) {
+      const billedPercentageSum = existingCourseBills
+        .filter(bill => UtilsHelper.doesArrayIncludeId(bill.companies, company))
+        .reduce((acc, bill) => acc + bill.mainFee.percentage, 0);
+
+      if (billedPercentageSum + mainFee.percentage > 100) {
+        throw Boom.conflict(translate[language].sumCourseBillsPercentageGreaterThan100);
+      }
     }
   }
 
