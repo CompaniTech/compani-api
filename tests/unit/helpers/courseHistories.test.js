@@ -15,6 +15,8 @@ const {
   COMPANY_DELETION,
   COURSE,
   TRAINEE,
+  TRAINER_ADDITION,
+  TRAINER_DELETION,
 } = require('../../../src/helpers/constants');
 const SinonMongoose = require('../sinonMongoose');
 
@@ -425,6 +427,63 @@ describe('createHistoryOnEstimatedStartDateEdition', () => {
   });
 });
 
+describe('createHistoryOnTrainerAddition', () => {
+  let createHistory;
+
+  beforeEach(() => {
+    createHistory = sinon.stub(CourseHistoriesHelper, 'createHistory');
+  });
+
+  afterEach(() => {
+    createHistory.restore();
+  });
+
+  it('should create a courseHistory', async () => {
+    const payload = { trainerId: new ObjectId(), course: new ObjectId() };
+    const userId = new ObjectId();
+
+    await CourseHistoriesHelper.createHistoryOnTrainerAddition(payload, userId);
+
+    sinon.assert.calledOnceWithExactly(
+      createHistory,
+      payload.course,
+      userId,
+      TRAINER_ADDITION,
+      { trainer: payload.trainerId }
+    );
+  });
+});
+
+describe('createHistoryOnTrainerDeletion', () => {
+  let createHistory;
+
+  beforeEach(() => {
+    createHistory = sinon.stub(CourseHistoriesHelper, 'createHistory');
+  });
+
+  afterEach(() => {
+    createHistory.restore();
+  });
+
+  it('should create a courseHistory', async () => {
+    const payload = {
+      trainerId: new ObjectId(),
+      course: new ObjectId(),
+    };
+    const userId = new ObjectId();
+
+    await CourseHistoriesHelper.createHistoryOnTrainerDeletion(payload, userId);
+
+    sinon.assert.calledOnceWithExactly(
+      createHistory,
+      payload.course,
+      userId,
+      TRAINER_DELETION,
+      { trainer: payload.trainerId }
+    );
+  });
+});
+
 describe('list', () => {
   let find;
 
@@ -460,6 +519,7 @@ describe('list', () => {
       { query: 'populate', args: [{ path: 'createdBy', select: '_id identity picture' }] },
       { query: 'populate', args: [{ path: 'trainee', select: '_id identity' }] },
       { query: 'populate', args: [{ path: 'company', select: '_id name' }] },
+      { query: 'populate', args: [{ path: 'trainer', select: '_id identity' }] },
       { query: 'sort', args: [{ createdAt: -1 }] },
       { query: 'limit', args: [20] },
       { query: 'lean' },
@@ -494,6 +554,7 @@ describe('list', () => {
         { query: 'populate', args: [{ path: 'createdBy', select: '_id identity picture' }] },
         { query: 'populate', args: [{ path: 'trainee', select: '_id identity' }] },
         { query: 'populate', args: [{ path: 'company', select: '_id name' }] },
+        { query: 'populate', args: [{ path: 'trainer', select: '_id identity' }] },
         { query: 'sort', args: [{ createdAt: -1 }] },
         { query: 'limit', args: [20] },
         { query: 'lean' },

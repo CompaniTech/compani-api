@@ -14,6 +14,8 @@ const {
   DAY,
   COMPANY_ADDITION,
   COMPANY_DELETION,
+  TRAINER_ADDITION,
+  TRAINER_DELETION,
 } = require('./constants');
 
 exports.createHistory = async (course, createdBy, action, payload) =>
@@ -106,6 +108,7 @@ exports.list = async (query) => {
     .populate({ path: 'createdBy', select: '_id identity picture' })
     .populate({ path: 'trainee', select: '_id identity' })
     .populate({ path: 'company', select: '_id name' })
+    .populate({ path: 'trainer', select: '_id identity' })
     .sort({ createdAt: -1 })
     .limit(20)
     .lean();
@@ -131,3 +134,13 @@ exports.getCompanyAtCourseRegistrationList = async (singleton, list) => {
 
   return companyAtCourseRegistrationList;
 };
+
+exports.createHistoryOnTrainerAddition = (payload, userId) => exports.createHistory(
+  payload.course,
+  userId,
+  TRAINER_ADDITION,
+  { trainer: payload.trainerId }
+);
+
+exports.createHistoryOnTrainerDeletion = (payload, userId) =>
+  exports.createHistory(payload.course, userId, TRAINER_DELETION, { trainer: payload.trainerId });

@@ -7976,8 +7976,9 @@ describe('addTrainer', () => {
     const trainerId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', trainers: [new ObjectId()] };
     const payload = { trainer: trainerId };
+    const credentials = { _id: new ObjectId() };
 
-    await CourseHelper.addTrainer(course._id, payload);
+    await CourseHelper.addTrainer(course._id, payload, credentials);
 
     sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $addToSet: { trainers: trainerId } });
   });
@@ -8004,13 +8005,14 @@ describe('removeTrainer', () => {
     const trainerId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', trainers: [trainerId], contact: trainerId };
     const trainerMission = { _id: new ObjectId(), courses: [course._id], trainer: trainerId };
+    const credentials = { _id: new ObjectId() };
 
     trainerMissionFindOneAndUpdate.returns(
       SinonMongoose.stubChainedQueries({ ...trainerMission, cancelledAt: CompaniDate().startOf(DAY).toISO() }, ['lean'])
     );
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
 
-    await CourseHelper.removeTrainer(course._id, trainerId);
+    await CourseHelper.removeTrainer(course._id, trainerId, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       trainerMissionFindOneAndUpdate,

@@ -1523,10 +1523,15 @@ exports.composeCourseName = (course) => {
   return companyName + course.subProgram.program.name + misc;
 };
 
-exports.addTrainer = async (courseId, payload) => Course
-  .updateOne({ _id: courseId }, { $addToSet: { trainers: payload.trainer } });
+exports.addTrainer = async (courseId, payload, credentials) => {
+  await Course.updateOne({ _id: courseId }, { $addToSet: { trainers: payload.trainer } });
 
-exports.removeTrainer = async (courseId, trainerId) => {
+  await CourseHistoriesHelper.createHistoryOnTrainerAddition(
+    { course: courseId, trainerId: payload.trainer }, credentials._id
+  );
+};
+
+exports.removeTrainer = async (courseId, trainerId, credentials) => {
   await TrainerMission
     .findOneAndUpdate(
       { courses: courseId, trainer: trainerId, cancelledAt: { $exists: false } },
@@ -1541,6 +1546,8 @@ exports.removeTrainer = async (courseId, trainerId) => {
     : { $pull: { trainers: trainerId } };
 
   await Course.updateOne({ _id: courseId }, query);
+
+  await CourseHistoriesHelper.createHistoryOnTrainerDeletion({ course: courseId, trainerId }, credentials._id);
 };
 
 exports.addTutor = async (courseId, payload) => {
