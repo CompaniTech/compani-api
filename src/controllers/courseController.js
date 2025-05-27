@@ -290,8 +290,7 @@ const generateTrainingContract = async (req, h) => {
 
 const addTrainer = async (req) => {
   try {
-    const { credentials } = req.auth;
-    await CoursesHelper.addTrainer(req.params._id, req.payload, credentials);
+    await CoursesHelper.addTrainer(req.params._id, req.payload, req.auth.credentials);
 
     return { message: translate[language].courseTrainerAdded };
   } catch (e) {
@@ -302,8 +301,7 @@ const addTrainer = async (req) => {
 
 const removeTrainer = async (req) => {
   try {
-    const { credentials } = req.auth;
-    await CoursesHelper.removeTrainer(req.params._id, req.params.trainerId, credentials);
+    await CoursesHelper.removeTrainer(req.params._id, req.params.trainerId, req.auth.credentials);
 
     return { message: translate[language].courseTrainerRemoved };
   } catch (e) {

@@ -427,7 +427,7 @@ describe('createHistoryOnEstimatedStartDateEdition', () => {
   });
 });
 
-describe('createHistoryOnTrainerAddition', () => {
+describe('createHistoryOnTrainerAdditionOrDeletion #tag', () => {
   let createHistory;
 
   beforeEach(() => {
@@ -438,47 +438,32 @@ describe('createHistoryOnTrainerAddition', () => {
     createHistory.restore();
   });
 
-  it('should create a courseHistory', async () => {
-    const payload = { trainerId: new ObjectId(), course: new ObjectId() };
+  it('should create a courseHistory for addition trainer', async () => {
+    const payload = { trainerId: new ObjectId(), course: new ObjectId(), action: TRAINER_ADDITION };
     const userId = new ObjectId();
 
-    await CourseHistoriesHelper.createHistoryOnTrainerAddition(payload, userId);
+    await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(payload, userId);
 
     sinon.assert.calledOnceWithExactly(
       createHistory,
       payload.course,
       userId,
-      TRAINER_ADDITION,
+      payload.action,
       { trainer: payload.trainerId }
     );
   });
-});
 
-describe('createHistoryOnTrainerDeletion', () => {
-  let createHistory;
-
-  beforeEach(() => {
-    createHistory = sinon.stub(CourseHistoriesHelper, 'createHistory');
-  });
-
-  afterEach(() => {
-    createHistory.restore();
-  });
-
-  it('should create a courseHistory', async () => {
-    const payload = {
-      trainerId: new ObjectId(),
-      course: new ObjectId(),
-    };
+  it('should create a courseHistory for deletion trainer', async () => {
+    const payload = { trainerId: new ObjectId(), course: new ObjectId(), action: TRAINER_DELETION };
     const userId = new ObjectId();
 
-    await CourseHistoriesHelper.createHistoryOnTrainerDeletion(payload, userId);
+    await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(payload, userId);
 
     sinon.assert.calledOnceWithExactly(
       createHistory,
       payload.course,
       userId,
-      TRAINER_DELETION,
+      payload.action,
       { trainer: payload.trainerId }
     );
   });

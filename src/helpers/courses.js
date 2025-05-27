@@ -70,6 +70,8 @@ const {
   DAY_D_MONTH_YEAR,
   MOBILE,
   SINGLE,
+  TRAINER_ADDITION,
+  TRAINER_DELETION,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
@@ -1526,8 +1528,9 @@ exports.composeCourseName = (course) => {
 exports.addTrainer = async (courseId, payload, credentials) => {
   await Course.updateOne({ _id: courseId }, { $addToSet: { trainers: payload.trainer } });
 
-  await CourseHistoriesHelper.createHistoryOnTrainerAddition(
-    { course: courseId, trainerId: payload.trainer }, credentials._id
+  await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(
+    { course: courseId, trainerId: payload.trainer, action: TRAINER_ADDITION },
+    credentials._id
   );
 };
 
@@ -1547,7 +1550,8 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
 
   await Course.updateOne({ _id: courseId }, query);
 
-  await CourseHistoriesHelper.createHistoryOnTrainerDeletion({ course: courseId, trainerId }, credentials._id);
+  await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(
+    { course: courseId, trainerId, action: TRAINER_DELETION }, credentials._id);
 };
 
 exports.addTutor = async (courseId, payload) => {
