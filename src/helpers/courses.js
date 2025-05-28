@@ -1232,11 +1232,11 @@ const generateCompletionCertificateWord = async (course, attendances, trainee, t
   return { name: `${docType} - ${identity}.docx`, file: fs.createReadStream(filePath) };
 };
 
-const getTraineeList = async (course, credentials) => {
+const getTraineeList = async (course, credentials, isClientInterface) => {
   const isRofOrAdmin = [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(credentials, 'role.vendor.name'));
   const isCourseTrainer = get(credentials, 'role.vendor.name') === TRAINER &&
     UtilsHelper.doesArrayIncludeId(course.trainers, credentials._id);
-  const canAccessAllTrainees = isRofOrAdmin || isCourseTrainer;
+  const canAccessAllTrainees = (isRofOrAdmin || isCourseTrainer) && !isClientInterface;
 
   const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
     .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
@@ -1361,7 +1361,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
     return generateCompletionCertificatePdf(courseData, allAttendances, trainee);
   }
 
-  const traineeList = await getTraineeList(course, credentials);
+  const traineeList = await getTraineeList(course, credentials, query.isClientInterface);
   if (format === ALL_WORD) {
     return generateCompletionCertificateAllWord(courseData, allAttendances, traineeList, type, courseId);
   }
