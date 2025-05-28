@@ -427,7 +427,7 @@ describe('createHistoryOnEstimatedStartDateEdition', () => {
   });
 });
 
-describe('createHistoryOnTrainerAdditionOrDeletion #tag', () => {
+describe('createHistoryOnTrainerAdditionOrDeletion', () => {
   let createHistory;
 
   beforeEach(() => {
