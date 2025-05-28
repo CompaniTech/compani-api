@@ -1551,7 +1551,9 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
   await Course.updateOne({ _id: courseId }, query);
 
   await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(
-    { course: courseId, trainerId, action: TRAINER_DELETION }, credentials._id);
+    { course: courseId, trainerId, action: TRAINER_DELETION },
+    credentials._id
+  );
 };
 
 exports.addTutor = async (courseId, payload) => {

@@ -133,6 +133,5 @@ exports.getCompanyAtCourseRegistrationList = async (singleton, list) => {
   return companyAtCourseRegistrationList;
 };
 
-exports.createHistoryOnTrainerAdditionOrDeletion = (payload, userId) => exports.createHistory(
-  payload.course, userId, payload.action, { trainer: payload.trainerId }
-);
+exports.createHistoryOnTrainerAdditionOrDeletion = (payload, userId) =>
+  exports.createHistory(payload.course, userId, payload.action, { trainer: payload.trainerId });
