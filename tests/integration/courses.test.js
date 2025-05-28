@@ -4481,6 +4481,17 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should return 200 if isClientInterface is true', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates`
+        + `?format=${ALL_WORD}&type=${OFFICIAL}&isClientInterface=${true}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return 404 if course does not exist', async () => {
       const invalidId = (new ObjectId()).toHexString();
       const response = await app.inject({

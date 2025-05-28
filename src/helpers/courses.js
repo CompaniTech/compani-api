@@ -1308,7 +1308,7 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
 };
 
 exports.generateCompletionCertificates = async (courseId, credentials, query) => {
-  const { format, type } = query;
+  const { format, type, isClientInterface } = query;
   const isVendorUser = VENDOR_ROLES.includes(get(credentials, 'role.vendor.name'));
 
   const courseTrainees = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
@@ -1361,7 +1361,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
     return generateCompletionCertificatePdf(courseData, allAttendances, trainee);
   }
 
-  const traineeList = await getTraineeList(course, credentials, query.isClientInterface);
+  const traineeList = await getTraineeList(course, credentials, isClientInterface);
   if (format === ALL_WORD) {
     return generateCompletionCertificateAllWord(courseData, allAttendances, traineeList, type, courseId);
   }
