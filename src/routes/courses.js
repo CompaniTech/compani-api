@@ -369,6 +369,7 @@ exports.plugin = {
           query: Joi.object({
             format: Joi.string().valid(...FORMAT_OPTIONS).required(),
             type: Joi.string().valid(...TYPE_OPTIONS).default(CUSTOM),
+            isClientInterface: Joi.boolean(),
           }),
         },
         pre: [{ method: authorizeGetDocuments }, { method: authorizeGetCompletionCertificates }],

@@ -68,7 +68,13 @@ const {
   ON_SITE,
   REMOTE,
 } = require('../../../src/helpers/constants');
-const { auxiliaryRoleId, trainerRoleId, coachRoleId, clientAdminRoleId } = require('../../seed/authRolesSeed');
+const {
+  auxiliaryRoleId,
+  trainerRoleId,
+  coachRoleId,
+  clientAdminRoleId,
+  trainingOrganisationManagerRoleId,
+} = require('../../seed/authRolesSeed');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 
 const traineeFromAuthFormerlyInOther = {
@@ -176,6 +182,16 @@ const coachFromOtherCompany = {
   origin: WEBAPP,
 };
 
+const ROFAndCoach = {
+  _id: new ObjectId(),
+  identity: { firstname: 'Sacha', lastname: 'Pika' },
+  local: { email: 'ROFAndCoach@alenvi.io', password: '123456!eR' },
+  role: { client: coachRoleId, vendor: trainingOrganisationManagerRoleId },
+  contact: { phone: '0987654312', countryCode: '+33' },
+  refreshToken: uuidv4(),
+  origin: WEBAPP,
+};
+
 const userList = [
   traineeFromOtherCompany,
   traineeFromAuthCompanyWithFormationExpoToken,
@@ -188,6 +204,7 @@ const userList = [
   traineeFormerlyInAuthCompany,
   traineeComingUpInAuthCompany,
   traineeFromAuthFormerlyInOther,
+  ROFAndCoach,
 ];
 
 const userCompanies = [
@@ -271,6 +288,12 @@ const userCompanies = [
     _id: new ObjectId(),
     user: clientAdminFromThirdCompany._id,
     company: thirdCompany._id,
+    startDate: '2020-01-01T10:00:00.000Z',
+  },
+  { // 13
+    _id: new ObjectId(),
+    user: ROFAndCoach._id,
+    company: authCompany._id,
     startDate: '2020-01-01T10:00:00.000Z',
   },
 ];
@@ -1371,4 +1394,5 @@ module.exports = {
   clientAdminFromThirdCompany,
   traineeFromThirdCompany,
   traineeWithoutCompany,
+  ROFAndCoach,
 };

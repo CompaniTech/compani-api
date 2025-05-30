@@ -6660,7 +6660,7 @@ describe('generateCompletionCertificates', () => {
         courseSlot: { startDate: '2022-01-18T07:00:00.000Z', endDate: '2022-01-18T10:00:00.000Z' },
       },
     ];
-    const query = { format: ALL_PDF, type: CUSTOM };
+    const query = { format: ALL_PDF, type: CUSTOM, isClientInterface: true };
 
     attendanceFind.returns(SinonMongoose.stubChainedQueries(attendances, ['populate', 'setOptions', 'lean']));
     courseFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(
