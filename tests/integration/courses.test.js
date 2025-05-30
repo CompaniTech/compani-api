@@ -48,6 +48,7 @@ const {
   clientAdminFromThirdCompany,
   traineeFromThirdCompany,
   fourthCompany,
+  ROFAndCoach,
 } = require('./seed/coursesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const {
@@ -4481,12 +4482,13 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       expect(response.statusCode).toBe(200);
     });
 
-    it('should return 200 if isClientInterface is true', async () => {
+    it('should return 200 if user is also Coach and isClientInterface is true', async () => {
+      const tokenCredentials = await getTokenByCredentials(ROFAndCoach.local);
       const response = await app.inject({
         method: 'GET',
         url: `/courses/${courseIdFromAuthCompany}/completion-certificates`
         + `?format=${ALL_WORD}&type=${OFFICIAL}&isClientInterface=${true}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `alenvi_token=${tokenCredentials}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -4625,7 +4627,8 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 200 as user is coach, course is inter_b2b and type is CUSTOM', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[7]._id}/completion-certificates?format=${ALL_PDF}&type=${CUSTOM}`,
+        url: `/courses/${coursesList[7]._id}/completion-certificates`
+        + `?format=${ALL_PDF}&type=${CUSTOM}&isClientInterface=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -4635,7 +4638,8 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 200 as user is coach, course is inter_b2b and type is OFFICIAL', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[7]._id}/completion-certificates?format=${ALL_PDF}&type=${OFFICIAL}`,
+        url: `/courses/${coursesList[7]._id}/completion-certificates`
+        + `?format=${ALL_PDF}&type=${OFFICIAL}&isClientInterface=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -4645,7 +4649,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 403 as user is coach and access ALL_WORD', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}`,
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}&isClientInterface=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -4679,7 +4683,8 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
         authToken = await getToken(role.name);
         const response = await app.inject({
           method: 'GET',
-          url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_PDF}`,
+          url: `/courses/${courseIdFromAuthCompany}/completion-certificates`
+          + `?format=${ALL_PDF}&isClientInterface=${true}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
 
@@ -4691,7 +4696,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       authToken = await getToken('client_admin');
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${ALL_PDF}`,
+        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${ALL_PDF}&isClientInterface=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
