@@ -3,7 +3,7 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 
-const { sendWelcome } = require('../controllers/emailController');
+const { sendWelcome, sendBillEmail } = require('../controllers/emailController');
 const { authorizeSendEmail } = require('./preHandlers/email');
 const { HELPER, TRAINER, COACH, CLIENT_ADMIN, TRAINEE } = require('../helpers/constants');
 
@@ -26,6 +26,21 @@ exports.plugin = {
         ],
       },
       handler: sendWelcome,
+    });
+    server.route({
+      method: 'POST',
+      path: '/bill',
+      options: {
+        auth: { scope: ['email:send'] },
+        validate: {
+          payload: Joi.object().keys({
+            email: Joi.string().email().required(),
+            pdf: Joi.object().required(),
+            pdfName: Joi.string(),
+          }),
+        },
+      },
+      handler: sendBillEmail,
     });
   },
 };

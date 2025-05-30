@@ -116,3 +116,15 @@ exports.completionCertificateCreationEmail = (certificateCreated, errors, month)
 
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
+
+exports.sendBill = ({ email, pdf, pdfName }) => {
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: email,
+    subject: 'test',
+    html: 'Ceci est un test',
+    attachments: [{ filename: `${pdfName}.pdf`, content: Buffer.from(pdf), contentType: 'application/pdf' }],
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+};
