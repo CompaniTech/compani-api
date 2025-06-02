@@ -119,7 +119,9 @@ exports.create = async (payload) => {
 
     if (trainerFees) {
       const trainerFeesPayload = {
-        price: NumbersHelper.oldDivide(NumbersHelper.oldMultiply(payload.mainFee.percentage, trainerFees), 100),
+        price: NumbersHelper.toFixedToFloat(
+          NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
+        ),
         count: 1,
         percentage: payload.mainFee.percentage,
         billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
@@ -166,9 +168,11 @@ exports.updateCourseBill = async (courseBillId, payload) => {
     if (billingPurchase) {
       const billingPurchasePayload = {
         count: 1,
-        price: NumbersHelper.oldMultiply(
-          billingPurchase.price,
-          NumbersHelper.oldDivide(get(payload, 'mainFee.percentage'), billingPurchase.percentage)
+        price: NumbersHelper.toFixedToFloat(
+          NumbersHelper.multiply(
+            billingPurchase.price,
+            NumbersHelper.divide(get(payload, 'mainFee.percentage'), billingPurchase.percentage)
+          )
         ),
         percentage: get(payload, 'mainFee.percentage'),
       };
