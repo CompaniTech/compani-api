@@ -152,7 +152,7 @@ exports.getFeeTable = (data) => {
   if (data.billingPurchaseList) {
     const totalTrainerFees = (data.course.prices || []).reduce((acc, price) => {
       if (UtilsHelper.doesArrayIncludeId(companiesIds, price.company)) {
-        return NumbersHelper.add(acc, price.trainerFees);
+        return NumbersHelper.add(acc, price.trainerFees || 0);
       }
       return acc;
     }, 0);
