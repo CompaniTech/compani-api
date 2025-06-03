@@ -7723,7 +7723,11 @@ describe('removeCourseCompany', () => {
 
     await CourseHelper.removeCourseCompany(course._id, companyId, credentials);
 
-    sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $pull: { companies: companyId } });
+    sinon.assert.calledOnceWithExactly(
+      courseUpdateOne,
+      { _id: course._id },
+      { $pull: { companies: companyId, prices: { company: companyId } } }
+    );
     sinon.assert.calledOnceWithExactly(
       createHistoryOnCompanyDeletion,
       { course: course._id, company: companyId },

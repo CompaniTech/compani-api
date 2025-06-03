@@ -379,6 +379,14 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
     maturityDate: '2025-04-29T22:00:00.000+00:00',
   };
 
+  const payloadWithPercentage = {
+    course: coursesList[13]._id,
+    companies: [otherCompany._id, authCompany._id],
+    mainFee: { price: 320, count: 2, countUnit: TRAINEE, percentage: 20 },
+    payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+    maturityDate: '2025-04-29T22:00:00.000+00:00',
+  };
+
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
@@ -437,12 +445,65 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should create a bill with percentage', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: payloadWithPercentage,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 403 if course is single but payload has percentage', async () => {
+      const singleCoursePayload = {
+        course: coursesList[12]._id,
+        companies: [otherCompany._id],
+        mainFee: { price: 1500, count: 1, countUnit: TRAINEE, percentage: 10 },
+        payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+        maturityDate: '2025-04-29T22:00:00.000+00:00',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: singleCoursePayload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if payload has percentage but some companies have no price', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payloadWithPercentage, companies: [otherCompany._id, companyWithoutSubscription._id] },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 409 if percentage sum is bigger than 100', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payloadWithPercentage, mainFee: { price: 1520, count: 2, countUnit: TRAINEE, percentage: 95 } },
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
     const missingParams = [
       'course',
       'companies',
       'mainFee',
       'mainFee.price',
       'mainFee.count',
+      'mainFee.percentage',
       'payer',
       'mainFee.countUnit',
       'maturityDate',
@@ -452,7 +513,7 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills',
-          payload: omit(payload, param),
+          payload: omit(payloadWithPercentage, param),
           headers: { 'x-access-token': authToken },
         });
 
@@ -468,6 +529,11 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
       { key: 'count', value: 0 },
       { key: 'count', value: 1.23 },
       { key: 'count', value: '1x' },
+      { key: 'percentage', value: -20 },
+      { key: 'percentage', value: 0 },
+      { key: 'percentage', value: 10.5 },
+      { key: 'percentage', value: 105 },
+      { key: 'percentage', value: '10%' },
       { key: 'countUnit', value: 'learner' },
     ];
     wrongValues.forEach((param) => {
@@ -475,7 +541,7 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills',
-          payload: { ...payload, mainFee: { ...payload.mainFee, [param.key]: param.value } },
+          payload: { ...payloadWithPercentage, mainFee: { ...payload.mainFee, [param.key]: param.value } },
           headers: { 'x-access-token': authToken },
         });
 

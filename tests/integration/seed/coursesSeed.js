@@ -470,6 +470,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    prices: [{ company: thirdCompany._id, global: 1200 }],
   },
   { // 8 eLearning course with access rules
     _id: new ObjectId(),
