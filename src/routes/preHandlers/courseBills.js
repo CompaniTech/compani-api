@@ -120,6 +120,7 @@ exports.authorizeCourseBillUpdate = async (req) => {
     .populate({ path: 'course', select: 'type' })
     .lean();
   if (!courseBill) throw Boom.notFound();
+  if (!courseBill.mainFee.percentage && has(req.payload, 'mainFee.percentage')) throw Boom.forbidden();
   if (courseBill.course.type === INTRA && get(req.payload, 'mainFee.countUnit') === TRAINEE) throw Boom.badRequest();
   if (courseBill.course.type === SINGLE) {
     const hasWrongCountUnit = get(req.payload, 'mainFee.countUnit') === GROUP;
@@ -153,6 +154,27 @@ exports.authorizeCourseBillUpdate = async (req) => {
     if (areFieldsChanged) throw Boom.forbidden();
   }
 
+  if (get(req.payload, 'mainFee.percentage')) {
+    const existingCourseBills = await CourseBill
+      .find({
+        _id: { $ne: courseBill._id },
+        course: courseBill.course._id,
+        companies: { $in: courseBill.companies },
+        'mainFee.percentage': { $exists: true },
+      })
+      .lean();
+
+    for (const company of courseBill.companies) {
+      const billedPercentageSum = existingCourseBills
+        .filter(bill => UtilsHelper.doesArrayIncludeId(bill.companies, company))
+        .reduce((acc, bill) => acc + bill.mainFee.percentage, 0);
+
+      if (billedPercentageSum + req.payload.mainFee.percentage > 100) {
+        throw Boom.conflict(translate[language].sumCourseBillsPercentageGreaterThan100);
+      }
+    }
+  }
+
   return null;
 };
 
@@ -181,14 +203,14 @@ exports.authorizeCourseBillingPurchaseUpdate = async (req) => {
     .lean();
   if (!courseBillRelatedToPurchase) throw Boom.notFound();
 
-  if (courseBillRelatedToPurchase.billedAt) {
-    const payloadKeys = Object.keys(omit(req.payload, 'description'));
-    const purchase = courseBillRelatedToPurchase.billingPurchaseList
-      .find(p => UtilsHelper.areObjectIdsEquals(p._id, billingPurchaseId));
+  const payloadKeys = Object.keys(omit(req.payload, 'description'));
+  const purchase = courseBillRelatedToPurchase.billingPurchaseList
+    .find(p => UtilsHelper.areObjectIdsEquals(p._id, billingPurchaseId));
 
-    const areFieldsChanged = payloadKeys.some(key => get(req.payload, key) !== get(purchase, key));
-    if (areFieldsChanged) throw Boom.forbidden();
-  }
+  const areFieldsChanged = payloadKeys.some(key => get(req.payload, key) !== get(purchase, key));
+  const isTrainerFeesWithPercentage = purchase.percentage &&
+    UtilsHelper.areObjectIdsEquals(purchase.billingItem, process.env.TRAINER_FEES_BILLING_ITEM);
+  if ((courseBillRelatedToPurchase.billedAt || isTrainerFeesWithPercentage) && areFieldsChanged) throw Boom.forbidden();
 
   return null;
 };
@@ -202,8 +224,12 @@ exports.authorizeCourseBillingPurchaseDelete = async (req) => {
   if (courseBill.billedAt) throw Boom.forbidden();
 
   const purchaseRelatedToBill = courseBill.billingPurchaseList
-    .some(p => UtilsHelper.areObjectIdsEquals(p._id, billingPurchaseId));
+    .find(p => UtilsHelper.areObjectIdsEquals(p._id, billingPurchaseId));
   if (!purchaseRelatedToBill) throw Boom.notFound();
+  const isTrainerFeesWithPercentage = purchaseRelatedToBill.percentage &&
+    UtilsHelper.areObjectIdsEquals(purchaseRelatedToBill.billingItem, process.env.TRAINER_FEES_BILLING_ITEM);
+
+  if (isTrainerFeesWithPercentage) throw Boom.forbidden();
 
   return null;
 };

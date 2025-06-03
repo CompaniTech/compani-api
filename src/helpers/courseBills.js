@@ -119,7 +119,9 @@ exports.create = async (payload) => {
 
     if (trainerFees) {
       const trainerFeesPayload = {
-        price: NumbersHelper.oldDivide(NumbersHelper.oldMultiply(payload.mainFee.percentage, trainerFees), 100),
+        price: NumbersHelper.toFixedToFloat(
+          NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
+        ),
         count: 1,
         percentage: payload.mainFee.percentage,
         billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
@@ -158,7 +160,26 @@ exports.updateCourseBill = async (courseBillId, payload) => {
     };
   }
 
-  await CourseBill.updateOne({ _id: courseBillId }, formattedPayload);
+  const courseBill = await CourseBill.findOneAndUpdate({ _id: courseBillId }, formattedPayload);
+  if (get(payload, 'mainFee.percentage')) {
+    const billingPurchase = courseBill.billingPurchaseList.find(bp =>
+      UtilsHelper.areObjectIdsEquals(bp.billingItem, process.env.TRAINER_FEES_BILLING_ITEM) && bp.percentage
+    );
+    if (billingPurchase) {
+      const billingPurchasePayload = {
+        count: 1,
+        price: NumbersHelper.toFixedToFloat(
+          NumbersHelper.multiply(
+            billingPurchase.price,
+            NumbersHelper.divide(get(payload, 'mainFee.percentage'), billingPurchase.percentage)
+          )
+        ),
+        percentage: get(payload, 'mainFee.percentage'),
+      };
+
+      await exports.updateBillingPurchase(courseBill._id, billingPurchase._id, billingPurchasePayload);
+    }
+  }
 };
 
 exports.addBillingPurchase = async (courseBillId, payload) =>
@@ -171,6 +192,7 @@ exports.updateBillingPurchase = async (courseBillId, billingPurchaseId, payload)
       'billingPurchaseList.$.price': payload.price,
       'billingPurchaseList.$.count': payload.count,
       ...(!!payload.description && { 'billingPurchaseList.$.description': payload.description }),
+      ...(!!payload.percentage && { 'billingPurchaseList.$.percentage': payload.percentage }),
     },
     ...(get(payload, 'description') === '' && { $unset: { 'billingPurchaseList.$.description': '' } }),
   }
