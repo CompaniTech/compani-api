@@ -107,7 +107,7 @@ exports.getFeeTable = (data) => {
       ...data.mainFee.percentage
         ? [
           { text: 'Prix global', style: 'header', alignment: 'center' },
-          { text: '%', style: 'header', alignment: 'center' },
+          { text: '% du prix global', style: 'header', alignment: 'center' },
         ]
         : [],
       { text: `Quantité (${COUNT_UNIT[data.mainFee.countUnit]})`, style: 'header', alignment: 'center' },
@@ -136,7 +136,7 @@ exports.getFeeTable = (data) => {
       ...data.mainFee.percentage
         ? [
           { text: UtilsHelper.formatPrice(totalPrice), alignment: 'center', marginTop: 8 },
-          { text: data.mainFee.percentage, alignment: 'center', marginTop: 8 },
+          { text: `${data.mainFee.percentage} %`, alignment: 'center', marginTop: 8 },
         ]
         : [],
       { text: data.mainFee.count, alignment: 'center', marginTop: 8 },
@@ -173,7 +173,7 @@ exports.getFeeTable = (data) => {
                 alignment: 'center',
                 marginTop: 8,
               },
-              { text: purchase.percentage || '', alignment: 'center', marginTop: 8 },
+              { text: purchase.percentage ? `${purchase.percentage} %` : '', alignment: 'center', marginTop: 8 },
             ]
             : [],
           { text: purchase.count, alignment: 'center', marginTop: 8 },
@@ -193,7 +193,7 @@ exports.getFeeTable = (data) => {
       table: {
         body: billDetailsTableBody,
         widths: data.mainFee.percentage
-          ? ['5%', '45%', '10%', '10%', '10%', '10%', '10%']
+          ? ['5%', '43%', '12%', '7%', '9%', '12%', '12%']
           : ['5%', '50%', '15%', '15%', '15%'],
       },
       margin: [0, 8, 0, 8],
