@@ -3923,10 +3923,10 @@ picomatch@^2.0.4, picomatch@^2.2.1, picomatch@^2.2.3, picomatch@^2.3.1:
   resolved "https://registry.yarnpkg.com/picomatch/-/picomatch-2.3.1.tgz#3ba3833733646d9d3e4995946c1365a67fb07a42"
   integrity sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA==
 
-pizzip@~3.1.8:
-  version "3.1.8"
-  resolved "https://registry.yarnpkg.com/pizzip/-/pizzip-3.1.8.tgz#2028944e4845cb08fb79412939fc41d842659858"
-  integrity sha512-Nynadaz6/o1cmXDQGKqmTnbeaY10BGNc1PPOZYJMfLcjWfVJQ1ARngpVO+BrrRl/WUNIj0V9uJNrP72mkfsY5A==
+pizzip@~3.2.0:
+  version "3.2.0"
+  resolved "https://registry.yarnpkg.com/pizzip/-/pizzip-3.2.0.tgz#033daeada94d862fc354a2222130ea91e8792615"
+  integrity sha512-X4NPNICxCfIK8VYhF6wbksn81vTiziyLbvKuORVAmolvnUzl1A1xmz9DAWKxPRq9lZg84pJOOAMq3OE61bD8IQ==
   dependencies:
     pako "^2.1.0"
 
