@@ -40,7 +40,7 @@
     "bcryptjs": "~3.0.2",
     "bignumber.js": "~9.3.0",
     "cron": "~4.3.1",
-    "date-holidays": "~3.24.1",
+    "date-holidays": "~3.24.3",
     "docxtemplater": "~3.61.1",
     "dotenv": "~16.5.0",
     "flat": "~5.0.2",
