@@ -104,11 +104,25 @@ exports.getFeeTable = (data) => {
     [
       { text: '#', style: 'header', alignment: 'left' },
       { text: 'Article & description', style: 'header', alignment: 'left' },
+      ...data.mainFee.percentage
+        ? [
+          { text: 'Prix global', style: 'header', alignment: 'center' },
+          { text: '% du prix global', style: 'header', alignment: 'center' },
+        ]
+        : [],
       { text: `Quantité (${COUNT_UNIT[data.mainFee.countUnit]})`, style: 'header', alignment: 'center' },
       { text: 'Prix unitaire', style: 'header', alignment: 'center' },
       { text: 'Coût', alignment: 'right', style: 'header' },
     ],
   ];
+
+  const companiesIds = data.companies.map(c => c._id);
+  const totalPrice = (data.course.prices || []).reduce((acc, price) => {
+    if (UtilsHelper.doesArrayIncludeId(companiesIds, price.company)) {
+      return NumbersHelper.add(acc, price.global);
+    }
+    return acc;
+  }, 0);
 
   billDetailsTableBody.push(
     [
@@ -119,6 +133,12 @@ exports.getFeeTable = (data) => {
           { text: data.mainFee.description || '', style: 'description', marginBottom: 8 },
         ],
       },
+      ...data.mainFee.percentage
+        ? [
+          { text: UtilsHelper.formatPrice(totalPrice), alignment: 'center', marginTop: 8 },
+          { text: `${data.mainFee.percentage} %`, alignment: 'center', marginTop: 8 },
+        ]
+        : [],
       { text: data.mainFee.count, alignment: 'center', marginTop: 8 },
       { text: UtilsHelper.formatPrice(data.mainFee.price), alignment: 'center', marginTop: 8 },
       {
@@ -130,6 +150,12 @@ exports.getFeeTable = (data) => {
   );
 
   if (data.billingPurchaseList) {
+    const totalTrainerFees = (data.course.prices || []).reduce((acc, price) => {
+      if (UtilsHelper.doesArrayIncludeId(companiesIds, price.company)) {
+        return NumbersHelper.add(acc, price.trainerFees || 0);
+      }
+      return acc;
+    }, 0);
     data.billingPurchaseList.forEach((purchase, i) => {
       billDetailsTableBody.push(
         [
@@ -140,6 +166,16 @@ exports.getFeeTable = (data) => {
               { text: purchase.description || '', style: 'description', marginBottom: 8 },
             ],
           },
+          ...data.mainFee.percentage
+            ? [
+              {
+                text: purchase.percentage ? UtilsHelper.formatPrice(totalTrainerFees) : '',
+                alignment: 'center',
+                marginTop: 8,
+              },
+              { text: purchase.percentage ? `${purchase.percentage} %` : '', alignment: 'center', marginTop: 8 },
+            ]
+            : [],
           { text: purchase.count, alignment: 'center', marginTop: 8 },
           { text: UtilsHelper.formatPrice(purchase.price), alignment: 'center', marginTop: 8 },
           {
@@ -154,7 +190,12 @@ exports.getFeeTable = (data) => {
 
   return [
     {
-      table: { body: billDetailsTableBody, widths: ['5%', '50%', '15%', '15%', '15%'] },
+      table: {
+        body: billDetailsTableBody,
+        widths: data.mainFee.percentage
+          ? ['5%', '43%', '12%', '7%', '9%', '12%', '12%']
+          : ['5%', '50%', '15%', '15%', '15%'],
+      },
       margin: [0, 8, 0, 8],
       layout: { vLineWidth: () => 0, hLineWidth: i => (i > 1 ? 1 : 0), hLineColor: () => COPPER_GREY_200 },
     },

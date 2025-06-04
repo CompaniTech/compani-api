@@ -870,7 +870,7 @@ describe('generateBillPdf', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram',
+            select: 'subProgram prices',
             populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
           }],
         },

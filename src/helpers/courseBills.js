@@ -224,7 +224,7 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
     .findOne({ _id: billId }, { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 })
     .populate({
       path: 'course',
-      select: 'subProgram',
+      select: 'subProgram prices',
       populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
     })
     .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } })

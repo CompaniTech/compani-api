@@ -32,7 +32,7 @@ exports.generateCreditNotePdf = async (creditNoteId) => {
       populate: [
         {
           path: 'course',
-          select: 'subProgram',
+          select: 'subProgram prices',
           populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
         },
         { path: 'payer.fundingOrganisation', select: 'name address' },
@@ -46,6 +46,7 @@ exports.generateCreditNotePdf = async (creditNoteId) => {
   const data = {
     number: creditNote.number,
     date: CompaniDate(creditNote.date).format(DD_MM_YYYY),
+    companies: creditNote.companies.map(c => ({ _id: c })),
     misc: creditNote.misc,
     vendorCompany,
     courseBill: {
