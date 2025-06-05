@@ -344,7 +344,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[0].trainees[0]._id.toHexString(),
+        trainee: coursesList[0].trainees[0].toHexString(),
         trainer: trainer._id.toHexString(),
       };
 
@@ -364,7 +364,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[5]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[5].trainees[0]._id.toHexString(),
+        trainee: coursesList[5].trainees[0].toHexString(),
         trainer: trainer._id.toHexString(),
       };
 

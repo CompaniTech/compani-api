@@ -550,14 +550,14 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
       const stepsLengthBefore = subProgramsList[0].steps.length;
       const response = await app.inject({
         method: 'DELETE',
-        url: `/subprograms/${subProgramId}/steps/${subProgramsList[0].steps[0]._id}`,
+        url: `/subprograms/${subProgramId}/steps/${subProgramsList[0].steps[0]}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
       const subProgramUpdated = await SubProgram.findOne({ _id: subProgramId }).lean();
       expect(subProgramUpdated.steps.length).toEqual(stepsLengthBefore - 1);
-      expect(subProgramUpdated.steps.some(step => step._id === subProgramsList[0].steps[0]._id)).toBeFalsy();
+      expect(subProgramUpdated.steps.some(step => step._id === subProgramsList[0].steps[0])).toBeFalsy();
     });
 
     it('should return a 404 if subprogram does not contain step', async () => {
@@ -573,7 +573,7 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
     it('should return a 403 if trying to remove step to a subprogram with status published', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/subprograms/${subProgramsList[2]._id}/steps/${subProgramsList[2].steps[0]._id}`,
+        url: `/subprograms/${subProgramsList[2]._id}/steps/${subProgramsList[2].steps[0]}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -583,7 +583,7 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
     it('should return a 200 if step is linked to a courseSlot but from another subprogram', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/subprograms/${subProgramsList[6]._id}/steps/${subProgramsList[6].steps[1]._id}`,
+        url: `/subprograms/${subProgramsList[6]._id}/steps/${subProgramsList[6].steps[1]}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

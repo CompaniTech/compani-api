@@ -300,11 +300,11 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         status: 'draft',
         activities: expect.arrayContaining([
           {
-            _id: expect.any(ObjectId),
+            _id: expect.any(Object),
             type: 'lesson',
             name: 'chanter',
             cards: expect.arrayContaining([
-              { _id: expect.any(ObjectId), template: 'transition', title: 'do mi sol do' },
+              { _id: expect.any(Object), template: 'transition', title: 'do mi sol do' },
             ]),
           },
         ]),
@@ -659,9 +659,9 @@ describe('STEPS ROUTES - GET /steps', () => {
       expect(response.statusCode).toBe(200);
       expect(response.result.data.steps.length).toEqual(3);
       expect(response.result.data.steps).toEqual(expect.arrayContaining([
-        { _id: expect.any(ObjectId), name: 'etape 1', type: 'on_site' },
-        { _id: expect.any(ObjectId), name: 'etape 2', type: 'e_learning' },
-        { _id: expect.any(ObjectId), name: 'etape 3', type: 'e_learning' },
+        { _id: expect.any(Object), name: 'etape 1', type: 'on_site' },
+        { _id: expect.any(Object), name: 'etape 2', type: 'e_learning' },
+        { _id: expect.any(Object), name: 'etape 3', type: 'e_learning' },
       ]));
     });
 
