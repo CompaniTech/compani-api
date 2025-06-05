@@ -228,9 +228,9 @@ exports.getDurationForExport = (startDate, endDate) =>
   exports.formatFloatForExport(CompaniDuration(CompaniDate(endDate).diff(startDate, 'minutes')).asHours());
 
 exports.getKeysOf2DepthObject = object => Object.entries(object).reduce((acc, [key, value]) => {
-  if (typeof value === 'object' && !(value instanceof ObjectId) && Object.keys(value).length && !Array.isArray(value)) {
-    return [...acc, ...Object.keys(value).map(k => `${key}.${k}`)];
-  }
+  const isPlainNestedObject = typeof value === 'object' && !isObjectIdOrHexString(value) && Object.keys(value).length &&
+    !Array.isArray(value);
+  if (isPlainNestedObject) return [...acc, ...Object.keys(value).map(k => `${key}.${k}`)];
 
   return [...acc, key];
 }, []);
