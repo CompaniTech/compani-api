@@ -63,7 +63,7 @@
     "mongoose-autopopulate": "~1.1.0",
     "mongoose-lean-virtuals": "~2.0.0",
     "nodemailer": "~7.0.3",
-    "pdfmake": "~0.2.18",
+    "pdfmake": "~0.2.20",
     "pizzip": "~3.2.0",
     "qrcode": "git+https://github.com/CompaniTech/node-qrcode.git",
     "randomatic": "~3.1.1",
