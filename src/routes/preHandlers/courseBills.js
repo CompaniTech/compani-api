@@ -165,10 +165,13 @@ exports.authorizeCourseBillUpdate = async (req) => {
         companies: { $in: courseBill.companies },
         'mainFee.percentage': { $exists: true },
       })
+      .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
       .lean();
 
+    const courseBillsWithoutCreditNote = existingCourseBills.filter(cb => !cb.courseCreditNote);
+
     for (const company of courseBill.companies) {
-      const billedPercentageSum = existingCourseBills
+      const billedPercentageSum = courseBillsWithoutCreditNote
         .filter(bill => UtilsHelper.doesArrayIncludeId(bill.companies, company))
         .reduce((acc, bill) => acc + bill.mainFee.percentage, 0);
 
