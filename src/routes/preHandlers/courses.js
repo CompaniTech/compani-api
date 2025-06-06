@@ -274,6 +274,21 @@ exports.authorizeCourseEdit = async (req) => {
       if (courseBillsWithoutCreditNote.length > payload.expectedBillsCount) throw Boom.conflict();
     }
 
+    if (has(payload, 'prices')) {
+      const { global, company } = payload.prices;
+      if (!isRofOrAdmin) throw Boom.forbidden();
+
+      const courseBills = await CourseBill.countDocuments({ course: course._id, companies: company });
+
+      if (courseBills && course.type !== SINGLE) throw Boom.forbidden();
+
+      const globalPriceExist = global ||
+        (course.prices && course.prices.find(p => UtilsHelper.areObjectIdsEquals(p.company, company)).global);
+      if (has(payload, 'prices.trainerFees') && !globalPriceExist) throw Boom.forbidden();
+
+      if (!UtilsHelper.doesArrayIncludeId(course.companies, company)) throw Boom.forbidden();
+    }
+
     const archivedAt = get(req, 'payload.archivedAt');
     if (archivedAt || unarchiveCourse) {
       if (!isRofOrAdmin) return Boom.forbidden();
@@ -542,11 +557,12 @@ exports.authorizeAccessRuleAddition = async (req) => {
   const course = await Course.findById(req.params._id, 'accessRules').lean();
   if (!course) throw Boom.notFound();
 
-  const accessRuleAlreadyExist = UtilsHelper.doesArrayIncludeId(course.accessRules, req.payload.company);
+  const accessRuleAlreadyExist = req.payload.companies
+    .some(companyId => UtilsHelper.doesArrayIncludeId(course.accessRules, companyId));
   if (accessRuleAlreadyExist) throw Boom.conflict();
 
-  const companyExists = await Company.countDocuments({ _id: req.payload.company });
-  if (!companyExists) throw Boom.notFound();
+  const companiesExists = await Company.countDocuments({ _id: { $in: req.payload.companies } });
+  if (companiesExists !== req.payload.companies.length) throw Boom.notFound();
 
   return null;
 };

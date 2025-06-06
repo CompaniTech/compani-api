@@ -26,14 +26,14 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       subProgram: subProgramId,
       type: INTER_B2C,
       format: STRICTLY_E_LEARNING,
-      accessRules: payload.accessCompany ? [payload.accessCompany] : [],
+      accessRules: payload.accessCompanies || [],
     });
     const query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
-    if (payload.accessCompany) {
+    if (payload.accessCompanies) {
       const userCompanies = await UserCompany
         .find(
           {
-            company: payload.accessCompany,
+            company: { $in: payload.accessCompanies },
             $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
           },
           { user: 1 }

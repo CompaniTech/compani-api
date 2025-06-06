@@ -2,6 +2,7 @@
 
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
+const has = require('lodash/has');
 const {
   list,
   create,
@@ -72,6 +73,7 @@ const {
   TYPE_OPTIONS,
   SINGLE,
   STRICTLY_E_LEARNING,
+  INTER_B2B,
 } = require('../helpers/constants');
 const { dateToISOString } = require('./validations/utils');
 
@@ -147,6 +149,12 @@ exports.plugin = {
             salesRepresentative: Joi.objectId(),
             certificateGenerationMode: Joi.string().required().valid(...CERTIFICATE_GENERATION_MODE),
             trainee: Joi.objectId().when('type', { is: SINGLE, then: Joi.required(), otherwise: Joi.forbidden() }),
+            prices: Joi
+              .object({
+                global: Joi.number().positive().when('trainerFees', { is: Joi.exist(), then: Joi.required() }),
+                trainerFees: Joi.number().positive(),
+              })
+              .when('type', { is: [INTER_B2B, INTRA_HOLDING], then: Joi.forbidden() }),
           }),
         },
         auth: { scope: ['courses:create'] },
@@ -232,6 +240,19 @@ exports.plugin = {
             hasCertifyingTest: Joi.boolean(),
             certifiedTrainees: Joi.array().items(Joi.objectId()),
             salesRepresentative: Joi.objectId().allow(''),
+            prices: Joi.object({
+              trainerFees: Joi.number().positive().allow(''),
+              global: Joi.number().positive(),
+              company: Joi.objectId(),
+            })
+              .with('trainerFees', 'company')
+              .with('global', 'company')
+              .custom((value, helpers) => {
+                if (value.company && !has(value, 'trainerFees') && !has(value, 'global')) {
+                  return helpers.error('any.invalid', { message: 'company must not be present alone' });
+                }
+                return value;
+              }),
           }),
         },
         pre: [{ method: authorizeCourseEdit }],
@@ -348,6 +369,7 @@ exports.plugin = {
           query: Joi.object({
             format: Joi.string().valid(...FORMAT_OPTIONS).required(),
             type: Joi.string().valid(...TYPE_OPTIONS).default(CUSTOM),
+            isClientInterface: Joi.boolean(),
           }),
         },
         pre: [{ method: authorizeGetDocuments }, { method: authorizeGetCompletionCertificates }],
@@ -360,7 +382,7 @@ exports.plugin = {
       path: '/{_id}/accessrules',
       options: {
         validate: {
-          payload: Joi.object({ company: Joi.string().required() }),
+          payload: Joi.object({ companies: Joi.array().items(Joi.objectId()).required().min(1) }),
         },
         auth: { scope: ['programs:edit'] },
         pre: [{ method: authorizeAccessRuleAddition }],

@@ -48,6 +48,7 @@ const {
   clientAdminFromThirdCompany,
   traineeFromThirdCompany,
   fourthCompany,
+  ROFAndCoach,
 } = require('./seed/coursesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const {
@@ -147,6 +148,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         expectedBillsCount: 2,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        prices: { global: 1200 },
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -205,6 +207,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         salesRepresentative: trainerOrganisationManager._id,
         trainee: traineeFromOtherCompany._id,
         certificateGenerationMode: MONTHLY,
+        prices: { global: 1000, trainerFees: 200 },
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -705,6 +708,79 @@ describe('COURSES ROUTES - POST /courses', () => {
 
         expect(response.statusCode).toBe(400);
       });
+    });
+
+    const wrongValues = [-200, 0, '200€'];
+    wrongValues.forEach((param) => {
+      it(`should return 400 as price has wrong value : ${param}`, async () => {
+        const payload = {
+          misc: 'course',
+          type: INTRA,
+          maxTrainees: 12,
+          company: authCompany._id,
+          subProgram: subProgramsList[0]._id,
+          operationsRepresentative: vendorAdmin._id,
+          expectedBillsCount: 2,
+          hasCertifyingTest: false,
+          certificateGenerationMode: GLOBAL,
+        };
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/courses',
+          payload: { ...payload, prices: { global: param } },
+          headers: { 'x-access-token': authToken },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+    });
+
+    it('should return 400 if trainer fees without global price', async () => {
+      const payload = {
+        misc: 'course',
+        type: INTRA,
+        maxTrainees: 12,
+        company: authCompany._id,
+        subProgram: subProgramsList[0]._id,
+        operationsRepresentative: vendorAdmin._id,
+        expectedBillsCount: 2,
+        hasCertifyingTest: false,
+        certificateGenerationMode: GLOBAL,
+        prices: { trainerFees: 200 },
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if price but wrong type', async () => {
+      const payload = {
+        misc: 'course',
+        type: INTER_B2B,
+        subProgram: subProgramsList[0]._id,
+        operationsRepresentative: vendorAdmin._id,
+        estimatedStartDate: '2022-05-31T08:00:00.000Z',
+        hasCertifyingTest: true,
+        salesRepresentative: trainerOrganisationManager._id,
+        certificateGenerationMode: GLOBAL,
+        prices: { global: 200 },
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses',
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 
@@ -2048,6 +2124,77 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(course).toBe(1);
     });
 
+    it('should add price to course', async () => {
+      const payload = { prices: { company: otherCompany._id, global: 200, trainerFees: 100 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[1]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const course = await Course.countDocuments({ _id: coursesList[1]._id, ...payload });
+      expect(course).toBe(1);
+    });
+
+    it('should update course price', async () => {
+      const payload = { prices: { company: authCompany._id, global: 200, trainerFees: 100 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const course = await Course.countDocuments({ _id: coursesList[2]._id, ...payload });
+      expect(course).toBe(1);
+    });
+
+    it('should remove trainer fees', async () => {
+      const payload = { prices: { company: otherCompany._id, trainerFees: '' } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[3]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const course = await Course.countDocuments({ _id: coursesList[3]._id, ...payload });
+      expect(course).toBe(1);
+    });
+
+    it('should update course price and other field', async () => {
+      const payload = {
+        prices: { company: authCompany._id, global: 200 },
+        salesRepresentative: trainerOrganisationManager._id,
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const course = await Course.countDocuments({ _id: coursesList[2]._id, ...payload });
+      expect(course).toBe(1);
+    });
+
+    it('should update price of a billed single course', async () => {
+      const payload = { prices: { company: authCompany._id, trainerFees: 300 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[24]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     const payloads = [
       { misc: 'new name' },
       { contact: vendorAdmin._id },
@@ -2277,6 +2424,30 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if company is missing in price', async () => {
+      const payload = { prices: { global: 200 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if only company in price', async () => {
+      const payload = { prices: { company: authCompany._id } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 409 if trying to set expectedBillsCount lower than the number of validated bills', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -2349,6 +2520,43 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[4]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if update price of a billed course (non single)', async () => {
+      const payload = { prices: { company: authCompany._id, trainerFees: 300 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if add trainer fees to a course without global price', async () => {
+      const payload = { prices: { company: otherCompany._id, trainerFees: 200 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[1]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if prices company in payload is not include in companies course', async () => {
+      const payload = { prices: { company: otherCompany._id, trainerFees: 200, global: 1200 } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[2]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload,
       });
@@ -2438,6 +2646,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to update course price', async () => {
+      const payload = { prices: { company: authCompany._id, global: 200, trainerFees: 100 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('HOLDING_ADMIN', () => {
@@ -2511,6 +2731,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
         url: `/courses/${coursesList[21]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: { contact: holdingAdminFromAuthCompany._id, companyRepresentative: holdingAdminFromAuthCompany._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to update course price', async () => {
+      const payload = { prices: { company: authCompany._id, global: 200, trainerFees: 100 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
       });
 
       expect(response.statusCode).toBe(403);
@@ -2627,6 +2859,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
         url: `/courses/${coursesList[21]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: { companyRepresentative: holdingAdminFromAuthCompany._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to update course price', async () => {
+      const payload = { prices: { company: authCompany._id, global: 200, trainerFees: 100 } };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
       });
 
       expect(response.statusCode).toBe(403);
@@ -4238,6 +4482,18 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should return 200 if user is also Coach and isClientInterface is true', async () => {
+      authToken = await getTokenByCredentials(ROFAndCoach.local);
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}&type=${OFFICIAL}`
+        + `&isClientInterface=${true}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return 404 if course does not exist', async () => {
       const invalidId = (new ObjectId()).toHexString();
       const response = await app.inject({
@@ -4371,7 +4627,8 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 200 as user is coach, course is inter_b2b and type is CUSTOM', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[7]._id}/completion-certificates?format=${ALL_PDF}&type=${CUSTOM}`,
+        url: `/courses/${coursesList[7]._id}/completion-certificates?format=${ALL_PDF}&type=${CUSTOM}`
+        + `&isClientInterface=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -4381,7 +4638,8 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 200 as user is coach, course is inter_b2b and type is OFFICIAL', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[7]._id}/completion-certificates?format=${ALL_PDF}&type=${OFFICIAL}`,
+        url: `/courses/${coursesList[7]._id}/completion-certificates?format=${ALL_PDF}&type=${OFFICIAL}`
+        + `&isClientInterface=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -4391,7 +4649,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 403 as user is coach and access ALL_WORD', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}`,
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}&isClientInterface=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -4425,7 +4683,8 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
         authToken = await getToken(role.name);
         const response = await app.inject({
           method: 'GET',
-          url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_PDF}`,
+          url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_PDF}`
+          + `&isClientInterface=${true}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
 
@@ -4437,7 +4696,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       authToken = await getToken('client_admin');
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${ALL_PDF}`,
+        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${ALL_PDF}&isClientInterface=${true}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -4455,16 +4714,31 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should return 200', async () => {
+    it('should add a company to access rules', async () => {
       const response = await app.inject({
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { company: otherCompany._id },
+        payload: { companies: [otherCompany._id] },
       });
 
       expect(response.statusCode).toBe(200);
       const course = await Course.countDocuments({ _id: coursesList[8]._id, accessRules: otherCompany._id });
+      expect(course).toBe(1);
+    });
+
+    it('should add several companies to access rules', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[8]._id}/accessrules`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { companies: [otherCompany._id, thirdCompany._id] },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const course = await Course.countDocuments(
+        { _id: coursesList[8]._id, accessRules: { $all: [otherCompany._id, thirdCompany._id] } }
+      );
       expect(course).toBe(1);
     });
 
@@ -4473,7 +4747,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
         method: 'POST',
         url: `/courses/${new ObjectId()}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { company: otherCompany._id },
+        payload: { companies: [otherCompany._id, thirdCompany._id] },
       });
 
       expect(response.statusCode).toBe(404);
@@ -4484,7 +4758,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { company: authCompany._id },
+        payload: { companies: [authCompany._id, thirdCompany._id] },
       });
 
       expect(response.statusCode).toBe(409);
@@ -4495,10 +4769,21 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
         method: 'POST',
         url: `/courses/${coursesList[8]._id}/accessrules`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { company: new ObjectId() },
+        payload: { companies: [otherCompany._id, new ObjectId()] },
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 400 if accessRules in payload is empty', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[8]._id}/accessrules`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { companies: [] },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 
@@ -4865,8 +5150,11 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/companies{companyId}', () => {
       });
       expect(courseHistory).toEqual(1);
 
-      const course = await Course.countDocuments({ _id: interb2bCourseId, companies: thirdCompany._id });
-      expect(course).toEqual(0);
+      const courseWithCompany = await Course.countDocuments({ _id: interb2bCourseId, companies: thirdCompany._id });
+      const courseWithPrice = await Course
+        .countDocuments({ _id: interb2bCourseId, prices: { company: thirdCompany._id } });
+      expect(courseWithCompany).toEqual(0);
+      expect(courseWithPrice).toEqual(0);
     });
 
     it('should remove company from intra_holding course even if has attendances', async () => {

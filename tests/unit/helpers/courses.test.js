@@ -65,6 +65,8 @@ const {
   EXPECTATIONS,
   DAY,
   SINGLE,
+  TRAINER_ADDITION,
+  TRAINER_DELETION,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -124,6 +126,7 @@ describe('createCourse', () => {
       type: INTRA,
       maxTrainees: 12,
       operationsRepresentative: new ObjectId(),
+      prices: { global: 1200, trainerFees: 200 },
     };
 
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
@@ -141,7 +144,14 @@ describe('createCourse', () => {
     expect(result.operationsRepresentative).toEqual(payload.operationsRepresentative);
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     sinon.assert.notCalled(findOneUserCompany);
-    sinon.assert.calledOnceWithExactly(create, { ...omit(payload, 'company'), companies: [payload.company] });
+    sinon.assert.calledOnceWithExactly(
+      create,
+      {
+        ...omit(payload, 'company'),
+        companies: [payload.company],
+        prices: [{ global: 1200, trainerFees: 200, company: payload.company }],
+      }
+    );
     sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
@@ -166,6 +176,7 @@ describe('createCourse', () => {
       expectedBillsCount: '0',
       hasCertifyingTest: false,
       trainee: traineeId,
+      prices: { global: 1200 },
     };
     const course = {
       _id: new ObjectId(),
@@ -198,7 +209,14 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(create, { ...omit(payload, ['trainee']), companies: [userCompany.company] });
+    sinon.assert.calledOnceWithExactly(
+      create,
+      {
+        ...omit(payload, ['trainee']),
+        companies: [userCompany.company],
+        prices: [{ global: 1200, company: userCompany.company }],
+      }
+    );
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -4189,6 +4207,7 @@ describe('getTraineesWithElearningProgress', () => {
 describe('updateCourse', () => {
   let courseFindOneAndUpdate;
   let createHistoryOnEstimatedStartDateEdition;
+  let courseFindOne;
   const credentials = { _id: new ObjectId() };
   beforeEach(() => {
     courseFindOneAndUpdate = sinon.stub(Course, 'findOneAndUpdate');
@@ -4196,10 +4215,12 @@ describe('updateCourse', () => {
       CourseHistoriesHelper,
       'createHistoryOnEstimatedStartDateEdition'
     );
+    courseFindOne = sinon.stub(Course, 'findOne');
   });
   afterEach(() => {
     courseFindOneAndUpdate.restore();
     createHistoryOnEstimatedStartDateEdition.restore();
+    courseFindOne.restore();
   });
 
   it('should update a field in intra course', async () => {
@@ -4354,6 +4375,66 @@ describe('updateCourse', () => {
         {
           query: 'findOneAndUpdate',
           args: [{ _id: courseId }, { $unset: { salesRepresentative: '' } }],
+        },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should push new price for company', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const courseFromDb = { _id: courseId };
+    const payload = { prices: { company: companyId, global: 2500, trainerFees: 300 } };
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(
+      { ...courseFromDb, prices: [{ company: companyId, global: 2500, trainerFees: 300 }] },
+      ['lean']
+    ));
+
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: courseId }, { $push: payload }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should update price for company', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const courseFromDb = { _id: courseId, prices: [{ company: companyId, global: 2000, trainerFees: 200 }] };
+    const payload = { prices: { company: companyId, global: 2500, trainerFees: '' } };
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(
+      { ...courseFromDb, prices: [{ company: companyId, global: 2500 }] },
+      ['lean']
+    ));
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [{ _id: courseId }, { $set: { prices: [{ company: companyId, global: 2500 }] } }],
         },
         { query: 'lean' },
       ]
@@ -6579,7 +6660,7 @@ describe('generateCompletionCertificates', () => {
         courseSlot: { startDate: '2022-01-18T07:00:00.000Z', endDate: '2022-01-18T10:00:00.000Z' },
       },
     ];
-    const query = { format: ALL_PDF, type: CUSTOM };
+    const query = { format: ALL_PDF, type: CUSTOM, isClientInterface: true };
 
     attendanceFind.returns(SinonMongoose.stubChainedQueries(attendances, ['populate', 'setOptions', 'lean']));
     courseFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(
@@ -7236,15 +7317,15 @@ describe('addAccessRule', () => {
   it('should add access rule to course', async () => {
     const courseId = new ObjectId();
     const userIds = [new ObjectId(), new ObjectId()];
-    const payload = { company: new ObjectId() };
+    const payload = { companies: [new ObjectId(), new ObjectId()] };
     const userCompanies = [
-      { user: userIds[0], company: payload.company },
-      { user: userIds[1], company: payload.company },
+      { user: userIds[0], company: payload.companies[0] },
+      { user: userIds[1], company: payload.companies[1] },
     ];
     userCompanyFind.returns(SinonMongoose.stubChainedQueries(userCompanies, ['lean']));
     await CourseHelper.addAccessRule(courseId, payload);
 
-    sinon.assert.calledOnceWithExactly(updateOne, { _id: courseId }, { $push: { accessRules: payload.company } });
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: courseId }, { $addToSet: { accessRules: payload.companies } });
     SinonMongoose.calledOnceWithExactly(
       userCompanyFind,
       [
@@ -7252,7 +7333,7 @@ describe('addAccessRule', () => {
           query: 'find',
           args: [
             {
-              company: payload.company,
+              company: { $in: payload.companies },
               $or: [{ endDate: { $gt: CompaniDate().endOf(DAY).toISO() } }, { endDate: { $exists: false } }],
             },
             { user: 1 }],
@@ -7642,7 +7723,11 @@ describe('removeCourseCompany', () => {
 
     await CourseHelper.removeCourseCompany(course._id, companyId, credentials);
 
-    sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $pull: { companies: companyId } });
+    sinon.assert.calledOnceWithExactly(
+      courseUpdateOne,
+      { _id: course._id },
+      { $pull: { companies: companyId, prices: { company: companyId } } }
+    );
     sinon.assert.calledOnceWithExactly(
       createHistoryOnCompanyDeletion,
       { course: course._id, company: companyId },
@@ -7884,23 +7969,34 @@ describe('generateTrainingContract', () => {
 
 describe('addTrainer', () => {
   let courseUpdateOne;
+  let createHistoryOnTrainerAdditionOrDeletion;
 
   beforeEach(() => {
     courseUpdateOne = sinon.stub(Course, 'updateOne');
+    createHistoryOnTrainerAdditionOrDeletion = sinon
+      .stub(CourseHistoriesHelper, 'createHistoryOnTrainerAdditionOrDeletion');
   });
 
   afterEach(() => {
     courseUpdateOne.restore();
+    createHistoryOnTrainerAdditionOrDeletion.restore();
   });
 
   it('should add trainer to course', async () => {
     const trainerId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', trainers: [new ObjectId()] };
-    const payload = { trainer: trainerId };
+    const payload = { course: course._id, trainer: trainerId, action: TRAINER_ADDITION };
+    const credentials = { _id: new ObjectId() };
 
-    await CourseHelper.addTrainer(course._id, payload);
+    await CourseHelper.addTrainer(course._id, payload, credentials);
 
     sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $addToSet: { trainers: trainerId } });
+
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnTrainerAdditionOrDeletion,
+      { course: course._id, trainerId, action: payload.action },
+      credentials._id
+    );
   });
 });
 
@@ -7908,30 +8004,36 @@ describe('removeTrainer', () => {
   let courseUpdateOne;
   let trainerMissionFindOneAndUpdate;
   let courseFindOne;
+  let createHistoryOnTrainerAdditionOrDeletion;
 
   beforeEach(() => {
     trainerMissionFindOneAndUpdate = sinon.stub(TrainerMission, 'findOneAndUpdate');
     courseUpdateOne = sinon.stub(Course, 'updateOne');
     courseFindOne = sinon.stub(Course, 'findOne');
+    createHistoryOnTrainerAdditionOrDeletion = sinon
+      .stub(CourseHistoriesHelper, 'createHistoryOnTrainerAdditionOrDeletion');
   });
 
   afterEach(() => {
     trainerMissionFindOneAndUpdate.restore();
     courseUpdateOne.restore();
     courseFindOne.restore();
+    createHistoryOnTrainerAdditionOrDeletion.restore();
   });
 
   it('should remove trainer and contact from course and cancelled trainerMission', async () => {
     const trainerId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', trainers: [trainerId], contact: trainerId };
     const trainerMission = { _id: new ObjectId(), courses: [course._id], trainer: trainerId };
+    const credentials = { _id: new ObjectId() };
+    const payload = { course: course._id, trainer: trainerId, action: TRAINER_DELETION };
 
     trainerMissionFindOneAndUpdate.returns(
       SinonMongoose.stubChainedQueries({ ...trainerMission, cancelledAt: CompaniDate().startOf(DAY).toISO() }, ['lean'])
     );
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
 
-    await CourseHelper.removeTrainer(course._id, trainerId);
+    await CourseHelper.removeTrainer(course._id, trainerId, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       trainerMissionFindOneAndUpdate,
@@ -7954,6 +8056,11 @@ describe('removeTrainer', () => {
       courseUpdateOne,
       { _id: course._id },
       { $pull: { trainers: trainerId }, $unset: { contact: '' } }
+    );
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnTrainerAdditionOrDeletion,
+      { course: course._id, trainerId, action: payload.action },
+      credentials._id
     );
   });
 });

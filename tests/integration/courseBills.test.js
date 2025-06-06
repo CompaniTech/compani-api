@@ -376,6 +376,15 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
     companies: [otherCompany._id],
     mainFee: { price: 120, count: 1, countUnit: GROUP, description: 'test' },
     payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+    maturityDate: '2025-04-29T22:00:00.000+00:00',
+  };
+
+  const payloadWithPercentage = {
+    course: coursesList[13]._id,
+    companies: [otherCompany._id, authCompany._id],
+    mainFee: { price: 320, count: 2, countUnit: TRAINEE, percentage: 20 },
+    payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+    maturityDate: '2025-04-29T22:00:00.000+00:00',
   };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -436,21 +445,75 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should create a bill with percentage', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: payloadWithPercentage,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 403 if course is single but payload has percentage', async () => {
+      const singleCoursePayload = {
+        course: coursesList[12]._id,
+        companies: [otherCompany._id],
+        mainFee: { price: 1500, count: 1, countUnit: TRAINEE, percentage: 10 },
+        payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+        maturityDate: '2025-04-29T22:00:00.000+00:00',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: singleCoursePayload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if payload has percentage but some companies have no price', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payloadWithPercentage, companies: [otherCompany._id, companyWithoutSubscription._id] },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 409 if percentage sum is bigger than 100', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payloadWithPercentage, mainFee: { price: 1520, count: 2, countUnit: TRAINEE, percentage: 95 } },
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
     const missingParams = [
       'course',
       'companies',
       'mainFee',
       'mainFee.price',
       'mainFee.count',
+      'mainFee.percentage',
       'payer',
       'mainFee.countUnit',
+      'maturityDate',
     ];
     missingParams.forEach((param) => {
       it(`should return 400 as ${param} is missing`, async () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills',
-          payload: omit(payload, param),
+          payload: omit(payloadWithPercentage, param),
           headers: { 'x-access-token': authToken },
         });
 
@@ -466,6 +529,11 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
       { key: 'count', value: 0 },
       { key: 'count', value: 1.23 },
       { key: 'count', value: '1x' },
+      { key: 'percentage', value: -20 },
+      { key: 'percentage', value: 0 },
+      { key: 'percentage', value: 10.5 },
+      { key: 'percentage', value: 105 },
+      { key: 'percentage', value: '10%' },
       { key: 'countUnit', value: 'learner' },
     ];
     wrongValues.forEach((param) => {
@@ -473,7 +541,7 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills',
-          payload: { ...payload, mainFee: { ...payload.mainFee, [param.key]: param.value } },
+          payload: { ...payloadWithPercentage, mainFee: { ...payload.mainFee, [param.key]: param.value } },
           headers: { 'x-access-token': authToken },
         });
 
@@ -734,6 +802,29 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(countAfter).toBeTruthy();
     });
 
+    it('should update maturityDate on course bill', async () => {
+      const countBefore = await CourseBill.countDocuments({
+        _id: courseBillsList[0]._id,
+        maturityDate: '2025-04-29T22:00:00.000+00:00',
+      });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { maturityDate: '2025-05-02T22:00:00.000+00:00' },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const countAfter = await CourseBill.countDocuments({
+        _id: courseBillsList[0]._id,
+        maturityDate: '2025-05-02T22:00:00.000+00:00',
+      });
+      expect(countBefore).toBeTruthy();
+      expect(countAfter).toBeTruthy();
+    });
+
     it('should add main fee description to course bill', async () => {
       const countBefore = await CourseBill.countDocuments({
         _id: courseBillsList[0]._id,
@@ -800,6 +891,31 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(countAfter).toBeTruthy();
     });
 
+    it('should update percentage on course bill', async () => {
+      const countBefore = await CourseBill.countDocuments({
+        _id: courseBillsList[13]._id,
+        mainFee: { price: 120, count: 1, countUnit: TRAINEE, percentage: 10 },
+        billingPurchaseList: { $elemMatch: { price: 12, count: 1, percentage: 10 } },
+      });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[13]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 } },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const countAfter = await CourseBill.countDocuments({
+        _id: courseBillsList[13]._id,
+        mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 },
+        billingPurchaseList: { $elemMatch: { price: 24, count: 1, percentage: 20 } },
+      });
+      expect(countBefore).toBeTruthy();
+      expect(countAfter).toBeTruthy();
+    });
+
     it('should invoice course bill', async () => {
       const isBilledBefore = await CourseBill.countDocuments({ number: 'FACT-00009' });
       expect(isBilledBefore).toBeFalsy();
@@ -839,7 +955,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(isUpdated).toBeTruthy();
     });
 
-    const wrongValuesMainFee = { price: 120, count: 1, description: 'lorem ipsum' };
+    const wrongValuesMainFee = { price: 120, count: 1, description: 'lorem ipsum', percentage: 10 };
     const wrongValues = [
       { key: 'price', value: -200 },
       { key: 'price', value: 0 },
@@ -848,13 +964,18 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       { key: 'count', value: 0 },
       { key: 'count', value: 1.23 },
       { key: 'count', value: '1x' },
+      { key: 'percentage', value: -20 },
+      { key: 'percentage', value: 0 },
+      { key: 'percentage', value: 10.5 },
+      { key: 'percentage', value: 105 },
+      { key: 'percentage', value: '10%' },
       { key: 'countUnit', value: '' },
     ];
     wrongValues.forEach((param) => {
       it(`should return 400 as ${param.key} has wrong value : ${param.value}`, async () => {
         const response = await app.inject({
           method: 'PUT',
-          url: `/coursebills/${courseBillsList[1]._id}`,
+          url: `/coursebills/${courseBillsList[13]._id}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: { mainFee: { ...wrongValuesMainFee, [param.key]: param.value } },
         });
@@ -974,6 +1095,17 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(response.result.message).toEqual('L\'adresse de la structure cliente est manquante.');
     });
 
+    it('should return 403 if update percentage on course bill without percentage', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[12]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 } },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 if adding payer on validated bill', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -1008,6 +1140,17 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
 
         expect(response.statusCode).toBe(403);
       });
+    });
+
+    it('should return 409 if company sum percentage is bigger than 100', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[13]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { mainFee: { price: 1080, count: 1, countUnit: TRAINEE, percentage: 90 } },
+      });
+
+      expect(response.statusCode).toBe(409);
     });
   });
 
@@ -1157,6 +1300,9 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
   const billingPurchaseId = courseBillsList[0].billingPurchaseList[0]._id;
   const courseBillInvoicedId = courseBillsList[2]._id;
   const billingPurchaseInvoicedId = courseBillsList[2].billingPurchaseList[0]._id;
+  const billWithPercentageId = courseBillsList[13]._id;
+  const trainerFeesWithPercentageId = courseBillsList[13].billingPurchaseList[0]._id;
+
   const payload = { price: 22, count: 2, description: 'café du midi' };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -1226,6 +1372,27 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       expect(courseBillAfter).toBeTruthy();
     });
 
+    it('should update description of trainer fees with percentage', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { price: 12, count: 1, description: 'description' },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const courseBillAfter = await CourseBill.countDocuments({
+        _id: billWithPercentageId,
+        'billingPurchaseList._id': trainerFeesWithPercentageId,
+        'billingPurchaseList.price': 12,
+        'billingPurchaseList.count': 1,
+        'billingPurchaseList.percentage': 10,
+        'billingPurchaseList.description': 'description',
+      });
+      expect(courseBillAfter).toBeTruthy();
+    });
+
     const wrongValues = [
       { key: 'price', value: -200 },
       { key: 'price', value: 0 },
@@ -1281,6 +1448,19 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${courseBillInvoicedId}/billingpurchases/${billingPurchaseInvoicedId}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: set(forbiddenUpdatesPayload, param.key, param.value),
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+    });
+
+    forbiddenUpdates.forEach((param) => {
+      it(`should return 403 if updating ${param.key} of trainer fees with percentage`, async () => {
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: set(forbiddenUpdatesPayload, param.key, param.value),
         });
@@ -1345,6 +1525,19 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}/billingpurchases/{billi
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursebills/${courseBillsList[2]._id}/billingpurchases/${courseBillsList[2].billingPurchaseList[0]._id}`,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course trainer fees with percentage', async () => {
+      const billWithPercentageId = courseBillsList[13]._id;
+      const trainerFeesWithPercentageId = courseBillsList[13].billingPurchaseList[0]._id;
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
         headers: { 'x-access-token': authToken },
       });
 

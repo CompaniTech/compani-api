@@ -7,6 +7,7 @@ const CourseBillSchema = mongoose.Schema({
   course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
   mainFee: {
     price: { type: Number, required: true },
+    percentage: { type: Number },
     count: { type: Number, required: true },
     countUnit: { type: String, enum: [GROUP, TRAINEE], required: true },
     description: { type: String },
@@ -24,6 +25,7 @@ const CourseBillSchema = mongoose.Schema({
     type: [mongoose.Schema({
       billingItem: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseBillingItem', required: true },
       price: { type: Number, required: true },
+      percentage: { type: Number },
       count: { type: Number, required: true },
       description: { type: String },
     }
@@ -31,6 +33,7 @@ const CourseBillSchema = mongoose.Schema({
   },
   billedAt: { type: Date, required() { return !!this.number; } },
   number: { type: String, required() { return !!this.billedAt; } },
+  maturityDate: { type: Date },
 }, { timestamps: true });
 
 function formatPayer(doc, next) {

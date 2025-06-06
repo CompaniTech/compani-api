@@ -106,6 +106,7 @@ exports.list = async (query) => {
     .populate({ path: 'createdBy', select: '_id identity picture' })
     .populate({ path: 'trainee', select: '_id identity' })
     .populate({ path: 'company', select: '_id name' })
+    .populate({ path: 'trainer', select: '_id identity' })
     .sort({ createdAt: -1 })
     .limit(20)
     .lean();
@@ -131,3 +132,6 @@ exports.getCompanyAtCourseRegistrationList = async (singleton, list) => {
 
   return companyAtCourseRegistrationList;
 };
+
+exports.createHistoryOnTrainerAdditionOrDeletion = (payload, userId) =>
+  exports.createHistory(payload.course, userId, payload.action, { trainer: payload.trainerId });

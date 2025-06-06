@@ -58,9 +58,9 @@ exports.authorizeSubProgramUpdate = async (req) => {
   }
 
   if (req.payload.status === PUBLISHED && subProgram.isStrictlyELearning) {
-    if (req.payload.accessCompany) {
-      const company = await Company.countDocuments({ _id: req.payload.accessCompany });
-      if (!company) throw Boom.badRequest();
+    if (req.payload.accessCompanies) {
+      const companies = await Company.countDocuments({ _id: { $in: req.payload.accessCompanies } });
+      if (companies !== req.payload.accessCompanies.length) throw Boom.notFound();
     }
 
     const prog = await Program.findOne({ _id: subProgram.program._id })
@@ -110,10 +110,10 @@ exports.authorizeStepReuse = async (req) => {
   const { subProgram } = req.pre;
   const { steps } = req.payload;
 
-  const stepsExist = await Step.countDocuments({ _id: steps });
-  if (!stepsExist) throw Boom.notFound();
+  const stepsExist = await Step.countDocuments({ _id: { $in: steps } });
+  if (stepsExist !== steps.length) throw Boom.notFound();
 
-  const stepsAlreadyAttached = UtilsHelper.doesArrayIncludeId(subProgram.steps, steps);
+  const stepsAlreadyAttached = steps.some(stepId => UtilsHelper.doesArrayIncludeId(subProgram.steps, stepId));
   if (stepsAlreadyAttached) throw Boom.forbidden();
 
   return null;

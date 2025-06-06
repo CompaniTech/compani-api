@@ -3,6 +3,7 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const has = require('lodash/has');
 const get = require('lodash/get');
+const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
 const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
@@ -393,40 +394,122 @@ describe('list', () => {
 
 describe('create', () => {
   let create;
+  let findOneCourse;
+  let addBillingPurchase;
+  const TRAINER_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
     create = sinon.stub(CourseBill, 'create');
+    findOneCourse = sinon.stub(Course, 'findOne');
+    addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
+    process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
   });
 
   afterEach(() => {
     create.restore();
+    findOneCourse.restore();
+    addBillingPurchase.restore();
+    process.env.TRAINER_FEES_BILLING_ITEM = '';
   });
 
-  it('should create a course bill', async () => {
+  it('should create a course bill (without percentage)', async () => {
     const payload = {
       course: new ObjectId(),
       companies: [new ObjectId(), new ObjectId()],
       mainFee: { price: 120, count: 1 },
       payer: { fundingOrganisation: new ObjectId() },
+      maturityDate: '2022-03-08T00:00:00.000Z',
     };
     await CourseBillHelper.create(payload);
 
     sinon.assert.calledOnceWithExactly(create, payload);
+    sinon.assert.notCalled(findOneCourse);
+    sinon.assert.notCalled(addBillingPurchase);
+  });
+
+  it('should create a course bill (with percentage)', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const course = {
+      _id: courseId,
+      prices: [{ company: companyId, global: 1200 }],
+    };
+    const payload = {
+      course: courseId,
+      companies: [companyId, new ObjectId()],
+      mainFee: { price: 120, count: 1, percentage: 10 },
+      payer: { fundingOrganisation: new ObjectId() },
+      maturityDate: '2022-03-08T00:00:00.000Z',
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    await CourseBillHelper.create(payload);
+
+    sinon.assert.calledOnceWithExactly(create, payload);
+    sinon.assert.notCalled(addBillingPurchase);
+    SinonMongoose.calledOnceWithExactly(
+      findOneCourse,
+      [
+        { query: 'findOne', args: [{ _id: payload.course }, { prices: 1 }] },
+        { query: 'lean', args: [] },
+      ]
+    );
+  });
+
+  it('should create a course bill (with percentage and trainer fees)', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const course = {
+      _id: courseId,
+      prices: [{ company: companyId, global: 1200, trainerFees: 120 }],
+    };
+    const courseBill = { _id: new ObjectId() };
+    const payload = {
+      course: courseId,
+      companies: [companyId, new ObjectId()],
+      mainFee: { price: 120, count: 1, percentage: 10 },
+      payer: { fundingOrganisation: new ObjectId() },
+      maturityDate: '2022-03-08T00:00:00.000Z',
+    };
+
+    create.returns(courseBill);
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    await CourseBillHelper.create(payload);
+
+    sinon.assert.calledOnceWithExactly(create, payload);
+    SinonMongoose.calledOnceWithExactly(
+      findOneCourse,
+      [
+        { query: 'findOne', args: [{ _id: payload.course }, { prices: 1 }] },
+        { query: 'lean', args: [] },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      addBillingPurchase,
+      courseBill._id,
+      { price: 12, count: 1, percentage: 10, billingItem: TRAINER_FEES_BILLING_ITEM }
+    );
   });
 });
 
 describe('updateCourseBill', () => {
-  let updateOne;
+  let findOneAndUpdate;
   let findOneAndUpdateCourseBillsNumber;
+  let updateBillingPurchase;
+  const TRAINER_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
-    updateOne = sinon.stub(CourseBill, 'updateOne');
+    findOneAndUpdate = sinon.stub(CourseBill, 'findOneAndUpdate');
     findOneAndUpdateCourseBillsNumber = sinon.stub(CourseBillsNumber, 'findOneAndUpdate');
+    updateBillingPurchase = sinon.stub(CourseBillHelper, 'updateBillingPurchase');
+    process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
   });
 
   afterEach(() => {
-    updateOne.restore();
+    findOneAndUpdate.restore();
     findOneAndUpdateCourseBillsNumber.restore();
+    updateBillingPurchase.restore();
+    process.env.TRAINER_FEES_BILLING_ITEM = '';
   });
 
   it('should update a course bill funder with funding organisation', async () => {
@@ -436,11 +519,12 @@ describe('updateCourseBill', () => {
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
     sinon.assert.calledOnceWithExactly(
-      updateOne,
+      findOneAndUpdate,
       { _id: courseBillId },
       { $set: { 'payer.fundingOrganisation': fundingOrganisationId }, $unset: { 'payer.company': '' } }
     );
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
+    sinon.assert.notCalled(updateBillingPurchase);
   });
 
   it('should update a course bill funder with company', async () => {
@@ -450,19 +534,66 @@ describe('updateCourseBill', () => {
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
     sinon.assert.calledOnceWithExactly(
-      updateOne,
+      findOneAndUpdate,
       { _id: courseBillId },
       { $set: { 'payer.company': companyId }, $unset: { 'payer.fundingOrganisation': '' } }
     );
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
+    sinon.assert.notCalled(updateBillingPurchase);
   });
 
-  it('should update a course bill mainFee', async () => {
+  it('should update a course bill mainFee (without percentage)', async () => {
     const courseBillId = new ObjectId();
     const payload = { 'mainFee.price': 200, 'mainFee.count': 1, description: 'skududu skududu' };
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
-    sinon.assert.calledOnceWithExactly(updateOne, { _id: courseBillId }, { $set: payload });
+    sinon.assert.calledOnceWithExactly(findOneAndUpdate, { _id: courseBillId }, { $set: payload });
+    sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
+    sinon.assert.notCalled(updateBillingPurchase);
+  });
+
+  it('should update a course bill mainFee (with trainer fees without percentage)', async () => {
+    const courseBillId = new ObjectId();
+    const billingPurchaseId = new ObjectId();
+    const courseBill = {
+      _id: courseBillId,
+      mainFee: { price: 100, count: 1, percentage: 10 },
+      billingPurchaseList: [
+        { _id: billingPurchaseId, billingItem: TRAINER_FEES_BILLING_ITEM, price: 10, count: 1 },
+      ],
+    };
+    const payload = { 'mainFee.price': 200, 'mainFee.count': 1, 'mainFee.percentage': 20 };
+
+    findOneAndUpdate.returns(courseBill);
+    await CourseBillHelper.updateCourseBill(courseBillId, payload);
+
+    sinon.assert.calledOnceWithExactly(findOneAndUpdate, { _id: courseBillId }, { $set: payload });
+    sinon.assert.notCalled(updateBillingPurchase);
+    sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
+  });
+
+  it('should update a course bill mainFee (with trainer fees with percentage)', async () => {
+    const courseBillId = new ObjectId();
+    const billingPurchaseId = new ObjectId();
+    const courseBill = {
+      _id: courseBillId,
+      mainFee: { price: 100, count: 1, percentage: 10 },
+      billingPurchaseList: [
+        { _id: billingPurchaseId, billingItem: TRAINER_FEES_BILLING_ITEM, price: 10, count: 1, percentage: 10 },
+      ],
+    };
+    const payload = { 'mainFee.price': 200, 'mainFee.count': 1, 'mainFee.percentage': 20 };
+
+    findOneAndUpdate.returns(courseBill);
+    await CourseBillHelper.updateCourseBill(courseBillId, payload);
+
+    sinon.assert.calledOnceWithExactly(findOneAndUpdate, { _id: courseBillId }, { $set: payload });
+    sinon.assert.calledOnceWithExactly(
+      updateBillingPurchase,
+      courseBillId,
+      billingPurchaseId,
+      { count: 1, price: 20, percentage: 20 }
+    );
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
   });
 
@@ -472,11 +603,12 @@ describe('updateCourseBill', () => {
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
     sinon.assert.calledOnceWithExactly(
-      updateOne,
+      findOneAndUpdate,
       { _id: courseBillId },
       { $set: { 'mainFee.price': 200, 'mainFee.count': 1 }, $unset: { 'mainFee.description': '' } }
     );
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
+    sinon.assert.notCalled(updateBillingPurchase);
   });
 
   it('should invoice bill', async () => {
@@ -499,10 +631,14 @@ describe('updateCourseBill', () => {
       ]);
 
     sinon.assert.calledOnceWithExactly(
-      updateOne,
+      findOneAndUpdate,
       { _id: courseBillId },
-      { $set: { billedAt: payload.billedAt, number: `FACT-${lastBillNumber.seq.toString().padStart(5, '0')}` } }
+      {
+        $set: { billedAt: payload.billedAt, number: `FACT-${lastBillNumber.seq.toString().padStart(5, '0')}` },
+        $unset: { maturityDate: '' },
+      }
     );
+    sinon.assert.notCalled(updateBillingPurchase);
   });
 });
 
@@ -576,6 +712,26 @@ describe('updateBillingPurchase', () => {
       {
         $set: { 'billingPurchaseList.$.price': 30, 'billingPurchaseList.$.count': 2 },
         $unset: { 'billingPurchaseList.$.description': '' },
+      }
+    );
+  });
+
+  it('should update purchase with percentage', async () => {
+    const courseBillId = new ObjectId();
+    const billingPurchaseId = new ObjectId();
+
+    const payload = { price: 120, count: 1, percentage: 10 };
+    await CourseBillHelper.updateBillingPurchase(courseBillId, billingPurchaseId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: courseBillId, 'billingPurchaseList._id': billingPurchaseId },
+      {
+        $set: {
+          'billingPurchaseList.$.price': 120,
+          'billingPurchaseList.$.count': 1,
+          'billingPurchaseList.$.percentage': 10,
+        },
       }
     );
   });
@@ -714,7 +870,7 @@ describe('generateBillPdf', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram',
+            select: 'subProgram prices',
             populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
           }],
         },

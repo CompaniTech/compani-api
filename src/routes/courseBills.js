@@ -23,7 +23,7 @@ const {
   authorizeBillPdfGet,
   authorizeCourseBillDeletion,
 } = require('./preHandlers/courseBills');
-const { requiredDateToISOString } = require('./validations/utils');
+const { requiredDateToISOString, dateToISOString } = require('./validations/utils');
 
 exports.plugin = {
   name: 'routes-course-bills',
@@ -55,6 +55,7 @@ exports.plugin = {
             course: Joi.objectId().required(),
             mainFee: Joi.object({
               price: Joi.number().positive().required(),
+              percentage: Joi.number().positive().integer().max(100),
               count: Joi.number().positive().integer().required(),
               countUnit: Joi.string().required().valid(GROUP, TRAINEE),
               description: Joi.string().allow(''),
@@ -64,6 +65,7 @@ exports.plugin = {
               company: Joi.objectId(),
               fundingOrganisation: Joi.objectId(),
             }).xor('company', 'fundingOrganisation').required(),
+            maturityDate: requiredDateToISOString,
           }),
         },
         pre: [{ method: authorizeCourseBillCreation }],
@@ -86,10 +88,12 @@ exports.plugin = {
               }).oxor('company', 'fundingOrganisation'),
               mainFee: Joi.object({
                 price: Joi.number().positive(),
+                percentage: Joi.number().positive().integer().max(100),
                 count: Joi.number().positive().integer(),
                 countUnit: Joi.string().valid(GROUP, TRAINEE),
                 description: Joi.string().allow(''),
               }),
+              maturityDate: dateToISOString,
             }),
             Joi.object({ billedAt: requiredDateToISOString })
           ),

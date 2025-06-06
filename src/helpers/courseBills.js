@@ -1,6 +1,8 @@
 const get = require('lodash/get');
 const omit = require('lodash/omit');
+const { ObjectId } = require('mongodb');
 const NumbersHelper = require('./numbers');
+const Course = require('../models/Course');
 const CourseBill = require('../models/CourseBill');
 const CourseBillsNumber = require('../models/CourseBillsNumber');
 const BalanceHelper = require('./balances');
@@ -103,7 +105,31 @@ exports.list = async (query, credentials) => {
   return balance(query.company, credentials);
 };
 
-exports.create = async payload => CourseBill.create(payload);
+exports.create = async (payload) => {
+  const courseBill = await CourseBill.create(payload);
+
+  if (payload.mainFee.percentage) {
+    const course = await Course.findOne({ _id: payload.course }, { prices: 1 }).lean();
+    const trainerFees = (course.prices || []).reduce((acc, price) => {
+      if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
+        return NumbersHelper.add(acc, price.trainerFees);
+      }
+      return acc;
+    }, 0);
+
+    if (trainerFees) {
+      const trainerFeesPayload = {
+        price: NumbersHelper.toFixedToFloat(
+          NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
+        ),
+        count: 1,
+        percentage: payload.mainFee.percentage,
+        billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+      };
+      await exports.addBillingPurchase(courseBill._id, trainerFeesPayload);
+    }
+  }
+};
 
 exports.updateCourseBill = async (courseBillId, payload) => {
   let formattedPayload = {};
@@ -115,6 +141,7 @@ exports.updateCourseBill = async (courseBillId, payload) => {
 
     formattedPayload = {
       $set: { billedAt: payload.billedAt, number: `FACT-${lastBillNumber.seq.toString().padStart(5, '0')}` },
+      $unset: { maturityDate: '' },
     };
   } else {
     let payloadToSet = payload;
@@ -133,7 +160,26 @@ exports.updateCourseBill = async (courseBillId, payload) => {
     };
   }
 
-  await CourseBill.updateOne({ _id: courseBillId }, formattedPayload);
+  const courseBill = await CourseBill.findOneAndUpdate({ _id: courseBillId }, formattedPayload);
+  if (get(payload, 'mainFee.percentage')) {
+    const billingPurchase = courseBill.billingPurchaseList.find(bp =>
+      UtilsHelper.areObjectIdsEquals(bp.billingItem, process.env.TRAINER_FEES_BILLING_ITEM) && bp.percentage
+    );
+    if (billingPurchase) {
+      const billingPurchasePayload = {
+        count: 1,
+        price: NumbersHelper.toFixedToFloat(
+          NumbersHelper.multiply(
+            billingPurchase.price,
+            NumbersHelper.divide(get(payload, 'mainFee.percentage'), billingPurchase.percentage)
+          )
+        ),
+        percentage: get(payload, 'mainFee.percentage'),
+      };
+
+      await exports.updateBillingPurchase(courseBill._id, billingPurchase._id, billingPurchasePayload);
+    }
+  }
 };
 
 exports.addBillingPurchase = async (courseBillId, payload) =>
@@ -146,6 +192,7 @@ exports.updateBillingPurchase = async (courseBillId, billingPurchaseId, payload)
       'billingPurchaseList.$.price': payload.price,
       'billingPurchaseList.$.count': payload.count,
       ...(!!payload.description && { 'billingPurchaseList.$.description': payload.description }),
+      ...(!!payload.percentage && { 'billingPurchaseList.$.percentage': payload.percentage }),
     },
     ...(get(payload, 'description') === '' && { $unset: { 'billingPurchaseList.$.description': '' } }),
   }
@@ -177,7 +224,7 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
     .findOne({ _id: billId }, { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 })
     .populate({
       path: 'course',
-      select: 'subProgram',
+      select: 'subProgram prices',
       populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
     })
     .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } })

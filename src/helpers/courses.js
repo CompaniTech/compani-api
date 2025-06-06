@@ -70,6 +70,8 @@ const {
   DAY_D_MONTH_YEAR,
   MOBILE,
   SINGLE,
+  TRAINER_ADDITION,
+  TRAINER_DELETION,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
@@ -99,6 +101,17 @@ exports.createCourse = async (payload, credentials) => {
       .lean();
 
     coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
+  }
+
+  if (payload.prices) {
+    coursePayload = {
+      ...coursePayload,
+      prices: [{
+        global: payload.prices.global,
+        ...payload.prices.trainerFees && { trainerFees: payload.prices.trainerFees },
+        company: coursePayload.companies[0],
+      }],
+    };
   }
 
   const course = await Course.create(coursePayload);
@@ -779,6 +792,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
 exports.updateCourse = async (courseId, payload, credentials) => {
   let setFields = payload;
   let unsetFields = {};
+  let pushFields = {};
 
   if (has(payload, 'certifiedTrainees') && !payload.certifiedTrainees.length) {
     setFields = omit(setFields, 'certifiedTrainees');
@@ -800,9 +814,36 @@ exports.updateCourse = async (courseId, payload, credentials) => {
     unsetFields = { ...unsetFields, contact: '' };
   }
 
+  if (payload.prices) {
+    const course = await Course.findOne({ _id: courseId }, { prices: 1 }).lean();
+    const courseAlreadyHasPriceForCompany = course.prices && course.prices
+      .find(price => UtilsHelper.areObjectIdsEquals(price.company, payload.prices.company));
+    if (!courseAlreadyHasPriceForCompany) {
+      pushFields = { prices: payload.prices };
+      setFields = { ...omit(setFields, 'prices') };
+    } else {
+      setFields = {
+        ...setFields,
+        prices: course.prices.map((p) => {
+          let price = p;
+          if (UtilsHelper.areObjectIdsEquals(p.company, payload.prices.company)) {
+            if (payload.prices.global) price = { ...price, global: payload.prices.global };
+            if (has(payload.prices, 'trainerFees')) {
+              price = payload.prices.trainerFees
+                ? { ...price, trainerFees: payload.prices.trainerFees }
+                : { ...omit(price, 'trainerFees') };
+            }
+          }
+          return price;
+        }),
+      };
+    }
+  }
+
   const formattedPayload = {
     ...(!isEmpty(setFields) && { $set: { ...setFields } }),
     ...(!isEmpty(unsetFields) && { $unset: { ...unsetFields } }),
+    ...(!isEmpty(pushFields) && { $push: { ...pushFields } }),
   };
 
   const courseFromDb = await Course.findOneAndUpdate({ _id: courseId }, formattedPayload).lean();
@@ -1193,11 +1234,11 @@ const generateCompletionCertificateWord = async (course, attendances, trainee, t
   return { name: `${docType} - ${identity}.docx`, file: fs.createReadStream(filePath) };
 };
 
-const getTraineeList = async (course, credentials) => {
+const getTraineeList = async (course, credentials, isClientInterface) => {
   const isRofOrAdmin = [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(credentials, 'role.vendor.name'));
   const isCourseTrainer = get(credentials, 'role.vendor.name') === TRAINER &&
     UtilsHelper.doesArrayIncludeId(course.trainers, credentials._id);
-  const canAccessAllTrainees = isRofOrAdmin || isCourseTrainer;
+  const canAccessAllTrainees = (isRofOrAdmin || isCourseTrainer) && !isClientInterface;
 
   const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
     .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
@@ -1269,7 +1310,7 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
 };
 
 exports.generateCompletionCertificates = async (courseId, credentials, query) => {
-  const { format, type } = query;
+  const { format, type, isClientInterface } = query;
   const isVendorUser = VENDOR_ROLES.includes(get(credentials, 'role.vendor.name'));
 
   const courseTrainees = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
@@ -1322,7 +1363,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
     return generateCompletionCertificatePdf(courseData, allAttendances, trainee);
   }
 
-  const traineeList = await getTraineeList(course, credentials);
+  const traineeList = await getTraineeList(course, credentials, isClientInterface);
   if (format === ALL_WORD) {
     return generateCompletionCertificateAllWord(courseData, allAttendances, traineeList, type, courseId);
   }
@@ -1337,12 +1378,12 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
 };
 
 exports.addAccessRule = async (courseId, payload) => {
-  await Course.updateOne({ _id: courseId }, { $push: { accessRules: payload.company } });
+  await Course.updateOne({ _id: courseId }, { $addToSet: { accessRules: payload.companies } });
 
   const userCompanies = await UserCompany
     .find(
       {
-        company: payload.company,
+        company: { $in: payload.companies },
         $or: [{ endDate: { $gt: CompaniDate().endOf(DAY).toISO() } }, { endDate: { $exists: false } }],
       },
       { user: 1 }
@@ -1443,7 +1484,7 @@ exports.removeCourseCompany = async (courseId, companyId, credentials) => {
   const trainingContract = await TrainingContract.findOne({ course: courseId, company: companyId }, { _id: 1 }).lean();
 
   return Promise.all([
-    Course.updateOne({ _id: courseId }, { $pull: { companies: companyId } }),
+    Course.updateOne({ _id: courseId }, { $pull: { companies: companyId, prices: { company: companyId } } }),
     CourseHistoriesHelper.createHistoryOnCompanyDeletion({ course: courseId, company: companyId }, credentials._id),
     ...trainingContract ? [TrainingContractsHelper.delete(trainingContract._id)] : [],
   ]);
@@ -1484,10 +1525,16 @@ exports.composeCourseName = (course) => {
   return companyName + course.subProgram.program.name + misc;
 };
 
-exports.addTrainer = async (courseId, payload) => Course
-  .updateOne({ _id: courseId }, { $addToSet: { trainers: payload.trainer } });
+exports.addTrainer = async (courseId, payload, credentials) => {
+  await Course.updateOne({ _id: courseId }, { $addToSet: { trainers: payload.trainer } });
 
-exports.removeTrainer = async (courseId, trainerId) => {
+  await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(
+    { course: courseId, trainerId: payload.trainer, action: TRAINER_ADDITION },
+    credentials._id
+  );
+};
+
+exports.removeTrainer = async (courseId, trainerId, credentials) => {
   await TrainerMission
     .findOneAndUpdate(
       { courses: courseId, trainer: trainerId, cancelledAt: { $exists: false } },
@@ -1502,6 +1549,11 @@ exports.removeTrainer = async (courseId, trainerId) => {
     : { $pull: { trainers: trainerId } };
 
   await Course.updateOne({ _id: courseId }, query);
+
+  await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(
+    { course: courseId, trainerId, action: TRAINER_DELETION },
+    credentials._id
+  );
 };
 
 exports.addTutor = async (courseId, payload) => {

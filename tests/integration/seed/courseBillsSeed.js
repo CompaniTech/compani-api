@@ -277,6 +277,23 @@ const coursesList = [
     expectedBillsCount: 2,
     companies: [otherCompany._id],
     certificateGenerationMode: GLOBAL,
+    prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
+  },
+  { // 13 - inter course with prices
+    _id: new ObjectId(),
+    type: INTER_B2B,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 10',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [traineeFromOtherCompany._id, traineeFromAuthCompany._id],
+    companies: [otherCompany._id, companyWithoutSubscription._id, authCompany._id],
+    certificateGenerationMode: GLOBAL,
+    prices: [
+      { company: otherCompany._id, global: 1200, trainerFees: 120 },
+      { company: authCompany._id, global: 2000 },
+    ],
   },
 ];
 
@@ -286,7 +303,7 @@ const courseFundingOrganisationList = [
 ];
 
 const billingItemList = [
-  { _id: new ObjectId(), name: 'frais formateur' },
+  { _id: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM), name: 'frais formateur' },
   { _id: new ObjectId(), name: 'forfait salle' },
   { _id: new ObjectId(), name: 'petit déjeuner' },
 ];
@@ -304,6 +321,7 @@ const courseBillsList = [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 90, count: 1 },
       { _id: new ObjectId(), billingItem: billingItemList[1]._id, price: 400, count: 1 },
     ],
+    maturityDate: '2025-04-29T22:00:00.000+00:00',
   },
   { // 1 - with funder and mainFee description
     _id: new ObjectId(),
@@ -437,6 +455,26 @@ const courseBillsList = [
     billingPurchaseList: [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 90, count: 1 },
       { _id: new ObjectId(), billingItem: billingItemList[1]._id, price: 400, count: 1 },
+    ],
+  },
+  { // 13
+    _id: new ObjectId(),
+    course: coursesList[13]._id,
+    companies: [otherCompany._id],
+    mainFee: { price: 120, count: 1, countUnit: TRAINEE, percentage: 10 },
+    payer: { company: otherCompany._id },
+    billingPurchaseList: [
+      { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 12, count: 1, percentage: 10 },
+    ],
+  },
+  { // 14
+    _id: new ObjectId(),
+    course: coursesList[13]._id,
+    companies: [otherCompany._id],
+    mainFee: { price: 360, count: 1, countUnit: TRAINEE, percentage: 30 },
+    payer: { company: otherCompany._id },
+    billingPurchaseList: [
+      { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 36, count: 1, percentage: 30 },
     ],
   },
 ];

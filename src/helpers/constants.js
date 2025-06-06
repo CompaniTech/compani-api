@@ -468,6 +468,8 @@ module.exports = {
   ESTIMATED_START_DATE_EDITION: 'estimated_start_date_edition',
   COMPANY_ADDITION: 'company_addition',
   COMPANY_DELETION: 'company_deletion',
+  TRAINER_ADDITION: 'trainer_addition',
+  TRAINER_DELETION: 'trainer_deletion',
   // MediaUpload
   UPLOAD_IMAGE: 'image',
   UPLOAD_VIDEO: 'video',
