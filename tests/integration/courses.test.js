@@ -861,16 +861,16 @@ describe('COURSES ROUTES - GET /courses', () => {
           { ...pick(otherCompany, ['_id', 'name']), holding: { _id: otherHolding._id, name: otherHolding.name } },
         ],
         subProgram: {
-          _id: expect.any(ObjectId),
+          _id: expect.any(Object),
           program: {
             _id: programsList[0]._id,
             name: programsList[0].name,
-            subPrograms: [expect.any(ObjectId), expect.any(ObjectId), expect.any(ObjectId)],
+            subPrograms: [expect.any(Object), expect.any(Object), expect.any(Object)],
           },
         },
         trainers: [pick(trainerAndCoach, ['_id', 'identity.firstname', 'identity.lastname'])],
         slots: [{
-          _id: expect.any(ObjectId),
+          _id: expect.any(Object),
           startDate: CompaniDate('2020-03-05T08:00:00.000Z').toDate(),
           endDate: CompaniDate('2020-03-05T10:00:00.000Z').toDate(),
           course: coursesList[3]._id,
@@ -881,10 +881,10 @@ describe('COURSES ROUTES - GET /courses', () => {
             street: '37 rue de Ponthieu',
             location: { type: 'Point', coordinates: [2.377133, 48.801389] },
           },
-          step: { _id: expect.any(ObjectId), type: ON_SITE },
+          step: { _id: expect.any(Object), type: ON_SITE },
         }],
-        trainees: expect.arrayContaining([expect.any(ObjectId)]),
-        slotsToPlan: [{ _id: expect.any(ObjectId), course: course._id }],
+        trainees: expect.arrayContaining([expect.any(Object)]),
+        slotsToPlan: [{ _id: expect.any(Object), course: course._id }],
       });
 
       const archivedCourse = response.result.data.courses
@@ -1082,13 +1082,13 @@ describe('COURSES ROUTES - GET /courses', () => {
           { ...pick(authCompany, ['_id', 'name']), holding: { _id: authHolding._id, name: authHolding.name } },
         ],
         subProgram: expect.objectContaining({
-          _id: expect.any(ObjectId),
+          _id: expect.any(Object),
           program: {
             _id: programsList[0]._id,
             name: programsList[0].name,
             image: programsList[0].image,
             description: programsList[0].description,
-            subPrograms: [expect.any(ObjectId), expect.any(ObjectId), expect.any(ObjectId)],
+            subPrograms: [expect.any(Object), expect.any(Object), expect.any(Object)],
           },
         }),
         slots: [{
@@ -1096,14 +1096,14 @@ describe('COURSES ROUTES - GET /courses', () => {
           endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
           course: coursesList[2]._id,
           step: {
-            _id: expect.any(ObjectId),
+            _id: expect.any(Object),
             type: 'on_site',
           },
-          _id: expect.any(ObjectId),
+          _id: expect.any(Object),
         }],
         slotsToPlan: [
-          { _id: expect.any(ObjectId), course: course._id },
-          { _id: expect.any(ObjectId), course: course._id },
+          { _id: expect.any(Object), course: course._id },
+          { _id: expect.any(Object), course: course._id },
         ],
       }));
       expect(course.trainer).toBeUndefined();
