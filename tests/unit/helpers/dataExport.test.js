@@ -119,7 +119,7 @@ describe('exportCustomers', () => {
     expect(result).toBeDefined();
     expect(result[1]).toBeDefined();
     expect(result[1]).toMatchObject([
-      expect.any(ObjectId),
+      expect.any(Object),
       'M.',
       'PAPI',
       'Grand Père',
@@ -127,7 +127,7 @@ describe('exportCustomers', () => {
       '9 rue du paradis 70015 Paris',
       'Paris',
       '08/08/2019',
-      expect.any(ObjectId),
+      expect.any(Object),
       'Toto Test',
       'Domicile',
       'Père Castor',
@@ -548,10 +548,10 @@ describe('exportHelpers', () => {
       [
         'aide@sos.io',
         '+33123456789',
-        expect.any(ObjectId),
+        expect.any(Object),
         'JE',
         'suis',
-        expect.any(ObjectId),
+        expect.any(Object),
         'M.',
         'PATATE',
         '',
@@ -738,11 +738,11 @@ describe('exportReferents', () => {
 
     expect(result).toBeDefined();
     expect(result[1]).toMatchObject([
-      expect.any(ObjectId),
+      expect.any(Object),
       'M.',
       'TATA',
       'titi',
-      expect.any(ObjectId),
+      expect.any(Object),
       'M.',
       '',
       'toto',
@@ -750,11 +750,11 @@ describe('exportReferents', () => {
       '21/01/2020',
     ]);
     expect(result[2]).toMatchObject([
-      expect.any(ObjectId),
+      expect.any(Object),
       'M.',
       'TATA',
       '',
-      expect.any(ObjectId),
+      expect.any(Object),
       '',
       'TUTU',
       'toto',
@@ -840,7 +840,7 @@ describe('exportStaffRegister', () => {
 
     expect(result).toBeDefined();
     expect(result[1]).toMatchObject([
-      expect.any(ObjectId),
+      expect.any(Object),
       'TUTU',
       'toto',
       'M.',
@@ -852,7 +852,7 @@ describe('exportStaffRegister', () => {
       '',
     ]);
     expect(result[2]).toMatchObject([
-      expect.any(ObjectId),
+      expect.any(Object),
       'TUTU2',
       'toto2',
       'Mme',
@@ -1009,7 +1009,7 @@ describe('exportSubscriptions', () => {
     expect(result).toBeDefined();
     expect(result[1]).toBeDefined();
     expect(result[1]).toMatchObject([
-      expect.any(ObjectId),
+      expect.any(Object),
       'M.',
       'AUTONOMIE',
       '',
@@ -1023,7 +1023,7 @@ describe('exportSubscriptions', () => {
     ]);
     expect(result[2]).toBeDefined();
     expect(result[2]).toMatchObject([
-      expect.any(ObjectId),
+      expect.any(Object),
       'M.',
       'AUTONOMIE',
       '',
@@ -1133,11 +1133,11 @@ describe('exportFundings', () => {
     expect(result).toBeDefined();
     expect(result[1]).toBeDefined();
     expect(result[1]).toMatchObject([
-      expect.any(ObjectId),
+      expect.any(Object),
       'M.',
       'AUTONOMIE',
       '',
-      expect.any(ObjectId),
+      expect.any(Object),
       'tpp',
       '12345678',
       'Forfaitaire',

@@ -651,11 +651,11 @@ describe('list', () => {
     it('should return courses for trainees, vendor', async () => {
       const traineeOrTutorId = new ObjectId();
       const stepId = new ObjectId();
-      const courseIds = [new ObjectId(), new ObjectId()];
+      const courseIds = [{ _id: new ObjectId() }, { _id: new ObjectId() }];
       const coursesList = [
         {
           misc: 'name',
-          _id: courseIds[0],
+          _id: courseIds[0]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -692,7 +692,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[1],
+          _id: courseIds[1]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -825,7 +825,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
           },
           {
             query: 'populate',
@@ -875,11 +875,11 @@ describe('list', () => {
       const traineeCompany = new ObjectId();
       const traineeOrTutorId = new ObjectId();
       const stepId = new ObjectId();
-      const courseIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+      const courseIds = [{ _id: new ObjectId() }, { _id: new ObjectId() }, { _id: new ObjectId() }];
       const coursesList = [
         {
           misc: 'name',
-          _id: courseIds[0],
+          _id: courseIds[0]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -916,7 +916,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[1],
+          _id: courseIds[1]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -952,7 +952,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[2],
+          _id: courseIds[2]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1098,7 +1098,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
           },
           {
             query: 'populate',
@@ -1152,11 +1152,11 @@ describe('list', () => {
       const traineeCompany = credentials.holding.companies[0];
       const traineeOrTutorId = new ObjectId();
       const stepId = new ObjectId();
-      const courseIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+      const courseIds = [{ _id: new ObjectId() }, { _id: new ObjectId() }, { _id: new ObjectId() }];
       const coursesList = [
         {
           misc: 'name',
-          _id: courseIds[0],
+          _id: courseIds[0]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1193,7 +1193,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[1],
+          _id: courseIds[1]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1229,7 +1229,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[2],
+          _id: courseIds[2]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1380,7 +1380,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
           },
           {
             query: 'populate',
@@ -1434,11 +1434,11 @@ describe('list', () => {
       const traineeOrTutorId = credentials._id;
       const stepId = new ObjectId();
       const slotId = new ObjectId();
-      const courseIds = [new ObjectId(), new ObjectId()];
+      const courseIds = [{ _id: new ObjectId() }, { _id: new ObjectId() }];
       const coursesList = [
         {
           misc: 'name',
-          _id: courseIds[0],
+          _id: courseIds[0]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1488,7 +1488,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[1],
+          _id: courseIds[1]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1644,7 +1644,7 @@ describe('list', () => {
             _id: slotId,
             slots: ['2019-11-06T12:00:00.000Z', '2025-03-04T17:00:00.000Z'],
             progress: { live: 0.5, presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 300 } } },
-            courseId: courseIds[1],
+            courseId: courseIds[1]._id,
           },
         ],
       });
@@ -1674,7 +1674,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
           },
           {
             query: 'populate',
@@ -3211,7 +3211,7 @@ describe('getCourse', () => {
           },
           ],
         },
-        slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+        slots: [{ step: { _id: stepId }, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
         slotsToPlan: [],
         trainers: [{ _id: loggedUser._id }],
       };
@@ -3238,7 +3238,9 @@ describe('getCourse', () => {
             type: 'on_site',
             areActivitiesValid: true,
             theoreticalDuration: 'PT12600S',
-            slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+            slots: [
+              { step: { _id: stepId }, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' },
+            ],
           },
           ],
         },
@@ -5536,7 +5538,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: [companyId, otherCompanyId],
+      companies: [{ _id: companyId }, { _id: otherCompanyId }],
       subProgram: {
         _id: subProgramIds[0],
         program: {
@@ -5833,7 +5835,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: [companyId, otherCompanyId],
+      companies: [{ _id: companyId }, { _id: otherCompanyId }],
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Apprendre', name: 'nom du programme', subPrograms: subProgramIds },
@@ -6081,7 +6083,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: companies.map(c => c._id),
+      companies,
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
@@ -6365,7 +6367,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: companies.map(c => c._id),
+      companies,
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
@@ -6628,7 +6630,7 @@ describe('generateCompletionCertificates', () => {
         { _id: traineesIds[2], identity: { lastname: 'trainee 3' } },
       ],
       misc: 'Bonjour je suis une formation',
-      companies: [companyId, new ObjectId(), otherCompanyId],
+      companies: [{ _id: companyId }, { _id: new ObjectId() }, { _id: otherCompanyId }],
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Apprendre plein de trucs cool', name: 'un programme', subPrograms: subProgramIds },
@@ -6778,7 +6780,7 @@ describe('generateCompletionCertificates', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: { $in: course.companies },
+            companies: { $in: course.companies.map(c => c._id) },
           }],
         },
         {
@@ -6789,7 +6791,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
-                company: { $in: course.companies },
+                company: { $in: course.companies.map(c => c._id) },
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: false },
@@ -6832,7 +6834,7 @@ describe('generateCompletionCertificates', () => {
         { _id: traineesIds[2], identity: { lastname: 'trainee 3' } },
       ],
       misc: 'Bonjour je suis une formation',
-      companies: [companyId],
+      companies: [{ _id: companyId }],
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Apprendre', name: 'nom du programme', subPrograms: subProgramIds },
@@ -7012,7 +7014,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: companies.map(c => c._id),
+      companies,
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },

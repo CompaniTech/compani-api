@@ -138,7 +138,7 @@ const getCourseCompletion = async (course) => {
   for (const step of elearningSteps) {
     let totalActivityProgress = 0;
     for (const activity of step.activities) {
-      const traineesWithAH = Object.keys(groupBy(activityHistoriesGroupedByActivity[activity._id], 'user'));
+      const traineesWithAH = Object.keys(groupBy(activityHistoriesGroupedByActivity[activity], 'user'));
 
       const activityAverageProgress = course.trainees.length
         ? NumbersHelper.divide(traineesWithAH.length, course.trainees.length)

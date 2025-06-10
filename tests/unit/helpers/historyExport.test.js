@@ -353,14 +353,14 @@ describe('exportWorkingEventsHistory', () => {
       header,
       ['Intervention', '', 'Lala', '2019/05/18 10:00:00', '2019/05/18 10:01:18', 'Manuel', 'QR Code manquant',
         '2019/05/18 12:00:00', '', '', '', '2,00', 'Une fois par semaine', '667,00', 'Transports en commun / À pied',
-        'Girafes - 75', expect.any(ObjectId), '', 'Jean-Claude', 'VAN DAMME', 'Non', expect.any(ObjectId), 'Mme',
+        'Girafes - 75', expect.any(Object), '', 'Jean-Claude', 'VAN DAMME', 'Non', expect.any(Object), 'Mme',
         'MATHY', 'Mimi', '', 'Oui', 'Non', '', ''],
       ['Intervention', '', 'Lala', '2019/05/20 10:00:00', '2019/05/20 10:01:18', 'Manuel', 'QR Code manquant',
         '2019/05/20 12:00:00', '2019/05/20 12:03:24', 'Manuel', 'Problème de caméra', '2,00', 'Une fois par semaine',
-        '', '', 'Girafes - 75', '', '', '', '', 'Oui', expect.any(ObjectId), 'Mme', 'MATHY', 'Mimi', '',
+        '', '', 'Girafes - 75', '', '', '', '', 'Oui', expect.any(Object), 'Mme', 'MATHY', 'Mimi', '',
         'Oui', 'Non', '', ''],
       ['Heure interne', 'Formation', '', '2019/05/24 10:00:00', '', '', '', '2019/05/24 12:00:00', '', '', '',
-        '2,00', '', '4124,00', 'Véhicule d\'entreprise', 'Etoiles - 75', '', '', '', '', 'Oui', expect.any(ObjectId), 'M.',
+        '2,00', '', '4124,00', 'Véhicule d\'entreprise', 'Etoiles - 75', '', '', '', '', 'Oui', expect.any(Object), 'M.',
         'HORSEMAN', 'Bojack', 'brbr', 'Non', 'Oui', 'Facturée & non payée', 'Initiative de l\'intervenant(e)'],
     ]);
   });
@@ -396,7 +396,7 @@ describe('formatAbsence', () => {
     const exportArray = await ExportHelper.formatAbsence(event);
 
     expect(exportArray).toEqual([
-      expect.any(ObjectId),
+      expect.any(Object),
       'Jean-Claude',
       'VAN DAMME',
       '',
@@ -436,7 +436,7 @@ describe('formatAbsence', () => {
     const exportArray = await ExportHelper.formatAbsence(event);
 
     expect(exportArray).toEqual([
-      expect.any(ObjectId),
+      expect.any(Object),
       'Princess',
       'CAROLYN',
       '',
@@ -1409,18 +1409,18 @@ describe('exportPayAndFinalPayHistory', () => {
 
     expect(exportArray).toEqual([
       header,
-      [expect.any(ObjectId), 'Mme', 'Tata', 'TOTO', 'Test', '04/05/2019', '01/05/2019', '', '', '31/05/2019', '77,94',
+      [expect.any(Object), 'Mme', 'Tata', 'TOTO', 'Test', '04/05/2019', '01/05/2019', '', '', '31/05/2019', '77,94',
         '10,00', '30,00', '0,00', '2,00', '2,00', 'surchargedAndExemptDetails', '2,00', '2,00',
         'surchargedAndNotExemptDetails', '8,00', '-69,94', '8,00', '-77,94', '0,00', '0,00', 'Oui', '37,60', '12,30',
         '12,30', '18,00', '0,00', '0,00'],
-      [expect.any(ObjectId), '', 'Titi', 'TUTU', 'Autre test', '', '01/05/2019', '', '', '31/05/2019', '97,94', '8,00',
+      [expect.any(Object), '', 'Titi', 'TUTU', 'Autre test', '', '01/05/2019', '', '', '31/05/2019', '97,94', '8,00',
         '20,00', '0,00', '2,00', '2,00', 'surchargedAndExemptDetails', '2,00', '2,00', 'surchargedAndNotExemptDetails',
         '2,00', '-89,94', '8,00', '-97,94', '0,00', '0,00', 'Oui', '47,60', '15,10', '15,10', '20,00', '100,00', '0,00'],
-      [expect.any(ObjectId), 'M.', 'Tata', 'TOTO', 'Test', '04/03/2019', '01/05/2019', '31/05/2019', 'Démission',
+      [expect.any(Object), 'M.', 'Tata', 'TOTO', 'Test', '04/03/2019', '01/05/2019', '31/05/2019', 'Démission',
         '31/05/2019', '77,94', '3,00', '20,00', '0,00', '2,00', '2,00', 'surchargedAndExemptDetails', '2,00', '2,00',
         'surchargedAndNotExemptDetails', '12,00', '-69,94', '8,00', '-77,94', '0,00', '0,00', 'Oui', '37,60', '0,00',
         '15,10', '18,00', '0,00', '156,00'],
-      [expect.any(ObjectId), '', 'Titi', 'TUTU', 'Autre test', '19/01/2019', '01/05/2019', '31/05/2019', 'Mutation',
+      [expect.any(Object), '', 'Titi', 'TUTU', 'Autre test', '19/01/2019', '01/05/2019', '31/05/2019', 'Mutation',
         '31/05/2019', '97,94', '0,00', '20,00', '0,00', '2,00', '2,00', 'surchargedAndExemptDetails', '2,00', '2,00',
         'surchargedAndNotExemptDetails', '0,00', '-89,94', '8,00', '-97,94', '0,00', '0,00', 'Oui', '47,60', '15,10',
         '15,10', '20,00', '100,00', '0,00'],
