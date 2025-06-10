@@ -187,7 +187,7 @@ exports.plugin = {
       options: {
         auth: { scope: ['coursebills:edit'] },
         validate: {
-          payload: Joi.object({ _ids: Joi.array().items(Joi.objectId()).required().min(1) }),
+          payload: Joi.object({ _ids: Joi.array().items(Joi.objectId()).min(1) }),
         },
         pre: [{ method: authorizeCourseBillListDeletion }],
       },
