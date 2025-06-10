@@ -2386,7 +2386,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 if trying to interrupt a course in progress', async () => {
+    it('should return 403 if trying to interrupt a course already interrupted', async () => {
       const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
       const response = await app.inject({
         method: 'PUT',
