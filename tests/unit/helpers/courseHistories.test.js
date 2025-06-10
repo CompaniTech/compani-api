@@ -17,6 +17,7 @@ const {
   TRAINEE,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  COURSE_INTERRUPTION,
 } = require('../../../src/helpers/constants');
 const SinonMongoose = require('../sinonMongoose');
 
@@ -683,6 +684,33 @@ describe('getCompanyAtCourseRegistrationList', () => {
         { query: 'sort', args: [{ createdAt: -1, course: 1 }] },
         { query: 'lean' },
       ]
+    );
+  });
+});
+
+describe('createHistoryOnCourseInterruption', () => {
+  let createHistory;
+
+  beforeEach(() => {
+    createHistory = sinon.stub(CourseHistoriesHelper, 'createHistory');
+  });
+
+  afterEach(() => {
+    createHistory.restore();
+  });
+
+  it('should create a courseHistory on course interruption', async () => {
+    const courseId = new ObjectId();
+    const userId = new ObjectId();
+
+    await CourseHistoriesHelper.createHistoryOnCourseInterruption(courseId, userId);
+
+    sinon.assert.calledOnceWithExactly(
+      createHistory,
+      courseId,
+      userId,
+      COURSE_INTERRUPTION,
+      {}
     );
   });
 });

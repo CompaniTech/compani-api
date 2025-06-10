@@ -2201,7 +2201,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       { operationsRepresentative: new ObjectId() },
       { maxTrainees: 15 },
       { expectedBillsCount: 10 },
-      { archivedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() },
+      { archivedAt: '2020-03-25T09:00:00.000Z' },
+      { interruptedAt: '2025-06-01T09:00:00.000Z' },
     ];
     payloads.forEach((payload) => {
       it(`should return 403 if course is archived (update ${Object.keys(payload)})`, async () => {

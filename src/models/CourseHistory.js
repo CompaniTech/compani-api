@@ -10,6 +10,7 @@ const {
   COMPANY_DELETION,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  COURSE_INTERRUPTION,
 } = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
@@ -25,6 +26,7 @@ const ACTION_TYPES = [
   COMPANY_DELETION,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  COURSE_INTERRUPTION,
 ];
 
 const CourseHistorySchema = mongoose.Schema({
