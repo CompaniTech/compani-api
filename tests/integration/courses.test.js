@@ -2092,6 +2092,22 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(course).toBeTruthy();
     });
 
+    it('should interrupt a blended course', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const course = await Course.countDocuments({ _id: coursesList[0]._id, interruptedAt: { $exists: true } });
+
+      expect(course).toBeTruthy();
+    });
+
     it('should update salesRepresentative for a blended course', async () => {
       const payload = { salesRepresentative: trainerOrganisationManager._id };
       const response = await app.inject({
@@ -2201,8 +2217,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       { operationsRepresentative: new ObjectId() },
       { maxTrainees: 15 },
       { expectedBillsCount: 10 },
-      { archivedAt: '2020-03-25T09:00:00.000Z' },
-      { interruptedAt: '2025-06-01T09:00:00.000Z' },
+      { archivedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() },
+      { interruptedAt: CompaniDate('2025-06-01T09:00:00.000Z').toDate() },
     ];
     payloads.forEach((payload) => {
       it(`should return 403 if course is archived (update ${Object.keys(payload)})`, async () => {
@@ -2363,6 +2379,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${courseIdFromAuthCompany}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if trying to interrupt a course in progress', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload,
       });

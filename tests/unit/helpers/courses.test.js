@@ -4206,7 +4206,7 @@ describe('getTraineesWithElearningProgress', () => {
   });
 });
 
-describe('updateCourse #tag', () => {
+describe('updateCourse', () => {
   let courseFindOneAndUpdate;
   let createHistoryOnEstimatedStartDateEdition;
   let courseFindOne;

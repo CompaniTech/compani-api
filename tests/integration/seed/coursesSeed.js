@@ -719,6 +719,22 @@ const coursesList = [
     maxTrainees: 1,
     expectedBillsCount: 0,
   },
+  { // 26 interrupted course
+    _id: new ObjectId(),
+    subProgram: subProgramsList[4]._id,
+    misc: 'old session',
+    trainers: [trainer._id],
+    trainees: [coach._id, helper._id, clientAdmin._id],
+    companies: [authCompany._id],
+    type: INTRA,
+    format: BLENDED,
+    maxTrainees: 8,
+    expectedBillsCount: 3,
+    operationsRepresentative: vendorAdmin._id,
+    interruptedAt: '2021-01-01T00:00:00.000Z',
+    estimatedStartDate: '2020-11-03T10:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
+  },
 ];
 
 const courseBillsList = [
