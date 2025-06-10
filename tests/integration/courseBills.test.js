@@ -1653,3 +1653,86 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}', () => {
     });
   });
 });
+
+describe('COURSE BILL ROUTES - POST /coursebills/list-deletion', () => {
+  let authToken;
+  beforeEach(populateDB);
+  const courseBillsToDelete = [courseBillsList[0]._id, courseBillsList[1]._id, courseBillsList[3]._id];
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should delete course bills', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-deletion',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: courseBillsToDelete },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const countBill = await CourseBill.countDocuments({ _id: { $in: courseBillsToDelete } });
+      expect(countBill).toBe(0);
+    });
+
+    it('should return 400 if no course bill in payload', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-deletion',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [] },
+
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if course bill doesn\'t exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-deletion',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToDelete, new ObjectId()] },
+
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if course bill have billedAt', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-deletion',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToDelete, courseBillsList[2]._id] },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-deletion',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { _ids: courseBillsToDelete },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});

@@ -921,3 +921,23 @@ describe('deleteBill', () => {
     sinon.assert.calledOnceWithExactly(deleteOne, { _id: courseBillId });
   });
 });
+
+describe('deleteBillList', () => {
+  let deleteMany;
+
+  beforeEach(() => {
+    deleteMany = sinon.stub(CourseBill, 'deleteMany');
+  });
+
+  afterEach(() => {
+    deleteMany.restore();
+  });
+
+  it('should delete course bills', async () => {
+    const courseBillIds = [new ObjectId(), new ObjectId()];
+
+    await CourseBillHelper.deleteBillList(courseBillIds);
+
+    sinon.assert.calledOnceWithExactly(deleteMany, { _id: { $in: courseBillIds } });
+  });
+});

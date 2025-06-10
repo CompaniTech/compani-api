@@ -268,3 +268,14 @@ exports.authorizeCourseBillDeletion = async (req) => {
 
   return null;
 };
+
+exports.authorizeCourseBillListDeletion = async (req) => {
+  const { _ids: courseBillIds } = req.payload;
+
+  const courseBills = await CourseBill.find({ _id: { $in: courseBillIds } }, { billedAt: 1 }).lean();
+  if (courseBills.length !== courseBillIds.length) throw Boom.notFound();
+
+  if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
+
+  return null;
+};

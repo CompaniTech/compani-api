@@ -11,6 +11,7 @@ const {
   deleteBillingPurchase,
   generateBillPdf,
   deleteBill,
+  deleteBillList,
 } = require('../controllers/courseBillController');
 const { LIST, BALANCE, GROUP, TRAINEE } = require('../helpers/constants');
 const {
@@ -22,6 +23,7 @@ const {
   authorizeCourseBillingPurchaseDelete,
   authorizeBillPdfGet,
   authorizeCourseBillDeletion,
+  authorizeCourseBillListDeletion,
 } = require('./preHandlers/courseBills');
 const { requiredDateToISOString, dateToISOString } = require('./validations/utils');
 
@@ -177,6 +179,19 @@ exports.plugin = {
         pre: [{ method: authorizeCourseBillDeletion }],
       },
       handler: deleteBill,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/list-deletion',
+      options: {
+        auth: { scope: ['coursebills:edit'] },
+        validate: {
+          payload: Joi.object({ _ids: Joi.array().items(Joi.objectId()).required().min(1) }),
+        },
+        pre: [{ method: authorizeCourseBillListDeletion }],
+      },
+      handler: deleteBillList,
     });
   },
 };
