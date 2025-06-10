@@ -901,7 +901,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(20);
+      expect(response.result.data.courses.length).toEqual(21);
     });
 
     it('should get blended archived courses (ops webapp)', async () => {
@@ -923,7 +923,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(16);
+      expect(response.result.data.courses.length).toEqual(17);
     });
 
     it('should get single courses only (type is string)', async () => {
@@ -1060,7 +1060,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(16);
+      expect(response.result.data.courses.length).toEqual(17);
     });
 
     it('should get trainer\'s course (ops mobile)', async () => {
@@ -1072,7 +1072,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.courses.length).toEqual(16);
+      expect(response.result.data.courses.courses.length).toEqual(17);
 
       const course =
          response.result.data.courses.courses.find(c => UtilsHelper.areObjectIdsEquals(coursesList[2]._id, c._id));
@@ -1130,7 +1130,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(13);
+      expect(response.result.data.courses.length).toEqual(14);
       const course =
          response.result.data.courses.find(c => UtilsHelper.areObjectIdsEquals(coursesList[2]._id, c._id));
       expect(course.companies).toEqual([pick(authCompany, ['_id', 'name'])]);
