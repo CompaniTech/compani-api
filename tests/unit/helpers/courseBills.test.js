@@ -902,26 +902,6 @@ describe('generateBillPdf', () => {
   });
 });
 
-describe('deleteBill', () => {
-  let deleteOne;
-
-  beforeEach(() => {
-    deleteOne = sinon.stub(CourseBill, 'deleteOne');
-  });
-
-  afterEach(() => {
-    deleteOne.restore();
-  });
-
-  it('should delete course bill', async () => {
-    const courseBillId = new ObjectId();
-
-    await CourseBillHelper.deleteBill(courseBillId);
-
-    sinon.assert.calledOnceWithExactly(deleteOne, { _id: courseBillId });
-  });
-});
-
 describe('deleteBillList', () => {
   let deleteMany;
 

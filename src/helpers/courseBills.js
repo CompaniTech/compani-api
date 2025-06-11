@@ -246,6 +246,4 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
   return { pdf, billNumber: bill.number };
 };
 
-exports.deleteBill = async courseBillId => CourseBill.deleteOne({ _id: courseBillId });
-
 exports.deleteBillList = async courseBillIds => CourseBill.deleteMany({ _id: { $in: courseBillIds } });
