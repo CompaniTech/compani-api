@@ -72,6 +72,8 @@ const {
   SINGLE,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  COURSE_RESTART,
+  COURSE_INTERRUPTION,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
@@ -840,6 +842,11 @@ exports.updateCourse = async (courseId, payload, credentials) => {
     }
   }
 
+  if (payload.interruptedAt === '') {
+    setFields = omit(setFields, 'interruptedAt');
+    unsetFields = { ...unsetFields, interruptedAt: '' };
+  }
+
   const formattedPayload = {
     ...(!isEmpty(setFields) && { $set: { ...setFields } }),
     ...(!isEmpty(unsetFields) && { $unset: { ...unsetFields } }),
@@ -859,8 +866,9 @@ exports.updateCourse = async (courseId, payload, credentials) => {
     );
   }
 
-  if (payload.interruptedAt) {
-    await CourseHistoriesHelper.createHistoryOnCourseInterruption(courseId, credentials._id);
+  if (has(payload, 'interruptedAt')) {
+    const action = payload.interruptedAt ? COURSE_INTERRUPTION : COURSE_RESTART;
+    await CourseHistoriesHelper.createHistoryOnCourseInterruptionOrRestart({ courseId, action }, credentials._id);
   }
 
   return courseFromDb;
