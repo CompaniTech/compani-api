@@ -39,6 +39,14 @@ describe('createHistory', () => {
 
     sinon.assert.calledOnceWithExactly(create, { course, createdBy: user, action: 'action', trainee: 'bonjour' });
   });
+
+  it('should create history without payload', async () => {
+    const course = new ObjectId();
+    const user = new ObjectId();
+    await CourseHistoriesHelper.createHistory(course, user, 'action');
+
+    sinon.assert.calledOnceWithExactly(create, { course, createdBy: user, action: 'action' });
+  });
 });
 
 describe('createHistoryOnSlotCreation', () => {
@@ -709,8 +717,7 @@ describe('createHistoryOnCourseInterruption', () => {
       createHistory,
       courseId,
       userId,
-      COURSE_INTERRUPTION,
-      {}
+      COURSE_INTERRUPTION
     );
   });
 });
