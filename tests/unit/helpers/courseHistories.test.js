@@ -696,7 +696,7 @@ describe('getCompanyAtCourseRegistrationList', () => {
   });
 });
 
-describe('createHistoryOnCourseInterruption', () => {
+describe('createHistoryOnCourseInterruptionOrRestart', () => {
   let createHistory;
 
   beforeEach(() => {
@@ -710,8 +710,9 @@ describe('createHistoryOnCourseInterruption', () => {
   it('should create a courseHistory on course interruption', async () => {
     const courseId = new ObjectId();
     const userId = new ObjectId();
+    const payload = { courseId, action: COURSE_INTERRUPTION };
 
-    await CourseHistoriesHelper.createHistoryOnCourseInterruption(courseId, userId);
+    await CourseHistoriesHelper.createHistoryOnCourseInterruptionOrRestart(payload, userId);
 
     sinon.assert.calledOnceWithExactly(
       createHistory,
