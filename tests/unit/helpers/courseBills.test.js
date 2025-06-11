@@ -6,6 +6,7 @@ const get = require('lodash/get');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
+const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
 const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
 const UtilsHelper = require('../../../src/helpers/utils');
 const CourseBillPdf = require('../../../src/data/pdf/courseBilling/courseBill');
@@ -18,6 +19,10 @@ const {
   REFUND,
   TRAINING_ORGANISATION_MANAGER,
   VENDOR_ADMIN,
+  DASHBOARD,
+  INTRA,
+  COURSE,
+  TRAINEE,
 } = require('../../../src/helpers/constants');
 
 describe('getNetInclTaxes', () => {
@@ -52,11 +57,14 @@ describe('getNetInclTaxes', () => {
 
 describe('list', () => {
   let find;
+  let getCompanyAtCourseRegistrationList;
   beforeEach(() => {
     find = sinon.stub(CourseBill, 'find');
+    getCompanyAtCourseRegistrationList = sinon.stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
   });
   afterEach(() => {
     find.restore();
+    getCompanyAtCourseRegistrationList.restore();
   });
 
   it('should return all course bills (without billing purchases)', async () => {
@@ -93,6 +101,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
   });
 
   it('should return all course bills (with billing purchases)', async () => {
@@ -139,6 +148,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
   });
 
   it('should return all company bills (with credit note) (vendor role)', async () => {
@@ -260,6 +270,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
   });
 
   it('should return all company bills (without credit note) (holding role)', async () => {
@@ -388,6 +399,206 @@ describe('list', () => {
         },
         { query: 'lean' },
       ]
+    );
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+  });
+
+  it('should return all draft course bills between two dates', async () => {
+    const courseId = new ObjectId();
+    const traineesIds = [new ObjectId(), new ObjectId()];
+    const companies = [{ _id: new ObjectId(), name: 'Company 1' }, { _id: new ObjectId(), name: 'Company 2' }];
+    const credentials = { role: { vendor: new ObjectId() } };
+    const courseBills = [
+      {
+        course: {
+          _id: courseId,
+          companies,
+          type: INTRA,
+          expectedBillscount: 2,
+          subProgram: { program: { name: 'program' } },
+          trainees: traineesIds,
+        },
+        companies: [companies[0]],
+        mainFee: { price: 120, count: 2 },
+        payer: { name: 'Funder' },
+        maturityDate: '2025-06-10T22:00:00.000Z',
+      },
+    ];
+
+    find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
+    getCompanyAtCourseRegistrationList.returns([
+      { trainee: traineesIds[0], company: companies[0]._id },
+      { trainee: traineesIds[1], company: companies[1]._id },
+    ]);
+
+    const result = await CourseBillHelper.list(
+      {
+        course: courseId,
+        action: DASHBOARD,
+        startDate: '2025-05-10T22:00:00.000Z',
+        endDate: '2025-07-10T22:00:00.000Z',
+      },
+      credentials
+    );
+
+    expect(result).toEqual([{
+      companies: [companies[0]],
+      mainFee: { price: 120, count: 2 },
+      payer: { name: 'Funder' },
+      maturityDate: '2025-06-10T22:00:00.000Z',
+      course: {
+        _id: courseId,
+        companies,
+        type: INTRA,
+        expectedBillscount: 2,
+        subProgram: { program: { name: 'program' } },
+        trainees: [
+          { _id: traineesIds[0], registrationCompany: companies[0]._id },
+          { _id: traineesIds[1], registrationCompany: companies[1]._id },
+        ],
+      },
+      netInclTaxes: 240,
+    }]);
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        {
+          query: 'find',
+          args: [{ maturityDate: { $gte: '2025-05-10T22:00:00.000Z', $lte: '2025-07-10T22:00:00.000Z' } }],
+        },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'course',
+              select: 'companies trainees subProgram type expectedBillsCount',
+              populate: [
+                { path: 'companies', select: 'name' },
+                { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+              ],
+            },
+          ],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'companies',
+            select: 'name',
+            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
+        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
+        { query: 'populate', args: [{ path: 'courseCreditNote', options: { isVendorUser: true } }] },
+        { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getCompanyAtCourseRegistrationList,
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: courseBills[0].course.trainees }
+    );
+  });
+
+  it('should return all validated course bills between two dates', async () => {
+    const courseId = new ObjectId();
+    const traineesIds = [new ObjectId(), new ObjectId()];
+    const companies = [{ _id: new ObjectId(), name: 'Company 1' }, { _id: new ObjectId(), name: 'Company 2' }];
+    const credentials = { role: { vendor: new ObjectId() } };
+    const courseBills = [
+      {
+        course: {
+          _id: courseId,
+          companies,
+          type: INTRA,
+          expectedBillscount: 2,
+          subProgram: { program: { name: 'program' } },
+          trainees: traineesIds,
+        },
+        companies: [companies[0]],
+        mainFee: { price: 120, count: 2 },
+        payer: { name: 'Funder' },
+        billedAt: '2025-06-10T22:00:00.000Z',
+      },
+    ];
+
+    find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
+    getCompanyAtCourseRegistrationList.returns([
+      { trainee: traineesIds[0], company: companies[0]._id },
+      { trainee: traineesIds[1], company: companies[1]._id },
+    ]);
+
+    const result = await CourseBillHelper.list(
+      {
+        course: courseId,
+        action: DASHBOARD,
+        startDate: '2025-05-10T22:00:00.000Z',
+        endDate: '2025-07-10T22:00:00.000Z',
+        isValidated: true,
+      },
+      credentials
+    );
+
+    expect(result).toEqual([{
+      companies: [companies[0]],
+      mainFee: { price: 120, count: 2 },
+      payer: { name: 'Funder' },
+      billedAt: '2025-06-10T22:00:00.000Z',
+      course: {
+        _id: courseId,
+        companies,
+        type: INTRA,
+        expectedBillscount: 2,
+        subProgram: { program: { name: 'program' } },
+        trainees: [
+          { _id: traineesIds[0], registrationCompany: companies[0]._id },
+          { _id: traineesIds[1], registrationCompany: companies[1]._id },
+        ],
+      },
+      netInclTaxes: 240,
+    }]);
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        {
+          query: 'find',
+          args: [{ billedAt: { $gte: '2025-05-10T22:00:00.000Z', $lte: '2025-07-10T22:00:00.000Z' } }],
+        },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'course',
+              select: 'companies trainees subProgram type expectedBillsCount',
+              populate: [
+                { path: 'companies', select: 'name' },
+                { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+              ],
+            },
+          ],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'companies',
+            select: 'name',
+            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
+        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
+        { query: 'populate', args: [{ path: 'courseCreditNote', options: { isVendorUser: true } }] },
+        { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getCompanyAtCourseRegistrationList,
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: courseBills[0].course.trainees }
     );
   });
 });

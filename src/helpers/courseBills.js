@@ -1,5 +1,7 @@
 const get = require('lodash/get');
 const omit = require('lodash/omit');
+const mapValues = require('lodash/mapValues');
+const keyBy = require('lodash/keyBy');
 const { ObjectId } = require('mongodb');
 const NumbersHelper = require('./numbers');
 const Course = require('../models/Course');
@@ -7,9 +9,18 @@ const CourseBill = require('../models/CourseBill');
 const CourseBillsNumber = require('../models/CourseBillsNumber');
 const BalanceHelper = require('./balances');
 const UtilsHelper = require('./utils');
+const CourseHistoriesHelper = require('./courseHistories');
 const VendorCompaniesHelper = require('./vendorCompanies');
 const CourseBillPdf = require('../data/pdf/courseBilling/courseBill');
-const { LIST, TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN, DD_MM_YYYY } = require('./constants');
+const {
+  LIST,
+  TRAINING_ORGANISATION_MANAGER,
+  VENDOR_ADMIN,
+  DD_MM_YYYY,
+  BALANCE,
+  COURSE,
+  TRAINEE,
+} = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 
 exports.getNetInclTaxes = (bill) => {
@@ -88,6 +99,16 @@ const balance = async (company, credentials) => {
   return courseBills.map(bill => exports.formatCourseBill(bill));
 };
 
+const formatCourse = async (course) => {
+  const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
+    .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
+  const traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
+  const courseTrainees = course.trainees
+    .map(traineeId => ({ _id: traineeId, registrationCompany: traineesCompany[traineeId] }));
+
+  return { ...course, trainees: courseTrainees };
+};
+
 exports.list = async (query, credentials) => {
   if (query.action === LIST) {
     const courseBills = await CourseBill
@@ -102,7 +123,38 @@ exports.list = async (query, credentials) => {
     return courseBills.map(bill => ({ ...bill, netInclTaxes: exports.getNetInclTaxes(bill) }));
   }
 
-  return balance(query.company, credentials);
+  if (query.action === BALANCE) return balance(query.company, credentials);
+
+  const courseBills = await CourseBill
+    .find(query.isValidated
+      ? { billedAt: { $gte: query.startDate, $lte: query.endDate } }
+      : { maturityDate: { $gte: query.startDate, $lte: query.endDate } }
+    )
+    .populate({
+      path: 'course',
+      select: 'companies trainees subProgram type expectedBillsCount',
+      populate: [
+        { path: 'companies', select: 'name' },
+        { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+      ],
+    })
+    .populate({
+      path: 'companies',
+      select: 'name',
+      populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+    })
+    .populate({ path: 'payer.fundingOrganisation', select: 'name' })
+    .populate({ path: 'payer.company', select: 'name' })
+    .populate({ path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } })
+    .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
+    .lean();
+
+  const courseByCourseBill = {};
+  for (const bill of courseBills) {
+    courseByCourseBill[bill._id] = await formatCourse(bill.course);
+  }
+  return courseBills
+    .map(bill => ({ ...bill, course: courseByCourseBill[bill._id], netInclTaxes: exports.getNetInclTaxes(bill) }));
 };
 
 exports.create = async (payload) => {

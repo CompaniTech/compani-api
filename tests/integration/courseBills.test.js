@@ -14,6 +14,7 @@ const {
 const { authCompany, otherCompany, companyWithoutSubscription } = require('../seed/authCompaniesSeed');
 
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
+const { CompaniDate } = require('../../src/helpers/dates/companiDates');
 const { GROUP, TRAINEE } = require('../../src/helpers/constants');
 const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 
@@ -105,6 +106,37 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       expect(response.result.data.courseBills.length).toEqual(5);
     });
 
+    it('should get draft bills between 2 dates', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?startDate=2025-01-10T22:00:00.000Z&endDate=2025-04-30T23:00:00.000Z&action=dashboard',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courseBills.length).toEqual(1);
+      const everyBillIsBetweenDates = response.result.data.courseBills
+        .every(bill => CompaniDate(bill.maturityDate).isSameOrBefore('2025-04-30T23:00:00') &&
+          CompaniDate(bill.maturityDate).isSameOrAfter('2025-01-10T22:00:00'));
+      expect(everyBillIsBetweenDates).toBeTruthy();
+    });
+
+    it('should get validated bills between 2 dates', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?startDate=2022-04-06T22:00:00.000Z&endDate=2022-04-08T22:00:00.000Z&action=dashboard'
+          + '&isValidated=true',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courseBills.length).toEqual(7);
+      const everyBillIsBetweenDates = response.result.data.courseBills
+        .every(bill => CompaniDate(bill.billedAt).isSameOrBefore('2022-04-08T22:00:00') &&
+          CompaniDate(bill.billedAt).isSameOrAfter('2022-04-06T22:00:00'));
+      expect(everyBillIsBetweenDates).toBeTruthy();
+    });
+
     it('should return 404 if course doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'GET',
@@ -139,6 +171,37 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?course=${coursesList[1]._id}&action=balance`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return if query is dashboard but no start date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?endDate=2022-04-08T22:00:00.000Z&action=dashboard&isValidated=true',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return if query is dashboard but no end date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?startDate=2022-04-06T22:00:00.000Z&action=dashboard&isValidated=true',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return if end date is before start date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?startDate=2023-04-06T22:00:00.000Z&endDate=2022-04-08T22:00:00.000Z&action=dashboard'
+          + '&isValidated=true',
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
