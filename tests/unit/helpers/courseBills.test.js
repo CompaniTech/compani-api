@@ -902,22 +902,22 @@ describe('generateBillPdf', () => {
   });
 });
 
-describe('deleteBill', () => {
-  let deleteOne;
+describe('deleteBillList', () => {
+  let deleteMany;
 
   beforeEach(() => {
-    deleteOne = sinon.stub(CourseBill, 'deleteOne');
+    deleteMany = sinon.stub(CourseBill, 'deleteMany');
   });
 
   afterEach(() => {
-    deleteOne.restore();
+    deleteMany.restore();
   });
 
-  it('should delete course bill', async () => {
-    const courseBillId = new ObjectId();
+  it('should delete course bills', async () => {
+    const courseBillIds = [new ObjectId(), new ObjectId()];
 
-    await CourseBillHelper.deleteBill(courseBillId);
+    await CourseBillHelper.deleteBillList(courseBillIds);
 
-    sinon.assert.calledOnceWithExactly(deleteOne, { _id: courseBillId });
+    sinon.assert.calledOnceWithExactly(deleteMany, { _id: { $in: courseBillIds } });
   });
 });

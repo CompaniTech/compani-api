@@ -1589,33 +1589,49 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}/billingpurchases/{billi
   });
 });
 
-describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}', () => {
+describe('COURSE BILL ROUTES - POST /coursebills/list-deletion', () => {
   let authToken;
   beforeEach(populateDB);
+  const courseBillsToDelete = [courseBillsList[0]._id, courseBillsList[1]._id, courseBillsList[3]._id];
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should delete course bill', async () => {
+    it('should delete course bills', async () => {
       const response = await app.inject({
-        method: 'DELETE',
-        url: `/coursebills/${courseBillsList[0]._id}`,
+        method: 'POST',
+        url: '/coursebills/list-deletion',
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: courseBillsToDelete },
       });
 
       expect(response.statusCode).toBe(200);
 
-      const countBill = await CourseBill.countDocuments({ _id: courseBillsList[0]._id });
+      const countBill = await CourseBill.countDocuments({ _id: { $in: courseBillsToDelete } });
       expect(countBill).toBe(0);
+    });
+
+    it('should return 400 if no course bill in payload', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-deletion',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [] },
+
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return 404 if course bill doesn\'t exist', async () => {
       const response = await app.inject({
-        method: 'DELETE',
-        url: `/coursebills/${new ObjectId()}`,
+        method: 'POST',
+        url: '/coursebills/list-deletion',
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToDelete, new ObjectId()] },
+
       });
 
       expect(response.statusCode).toBe(404);
@@ -1623,9 +1639,10 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}', () => {
 
     it('should return 403 if course bill have billedAt', async () => {
       const response = await app.inject({
-        method: 'DELETE',
-        url: `/coursebills/${courseBillsList[2]._id}`,
+        method: 'POST',
+        url: '/coursebills/list-deletion',
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToDelete, courseBillsList[2]._id] },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1643,9 +1660,10 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}', () => {
         authToken = await getToken(role.name);
 
         const response = await app.inject({
-          method: 'DELETE',
-          url: `/coursebills/${courseBillsList[0]._id}`,
+          method: 'POST',
+          url: '/coursebills/list-deletion',
           headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { _ids: courseBillsToDelete },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

@@ -258,13 +258,13 @@ exports.authorizeBillPdfGet = async (req) => {
   return [...new Set([...bill.companies.map(c => c.toHexString()), bill.payer.toHexString()])];
 };
 
-exports.authorizeCourseBillDeletion = async (req) => {
-  const { _id: courseBillId } = req.params;
+exports.authorizeCourseBillListDeletion = async (req) => {
+  const { _ids: courseBillIds } = req.payload;
 
-  const courseBill = await CourseBill.findOne({ _id: courseBillId }, { billedAt: 1 }).lean();
-  if (!courseBill) throw Boom.notFound();
+  const courseBills = await CourseBill.find({ _id: { $in: courseBillIds } }, { billedAt: 1 }).lean();
+  if (courseBills.length !== courseBillIds.length) throw Boom.notFound();
 
-  if (courseBill.billedAt) throw Boom.forbidden();
+  if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
 
   return null;
 };

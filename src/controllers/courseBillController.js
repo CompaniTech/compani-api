@@ -94,11 +94,11 @@ const generateBillPdf = async (req, h) => {
   }
 };
 
-const deleteBill = async (req) => {
+const deleteBillList = async (req) => {
   try {
-    await CourseBillHelper.deleteBill(req.params._id);
+    await CourseBillHelper.deleteBillList(req.payload._ids);
 
-    return { message: translate[language].courseBillDeleted };
+    return { message: translate[language].courseBillsDeleted };
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
@@ -113,5 +113,5 @@ module.exports = {
   updateBillingPurchase,
   deleteBillingPurchase,
   generateBillPdf,
-  deleteBill,
+  deleteBillList,
 };
