@@ -859,6 +859,10 @@ exports.updateCourse = async (courseId, payload, credentials) => {
     );
   }
 
+  if (payload.interruptedAt) {
+    await CourseHistoriesHelper.createHistoryOnCourseInterruption(courseId, credentials._id);
+  }
+
   return courseFromDb;
 };
 
