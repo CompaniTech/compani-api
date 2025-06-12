@@ -471,6 +471,7 @@ module.exports = {
   TRAINER_ADDITION: 'trainer_addition',
   TRAINER_DELETION: 'trainer_deletion',
   COURSE_INTERRUPTION: 'course_interruption',
+  COURSE_RESTART: 'course_restart',
   // MediaUpload
   UPLOAD_IMAGE: 'image',
   UPLOAD_VIDEO: 'video',

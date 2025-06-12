@@ -14,7 +14,6 @@ const {
   DAY,
   COMPANY_ADDITION,
   COMPANY_DELETION,
-  COURSE_INTERRUPTION,
 } = require('./constants');
 
 exports.createHistory = async (course, createdBy, action, payload = {}) =>
@@ -137,5 +136,5 @@ exports.getCompanyAtCourseRegistrationList = async (singleton, list) => {
 exports.createHistoryOnTrainerAdditionOrDeletion = (payload, userId) =>
   exports.createHistory(payload.course, userId, payload.action, { trainer: payload.trainerId });
 
-exports.createHistoryOnCourseInterruption = (courseId, userId) =>
-  exports.createHistory(courseId, userId, COURSE_INTERRUPTION);
+exports.createHistoryOnCourseInterruptionOrRestart = (payload, userId) =>
+  exports.createHistory(payload.courseId, userId, payload.action);

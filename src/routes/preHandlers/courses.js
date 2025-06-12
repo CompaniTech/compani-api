@@ -238,18 +238,24 @@ exports.authorizeCourseEdit = async (req) => {
       .lean();
     if (!course) throw Boom.notFound();
 
+    const userVendorRole = get(credentials, 'role.vendor.name');
+    const isRofOrAdmin = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(userVendorRole);
+
     const unarchiveCourse = has(payload, 'archivedAt') && payload.archivedAt === '';
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
 
-    if (course.interruptedAt && payload.interruptedAt) throw Boom.forbidden();
+    if (has(payload, 'interruptedAt')) {
+      if (!isRofOrAdmin) throw Boom.forbidden();
+
+      const interruptAnInterruptedCourse = course.interruptedAt && payload.interruptedAt;
+      const restartACourseInProgress = !course.interruptedAt && payload.interruptedAt === '';
+      if (interruptAnInterruptedCourse || restartACourseInProgress) throw Boom.conflict();
+    }
 
     const courseTrainerIds = get(course, 'trainers', []);
     const companies = [INTRA, INTRA_HOLDING, SINGLE].includes(course.type) ? course.companies : [];
     const holding = course.type === INTRA_HOLDING ? course.holding : null;
     this.checkAuthorization(credentials, courseTrainerIds, companies, holding);
-
-    const userVendorRole = get(credentials, 'role.vendor.name');
-    const isRofOrAdmin = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(userVendorRole);
 
     await checkCertification(payload, course, isRofOrAdmin);
 

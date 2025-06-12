@@ -2108,6 +2108,21 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(course).toBeTruthy();
     });
 
+    it('should restart an interrupted blended course', async () => {
+      const payload = { interruptedAt: '' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const course = await Course.countDocuments({ _id: coursesList[26]._id, interruptedAt: { $exists: false } });
+      expect(course).toBeTruthy();
+    });
+
     it('should update salesRepresentative for a blended course', async () => {
       const payload = { salesRepresentative: trainerOrganisationManager._id };
       const response = await app.inject({
@@ -2386,18 +2401,6 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 if trying to interrupt a course already interrupted', async () => {
-      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/courses/${coursesList[26]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(403);
-    });
-
     it('should return 400 if trying to set maxTrainees for inter b2b course', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -2527,6 +2530,30 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
         url: `/courses/${coursesList[4]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: { hasCertifyingTest: false },
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
+    it('should return 409 if trying to interrupt a course already interrupted', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
+    it('should return 409 if trying to restart a course in progress', async () => {
+      const payload = { interruptedAt: '' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
       });
 
       expect(response.statusCode).toBe(409);
@@ -2687,6 +2714,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to interrupt course', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('HOLDING_ADMIN', () => {
@@ -2770,6 +2809,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to interrupt course', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[22]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload,
       });
@@ -2904,6 +2955,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to interrupt course', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {
@@ -2947,6 +3010,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
           url: `/courses/${coursesList[4]._id}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: { certifiedTrainees: [coach._id] },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+
+      it('should return 403 if try to interrupt course', async () => {
+        const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/courses/${coursesList[0]._id}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload,
         });
 
         expect(response.statusCode).toBe(403);

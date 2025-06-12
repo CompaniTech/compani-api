@@ -67,6 +67,8 @@ const {
   SINGLE,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  COURSE_RESTART,
+  COURSE_INTERRUPTION,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -4210,7 +4212,7 @@ describe('updateCourse', () => {
   let courseFindOneAndUpdate;
   let createHistoryOnEstimatedStartDateEdition;
   let courseFindOne;
-  let createHistoryOnCourseInterruption;
+  let createHistoryOnCourseInterruptionOrRestart;
   const credentials = { _id: new ObjectId() };
   beforeEach(() => {
     courseFindOneAndUpdate = sinon.stub(Course, 'findOneAndUpdate');
@@ -4219,13 +4221,14 @@ describe('updateCourse', () => {
       'createHistoryOnEstimatedStartDateEdition'
     );
     courseFindOne = sinon.stub(Course, 'findOne');
-    createHistoryOnCourseInterruption = sinon.stub(CourseHistoriesHelper, 'createHistoryOnCourseInterruption');
+    createHistoryOnCourseInterruptionOrRestart = sinon
+      .stub(CourseHistoriesHelper, 'createHistoryOnCourseInterruptionOrRestart');
   });
   afterEach(() => {
     courseFindOneAndUpdate.restore();
     createHistoryOnEstimatedStartDateEdition.restore();
     courseFindOne.restore();
-    createHistoryOnCourseInterruption.restore();
+    createHistoryOnCourseInterruptionOrRestart.restore();
   });
 
   it('should update a field in intra course', async () => {
@@ -4238,7 +4241,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4259,7 +4262,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4282,7 +4285,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4305,7 +4308,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4327,7 +4330,7 @@ describe('updateCourse', () => {
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4356,7 +4359,7 @@ describe('updateCourse', () => {
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4380,7 +4383,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4408,7 +4411,7 @@ describe('updateCourse', () => {
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
@@ -4437,7 +4440,7 @@ describe('updateCourse', () => {
     ));
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
-    sinon.assert.notCalled(createHistoryOnCourseInterruption);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
@@ -4455,7 +4458,7 @@ describe('updateCourse', () => {
     );
   });
 
-  it('should interrupted course', async () => {
+  it('should interrupt the course', async () => {
     const courseId = new ObjectId();
     const payload = { interruptedAt: '2025-01-06T10:20:00.000Z' };
     const courseFromDb = { _id: courseId };
@@ -4475,7 +4478,35 @@ describe('updateCourse', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(createHistoryOnCourseInterruption, courseId, credentials._id);
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnCourseInterruptionOrRestart,
+      { courseId, action: COURSE_INTERRUPTION },
+      credentials._id
+    );
+  });
+
+  it('should restart an interrupted course', async () => {
+    const courseId = new ObjectId();
+    const payload = { interruptedAt: '' };
+    const courseFromDb = { _id: courseId, interruptedAt: '2025-01-06T10:20:00.000Z' };
+
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: courseId }, { $unset: { interruptedAt: '' } }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnCourseInterruptionOrRestart,
+      { courseId, action: COURSE_RESTART },
+      credentials._id
+    );
   });
 });
 
