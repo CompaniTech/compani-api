@@ -417,6 +417,7 @@ describe('list', () => {
           expectedBillscount: 2,
           subProgram: { program: { name: 'program' } },
           trainees: traineesIds,
+          prices: [{ company: companies[0]._id, global: 200 }],
         },
         companies: [companies[0]],
         mainFee: { price: 120, count: 2 },
@@ -456,6 +457,7 @@ describe('list', () => {
           { _id: traineesIds[0], registrationCompany: companies[0]._id },
           { _id: traineesIds[1], registrationCompany: companies[1]._id },
         ],
+        prices: [{ company: companies[0]._id, global: 200 }, { company: companies[1]._id, global: '' }],
       },
       netInclTaxes: 240,
     }]);
@@ -472,10 +474,12 @@ describe('list', () => {
           args: [
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount',
+              select: 'companies trainees subProgram type expectedBillsCount prices',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+                { path: 'slots', select: 'startDate endDate' },
+                { path: 'slotsToPlan', select: '_id' },
               ],
             },
           ],
@@ -516,6 +520,7 @@ describe('list', () => {
           expectedBillscount: 2,
           subProgram: { program: { name: 'program' } },
           trainees: traineesIds,
+          prices: [{ company: companies[0]._id, global: 200, trainerFees: 20 }],
         },
         companies: [companies[0]],
         mainFee: { price: 120, count: 2 },
@@ -556,6 +561,10 @@ describe('list', () => {
           { _id: traineesIds[0], registrationCompany: companies[0]._id },
           { _id: traineesIds[1], registrationCompany: companies[1]._id },
         ],
+        prices: [
+          { company: companies[0]._id, global: 200, trainerFees: 20 },
+          { company: companies[1]._id, global: '' },
+        ],
       },
       netInclTaxes: 240,
     }]);
@@ -572,10 +581,12 @@ describe('list', () => {
           args: [
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount',
+              select: 'companies trainees subProgram type expectedBillsCount prices',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+                { path: 'slots', select: 'startDate endDate' },
+                { path: 'slotsToPlan', select: '_id' },
               ],
             },
           ],

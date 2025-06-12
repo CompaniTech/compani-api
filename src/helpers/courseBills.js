@@ -105,8 +105,12 @@ const formatCourse = async (course) => {
   const traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
   const courseTrainees = course.trainees
     .map(traineeId => ({ _id: traineeId, registrationCompany: traineesCompany[traineeId] }));
-
-  return { ...course, trainees: courseTrainees };
+  const coursePrices = course.companies.map((c) => {
+    const companyPrice = (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c._id)) ||
+      { company: c._id, global: '' };
+    return companyPrice;
+  });
+  return { ...course, trainees: courseTrainees, prices: coursePrices };
 };
 
 exports.list = async (query, credentials) => {
@@ -132,10 +136,12 @@ exports.list = async (query, credentials) => {
     )
     .populate({
       path: 'course',
-      select: 'companies trainees subProgram type expectedBillsCount',
+      select: 'companies trainees subProgram type expectedBillsCount prices',
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+        { path: 'slots', select: 'startDate endDate' },
+        { path: 'slotsToPlan', select: '_id' },
       ],
     })
     .populate({
