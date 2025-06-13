@@ -642,6 +642,7 @@ module.exports = {
   // COURSE BILLING
   LIST: 'list',
   BALANCE: 'balance',
+  DASHBOARD: 'dashboard',
   GROUP: 'group',
   get COUNT_UNIT() {
     return {
