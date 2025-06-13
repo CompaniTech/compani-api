@@ -177,7 +177,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return if query is dashboard but no start date', async () => {
+    it('should return 400 if query is dashboard but no start date', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/coursebills?endDate=2022-04-08T22:00:00.000Z&action=dashboard&isValidated=true',
@@ -187,7 +187,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return if query is dashboard but no end date', async () => {
+    it('should return 400 if query is dashboard but no end date', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/coursebills?startDate=2022-04-06T22:00:00.000Z&action=dashboard&isValidated=true',
@@ -197,7 +197,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return if end date is before start date', async () => {
+    it('should return 400 if end date is before start date', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/coursebills?startDate=2023-04-06T22:00:00.000Z&endDate=2022-04-08T22:00:00.000Z&action=dashboard'

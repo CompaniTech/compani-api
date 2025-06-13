@@ -155,12 +155,11 @@ exports.list = async (query, credentials) => {
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
     .lean();
 
-  const courseByCourseBill = {};
-  for (const bill of courseBills) {
-    courseByCourseBill[bill._id] = await formatCourse(bill.course);
-  }
-  return courseBills
-    .map(bill => ({ ...bill, course: courseByCourseBill[bill._id], netInclTaxes: exports.getNetInclTaxes(bill) }));
+  return Promise.all(
+    courseBills.map(async bill => (
+      { ...bill, course: await formatCourse(bill.course), netInclTaxes: exports.getNetInclTaxes(bill) }
+    ))
+  );
 };
 
 exports.create = async (payload) => {
