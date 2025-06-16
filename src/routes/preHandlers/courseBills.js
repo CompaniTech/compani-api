@@ -23,8 +23,11 @@ exports.authorizeCourseBillCreation = async (req) => {
   const { course: courseId, companies: companiesIds, payer, mainFee } = req.payload;
 
   const course = await Course
-    .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1 })
+    .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptedAt: 1 })
     .lean();
+
+  if (course.interruptedAt) throw Boom.forbidden();
+
   const everyCompanyBelongsToCourse = course &&
     companiesIds.every(c => UtilsHelper.doesArrayIncludeId(course.companies, c));
   if (!everyCompanyBelongsToCourse) throw Boom.notFound();

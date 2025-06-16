@@ -612,6 +612,84 @@ describe('list', () => {
       { key: TRAINEE, value: courseBills[0].course.trainees }
     );
   });
+
+  it('should not include course bills linked to interrupted courses', async () => {
+    const courseId = new ObjectId();
+    const companies = [{ _id: new ObjectId(), name: 'Company 1' }];
+    const traineesIds = [new ObjectId(), new ObjectId()];
+
+    const interruptedCourse = {
+      _id: courseId,
+      companies,
+      trainees: traineesIds,
+      subProgram: { program: { name: 'Program' } },
+      type: INTRA,
+      expectedBillsCount: 1,
+      prices: [{ company: companies[0]._id, global: 200 }],
+      interruptedAt: '2025-01-01T00:00:00.000Z',
+    };
+
+    const courseBills = [{
+      course: interruptedCourse,
+      companies: [companies[0]],
+      mainFee: { price: 100, count: 1 },
+      billedAt: '2025-06-10T00:00:00.000Z',
+    }];
+
+    find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
+    getCompanyAtCourseRegistrationList.returns([]);
+
+    const credentials = { role: { vendor: new ObjectId() } };
+
+    const result = await CourseBillHelper.list({
+      action: DASHBOARD,
+      startDate: '2025-05-01T00:00:00.000Z',
+      endDate: '2025-07-01T00:00:00.000Z',
+      isValidated: false,
+    }, credentials);
+
+    expect(result).toEqual([]);
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        {
+          query: 'find',
+          args: [{ maturityDate: { $gte: '2025-05-01T00:00:00.000Z', $lte: '2025-07-01T00:00:00.000Z' } }],
+        },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'course',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
+              populate: [
+                { path: 'companies', select: 'name' },
+                { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+                { path: 'slots', select: 'startDate endDate' },
+                { path: 'slotsToPlan', select: '_id' },
+              ],
+            },
+          ],
+        },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'companies',
+              select: 'name',
+              populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+            },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
+        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
+        { query: 'populate', args: [{ path: 'courseCreditNote', options: { isVendorUser: true } }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+  });
 });
 
 describe('create', () => {

@@ -136,7 +136,7 @@ exports.list = async (query, credentials) => {
     )
     .populate({
       path: 'course',
-      select: 'companies trainees subProgram type expectedBillsCount prices',
+      select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
@@ -155,11 +155,19 @@ exports.list = async (query, credentials) => {
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
     .lean();
 
-  return Promise.all(
-    courseBills.map(async bill => (
-      { ...bill, course: await formatCourse(bill.course), netInclTaxes: exports.getNetInclTaxes(bill) }
-    ))
-  );
+  if (query.isValidated) {
+    return Promise.all(
+      courseBills.map(async bill => ({
+        ...bill,
+        course: await formatCourse(bill.course),
+        netInclTaxes: exports.getNetInclTaxes(bill),
+      }))
+    );
+  }
+
+  return courseBills
+    .filter(bill => !get(bill, 'course.interruptedAt'))
+    .map(bill => ({ ...bill, course: formatCourse(bill.course), netInclTaxes: exports.getNetInclTaxes(bill) }));
 };
 
 exports.create = async (payload) => {
