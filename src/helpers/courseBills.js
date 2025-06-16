@@ -165,9 +165,15 @@ exports.list = async (query, credentials) => {
     );
   }
 
-  return courseBills
-    .filter(bill => !get(bill, 'course.interruptedAt'))
-    .map(bill => ({ ...bill, course: formatCourse(bill.course), netInclTaxes: exports.getNetInclTaxes(bill) }));
+  return Promise.all(
+    courseBills
+      .filter(bill => !get(bill, 'course.interruptedAt'))
+      .map(async bill => ({
+        ...bill,
+        course: await formatCourse(bill.course),
+        netInclTaxes: exports.getNetInclTaxes(bill),
+      }))
+  );
 };
 
 exports.create = async (payload) => {
