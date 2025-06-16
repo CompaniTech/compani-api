@@ -41,6 +41,17 @@ const update = async (req) => {
   }
 };
 
+const updateBillList = async (req) => {
+  try {
+    await CourseBillHelper.updateBillList(req.payload);
+
+    return { message: translate[language].courseBillsDeleted };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 const addBillingPurchase = async (req) => {
   try {
     await CourseBillHelper.addBillingPurchase(req.params._id, req.payload);
@@ -114,4 +125,5 @@ module.exports = {
   deleteBillingPurchase,
   generateBillPdf,
   deleteBillList,
+  updateBillList,
 };

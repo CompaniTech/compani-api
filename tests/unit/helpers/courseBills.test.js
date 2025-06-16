@@ -881,6 +881,66 @@ describe('updateCourseBill', () => {
   });
 });
 
+describe('updateBillList', () => {
+  let findOneCourseBillsNumber;
+  let updateOneCourseBill;
+  let updateOneCourseBillsNumber;
+
+  beforeEach(() => {
+    findOneCourseBillsNumber = sinon.stub(CourseBillsNumber, 'findOne');
+    updateOneCourseBill = sinon.stub(CourseBill, 'updateOne');
+    updateOneCourseBillsNumber = sinon.stub(CourseBillsNumber, 'updateOne');
+  });
+
+  afterEach(() => {
+    findOneCourseBillsNumber.restore();
+    updateOneCourseBill.restore();
+    updateOneCourseBillsNumber.restore();
+  });
+
+  it('should invoice bill', async () => {
+    const courseBillIds = [new ObjectId(), new ObjectId()];
+    const payload = { _ids: courseBillIds, billedAt: '2022-03-08T00:00:00.000Z' };
+    const lastBillNumber = { seq: 1 };
+
+    findOneCourseBillsNumber.returns(SinonMongoose.stubChainedQueries(lastBillNumber, ['lean']));
+
+    await CourseBillHelper.updateBillList(payload);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOneCourseBillsNumber,
+      [
+        {
+          query: 'findOne',
+          args: [{}],
+        },
+        { query: 'lean' },
+      ]);
+    sinon.assert.calledWithExactly(
+      updateOneCourseBill.getCall(0),
+      { _id: courseBillIds[0] },
+      {
+        $set: { billedAt: payload.billedAt, number: 'FACT-00002' },
+        $unset: { maturityDate: '' },
+      }
+    );
+    sinon.assert.calledWithExactly(
+      updateOneCourseBill.getCall(1),
+      { _id: courseBillIds[1] },
+      {
+        $set: { billedAt: payload.billedAt, number: 'FACT-00003' },
+        $unset: { maturityDate: '' },
+      }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateOneCourseBillsNumber,
+      {},
+      { $inc: { seq: payload._ids.length } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+  });
+});
+
 describe('addBillingPurchase', () => {
   let updateOne;
 

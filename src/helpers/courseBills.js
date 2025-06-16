@@ -243,6 +243,32 @@ exports.updateCourseBill = async (courseBillId, payload) => {
   }
 };
 
+exports.updateBillList = async (payload) => {
+  if (payload.billedAt) {
+    const lastBillNumber = await CourseBillsNumber.findOne({}).lean();
+    const promises = [];
+    for (let i = 0; i < payload._ids.length; i++) {
+      promises.push(
+        CourseBill.updateOne(
+          { _id: payload._ids[i] },
+          {
+            $set: {
+              billedAt: payload.billedAt,
+              number: `FACT-${(lastBillNumber.seq + i + 1).toString().padStart(5, '0')}`,
+            },
+            $unset: { maturityDate: '' },
+          }
+        )
+      );
+    }
+    promises.push(
+      CourseBillsNumber
+        .updateOne({}, { $inc: { seq: payload._ids.length } }, { new: true, upsert: true, setDefaultsOnInsert: true })
+    );
+    await Promise.all(promises);
+  }
+};
+
 exports.addBillingPurchase = async (courseBillId, payload) =>
   CourseBill.updateOne({ _id: courseBillId }, { $push: { billingPurchaseList: payload } });
 
