@@ -26,6 +26,7 @@ exports.authorizeCourseBillCreation = async (req) => {
     .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptedAt: 1 })
     .lean();
 
+  if (!course) throw Boom.notFound();
   if (course.interruptedAt) throw Boom.forbidden();
 
   const everyCompanyBelongsToCourse = course &&
