@@ -136,7 +136,7 @@ exports.list = async (query, credentials) => {
     )
     .populate({
       path: 'course',
-      select: 'companies trainees subProgram type expectedBillsCount prices',
+      select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
@@ -156,9 +156,13 @@ exports.list = async (query, credentials) => {
     .lean();
 
   return Promise.all(
-    courseBills.map(async bill => (
-      { ...bill, course: await formatCourse(bill.course), netInclTaxes: exports.getNetInclTaxes(bill) }
-    ))
+    courseBills
+      .filter(bill => query.isValidated || !get(bill, 'course.interruptedAt'))
+      .map(async bill => ({
+        ...bill,
+        course: await formatCourse(bill.course),
+        netInclTaxes: exports.getNetInclTaxes(bill),
+      }))
   );
 };
 

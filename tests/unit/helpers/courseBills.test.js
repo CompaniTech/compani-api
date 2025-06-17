@@ -23,6 +23,7 @@ const {
   INTRA,
   COURSE,
   TRAINEE,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 
 describe('getNetInclTaxes', () => {
@@ -404,14 +405,14 @@ describe('list', () => {
   });
 
   it('should return all draft course bills between two dates', async () => {
-    const courseId = new ObjectId();
+    const courseIds = [new ObjectId(), new ObjectId()];
     const traineesIds = [new ObjectId(), new ObjectId()];
     const companies = [{ _id: new ObjectId(), name: 'Company 1' }, { _id: new ObjectId(), name: 'Company 2' }];
     const credentials = { role: { vendor: new ObjectId() } };
     const courseBills = [
       {
         course: {
-          _id: courseId,
+          _id: courseIds[0],
           companies,
           type: INTRA,
           expectedBillscount: 2,
@@ -424,6 +425,22 @@ describe('list', () => {
         payer: { name: 'Funder' },
         maturityDate: '2025-06-10T22:00:00.000Z',
       },
+      {
+        course: {
+          _id: courseIds[1],
+          companies,
+          type: SINGLE,
+          expectedBillscount: 4,
+          subProgram: { program: { name: 'program 2' } },
+          trainees: traineesIds,
+          prices: [{ company: companies[0]._id, global: 400 }],
+          interruptedAt: '2025-01-01T00:00:00.000Z',
+        },
+        companies: [companies[1]],
+        mainFee: { price: 320, count: 2 },
+        payer: { name: 'Funder' },
+        maturityDate: '2025-06-13T14:00:00.000Z',
+      },
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
@@ -434,7 +451,7 @@ describe('list', () => {
 
     const result = await CourseBillHelper.list(
       {
-        course: courseId,
+        course: courseIds[0],
         action: DASHBOARD,
         startDate: '2025-05-10T22:00:00.000Z',
         endDate: '2025-07-10T22:00:00.000Z',
@@ -448,7 +465,7 @@ describe('list', () => {
       payer: { name: 'Funder' },
       maturityDate: '2025-06-10T22:00:00.000Z',
       course: {
-        _id: courseId,
+        _id: courseIds[0],
         companies,
         type: INTRA,
         expectedBillscount: 2,
@@ -474,7 +491,7 @@ describe('list', () => {
           args: [
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
@@ -501,7 +518,7 @@ describe('list', () => {
     );
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
-      { key: COURSE, value: courseId },
+      { key: COURSE, value: courseIds[0] },
       { key: TRAINEE, value: courseBills[0].course.trainees }
     );
   });
@@ -581,7 +598,7 @@ describe('list', () => {
           args: [
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },

@@ -549,6 +549,25 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if course is interrupted', async () => {
+      const payloadForInterruptedCourse = {
+        course: coursesList[14]._id,
+        companies: [authCompany._id],
+        mainFee: { price: 240, count: 1, countUnit: GROUP, percentage: 20 },
+        payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+        maturityDate: '2025-04-29T22:00:00.000+00:00',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: payloadForInterruptedCourse,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 409 if percentage sum is bigger than 100', async () => {
       const response = await app.inject({
         method: 'POST',
