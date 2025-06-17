@@ -309,6 +309,9 @@ const coursesList = [
     interruptedAt: '2021-01-01T00:00:00.000Z',
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    prices: [
+      { company: authCompany._id, global: 12000 },
+    ],
   },
 ];
 

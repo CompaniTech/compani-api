@@ -412,7 +412,7 @@ describe('list', () => {
     const courseBills = [
       {
         course: {
-          _id: courseIds[1],
+          _id: courseIds[0],
           companies,
           type: INTRA,
           expectedBillscount: 2,
@@ -427,7 +427,7 @@ describe('list', () => {
       },
       {
         course: {
-          _id: courseIds[2],
+          _id: courseIds[1],
           companies,
           type: SINGLE,
           expectedBillscount: 4,
@@ -451,7 +451,7 @@ describe('list', () => {
 
     const result = await CourseBillHelper.list(
       {
-        course: courseIds[1],
+        course: courseIds[0],
         action: DASHBOARD,
         startDate: '2025-05-10T22:00:00.000Z',
         endDate: '2025-07-10T22:00:00.000Z',
@@ -465,7 +465,7 @@ describe('list', () => {
       payer: { name: 'Funder' },
       maturityDate: '2025-06-10T22:00:00.000Z',
       course: {
-        _id: courseIds[1],
+        _id: courseIds[0],
         companies,
         type: INTRA,
         expectedBillscount: 2,
@@ -518,7 +518,7 @@ describe('list', () => {
     );
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
-      { key: COURSE, value: courseIds[1] },
+      { key: COURSE, value: courseIds[0] },
       { key: TRAINEE, value: courseBills[0].course.trainees }
     );
   });
