@@ -1260,6 +1260,100 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
   });
 });
 
+describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
+  let authToken;
+  beforeEach(populateDB);
+  const courseBillsToValidate = [courseBillsList[0]._id, courseBillsList[1]._id, courseBillsList[3]._id];
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should validate course bills', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: courseBillsToValidate, billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const countBill = await CourseBill
+        .countDocuments({ _id: { $in: courseBillsToValidate }, billedAt: { $exists: true } });
+      expect(countBill).toBe(3);
+    });
+
+    it('should return 400 if no course bill in payload', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [], billedAt: '2022-03-08T00:00:00.000Z' },
+
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if course bill doesn\'t exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToValidate, new ObjectId()], billedAt: '2022-03-08T00:00:00.000Z' },
+
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if course bill have billedAt', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToValidate, courseBillsList[2]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+    it('should return 403 if course bill payer has no address', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToValidate, courseBillsList[5]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-edition',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { _ids: courseBillsToValidate, billedAt: '2022-03-08T00:00:00.000Z' },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
 describe('COURSE BILL ROUTES - POST /coursebills/{_id}/billingpurchases', () => {
   let authToken;
   beforeEach(populateDB);

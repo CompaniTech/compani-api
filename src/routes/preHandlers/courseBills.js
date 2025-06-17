@@ -188,6 +188,25 @@ exports.authorizeCourseBillUpdate = async (req) => {
   return null;
 };
 
+exports.authorizeCourseBillListEdition = async (req) => {
+  const { _ids: courseBillIds, billedAt } = req.payload;
+
+  const courseBills = await CourseBill
+    .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1 })
+    .populate({ path: 'payer.company', select: 'address' })
+    .populate({ path: 'payer.fundingOrganisation', select: 'address' })
+    .lean();
+  if (courseBills.length !== courseBillIds.length) throw Boom.notFound();
+
+  if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
+
+  if (billedAt && courseBills.some(bill => !get(bill, 'payer.address'))) {
+    throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
+  }
+
+  return null;
+};
+
 exports.authorizeCourseBillingPurchaseAddition = async (req) => {
   const { billingItem } = req.payload;
   const billingItemExists = await CourseBillingItem.countDocuments({ _id: billingItem }, { limit: 1 });
