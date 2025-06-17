@@ -45,7 +45,7 @@ const updateBillList = async (req) => {
   try {
     await CourseBillHelper.updateBillList(req.payload);
 
-    return { message: translate[language].courseBillsDeleted };
+    return { message: translate[language].courseBillsUpdated };
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);

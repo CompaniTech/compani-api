@@ -261,11 +261,11 @@ exports.updateBillList = async (payload) => {
         )
       );
     }
-    promises.push(
-      CourseBillsNumber
-        .updateOne({}, { $inc: { seq: payload._ids.length } }, { new: true, upsert: true, setDefaultsOnInsert: true })
-    );
-    await Promise.all(promises);
+    const result = await Promise.all(promises);
+    const modifiedCount = result.reduce((acc, r) => acc + r.modifiedCount, 0);
+
+    await CourseBillsNumber
+      .updateOne({}, { $inc: { seq: modifiedCount } }, { new: true, upsert: true, setDefaultsOnInsert: true });
   }
 };
 

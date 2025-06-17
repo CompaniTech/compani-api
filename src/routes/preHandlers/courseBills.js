@@ -200,10 +200,8 @@ exports.authorizeCourseBillListEdition = async (req) => {
 
   if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
 
-  if (billedAt) {
-    if (courseBills.some(bill => !get(bill, 'payer.address'))) {
-      throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
-    }
+  if (billedAt && courseBills.some(bill => !get(bill, 'payer.address'))) {
+    throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
   }
 
   return null;

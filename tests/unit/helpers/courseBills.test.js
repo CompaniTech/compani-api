@@ -898,12 +898,14 @@ describe('updateBillList', () => {
     updateOneCourseBillsNumber.restore();
   });
 
-  it('should invoice bill', async () => {
+  it('should invoice bills', async () => {
     const courseBillIds = [new ObjectId(), new ObjectId()];
     const payload = { _ids: courseBillIds, billedAt: '2022-03-08T00:00:00.000Z' };
     const lastBillNumber = { seq: 1 };
 
     findOneCourseBillsNumber.returns(SinonMongoose.stubChainedQueries(lastBillNumber, ['lean']));
+    updateOneCourseBill.onCall(0).returns({ acknowledged: true, matchedCount: 1, modifiedCount: 1 });
+    updateOneCourseBill.onCall(1).returns({ acknowledged: true, matchedCount: 1, modifiedCount: 1 });
 
     await CourseBillHelper.updateBillList(payload);
 
@@ -935,7 +937,7 @@ describe('updateBillList', () => {
     sinon.assert.calledOnceWithExactly(
       updateOneCourseBillsNumber,
       {},
-      { $inc: { seq: payload._ids.length } },
+      { $inc: { seq: 2 } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );
   });
