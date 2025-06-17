@@ -155,19 +155,9 @@ exports.list = async (query, credentials) => {
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
     .lean();
 
-  if (query.isValidated) {
-    return Promise.all(
-      courseBills.map(async bill => ({
-        ...bill,
-        course: await formatCourse(bill.course),
-        netInclTaxes: exports.getNetInclTaxes(bill),
-      }))
-    );
-  }
-
   return Promise.all(
     courseBills
-      .filter(bill => !get(bill, 'course.interruptedAt'))
+      .filter(bill => query.isValidated || !get(bill, 'course.interruptedAt'))
       .map(async bill => ({
         ...bill,
         course: await formatCourse(bill.course),

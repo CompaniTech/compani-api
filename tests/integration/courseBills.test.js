@@ -450,14 +450,6 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
     maturityDate: '2025-04-29T22:00:00.000+00:00',
   };
 
-  const payloadForInterruptedCourse = {
-    course: coursesList[14]._id,
-    companies: [otherCompany._id, authCompany._id],
-    mainFee: { price: 320, count: 2, countUnit: TRAINEE, percentage: 20 },
-    payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
-    maturityDate: '2025-04-29T22:00:00.000+00:00',
-  };
-
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
@@ -558,6 +550,14 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
     });
 
     it('should return 403 if course is interrupted', async () => {
+      const payloadForInterruptedCourse = {
+        course: coursesList[14]._id,
+        companies: [authCompany._id],
+        mainFee: { price: 320, count: 1, countUnit: GROUP, percentage: 20 },
+        payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+        maturityDate: '2025-04-29T22:00:00.000+00:00',
+      };
+
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills',
