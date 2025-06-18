@@ -40,7 +40,7 @@ exports.plugin = {
             action: Joi.string().required().valid(LIST, BALANCE, DASHBOARD),
             course: Joi.objectId().when('action', { is: LIST, then: Joi.required(), otherwise: Joi.forbidden() }),
             company: Joi.objectId().when('action', { is: BALANCE, then: Joi.required(), otherwise: Joi.forbidden() }),
-            startDate: Joi.when('action', { is: DASHBOARD, then: requiredDateToISOString, otherwise: Joi.forbidden() }),
+            startDate: Joi.when('action', { is: DASHBOARD, then: dateToISOString, otherwise: Joi.forbidden() }),
             endDate: Joi.when(
               'startDate',
               {

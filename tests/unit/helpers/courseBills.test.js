@@ -451,7 +451,6 @@ describe('list', () => {
 
     const result = await CourseBillHelper.list(
       {
-        course: courseIds[0],
         action: DASHBOARD,
         startDate: '2025-05-10T22:00:00.000Z',
         endDate: '2025-07-10T22:00:00.000Z',
@@ -488,7 +487,7 @@ describe('list', () => {
         },
         {
           query: 'populate',
-          args: [
+          args: [[
             {
               path: 'course',
               select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
@@ -499,19 +498,16 @@ describe('list', () => {
                 { path: 'slotsToPlan', select: '_id' },
               ],
             },
-          ],
+            {
+              path: 'companies',
+              select: 'name',
+              populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+            },
+            { path: 'payer.fundingOrganisation', select: 'name' },
+            { path: 'payer.company', select: 'name' },
+            { path: 'courseCreditNote', options: { isVendorUser: true } },
+          ]],
         },
-        {
-          query: 'populate',
-          args: [{
-            path: 'companies',
-            select: 'name',
-            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
-          }],
-        },
-        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'courseCreditNote', options: { isVendorUser: true } }] },
         { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
         { query: 'lean' },
       ]
@@ -554,7 +550,6 @@ describe('list', () => {
 
     const result = await CourseBillHelper.list(
       {
-        course: courseId,
         action: DASHBOARD,
         startDate: '2025-05-10T22:00:00.000Z',
         endDate: '2025-07-10T22:00:00.000Z',
@@ -595,7 +590,7 @@ describe('list', () => {
         },
         {
           query: 'populate',
-          args: [
+          args: [[
             {
               path: 'course',
               select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
@@ -606,19 +601,16 @@ describe('list', () => {
                 { path: 'slotsToPlan', select: '_id' },
               ],
             },
-          ],
+            {
+              path: 'companies',
+              select: 'name',
+              populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+            },
+            { path: 'payer.fundingOrganisation', select: 'name' },
+            { path: 'payer.company', select: 'name' },
+            { path: 'courseCreditNote', options: { isVendorUser: true } },
+          ]],
         },
-        {
-          query: 'populate',
-          args: [{
-            path: 'companies',
-            select: 'name',
-            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
-          }],
-        },
-        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'courseCreditNote', options: { isVendorUser: true } }] },
         { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
         { query: 'lean' },
       ]
@@ -628,6 +620,51 @@ describe('list', () => {
       { key: COURSE, value: courseId },
       { key: TRAINEE, value: courseBills[0].course.trainees }
     );
+  });
+
+  it('should return all validated course bills', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const credentials = { role: { vendor: new ObjectId() } };
+    const courseBills = [
+      {
+        course: courseId,
+        companies: [companyId],
+        mainFee: { price: 120, count: 2 },
+        payer: { name: 'Funder' },
+        billedAt: '2025-06-10T22:00:00.000Z',
+      },
+    ];
+
+    find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
+
+    const result = await CourseBillHelper.list({ action: DASHBOARD, isValidated: true }, credentials);
+
+    expect(result).toEqual([{
+      companies: [companyId],
+      mainFee: { price: 120, count: 2 },
+      payer: { name: 'Funder' },
+      billedAt: '2025-06-10T22:00:00.000Z',
+      course: courseId,
+      netInclTaxes: 240,
+    }]);
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        {
+          query: 'find',
+          args: [{ billedAt: { $exists: true } }],
+        },
+        {
+          query: 'populate',
+          args: [[{ path: 'courseCreditNote', options: { isVendorUser: true } }]],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
   });
 });
 

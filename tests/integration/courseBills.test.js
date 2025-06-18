@@ -137,6 +137,17 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       expect(everyBillIsBetweenDates).toBeTruthy();
     });
 
+    it('should get every validated bills', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?action=dashboard&isValidated=true',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courseBills.length).toEqual(8);
+    });
+
     it('should return 404 if course doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'GET',

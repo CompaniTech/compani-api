@@ -129,29 +129,38 @@ exports.list = async (query, credentials) => {
 
   if (query.action === BALANCE) return balance(query.company, credentials);
 
-  const courseBills = await CourseBill
-    .find(query.isValidated
+  let formattedQuery = {};
+  if (query.startDate && query.endDate) {
+    formattedQuery = query.isValidated
       ? { billedAt: { $gte: query.startDate, $lte: query.endDate } }
-      : { maturityDate: { $gte: query.startDate, $lte: query.endDate } }
-    )
-    .populate({
-      path: 'course',
-      select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
-      populate: [
-        { path: 'companies', select: 'name' },
-        { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
-        { path: 'slots', select: 'startDate endDate' },
-        { path: 'slotsToPlan', select: '_id' },
-      ],
-    })
-    .populate({
-      path: 'companies',
-      select: 'name',
-      populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
-    })
-    .populate({ path: 'payer.fundingOrganisation', select: 'name' })
-    .populate({ path: 'payer.company', select: 'name' })
-    .populate({ path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } })
+      : { maturityDate: { $gte: query.startDate, $lte: query.endDate } };
+  } else if (query.isValidated) formattedQuery = { billedAt: { $exists: true } };
+  const courseBills = await CourseBill
+    .find(formattedQuery)
+    .populate([
+      ...(query.startDate && query.endDate
+        ? [{
+          path: 'course',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
+          populate: [
+            { path: 'companies', select: 'name' },
+            { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+            { path: 'slots', select: 'startDate endDate' },
+            { path: 'slotsToPlan', select: '_id' },
+          ],
+        },
+        {
+          path: 'companies',
+          select: 'name',
+          populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+        },
+        { path: 'payer.fundingOrganisation', select: 'name' },
+        { path: 'payer.company', select: 'name' },
+        ]
+        : []
+      ),
+      { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
+    ])
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
     .lean();
 
@@ -160,7 +169,7 @@ exports.list = async (query, credentials) => {
       .filter(bill => query.isValidated || !get(bill, 'course.interruptedAt'))
       .map(async bill => ({
         ...bill,
-        course: await formatCourse(bill.course),
+        ...(query.startDate && query.endDate && { course: await formatCourse(bill.course) }),
         netInclTaxes: exports.getNetInclTaxes(bill),
       }))
   );
