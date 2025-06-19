@@ -658,7 +658,11 @@ describe('list', () => {
         },
         {
           query: 'populate',
-          args: [[{ path: 'courseCreditNote', options: { isVendorUser: true } }]],
+          args: [[
+            { path: 'payer.fundingOrganisation', select: 'name' },
+            { path: 'payer.company', select: 'name' },
+            { path: 'courseCreditNote', options: { isVendorUser: true } },
+          ]],
         },
         { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
         { query: 'lean' },

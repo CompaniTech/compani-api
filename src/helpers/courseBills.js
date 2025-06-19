@@ -154,11 +154,11 @@ exports.list = async (query, credentials) => {
           select: 'name',
           populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
         },
-        { path: 'payer.fundingOrganisation', select: 'name' },
-        { path: 'payer.company', select: 'name' },
         ]
         : []
       ),
+      { path: 'payer.fundingOrganisation', select: 'name' },
+      { path: 'payer.company', select: 'name' },
       { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
     ])
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
