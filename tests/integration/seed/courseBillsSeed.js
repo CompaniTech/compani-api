@@ -295,6 +295,24 @@ const coursesList = [
       { company: authCompany._id, global: 2000 },
     ],
   },
+  { // 14 interrupted course
+    _id: new ObjectId(),
+    subProgram: subProgramList[0]._id,
+    misc: 'old session',
+    trainers: [trainer._id],
+    trainees: [traineeFromAuthCompany._id],
+    companies: [authCompany._id],
+    type: INTRA,
+    maxTrainees: 8,
+    expectedBillsCount: 3,
+    operationsRepresentative: vendorAdmin._id,
+    interruptedAt: '2021-01-01T00:00:00.000Z',
+    estimatedStartDate: '2020-11-03T10:00:00.000Z',
+    certificateGenerationMode: GLOBAL,
+    prices: [
+      { company: authCompany._id, global: 12000 },
+    ],
+  },
 ];
 
 const courseFundingOrganisationList = [

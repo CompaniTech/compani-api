@@ -1,5 +1,7 @@
 const get = require('lodash/get');
 const omit = require('lodash/omit');
+const mapValues = require('lodash/mapValues');
+const keyBy = require('lodash/keyBy');
 const { ObjectId } = require('mongodb');
 const NumbersHelper = require('./numbers');
 const Course = require('../models/Course');
@@ -7,9 +9,18 @@ const CourseBill = require('../models/CourseBill');
 const CourseBillsNumber = require('../models/CourseBillsNumber');
 const BalanceHelper = require('./balances');
 const UtilsHelper = require('./utils');
+const CourseHistoriesHelper = require('./courseHistories');
 const VendorCompaniesHelper = require('./vendorCompanies');
 const CourseBillPdf = require('../data/pdf/courseBilling/courseBill');
-const { LIST, TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN, DD_MM_YYYY } = require('./constants');
+const {
+  LIST,
+  TRAINING_ORGANISATION_MANAGER,
+  VENDOR_ADMIN,
+  DD_MM_YYYY,
+  BALANCE,
+  COURSE,
+  TRAINEE,
+} = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 
 exports.getNetInclTaxes = (bill) => {
@@ -88,6 +99,20 @@ const balance = async (company, credentials) => {
   return courseBills.map(bill => exports.formatCourseBill(bill));
 };
 
+const formatCourse = async (course) => {
+  const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
+    .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
+  const traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
+  const courseTrainees = course.trainees
+    .map(traineeId => ({ _id: traineeId, registrationCompany: traineesCompany[traineeId] }));
+  const coursePrices = course.companies.map((c) => {
+    const companyPrice = (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c._id)) ||
+      { company: c._id, global: '' };
+    return companyPrice;
+  });
+  return { ...course, trainees: courseTrainees, prices: coursePrices };
+};
+
 exports.list = async (query, credentials) => {
   if (query.action === LIST) {
     const courseBills = await CourseBill
@@ -102,7 +127,52 @@ exports.list = async (query, credentials) => {
     return courseBills.map(bill => ({ ...bill, netInclTaxes: exports.getNetInclTaxes(bill) }));
   }
 
-  return balance(query.company, credentials);
+  if (query.action === BALANCE) return balance(query.company, credentials);
+
+  let formattedQuery = {};
+  if (query.startDate && query.endDate) {
+    formattedQuery = query.isValidated
+      ? { billedAt: { $gte: query.startDate, $lte: query.endDate } }
+      : { maturityDate: { $gte: query.startDate, $lte: query.endDate } };
+  } else if (query.isValidated) formattedQuery = { billedAt: { $exists: true } };
+  const courseBills = await CourseBill
+    .find(formattedQuery)
+    .populate([
+      ...(query.startDate && query.endDate
+        ? [{
+          path: 'course',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
+          populate: [
+            { path: 'companies', select: 'name' },
+            { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+            { path: 'slots', select: 'startDate endDate' },
+            { path: 'slotsToPlan', select: '_id' },
+          ],
+        },
+        {
+          path: 'companies',
+          select: 'name',
+          populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+        },
+        ]
+        : []
+      ),
+      { path: 'payer.fundingOrganisation', select: 'name' },
+      { path: 'payer.company', select: 'name' },
+      { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
+    ])
+    .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
+    .lean();
+
+  return Promise.all(
+    courseBills
+      .filter(bill => query.isValidated || !get(bill, 'course.interruptedAt'))
+      .map(async bill => ({
+        ...bill,
+        ...(query.startDate && query.endDate && { course: await formatCourse(bill.course) }),
+        netInclTaxes: exports.getNetInclTaxes(bill),
+      }))
+  );
 };
 
 exports.create = async (payload) => {
@@ -182,6 +252,32 @@ exports.updateCourseBill = async (courseBillId, payload) => {
   }
 };
 
+exports.updateBillList = async (payload) => {
+  if (payload.billedAt) {
+    const lastBillNumber = await CourseBillsNumber.findOne({}).lean();
+    const promises = [];
+    for (let i = 0; i < payload._ids.length; i++) {
+      promises.push(
+        CourseBill.updateOne(
+          { _id: payload._ids[i] },
+          {
+            $set: {
+              billedAt: payload.billedAt,
+              number: `FACT-${(lastBillNumber.seq + i + 1).toString().padStart(5, '0')}`,
+            },
+            $unset: { maturityDate: '' },
+          }
+        )
+      );
+    }
+    const result = await Promise.all(promises);
+    const modifiedCount = result.reduce((acc, r) => acc + r.modifiedCount, 0);
+
+    await CourseBillsNumber
+      .updateOne({}, { $inc: { seq: modifiedCount } }, { new: true, upsert: true, setDefaultsOnInsert: true });
+  }
+};
+
 exports.addBillingPurchase = async (courseBillId, payload) =>
   CourseBill.updateOne({ _id: courseBillId }, { $push: { billingPurchaseList: payload } });
 
@@ -246,4 +342,4 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
   return { pdf, billNumber: bill.number };
 };
 
-exports.deleteBill = async courseBillId => CourseBill.deleteOne({ _id: courseBillId });
+exports.deleteBillList = async courseBillIds => CourseBill.deleteMany({ _id: { $in: courseBillIds } });

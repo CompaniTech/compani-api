@@ -79,6 +79,7 @@ const CourseSchema = mongoose.Schema({
     _id: false,
     id: false,
   },
+  interruptedAt: { type: Date },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {

@@ -14,6 +14,7 @@ const {
 const { authCompany, otherCompany, companyWithoutSubscription } = require('../seed/authCompaniesSeed');
 
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
+const { CompaniDate } = require('../../src/helpers/dates/companiDates');
 const { GROUP, TRAINEE } = require('../../src/helpers/constants');
 const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 
@@ -105,6 +106,48 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       expect(response.result.data.courseBills.length).toEqual(5);
     });
 
+    it('should get draft bills between 2 dates', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?startDate=2025-01-10T22:00:00.000Z&endDate=2025-04-30T23:00:00.000Z&action=dashboard',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courseBills.length).toEqual(1);
+      const everyBillIsBetweenDates = response.result.data.courseBills
+        .every(bill => CompaniDate(bill.maturityDate).isSameOrBefore('2025-04-30T23:00:00') &&
+          CompaniDate(bill.maturityDate).isSameOrAfter('2025-01-10T22:00:00'));
+      expect(everyBillIsBetweenDates).toBeTruthy();
+    });
+
+    it('should get validated bills between 2 dates', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?startDate=2022-04-06T22:00:00.000Z&endDate=2022-04-08T22:00:00.000Z&action=dashboard'
+          + '&isValidated=true',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courseBills.length).toEqual(7);
+      const everyBillIsBetweenDates = response.result.data.courseBills
+        .every(bill => CompaniDate(bill.billedAt).isSameOrBefore('2022-04-08T22:00:00') &&
+          CompaniDate(bill.billedAt).isSameOrAfter('2022-04-06T22:00:00'));
+      expect(everyBillIsBetweenDates).toBeTruthy();
+    });
+
+    it('should get every validated bills', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?action=dashboard&isValidated=true',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courseBills.length).toEqual(8);
+    });
+
     it('should return 404 if course doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'GET',
@@ -139,6 +182,37 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?course=${coursesList[1]._id}&action=balance`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if query is dashboard but no start date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?endDate=2022-04-08T22:00:00.000Z&action=dashboard&isValidated=true',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if query is dashboard but no end date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?startDate=2022-04-06T22:00:00.000Z&action=dashboard&isValidated=true',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if end date is before start date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebills?startDate=2023-04-06T22:00:00.000Z&endDate=2022-04-08T22:00:00.000Z&action=dashboard'
+          + '&isValidated=true',
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -481,6 +555,25 @@ describe('COURSE BILL ROUTES - POST /coursebills', () => {
         url: '/coursebills',
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: { ...payloadWithPercentage, companies: [otherCompany._id, companyWithoutSubscription._id] },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course is interrupted', async () => {
+      const payloadForInterruptedCourse = {
+        course: coursesList[14]._id,
+        companies: [authCompany._id],
+        mainFee: { price: 240, count: 1, countUnit: GROUP, percentage: 20 },
+        payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+        maturityDate: '2025-04-29T22:00:00.000+00:00',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: payloadForInterruptedCourse,
       });
 
       expect(response.statusCode).toBe(403);
@@ -1178,6 +1271,100 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
   });
 });
 
+describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
+  let authToken;
+  beforeEach(populateDB);
+  const courseBillsToValidate = [courseBillsList[0]._id, courseBillsList[1]._id, courseBillsList[3]._id];
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should validate course bills', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: courseBillsToValidate, billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const countBill = await CourseBill
+        .countDocuments({ _id: { $in: courseBillsToValidate }, billedAt: { $exists: true } });
+      expect(countBill).toBe(3);
+    });
+
+    it('should return 400 if no course bill in payload', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [], billedAt: '2022-03-08T00:00:00.000Z' },
+
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if course bill doesn\'t exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToValidate, new ObjectId()], billedAt: '2022-03-08T00:00:00.000Z' },
+
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if course bill have billedAt', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToValidate, courseBillsList[2]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+    it('should return 403 if course bill payer has no address', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToValidate, courseBillsList[5]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-edition',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { _ids: courseBillsToValidate, billedAt: '2022-03-08T00:00:00.000Z' },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
 describe('COURSE BILL ROUTES - POST /coursebills/{_id}/billingpurchases', () => {
   let authToken;
   beforeEach(populateDB);
@@ -1589,33 +1776,49 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}/billingpurchases/{billi
   });
 });
 
-describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}', () => {
+describe('COURSE BILL ROUTES - POST /coursebills/list-deletion', () => {
   let authToken;
   beforeEach(populateDB);
+  const courseBillsToDelete = [courseBillsList[0]._id, courseBillsList[1]._id, courseBillsList[3]._id];
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should delete course bill', async () => {
+    it('should delete course bills', async () => {
       const response = await app.inject({
-        method: 'DELETE',
-        url: `/coursebills/${courseBillsList[0]._id}`,
+        method: 'POST',
+        url: '/coursebills/list-deletion',
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: courseBillsToDelete },
       });
 
       expect(response.statusCode).toBe(200);
 
-      const countBill = await CourseBill.countDocuments({ _id: courseBillsList[0]._id });
+      const countBill = await CourseBill.countDocuments({ _id: { $in: courseBillsToDelete } });
       expect(countBill).toBe(0);
+    });
+
+    it('should return 400 if no course bill in payload', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-deletion',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [] },
+
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return 404 if course bill doesn\'t exist', async () => {
       const response = await app.inject({
-        method: 'DELETE',
-        url: `/coursebills/${new ObjectId()}`,
+        method: 'POST',
+        url: '/coursebills/list-deletion',
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToDelete, new ObjectId()] },
+
       });
 
       expect(response.statusCode).toBe(404);
@@ -1623,9 +1826,10 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}', () => {
 
     it('should return 403 if course bill have billedAt', async () => {
       const response = await app.inject({
-        method: 'DELETE',
-        url: `/coursebills/${courseBillsList[2]._id}`,
+        method: 'POST',
+        url: '/coursebills/list-deletion',
         headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToDelete, courseBillsList[2]._id] },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1643,9 +1847,10 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}', () => {
         authToken = await getToken(role.name);
 
         const response = await app.inject({
-          method: 'DELETE',
-          url: `/coursebills/${courseBillsList[0]._id}`,
+          method: 'POST',
+          url: '/coursebills/list-deletion',
           headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { _ids: courseBillsToDelete },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

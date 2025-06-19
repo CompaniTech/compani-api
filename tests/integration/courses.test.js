@@ -861,16 +861,16 @@ describe('COURSES ROUTES - GET /courses', () => {
           { ...pick(otherCompany, ['_id', 'name']), holding: { _id: otherHolding._id, name: otherHolding.name } },
         ],
         subProgram: {
-          _id: expect.any(ObjectId),
+          _id: expect.any(Object),
           program: {
             _id: programsList[0]._id,
             name: programsList[0].name,
-            subPrograms: [expect.any(ObjectId), expect.any(ObjectId), expect.any(ObjectId)],
+            subPrograms: [expect.any(Object), expect.any(Object), expect.any(Object)],
           },
         },
         trainers: [pick(trainerAndCoach, ['_id', 'identity.firstname', 'identity.lastname'])],
         slots: [{
-          _id: expect.any(ObjectId),
+          _id: expect.any(Object),
           startDate: CompaniDate('2020-03-05T08:00:00.000Z').toDate(),
           endDate: CompaniDate('2020-03-05T10:00:00.000Z').toDate(),
           course: coursesList[3]._id,
@@ -881,10 +881,10 @@ describe('COURSES ROUTES - GET /courses', () => {
             street: '37 rue de Ponthieu',
             location: { type: 'Point', coordinates: [2.377133, 48.801389] },
           },
-          step: { _id: expect.any(ObjectId), type: ON_SITE },
+          step: { _id: expect.any(Object), type: ON_SITE },
         }],
-        trainees: expect.arrayContaining([expect.any(ObjectId)]),
-        slotsToPlan: [{ _id: expect.any(ObjectId), course: course._id }],
+        trainees: expect.arrayContaining([expect.any(Object)]),
+        slotsToPlan: [{ _id: expect.any(Object), course: course._id }],
       });
 
       const archivedCourse = response.result.data.courses
@@ -901,7 +901,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(20);
+      expect(response.result.data.courses.length).toEqual(21);
     });
 
     it('should get blended archived courses (ops webapp)', async () => {
@@ -923,7 +923,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(16);
+      expect(response.result.data.courses.length).toEqual(17);
     });
 
     it('should get single courses only (type is string)', async () => {
@@ -1060,7 +1060,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(16);
+      expect(response.result.data.courses.length).toEqual(17);
     });
 
     it('should get trainer\'s course (ops mobile)', async () => {
@@ -1072,7 +1072,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.courses.length).toEqual(16);
+      expect(response.result.data.courses.courses.length).toEqual(17);
 
       const course =
          response.result.data.courses.courses.find(c => UtilsHelper.areObjectIdsEquals(coursesList[2]._id, c._id));
@@ -1082,13 +1082,13 @@ describe('COURSES ROUTES - GET /courses', () => {
           { ...pick(authCompany, ['_id', 'name']), holding: { _id: authHolding._id, name: authHolding.name } },
         ],
         subProgram: expect.objectContaining({
-          _id: expect.any(ObjectId),
+          _id: expect.any(Object),
           program: {
             _id: programsList[0]._id,
             name: programsList[0].name,
             image: programsList[0].image,
             description: programsList[0].description,
-            subPrograms: [expect.any(ObjectId), expect.any(ObjectId), expect.any(ObjectId)],
+            subPrograms: [expect.any(Object), expect.any(Object), expect.any(Object)],
           },
         }),
         slots: [{
@@ -1096,14 +1096,14 @@ describe('COURSES ROUTES - GET /courses', () => {
           endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
           course: coursesList[2]._id,
           step: {
-            _id: expect.any(ObjectId),
+            _id: expect.any(Object),
             type: 'on_site',
           },
-          _id: expect.any(ObjectId),
+          _id: expect.any(Object),
         }],
         slotsToPlan: [
-          { _id: expect.any(ObjectId), course: course._id },
-          { _id: expect.any(ObjectId), course: course._id },
+          { _id: expect.any(Object), course: course._id },
+          { _id: expect.any(Object), course: course._id },
         ],
       }));
       expect(course.trainer).toBeUndefined();
@@ -1130,7 +1130,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(13);
+      expect(response.result.data.courses.length).toEqual(14);
       const course =
          response.result.data.courses.find(c => UtilsHelper.areObjectIdsEquals(coursesList[2]._id, c._id));
       expect(course.companies).toEqual([pick(authCompany, ['_id', 'name'])]);
@@ -2092,6 +2092,37 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(course).toBeTruthy();
     });
 
+    it('should interrupt a blended course', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const course = await Course.countDocuments({ _id: coursesList[0]._id, interruptedAt: { $exists: true } });
+
+      expect(course).toBeTruthy();
+    });
+
+    it('should restart an interrupted blended course', async () => {
+      const payload = { interruptedAt: '' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const course = await Course.countDocuments({ _id: coursesList[26]._id, interruptedAt: { $exists: false } });
+      expect(course).toBeTruthy();
+    });
+
     it('should update salesRepresentative for a blended course', async () => {
       const payload = { salesRepresentative: trainerOrganisationManager._id };
       const response = await app.inject({
@@ -2202,6 +2233,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       { maxTrainees: 15 },
       { expectedBillsCount: 10 },
       { archivedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() },
+      { interruptedAt: CompaniDate('2025-06-01T09:00:00.000Z').toDate() },
     ];
     payloads.forEach((payload) => {
       it(`should return 403 if course is archived (update ${Object.keys(payload)})`, async () => {
@@ -2503,6 +2535,30 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(response.statusCode).toBe(409);
     });
 
+    it('should return 409 if trying to interrupt a course already interrupted', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
+    it('should return 409 if trying to restart a course in progress', async () => {
+      const payload = { interruptedAt: '' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
     it('should return 404 if invalid salesRepresentative', async () => {
       const payload = { salesRepresentative: coachFromOtherCompany._id };
       const response = await app.inject({
@@ -2658,6 +2714,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to interrupt course', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('HOLDING_ADMIN', () => {
@@ -2741,6 +2809,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to interrupt course', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[22]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload,
       });
@@ -2875,6 +2955,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to interrupt course', async () => {
+      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {
@@ -2918,6 +3010,18 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
           url: `/courses/${coursesList[4]._id}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: { certifiedTrainees: [coach._id] },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+
+      it('should return 403 if try to interrupt course', async () => {
+        const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/courses/${coursesList[0]._id}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload,
         });
 
         expect(response.statusCode).toBe(403);

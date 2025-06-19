@@ -10,9 +10,10 @@ const {
   updateBillingPurchase,
   deleteBillingPurchase,
   generateBillPdf,
-  deleteBill,
+  deleteBillList,
+  updateBillList,
 } = require('../controllers/courseBillController');
-const { LIST, BALANCE, GROUP, TRAINEE } = require('../helpers/constants');
+const { LIST, BALANCE, GROUP, TRAINEE, DASHBOARD } = require('../helpers/constants');
 const {
   authorizeCourseBillCreation,
   authorizeCourseBillGet,
@@ -21,7 +22,8 @@ const {
   authorizeCourseBillingPurchaseUpdate,
   authorizeCourseBillingPurchaseDelete,
   authorizeBillPdfGet,
-  authorizeCourseBillDeletion,
+  authorizeCourseBillListDeletion,
+  authorizeCourseBillListEdition,
 } = require('./preHandlers/courseBills');
 const { requiredDateToISOString, dateToISOString } = require('./validations/utils');
 
@@ -35,9 +37,19 @@ exports.plugin = {
         auth: { scope: ['coursebills:read'] },
         validate: {
           query: Joi.object({
-            action: Joi.string().required().valid(LIST, BALANCE),
+            action: Joi.string().required().valid(LIST, BALANCE, DASHBOARD),
             course: Joi.objectId().when('action', { is: LIST, then: Joi.required(), otherwise: Joi.forbidden() }),
             company: Joi.objectId().when('action', { is: BALANCE, then: Joi.required(), otherwise: Joi.forbidden() }),
+            startDate: Joi.when('action', { is: DASHBOARD, then: dateToISOString, otherwise: Joi.forbidden() }),
+            endDate: Joi.when(
+              'startDate',
+              {
+                is: Joi.exist(),
+                then: dateToISOString && Joi.date().required().min(Joi.ref('startDate')),
+                otherwise: Joi.forbidden(),
+              }
+            ),
+            isValidated: Joi.boolean(),
           }),
         },
         pre: [{ method: authorizeCourseBillGet }],
@@ -105,6 +117,19 @@ exports.plugin = {
 
     server.route({
       method: 'POST',
+      path: '/list-edition',
+      options: {
+        auth: { scope: ['coursebills:edit'] },
+        validate: {
+          payload: Joi.object({ _ids: Joi.array().items(Joi.objectId()).min(1), billedAt: requiredDateToISOString }),
+        },
+        pre: [{ method: authorizeCourseBillListEdition }],
+      },
+      handler: updateBillList,
+    });
+
+    server.route({
+      method: 'POST',
       path: '/{_id}/billingpurchases',
       options: {
         auth: { scope: ['coursebills:edit'] },
@@ -167,16 +192,16 @@ exports.plugin = {
     });
 
     server.route({
-      method: 'DELETE',
-      path: '/{_id}',
+      method: 'POST',
+      path: '/list-deletion',
       options: {
         auth: { scope: ['coursebills:edit'] },
         validate: {
-          params: Joi.object({ _id: Joi.objectId().required() }),
+          payload: Joi.object({ _ids: Joi.array().items(Joi.objectId()).min(1) }),
         },
-        pre: [{ method: authorizeCourseBillDeletion }],
+        pre: [{ method: authorizeCourseBillListDeletion }],
       },
-      handler: deleteBill,
+      handler: deleteBillList,
     });
   },
 };

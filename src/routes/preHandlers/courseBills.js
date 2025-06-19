@@ -23,8 +23,12 @@ exports.authorizeCourseBillCreation = async (req) => {
   const { course: courseId, companies: companiesIds, payer, mainFee } = req.payload;
 
   const course = await Course
-    .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1 })
+    .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptedAt: 1 })
     .lean();
+
+  if (!course) throw Boom.notFound();
+  if (course.interruptedAt) throw Boom.forbidden();
+
   const everyCompanyBelongsToCourse = course &&
     companiesIds.every(c => UtilsHelper.doesArrayIncludeId(course.companies, c));
   if (!everyCompanyBelongsToCourse) throw Boom.notFound();
@@ -184,6 +188,25 @@ exports.authorizeCourseBillUpdate = async (req) => {
   return null;
 };
 
+exports.authorizeCourseBillListEdition = async (req) => {
+  const { _ids: courseBillIds, billedAt } = req.payload;
+
+  const courseBills = await CourseBill
+    .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1 })
+    .populate({ path: 'payer.company', select: 'address' })
+    .populate({ path: 'payer.fundingOrganisation', select: 'address' })
+    .lean();
+  if (courseBills.length !== courseBillIds.length) throw Boom.notFound();
+
+  if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
+
+  if (billedAt && courseBills.some(bill => !get(bill, 'payer.address'))) {
+    throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
+  }
+
+  return null;
+};
+
 exports.authorizeCourseBillingPurchaseAddition = async (req) => {
   const { billingItem } = req.payload;
   const billingItemExists = await CourseBillingItem.countDocuments({ _id: billingItem }, { limit: 1 });
@@ -258,13 +281,13 @@ exports.authorizeBillPdfGet = async (req) => {
   return [...new Set([...bill.companies.map(c => c.toHexString()), bill.payer.toHexString()])];
 };
 
-exports.authorizeCourseBillDeletion = async (req) => {
-  const { _id: courseBillId } = req.params;
+exports.authorizeCourseBillListDeletion = async (req) => {
+  const { _ids: courseBillIds } = req.payload;
 
-  const courseBill = await CourseBill.findOne({ _id: courseBillId }, { billedAt: 1 }).lean();
-  if (!courseBill) throw Boom.notFound();
+  const courseBills = await CourseBill.find({ _id: { $in: courseBillIds } }, { billedAt: 1 }).lean();
+  if (courseBills.length !== courseBillIds.length) throw Boom.notFound();
 
-  if (courseBill.billedAt) throw Boom.forbidden();
+  if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
 
   return null;
 };

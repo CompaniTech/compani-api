@@ -698,7 +698,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/{_id}/categories/{_id}', () => {
 
       const response = await app.inject({
         method: 'DELETE',
-        url: `/programs/${programsList[0]._id}/categories/${programsList[0].categories[0]._id}`,
+        url: `/programs/${programsList[0]._id}/categories/${programsList[0].categories[0]}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -711,7 +711,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/{_id}/categories/{_id}', () => {
     it('should return a 404 if program does not exist', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/programs/${new ObjectId()}/categories/${programsList[0].categories[0]._id}`,
+        url: `/programs/${new ObjectId()}/categories/${programsList[0].categories[0]}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

@@ -17,6 +17,7 @@ const {
   TRAINEE,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  COURSE_INTERRUPTION,
 } = require('../../../src/helpers/constants');
 const SinonMongoose = require('../sinonMongoose');
 
@@ -37,6 +38,14 @@ describe('createHistory', () => {
     await CourseHistoriesHelper.createHistory(course, user, 'action', { trainee: 'bonjour' });
 
     sinon.assert.calledOnceWithExactly(create, { course, createdBy: user, action: 'action', trainee: 'bonjour' });
+  });
+
+  it('should create history without payload', async () => {
+    const course = new ObjectId();
+    const user = new ObjectId();
+    await CourseHistoriesHelper.createHistory(course, user, 'action');
+
+    sinon.assert.calledOnceWithExactly(create, { course, createdBy: user, action: 'action' });
   });
 });
 
@@ -683,6 +692,33 @@ describe('getCompanyAtCourseRegistrationList', () => {
         { query: 'sort', args: [{ createdAt: -1, course: 1 }] },
         { query: 'lean' },
       ]
+    );
+  });
+});
+
+describe('createHistoryOnCourseInterruptionOrRestart', () => {
+  let createHistory;
+
+  beforeEach(() => {
+    createHistory = sinon.stub(CourseHistoriesHelper, 'createHistory');
+  });
+
+  afterEach(() => {
+    createHistory.restore();
+  });
+
+  it('should create a courseHistory on course interruption', async () => {
+    const courseId = new ObjectId();
+    const userId = new ObjectId();
+    const payload = { courseId, action: COURSE_INTERRUPTION };
+
+    await CourseHistoriesHelper.createHistoryOnCourseInterruptionOrRestart(payload, userId);
+
+    sinon.assert.calledOnceWithExactly(
+      createHistory,
+      courseId,
+      userId,
+      COURSE_INTERRUPTION
     );
   });
 });

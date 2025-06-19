@@ -67,6 +67,8 @@ const {
   SINGLE,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  COURSE_RESTART,
+  COURSE_INTERRUPTION,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -651,11 +653,11 @@ describe('list', () => {
     it('should return courses for trainees, vendor', async () => {
       const traineeOrTutorId = new ObjectId();
       const stepId = new ObjectId();
-      const courseIds = [new ObjectId(), new ObjectId()];
+      const courseIds = [{ _id: new ObjectId() }, { _id: new ObjectId() }];
       const coursesList = [
         {
           misc: 'name',
-          _id: courseIds[0],
+          _id: courseIds[0]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -692,7 +694,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[1],
+          _id: courseIds[1]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -825,7 +827,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
           },
           {
             query: 'populate',
@@ -875,11 +877,11 @@ describe('list', () => {
       const traineeCompany = new ObjectId();
       const traineeOrTutorId = new ObjectId();
       const stepId = new ObjectId();
-      const courseIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+      const courseIds = [{ _id: new ObjectId() }, { _id: new ObjectId() }, { _id: new ObjectId() }];
       const coursesList = [
         {
           misc: 'name',
-          _id: courseIds[0],
+          _id: courseIds[0]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -916,7 +918,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[1],
+          _id: courseIds[1]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -952,7 +954,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[2],
+          _id: courseIds[2]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1098,7 +1100,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
           },
           {
             query: 'populate',
@@ -1152,11 +1154,11 @@ describe('list', () => {
       const traineeCompany = credentials.holding.companies[0];
       const traineeOrTutorId = new ObjectId();
       const stepId = new ObjectId();
-      const courseIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+      const courseIds = [{ _id: new ObjectId() }, { _id: new ObjectId() }, { _id: new ObjectId() }];
       const coursesList = [
         {
           misc: 'name',
-          _id: courseIds[0],
+          _id: courseIds[0]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1193,7 +1195,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[1],
+          _id: courseIds[1]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1229,7 +1231,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[2],
+          _id: courseIds[2]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1380,7 +1382,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
           },
           {
             query: 'populate',
@@ -1434,11 +1436,11 @@ describe('list', () => {
       const traineeOrTutorId = credentials._id;
       const stepId = new ObjectId();
       const slotId = new ObjectId();
-      const courseIds = [new ObjectId(), new ObjectId()];
+      const courseIds = [{ _id: new ObjectId() }, { _id: new ObjectId() }];
       const coursesList = [
         {
           misc: 'name',
-          _id: courseIds[0],
+          _id: courseIds[0]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1488,7 +1490,7 @@ describe('list', () => {
         },
         {
           misc: 'program',
-          _id: courseIds[1],
+          _id: courseIds[1]._id,
           format: BLENDED,
           subProgram: {
             steps: [{
@@ -1644,7 +1646,7 @@ describe('list', () => {
             _id: slotId,
             slots: ['2019-11-06T12:00:00.000Z', '2025-03-04T17:00:00.000Z'],
             progress: { live: 0.5, presence: { attendanceDuration: { minutes: 180 }, maxDuration: { minutes: 300 } } },
-            courseId: courseIds[1],
+            courseId: courseIds[1]._id,
           },
         ],
       });
@@ -1674,7 +1676,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
           },
           {
             query: 'populate',
@@ -3211,7 +3213,7 @@ describe('getCourse', () => {
           },
           ],
         },
-        slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+        slots: [{ step: { _id: stepId }, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
         slotsToPlan: [],
         trainers: [{ _id: loggedUser._id }],
       };
@@ -3238,7 +3240,9 @@ describe('getCourse', () => {
             type: 'on_site',
             areActivitiesValid: true,
             theoreticalDuration: 'PT12600S',
-            slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
+            slots: [
+              { step: { _id: stepId }, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' },
+            ],
           },
           ],
         },
@@ -4208,6 +4212,7 @@ describe('updateCourse', () => {
   let courseFindOneAndUpdate;
   let createHistoryOnEstimatedStartDateEdition;
   let courseFindOne;
+  let createHistoryOnCourseInterruptionOrRestart;
   const credentials = { _id: new ObjectId() };
   beforeEach(() => {
     courseFindOneAndUpdate = sinon.stub(Course, 'findOneAndUpdate');
@@ -4216,11 +4221,14 @@ describe('updateCourse', () => {
       'createHistoryOnEstimatedStartDateEdition'
     );
     courseFindOne = sinon.stub(Course, 'findOne');
+    createHistoryOnCourseInterruptionOrRestart = sinon
+      .stub(CourseHistoriesHelper, 'createHistoryOnCourseInterruptionOrRestart');
   });
   afterEach(() => {
     courseFindOneAndUpdate.restore();
     createHistoryOnEstimatedStartDateEdition.restore();
     courseFindOne.restore();
+    createHistoryOnCourseInterruptionOrRestart.restore();
   });
 
   it('should update a field in intra course', async () => {
@@ -4233,6 +4241,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4253,6 +4262,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4275,6 +4285,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4297,6 +4308,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4318,6 +4330,7 @@ describe('updateCourse', () => {
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4346,6 +4359,7 @@ describe('updateCourse', () => {
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4369,6 +4383,7 @@ describe('updateCourse', () => {
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
@@ -4396,6 +4411,7 @@ describe('updateCourse', () => {
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
@@ -4424,6 +4440,7 @@ describe('updateCourse', () => {
     ));
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
+    sinon.assert.notCalled(createHistoryOnCourseInterruptionOrRestart);
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [{ query: 'findOne', args: [{ _id: courseId }, { prices: 1 }] }, { query: 'lean' }]
@@ -4438,6 +4455,57 @@ describe('updateCourse', () => {
         },
         { query: 'lean' },
       ]
+    );
+  });
+
+  it('should interrupt the course', async () => {
+    const courseId = new ObjectId();
+    const payload = { interruptedAt: '2025-01-06T10:20:00.000Z' };
+    const courseFromDb = { _id: courseId };
+
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [{ _id: courseId }, { $set: { interruptedAt: '2025-01-06T10:20:00.000Z' } }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnCourseInterruptionOrRestart,
+      { courseId, action: COURSE_INTERRUPTION },
+      credentials._id
+    );
+  });
+
+  it('should restart an interrupted course', async () => {
+    const courseId = new ObjectId();
+    const payload = { interruptedAt: '' };
+    const courseFromDb = { _id: courseId, interruptedAt: '2025-01-06T10:20:00.000Z' };
+
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: courseId }, { $unset: { interruptedAt: '' } }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnCourseInterruptionOrRestart,
+      { courseId, action: COURSE_RESTART },
+      credentials._id
     );
   });
 });
@@ -5536,7 +5604,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: [companyId, otherCompanyId],
+      companies: [{ _id: companyId }, { _id: otherCompanyId }],
       subProgram: {
         _id: subProgramIds[0],
         program: {
@@ -5833,7 +5901,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: [companyId, otherCompanyId],
+      companies: [{ _id: companyId }, { _id: otherCompanyId }],
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Apprendre', name: 'nom du programme', subPrograms: subProgramIds },
@@ -6081,7 +6149,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: companies.map(c => c._id),
+      companies,
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
@@ -6365,7 +6433,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: companies.map(c => c._id),
+      companies,
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
@@ -6628,7 +6696,7 @@ describe('generateCompletionCertificates', () => {
         { _id: traineesIds[2], identity: { lastname: 'trainee 3' } },
       ],
       misc: 'Bonjour je suis une formation',
-      companies: [companyId, new ObjectId(), otherCompanyId],
+      companies: [{ _id: companyId }, { _id: new ObjectId() }, { _id: otherCompanyId }],
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Apprendre plein de trucs cool', name: 'un programme', subPrograms: subProgramIds },
@@ -6778,7 +6846,7 @@ describe('generateCompletionCertificates', () => {
             _id: { $ne: courseId },
             format: BLENDED,
             subProgram: { $in: subProgramIds },
-            companies: { $in: course.companies },
+            companies: { $in: course.companies.map(c => c._id) },
           }],
         },
         {
@@ -6789,7 +6857,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
-                company: { $in: course.companies },
+                company: { $in: course.companies.map(c => c._id) },
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: false },
@@ -6832,7 +6900,7 @@ describe('generateCompletionCertificates', () => {
         { _id: traineesIds[2], identity: { lastname: 'trainee 3' } },
       ],
       misc: 'Bonjour je suis une formation',
-      companies: [companyId],
+      companies: [{ _id: companyId }],
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Apprendre', name: 'nom du programme', subPrograms: subProgramIds },
@@ -7012,7 +7080,7 @@ describe('generateCompletionCertificates', () => {
       ],
       misc: 'Bonjour je suis une formation',
       trainer: new ObjectId(),
-      companies: companies.map(c => c._id),
+      companies,
       subProgram: {
         _id: subProgramIds[0],
         program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },

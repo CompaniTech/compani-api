@@ -41,6 +41,17 @@ const update = async (req) => {
   }
 };
 
+const updateBillList = async (req) => {
+  try {
+    await CourseBillHelper.updateBillList(req.payload);
+
+    return { message: translate[language].courseBillsUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 const addBillingPurchase = async (req) => {
   try {
     await CourseBillHelper.addBillingPurchase(req.params._id, req.payload);
@@ -94,11 +105,11 @@ const generateBillPdf = async (req, h) => {
   }
 };
 
-const deleteBill = async (req) => {
+const deleteBillList = async (req) => {
   try {
-    await CourseBillHelper.deleteBill(req.params._id);
+    await CourseBillHelper.deleteBillList(req.payload._ids);
 
-    return { message: translate[language].courseBillDeleted };
+    return { message: translate[language].courseBillsDeleted };
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
@@ -113,5 +124,6 @@ module.exports = {
   updateBillingPurchase,
   deleteBillingPurchase,
   generateBillPdf,
-  deleteBill,
+  deleteBillList,
+  updateBillList,
 };

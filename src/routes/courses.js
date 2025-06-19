@@ -253,6 +253,7 @@ exports.plugin = {
                 }
                 return value;
               }),
+            interruptedAt: Joi.date().allow(''),
           }),
         },
         pre: [{ method: authorizeCourseEdit }],
