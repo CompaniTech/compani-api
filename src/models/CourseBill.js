@@ -6,7 +6,7 @@ const { validateQuery, validateAggregation, formatQuery, queryMiddlewareList } =
 const CourseBillSchema = mongoose.Schema({
   course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
   mainFee: {
-    price: { type: Number, required: true },
+    price: { type: Number },
     percentage: { type: Number },
     count: { type: Number, required: true },
     countUnit: { type: String, enum: [GROUP, TRAINEE], required: true },

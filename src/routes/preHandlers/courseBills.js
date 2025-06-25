@@ -19,13 +19,12 @@ const {
 
 const { language } = translate;
 
-exports.authorizeCourseBillCreation = async (req) => {
-  const { course: courseId, companies: companiesIds, payer, mainFee } = req.payload;
+exports.authorizeCourseBillListCreation = async (req) => {
+  const { course: courseId, companies: companiesIds, payer, mainFee, quantity } = req.payload;
 
   const course = await Course
     .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptedAt: 1 })
     .lean();
-
   if (!course) throw Boom.notFound();
   if (course.interruptedAt) throw Boom.forbidden();
 
@@ -37,25 +36,53 @@ exports.authorizeCourseBillCreation = async (req) => {
     const companiesHavePrice = companiesIds
       .some(c => (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)));
 
-    if (companiesHavePrice && !mainFee.percentage) throw Boom.badRequest();
-  }
+    if (companiesHavePrice && !mainFee.percentage) throw Boom.badRequest('ca pete ici');
 
-  if ([INTRA, SINGLE].includes(course.type)) {
-    if (!course.expectedBillsCount) throw Boom.conflict();
-    if (course.type === INTRA && mainFee.countUnit !== GROUP) throw Boom.badRequest();
-    if (course.type === SINGLE) {
-      const hasWrongCountUnit = mainFee.countUnit !== TRAINEE;
-      const hasWrongQuantity = mainFee.count !== 1;
-      if (hasWrongCountUnit || hasWrongQuantity) throw Boom.badRequest();
+    if (course.type === INTRA) {
+      if (mainFee.countUnit !== GROUP || mainFee.count !== 1) throw Boom.badRequest();
+
+      if (!course.expectedBillsCount) throw Boom.conflict();
+
+      const courseBills = await CourseBill.find({ course: courseId }, { courseCreditNote: 1 })
+        .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
+        .setOptions({ isVendorUser: true })
+        .lean();
+
+      const courseBillsWithoutCreditNote = courseBills.filter(cb => !cb.courseCreditNote);
+      if (courseBillsWithoutCreditNote.length + quantity > course.expectedBillsCount) throw Boom.conflict();
     }
 
-    const courseBills = await CourseBill.find({ course: course._id }, { courseCreditNote: 1 })
-      .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
-      .setOptions({ isVendorUser: true })
-      .lean();
+    if (quantity === 1) {
+      const courseBillsCount = await CourseBill.countDocuments({ course: courseId });
 
-    const courseBillsWithoutCreditNote = courseBills.filter(cb => !cb.courseCreditNote);
-    if (courseBillsWithoutCreditNote.length === course.expectedBillsCount) throw Boom.conflict();
+      if (courseBillsCount > 0 && !mainFee.price && !companiesHavePrice) throw Boom.badRequest();
+
+      if (courseBillsCount === 0 && companiesHavePrice && !mainFee.percentage) throw Boom.badRequest();
+
+      if (mainFee.percentage) {
+        if (!companiesHavePrice) throw Boom.badRequest();
+
+        if (companiesIds.some(c => !(course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)))) {
+          throw Boom.forbidden();
+        }
+        const existingCourseBills = await CourseBill
+          .find({ course: course._id, companies: { $in: companiesIds }, 'mainFee.percentage': { $exists: true } })
+          .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
+          .lean();
+
+        const courseBillsWithoutCreditNote = existingCourseBills.filter(cb => !cb.courseCreditNote);
+
+        for (const company of companiesIds) {
+          const billedPercentageSum = courseBillsWithoutCreditNote
+            .filter(bill => UtilsHelper.doesArrayIncludeId(bill.companies, company))
+            .reduce((acc, bill) => acc + bill.mainFee.percentage, 0);
+
+          if (billedPercentageSum + mainFee.percentage > 100) {
+            throw Boom.conflict(translate[language].sumCourseBillsPercentageGreaterThan100);
+          }
+        }
+      }
+    }
   }
 
   if (payer) {
@@ -66,29 +93,6 @@ exports.authorizeCourseBillCreation = async (req) => {
     } else {
       const company = await Company.countDocuments({ _id: payer.company }, { limit: 1 });
       if (!company) throw Boom.notFound();
-    }
-  }
-
-  if (mainFee.percentage) {
-    if (course.type === SINGLE) throw Boom.forbidden();
-    if (companiesIds.some(c => !(course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)))) {
-      throw Boom.forbidden();
-    }
-    const existingCourseBills = await CourseBill
-      .find({ course: course._id, companies: { $in: companiesIds }, 'mainFee.percentage': { $exists: true } })
-      .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
-      .lean();
-
-    const courseBillsWithoutCreditNote = existingCourseBills.filter(cb => !cb.courseCreditNote);
-
-    for (const company of companiesIds) {
-      const billedPercentageSum = courseBillsWithoutCreditNote
-        .filter(bill => UtilsHelper.doesArrayIncludeId(bill.companies, company))
-        .reduce((acc, bill) => acc + bill.mainFee.percentage, 0);
-
-      if (billedPercentageSum + mainFee.percentage > 100) {
-        throw Boom.conflict(translate[language].sumCourseBillsPercentageGreaterThan100);
-      }
     }
   }
 
