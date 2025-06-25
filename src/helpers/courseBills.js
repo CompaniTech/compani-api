@@ -20,6 +20,9 @@ const {
   BALANCE,
   COURSE,
   TRAINEE,
+  SINGLE,
+  INTRA,
+  GROUP,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 
@@ -197,6 +200,69 @@ exports.create = async (payload) => {
         billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
       };
       await exports.addBillingPurchase(courseBill._id, trainerFeesPayload);
+    }
+  }
+};
+
+exports.createBillList = async (payload) => {
+  const course = await Course.findOne({ _id: payload.course }, { type: 1, prices: 1 }).lean();
+
+  if (course.type !== SINGLE) {
+    if (payload.quantity === 1) {
+      const mainFee = {
+        price: payload.mainFee.price,
+        count: course.type === INTRA ? 1 : payload.mainFee.count,
+        countUnit: course.type === INTRA ? GROUP : payload.mainFee.countUnit,
+        ...(payload.mainFee.percentage && { percentage: payload.mainFee.percentage }),
+        ...(payload.mainFee.description && { description: payload.mainFee.description }),
+      };
+
+      const bill = {
+        course: payload.course,
+        mainFee,
+        companies: payload.companies,
+        payer: payload.payer,
+        maturityDate: payload.maturityDate,
+      };
+
+      const billCreated = await CourseBill.create(bill);
+
+      if (payload.mainFee.percentage) {
+        const trainerFees = (course.prices || []).reduce((acc, price) => {
+          if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
+            return NumbersHelper.add(acc, price.trainerFees);
+          }
+          return acc;
+        }, 0);
+
+        if (trainerFees) {
+          const trainerFeesPayload = {
+            price: NumbersHelper.toFixedToFloat(
+              NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
+            ),
+            count: 1,
+            percentage: payload.mainFee.percentage,
+            billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+          };
+          await exports.addBillingPurchase(billCreated._id, trainerFeesPayload);
+        }
+      }
+    } else {
+      const mainFee = {
+        count: course.type === INTRA ? 1 : payload.mainFee.count,
+        countUnit: course.type === INTRA ? GROUP : payload.mainFee.countUnit,
+        ...(payload.mainFee.description && { description: payload.mainFee.description }),
+      };
+
+      const billsToCreate = new Array(payload.quantity).fill({
+        course: payload.course,
+        mainFee,
+        companies: payload.companies,
+        payer: payload.payer,
+        maturityDate: payload.maturityDate,
+      });
+
+      await CourseBill.insertMany(billsToCreate);
     }
   }
 };
