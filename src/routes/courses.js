@@ -188,9 +188,11 @@ exports.plugin = {
       options: {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
-          query: Joi.object({ company: Joi.objectId(), holding: Joi.objectId() }).oxor('company', 'holding'),
+          query: Joi
+            .object({ company: Joi.objectId(), holding: Joi.objectId(), trainee: Joi.objectId() })
+            .oxor('company', 'holding', 'trainee'),
         },
-        auth: { scope: ['courses:read'] },
+        auth: { mode: 'required' },
         pre: [{ method: authorizeGetCourse }, { method: authorizeGetFollowUp }],
       },
       handler: getFollowUp,

@@ -610,7 +610,9 @@ exports.getCourseFollowUp = async (course, query, credentials) => {
   const companies = [];
   if (query.company) companies.push(query.company);
   if (query.holding) companies.push(...credentials.holding.companies);
-  const courseWithTrainees = await Course.findOne({ _id: course }, { trainees: 1, format: 1 }).lean();
+  const courseWithTrainees = query.trainee
+    ? { trainees: [query.trainee] }
+    : await Course.findOne({ _id: course }, { trainees: 1, format: 1 }).lean();
 
   const courseFollowUp = await Course.findOne({ _id: course }, { subProgram: 1 })
     .populate({

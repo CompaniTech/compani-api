@@ -586,13 +586,24 @@ exports.authorizeAccessRuleDeletion = async (req) => {
 exports.authorizeGetFollowUp = async (req) => {
   const credentials = get(req, 'auth.credentials');
   const loggedUserVendorRole = get(credentials, 'role.vendor.name');
-  const isClientAndAuthorized = !!req.query.company &&
+  const loggedUserClientRole = get(credentials, 'role.client.name');
+
+  const isClientAndAuthorized = !!req.query.company && [CLIENT_ADMIN, COACH].includes(loggedUserClientRole) &&
     UtilsHelper.areObjectIdsEquals(get(credentials, 'company._id'), req.query.company);
 
   const isHoldingAndAuthorized = !!req.query.holding &&
     UtilsHelper.areObjectIdsEquals(get(credentials, 'holding._id'), req.query.holding);
 
-  if (!loggedUserVendorRole && !isClientAndAuthorized && !isHoldingAndAuthorized) throw Boom.forbidden();
+  let isTraineeAndAuthorized = false;
+  if (req.query.trainee) {
+    const course = await Course.findOne({ _id: req.params._id }, { trainees: 1, tutors: 1 }).lean();
+    isTraineeAndAuthorized = UtilsHelper.doesArrayIncludeId(course.trainees, req.query.trainee) &&
+      UtilsHelper.doesArrayIncludeId(course.tutors, credentials._id);
+  }
+
+  if (!loggedUserVendorRole && !isClientAndAuthorized && !isHoldingAndAuthorized && !isTraineeAndAuthorized) {
+    throw Boom.forbidden();
+  }
 
   return null;
 };
