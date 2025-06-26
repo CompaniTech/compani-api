@@ -1746,6 +1746,52 @@ describe('COURSES ROUTES - GET /courses/{_id}/follow-up', () => {
     });
   });
 
+  describe('TUTOR', () => {
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(traineeFromAuthFormerlyInOther.local);
+    });
+
+    it('should return 200 as user is trainee tutor', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${coursesList[14]._id}/follow-up?trainee=${coach._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toEqual(200);
+    });
+
+    it('should return 403 as user is not trainee tutor', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${coursesList[25]._id}/follow-up?trainee=${traineeFromAuthFormerlyInOther._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toEqual(403);
+    });
+
+    it('should return 403 as trainee is not in course', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${coursesList[14]._id}/follow-up?trainee=${vendorAdmin._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toEqual(403);
+    });
+
+    it('should return 400 if trainee and company in query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${coursesList[14]._id}/follow-up?trainee=${coach._id}&company=${authCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
   describe('Other roles', () => {
     it('should return 403 if user has no company and query has no company', async () => {
       authToken = await getToken('auxiliary_without_company');

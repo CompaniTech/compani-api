@@ -3983,6 +3983,67 @@ describe('getCourseFollowUp', () => {
     sinon.assert.calledOnceWithExactly(getTraineesWithElearningProgress, [course.trainees[0]], course.subProgram.steps);
     sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
   });
+
+  it('should return elearning course follow up from trainee', async () => {
+    const companyId = new ObjectId();
+    const credentials = { role: { client: { _id: new ObjectId() } }, company: companyId };
+    const course = {
+      _id: '1234567890',
+      subProgram: { name: 'je suis un sous programme', steps: [{ _id: 'abc' }, { _id: 'def' }, { _id: 'ghi' }] },
+      trainees: [{ _id: '123213123', company: companyId }],
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(course));
+    formatStep.callsFake(s => s);
+    getTraineesWithElearningProgress.returns([
+      { _id: '123213123', steps: { progress: 1 }, progress: 1, company: companyId },
+    ]);
+
+    const result = await CourseHelper.getCourseFollowUp(course._id, { trainee: '123213123' }, credentials);
+
+    expect(result).toEqual({
+      _id: '1234567890',
+      subProgram: { name: 'je suis un sous programme', steps: [{ _id: 'abc' }, { _id: 'def' }, { _id: 'ghi' }] },
+      trainees: [{ _id: '123213123', steps: { progress: 1 }, progress: 1, company: companyId }],
+    });
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1 }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'subProgram',
+            select: 'name steps program',
+            populate: [
+              { path: 'program', select: 'name' },
+              {
+                path: 'steps',
+                select: 'name activities type',
+                populate: {
+                  path: 'activities',
+                  select: 'name type',
+                  populate: { path: 'activityHistories', match: { user: { $in: ['123213123'] } } },
+                },
+              },
+            ],
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainees',
+            select: 'identity.firstname identity.lastname firstMobileConnectionDate loginCode',
+            populate: { path: 'company' },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(getTraineesWithElearningProgress, [course.trainees[0]], course.subProgram.steps);
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+  });
 });
 
 describe('getQuestionnaireAnswers', () => {
