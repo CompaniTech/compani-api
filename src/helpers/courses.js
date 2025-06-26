@@ -752,7 +752,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
-    .select('_id misc format type')
+    .select('_id misc format type trainees')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
@@ -763,7 +763,8 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     const slotsGroupedByStep = groupBy(course.slots, 'step._id');
 
     return {
-      ...course,
+      ...isTutor ? { ...course } : { ...omit(course, 'trainees') },
+      // ...course,
       slots: [...new Set(
         course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
       )],
