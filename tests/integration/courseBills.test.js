@@ -551,7 +551,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
       expect(billsCountAfter).toBe(billsCountBefore + 1);
     });
 
-    // 400
     const missingParams = [
       'quantity',
       'course',
@@ -563,7 +562,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
     ];
     missingParams.forEach((param) => {
       it(`should return 400 as ${param} is missing in payload`, async () => {
-        // faire un omit sur `payload`
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
@@ -576,7 +574,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
     });
 
     it('should return 400 if course price exist and percentage is not defined (intra)', async () => {
-      // formation intra qui a prices + pas passer percentage dans le payload
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-creation',
@@ -684,7 +681,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
       });
     });
 
-    // 404
     it('should return 404 if course does not exist', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -732,7 +728,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    // 403
     it('should return 403 if course is interruptedAt', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -761,7 +756,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    // 409
     it('should return 409 if expectedCount is not defined (intra)', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -826,340 +820,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
     });
   });
 });
-
-// describe('COURSE BILL ROUTES - POST /coursebills, () => {
-//   let authToken;
-//   beforeEach(populateDB);
-//   const payload = {
-//     course: coursesList[13]._id,
-//     companies: [otherCompany._id],
-//     mainFee: { price: 120, count: 1, countUnit: GROUP, description: 'test', percentage: 40 },
-//     payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
-//     maturityDate: '2025-04-29T22:00:00.000+00:00',
-//     quantity: 2,
-//   };
-
-//   const payloadWithPercentage = {
-//     course: coursesList[13]._id,
-//     companies: [otherCompany._id, authCompany._id],
-//     mainFee: { price: 320, count: 2, countUnit: TRAINEE, percentage: 20 },
-//     payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
-//     maturityDate: '2025-04-29T22:00:00.000+00:00',
-//   };
-
-//   describe('TRAINING_ORGANISATION_MANAGER', () => {
-//     beforeEach(async () => {
-//       authToken = await getToken('training_organisation_manager');
-//     });
-
-//     it('should create a course bill with fundingOrganisation as payer (intra) #tag', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload,
-//       });
-
-//       expect(response.statusCode).toBe(200);
-
-//       const count = await CourseBill.countDocuments();
-//       expect(count).toBe(courseBillsList.length + 1);
-//     });
-
-//     it('should create a course bill with company as payer (intra)', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload: { ...payload, payer: { company: otherCompany._id } },
-//       });
-
-//       expect(response.statusCode).toBe(200);
-
-//       const count = await CourseBill.countDocuments();
-//       expect(count).toBe(courseBillsList.length + 1);
-//     });
-
-//     it('should create a course bill (inter b2b)', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload: { ...payload, course: coursesList[9]._id },
-//       });
-
-//       expect(response.statusCode).toBe(200);
-
-//       const count = await CourseBill.countDocuments();
-//       expect(count).toBe(courseBillsList.length + 1);
-//     });
-
-//     it('should create a bill if expectedBillsCount higher than number of bills without creditNote', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload: { ...payload, course: coursesList[1]._id, companies: [authCompany._id] },
-//       });
-
-//       expect(response.statusCode).toBe(200);
-//     });
-
-//     it('should create a bill with percentage', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload: payloadWithPercentage,
-//       });
-
-//       expect(response.statusCode).toBe(200);
-//     });
-
-//     it('should return 403 if payload has percentage but some companies have no price', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload: { ...payloadWithPercentage, companies: [otherCompany._id, companyWithoutSubscription._id] },
-//       });
-
-//       expect(response.statusCode).toBe(403);
-//     });
-
-//     it('should return 403 if course is interrupted', async () => {
-//       const payloadForInterruptedCourse = {
-//         course: coursesList[14]._id,
-//         companies: [authCompany._id],
-//         mainFee: { price: 240, count: 1, countUnit: GROUP, percentage: 20 },
-//         payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
-//         maturityDate: '2025-04-29T22:00:00.000+00:00',
-//       };
-
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload: payloadForInterruptedCourse,
-//       });
-
-//       expect(response.statusCode).toBe(403);
-//     });
-
-//     it('should return 409 if percentage sum is bigger than 100', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-// payload: { ...payloadWithPercentage, mainFee: { price: 1520, count: 2, countUnit: TRAINEE, percentage: 95 } },
-//       });
-
-//       expect(response.statusCode).toBe(409);
-//     });
-
-//     const missingParams = [
-//       'course',
-//       'companies',
-//       'mainFee',
-//       'mainFee.price',
-//       'mainFee.count',
-//       'mainFee.percentage',
-//       'payer',
-//       'mainFee.countUnit',
-//       'maturityDate',
-//     ];
-//     missingParams.forEach((param) => {
-//       it(`should return 400 as ${param} is missing`, async () => {
-//         const response = await app.inject({
-//           method: 'POST',
-//           url: '/coursebills/list-creation',
-//           payload: omit(payloadWithPercentage, param),
-//           headers: { 'x-access-token': authToken },
-//         });
-
-//         expect(response.statusCode).toBe(400);
-//       });
-//     });
-
-//     const wrongValues = [
-//       { key: 'price', value: -200 },
-//       { key: 'price', value: 0 },
-//       { key: 'price', value: '200€' },
-//       { key: 'count', value: -200 },
-//       { key: 'count', value: 0 },
-//       { key: 'count', value: 1.23 },
-//       { key: 'count', value: '1x' },
-//       { key: 'percentage', value: -20 },
-//       { key: 'percentage', value: 0 },
-//       { key: 'percentage', value: 10.5 },
-//       { key: 'percentage', value: 105 },
-//       { key: 'percentage', value: '10%' },
-//       { key: 'countUnit', value: 'learner' },
-//     ];
-//     wrongValues.forEach((param) => {
-//       it(`should return 400 as ${param.key} has wrong value : ${param.value}`, async () => {
-//         const response = await app.inject({
-//           method: 'POST',
-//           url: '/coursebills/list-creation',
-//           payload: { ...payloadWithPercentage, mainFee: { ...payload.mainFee, [param.key]: param.value } },
-//           headers: { 'x-access-token': authToken },
-//         });
-
-//         expect(response.statusCode).toBe(400);
-//       });
-//     });
-
-//     it('should return 400 if payer is funding organisation and company', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         payload: {
-//           ...payload,
-//           payer: { fundingOrganisation: courseFundingOrganisationList[0]._id, company: otherCompany._id },
-//         },
-//         headers: { 'x-access-token': authToken },
-//       });
-
-//       expect(response.statusCode).toBe(400);
-//     });
-
-//     it('should return 400 if course is INTRA and count unit is trainee', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         payload: { ...payload, mainFee: { price: 120, count: 1, countUnit: TRAINEE } },
-//         headers: { 'x-access-token': authToken },
-//       });
-
-//       expect(response.statusCode).toBe(400);
-//     });
-
-//     it('should return 400 if course is SINGLE and count unit is group', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         payload: { ...payload, course: coursesList[12]._id, mainFee: { price: 120, count: 1, countUnit: GROUP } },
-//         headers: { 'x-access-token': authToken },
-//       });
-
-//       expect(response.statusCode).toBe(400);
-//     });
-
-//     it('should return 400 if course is SINGLE and count is not 1', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         payload: { ...payload, course: coursesList[12]._id, mainFee: { price: 120, count: 2, countUnit: TRAINEE } },
-//         headers: { 'x-access-token': authToken },
-//       });
-
-//       expect(response.statusCode).toBe(400);
-//     });
-
-//     it('should return 400 if no company', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         payload: { ...payload, companies: [] },
-//         headers: { 'x-access-token': authToken },
-//       });
-
-//       expect(response.statusCode).toBe(400);
-//     });
-
-//     it('should return 404 as course doesn\'t exist', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         payload: { ...payload, course: new ObjectId() },
-//         headers: { 'x-access-token': authToken },
-//       });
-
-//       expect(response.statusCode).toBe(404);
-//     });
-
-//     it('should return 404 as companies don\'t exist', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         payload: { ...payload, companies: [new ObjectId()] },
-//         headers: { 'x-access-token': authToken },
-//       });
-
-//       expect(response.statusCode).toBe(404);
-//     });
-
-//     const wrongPayers = ['company', 'fundingOrganisation'];
-//     wrongPayers.forEach((payer) => {
-//       it(`should return 404 if ${payer} doesn't exists`, async () => {
-//         const response = await app.inject({
-//           method: 'POST',
-//           url: '/coursebills/list-creation',
-//           payload: { ...payload, payer: { [payer]: new ObjectId() } },
-//           headers: { 'x-access-token': authToken },
-//         });
-
-//         expect(response.statusCode).toBe(404);
-//       });
-//     });
-
-//     it('should return 404 as company is not registered to course', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         payload: { ...payload, course: coursesList[0]._id },
-//         headers: { 'x-access-token': authToken },
-//       });
-
-//       expect(response.statusCode).toBe(404);
-//     });
-
-//     it('should return 409 if expectedBillsCount is 0', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload: { ...payload, course: coursesList[10]._id },
-//       });
-
-//       expect(response.statusCode).toBe(409);
-//     });
-
-//     it('should return 409 if expectedBillsCount is equal to number of bills without creditNote', async () => {
-//       const response = await app.inject({
-//         method: 'POST',
-//         url: '/coursebills/list-creation',
-//         headers: { Cookie: `alenvi_token=${authToken}` },
-//         payload: { ...payload, course: coursesList[0]._id, companies: [authCompany._id] },
-//       });
-
-//       expect(response.statusCode).toBe(409);
-//     });
-//   });
-
-//   describe('Other roles', () => {
-//     const roles = [
-//       { name: 'helper', expectedCode: 403 },
-//       { name: 'planning_referent', expectedCode: 403 },
-//       { name: 'client_admin', expectedCode: 403 },
-//       { name: 'trainer', expectedCode: 403 },
-//     ];
-
-//     roles.forEach((role) => {
-//       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
-//         authToken = await getToken(role.name);
-//         const response = await app.inject({
-//           method: 'POST',
-//           url: '/coursebills/list-creation',
-//           headers: { Cookie: `alenvi_token=${authToken}` },
-//           payload,
-//         });
-
-//         expect(response.statusCode).toBe(role.expectedCode);
-//       });
-//     });
-//   });
-// });
 
 describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
   let authToken;
