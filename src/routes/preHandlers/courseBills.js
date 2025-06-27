@@ -36,8 +36,6 @@ exports.authorizeCourseBillListCreation = async (req) => {
     const companiesHavePrice = companiesIds
       .some(c => (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)));
 
-    if (companiesHavePrice && !mainFee.percentage) throw Boom.badRequest('ca pete ici');
-
     if (course.type === INTRA) {
       if (mainFee.countUnit !== GROUP || mainFee.count !== 1) throw Boom.badRequest();
 
