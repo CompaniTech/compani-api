@@ -4010,9 +4010,7 @@ describe('getCourseFollowUp', () => {
     const result = await CourseHelper.getCourseFollowUp(course._id, { trainee: '123213123' }, credentials);
 
     expect(result).toEqual({
-      _id: '1234567890',
-      subProgram: { name: 'je suis un sous programme', steps: [{ _id: 'abc' }, { _id: 'def' }, { _id: 'ghi' }] },
-      trainees: [{ _id: '123213123', steps: { progress: 1 }, progress: 1, company: companyId }],
+      trainee: { _id: '123213123', steps: { progress: 1 }, progress: 1, company: companyId },
     });
 
     SinonMongoose.calledOnceWithExactly(

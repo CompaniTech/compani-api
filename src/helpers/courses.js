@@ -639,6 +639,11 @@ exports.getCourseFollowUp = async (course, query, credentials) => {
     .lean();
 
   let filteredTrainees = [];
+  if (query.trainee) {
+    return {
+      trainee: exports.getTraineesWithElearningProgress(courseFollowUp.trainees, courseFollowUp.subProgram.steps)[0],
+    };
+  }
   if (!companies.length) filteredTrainees = courseFollowUp.trainees;
   else if (courseWithTrainees.format === STRICTLY_E_LEARNING) {
     filteredTrainees = courseFollowUp.trainees.filter(t => UtilsHelper.doesArrayIncludeId(companies, t.company));
