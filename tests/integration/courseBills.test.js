@@ -490,7 +490,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           mainFee: { ...payload.mainFee, price: 120 },
         },
       });
-
       expect(response.statusCode).toBe(200);
 
       const billsCountAfter = await CourseBill.countDocuments();
@@ -578,7 +577,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         method: 'POST',
         url: '/coursebills/list-creation',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { ...payload, course: coursesList[15]._id },
+        payload: { ...payload, course: coursesList[15]._id, ...omit(payload.mainFee, 'percentage') },
       });
 
       expect(response.statusCode).toBe(400);
@@ -677,6 +676,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
 
+        // console.log('response', response);
         expect(response.statusCode).toBe(400);
       });
     });
@@ -749,7 +749,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           maturityDate: '2025-04-29T22:00:00.000+00:00',
           course: coursesList[13]._id,
           companies: [otherCompany._id, companyWithoutSubscription._id],
-          mainFee: { ...payload.mainFee, percentage: 40 },
+          mainFee: { ...payload.mainFee, price: 480, percentage: 40 },
         },
       });
 

@@ -186,12 +186,20 @@ exports.plugin = {
             quantity: Joi.number().positive().required(),
             course: Joi.objectId().required(),
             mainFee: Joi.object({
-              price: Joi.when('quantity', { is: 1, then: Joi.number().positive().required() }),
+              price: Joi.number().positive(),
               percentage: Joi.number().positive().integer().max(100),
               count: Joi.number().positive().integer().required(),
               countUnit: Joi.string().required().valid(GROUP, TRAINEE),
               description: Joi.string().allow(''),
-            }).required(),
+            }).required()
+              .when(
+                'quantity',
+                {
+                  is: 1,
+                  then: Joi.object({ price: Joi.required() }),
+                  otherwise: Joi.object({ price: Joi.forbidden() }),
+                }
+              ),
             companies: Joi.array().items(Joi.objectId()).min(1),
             payer: Joi.object({
               company: Joi.objectId(),
