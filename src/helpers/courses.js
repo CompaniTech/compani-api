@@ -768,8 +768,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     const slotsGroupedByStep = groupBy(course.slots, 'step._id');
 
     return {
-      ...isTutor ? { ...course } : { ...omit(course, 'trainees') },
-      // ...course,
+      ...isTutor ? { course } : omit(course, 'trainees'),
       slots: [...new Set(
         course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
       )],

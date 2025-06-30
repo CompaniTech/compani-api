@@ -1771,14 +1771,14 @@ describe('COURSES ROUTES - GET /courses/{_id}/follow-up', () => {
       expect(response.statusCode).toEqual(403);
     });
 
-    it('should return 403 as trainee is not in course', async () => {
+    it('should return 404 as trainee is not in course', async () => {
       const response = await app.inject({
         method: 'GET',
         url: `/courses/${coursesList[14]._id}/follow-up?trainee=${vendorAdmin._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
-      expect(response.statusCode).toEqual(403);
+      expect(response.statusCode).toEqual(404);
     });
 
     it('should return 400 if trainee and company in query', async () => {

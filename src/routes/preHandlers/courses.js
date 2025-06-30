@@ -594,16 +594,15 @@ exports.authorizeGetFollowUp = async (req) => {
   const isHoldingAndAuthorized = !!req.query.holding &&
     UtilsHelper.areObjectIdsEquals(get(credentials, 'holding._id'), req.query.holding);
 
-  let isTraineeAndAuthorized = false;
   if (req.query.trainee) {
     const course = await Course.findOne({ _id: req.params._id }, { trainees: 1, tutors: 1 }).lean();
-    isTraineeAndAuthorized = UtilsHelper.doesArrayIncludeId(course.trainees, req.query.trainee) &&
-      UtilsHelper.doesArrayIncludeId(course.tutors, credentials._id);
+    if (!UtilsHelper.doesArrayIncludeId(course.trainees, req.query.trainee)) throw Boom.notFound();
+    if (!UtilsHelper.doesArrayIncludeId(course.tutors, credentials._id)) throw Boom.forbidden();
+
+    return null;
   }
 
-  if (!loggedUserVendorRole && !isClientAndAuthorized && !isHoldingAndAuthorized && !isTraineeAndAuthorized) {
-    throw Boom.forbidden();
-  }
+  if (!loggedUserVendorRole && !isClientAndAuthorized && !isHoldingAndAuthorized) throw Boom.forbidden();
 
   return null;
 };
