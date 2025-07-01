@@ -705,7 +705,7 @@ describe('createBillList', () => {
       mainFee: { price: 100, count: 2, countUnit: GROUP, description: 'test' },
       companies: [new ObjectId()],
       payer: { fundingOrganisation: new ObjectId() },
-      maturityDate: '2025-04-29T22:00:00.000+00:00',
+      maturityDate: '2025-04-29T22:00:00.000Z',
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
@@ -725,6 +725,7 @@ describe('createBillList', () => {
       maturityDate: payload.maturityDate,
     });
     sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(insertManyCourseBills);
   });
 
   it('should create one bill with trainer fees for INTRA course', async () => {
@@ -741,7 +742,7 @@ describe('createBillList', () => {
       mainFee: { price: 100, count: 1, countUnit: GROUP, percentage: 10 },
       companies: [companyId],
       payer: { fundingOrganisation: new ObjectId() },
-      maturityDate: '2025-04-29T22:00:00.000+00:00',
+      maturityDate: '2025-04-29T22:00:00.000Z',
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
@@ -770,6 +771,7 @@ describe('createBillList', () => {
         percentage: 10,
         billingItem: TRAINER_FEES_BILLING_ITEM,
       });
+    sinon.assert.notCalled(insertManyCourseBills);
   });
 
   it('should insert many bills when quantity > 1', async () => {

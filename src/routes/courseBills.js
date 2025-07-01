@@ -89,6 +89,44 @@ exports.plugin = {
 
     server.route({
       method: 'POST',
+      path: '/list-creation',
+      options: {
+        auth: { scope: ['coursebills:edit'] },
+        validate: {
+          payload: Joi.object({
+            quantity: Joi.number().positive().required(),
+            course: Joi.objectId().required(),
+            mainFee: Joi.object({
+              price: Joi.number().positive(),
+              percentage: Joi.number().positive().integer().max(100),
+              count: Joi.number().positive().integer().required(),
+              countUnit: Joi.string().required().valid(GROUP, TRAINEE),
+              description: Joi.string().allow(''),
+            }).required()
+              .when(
+                'quantity',
+                {
+                  is: 1,
+                  then: Joi.object({ price: Joi.required() }),
+                  otherwise: Joi.object({ price: Joi.forbidden(), percentage: Joi.forbidden() }),
+                }
+              ),
+            companies: Joi.array().items(Joi.objectId()).min(1),
+            payer: Joi.object({
+              company: Joi.objectId(),
+              fundingOrganisation: Joi.objectId(),
+            }).xor('company', 'fundingOrganisation')
+              .required(),
+            maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString, otherwise: Joi.forbidden() }),
+          }),
+        },
+        pre: [{ method: authorizeCourseBillListCreation }],
+      },
+      handler: createBillList,
+    });
+
+    server.route({
+      method: 'POST',
       path: '/list-edition',
       options: {
         auth: { scope: ['coursebills:edit'] },
@@ -174,44 +212,6 @@ exports.plugin = {
         pre: [{ method: authorizeCourseBillListDeletion }],
       },
       handler: deleteBillList,
-    });
-
-    server.route({
-      method: 'POST',
-      path: '/list-creation',
-      options: {
-        auth: { scope: ['coursebills:edit'] },
-        validate: {
-          payload: Joi.object({
-            quantity: Joi.number().positive().required(),
-            course: Joi.objectId().required(),
-            mainFee: Joi.object({
-              price: Joi.number().positive(),
-              percentage: Joi.number().positive().integer().max(100),
-              count: Joi.number().positive().integer().required(),
-              countUnit: Joi.string().required().valid(GROUP, TRAINEE),
-              description: Joi.string().allow(''),
-            }).required()
-              .when(
-                'quantity',
-                {
-                  is: 1,
-                  then: Joi.object({ price: Joi.required() }),
-                  otherwise: Joi.object({ price: Joi.forbidden(), percentage: Joi.forbidden() }),
-                }
-              ),
-            companies: Joi.array().items(Joi.objectId()).min(1),
-            payer: Joi.object({
-              company: Joi.objectId(),
-              fundingOrganisation: Joi.objectId(),
-            }).xor('company', 'fundingOrganisation')
-              .required(),
-            maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString, otherwise: Joi.forbidden() }),
-          }),
-        },
-        pre: [{ method: authorizeCourseBillListCreation }],
-      },
-      handler: createBillList,
     });
   },
 };

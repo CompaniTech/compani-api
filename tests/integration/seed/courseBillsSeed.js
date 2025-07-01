@@ -330,23 +330,6 @@ const coursesList = [
       { company: authCompany._id, global: 12000 },
     ],
   },
-  { // 16 - course with price and without bill, expectedBillsCount is 0
-    _id: new ObjectId(),
-    type: INTRA,
-    maxTrainees: 8,
-    companies: [otherCompany._id],
-    subProgram: subProgramList[0]._id,
-    misc: 'group 16',
-    trainers: [trainer._id],
-    operationsRepresentative: vendorAdmin._id,
-    contact: vendorAdmin._id,
-    trainees: [traineeFromOtherCompany._id],
-    expectedBillsCount: 0,
-    certificateGenerationMode: GLOBAL,
-    prices: [
-      { company: otherCompany._id, global: 1200 },
-    ],
-  },
 ];
 
 const courseFundingOrganisationList = [

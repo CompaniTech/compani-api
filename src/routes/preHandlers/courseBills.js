@@ -25,12 +25,25 @@ exports.authorizeCourseBillListCreation = async (req) => {
   const course = await Course
     .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptedAt: 1 })
     .lean();
+
   if (!course) throw Boom.notFound();
+
   if (course.interruptedAt) throw Boom.forbidden();
 
   const everyCompanyBelongsToCourse = course &&
     companiesIds.every(c => UtilsHelper.doesArrayIncludeId(course.companies, c));
   if (!everyCompanyBelongsToCourse) throw Boom.notFound();
+
+  if (payer) {
+    if (payer.fundingOrganisation) {
+      const fundingOrganisation = await CourseFundingOrganisation
+        .countDocuments({ _id: payer.fundingOrganisation }, { limit: 1 });
+      if (!fundingOrganisation) throw Boom.notFound();
+    } else {
+      const company = await Company.countDocuments({ _id: payer.company }, { limit: 1 });
+      if (!company) throw Boom.notFound();
+    }
+  }
 
   if (course.type !== SINGLE) {
     const companiesHavePrice = companiesIds
@@ -58,8 +71,6 @@ exports.authorizeCourseBillListCreation = async (req) => {
       if (courseBillsCount === 0 && companiesHavePrice && !mainFee.percentage) throw Boom.badRequest();
 
       if (mainFee.percentage) {
-        if (!companiesHavePrice) throw Boom.badRequest();
-
         if (companiesIds.some(c => !(course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)))) {
           throw Boom.forbidden();
         }
@@ -80,17 +91,6 @@ exports.authorizeCourseBillListCreation = async (req) => {
           }
         }
       }
-    }
-  }
-
-  if (payer) {
-    if (payer.fundingOrganisation) {
-      const fundingOrganisation = await CourseFundingOrganisation
-        .countDocuments({ _id: payer.fundingOrganisation }, { limit: 1 });
-      if (!fundingOrganisation) throw Boom.notFound();
-    } else {
-      const company = await Company.countDocuments({ _id: payer.company }, { limit: 1 });
-      if (!company) throw Boom.notFound();
     }
   }
 
