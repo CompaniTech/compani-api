@@ -519,7 +519,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         method: 'POST',
         url: '/coursebills/list-creation',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { ...payload, course: coursesList[13]._id, mainFee: { ...payload.mainFee, percentage: 40 } },
+        payload: { ...payload, course: coursesList[13]._id },
       });
 
       expect(response.statusCode).toBe(200);
@@ -577,7 +577,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         method: 'POST',
         url: '/coursebills/list-creation',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { ...payload, course: coursesList[15]._id, ...omit(payload.mainFee, 'percentage') },
+        payload: { course: coursesList[15]._id, ...omit(payload.mainFee, 'percentage') },
       });
 
       expect(response.statusCode).toBe(400);
@@ -588,7 +588,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         method: 'POST',
         url: '/coursebills/list-creation',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { ...payload, course: coursesList[15]._id, mainFee: { ...payload.mainFee, countUnit: TRAINEE } },
+        payload: { ...payload, mainFee: { ...payload.mainFee, countUnit: TRAINEE } },
       });
 
       expect(response.statusCode).toBe(400);
@@ -599,7 +599,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         method: 'POST',
         url: '/coursebills/list-creation',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { ...payload, course: coursesList[15]._id, mainFee: { ...payload.mainFee, count: 2 } },
+        payload: { ...payload, mainFee: { ...payload.mainFee, count: 2 } },
       });
 
       expect(response.statusCode).toBe(400);
@@ -621,7 +621,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         method: 'POST',
         url: '/coursebills/list-creation',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { ...payload, course: coursesList[15]._id, quantity: 0 },
+        payload: { ...payload, course: coursesList[16]._id, quantity: 1 },
       });
 
       expect(response.statusCode).toBe(400);
@@ -772,7 +772,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         method: 'POST',
         url: '/coursebills/list-creation',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { ...payload, quantity: 5 },
+        payload: { ...payload, quantity: 4 },
       });
 
       expect(response.statusCode).toBe(409);
@@ -783,7 +783,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         quantity: 1,
         maturityDate: '2025-04-29T22:00:00.000+00:00',
         course: coursesList[13]._id,
-        mainFee: { price: 320, count: 2, countUnit: GROUP, percentage: 30 },
+        mainFee: { price: 320, count: 2, countUnit: GROUP, percentage: 70 },
         payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
         companies: [otherCompany._id, authCompany._id],
       };
@@ -792,10 +792,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         method: 'POST',
         url: '/coursebills/list-creation',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: {
-          ...payloadWithPercentage,
-          mainFee: { price: 1520, count: 2, countUnit: GROUP, percentage: 95 },
-        },
+        payload: payloadWithPercentage,
       });
 
       expect(response.statusCode).toBe(409);

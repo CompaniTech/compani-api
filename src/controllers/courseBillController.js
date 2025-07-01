@@ -19,17 +19,6 @@ const list = async (req) => {
   }
 };
 
-const create = async (req) => {
-  try {
-    await CourseBillHelper.create(req.payload);
-
-    return { message: translate[language].courseBillCreated };
-  } catch (e) {
-    req.log('error', e);
-    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
-  }
-};
-
 const createBillList = async (req) => {
   try {
     await CourseBillHelper.createBillList(req.payload);
@@ -129,7 +118,6 @@ const deleteBillList = async (req) => {
 
 module.exports = {
   list,
-  create,
   createBillList,
   update,
   addBillingPurchase,

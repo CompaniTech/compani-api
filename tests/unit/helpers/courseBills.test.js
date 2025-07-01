@@ -24,6 +24,8 @@ const {
   COURSE,
   TRAINEE,
   SINGLE,
+  GROUP,
+  INTER_B2B,
 } = require('../../../src/helpers/constants');
 
 describe('getNetInclTaxes', () => {
@@ -796,76 +798,89 @@ describe('createBillList', () => {
   });
 
   it('should create one bill without percentage for INTER course', async () => {
-    const course = { type: 'inter', prices: [] };
+    const course = { type: INTER_B2B, prices: [] };
     const payload = {
       course: new ObjectId(),
       quantity: 1,
-      mainFee: { price: 100, count: 2, countUnit: 'group' },
+      mainFee: { price: 100, count: 2, countUnit: GROUP, description: 'test' },
       companies: [new ObjectId()],
       payer: { fundingOrganisation: new ObjectId() },
-      maturityDate: '2023-10-10',
+      maturityDate: '2025-04-29T22:00:00.000+00:00',
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
-    createCourseBill.resolves();
 
     await CourseBillHelper.createBillList(payload);
 
-    sinon.assert.calledOnceWithExactly(createCourseBill, sinon.match({
+    sinon.assert.calledOnceWithExactly(createCourseBill, {
       course: payload.course,
       mainFee: {
         price: 100,
         count: 2,
-        countUnit: 'group',
+        countUnit: GROUP,
+        description: 'test',
       },
       companies: payload.companies,
       payer: payload.payer,
       maturityDate: payload.maturityDate,
-    }));
+    });
     sinon.assert.notCalled(addBillingPurchase);
   });
 
   it('should create one bill with trainer fees for INTRA course', async () => {
     const companyId = new ObjectId();
     const course = {
-      type: 'intra',
-      prices: [{ company: companyId, trainerFees: 200 }],
+      _id: new ObjectId(),
+      type: INTRA,
+      prices: [{ company: companyId, global: 1200, trainerFees: 200 }],
     };
     const billCreated = { _id: new ObjectId() };
     const payload = {
-      course: new ObjectId(),
+      course: course._id,
       quantity: 1,
-      mainFee: { price: 100, count: 5, countUnit: 'group', percentage: 10 },
+      mainFee: { price: 100, count: 1, countUnit: GROUP, percentage: 10 },
       companies: [companyId],
       payer: { fundingOrganisation: new ObjectId() },
-      maturityDate: '2023-10-10',
+      maturityDate: '2025-04-29T22:00:00.000+00:00',
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
-    createCourseBill.resolves(billCreated);
+    createCourseBill.returns(billCreated);
 
     await CourseBillHelper.createBillList(payload);
 
-    sinon.assert.calledOnce(createCourseBill);
-    sinon.assert.calledOnceWithExactly(addBillingPurchase, billCreated._id, {
-      price: 20,
-      count: 1,
-      percentage: 10,
-      billingItem: TRAINER_FEES_BILLING_ITEM,
+    sinon.assert.calledOnceWithExactly(createCourseBill, {
+      course: payload.course,
+      mainFee: {
+        price: 100,
+        count: 1,
+        countUnit: GROUP,
+        percentage: 10,
+      },
+      companies: payload.companies,
+      payer: payload.payer,
+      maturityDate: payload.maturityDate,
     });
+    sinon.assert.calledOnceWithExactly(
+      addBillingPurchase,
+      billCreated._id,
+      {
+        price: 20,
+        count: 1,
+        percentage: 10,
+        billingItem: TRAINER_FEES_BILLING_ITEM,
+      });
   });
 
   it('should insert many bills when quantity > 1', async () => {
+    const course = { _id: new ObjectId(), type: INTER_B2B };
     const payload = {
-      course: new ObjectId(),
+      course: course._id,
       quantity: 3,
-      mainFee: { count: 2, countUnit: 'group', description: 'Test' },
+      mainFee: { count: 2, countUnit: GROUP, description: 'Test' },
       companies: [new ObjectId()],
       payer: { fundingOrganisation: new ObjectId() },
-      maturityDate: '2023-10-10',
     };
-
-    const course = { type: 'inter' };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
 
@@ -875,12 +890,11 @@ describe('createBillList', () => {
       course: payload.course,
       mainFee: {
         count: 2,
-        countUnit: 'group',
+        countUnit: GROUP,
         description: 'Test',
       },
       companies: payload.companies,
       payer: payload.payer,
-      maturityDate: payload.maturityDate,
     };
 
     const expectedBills = new Array(3).fill(expectedBill);

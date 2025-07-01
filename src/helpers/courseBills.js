@@ -178,32 +178,6 @@ exports.list = async (query, credentials) => {
   );
 };
 
-exports.create = async (payload) => {
-  const courseBill = await CourseBill.create(payload);
-
-  if (payload.mainFee.percentage) {
-    const course = await Course.findOne({ _id: payload.course }, { prices: 1 }).lean();
-    const trainerFees = (course.prices || []).reduce((acc, price) => {
-      if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
-        return NumbersHelper.add(acc, price.trainerFees);
-      }
-      return acc;
-    }, 0);
-
-    if (trainerFees) {
-      const trainerFeesPayload = {
-        price: NumbersHelper.toFixedToFloat(
-          NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
-        ),
-        count: 1,
-        percentage: payload.mainFee.percentage,
-        billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
-      };
-      await exports.addBillingPurchase(courseBill._id, trainerFeesPayload);
-    }
-  }
-};
-
 exports.createBillList = async (payload) => {
   const course = await Course.findOne({ _id: payload.course }, { type: 1, prices: 1 }).lean();
 
@@ -259,7 +233,6 @@ exports.createBillList = async (payload) => {
         mainFee,
         companies: payload.companies,
         payer: payload.payer,
-        maturityDate: payload.maturityDate,
       });
 
       await CourseBill.insertMany(billsToCreate);

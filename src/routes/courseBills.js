@@ -197,15 +197,16 @@ exports.plugin = {
                 {
                   is: 1,
                   then: Joi.object({ price: Joi.required() }),
-                  otherwise: Joi.object({ price: Joi.forbidden() }),
+                  otherwise: Joi.object({ price: Joi.forbidden(), percentage: Joi.forbidden() }),
                 }
               ),
             companies: Joi.array().items(Joi.objectId()).min(1),
             payer: Joi.object({
               company: Joi.objectId(),
               fundingOrganisation: Joi.objectId(),
-            }).xor('company', 'fundingOrganisation').required(),
-            maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString }),
+            }).xor('company', 'fundingOrganisation')
+              .required(),
+            maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString, otherwise: Joi.forbidden() }),
           }),
         },
         pre: [{ method: authorizeCourseBillListCreation }],
