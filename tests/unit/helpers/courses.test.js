@@ -3994,23 +3994,24 @@ describe('getCourseFollowUp', () => {
 
   it('should return elearning course follow up from trainee', async () => {
     const companyId = new ObjectId();
-    const credentials = { role: { client: { _id: new ObjectId() } }, company: companyId };
+    const credentials = { company: companyId };
+    const traineeId = new ObjectId();
     const course = {
-      _id: '1234567890',
+      _id: new ObjectId(),
       subProgram: { name: 'je suis un sous programme', steps: [{ _id: 'abc' }, { _id: 'def' }, { _id: 'ghi' }] },
-      trainees: [{ _id: '123213123', company: companyId }],
+      trainees: [{ _id: traineeId, company: companyId }],
     };
 
     findOne.returns(SinonMongoose.stubChainedQueries(course));
     formatStep.callsFake(s => s);
     getTraineesWithElearningProgress.returns([
-      { _id: '123213123', steps: { progress: 1 }, progress: 1, company: companyId },
+      { _id: traineeId, steps: { progress: 1 }, progress: 1, company: companyId },
     ]);
 
-    const result = await CourseHelper.getCourseFollowUp(course._id, { trainee: '123213123' }, credentials);
+    const result = await CourseHelper.getCourseFollowUp(course._id, { trainee: traineeId }, credentials);
 
     expect(result).toEqual({
-      trainee: { _id: '123213123', steps: { progress: 1 }, progress: 1, company: companyId },
+      trainee: { _id: traineeId, steps: { progress: 1 }, progress: 1, company: companyId },
     });
 
     SinonMongoose.calledOnceWithExactly(
@@ -4030,7 +4031,7 @@ describe('getCourseFollowUp', () => {
                 populate: {
                   path: 'activities',
                   select: 'name type',
-                  populate: { path: 'activityHistories', match: { user: { $in: ['123213123'] } } },
+                  populate: { path: 'activityHistories', match: { user: { $in: [traineeId] } } },
                 },
               },
             ],
@@ -4047,7 +4048,7 @@ describe('getCourseFollowUp', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(getTraineesWithElearningProgress, [course.trainees[0]], course.subProgram.steps);
+    sinon.assert.calledOnceWithExactly(getTraineesWithElearningProgress, course.trainees, course.subProgram.steps);
     sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
   });
 });
