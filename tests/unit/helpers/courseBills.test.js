@@ -770,7 +770,8 @@ describe('createBillList', () => {
         count: 1,
         percentage: 10,
         billingItem: TRAINER_FEES_BILLING_ITEM,
-      });
+      }
+    );
     sinon.assert.notCalled(insertManyCourseBills);
   });
 
@@ -802,6 +803,7 @@ describe('createBillList', () => {
     const expectedBills = new Array(3).fill(expectedBill);
 
     sinon.assert.calledOnceWithExactly(insertManyCourseBills, expectedBills);
+    sinon.assert.notCalled(createCourseBill);
   });
 });
 

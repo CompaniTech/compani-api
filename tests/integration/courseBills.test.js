@@ -551,13 +551,15 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
     });
 
     const missingParams = [
-      'quantity',
       'course',
-      'mainFee',
       'companies',
-      'payer',
+      'mainFee',
+      'mainFee.price',
       'mainFee.count',
+      'mainFee.percentage',
+      'payer',
       'mainFee.countUnit',
+      'maturityDate',
     ];
     missingParams.forEach((param) => {
       it(`should return 400 as ${param} is missing in payload`, async () => {
@@ -676,7 +678,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
 
-        // console.log('response', response);
         expect(response.statusCode).toBe(400);
       });
     });

@@ -64,11 +64,7 @@ exports.authorizeCourseBillListCreation = async (req) => {
     }
 
     if (quantity === 1) {
-      const courseBillsCount = await CourseBill.countDocuments({ course: courseId });
-
-      if (courseBillsCount > 0 && !mainFee.price && !companiesHavePrice) throw Boom.badRequest();
-
-      if (courseBillsCount === 0 && companiesHavePrice && !mainFee.percentage) throw Boom.badRequest();
+      if (companiesHavePrice && !mainFee.percentage) throw Boom.badRequest();
 
       if (mainFee.percentage) {
         if (companiesIds.some(c => !(course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)))) {

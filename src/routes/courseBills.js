@@ -58,36 +58,6 @@ exports.plugin = {
     });
 
     server.route({
-      method: 'PUT',
-      path: '/{_id}',
-      options: {
-        auth: { scope: ['coursebills:edit'] },
-        validate: {
-          params: Joi.object({ _id: Joi.objectId().required() }),
-          payload: Joi.alternatives().try(
-            Joi.object({
-              payer: Joi.object({
-                company: Joi.objectId(),
-                fundingOrganisation: Joi.objectId(),
-              }).oxor('company', 'fundingOrganisation'),
-              mainFee: Joi.object({
-                price: Joi.number().positive(),
-                percentage: Joi.number().positive().integer().max(100),
-                count: Joi.number().positive().integer(),
-                countUnit: Joi.string().valid(GROUP, TRAINEE),
-                description: Joi.string().allow(''),
-              }),
-              maturityDate: dateToISOString,
-            }),
-            Joi.object({ billedAt: requiredDateToISOString })
-          ),
-        },
-        pre: [{ method: authorizeCourseBillUpdate }],
-      },
-      handler: update,
-    });
-
-    server.route({
       method: 'POST',
       path: '/list-creation',
       options: {
@@ -123,6 +93,36 @@ exports.plugin = {
         pre: [{ method: authorizeCourseBillListCreation }],
       },
       handler: createBillList,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/{_id}',
+      options: {
+        auth: { scope: ['coursebills:edit'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          payload: Joi.alternatives().try(
+            Joi.object({
+              payer: Joi.object({
+                company: Joi.objectId(),
+                fundingOrganisation: Joi.objectId(),
+              }).oxor('company', 'fundingOrganisation'),
+              mainFee: Joi.object({
+                price: Joi.number().positive(),
+                percentage: Joi.number().positive().integer().max(100),
+                count: Joi.number().positive().integer(),
+                countUnit: Joi.string().valid(GROUP, TRAINEE),
+                description: Joi.string().allow(''),
+              }),
+              maturityDate: dateToISOString,
+            }),
+            Joi.object({ billedAt: requiredDateToISOString })
+          ),
+        },
+        pre: [{ method: authorizeCourseBillUpdate }],
+      },
+      handler: update,
     });
 
     server.route({

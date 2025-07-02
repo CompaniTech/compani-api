@@ -21,8 +21,6 @@ const {
   COURSE,
   TRAINEE,
   SINGLE,
-  INTRA,
-  GROUP,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 
@@ -183,23 +181,7 @@ exports.createBillList = async (payload) => {
 
   if (course.type !== SINGLE) {
     if (payload.quantity === 1) {
-      const mainFee = {
-        price: payload.mainFee.price,
-        count: course.type === INTRA ? 1 : payload.mainFee.count,
-        countUnit: course.type === INTRA ? GROUP : payload.mainFee.countUnit,
-        ...(payload.mainFee.percentage && { percentage: payload.mainFee.percentage }),
-        ...(payload.mainFee.description && { description: payload.mainFee.description }),
-      };
-
-      const bill = {
-        course: payload.course,
-        mainFee,
-        companies: payload.companies,
-        payer: payload.payer,
-        maturityDate: payload.maturityDate,
-      };
-
-      const billCreated = await CourseBill.create(bill);
+      const billCreated = await CourseBill.create(omit(payload, 'quantity'));
 
       if (payload.mainFee.percentage) {
         const trainerFees = (course.prices || []).reduce((acc, price) => {
@@ -222,15 +204,9 @@ exports.createBillList = async (payload) => {
         }
       }
     } else {
-      const mainFee = {
-        count: course.type === INTRA ? 1 : payload.mainFee.count,
-        countUnit: course.type === INTRA ? GROUP : payload.mainFee.countUnit,
-        ...(payload.mainFee.description && { description: payload.mainFee.description }),
-      };
-
       const billsToCreate = new Array(payload.quantity).fill({
         course: payload.course,
-        mainFee,
+        mainFee: payload.mainFee,
         companies: payload.companies,
         payer: payload.payer,
       });
