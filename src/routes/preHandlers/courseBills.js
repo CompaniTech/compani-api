@@ -46,9 +46,6 @@ exports.authorizeCourseBillListCreation = async (req) => {
   }
 
   if (course.type !== SINGLE) {
-    const companiesHavePrice = companiesIds
-      .some(c => (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)));
-
     if (course.type === INTRA) {
       if (mainFee.countUnit !== GROUP || mainFee.count !== 1) throw Boom.badRequest();
 
@@ -62,6 +59,9 @@ exports.authorizeCourseBillListCreation = async (req) => {
       const courseBillsWithoutCreditNote = courseBills.filter(cb => !cb.courseCreditNote);
       if (courseBillsWithoutCreditNote.length + quantity > course.expectedBillsCount) throw Boom.conflict();
     }
+
+    const companiesHavePrice = companiesIds
+      .some(c => (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c)));
 
     if (quantity === 1) {
       if (companiesHavePrice && !mainFee.percentage) throw Boom.badRequest();
