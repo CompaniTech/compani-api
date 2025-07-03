@@ -2311,4 +2311,5 @@ module.exports = {
   coursesList,
   courseSlotList,
   distanceMatrixList,
+  courseFundingOrganisation,
 };
