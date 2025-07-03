@@ -469,8 +469,9 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload,
+          payload: { ...payload, course: coursesList[15]._id },
         });
+
         expect(response.statusCode).toBe(200);
 
         const billsCountAfter = await CourseBill.countDocuments();
