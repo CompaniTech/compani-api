@@ -414,6 +414,7 @@ const formatCommonInfos = (bill, netInclTaxes) => {
     Formation: courseName,
     Programme: bill.course.subProgram.program.name,
     Structure: bill.companies.map(c => c.name).join(', '),
+    'Id payeur': bill.payer._id,
     Payeur: bill.payer.name,
     'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
   };
