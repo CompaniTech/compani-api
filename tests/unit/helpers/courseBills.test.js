@@ -775,6 +775,44 @@ describe('createBillList', () => {
     sinon.assert.notCalled(insertManyCourseBills);
   });
 
+  it('should create a course bill with global for INTRA course', async () => {
+    const companyId = new ObjectId();
+    const course = {
+      _id: new ObjectId(),
+      type: INTRA,
+      prices: [{ company: companyId, global: 1200 }],
+    };
+    const billCreated = { _id: new ObjectId() };
+    const payload = {
+      course: course._id,
+      quantity: 1,
+      companies: [companyId, new ObjectId()],
+      mainFee: { price: 120, count: 1, countUnit: GROUP, percentage: 10 },
+      payer: { fundingOrganisation: new ObjectId() },
+      maturityDate: '2025-03-08T00:00:00.000Z',
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    createCourseBill.returns(billCreated);
+
+    await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledOnceWithExactly(createCourseBill, {
+      course: payload.course,
+      mainFee: {
+        price: 120,
+        count: 1,
+        countUnit: GROUP,
+        percentage: 10,
+      },
+      companies: payload.companies,
+      payer: payload.payer,
+      maturityDate: payload.maturityDate,
+    });
+    sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(insertManyCourseBills);
+  });
+
   it('should insert many bills when quantity > 1', async () => {
     const course = { _id: new ObjectId(), type: INTER_B2B };
     const payload = {
