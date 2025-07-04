@@ -462,7 +462,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
       };
 
-      it('should create a bill with fundingOrganisation as payer (intra)', async () => {
+      it('should create a bill with fundingOrganisation as payer without percentage (intra)', async () => {
         const billsCountBefore = await CourseBill.countDocuments();
 
         const response = await app.inject({
@@ -604,7 +604,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
             ...payload,
             course: coursesList[13]._id,
             companies: [otherCompany._id, authCompany._id],
-            mainFee: { price: 320, count: 1, countUnit: GROUP, percentage: 70 },
+            mainFee: { ...payload.mainFee, price: 3200, percentage: 70 },
           },
         });
 

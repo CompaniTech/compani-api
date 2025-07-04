@@ -725,17 +725,18 @@ describe('createBillList', () => {
         companies: payload.companies,
         payer: payload.payer,
         maturityDate: payload.maturityDate,
-      });
+      }
+    );
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
   });
 
-  it('should create one bill with trainer fees for INTRA course', async () => {
+  it('should create one bill with trainer fees for INTRA course with percentage', async () => {
     const companyId = new ObjectId();
     const course = {
       _id: new ObjectId(),
       type: INTRA,
-      prices: [{ company: companyId, global: 1200, trainerFees: 200 }],
+      prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
     };
     const billCreated = { _id: new ObjectId() };
     const payload = {
@@ -765,7 +766,8 @@ describe('createBillList', () => {
         companies: payload.companies,
         payer: payload.payer,
         maturityDate: payload.maturityDate,
-      });
+      }
+    );
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
       billCreated._id,
@@ -779,7 +781,7 @@ describe('createBillList', () => {
     sinon.assert.notCalled(insertManyCourseBills);
   });
 
-  it('should create a course bill with global for INTRA course', async () => {
+  it('should create a course bill with percentage and wihtout trainerFees for INTRA course', async () => {
     const companyId = new ObjectId();
     const course = {
       _id: new ObjectId(),
@@ -814,7 +816,8 @@ describe('createBillList', () => {
         companies: payload.companies,
         payer: payload.payer,
         maturityDate: payload.maturityDate,
-      });
+      }
+    );
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
   });
