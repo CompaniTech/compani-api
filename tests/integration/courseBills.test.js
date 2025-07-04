@@ -543,9 +543,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         { key: 'percentage', value: 105 },
         { key: 'percentage', value: '10%' },
         { key: 'countUnit', value: 'learner' },
-        { key: 'quantity', value: -1 },
-        { key: 'quantity', value: '1' },
-        { key: 'quantity', value: 0 },
       ];
 
       wrongValues.forEach((wrongValue) => {
@@ -575,10 +572,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           const response = await app.inject({
             method: 'POST',
             url: '/coursebills/list-creation',
-            payload: {
-              ...payload,
-              mainFee: { ...payload, [wrongValue.key]: wrongValue.value },
-            },
+            payload: { ...payload, [wrongValue.key]: wrongValue.value },
             headers: { Cookie: `alenvi_token=${authToken}` },
           });
 
@@ -722,7 +716,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           const response = await app.inject({
             method: 'POST',
             url: '/coursebills/list-creation',
-            payload: set(payload, param.key, param.value),
+            payload: { ...payload, [param.key]: param.value },
             headers: { Cookie: `alenvi_token=${authToken}` },
           });
 

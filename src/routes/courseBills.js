@@ -64,7 +64,7 @@ exports.plugin = {
         auth: { scope: ['coursebills:edit'] },
         validate: {
           payload: Joi.object({
-            quantity: Joi.number().positive().required(),
+            quantity: Joi.number().positive().strict().required(),
             course: Joi.objectId().required(),
             mainFee: Joi.object({
               price: Joi.number().positive(),
