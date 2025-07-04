@@ -458,7 +458,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         course: coursesList[15]._id,
         companies: [authCompany._id],
         maturityDate: '2025-04-29T22:00:00.000Z',
-        mainFee: { count: 1, countUnit: GROUP, description: 'test', price: 120, percentage: 10 },
+        mainFee: { count: 1, countUnit: GROUP, description: 'test', price: 1200, percentage: 10 },
         payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
       };
 
@@ -485,7 +485,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, course: coursesList[13]._id },
+          payload: { ...payload, course: coursesList[13]._id, mainFee: { ...payload.mainFee, price: 200 } },
         });
 
         expect(response.statusCode).toBe(200);
@@ -510,7 +510,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           const response = await app.inject({
             method: 'POST',
             url: '/coursebills/list-creation',
-            payload: { ...omit(payload, param) },
+            payload: omit(payload, param),
             headers: { Cookie: `alenvi_token=${authToken}` },
           });
 
@@ -523,7 +523,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...omit(payload, 'mainFee.percentage') },
+          payload: omit(payload, 'mainFee.percentage'),
         });
 
         expect(response.statusCode).toBe(400);
@@ -768,7 +768,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(response.statusCode).toBe(404);
       });
 
-      it('should return 403 if course is interruptedAt', async () => {
+      it('should return 403 if course is interrupted', async () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
