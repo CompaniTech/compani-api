@@ -455,7 +455,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
     describe('Quantity === 1', () => {
       const payload = {
         quantity: 1,
-        course: coursesList[0]._id,
+        course: coursesList[15]._id,
         companies: [authCompany._id],
         maturityDate: '2025-04-29T22:00:00.000Z',
         mainFee: { count: 1, countUnit: GROUP, description: 'test', price: 120, percentage: 10 },
@@ -469,7 +469,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: omit(payload, 'mainFee.percentage'),
+          payload: { ...omit(payload, 'mainFee.percentage'), course: coursesList[0]._id },
         });
 
         expect(response.statusCode).toBe(200);
@@ -523,7 +523,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...omit(payload, 'mainFee.percentage'), course: coursesList[15]._id },
+          payload: { ...omit(payload, 'mainFee.percentage') },
         });
 
         expect(response.statusCode).toBe(400);
@@ -604,7 +604,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
             ...payload,
             course: coursesList[13]._id,
             companies: [otherCompany._id, authCompany._id],
-            mainFee: { ...payload.mainFee, price: 3200, percentage: 70 },
+            mainFee: { ...payload.mainFee, price: 2240, percentage: 70 },
           },
         });
 

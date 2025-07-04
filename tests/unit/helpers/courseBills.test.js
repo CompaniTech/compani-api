@@ -731,7 +731,7 @@ describe('createBillList', () => {
     sinon.assert.notCalled(insertManyCourseBills);
   });
 
-  it('should create one bill with trainer fees for INTRA course with percentage', async () => {
+  it('should create one bill with trainer fees and with percentage for INTRA course', async () => {
     const companyId = new ObjectId();
     const course = {
       _id: new ObjectId(),
