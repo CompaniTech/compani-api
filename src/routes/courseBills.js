@@ -81,7 +81,7 @@ exports.plugin = {
                   otherwise: Joi.object({ price: Joi.forbidden(), percentage: Joi.forbidden() }),
                 }
               ),
-            companies: Joi.array().items(Joi.objectId()).min(1),
+            companies: Joi.array().items(Joi.objectId()).min(1).required(),
             payer: Joi.object({
               company: Joi.objectId(),
               fundingOrganisation: Joi.objectId(),

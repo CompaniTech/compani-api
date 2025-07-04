@@ -702,7 +702,7 @@ describe('createBillList', () => {
     const payload = {
       course: new ObjectId(),
       quantity: 1,
-      mainFee: { price: 100, count: 2, countUnit: GROUP, description: 'test' },
+      mainFee: { price: 100, count: 1, countUnit: GROUP, description: 'test' },
       companies: [new ObjectId()],
       payer: { fundingOrganisation: new ObjectId() },
       maturityDate: '2025-04-29T22:00:00.000Z',
@@ -712,18 +712,20 @@ describe('createBillList', () => {
 
     await CourseBillHelper.createBillList(payload);
 
-    sinon.assert.calledOnceWithExactly(createCourseBill, {
-      course: payload.course,
-      mainFee: {
-        price: 100,
-        count: 2,
-        countUnit: GROUP,
-        description: 'test',
-      },
-      companies: payload.companies,
-      payer: payload.payer,
-      maturityDate: payload.maturityDate,
-    });
+    sinon.assert.calledOnceWithExactly(
+      createCourseBill,
+      {
+        course: payload.course,
+        mainFee: {
+          price: 100,
+          count: 1,
+          countUnit: GROUP,
+          description: 'test',
+        },
+        companies: payload.companies,
+        payer: payload.payer,
+        maturityDate: payload.maturityDate,
+      });
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
   });
@@ -750,18 +752,20 @@ describe('createBillList', () => {
 
     await CourseBillHelper.createBillList(payload);
 
-    sinon.assert.calledOnceWithExactly(createCourseBill, {
-      course: payload.course,
-      mainFee: {
-        price: 100,
-        count: 1,
-        countUnit: GROUP,
-        percentage: 10,
-      },
-      companies: payload.companies,
-      payer: payload.payer,
-      maturityDate: payload.maturityDate,
-    });
+    sinon.assert.calledOnceWithExactly(
+      createCourseBill,
+      {
+        course: payload.course,
+        mainFee: {
+          price: 100,
+          count: 1,
+          countUnit: GROUP,
+          percentage: 10,
+        },
+        companies: payload.companies,
+        payer: payload.payer,
+        maturityDate: payload.maturityDate,
+      });
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
       billCreated._id,
@@ -797,18 +801,20 @@ describe('createBillList', () => {
 
     await CourseBillHelper.createBillList(payload);
 
-    sinon.assert.calledOnceWithExactly(createCourseBill, {
-      course: payload.course,
-      mainFee: {
-        price: 120,
-        count: 1,
-        countUnit: GROUP,
-        percentage: 10,
-      },
-      companies: payload.companies,
-      payer: payload.payer,
-      maturityDate: payload.maturityDate,
-    });
+    sinon.assert.calledOnceWithExactly(
+      createCourseBill,
+      {
+        course: payload.course,
+        mainFee: {
+          price: 120,
+          count: 1,
+          countUnit: GROUP,
+          percentage: 10,
+        },
+        companies: payload.companies,
+        payer: payload.payer,
+        maturityDate: payload.maturityDate,
+      });
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
   });
@@ -818,7 +824,7 @@ describe('createBillList', () => {
     const payload = {
       course: course._id,
       quantity: 3,
-      mainFee: { count: 2, countUnit: GROUP, description: 'Test' },
+      mainFee: { count: 1, countUnit: GROUP, description: 'Test' },
       companies: [new ObjectId()],
       payer: { fundingOrganisation: new ObjectId() },
     };
@@ -830,7 +836,7 @@ describe('createBillList', () => {
     const expectedBill = {
       course: payload.course,
       mainFee: {
-        count: 2,
+        count: 1,
         countUnit: GROUP,
         description: 'Test',
       },
