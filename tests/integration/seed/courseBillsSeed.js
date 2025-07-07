@@ -274,7 +274,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     contact: vendorAdmin._id,
     trainees: [traineeFromOtherCompany._id],
-    expectedBillsCount: 2,
+    expectedBillsCount: 3,
     companies: [otherCompany._id],
     certificateGenerationMode: GLOBAL,
     prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
@@ -329,6 +329,21 @@ const coursesList = [
     prices: [
       { company: authCompany._id, global: 12000 },
     ],
+  },
+  { // 16 - single course, expectedBillsCount is 0
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 3',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [traineeFromOtherCompany._id],
+    expectedBillsCount: 0,
+    companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
+    prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
   },
 ];
 

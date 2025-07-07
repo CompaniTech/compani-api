@@ -494,6 +494,30 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(billsCountAfter).toBe(billsCountBefore + 1);
       });
 
+      const singleCoursePayload = {
+        quantity: 1,
+        course: coursesList[12]._id,
+        companies: [otherCompany._id],
+        maturityDate: '2025-04-29T22:00:00.000Z',
+        mainFee: { count: 1, countUnit: TRAINEE, description: 'test', price: 1200 },
+        payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+      };
+      it('should create a bill (single)', async () => {
+        const billsCountBefore = await CourseBill.countDocuments({ course: coursesList[12]._id });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: singleCoursePayload,
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const billsCountAfter = await CourseBill.countDocuments({ course: coursesList[12]._id });
+        expect(billsCountAfter).toBe(billsCountBefore + 1);
+      });
+
       it('should return 403 if payload has percentage but some companies have no price', async () => {
         const response = await app.inject({
           method: 'POST',
@@ -515,6 +539,17 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: { ...payload, course: coursesList[14]._id },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+
+      it('should return 403 if course is single but payload has percentage', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...singleCoursePayload, mainFee: { ...singleCoursePayload.mainFee, percentage: 10 } },
+          headers: { 'x-access-token': authToken },
         });
 
         expect(response.statusCode).toBe(403);
@@ -658,6 +693,28 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(response.statusCode).toBe(400);
       });
 
+      it('should return 400 if course is SINGLE and count unit is group', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...singleCoursePayload, mainFee: { ...singleCoursePayload.mainFee, countUnit: GROUP } },
+          headers: { 'x-access-token': authToken },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
+      it('should return 400 if course is SINGLE and count is not 1', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...singleCoursePayload, mainFee: { ...singleCoursePayload.mainFee, count: 2 } },
+          headers: { 'x-access-token': authToken },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
       it('should return 400 if course price exist and percentage is not defined (intra)', async () => {
         const response = await app.inject({
           method: 'POST',
@@ -782,6 +839,30 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(billsCountAfter).toBe(billsCountBefore + 2);
       });
 
+      const singleCoursePayload = {
+        quantity: 2,
+        course: coursesList[12]._id,
+        companies: [otherCompany._id],
+        maturityDate: '2025-03-29T22:00:00.000Z',
+        mainFee: { count: 1, countUnit: TRAINEE, description: 'test' },
+        payer: { company: otherCompany._id },
+      };
+      it('should create several bills (single)', async () => {
+        const billsCountBefore = await CourseBill.countDocuments({ course: coursesList[12]._id });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: singleCoursePayload,
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const billsCountAfter = await CourseBill.countDocuments({ course: coursesList[12]._id });
+        expect(billsCountAfter).toBe(billsCountBefore + 2);
+      });
+
       const wrongParams = [
         { key: 'maturityDate', value: '2025-04-29T22:00:00.000Z' },
         { key: 'mainFee.percentage', value: 10 },
@@ -801,6 +882,28 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         });
       });
 
+      it('should return 400 if course is single and maturityDate is missing in payload', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...omit(singleCoursePayload, 'maturityDate') },
+          headers: { 'x-access-token': authToken },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
+      it('should return 409 if expectedBillsCount is 0 (single)', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { ...singleCoursePayload, course: coursesList[16]._id },
+        });
+
+        expect(response.statusCode).toBe(409);
+      });
+
       it('should return 409 if number of bills without CN + quantity is greater than expectedBillsCount'
       + '(intra)', async () => {
         const response = await app.inject({
@@ -808,6 +911,18 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: { ...payload, quantity: 4 },
+        });
+
+        expect(response.statusCode).toBe(409);
+      });
+
+      it('should return 409 if number of bills without CN + quantity is greater than expectedBillsCount'
+      + '(single)', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { ...singleCoursePayload, quantity: 3 },
         });
 
         expect(response.statusCode).toBe(409);
