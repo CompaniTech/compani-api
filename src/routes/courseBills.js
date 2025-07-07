@@ -4,7 +4,6 @@ const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 const {
   list,
-  create,
   update,
   addBillingPurchase,
   updateBillingPurchase,
@@ -12,10 +11,11 @@ const {
   generateBillPdf,
   deleteBillList,
   updateBillList,
+  createBillList,
 } = require('../controllers/courseBillController');
 const { LIST, BALANCE, GROUP, TRAINEE, DASHBOARD } = require('../helpers/constants');
 const {
-  authorizeCourseBillCreation,
+  authorizeCourseBillListCreation,
   authorizeCourseBillGet,
   authorizeCourseBillUpdate,
   authorizeCourseBillingPurchaseAddition,
@@ -59,30 +59,40 @@ exports.plugin = {
 
     server.route({
       method: 'POST',
-      path: '/',
+      path: '/list-creation',
       options: {
         auth: { scope: ['coursebills:edit'] },
         validate: {
           payload: Joi.object({
+            quantity: Joi.number().positive().strict().required(),
             course: Joi.objectId().required(),
             mainFee: Joi.object({
-              price: Joi.number().positive().required(),
+              price: Joi.number().positive(),
               percentage: Joi.number().positive().integer().max(100),
               count: Joi.number().positive().integer().required(),
               countUnit: Joi.string().required().valid(GROUP, TRAINEE),
               description: Joi.string().allow(''),
-            }).required(),
-            companies: Joi.array().items(Joi.objectId()).required().min(1),
+            }).required()
+              .when(
+                'quantity',
+                {
+                  is: 1,
+                  then: Joi.object({ price: Joi.required() }),
+                  otherwise: Joi.object({ price: Joi.forbidden(), percentage: Joi.forbidden() }),
+                }
+              ),
+            companies: Joi.array().items(Joi.objectId()).min(1).required(),
             payer: Joi.object({
               company: Joi.objectId(),
               fundingOrganisation: Joi.objectId(),
-            }).xor('company', 'fundingOrganisation').required(),
-            maturityDate: requiredDateToISOString,
+            }).xor('company', 'fundingOrganisation')
+              .required(),
+            maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString, otherwise: Joi.forbidden() }),
           }),
         },
-        pre: [{ method: authorizeCourseBillCreation }],
+        pre: [{ method: authorizeCourseBillListCreation }],
       },
-      handler: create,
+      handler: createBillList,
     });
 
     server.route({

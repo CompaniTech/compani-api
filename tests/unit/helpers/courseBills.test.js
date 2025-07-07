@@ -24,6 +24,8 @@ const {
   COURSE,
   TRAINEE,
   SINGLE,
+  GROUP,
+  INTER_B2B,
 } = require('../../../src/helpers/constants');
 
 describe('getNetInclTaxes', () => {
@@ -672,103 +674,183 @@ describe('list', () => {
   });
 });
 
-describe('create', () => {
-  let create;
+describe('createBillList', () => {
   let findOneCourse;
+  let createCourseBill;
+  let insertManyCourseBills;
   let addBillingPurchase;
   const TRAINER_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
-    create = sinon.stub(CourseBill, 'create');
     findOneCourse = sinon.stub(Course, 'findOne');
+    createCourseBill = sinon.stub(CourseBill, 'create');
+    insertManyCourseBills = sinon.stub(CourseBill, 'insertMany');
     addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
     process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
   });
 
   afterEach(() => {
-    create.restore();
     findOneCourse.restore();
+    createCourseBill.restore();
+    insertManyCourseBills.restore();
     addBillingPurchase.restore();
     process.env.TRAINER_FEES_BILLING_ITEM = '';
   });
 
-  it('should create a course bill (without percentage)', async () => {
+  it('should create one bill without percentage for INTER course', async () => {
+    const course = { type: INTER_B2B, prices: [] };
     const payload = {
       course: new ObjectId(),
-      companies: [new ObjectId(), new ObjectId()],
-      mainFee: { price: 120, count: 1 },
+      quantity: 1,
+      mainFee: { price: 100, count: 1, countUnit: GROUP, description: 'test' },
+      companies: [new ObjectId()],
       payer: { fundingOrganisation: new ObjectId() },
-      maturityDate: '2022-03-08T00:00:00.000Z',
-    };
-    await CourseBillHelper.create(payload);
-
-    sinon.assert.calledOnceWithExactly(create, payload);
-    sinon.assert.notCalled(findOneCourse);
-    sinon.assert.notCalled(addBillingPurchase);
-  });
-
-  it('should create a course bill (with percentage)', async () => {
-    const courseId = new ObjectId();
-    const companyId = new ObjectId();
-    const course = {
-      _id: courseId,
-      prices: [{ company: companyId, global: 1200 }],
-    };
-    const payload = {
-      course: courseId,
-      companies: [companyId, new ObjectId()],
-      mainFee: { price: 120, count: 1, percentage: 10 },
-      payer: { fundingOrganisation: new ObjectId() },
-      maturityDate: '2022-03-08T00:00:00.000Z',
+      maturityDate: '2025-04-29T22:00:00.000Z',
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
-    await CourseBillHelper.create(payload);
 
-    sinon.assert.calledOnceWithExactly(create, payload);
-    sinon.assert.notCalled(addBillingPurchase);
-    SinonMongoose.calledOnceWithExactly(
-      findOneCourse,
-      [
-        { query: 'findOne', args: [{ _id: payload.course }, { prices: 1 }] },
-        { query: 'lean', args: [] },
-      ]
+    await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledOnceWithExactly(
+      createCourseBill,
+      {
+        course: payload.course,
+        mainFee: {
+          price: 100,
+          count: 1,
+          countUnit: GROUP,
+          description: 'test',
+        },
+        companies: payload.companies,
+        payer: payload.payer,
+        maturityDate: payload.maturityDate,
+      }
     );
+    sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(insertManyCourseBills);
   });
 
-  it('should create a course bill (with percentage and trainer fees)', async () => {
-    const courseId = new ObjectId();
+  it('should create one bill with percentage for INTRA course with trainer fees', async () => {
     const companyId = new ObjectId();
     const course = {
-      _id: courseId,
-      prices: [{ company: companyId, global: 1200, trainerFees: 120 }],
+      _id: new ObjectId(),
+      type: INTRA,
+      prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
     };
-    const courseBill = { _id: new ObjectId() };
+    const billCreated = { _id: new ObjectId() };
     const payload = {
-      course: courseId,
-      companies: [companyId, new ObjectId()],
-      mainFee: { price: 120, count: 1, percentage: 10 },
+      course: course._id,
+      quantity: 1,
+      mainFee: { price: 100, count: 1, countUnit: GROUP, percentage: 10 },
+      companies: [companyId],
       payer: { fundingOrganisation: new ObjectId() },
-      maturityDate: '2022-03-08T00:00:00.000Z',
+      maturityDate: '2025-04-29T22:00:00.000Z',
     };
 
-    create.returns(courseBill);
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
-    await CourseBillHelper.create(payload);
+    createCourseBill.returns(billCreated);
 
-    sinon.assert.calledOnceWithExactly(create, payload);
-    SinonMongoose.calledOnceWithExactly(
-      findOneCourse,
-      [
-        { query: 'findOne', args: [{ _id: payload.course }, { prices: 1 }] },
-        { query: 'lean', args: [] },
-      ]
+    await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledOnceWithExactly(
+      createCourseBill,
+      {
+        course: payload.course,
+        mainFee: {
+          price: 100,
+          count: 1,
+          countUnit: GROUP,
+          percentage: 10,
+        },
+        companies: payload.companies,
+        payer: payload.payer,
+        maturityDate: payload.maturityDate,
+      }
     );
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
-      courseBill._id,
-      { price: 12, count: 1, percentage: 10, billingItem: TRAINER_FEES_BILLING_ITEM }
+      billCreated._id,
+      {
+        price: 20,
+        count: 1,
+        percentage: 10,
+        billingItem: TRAINER_FEES_BILLING_ITEM,
+      }
     );
+    sinon.assert.notCalled(insertManyCourseBills);
+  });
+
+  it('should create one bill with percentage for INTRA course without trainer fees', async () => {
+    const companyId = new ObjectId();
+    const course = {
+      _id: new ObjectId(),
+      type: INTRA,
+      prices: [{ company: companyId, global: 1200 }],
+    };
+    const billCreated = { _id: new ObjectId() };
+    const payload = {
+      course: course._id,
+      quantity: 1,
+      companies: [companyId, new ObjectId()],
+      mainFee: { price: 120, count: 1, countUnit: GROUP, percentage: 10 },
+      payer: { fundingOrganisation: new ObjectId() },
+      maturityDate: '2025-03-08T00:00:00.000Z',
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    createCourseBill.returns(billCreated);
+
+    await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledOnceWithExactly(
+      createCourseBill,
+      {
+        course: payload.course,
+        mainFee: {
+          price: 120,
+          count: 1,
+          countUnit: GROUP,
+          percentage: 10,
+        },
+        companies: payload.companies,
+        payer: payload.payer,
+        maturityDate: payload.maturityDate,
+      }
+    );
+    sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(insertManyCourseBills);
+  });
+
+  it('should create several bills', async () => {
+    const course = { _id: new ObjectId(), type: INTER_B2B };
+    const payload = {
+      course: course._id,
+      quantity: 3,
+      mainFee: { count: 1, countUnit: GROUP, description: 'Test' },
+      companies: [new ObjectId()],
+      payer: { fundingOrganisation: new ObjectId() },
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
+    await CourseBillHelper.createBillList(payload);
+
+    const expectedBill = {
+      course: payload.course,
+      mainFee: {
+        count: 1,
+        countUnit: GROUP,
+        description: 'Test',
+      },
+      companies: payload.companies,
+      payer: payload.payer,
+    };
+
+    const expectedBills = new Array(3).fill(expectedBill);
+
+    sinon.assert.calledOnceWithExactly(insertManyCourseBills, expectedBills);
+    sinon.assert.notCalled(createCourseBill);
   });
 });
 
