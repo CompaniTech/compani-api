@@ -591,6 +591,17 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(response.statusCode).toBe(400);
       });
 
+      it('should return 400 if no company', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...payload, companies: [] },
+          headers: { 'x-access-token': authToken },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
       it('should return 400 if count is greater than 1 (intra)', async () => {
         const response = await app.inject({
           method: 'POST',
