@@ -21,6 +21,7 @@ const {
   COURSE,
   TRAINEE,
   SINGLE,
+  MONTH_YEAR,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 
@@ -236,7 +237,7 @@ exports.createBillList = async (payload) => {
         const billMaturityDate = CompaniDate(payload.maturityDate).add(`P${i}M`);
         const description = 'Facture liée à des frais pédagogiques \r\n'
           + 'Contrat de professionnalisation \r\n'
-          + `ACCOMPAGNEMENT ${billMaturityDate.format('LLLL yyyy')} \r\n`
+          + `ACCOMPAGNEMENT ${billMaturityDate.format(MONTH_YEAR)} \r\n`
           + `Nom de l'apprenant·e: ${traineeName} \r\n`
           + `Nom du / des intervenants: ${trainersName}`;
 

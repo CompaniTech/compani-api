@@ -30,6 +30,7 @@ module.exports = {
   UPLOAD_DATE_FORMAT: 'yyyyLLddHHmmss',
   MM_YYYY: 'LL-yyyy',
   DAY_D_MONTH_YEAR: 'ccc d LLL yyyy',
+  MONTH_YEAR: 'LLLL yyyy',
   // DATE INDEX
   MONDAY: 0,
   TUESDAY: 1,
