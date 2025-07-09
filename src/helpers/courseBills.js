@@ -233,13 +233,18 @@ exports.createBillList = async (payload) => {
         .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
 
       for (let i = 0; i < payload.quantity; i++) {
+        const billMaturityDate = CompaniDate(payload.maturityDate).add(`P${i}M`);
         const description = 'Facture liée à des frais pédagogiques \r\n'
           + 'Contrat de professionnalisation \r\n'
-          + `ACCOMPAGNEMENT ${CompaniDate(payload.maturityDate).add(`P${i}M`).format('LLLL yyyy')}\r\n`
+          + `ACCOMPAGNEMENT ${billMaturityDate.format('LLLL yyyy')} \r\n`
           + `Nom de l'apprenant·e: ${traineeName} \r\n`
           + `Nom du / des intervenants: ${trainersName}`;
 
-        await CourseBill.create({ ...billPayload, mainFee: { ...payload.mainFee, description } });
+        await CourseBill.create({
+          ...billPayload,
+          mainFee: { ...payload.mainFee, description },
+          maturityDate: billMaturityDate.toISO(),
+        });
       }
     }
   }
