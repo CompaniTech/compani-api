@@ -95,7 +95,7 @@ exports.authorizeCourseBillListCreation = async (req) => {
     const hasWrongQuantity = mainFee.count !== 1;
     if (hasWrongCountUnit || hasWrongQuantity) throw Boom.badRequest();
 
-    if (quantity > 1 && !maturityDate) throw Boom.badRequest();
+    if (!maturityDate) throw Boom.badRequest();
 
     if (!course.expectedBillsCount) throw Boom.conflict();
 
