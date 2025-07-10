@@ -708,7 +708,7 @@ describe('createBillList', () => {
       maturityDate: '2025-04-29T22:00:00.000Z',
     };
 
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'populate', 'lean']));
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
 
     await CourseBillHelper.createBillList(payload);
 
@@ -748,7 +748,7 @@ describe('createBillList', () => {
       maturityDate: '2025-04-29T22:00:00.000Z',
     };
 
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'populate', 'lean']));
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
     createCourseBill.returns(billCreated);
 
     await CourseBillHelper.createBillList(payload);
@@ -798,7 +798,7 @@ describe('createBillList', () => {
       maturityDate: '2025-03-08T00:00:00.000Z',
     };
 
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'populate', 'lean']));
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
     createCourseBill.returns(billCreated);
 
     await CourseBillHelper.createBillList(payload);
@@ -832,7 +832,7 @@ describe('createBillList', () => {
       payer: { fundingOrganisation: new ObjectId() },
     };
 
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'populate', 'lean']));
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
 
     await CourseBillHelper.createBillList(payload);
 
@@ -872,7 +872,7 @@ describe('createBillList', () => {
       maturityDate: '2025-04-29T22:00:00.000Z',
     };
 
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'populate', 'lean']));
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
 
     await CourseBillHelper.createBillList(payload);
 
