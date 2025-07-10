@@ -1348,6 +1348,18 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(response.result.message).toEqual('L\'adresse de la structure cliente est manquante.');
     });
 
+    it('should return 403 if requesting invoice and price is not defined', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[15]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message).toEqual('Le prix de la facture est manquant.');
+    });
+
     it('should return 403 if update percentage on course bill without percentage', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -1490,6 +1502,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
     it('should return 403 if course bill payer has no address', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -1499,6 +1512,18 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if one course bill has no price', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToValidate, courseBillsList[15]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message).toEqual('Le prix de la facture est manquant.');
     });
   });
 

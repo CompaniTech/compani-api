@@ -167,6 +167,8 @@ exports.authorizeCourseBillUpdate = async (req) => {
     if (!get(courseBill, 'payer.address')) {
       throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
     }
+
+    if (!get(courseBill, 'mainFee.price')) throw Boom.forbidden(translate[language].courseBillPriceMissing);
   }
 
   if (courseBill.billedAt) {
@@ -205,10 +207,10 @@ exports.authorizeCourseBillUpdate = async (req) => {
 };
 
 exports.authorizeCourseBillListEdition = async (req) => {
-  const { _ids: courseBillIds, billedAt } = req.payload;
+  const { _ids: courseBillIds } = req.payload;
 
   const courseBills = await CourseBill
-    .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1 })
+    .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1, 'mainFee.price': 1 })
     .populate({ path: 'payer.company', select: 'address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'address' })
     .lean();
@@ -216,8 +218,12 @@ exports.authorizeCourseBillListEdition = async (req) => {
 
   if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
 
-  if (billedAt && courseBills.some(bill => !get(bill, 'payer.address'))) {
+  if (courseBills.some(bill => !get(bill, 'payer.address'))) {
     throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
+  }
+
+  if (courseBills.some(bill => !get(bill, 'mainFee.price'))) {
+    throw Boom.forbidden(translate[language].courseBillPriceMissing);
   }
 
   return null;
