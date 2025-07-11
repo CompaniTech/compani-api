@@ -500,7 +500,7 @@ const courseBillsList = [
     _id: new ObjectId(),
     course: coursesList[12]._id,
     companies: [otherCompany._id],
-    mainFee: { price: 120, count: 1, countUnit: TRAINEE },
+    mainFee: { price: 120, count: 1, countUnit: TRAINEE, description: 'test' },
     payer: { company: otherCompany._id },
     billingPurchaseList: [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 90, count: 1 },
