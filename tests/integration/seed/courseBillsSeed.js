@@ -531,7 +531,7 @@ const courseBillsList = [
     _id: new ObjectId(),
     course: coursesList[13]._id,
     companies: [otherCompany._id],
-    mainFee: { count: 1, countUnit: TRAINEE, percentage: 30 },
+    mainFee: { count: 1, countUnit: TRAINEE },
     payer: { company: otherCompany._id },
   },
 ];
