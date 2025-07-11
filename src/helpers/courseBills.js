@@ -315,7 +315,7 @@ exports.updateBillList = async (payload) => {
     await CourseBillsNumber
       .updateOne({}, { $inc: { seq: modifiedCount } }, { new: true, upsert: true, setDefaultsOnInsert: true });
   } else {
-    let payloadToSet = payload;
+    let payloadToSet = omit(payload, '_ids');
     const payloadToUnset = {};
     if (get(payload, 'mainFee.description') === '') {
       payloadToSet = omit(payloadToSet, 'mainFee');
