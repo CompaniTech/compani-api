@@ -453,12 +453,20 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
     });
 
     describe('Quantity === 1', () => {
-      const payload = {
+      const intraCoursePayload = {
         quantity: 1,
         course: coursesList[15]._id,
         companies: [authCompany._id],
         maturityDate: '2025-04-29T22:00:00.000Z',
         mainFee: { count: 1, countUnit: GROUP, description: 'test', price: 1200, percentage: 10 },
+        payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+      };
+      const singleCoursePayload = {
+        quantity: 1,
+        course: coursesList[12]._id,
+        companies: [otherCompany._id],
+        maturityDate: '2025-04-29T22:00:00.000Z',
+        mainFee: { count: 1, countUnit: TRAINEE, description: 'test', price: 1200 },
         payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
       };
 
@@ -469,7 +477,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...omit(payload, 'mainFee.percentage'), course: coursesList[0]._id },
+          payload: { ...omit(intraCoursePayload, 'mainFee.percentage'), course: coursesList[0]._id },
         });
 
         expect(response.statusCode).toBe(200);
@@ -485,12 +493,32 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, course: coursesList[13]._id, mainFee: { ...payload.mainFee, price: 200 } },
+          payload: {
+            ...intraCoursePayload,
+            course: coursesList[13]._id,
+            mainFee: { ...intraCoursePayload.mainFee, price: 200 },
+          },
         });
 
         expect(response.statusCode).toBe(200);
 
         const billsCountAfter = await CourseBill.countDocuments();
+        expect(billsCountAfter).toBe(billsCountBefore + 1);
+      });
+
+      it('should create a bill (single)', async () => {
+        const billsCountBefore = await CourseBill.countDocuments({ course: coursesList[12]._id });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: singleCoursePayload,
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const billsCountAfter = await CourseBill.countDocuments({ course: coursesList[12]._id });
         expect(billsCountAfter).toBe(billsCountBefore + 1);
       });
 
@@ -500,7 +528,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: {
-            ...payload,
+            ...intraCoursePayload,
             course: coursesList[13]._id,
             companies: [otherCompany._id, companyWithoutSubscription._id],
           },
@@ -514,7 +542,18 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, course: coursesList[14]._id },
+          payload: { ...intraCoursePayload, course: coursesList[14]._id },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+
+      it('should return 403 if course is single but payload has percentage', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...singleCoursePayload, mainFee: { ...singleCoursePayload.mainFee, percentage: 10 } },
+          headers: { 'x-access-token': authToken },
         });
 
         expect(response.statusCode).toBe(403);
@@ -526,10 +565,10 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: {
-            ...payload,
+            ...intraCoursePayload,
             course: coursesList[13]._id,
             companies: [otherCompany._id, authCompany._id],
-            mainFee: { ...payload.mainFee, price: 2240, percentage: 70 },
+            mainFee: { ...intraCoursePayload.mainFee, price: 2240, percentage: 70 },
           },
         });
 
@@ -552,7 +591,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           const response = await app.inject({
             method: 'POST',
             url: '/coursebills/list-creation',
-            payload: omit(payload, param),
+            payload: omit(intraCoursePayload, param),
             headers: { Cookie: `alenvi_token=${authToken}` },
           });
 
@@ -582,8 +621,8 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
             method: 'POST',
             url: '/coursebills/list-creation',
             payload: {
-              ...payload,
-              mainFee: { ...payload.mainFee, [wrongValue.key]: wrongValue.value },
+              ...intraCoursePayload,
+              mainFee: { ...intraCoursePayload.mainFee, [wrongValue.key]: wrongValue.value },
             },
             headers: { Cookie: `alenvi_token=${authToken}` },
           });
@@ -603,7 +642,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           const response = await app.inject({
             method: 'POST',
             url: '/coursebills/list-creation',
-            payload: { ...payload, [wrongValue.key]: wrongValue.value },
+            payload: { ...intraCoursePayload, [wrongValue.key]: wrongValue.value },
             headers: { Cookie: `alenvi_token=${authToken}` },
           });
 
@@ -617,7 +656,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
           payload: {
-            ...payload,
+            ...intraCoursePayload,
             payer: { fundingOrganisation: courseFundingOrganisationList[0]._id, company: authCompany._id },
           },
         });
@@ -630,7 +669,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, mainFee: { ...payload.mainFee, countUnit: TRAINEE } },
+          payload: { ...intraCoursePayload, mainFee: { ...intraCoursePayload.mainFee, countUnit: TRAINEE } },
         });
 
         expect(response.statusCode).toBe(400);
@@ -640,7 +679,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          payload: { ...payload, companies: [] },
+          payload: { ...intraCoursePayload, companies: [] },
           headers: { 'x-access-token': authToken },
         });
 
@@ -652,7 +691,29 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, mainFee: { ...payload.mainFee, count: 2 } },
+          payload: { ...intraCoursePayload, mainFee: { ...intraCoursePayload.mainFee, count: 2 } },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
+      it('should return 400 if course is SINGLE and count unit is group', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...singleCoursePayload, mainFee: { ...singleCoursePayload.mainFee, countUnit: GROUP } },
+          headers: { 'x-access-token': authToken },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
+      it('should return 400 if course is SINGLE and count is not 1', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...singleCoursePayload, mainFee: { ...singleCoursePayload.mainFee, count: 2 } },
+          headers: { 'x-access-token': authToken },
         });
 
         expect(response.statusCode).toBe(400);
@@ -663,7 +724,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: omit(payload, 'mainFee.percentage'),
+          payload: omit(intraCoursePayload, 'mainFee.percentage'),
         });
 
         expect(response.statusCode).toBe(400);
@@ -674,7 +735,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, course: new ObjectId() },
+          payload: { ...intraCoursePayload, course: new ObjectId() },
         });
 
         expect(response.statusCode).toBe(404);
@@ -685,7 +746,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, payer: { fundingOrganisation: new ObjectId() } },
+          payload: { ...intraCoursePayload, payer: { fundingOrganisation: new ObjectId() } },
         });
 
         expect(response.statusCode).toBe(404);
@@ -696,7 +757,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, payer: { company: new ObjectId() } },
+          payload: { ...intraCoursePayload, payer: { company: new ObjectId() } },
         });
 
         expect(response.statusCode).toBe(404);
@@ -707,7 +768,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, companies: [otherCompany._id] },
+          payload: { ...intraCoursePayload, companies: [otherCompany._id] },
         });
 
         expect(response.statusCode).toBe(404);
@@ -718,7 +779,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, course: coursesList[10]._id, companies: [otherCompany._id] },
+          payload: { ...intraCoursePayload, course: coursesList[10]._id, companies: [otherCompany._id] },
         });
 
         expect(response.statusCode).toBe(409);
@@ -726,12 +787,21 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
     });
 
     describe('Quantity > 1', () => {
-      const payload = {
+      const intraCoursePayload = {
         quantity: 2,
         course: coursesList[0]._id,
         companies: [authCompany._id],
         mainFee: { count: 1, countUnit: GROUP, description: 'test' },
         payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
+      };
+
+      const singleCoursePayload = {
+        quantity: 2,
+        course: coursesList[12]._id,
+        companies: [otherCompany._id],
+        maturityDate: '2025-03-29T22:00:00.000Z',
+        mainFee: { count: 1, countUnit: TRAINEE, description: 'test' },
+        payer: { company: otherCompany._id },
       };
 
       it('should create several bills with fundingOrganisation as payer (intra)', async () => {
@@ -741,7 +811,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload,
+          payload: intraCoursePayload,
         });
 
         expect(response.statusCode).toBe(200);
@@ -757,7 +827,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, payer: { company: authCompany._id } },
+          payload: { ...intraCoursePayload, payer: { company: authCompany._id } },
         });
 
         expect(response.statusCode).toBe(200);
@@ -773,12 +843,28 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, course: coursesList[13]._id },
+          payload: { ...intraCoursePayload, course: coursesList[13]._id },
         });
 
         expect(response.statusCode).toBe(200);
 
         const billsCountAfter = await CourseBill.countDocuments();
+        expect(billsCountAfter).toBe(billsCountBefore + 2);
+      });
+
+      it('should create several bills (single)', async () => {
+        const billsCountBefore = await CourseBill.countDocuments({ course: coursesList[12]._id });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: singleCoursePayload,
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const billsCountAfter = await CourseBill.countDocuments({ course: coursesList[12]._id });
         expect(billsCountAfter).toBe(billsCountBefore + 2);
       });
 
@@ -793,12 +879,34 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           const response = await app.inject({
             method: 'POST',
             url: '/coursebills/list-creation',
-            payload: { ...payload, [param.key]: param.value },
+            payload: { ...intraCoursePayload, [param.key]: param.value },
             headers: { Cookie: `alenvi_token=${authToken}` },
           });
 
           expect(response.statusCode).toBe(400);
         });
+      });
+
+      it('should return 400 if course is single and maturityDate is missing in payload', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          payload: { ...omit(singleCoursePayload, 'maturityDate') },
+          headers: { 'x-access-token': authToken },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
+      it('should return 409 if expectedBillsCount is 0 (single)', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { ...singleCoursePayload, course: coursesList[16]._id },
+        });
+
+        expect(response.statusCode).toBe(409);
       });
 
       it('should return 409 if number of bills without CN + quantity is greater than expectedBillsCount'
@@ -807,7 +915,19 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { ...payload, quantity: 4 },
+          payload: { ...intraCoursePayload, quantity: 4 },
+        });
+
+        expect(response.statusCode).toBe(409);
+      });
+
+      it('should return 409 if number of bills without CN + quantity is greater than expectedBillsCount'
+      + '(single)', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { ...singleCoursePayload, quantity: 3 },
         });
 
         expect(response.statusCode).toBe(409);
@@ -823,7 +943,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
               method: 'POST',
               url: '/coursebills/list-creation',
               headers: { Cookie: `alenvi_token=${authToken}` },
-              payload,
+              payload: intraCoursePayload,
             });
 
             expect(response.statusCode).toBe(role.expectedCode);
@@ -1228,6 +1348,18 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(response.result.message).toEqual('L\'adresse de la structure cliente est manquante.');
     });
 
+    it('should return 403 if requesting invoice and price is not defined', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[15]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message).toEqual('Le prix de la facture est manquant.');
+    });
+
     it('should return 403 if update percentage on course bill without percentage', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -1370,6 +1502,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
     it('should return 403 if course bill payer has no address', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -1379,6 +1512,18 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if one course bill has no price', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [...courseBillsToValidate, courseBillsList[15]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message).toEqual('Le prix de la facture est manquant.');
     });
   });
 

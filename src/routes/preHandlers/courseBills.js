@@ -20,7 +20,7 @@ const {
 const { language } = translate;
 
 exports.authorizeCourseBillListCreation = async (req) => {
-  const { course: courseId, companies: companiesIds, payer, mainFee, quantity } = req.payload;
+  const { course: courseId, companies: companiesIds, payer, mainFee, quantity, maturityDate } = req.payload;
 
   const course = await Course
     .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptedAt: 1 })
@@ -87,7 +87,25 @@ exports.authorizeCourseBillListCreation = async (req) => {
           }
         }
       }
-    }
+    } else if (maturityDate) throw Boom.badRequest();
+  } else {
+    if (mainFee.percentage) throw Boom.forbidden();
+
+    const hasWrongCountUnit = mainFee.countUnit !== TRAINEE;
+    const hasWrongQuantity = mainFee.count !== 1;
+    if (hasWrongCountUnit || hasWrongQuantity) throw Boom.badRequest();
+
+    if (!maturityDate) throw Boom.badRequest();
+
+    if (!course.expectedBillsCount) throw Boom.conflict();
+
+    const courseBills = await CourseBill.find({ course: courseId }, { courseCreditNote: 1 })
+      .populate({ path: 'courseCreditNote', options: { isVendorUser: true } })
+      .setOptions({ isVendorUser: true })
+      .lean();
+
+    const courseBillsWithoutCreditNote = courseBills.filter(cb => !cb.courseCreditNote);
+    if (courseBillsWithoutCreditNote.length + quantity > course.expectedBillsCount) throw Boom.conflict('ca pete ici');
   }
 
   return null;
@@ -149,6 +167,8 @@ exports.authorizeCourseBillUpdate = async (req) => {
     if (!get(courseBill, 'payer.address')) {
       throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
     }
+
+    if (!get(courseBill, 'mainFee.price')) throw Boom.forbidden(translate[language].courseBillPriceMissing);
   }
 
   if (courseBill.billedAt) {
@@ -190,7 +210,7 @@ exports.authorizeCourseBillListEdition = async (req) => {
   const { _ids: courseBillIds, billedAt } = req.payload;
 
   const courseBills = await CourseBill
-    .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1 })
+    .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1, 'mainFee.price': 1 })
     .populate({ path: 'payer.company', select: 'address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'address' })
     .lean();
@@ -200,6 +220,10 @@ exports.authorizeCourseBillListEdition = async (req) => {
 
   if (billedAt && courseBills.some(bill => !get(bill, 'payer.address'))) {
     throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
+  }
+
+  if (courseBills.some(bill => !get(bill, 'mainFee.price'))) {
+    throw Boom.forbidden(translate[language].courseBillPriceMissing);
   }
 
   return null;

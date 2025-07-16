@@ -21,6 +21,7 @@ const {
   COURSE,
   TRAINEE,
   SINGLE,
+  MONTH_YEAR,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 
@@ -177,41 +178,64 @@ exports.list = async (query, credentials) => {
 };
 
 exports.createBillList = async (payload) => {
-  const course = await Course.findOne({ _id: payload.course }, { type: 1, prices: 1 }).lean();
+  const course = await Course
+    .findOne({ _id: payload.course }, { type: 1, prices: 1, trainees: 1, trainers: 1 })
+    .populate({ path: 'trainees', select: 'identity' })
+    .populate({ path: 'trainers', select: 'identity' })
+    .lean();
 
-  if (course.type !== SINGLE) {
-    if (payload.quantity === 1) {
-      const billCreated = await CourseBill.create(omit(payload, 'quantity'));
+  if (payload.quantity === 1) {
+    const billCreated = await CourseBill.create(omit(payload, 'quantity'));
 
-      if (payload.mainFee.percentage) {
-        const trainerFees = (course.prices || []).reduce((acc, price) => {
-          if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
-            return NumbersHelper.add(acc, price.trainerFees);
-          }
-          return acc;
-        }, 0);
-
-        if (trainerFees) {
-          const trainerFeesPayload = {
-            price: NumbersHelper.toFixedToFloat(
-              NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
-            ),
-            count: 1,
-            percentage: payload.mainFee.percentage,
-            billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
-          };
-          await exports.addBillingPurchase(billCreated._id, trainerFeesPayload);
+    if (payload.mainFee.percentage) {
+      const trainerFees = (course.prices || []).reduce((acc, price) => {
+        if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
+          return NumbersHelper.add(acc, price.trainerFees);
         }
-      }
-    } else {
-      const billsToCreate = new Array(payload.quantity).fill({
-        course: payload.course,
-        mainFee: payload.mainFee,
-        companies: payload.companies,
-        payer: payload.payer,
-      });
+        return acc;
+      }, 0);
 
-      await CourseBill.insertMany(billsToCreate);
+      if (trainerFees) {
+        const trainerFeesPayload = {
+          price: NumbersHelper.toFixedToFloat(
+            NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
+          ),
+          count: 1,
+          percentage: payload.mainFee.percentage,
+          billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+        };
+        await exports.addBillingPurchase(billCreated._id, trainerFeesPayload);
+      }
+    }
+  } else if (course.type !== SINGLE) {
+    const billsToCreate = new Array(payload.quantity).fill({
+      course: payload.course,
+      mainFee: payload.mainFee,
+      companies: payload.companies,
+      payer: payload.payer,
+    });
+    await CourseBill.insertMany(billsToCreate);
+  } else {
+    const traineeName = course.trainees.length
+      ? UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL')
+      : '';
+
+    const trainersName = course.trainers
+      .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
+
+    for (let i = 0; i < payload.quantity; i++) {
+      const billMaturityDate = CompaniDate(payload.maturityDate).add(`P${i}M`);
+      const description = 'Facture liée à des frais pédagogiques \r\n'
+        + 'Contrat de professionnalisation \r\n'
+        + `ACCOMPAGNEMENT ${billMaturityDate.format(MONTH_YEAR)} \r\n`
+        + `Nom de l'apprenant·e: ${traineeName} \r\n`
+        + `Nom du / des intervenants: ${trainersName}`;
+
+      await CourseBill.create({
+        ...omit(payload, ['quantity', 'maturityDate']),
+        mainFee: { ...payload.mainFee, description },
+        maturityDate: billMaturityDate.toISO(),
+      });
     }
   }
 };

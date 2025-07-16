@@ -87,7 +87,7 @@ exports.plugin = {
               fundingOrganisation: Joi.objectId(),
             }).xor('company', 'fundingOrganisation')
               .required(),
-            maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString, otherwise: Joi.forbidden() }),
+            maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString, otherwise: dateToISOString }),
           }),
         },
         pre: [{ method: authorizeCourseBillListCreation }],
