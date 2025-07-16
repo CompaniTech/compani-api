@@ -207,7 +207,7 @@ exports.authorizeCourseBillUpdate = async (req) => {
 };
 
 exports.authorizeCourseBillListEdition = async (req) => {
-  const { _ids: courseBillIds } = req.payload;
+  const { _ids: courseBillIds, billedAt } = req.payload;
 
   const courseBills = await CourseBill
     .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1, 'mainFee.price': 1 })
@@ -218,7 +218,7 @@ exports.authorizeCourseBillListEdition = async (req) => {
 
   if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
 
-  if (courseBills.some(bill => !get(bill, 'payer.address'))) {
+  if (billedAt && courseBills.some(bill => !get(bill, 'payer.address'))) {
     throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
   }
 
