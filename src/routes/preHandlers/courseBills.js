@@ -223,6 +223,10 @@ exports.authorizeCourseBillListEdition = async (req) => {
     if (courseBills.some(bill => !get(bill, 'payer.address'))) {
       throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
     }
+
+    if (courseBills.some(bill => !get(bill, 'mainFee.price'))) {
+      throw Boom.forbidden(translate[language].courseBillPriceMissing);
+    }
   }
 
   if (payer) {
@@ -236,10 +240,6 @@ exports.authorizeCourseBillListEdition = async (req) => {
       const company = await Company.countDocuments({ _id: payer.company }, { limit: 1 });
       if (!company) throw Boom.notFound();
     }
-  }
-
-  if (courseBills.some(bill => !get(bill, 'mainFee.price'))) {
-    throw Boom.forbidden(translate[language].courseBillPriceMissing);
   }
 
   return null;
