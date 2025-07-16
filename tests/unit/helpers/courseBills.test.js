@@ -1107,6 +1107,7 @@ describe('updateBillList', () => {
 
     await CourseBillHelper.updateBillList(payload);
 
+    sinon.assert.notCalled(updateManyCourseBill);
     SinonMongoose.calledOnceWithExactly(
       findOneCourseBillsNumber,
       [
@@ -1148,6 +1149,7 @@ describe('updateBillList', () => {
     await CourseBillHelper.updateBillList(payload);
 
     sinon.assert.notCalled(findOneCourseBillsNumber);
+    sinon.assert.notCalled(updateOneCourseBill);
     sinon.assert.calledOnceWithExactly(
       updateManyCourseBill,
       { _id: { $in: courseBillIds } },
@@ -1167,6 +1169,7 @@ describe('updateBillList', () => {
     await CourseBillHelper.updateBillList(payload);
 
     sinon.assert.notCalled(findOneCourseBillsNumber);
+    sinon.assert.notCalled(updateOneCourseBill);
     sinon.assert.calledOnceWithExactly(
       updateManyCourseBill,
       { _id: { $in: courseBillIds } },
