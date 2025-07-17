@@ -1360,7 +1360,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(response.result.message).toEqual('Le prix de la facture est manquant.');
     });
 
-    it('should return 403 if update percentage on course bill without percentage', async () => {
+    it('should return 403 if update percentage on course bill with price but without percentage', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[12]._id}`,
