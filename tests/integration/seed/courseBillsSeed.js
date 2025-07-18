@@ -98,7 +98,7 @@ const userCompanies = [
 ];
 
 const coursesList = [
-  { // 0 - linked to bill 0 and 8, linked to creditNote 1, expectedBillsCount is 1
+  { // 0 - linked to bill 0, 8 and 16, linked to creditNote 1, expectedBillsCount is 1
     _id: new ObjectId(),
     type: INTRA,
     maxTrainees: 8,
@@ -533,6 +533,13 @@ const courseBillsList = [
     companies: [otherCompany._id],
     mainFee: { count: 1, countUnit: TRAINEE },
     payer: { company: otherCompany._id },
+  },
+  { // 16 courseBill without price linked to course without global price
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    companies: [authCompany._id],
+    mainFee: { count: 1, countUnit: GROUP },
+    payer: { company: authCompany._id },
   },
 ];
 

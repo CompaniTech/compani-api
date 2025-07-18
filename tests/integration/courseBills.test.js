@@ -42,7 +42,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courseBills.length).toEqual(2);
+      expect(response.result.data.courseBills.length).toEqual(3);
       expect(response.result.data.courseBills).toEqual(expect.arrayContaining([
         expect.objectContaining({
           course: coursesList[0]._id,
@@ -1366,6 +1366,17 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
         url: `/coursebills/${courseBillsList[12]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: { mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 } },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if update percentage on courseBill linked to course without global price', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[16]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { mainFee: { price: 240, count: 1, countUnit: GROUP, percentage: 20 } },
       });
 
       expect(response.statusCode).toBe(403);

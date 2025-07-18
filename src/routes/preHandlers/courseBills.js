@@ -140,7 +140,7 @@ exports.authorizeCourseBillUpdate = async (req) => {
     .findOne({ _id: req.params._id })
     .populate({ path: 'payer.company', select: 'address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'address' })
-    .populate({ path: 'course', select: 'type' })
+    .populate({ path: 'course', select: 'type prices' })
     .lean();
   if (!courseBill) throw Boom.notFound();
   if (courseBill.mainFee.price && !courseBill.mainFee.percentage && has(req.payload, 'mainFee.percentage')) {
@@ -203,6 +203,11 @@ exports.authorizeCourseBillUpdate = async (req) => {
         throw Boom.conflict(translate[language].sumCourseBillsPercentageGreaterThan100);
       }
     }
+
+    const everyCourseBillCompanyHasGlobalPrice = courseBill.companies
+      .every(c => get(courseBill, 'course.prices', [])
+        .find(p => UtilsHelper.areObjectIdsEquals(p.company, c) && p.global));
+    if (!everyCourseBillCompanyHasGlobalPrice) throw Boom.forbidden();
   }
 
   return null;
