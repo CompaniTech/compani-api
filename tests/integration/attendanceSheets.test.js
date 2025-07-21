@@ -908,7 +908,8 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const attendanceSheetUpdated = await AttendanceSheet.countDocuments({ _id: attendanceSheetId, ...payload });
+      const attendanceSheetUpdated = await AttendanceSheet
+        .countDocuments({ _id: attendanceSheetId, 'slots.slotId': slotsList[4]._id });
       expect(attendanceSheetUpdated).toEqual(1);
       sinon.assert.notCalled(uploadCourseFile);
     });
@@ -1098,12 +1099,10 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       });
 
       expect(response.statusCode).toBe(200);
-      const attendanceSheetsWithBothSignatures = await AttendanceSheet.countDocuments({
-        _id: attendanceSheetList[8]._id,
-        'signatures.trainer': { $exists: true },
-        'signatures.trainee': { $exists: true },
-      });
-      expect(attendanceSheetsWithBothSignatures).toBe(1);
+      const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[8]._id });
+      const attendanceSheetHasBothSignatures = attendanceSheet.slots
+        .every(s => s.trainerSignature && s.traineesSignature.length);
+      expect(attendanceSheetHasBothSignatures).toBeTruthy();
       sinon.assert.calledOnce(uploadCourseFile);
     });
 

@@ -292,7 +292,7 @@ const attendanceSheet = {
   file: { publicId: 'mon upload', link: 'www.test.com' },
   trainee: traineeFromOtherCompany._id,
   companies: [otherCompany._id],
-  slots: [courseSlotsList[12]._id],
+  slots: [{ slotId: courseSlotsList[12]._id }],
   origin: WEBAPP,
   trainer: trainer._id,
 };
