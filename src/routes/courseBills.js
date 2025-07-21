@@ -131,7 +131,20 @@ exports.plugin = {
       options: {
         auth: { scope: ['coursebills:edit'] },
         validate: {
-          payload: Joi.object({ _ids: Joi.array().items(Joi.objectId()).min(1), billedAt: requiredDateToISOString }),
+          payload: Joi.alternatives().try(
+            Joi.object({
+              _ids: Joi.array().items(Joi.objectId()).min(1).required(),
+              billedAt: requiredDateToISOString,
+            }),
+            Joi.object({
+              _ids: Joi.array().items(Joi.objectId()).min(1).required(),
+              payer: Joi.object({
+                company: Joi.objectId(),
+                fundingOrganisation: Joi.objectId(),
+              }).oxor('company', 'fundingOrganisation'),
+              mainFee: Joi.object({ description: Joi.string().allow('') }),
+            })
+          ),
         },
         pre: [{ method: authorizeCourseBillListEdition }],
       },

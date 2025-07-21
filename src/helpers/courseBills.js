@@ -314,6 +314,24 @@ exports.updateBillList = async (payload) => {
 
     await CourseBillsNumber
       .updateOne({}, { $inc: { seq: modifiedCount } }, { new: true, upsert: true, setDefaultsOnInsert: true });
+  } else {
+    let payloadToSet = omit(payload, '_ids');
+    const payloadToUnset = {};
+    if (get(payload, 'mainFee.description') === '') {
+      payloadToSet = omit(payloadToSet, 'mainFee');
+      payloadToUnset['mainFee.description'] = '';
+    }
+
+    if (get(payload, 'payer.company')) payloadToUnset['payer.fundingOrganisation'] = '';
+    else if (get(payload, 'payer.fundingOrganisation')) payloadToUnset['payer.company'] = '';
+
+    await CourseBill.updateMany(
+      { _id: { $in: payload._ids } },
+      {
+        ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
+        ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+      }
+    );
   }
 };
 

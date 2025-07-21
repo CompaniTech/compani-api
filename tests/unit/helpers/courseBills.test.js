@@ -1080,17 +1080,20 @@ describe('updateBillList', () => {
   let findOneCourseBillsNumber;
   let updateOneCourseBill;
   let updateOneCourseBillsNumber;
+  let updateManyCourseBill;
 
   beforeEach(() => {
     findOneCourseBillsNumber = sinon.stub(CourseBillsNumber, 'findOne');
     updateOneCourseBill = sinon.stub(CourseBill, 'updateOne');
     updateOneCourseBillsNumber = sinon.stub(CourseBillsNumber, 'updateOne');
+    updateManyCourseBill = sinon.stub(CourseBill, 'updateMany');
   });
 
   afterEach(() => {
     findOneCourseBillsNumber.restore();
     updateOneCourseBill.restore();
     updateOneCourseBillsNumber.restore();
+    updateManyCourseBill.restore();
   });
 
   it('should invoice bills', async () => {
@@ -1104,6 +1107,7 @@ describe('updateBillList', () => {
 
     await CourseBillHelper.updateBillList(payload);
 
+    sinon.assert.notCalled(updateManyCourseBill);
     SinonMongoose.calledOnceWithExactly(
       findOneCourseBillsNumber,
       [
@@ -1134,6 +1138,48 @@ describe('updateBillList', () => {
       {},
       { $inc: { seq: 2 } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+  });
+
+  it('should remove description and edit payer with company for several bills', async () => {
+    const courseBillIds = [new ObjectId(), new ObjectId()];
+    const companyId = new ObjectId();
+    const payload = { _ids: courseBillIds, mainFee: { description: '' }, payer: { company: companyId } };
+
+    await CourseBillHelper.updateBillList(payload);
+
+    sinon.assert.notCalled(findOneCourseBillsNumber);
+    sinon.assert.notCalled(updateOneCourseBill);
+    sinon.assert.calledOnceWithExactly(
+      updateManyCourseBill,
+      { _id: { $in: courseBillIds } },
+      { $set: { 'payer.company': companyId }, $unset: { 'mainFee.description': '', 'payer.fundingOrganisation': '' } }
+    );
+  });
+
+  it('should edit description and payer with fundingOrganisation for several bills', async () => {
+    const courseBillIds = [new ObjectId(), new ObjectId()];
+    const fundingOrganisationId = new ObjectId();
+    const payload = {
+      _ids: courseBillIds,
+      mainFee: { description: 'Facture pour 3 apprenants' },
+      payer: { fundingOrganisation: fundingOrganisationId },
+    };
+
+    await CourseBillHelper.updateBillList(payload);
+
+    sinon.assert.notCalled(findOneCourseBillsNumber);
+    sinon.assert.notCalled(updateOneCourseBill);
+    sinon.assert.calledOnceWithExactly(
+      updateManyCourseBill,
+      { _id: { $in: courseBillIds } },
+      {
+        $set: {
+          'payer.fundingOrganisation': fundingOrganisationId,
+          'mainFee.description': 'Facture pour 3 apprenants',
+        },
+        $unset: { 'payer.company': '' },
+      }
     );
   });
 });

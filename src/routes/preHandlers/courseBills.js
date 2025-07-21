@@ -140,10 +140,12 @@ exports.authorizeCourseBillUpdate = async (req) => {
     .findOne({ _id: req.params._id })
     .populate({ path: 'payer.company', select: 'address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'address' })
-    .populate({ path: 'course', select: 'type' })
+    .populate({ path: 'course', select: 'type prices' })
     .lean();
   if (!courseBill) throw Boom.notFound();
-  if (!courseBill.mainFee.percentage && has(req.payload, 'mainFee.percentage')) throw Boom.forbidden();
+  if (courseBill.mainFee.price && !courseBill.mainFee.percentage && has(req.payload, 'mainFee.percentage')) {
+    throw Boom.forbidden();
+  }
   if (courseBill.course.type === INTRA && get(req.payload, 'mainFee.countUnit') === TRAINEE) throw Boom.badRequest();
   if (courseBill.course.type === SINGLE) {
     const hasWrongCountUnit = get(req.payload, 'mainFee.countUnit') === GROUP;
@@ -180,6 +182,8 @@ exports.authorizeCourseBillUpdate = async (req) => {
   }
 
   if (get(req.payload, 'mainFee.percentage')) {
+    if (!get(req.payload, 'mainFee.price')) throw Boom.badRequest();
+
     const existingCourseBills = await CourseBill
       .find({
         _id: { $ne: courseBill._id },
@@ -201,13 +205,18 @@ exports.authorizeCourseBillUpdate = async (req) => {
         throw Boom.conflict(translate[language].sumCourseBillsPercentageGreaterThan100);
       }
     }
+
+    const everyCourseBillCompanyHasGlobalPrice = courseBill.companies
+      .every(c => get(courseBill, 'course.prices', [])
+        .find(p => UtilsHelper.areObjectIdsEquals(p.company, c) && p.global));
+    if (!everyCourseBillCompanyHasGlobalPrice) throw Boom.forbidden();
   }
 
   return null;
 };
 
 exports.authorizeCourseBillListEdition = async (req) => {
-  const { _ids: courseBillIds, billedAt } = req.payload;
+  const { _ids: courseBillIds, billedAt, payer } = req.payload;
 
   const courseBills = await CourseBill
     .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1, 'mainFee.price': 1 })
@@ -215,15 +224,31 @@ exports.authorizeCourseBillListEdition = async (req) => {
     .populate({ path: 'payer.fundingOrganisation', select: 'address' })
     .lean();
   if (courseBills.length !== courseBillIds.length) throw Boom.notFound();
+  const someBillsAreAlreadyBilled = courseBills.some(bill => bill.billedAt);
 
-  if (courseBills.some(bill => bill.billedAt)) throw Boom.forbidden();
+  if (billedAt) {
+    if (someBillsAreAlreadyBilled) throw Boom.forbidden();
 
-  if (billedAt && courseBills.some(bill => !get(bill, 'payer.address'))) {
-    throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
+    if (courseBills.some(bill => !get(bill, 'payer.address'))) {
+      throw Boom.forbidden(translate[language].courseCompanyAddressMissing);
+    }
+
+    if (courseBills.some(bill => !get(bill, 'mainFee.price'))) {
+      throw Boom.forbidden(translate[language].courseBillPriceMissing);
+    }
   }
 
-  if (courseBills.some(bill => !get(bill, 'mainFee.price'))) {
-    throw Boom.forbidden(translate[language].courseBillPriceMissing);
+  if (payer) {
+    if (someBillsAreAlreadyBilled) throw Boom.forbidden();
+
+    if (payer.fundingOrganisation) {
+      const fundingOrganisation = await CourseFundingOrganisation
+        .countDocuments({ _id: payer.fundingOrganisation }, { limit: 1 });
+      if (!fundingOrganisation) throw Boom.notFound();
+    } else {
+      const company = await Company.countDocuments({ _id: payer.company }, { limit: 1 });
+      if (!company) throw Boom.notFound();
+    }
   }
 
   return null;
