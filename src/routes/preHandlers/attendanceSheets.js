@@ -91,7 +91,7 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     const courseSlotCount = await CourseSlot.countDocuments({ _id: { $in: slotsIds }, course: course._id });
     if (courseSlotCount !== slotsIds.length) throw Boom.notFound();
 
-    const attendanceSheetCount = await AttendanceSheet.countDocuments({ slots: { $in: slotsIds } });
+    const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
     if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
   }
 
@@ -112,7 +112,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   const isSingleCourse = attendanceSheet.course.type === SINGLE;
   if (!isSingleCourse) throw Boom.forbidden();
 
-  const hasBothSignatures = get(attendanceSheet, 'signatures.trainer') && get(attendanceSheet, 'signatures.trainee');
+  const hasBothSignatures = attendanceSheet.slots.every(s => s.trainerSignature && s.traineesSignature);
   if (req.payload.action) {
     if (!hasBothSignatures) throw Boom.forbidden();
   } else {
@@ -121,7 +121,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     if (courseSlotCount !== req.payload.slots.length) throw Boom.notFound();
 
     const slotAlreadyLinkedToAS = await AttendanceSheet
-      .countDocuments({ _id: { $ne: attendanceSheet._id }, slots: { $in: req.payload.slots } });
+      .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
     if (slotAlreadyLinkedToAS) throw Boom.conflict();
   }
 
@@ -129,11 +129,10 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
 };
 
 exports.authorizeAttendanceSheetSignature = async (req) => {
-  const attendanceSheet = await AttendanceSheet
-    .findOne({ _id: req.params._id, 'signatures.trainer': { $exists: true }, 'signatures.trainee': { $exists: false } })
-    .lean();
+  const attendanceSheet = await AttendanceSheet.findOne({ _id: req.params._id }).lean();
 
   if (!attendanceSheet) throw Boom.notFound();
+  if (attendanceSheet.slots.some(s => !s.trainerSignature || s.traineesSignature)) throw Boom.notFound();
 
   const { credentials } = req.auth;
   const loggedUserId = get(credentials, '_id');
