@@ -454,7 +454,7 @@ describe('SEEDS VERIFICATION', () => {
             .every((a) => {
               const slotsIds = a.course.slots.map(slot => slot._id);
 
-              return a.slots.every(slot => UtilsHelper.doesArrayIncludeId(slotsIds, slot));
+              return a.slots.every(slot => UtilsHelper.doesArrayIncludeId(slotsIds, slot.slotId));
             });
 
           expect(everySheetDateIsSlotDate).toBeTruthy();
