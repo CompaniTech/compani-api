@@ -216,12 +216,13 @@ exports.authorizeCourseBillUpdate = async (req) => {
 };
 
 exports.authorizeCourseBillListEdition = async (req) => {
-  const { _ids: courseBillIds, billedAt, payer } = req.payload;
+  const { _ids: courseBillIds, billedAt, payer, maturityDate, mainFee } = req.payload;
 
   const courseBills = await CourseBill
     .find({ _id: { $in: courseBillIds } }, { billedAt: 1, payer: 1, 'mainFee.price': 1 })
     .populate({ path: 'payer.company', select: 'address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'address' })
+    .populate({ path: 'course', select: 'type' })
     .lean();
   if (courseBills.length !== courseBillIds.length) throw Boom.notFound();
   const someBillsAreAlreadyBilled = courseBills.some(bill => bill.billedAt);
@@ -250,6 +251,9 @@ exports.authorizeCourseBillListEdition = async (req) => {
       if (!company) throw Boom.notFound();
     }
   }
+
+  const isSingleCourse = courseBills[0].course.type === SINGLE;
+  if (!isSingleCourse && (get(mainFee, 'price') || maturityDate)) throw Boom.forbidden();
 
   return null;
 };

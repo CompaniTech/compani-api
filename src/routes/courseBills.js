@@ -142,7 +142,11 @@ exports.plugin = {
                 company: Joi.objectId(),
                 fundingOrganisation: Joi.objectId(),
               }).oxor('company', 'fundingOrganisation'),
-              mainFee: Joi.object({ description: Joi.string().allow('') }),
+              mainFee: Joi.object({
+                description: Joi.string().allow(''),
+                price: Joi.number().positive(),
+              }),
+              maturityDate: dateToISOString,
             })
           ),
         },

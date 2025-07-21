@@ -315,6 +315,15 @@ exports.updateBillList = async (payload) => {
     await CourseBillsNumber
       .updateOne({}, { $inc: { seq: modifiedCount } }, { new: true, upsert: true, setDefaultsOnInsert: true });
   } else {
+    const courseBill = await CourseBill
+      .findOne({ _id: { $in: payload._ids[0] } }, { course: 1, maturityDate: 1 })
+      .populate({
+        path: 'course',
+        select: 'type trainees trainers',
+        populate: [{ path: 'trainees', select: 'identity' }, { path: 'trainers', select: 'identity' }],
+      })
+      .lean();
+
     let payloadToSet = omit(payload, '_ids');
     const payloadToUnset = {};
     if (get(payload, 'mainFee.description') === '') {
@@ -325,13 +334,53 @@ exports.updateBillList = async (payload) => {
     if (get(payload, 'payer.company')) payloadToUnset['payer.fundingOrganisation'] = '';
     else if (get(payload, 'payer.fundingOrganisation')) payloadToUnset['payer.company'] = '';
 
-    await CourseBill.updateMany(
-      { _id: { $in: payload._ids } },
-      {
-        ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
-        ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+    const { course } = courseBill;
+    const isSingleCourse = course.type === SINGLE;
+
+    if (!isSingleCourse) {
+      await CourseBill.updateMany(
+        { _id: { $in: payload._ids } },
+        {
+          ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
+          ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+        }
+      );
+    } else {
+      const maturityDateDiff = payload.maturityDate
+        ? CompaniDate(payload.maturityDate).diff(courseBill.maturityDate, 'days')
+        : null;
+
+      for (let i = 0; i < payload._ids.length; i++) {
+        const currentId = payload._ids[i];
+        const isFirstBill = i === 0;
+
+        if (!isFirstBill && maturityDateDiff) {
+          const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 });
+          const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDiff).toISO();
+          const newMaturityDateMonthYear = CompaniDate(billToUpdate.maturityDate)
+            .add(maturityDateDiff)
+            .format('LLLL yyyy');
+          const traineeName = UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL');
+          const trainersName = course.trainers
+            .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
+          const newDescription = 'Facture liée à des frais pédagogiques \r\n'
+            + 'Contrat de professionnalisation \r\n'
+            + `ACCOMPAGNEMENT ${newMaturityDateMonthYear}\r\n`
+            + `Nom de l'apprenant·e: ${traineeName} \r\n`
+            + `Nom du / des intervenants: ${trainersName}`;
+
+          payloadToSet['mainFee.description'] = newDescription;
+          payloadToSet.maturityDate = newMaturityDate;
+        }
+
+        const formattedPayload = {
+          ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
+          ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+        };
+
+        await CourseBill.updateOne({ _id: currentId }, formattedPayload);
       }
-    );
+    }
   }
 };
 
