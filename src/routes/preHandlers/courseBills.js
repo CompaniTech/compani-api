@@ -182,6 +182,8 @@ exports.authorizeCourseBillUpdate = async (req) => {
   }
 
   if (get(req.payload, 'mainFee.percentage')) {
+    if (!get(req.payload, 'mainFee.price')) throw Boom.badRequest();
+
     const existingCourseBills = await CourseBill
       .find({
         _id: { $ne: courseBill._id },

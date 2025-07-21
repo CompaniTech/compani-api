@@ -1281,6 +1281,17 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if payload contains percentage but no price', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillsList[13]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { mainFee: { count: 1, countUnit: TRAINEE, percentage: 20 } },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 404 if course bill doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'PUT',
