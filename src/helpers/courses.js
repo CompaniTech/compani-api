@@ -989,6 +989,7 @@ exports.formatInterCourseSlotsForPdf = (slot) => {
   const duration = UtilsHelper.getDuration(slot.startDate, slot.endDate);
 
   return {
+    _id: slot._id,
     address: get(slot, 'address.fullAddress') || null,
     date: CompaniDate(slot.startDate).format(DD_MM_YYYY),
     startHour: CompaniDate(slot.startDate).format(HH_MM),

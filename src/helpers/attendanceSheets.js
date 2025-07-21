@@ -1,6 +1,5 @@
 const omit = require('lodash/omit');
 const get = require('lodash/get');
-const has = require('lodash/has');
 const AttendanceSheet = require('../models/AttendanceSheet');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
 const User = require('../models/User');
@@ -39,7 +38,7 @@ exports.create = async (payload, credentials) => {
     companies = [get(traineeCompanyAtCourseRegistration[0], 'company')];
 
     if (payload.slots) {
-      slots = Array.isArray(payload.slots) ? payload.slots : [payload.slots];
+      slots = Array.isArray(payload.slots) ? payload.slots.map(s => ({ slotId: s })) : [{ slotId: payload.slots }];
       if (get(formationExpoTokenList, 'length')) formationExpoTokens.push(...formationExpoTokenList);
     }
   }
@@ -55,19 +54,17 @@ exports.create = async (payload, credentials) => {
       fileName: `trainer_signature_${fileName}`,
       file: payload.signature,
     });
+    slots = slots.map(s => ({ ...s, trainerSignature: { trainerId: payload.trainer, signature: signature.link } }));
   }
 
   const attendanceSheet = await AttendanceSheet.create({
     ...omit(payload, 'signature'),
     companies,
-    ...(Object.keys(fileUploaded).length
-      ? { file: fileUploaded }
-      : { signatures: { trainer: signature.link } }
-    ),
+    ...(Object.keys(fileUploaded).length && { file: fileUploaded }),
     ...(slots.length && { slots }),
   });
 
-  if (attendanceSheet.signatures) {
+  if (get(attendanceSheet, 'slots[0].trainerSignature')) {
     await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(attendanceSheet._id, formationExpoTokens);
   }
 };
@@ -89,7 +86,7 @@ exports.list = async (query, credentials) => {
 };
 
 exports.update = async (attendanceSheetId, payload) =>
-  AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: payload });
+  AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots: payload.slots.map(s => ({ slotId: s })) } });
 
 exports.sign = async (attendanceSheetId, payload, credentials) => {
   const signature = await GCloudStorageHelper.uploadCourseFile({
@@ -97,13 +94,21 @@ exports.sign = async (attendanceSheetId, payload, credentials) => {
     file: payload.signature,
   });
 
-  return AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { 'signatures.trainee': signature.link } });
+  const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
+  const slots = attendanceSheet.slots
+    .map(s => ({ ...s, traineesSignature: [{ traineeId: credentials._id, signature: signature.link }] }));
+
+  return AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots } });
 };
 
 exports.generate = async (attendanceSheetId) => {
   const attendanceSheet = await AttendanceSheet
     .findOne({ _id: attendanceSheetId })
-    .populate({ path: 'slots', select: 'step startDate endDate address', populate: { path: 'step', select: 'type' } })
+    .populate({
+      path: 'slots.slotId',
+      select: 'step startDate endDate address',
+      populate: { path: 'step', select: 'type' },
+    })
     .populate({ path: 'trainee', select: 'identity' })
     .populate({ path: 'trainer', select: 'identity' })
     .populate({
@@ -118,12 +123,13 @@ exports.generate = async (attendanceSheetId) => {
 
   const formattedCourse = {
     ...attendanceSheet.course,
-    slots: attendanceSheet.slots,
+    slots: attendanceSheet.slots.map(s => ({ ...s.slotId })),
     trainees: [attendanceSheet.trainee],
     trainers: [attendanceSheet.trainer],
   };
   const formattedCourseForInter = await CoursesHelper.formatInterCourseForPdf(formattedCourse);
-  const pdf = await InterAttendanceSheet.getPdf({ ...formattedCourseForInter, signatures: attendanceSheet.signatures });
+  const signedSlots = attendanceSheet.slots.map(s => ({ slotId: s.slotId._id, ...omit(s, 'slotId') }));
+  const pdf = await InterAttendanceSheet.getPdf({ ...formattedCourseForInter, signedSlots });
   const slotsDates = [...new Set(formattedCourseForInter.trainees[0].course.slots.map(slot => slot.date))].join(', ');
   const fileName = `emargements_${formattedCourseForInter.trainees[0].traineeName}_${slotsDates}`
     .replaceAll(/ - | |'/g, '_');
@@ -138,14 +144,17 @@ exports.delete = async (attendanceSheetId) => {
 
   await AttendanceSheet.deleteOne({ _id: attendanceSheet._id });
 
-  if (attendanceSheet.signatures) {
+  if (attendanceSheet.slots) {
     const promises = [];
-    const { signatures } = attendanceSheet;
-    if (has(signatures, 'trainer')) {
-      promises.push(GCloudStorageHelper.deleteCourseFile(signatures.trainer.split('/').pop()));
+    const { slots } = attendanceSheet;
+    const signatures = [];
+    for (const slot of slots) {
+      if (slot.trainerSignature) signatures.push(slot.trainerSignature.signature);
+      if (slot.traineesSignature) signatures.push(...slot.traineesSignature.map(s => s.signature));
     }
-    if (has(signatures, 'trainee')) {
-      promises.push(GCloudStorageHelper.deleteCourseFile(signatures.trainee.split('/').pop()));
+
+    for (const signature of [...new Set(signatures)]) {
+      promises.push(GCloudStorageHelper.deleteCourseFile(signature.split('/').pop()));
     }
 
     await Promise.all(promises);
