@@ -1,5 +1,6 @@
 const sinon = require('sinon');
 const { expect } = require('expect');
+const { ObjectId } = require('mongodb');
 const FileHelper = require('../../../src/helpers/file');
 const PdfHelper = require('../../../src/helpers/pdf');
 const InterAttendanceSheet = require('../../../src/data/pdf/attendanceSheet/interAttendanceSheet');
@@ -178,10 +179,12 @@ describe('getPdfContent', () => {
       'src/data/pdf/tmp/trainer_signature.png',
       'src/data/pdf/tmp/trainee_signature.png',
     ];
+    const slotIds = [new ObjectId(), new ObjectId()];
     const course = {
       name: 'Formation Test',
       slots: [
         {
+          _id: slotIds[0],
           address: '24 Avenue Daumesnil 75012 Paris',
           date: '16/09/2021',
           startHour: '10:00',
@@ -189,6 +192,7 @@ describe('getPdfContent', () => {
           duration: '3h',
         },
         {
+          _id: slotIds[1],
           address: '24 Avenue Daumesnil 75012 Paris',
           date: '16/09/2021',
           startHour: '14:00',
@@ -206,10 +210,18 @@ describe('getPdfContent', () => {
         { traineeName: 'Alain TÉRIEUR', registrationCompany: 'Alenvi Home SAS', course },
         { traineeName: 'Alex TÉRIEUR', registrationCompany: 'APEF Rouen', course },
       ],
-      signatures: {
-        trainer: 'https://storage.googleapis.com/compani-main/trainer_signature.png',
-        trainee: 'https://storage.googleapis.com/compani-main/trainee_signature.png',
-      },
+      signedSlots: [
+        {
+          slotId: slotIds[0],
+          trainerSignature: { signature: 'https://storage.googleapis.com/compani-main/trainer_signature.png' },
+          traineesSignature: [{ signature: 'https://storage.googleapis.com/compani-main/trainee_signature.png' }],
+        },
+        {
+          slotId: slotIds[1],
+          trainerSignature: { signature: 'https://storage.googleapis.com/compani-main/trainer_signature.png' },
+          traineesSignature: [{ signature: 'https://storage.googleapis.com/compani-main/trainee_signature.png' }],
+        },
+      ],
     };
     const table = {
       body: [
@@ -319,6 +331,9 @@ describe('getPdfContent', () => {
 
     downloadImages.onCall(0).returns(paths);
     downloadImages.onCall(1).returns(signaturePaths);
+    downloadImages.onCall(2).returns(signaturePaths);
+    downloadImages.onCall(3).returns(signaturePaths);
+    downloadImages.onCall(4).returns(signaturePaths);
 
     const result = await InterAttendanceSheet.getPdfContent(data);
 
@@ -327,6 +342,27 @@ describe('getPdfContent', () => {
     sinon.assert.calledWithExactly(downloadImages.getCall(0), imageList);
     sinon.assert.calledWithExactly(
       downloadImages.getCall(1),
+      [
+        { url: 'https://storage.googleapis.com/compani-main/trainer_signature.png', name: 'trainer_signature.png' },
+        { url: 'https://storage.googleapis.com/compani-main/trainee_signature.png', name: 'trainee_signature.png' },
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      downloadImages.getCall(2),
+      [
+        { url: 'https://storage.googleapis.com/compani-main/trainer_signature.png', name: 'trainer_signature.png' },
+        { url: 'https://storage.googleapis.com/compani-main/trainee_signature.png', name: 'trainee_signature.png' },
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      downloadImages.getCall(3),
+      [
+        { url: 'https://storage.googleapis.com/compani-main/trainer_signature.png', name: 'trainer_signature.png' },
+        { url: 'https://storage.googleapis.com/compani-main/trainee_signature.png', name: 'trainee_signature.png' },
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      downloadImages.getCall(4),
       [
         { url: 'https://storage.googleapis.com/compani-main/trainer_signature.png', name: 'trainer_signature.png' },
         { url: 'https://storage.googleapis.com/compani-main/trainee_signature.png', name: 'trainee_signature.png' },

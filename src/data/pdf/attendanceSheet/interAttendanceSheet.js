@@ -1,32 +1,29 @@
+const get = require('lodash/get');
 const UtilsPdfHelper = require('./utils');
+const UtilsHelper = require('../../../helpers/utils');
 const PdfHelper = require('../../../helpers/pdf');
 const FileHelper = require('../../../helpers/file');
 const { COPPER_500 } = require('../../../helpers/constants');
 
-const getSlotTableContent = (slot, trainerSignature, traineeSignature) => [
+const getSlotTableContent = (slot, slotSignatures) => [
   { stack: [{ text: `${slot.date}` }, { text: `${slot.address || ''}`, fontSize: 8 }] },
   { stack: [{ text: `${slot.duration}` }, { text: `${slot.startHour} - ${slot.endHour}`, fontSize: 8 }] },
-  ...traineeSignature ? [{ image: traineeSignature, width: 64, alignment: 'center' }] : [{ text: '' }],
-  ...trainerSignature ? [{ image: trainerSignature, width: 64, alignment: 'center' }] : [{ text: '' }],
+  ...get(slotSignatures, 'traineeSignature')
+    ? [{ image: slotSignatures.traineeSignature, width: 64, alignment: 'center' }]
+    : [{ text: '' }],
+  ...get(slotSignatures, 'trainerSignature')
+    ? [{ image: slotSignatures.trainerSignature, width: 64, alignment: 'center' }]
+    : [{ text: '' }],
 ];
 
 exports.getPdfContent = async (data) => {
-  const { trainees, signatures } = data;
-  let trainerSignature = null;
-  let traineeSignature = null;
+  const { trainees, signedSlots } = data;
   const [conscience, compani, decision, signature] = await UtilsPdfHelper.getImages();
-  if (signatures) {
-    const signatureImages = [
-      { url: signatures.trainer, name: 'trainer_signature.png' },
-      { url: signatures.trainee, name: 'trainee_signature.png' },
-    ];
-    const [trainer, trainee] = await FileHelper.downloadImages(signatureImages);
-    trainerSignature = trainer;
-    traineeSignature = trainee;
-  }
+  const slotsSignatures = [];
 
   const content = [];
-  trainees.forEach((trainee, i) => {
+  for (let i = 0; i < trainees.length; i++) {
+    const trainee = trainees[i];
     const title = `Émargements - ${trainee.traineeName}`;
     const columns = [
       [
@@ -48,7 +45,25 @@ exports.getPdfContent = async (data) => {
         { text: 'Signature de l\'intervenant·e', style: 'header' },
       ],
     ];
-    trainee.course.slots.forEach(slot => body.push(getSlotTableContent(slot, trainerSignature, traineeSignature)));
+
+    if (signedSlots) {
+      for (const slot of signedSlots) {
+        const slotSignatures = { slotId: slot.slotId };
+        const signatureImages = [
+          { url: slot.trainerSignature.signature, name: 'trainer_signature.png' },
+          { url: slot.traineesSignature[0].signature, name: 'trainee_signature.png' },
+        ];
+        const [trainerSignature, traineeSignature] = await FileHelper.downloadImages(signatureImages);
+        slotSignatures.trainerSignature = trainerSignature;
+        slotSignatures.traineeSignature = traineeSignature;
+        slotsSignatures.push(slotSignatures);
+      }
+    }
+
+    trainee.course.slots
+      .forEach(slot => body.push(
+        getSlotTableContent(slot, slotsSignatures.find(s => UtilsHelper.areObjectIdsEquals(slot._id, s.slotId)))
+      ));
 
     const table = [{
       table: { body, widths: ['auto', 'auto', '*', '*'], dontBreakRows: true },
@@ -57,7 +72,7 @@ exports.getPdfContent = async (data) => {
     }];
 
     content.push(header, table);
-  });
+  }
 
   return {
     template: {
@@ -75,7 +90,9 @@ exports.getPdfContent = async (data) => {
       compani,
       decision,
       signature,
-      ...trainerSignature && traineeSignature ? [trainerSignature, traineeSignature] : [],
+      ...slotsSignatures.length
+        ? [...new Set(slotsSignatures.flatMap(s => [s.trainerSignature, s.traineeSignature]))]
+        : [],
     ],
   };
 };
