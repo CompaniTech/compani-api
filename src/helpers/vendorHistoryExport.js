@@ -533,7 +533,7 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
     { courseBill: { $in: paymentsOnPeriod.map(p => p.courseBill) } },
     { nature: 1, number: 1, date: 1, courseBill: 1, type: 1, netInclTaxes: 1 }
   )
-    .populate({ path: 'courseBill', option: { isVendorUser }, select: 'number' })
+    .populate({ path: 'courseBill', option: { isVendorUser }, select: 'number payer' })
     .setOptions({ isVendorUser })
     .lean();
 
@@ -549,6 +549,7 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
             Identifiant: payment.number,
             Date: CompaniDate(payment.date).format(DD_MM_YYYY),
             'Facture associée': payment.courseBill.number,
+            'Id payeur facture': payment.courseBill.payer._id,
             'Numéro du paiement (parmi ceux de la même facture)': paymentIndex + 1,
             'Moyen de paiement': PAYMENT_TYPES_LIST[payment.type],
             Montant: UtilsHelper.formatFloatForExport(payment.netInclTaxes),

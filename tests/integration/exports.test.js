@@ -171,11 +171,11 @@ const vendorHistoryExportTypes = [
   {
     exportType: COURSE_PAYMENT,
     expectedRows: [
-      '\ufeff"Nature";"Identifiant";"Date";"Facture associée";"Numéro du paiement (parmi ceux de la même facture)";"Moyen de paiement";"Montant"',
-      '"Paiement";"REG-00001";"09/03/2022";"FACT-00001";1;"Prélèvement";"1100,00"',
-      '"Paiement";"REG-00003";"09/03/2022";"FACT-00005";1;"Espèces";"300,00"',
-      '"Paiement";"REG-00006";"01/04/2022";"FACT-00001";2;"Prélèvement";"50,00"',
-      '"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";2;"Chèque";"200,00"',
+      '\ufeff"Nature";"Identifiant";"Date";"Facture associée";"Id payeur facture";"Numéro du paiement (parmi ceux de la même facture)";"Moyen de paiement";"Montant"',
+      `"Paiement";"REG-00001";"09/03/2022";"FACT-00001";${courseFundingOrganisation._id};1;"Prélèvement";"1100,00"`,
+      `"Paiement";"REG-00003";"09/03/2022";"FACT-00005";${courseFundingOrganisation._id};1;"Espèces";"300,00"`,
+      `"Paiement";"REG-00006";"01/04/2022";"FACT-00001";${courseFundingOrganisation._id};2;"Prélèvement";"50,00"`,
+      `"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";${courseFundingOrganisation._id};2;"Chèque";"200,00"`,
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
   },
