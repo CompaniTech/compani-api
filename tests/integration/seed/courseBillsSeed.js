@@ -264,7 +264,7 @@ const coursesList = [
     expectedBillsCount: 1,
     certificateGenerationMode: GLOBAL,
   },
-  { // 12 - single course, expectedBillsCount is 2
+  { // 12 - single course, expectedBillsCount is 4
     _id: new ObjectId(),
     type: SINGLE,
     maxTrainees: 1,
@@ -274,7 +274,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     contact: vendorAdmin._id,
     trainees: [traineeFromOtherCompany._id],
-    expectedBillsCount: 3,
+    expectedBillsCount: 4,
     companies: [otherCompany._id],
     certificateGenerationMode: GLOBAL,
     prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],

@@ -1114,6 +1114,8 @@ describe('updateBillList', () => {
     await CourseBillHelper.updateBillList(payload);
 
     sinon.assert.notCalled(updateManyCourseBill);
+    sinon.assert.notCalled(formatIdentity);
+    sinon.assert.notCalled(findOneCourseBill);
     SinonMongoose.calledOnceWithExactly(
       findOneCourseBillsNumber,
       [
@@ -1149,13 +1151,33 @@ describe('updateBillList', () => {
 
   it('should remove description and edit payer with company for several bills (not single)', async () => {
     const courseBillIds = [new ObjectId(), new ObjectId()];
+    const course = { type: INTRA };
+    const courseBills = [{ _id: courseBillIds[0], course }, { _id: courseBillIds[1], course }];
     const companyId = new ObjectId();
     const payload = { _ids: courseBillIds, mainFee: { description: '' }, payer: { company: companyId } };
+
+    findOneCourseBill.onCall(0).returns(SinonMongoose.stubChainedQueries(courseBills[0]));
 
     await CourseBillHelper.updateBillList(payload);
 
     sinon.assert.notCalled(findOneCourseBillsNumber);
     sinon.assert.notCalled(updateOneCourseBill);
+    sinon.assert.notCalled(formatIdentity);
+    SinonMongoose.calledWithExactly(
+      findOneCourseBill,
+      [
+        { query: 'findOne', args: [{ _id: { $in: courseBillIds[0] } }, { course: 1, maturityDate: 1 }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type trainees trainers',
+            populate: [{ path: 'trainees', select: 'identity' }, { path: 'trainers', select: 'identity' }],
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.calledOnceWithExactly(
       updateManyCourseBill,
       { _id: { $in: courseBillIds } },
@@ -1165,6 +1187,8 @@ describe('updateBillList', () => {
 
   it('should edit description and payer with fundingOrganisation for several bills (not single)', async () => {
     const courseBillIds = [new ObjectId(), new ObjectId()];
+    const course = { type: INTRA };
+    const courseBills = [{ _id: courseBillIds[0], course }, { _id: courseBillIds[1], course }];
     const fundingOrganisationId = new ObjectId();
     const payload = {
       _ids: courseBillIds,
@@ -1172,10 +1196,28 @@ describe('updateBillList', () => {
       payer: { fundingOrganisation: fundingOrganisationId },
     };
 
+    findOneCourseBill.onCall(0).returns(SinonMongoose.stubChainedQueries(courseBills[0]));
+
     await CourseBillHelper.updateBillList(payload);
 
     sinon.assert.notCalled(findOneCourseBillsNumber);
     sinon.assert.notCalled(updateOneCourseBill);
+    sinon.assert.notCalled(formatIdentity);
+    SinonMongoose.calledWithExactly(
+      findOneCourseBill,
+      [
+        { query: 'findOne', args: [{ _id: { $in: courseBillIds[0] } }, { course: 1, maturityDate: 1 }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type trainees trainers',
+            populate: [{ path: 'trainees', select: 'identity' }, { path: 'trainers', select: 'identity' }],
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.calledOnceWithExactly(
       updateManyCourseBill,
       { _id: { $in: courseBillIds } },
