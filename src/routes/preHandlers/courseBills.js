@@ -253,7 +253,7 @@ exports.authorizeCourseBillListEdition = async (req) => {
   }
 
   const isSingleCourse = courseBills[0].course.type === SINGLE;
-  if (!isSingleCourse && (get(mainFee, 'price') || maturityDate)) throw Boom.forbidden();
+  if (!isSingleCourse && (get(mainFee, 'price') || maturityDate)) throw Boom.badRequest();
 
   return null;
 };

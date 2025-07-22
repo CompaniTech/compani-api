@@ -506,6 +506,7 @@ const courseBillsList = [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 90, count: 1 },
       { _id: new ObjectId(), billingItem: billingItemList[1]._id, price: 400, count: 1 },
     ],
+    maturityDate: '2025-07-14T22:00:00.000+00:00',
   },
   { // 13
     _id: new ObjectId(),
@@ -540,6 +541,14 @@ const courseBillsList = [
     companies: [authCompany._id],
     mainFee: { count: 1, countUnit: GROUP },
     payer: { company: authCompany._id },
+  },
+  { // 17
+    _id: new ObjectId(),
+    course: coursesList[12]._id,
+    companies: [otherCompany._id],
+    mainFee: { price: 100, count: 1, countUnit: TRAINEE, description: 'test' },
+    payer: { company: otherCompany._id },
+    maturityDate: '2025-08-14T22:00:00.000+00:00',
   },
 ];
 

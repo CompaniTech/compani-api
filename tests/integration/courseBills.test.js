@@ -1490,7 +1490,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       expect(countBill).toBe(3);
     });
 
-    it('should edit courseBills', async () => {
+    it('should edit courseBills (not single course)', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
@@ -1508,6 +1508,28 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         mainFee: { description: 'Description de la facture' },
       });
       expect(courseBillsCountAfterUpdate).toBe(3);
+    });
+
+    it('should edit courseBills (single course)', async () => {
+      const description = 'Facture liée à des frais pédagogiques \r\n'
+      + 'Contrat de professionnalisation \r\n'
+      + 'ACCOMPAGNEMENT juillet 2025\r\n'
+      + 'Nom de l\'apprenant·e: Tom De Savoie \r\n'
+      + 'Nom du / des intervenants: Trainer Trainer';
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: {
+          _ids: [courseBillsList[12]._id, courseBillsList[17]._id],
+          payer: { company: authCompany._id },
+          maturityDate: '2025-07-25T22:00:00.000+00:00',
+          mainFee: { description, price: 1400 },
+        },
+      });
+
+      expect(response.statusCode).toBe(200);
     });
 
     it('should remove main fee description', async () => {
@@ -1579,6 +1601,36 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
           _ids: courseBillsToValidate,
           billedAt: '2022-03-08T00:00:00.000Z',
           payer: { company: authCompany._id },
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if price is in payload and course is not single', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: {
+          _ids: courseBillsToValidate,
+          payer: { company: authCompany._id },
+          mainFee: { price: 1400 },
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if maturityDate is in payload and course is not single', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebills/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: {
+          _ids: courseBillsToValidate,
+          payer: { company: authCompany._id },
+          maturityDate: '2025-07-25T22:00:00.000+00:00',
         },
       });
 

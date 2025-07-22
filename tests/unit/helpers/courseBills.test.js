@@ -1081,12 +1081,16 @@ describe('updateBillList', () => {
   let updateOneCourseBill;
   let updateOneCourseBillsNumber;
   let updateManyCourseBill;
+  let findOneCourseBill;
+  let formatIdentity;
 
   beforeEach(() => {
     findOneCourseBillsNumber = sinon.stub(CourseBillsNumber, 'findOne');
     updateOneCourseBill = sinon.stub(CourseBill, 'updateOne');
     updateOneCourseBillsNumber = sinon.stub(CourseBillsNumber, 'updateOne');
     updateManyCourseBill = sinon.stub(CourseBill, 'updateMany');
+    findOneCourseBill = sinon.stub(CourseBill, 'findOne');
+    formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
   });
 
   afterEach(() => {
@@ -1094,6 +1098,8 @@ describe('updateBillList', () => {
     updateOneCourseBill.restore();
     updateOneCourseBillsNumber.restore();
     updateManyCourseBill.restore();
+    findOneCourseBill.restore();
+    formatIdentity.restore();
   });
 
   it('should invoice bills', async () => {
@@ -1141,7 +1147,7 @@ describe('updateBillList', () => {
     );
   });
 
-  it('should remove description and edit payer with company for several bills', async () => {
+  it('should remove description and edit payer with company for several bills (not single)', async () => {
     const courseBillIds = [new ObjectId(), new ObjectId()];
     const companyId = new ObjectId();
     const payload = { _ids: courseBillIds, mainFee: { description: '' }, payer: { company: companyId } };
@@ -1157,7 +1163,7 @@ describe('updateBillList', () => {
     );
   });
 
-  it('should edit description and payer with fundingOrganisation for several bills', async () => {
+  it('should edit description and payer with fundingOrganisation for several bills (not single)', async () => {
     const courseBillIds = [new ObjectId(), new ObjectId()];
     const fundingOrganisationId = new ObjectId();
     const payload = {
@@ -1177,6 +1183,95 @@ describe('updateBillList', () => {
         $set: {
           'payer.fundingOrganisation': fundingOrganisationId,
           'mainFee.description': 'Facture pour 3 apprenants',
+        },
+        $unset: { 'payer.company': '' },
+      }
+    );
+  });
+
+  it('should edit several bills for single course', async () => {
+    const courseBillIds = [new ObjectId(), new ObjectId()];
+    const course = {
+      type: SINGLE,
+      trainers: [
+        { identity: { firstname: 'toto', lastname: 'formateur' } },
+        { identity: { firstname: 'architecte', lastname: 'parcours' } },
+      ],
+      trainees: [{ identity: { firstname: 'lili', lastname: 'apprenante' } }],
+    };
+    const courseBills = [
+      { _id: courseBillIds[0], maturityDate: '2025-07-10T22:00:00.000Z', course },
+      { _id: courseBillIds[1], maturityDate: '2025-08-10T22:00:00.000Z', course },
+    ];
+    const fundingOrganisationId = new ObjectId();
+    const payload = {
+      _ids: courseBillIds,
+      mainFee: { description: 'Facture pour 1 apprenant', price: 1200 },
+      payer: { fundingOrganisation: fundingOrganisationId },
+      maturityDate: '2025-07-27T22:00:00.000Z',
+    };
+    const description = 'Facture liée à des frais pédagogiques \r\n'
+      + 'Contrat de professionnalisation \r\n'
+      + 'ACCOMPAGNEMENT août 2025\r\n'
+      + 'Nom de l\'apprenant·e: Lili Apprenante \r\n'
+      + 'Nom du / des intervenants: Toto Formateur, Architecte Parcours';
+
+    findOneCourseBill.onCall(0).returns(SinonMongoose.stubChainedQueries(courseBills[0]));
+    findOneCourseBill.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBills[1], ['lean']));
+    formatIdentity.onCall(0).returns('Lili Apprenante');
+    formatIdentity.onCall(1).returns('Toto Formateur');
+    formatIdentity.onCall(2).returns('Architecte Parcours');
+
+    await CourseBillHelper.updateBillList(payload);
+
+    sinon.assert.notCalled(findOneCourseBillsNumber);
+    sinon.assert.notCalled(updateOneCourseBillsNumber);
+    SinonMongoose.calledWithExactly(
+      findOneCourseBill,
+      [
+        { query: 'findOne', args: [{ _id: { $in: courseBillIds[0] } }, { course: 1, maturityDate: 1 }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type trainees trainers',
+            populate: [{ path: 'trainees', select: 'identity' }, { path: 'trainers', select: 'identity' }],
+          }],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    sinon.assert.calledWithExactly(
+      updateOneCourseBill.getCall(0),
+      { _id: courseBillIds[0] },
+      {
+        $set: {
+          'mainFee.description': 'Facture pour 1 apprenant',
+          'mainFee.price': 1200,
+          'payer.fundingOrganisation': fundingOrganisationId,
+          maturityDate: '2025-07-27T22:00:00.000Z',
+        },
+        $unset: { 'payer.company': '' },
+      }
+    );
+    SinonMongoose.calledWithExactly(
+      findOneCourseBill,
+      [{ query: 'findOne', args: [{ _id: courseBillIds[1] }, { maturityDate: 1 }] }, { query: 'lean' }],
+      1
+    );
+    sinon.assert.calledWithExactly(formatIdentity.getCall(0), { firstname: 'lili', lastname: 'apprenante' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstname: 'toto', lastname: 'formateur' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(2), { firstname: 'architecte', lastname: 'parcours' }, 'FL');
+    sinon.assert.calledWithExactly(
+      updateOneCourseBill.getCall(1),
+      { _id: courseBillIds[1] },
+      {
+        $set: {
+          'mainFee.description': description,
+          'mainFee.price': 1200,
+          'payer.fundingOrganisation': fundingOrganisationId,
+          maturityDate: '2025-08-27T22:00:00.000Z',
         },
         $unset: { 'payer.company': '' },
       }

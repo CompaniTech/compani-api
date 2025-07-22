@@ -355,7 +355,7 @@ exports.updateBillList = async (payload) => {
         const isFirstBill = i === 0;
 
         if (!isFirstBill && maturityDateDiff) {
-          const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 });
+          const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
           const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDiff).toISO();
           const newMaturityDateMonthYear = CompaniDate(billToUpdate.maturityDate)
             .add(maturityDateDiff)
