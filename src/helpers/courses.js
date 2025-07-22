@@ -755,7 +755,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       path: 'attendanceSheets',
       match: { trainee: credentials._id },
       options: { requestingOwnInfos: true },
-      populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
+      populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
     .select('_id misc format type trainees')
     .lean({ autopopulate: true, virtuals: true });
