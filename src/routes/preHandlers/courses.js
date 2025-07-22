@@ -586,11 +586,21 @@ exports.authorizeAccessRuleDeletion = async (req) => {
 exports.authorizeGetFollowUp = async (req) => {
   const credentials = get(req, 'auth.credentials');
   const loggedUserVendorRole = get(credentials, 'role.vendor.name');
-  const isClientAndAuthorized = !!req.query.company &&
+  const loggedUserClientRole = get(credentials, 'role.client.name');
+
+  const isClientAndAuthorized = !!req.query.company && [CLIENT_ADMIN, COACH].includes(loggedUserClientRole) &&
     UtilsHelper.areObjectIdsEquals(get(credentials, 'company._id'), req.query.company);
 
   const isHoldingAndAuthorized = !!req.query.holding &&
     UtilsHelper.areObjectIdsEquals(get(credentials, 'holding._id'), req.query.holding);
+
+  if (req.query.trainee) {
+    const course = await Course.findOne({ _id: req.params._id }, { trainees: 1, tutors: 1 }).lean();
+    if (!UtilsHelper.doesArrayIncludeId(course.trainees, req.query.trainee)) throw Boom.notFound();
+    if (!UtilsHelper.doesArrayIncludeId(course.tutors, credentials._id)) throw Boom.forbidden();
+
+    return null;
+  }
 
   if (!loggedUserVendorRole && !isClientAndAuthorized && !isHoldingAndAuthorized) throw Boom.forbidden();
 

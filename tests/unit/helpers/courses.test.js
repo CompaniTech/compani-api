@@ -2779,13 +2779,14 @@ describe('getCourse', () => {
         trainers: [
           { _id: new ObjectId(), identity: { firstname: 'Paul', lastName: 'Durand' }, biography: 'voici ma bio' },
         ],
+        trainees: [new ObjectId(), new ObjectId()],
         tutors: [{ _id: new ObjectId(), identity: { firstname: 'Pauline', lastName: 'Durand' } }],
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
 
       formatCourseWithProgress.returns({
-        ...course,
+        ...omit(course, 'trainees'),
         subProgram: {
           ...course.subProgram,
           steps: [{ ...course.subProgram.steps[0], progress: { eLearning: 1 } }],
@@ -2795,7 +2796,7 @@ describe('getCourse', () => {
 
       const result = await CourseHelper.getCourse({ action: PEDAGOGY }, { _id: course._id }, loggedUser);
       expect(result).toMatchObject({
-        ...course,
+        ...omit(course, 'trainees'),
         subProgram: {
           ...course.subProgram,
           steps: [{ ...course.subProgram.steps[0], progress: { eLearning: 1 } }],
@@ -2859,7 +2860,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format type'] },
+          { query: 'select', args: ['_id misc format type trainees'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -2920,13 +2921,15 @@ describe('getCourse', () => {
         trainers: [
           { _id: new ObjectId(), identity: { firstname: 'Paul', lastName: 'Durand' }, biography: 'voici ma bio' },
         ],
+        trainees: [new ObjectId(), new ObjectId()],
+
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
       attendanceCountDocuments.returns(0);
 
       formatCourseWithProgress.returns({
-        ...course,
+        ...omit(course, 'trainees'),
         subProgram: {
           ...course.subProgram,
           steps: [
@@ -2944,7 +2947,7 @@ describe('getCourse', () => {
       const result = await CourseHelper.getCourse({ action: PEDAGOGY }, { _id: course._id }, loggedUser);
 
       expect(result).toMatchObject({
-        ...course,
+        ...omit(course, 'trainees'),
         areLastSlotAttendancesValidated: false,
         subProgram: {
           ...course.subProgram,
@@ -3016,7 +3019,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format type'] },
+          { query: 'select', args: ['_id misc format type trainees'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3077,13 +3080,14 @@ describe('getCourse', () => {
         trainers: [
           { _id: new ObjectId(), identity: { firstname: 'Paul', lastName: 'Durand' }, biography: 'voici ma bio' },
         ],
+        trainees: [new ObjectId(), new ObjectId()],
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
       attendanceCountDocuments.returns(1);
 
       formatCourseWithProgress.returns({
-        ...course,
+        ...omit(course, 'trainees'),
         subProgram: {
           ...course.subProgram,
           steps: [
@@ -3101,7 +3105,7 @@ describe('getCourse', () => {
       const result = await CourseHelper.getCourse({ action: PEDAGOGY }, { _id: course._id }, loggedUser);
 
       expect(result).toMatchObject({
-        ...course,
+        ...omit(course, 'trainees'),
         areLastSlotAttendancesValidated: true,
         subProgram: {
           ...course.subProgram,
@@ -3173,7 +3177,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format type'] },
+          { query: 'select', args: ['_id misc format type trainees'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3216,6 +3220,7 @@ describe('getCourse', () => {
         slots: [{ step: { _id: stepId }, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
         slotsToPlan: [],
         trainers: [{ _id: loggedUser._id }],
+        trainees: [new ObjectId(), new ObjectId()],
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
@@ -3306,7 +3311,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format type'] },
+          { query: 'select', args: ['_id misc format type trainees'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3323,6 +3328,7 @@ describe('getCourse', () => {
       };
       const courseId = new ObjectId();
       const stepId = new ObjectId();
+      const traineeId = new ObjectId();
       const course = {
         _id: courseId,
         type: INTRA,
@@ -3348,6 +3354,8 @@ describe('getCourse', () => {
         slots: [{ step: stepId, startDate: '2020-11-03T09:00:00.000Z', endDate: '2020-11-03T12:00:00.000Z' }],
         slotsToPlan: [],
         tutors: [{ _id: loggedUser._id }],
+        trainees: [traineeId],
+
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
@@ -3439,7 +3447,7 @@ describe('getCourse', () => {
               populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
             }],
           },
-          { query: 'select', args: ['_id misc format type'] },
+          { query: 'select', args: ['_id misc format type trainees'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3981,6 +3989,66 @@ describe('getCourseFollowUp', () => {
       1
     );
     sinon.assert.calledOnceWithExactly(getTraineesWithElearningProgress, [course.trainees[0]], course.subProgram.steps);
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+  });
+
+  it('should return elearning course follow up from trainee', async () => {
+    const companyId = new ObjectId();
+    const credentials = { company: companyId };
+    const traineeId = new ObjectId();
+    const course = {
+      _id: new ObjectId(),
+      subProgram: { name: 'je suis un sous programme', steps: [{ _id: 'abc' }, { _id: 'def' }, { _id: 'ghi' }] },
+      trainees: [{ _id: traineeId, company: companyId }],
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(course));
+    formatStep.callsFake(s => s);
+    getTraineesWithElearningProgress.returns([
+      { _id: traineeId, steps: { progress: 1 }, progress: 1, company: companyId },
+    ]);
+
+    const result = await CourseHelper.getCourseFollowUp(course._id, { trainee: traineeId }, credentials);
+
+    expect(result).toEqual({
+      trainee: { _id: traineeId, steps: { progress: 1 }, progress: 1, company: companyId },
+    });
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1 }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'subProgram',
+            select: 'name steps program',
+            populate: [
+              { path: 'program', select: 'name' },
+              {
+                path: 'steps',
+                select: 'name activities type',
+                populate: {
+                  path: 'activities',
+                  select: 'name type',
+                  populate: { path: 'activityHistories', match: { user: { $in: [traineeId] } } },
+                },
+              },
+            ],
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainees',
+            select: 'identity.firstname identity.lastname firstMobileConnectionDate loginCode',
+            populate: { path: 'company' },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(getTraineesWithElearningProgress, course.trainees, course.subProgram.steps);
     sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
   });
 });
