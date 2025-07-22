@@ -40,7 +40,7 @@ const checkPayload = async (courseSlot, payload) => {
   const hasBothDates = !!(startDate && endDate);
   const hasOneDate = !!(startDate || endDate);
 
-  const attendanceSheets = await AttendanceSheet.countDocuments({ slots: courseSlot._id });
+  const attendanceSheets = await AttendanceSheet.countDocuments({ 'slots.slotId': courseSlot._id });
   if (attendanceSheets) throw Boom.forbidden(translate[language].courseSlotWithAttendances);
 
   if (!hasOneDate) {
