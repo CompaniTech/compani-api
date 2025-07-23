@@ -27,7 +27,7 @@ const AttendanceSheetSchema = mongoose.Schema({
           }
           return true;
         },
-        message: 'file.publicId is required when there is no trainer signature.',
+        message: 'file.link is required when there is no trainer signature.',
       },
     },
   },
