@@ -48,14 +48,12 @@ exports.getPdfContent = async (data) => {
 
     if (signedSlots) {
       for (const slot of signedSlots) {
-        const slotSignatures = { slotId: slot.slotId };
         const signatureImages = [
           { url: slot.trainerSignature.signature, name: 'trainer_signature.png' },
           { url: slot.traineesSignature[0].signature, name: 'trainee_signature.png' },
         ];
         const [trainerSignature, traineeSignature] = await FileHelper.downloadImages(signatureImages);
-        slotSignatures.trainerSignature = trainerSignature;
-        slotSignatures.traineeSignature = traineeSignature;
+        const slotSignatures = { slotId: slot.slotId, trainerSignature, traineeSignature };
         slotsSignatures.push(slotSignatures);
       }
     }
