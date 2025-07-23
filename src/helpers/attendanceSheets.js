@@ -123,7 +123,7 @@ exports.generate = async (attendanceSheetId) => {
 
   const formattedCourse = {
     ...attendanceSheet.course,
-    slots: attendanceSheet.slots.map(s => ({ ...s.slotId })),
+    slots: attendanceSheet.slots.map(s => s.slotId),
     trainees: [attendanceSheet.trainee],
     trainers: [attendanceSheet.trainer],
   };

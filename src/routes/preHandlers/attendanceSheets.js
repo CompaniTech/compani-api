@@ -112,8 +112,8 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   const isSingleCourse = attendanceSheet.course.type === SINGLE;
   if (!isSingleCourse) throw Boom.forbidden();
 
-  const hasBothSignatures = attendanceSheet.slots.every(s => s.trainerSignature && s.traineesSignature);
   if (req.payload.action) {
+    const hasBothSignatures = attendanceSheet.slots.every(s => s.trainerSignature && s.traineesSignature);
     if (!hasBothSignatures) throw Boom.forbidden();
   } else {
     const courseSlotCount = await CourseSlot
