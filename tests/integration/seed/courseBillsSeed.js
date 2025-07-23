@@ -108,7 +108,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     contact: vendorAdmin._id,
     trainees: [auxiliary._id],
-    expectedBillsCount: 4,
+    expectedBillsCount: 5,
     companies: [authCompany._id],
     certificateGenerationMode: GLOBAL,
   },
@@ -549,18 +549,6 @@ const courseBillsList = [
     mainFee: { price: 100, count: 1, countUnit: TRAINEE, description: 'test' },
     payer: { company: otherCompany._id },
     maturityDate: '2025-08-14T22:00:00.000+00:00',
-  },
-  { // 18 - billed
-    _id: new ObjectId(),
-    course: coursesList[0]._id,
-    companies: [authCompany._id],
-    payer: { company: authCompany._id },
-    mainFee: { price: 120, count: 1, description: 'Lorem ipsum', countUnit: GROUP },
-    billedAt: '2022-03-07T00:00:00.000Z',
-    number: 'FACT-00001',
-    billingPurchaseList: [
-      { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 9, count: 1, description: 'une description' },
-    ],
   },
 ];
 

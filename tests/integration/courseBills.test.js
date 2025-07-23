@@ -875,7 +875,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
       ];
 
       wrongParams.forEach((param) => {
-        it(`should return 400 if quantity > 1 and ${param} is in payload`, async () => {
+        it(`should return 400 if quantity > 1 and ${param.key} is in payload`, async () => {
           const response = await app.inject({
             method: 'POST',
             url: '/coursebills/list-creation',
@@ -1655,7 +1655,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         method: 'POST',
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { _ids: [...courseBillToEdit, courseBillsList[18]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+        payload: { _ids: [...courseBillToEdit, courseBillsList[9]._id], billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
       expect(response.statusCode).toBe(403);
