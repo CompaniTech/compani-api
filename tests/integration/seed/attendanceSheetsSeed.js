@@ -414,7 +414,7 @@ const attendanceSheetList = [
         signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
       },
       traineesSignature: [{
-        trainerId: userList[1]._id,
+        traineeId: userList[1]._id,
         signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
       }],
     }],
@@ -433,7 +433,7 @@ const attendanceSheetList = [
         signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
       },
       traineesSignature: [{
-        trainerId: userList[1]._id,
+        traineeId: userList[1]._id,
         signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
       }],
     }],
