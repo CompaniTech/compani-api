@@ -105,7 +105,7 @@ exports.authorizeCourseBillListCreation = async (req) => {
       .lean();
 
     const courseBillsWithoutCreditNote = courseBills.filter(cb => !cb.courseCreditNote);
-    if (courseBillsWithoutCreditNote.length + quantity > course.expectedBillsCount) throw Boom.conflict('ca pete ici');
+    if (courseBillsWithoutCreditNote.length + quantity > course.expectedBillsCount) throw Boom.conflict();
   }
 
   return null;
