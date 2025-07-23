@@ -237,6 +237,10 @@ exports.authorizeCourseBillListEdition = async (req) => {
     if (courseBills.some(bill => !get(bill, 'mainFee.price'))) {
       throw Boom.forbidden(translate[language].courseBillPriceMissing);
     }
+  } else {
+    const billsAreLinkedToSameCourse = courseBills
+      .every(bill => UtilsHelper.areObjectIdsEquals(bill.course._id, courseBills[0].course._id));
+    if (!billsAreLinkedToSameCourse) throw Boom.forbidden();
   }
 
   if (payer) {

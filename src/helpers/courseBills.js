@@ -356,21 +356,18 @@ exports.updateBillList = async (payload) => {
 
         if (!isFirstBill && maturityDateDiff) {
           const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
-          const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDiff).toISO();
-          const newMaturityDateMonthYear = CompaniDate(billToUpdate.maturityDate)
-            .add(maturityDateDiff)
-            .format('LLLL yyyy');
+          const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDiff);
           const traineeName = UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL');
           const trainersName = course.trainers
             .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
           const newDescription = 'Facture liée à des frais pédagogiques \r\n'
             + 'Contrat de professionnalisation \r\n'
-            + `ACCOMPAGNEMENT ${newMaturityDateMonthYear}\r\n`
+            + `ACCOMPAGNEMENT ${newMaturityDate.format('LLLL yyyy')}\r\n`
             + `Nom de l'apprenant·e: ${traineeName} \r\n`
             + `Nom du / des intervenants: ${trainersName}`;
 
           payloadToSet['mainFee.description'] = newDescription;
-          payloadToSet.maturityDate = newMaturityDate;
+          payloadToSet.maturityDate = newMaturityDate.toISO();
         }
 
         const formattedPayload = {
