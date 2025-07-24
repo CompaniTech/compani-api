@@ -38,7 +38,6 @@ exports.create = async (payload, credentials) => {
     companies = [get(traineeCompanyAtCourseRegistration[0], 'company')];
 
     if (payload.slots) {
-      slots = Array.isArray(payload.slots) ? payload.slots.map(s => ({ slotId: s })) : [{ slotId: payload.slots }];
       if (get(formationExpoTokenList, 'length')) formationExpoTokens.push(...formationExpoTokenList);
     }
   }
@@ -48,13 +47,19 @@ exports.create = async (payload, credentials) => {
       fileName: `emargement_${fileName}`,
       file: payload.file,
     });
+    if (payload.slots) {
+      slots = Array.isArray(payload.slots) ? payload.slots.map(s => ({ slotId: s })) : [{ slotId: payload.slots }];
+    }
   } else {
     fileName = `${credentials._id}_course_${payload.course}`;
     signature = await GCloudStorageHelper.uploadCourseFile({
       fileName: `trainer_signature_${fileName}`,
       file: payload.signature,
     });
-    slots = slots.map(s => ({ ...s, trainerSignature: { trainerId: payload.trainer, signature: signature.link } }));
+    slots = (Array.isArray(payload.slots) ? payload.slots : [payload.slots]).map(s => ({
+      slotId: s,
+      trainerSignature: { trainerId: payload.trainer, signature: signature.link },
+    }));
   }
 
   const attendanceSheet = await AttendanceSheet.create({
