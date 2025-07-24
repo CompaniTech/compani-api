@@ -24,6 +24,7 @@ const {
   MONTH_YEAR,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
+const { CompaniDuration } = require('./dates/companiDurations');
 
 exports.getNetInclTaxes = (bill) => {
   const mainFeeTotal = NumbersHelper.oldMultiply(bill.mainFee.price, bill.mainFee.count);
@@ -291,6 +292,16 @@ exports.updateCourseBill = async (courseBillId, payload) => {
   }
 };
 
+const getMaturityDateDurationToAdd = (initialMaturityDate, newMaturityDate) => {
+  const maturityDateDiffInMonth = CompaniDate(newMaturityDate).diff(initialMaturityDate, 'months');
+  const monthToAdd = Math.trunc(CompaniDuration(maturityDateDiffInMonth).asMonths());
+  const dateAfterAddingMonth = CompaniDate(initialMaturityDate).add(`P${monthToAdd}M`);
+  const diffInDay = CompaniDate(newMaturityDate).diff(dateAfterAddingMonth, 'days');
+  const dayToAdd = Math.trunc(CompaniDuration(diffInDay).asDays());
+
+  return `P${monthToAdd}M${dayToAdd}D`;
+};
+
 exports.updateBillList = async (payload) => {
   if (payload.billedAt) {
     const lastBillNumber = await CourseBillsNumber.findOne({}).lean();
@@ -346,17 +357,20 @@ exports.updateBillList = async (payload) => {
         }
       );
     } else {
-      const maturityDateDiff = payload.maturityDate
-        ? CompaniDate(payload.maturityDate).diff(courseBill.maturityDate, 'days')
-        : null;
+      let maturityDateDurationToAdd;
+      let changeMaturityDate;
+      if (payload.maturityDate) {
+        maturityDateDurationToAdd = getMaturityDateDurationToAdd(courseBill.maturityDate, payload.maturityDate);
+        changeMaturityDate = !CompaniDuration(maturityDateDurationToAdd).isEquivalentTo('P0M0D');
+      }
 
       for (let i = 0; i < payload._ids.length; i++) {
         const currentId = payload._ids[i];
         const isFirstBill = i === 0;
 
-        if (!isFirstBill && maturityDateDiff) {
+        if (!isFirstBill && changeMaturityDate) {
           const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
-          const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDiff);
+          const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDurationToAdd);
           const traineeName = UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL');
           const trainersName = course.trainers
             .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');

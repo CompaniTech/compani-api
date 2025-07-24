@@ -1250,11 +1250,11 @@ describe('updateBillList', () => {
       _ids: courseBillIds,
       mainFee: { description: 'Facture pour 1 apprenant', price: 1200 },
       payer: { fundingOrganisation: fundingOrganisationId },
-      maturityDate: '2025-07-27T22:00:00.000Z',
+      maturityDate: '2025-08-27T22:00:00.000Z',
     };
     const description = 'Facture liée à des frais pédagogiques \r\n'
       + 'Contrat de professionnalisation \r\n'
-      + 'ACCOMPAGNEMENT août 2025\r\n'
+      + 'ACCOMPAGNEMENT septembre 2025\r\n'
       + 'Nom de l\'apprenant·e: Lili Apprenante \r\n'
       + 'Nom du / des intervenants: Toto Formateur, Architecte Parcours';
 
@@ -1292,7 +1292,7 @@ describe('updateBillList', () => {
           'mainFee.description': 'Facture pour 1 apprenant',
           'mainFee.price': 1200,
           'payer.fundingOrganisation': fundingOrganisationId,
-          maturityDate: '2025-07-27T22:00:00.000Z',
+          maturityDate: '2025-08-27T22:00:00.000Z',
         },
         $unset: { 'payer.company': '' },
       }
@@ -1313,7 +1313,7 @@ describe('updateBillList', () => {
           'mainFee.description': description,
           'mainFee.price': 1200,
           'payer.fundingOrganisation': fundingOrganisationId,
-          maturityDate: '2025-08-27T22:00:00.000Z',
+          maturityDate: '2025-09-27T22:00:00.000Z',
         },
         $unset: { 'payer.company': '' },
       }
