@@ -1468,7 +1468,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
 describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
   let authToken;
   beforeEach(populateDB);
-  const courseBillToEdit = [courseBillsList[0]._id, courseBillsList[16]._id];
+  const courseBillsToEdit = [courseBillsList[0]._id, courseBillsList[16]._id];
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
@@ -1497,7 +1497,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: {
-          _ids: courseBillToEdit,
+          _ids: courseBillsToEdit,
           payer: { company: authCompany._id },
           mainFee: { description: 'Description de la facture' },
         },
@@ -1511,6 +1511,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       expect(courseBillsCountAfterUpdate).toBe(2);
     });
 
+    const singleCourseBillsToEdit = [courseBillsList[12]._id, courseBillsList[17]._id];
     it('should edit courseBills (single course)', async () => {
       const description = 'Facture liée à des frais pédagogiques \r\n'
       + 'Contrat de professionnalisation \r\n'
@@ -1523,7 +1524,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: {
-          _ids: [courseBillsList[12]._id, courseBillsList[17]._id],
+          _ids: singleCourseBillsToEdit,
           payer: { company: authCompany._id },
           maturityDate: '2025-07-25T22:00:00.000+00:00',
           mainFee: { description, price: 1400 },
@@ -1534,24 +1535,19 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
     });
 
     it('should remove main fee description', async () => {
-      const courseBillsIdsToEdit = [courseBillsList[12]._id, courseBillsList[17]._id];
       const courseBillsCountBefore = await CourseBill
-        .countDocuments({ _id: { $in: courseBillsIdsToEdit }, 'mainFee.description': { $exists: true } });
+        .countDocuments({ _id: { $in: singleCourseBillsToEdit }, 'mainFee.description': { $exists: true } });
 
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: {
-          _ids: courseBillsIdsToEdit,
-          payer: { company: authCompany._id },
-          mainFee: { description: '' },
-        },
+        payload: { _ids: singleCourseBillsToEdit, payer: { company: authCompany._id }, mainFee: { description: '' } },
       });
 
       expect(response.statusCode).toBe(200);
       const courseBillsCountAfterUpdate = await CourseBill
-        .countDocuments({ _id: { $in: courseBillsIdsToEdit }, 'mainFee.description': { $exists: true } });
+        .countDocuments({ _id: { $in: singleCourseBillsToEdit }, 'mainFee.description': { $exists: true } });
       expect(courseBillsCountAfterUpdate).toBe(courseBillsCountBefore - 2);
     });
 
@@ -1599,7 +1595,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: {
-          _ids: courseBillToEdit,
+          _ids: courseBillsToEdit,
           billedAt: '2022-03-08T00:00:00.000Z',
           payer: { company: authCompany._id },
         },
@@ -1614,7 +1610,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: {
-          _ids: courseBillToEdit,
+          _ids: courseBillsToEdit,
           payer: { company: authCompany._id },
           mainFee: { price: 1400 },
         },
@@ -1629,7 +1625,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
         payload: {
-          _ids: courseBillToEdit,
+          _ids: courseBillsToEdit,
           payer: { company: authCompany._id },
           maturityDate: '2025-07-25T22:00:00.000+00:00',
         },
@@ -1643,7 +1639,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         method: 'POST',
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { _ids: [...courseBillToEdit, new ObjectId()], billedAt: '2022-03-08T00:00:00.000Z' },
+        payload: { _ids: [...courseBillsToEdit, new ObjectId()], billedAt: '2022-03-08T00:00:00.000Z' },
 
       });
 
@@ -1655,7 +1651,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         method: 'POST',
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { _ids: [...courseBillToEdit, courseBillsList[9]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+        payload: { _ids: [...courseBillsToEdit, courseBillsList[9]._id], billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1677,7 +1673,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         method: 'POST',
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { _ids: [courseBillsList[13]._id, courseBillsList[15]._id], billedAt: '2022-03-08T00:00:00.000Z' },
+        payload: { _ids: courseBillsToEdit, billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1689,7 +1685,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         method: 'POST',
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { _ids: [...courseBillToEdit, courseBillsList[9]._id], payer: { company: authCompany._id } },
+        payload: { _ids: [...courseBillsToEdit, courseBillsList[9]._id], payer: { company: authCompany._id } },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1711,7 +1707,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         method: 'POST',
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { _ids: courseBillToEdit, payer: { fundingOrganisation: new ObjectId() } },
+        payload: { _ids: courseBillsToEdit, payer: { fundingOrganisation: new ObjectId() } },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1722,7 +1718,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         method: 'POST',
         url: '/coursebills/list-edition',
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { _ids: courseBillToEdit, payer: { company: new ObjectId() } },
+        payload: { _ids: courseBillsToEdit, payer: { company: new ObjectId() } },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1743,7 +1739,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
           method: 'POST',
           url: '/coursebills/list-edition',
           headers: { Cookie: `alenvi_token=${authToken}` },
-          payload: { _ids: courseBillToEdit, billedAt: '2022-03-08T00:00:00.000Z' },
+          payload: { _ids: courseBillsToEdit, billedAt: '2022-03-08T00:00:00.000Z' },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
