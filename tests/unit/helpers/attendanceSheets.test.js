@@ -498,7 +498,7 @@ describe('sign', () => {
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
-      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean', args: [] }]
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
     );
 
     sinon.assert.calledOnceWithExactly(
