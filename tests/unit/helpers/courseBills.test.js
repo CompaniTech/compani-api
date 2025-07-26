@@ -1231,7 +1231,7 @@ describe('updateBillList', () => {
     );
   });
 
-  it('should edit several bills for single course', async () => {
+  it('should edit maturityDate and payer for several bills (single course)', async () => {
     const courseBillIds = [new ObjectId(), new ObjectId()];
     const course = {
       type: SINGLE,
@@ -1268,6 +1268,7 @@ describe('updateBillList', () => {
 
     sinon.assert.notCalled(findOneCourseBillsNumber);
     sinon.assert.notCalled(updateOneCourseBillsNumber);
+    sinon.assert.notCalled(updateManyCourseBill);
     SinonMongoose.calledWithExactly(
       findOneCourseBill,
       [
@@ -1317,6 +1318,58 @@ describe('updateBillList', () => {
         },
         $unset: { 'payer.company': '' },
       }
+    );
+  });
+
+  it('should edit price and payer for several bills (single course)', async () => {
+    const courseBillIds = [new ObjectId(), new ObjectId()];
+    const course = {
+      type: SINGLE,
+      trainers: [
+        { identity: { firstname: 'toto', lastname: 'formateur' } },
+        { identity: { firstname: 'architecte', lastname: 'parcours' } },
+      ],
+      trainees: [{ identity: { firstname: 'lili', lastname: 'apprenante' } }],
+    };
+    const courseBills = [
+      { _id: courseBillIds[0], maturityDate: '2025-07-10T22:00:00.000Z', course },
+      { _id: courseBillIds[1], maturityDate: '2025-08-10T22:00:00.000Z', course },
+    ];
+    const payerId = new ObjectId();
+
+    const payload = { _ids: courseBillIds, mainFee: { price: 1200 }, payer: { company: payerId } };
+
+    findOneCourseBill.returns(SinonMongoose.stubChainedQueries(courseBills[0]));
+
+    await CourseBillHelper.updateBillList(payload);
+
+    sinon.assert.notCalled(findOneCourseBillsNumber);
+    sinon.assert.notCalled(updateOneCourseBillsNumber);
+    sinon.assert.notCalled(updateManyCourseBill);
+    SinonMongoose.calledWithExactly(
+      findOneCourseBill,
+      [
+        { query: 'findOne', args: [{ _id: { $in: courseBillIds[0] } }, { course: 1, maturityDate: 1 }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type trainees trainers',
+            populate: [{ path: 'trainees', select: 'identity' }, { path: 'trainers', select: 'identity' }],
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      updateOneCourseBill.getCall(0),
+      { _id: courseBillIds[0] },
+      { $set: { 'mainFee.price': 1200, 'payer.company': payerId }, $unset: { 'payer.fundingOrganisation': '' } }
+    );
+    sinon.assert.calledWithExactly(
+      updateOneCourseBill.getCall(1),
+      { _id: courseBillIds[1] },
+      { $set: { 'mainFee.price': 1200, 'payer.company': payerId }, $unset: { 'payer.fundingOrganisation': '' } }
     );
   });
 });

@@ -338,7 +338,9 @@ exports.updateBillList = async (payload) => {
     let payloadToSet = omit(payload, '_ids');
     const payloadToUnset = {};
     if (get(payload, 'mainFee.description') === '') {
-      payloadToSet = omit(payloadToSet, 'mainFee');
+      payloadToSet = Object.keys(payload.mainFee).length === 1
+        ? payloadToSet = omit(payloadToSet, 'mainFee')
+        : payloadToSet = omit(payloadToSet, 'mainFee.description');
       payloadToUnset['mainFee.description'] = '';
     }
 
@@ -358,17 +360,15 @@ exports.updateBillList = async (payload) => {
       );
     } else {
       let maturityDateDurationToAdd;
-      let changeMaturityDate;
       if (payload.maturityDate) {
         maturityDateDurationToAdd = getMaturityDateDurationToAdd(courseBill.maturityDate, payload.maturityDate);
-        changeMaturityDate = !CompaniDuration(maturityDateDurationToAdd).isEquivalentTo('P0M0D');
       }
 
       for (let i = 0; i < payload._ids.length; i++) {
         const currentId = payload._ids[i];
         const isFirstBill = i === 0;
 
-        if (!isFirstBill && changeMaturityDate) {
+        if (!isFirstBill && payload.maturityDate) {
           const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
           const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDurationToAdd);
           const traineeName = UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL');
