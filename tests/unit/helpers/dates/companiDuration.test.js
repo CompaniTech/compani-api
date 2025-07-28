@@ -383,6 +383,15 @@ describe('DISPLAY', () => {
     });
   });
 
+  describe('toMonthAndDaysObject', () => {
+    it('should return object with months and days from CompaniDuration', () => {
+      const companiDuration = CompaniDurationsHelper.CompaniDuration('P36DT');
+      const result = companiDuration.toMonthAndDaysObject();
+
+      expect(result).toEqual({ months: 1, days: 6 });
+    });
+  });
+
   describe('toISO', () => {
     it('should return ISO string if argument is ISO string', () => {
       const duration = 'PT2H30M';

@@ -24,6 +24,7 @@ const {
   MONTH_YEAR,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
+const { CompaniDuration } = require('./dates/companiDurations');
 
 exports.getNetInclTaxes = (bill) => {
   const mainFeeTotal = NumbersHelper.oldMultiply(bill.mainFee.price, bill.mainFee.count);
@@ -291,6 +292,16 @@ exports.updateCourseBill = async (courseBillId, payload) => {
   }
 };
 
+const getMaturityDateDurationToAdd = (initialMaturityDate, newMaturityDate) => {
+  const maturityDateDiffInMonth = CompaniDate(newMaturityDate).diff(initialMaturityDate, 'months');
+  const monthToAdd = Math.trunc(CompaniDuration(maturityDateDiffInMonth).asMonths());
+  const dateAfterAddingMonth = CompaniDate(initialMaturityDate).add(`P${monthToAdd}M`);
+  const diffInDay = CompaniDate(newMaturityDate).diff(dateAfterAddingMonth, 'days');
+  const dayToAdd = Math.trunc(CompaniDuration(diffInDay).asDays());
+
+  return `P${monthToAdd}M${dayToAdd}D`;
+};
+
 exports.updateBillList = async (payload) => {
   if (payload.billedAt) {
     const lastBillNumber = await CourseBillsNumber.findOne({}).lean();
@@ -315,23 +326,72 @@ exports.updateBillList = async (payload) => {
     await CourseBillsNumber
       .updateOne({}, { $inc: { seq: modifiedCount } }, { new: true, upsert: true, setDefaultsOnInsert: true });
   } else {
+    const courseBill = await CourseBill
+      .findOne({ _id: { $in: payload._ids[0] } }, { course: 1, maturityDate: 1 })
+      .populate({
+        path: 'course',
+        select: 'type trainees trainers',
+        populate: [{ path: 'trainees', select: 'identity' }, { path: 'trainers', select: 'identity' }],
+      })
+      .lean();
+
     let payloadToSet = omit(payload, '_ids');
     const payloadToUnset = {};
     if (get(payload, 'mainFee.description') === '') {
-      payloadToSet = omit(payloadToSet, 'mainFee');
+      payloadToSet = Object.keys(payload.mainFee).length === 1
+        ? payloadToSet = omit(payloadToSet, 'mainFee')
+        : payloadToSet = omit(payloadToSet, 'mainFee.description');
       payloadToUnset['mainFee.description'] = '';
     }
 
     if (get(payload, 'payer.company')) payloadToUnset['payer.fundingOrganisation'] = '';
     else if (get(payload, 'payer.fundingOrganisation')) payloadToUnset['payer.company'] = '';
 
-    await CourseBill.updateMany(
-      { _id: { $in: payload._ids } },
-      {
-        ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
-        ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+    const { course } = courseBill;
+    const isSingleCourse = course.type === SINGLE;
+
+    if (!isSingleCourse) {
+      await CourseBill.updateMany(
+        { _id: { $in: payload._ids } },
+        {
+          ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
+          ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+        }
+      );
+    } else {
+      let maturityDateDurationToAdd;
+      if (payload.maturityDate) {
+        maturityDateDurationToAdd = getMaturityDateDurationToAdd(courseBill.maturityDate, payload.maturityDate);
       }
-    );
+
+      for (let i = 0; i < payload._ids.length; i++) {
+        const currentId = payload._ids[i];
+        const isFirstBill = i === 0;
+
+        if (!isFirstBill && payload.maturityDate) {
+          const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
+          const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDurationToAdd);
+          const traineeName = UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL');
+          const trainersName = course.trainers
+            .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
+          const newDescription = 'Facture liée à des frais pédagogiques \r\n'
+            + 'Contrat de professionnalisation \r\n'
+            + `ACCOMPAGNEMENT ${newMaturityDate.format('LLLL yyyy')}\r\n`
+            + `Nom de l'apprenant·e: ${traineeName} \r\n`
+            + `Nom du / des intervenants: ${trainersName}`;
+
+          payloadToSet['mainFee.description'] = newDescription;
+          payloadToSet.maturityDate = newMaturityDate.toISO();
+        }
+
+        const formattedPayload = {
+          ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
+          ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+        };
+
+        await CourseBill.updateOne({ _id: currentId }, formattedPayload);
+      }
+    }
   }
 };
 
