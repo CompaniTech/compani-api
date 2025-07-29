@@ -10,35 +10,66 @@ const GCloudStorageHelper = require('./gCloudStorage');
 const NotificationHelper = require('./notifications');
 const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
-const { DAY_MONTH_YEAR, COURSE, TRAINEE } = require('./constants');
+const { DAY_MONTH_YEAR, COURSE, TRAINEE, INTER_B2B } = require('./constants');
 
 exports.create = async (payload, credentials) => {
   let fileName;
   let companies;
   let slots = [];
-  let signature = {};
   let fileUploaded = {};
-  const formationExpoTokens = [];
+  const formationExpoTokens = {};
 
-  const course = await Course.findOne({ _id: payload.course }, { companies: 1 }).lean();
+  const course = await Course.findOne({ _id: payload.course }, { companies: 1, type: 1 }).lean();
 
+  const promises = [];
   if (payload.date) {
     fileName = CompaniDate(payload.date).format(DAY_MONTH_YEAR);
     companies = course.companies;
   } else {
-    const { identity, formationExpoTokenList } = await User
-      .findOne({ _id: payload.trainee }, { identity: 1, formationExpoTokenList: 1 })
-      .lean();
-    fileName = UtilsHelper.formatIdentity(identity, 'FL');
+    const trainees = (Array.isArray(payload.trainees) ? payload.trainees : [payload.trainees]);
+    for (const trainee of trainees) {
+      const { identity, formationExpoTokenList } = await User
+        .findOne({ _id: trainee }, { identity: 1, formationExpoTokenList: 1 })
+        .lean();
+      fileName = UtilsHelper.formatIdentity(identity, 'FL');
 
-    const traineeCompanyAtCourseRegistration = await CourseHistoriesHelper
-      .getCompanyAtCourseRegistrationList(
-        { key: COURSE, value: payload.course }, { key: TRAINEE, value: [payload.trainee] }
-      );
-    companies = [get(traineeCompanyAtCourseRegistration[0], 'company')];
+      const traineeCompanyAtCourseRegistration = await CourseHistoriesHelper
+        .getCompanyAtCourseRegistrationList(
+          { key: COURSE, value: payload.course }, { key: TRAINEE, value: [trainee] }
+        );
+      companies = [get(traineeCompanyAtCourseRegistration[0], 'company')];
 
-    if (payload.slots) {
-      if (get(formationExpoTokenList, 'length')) formationExpoTokens.push(...formationExpoTokenList);
+      if (payload.signature) {
+        if (get(formationExpoTokenList, 'length')) formationExpoTokens[trainee] = formationExpoTokenList;
+        let signature = {};
+        const attendanceSheet = await AttendanceSheet
+          .findOne({ trainee, course: payload.course, slots: { $exists: true }, file: { $exists: false } }).lean();
+        let slotWithTrainerSignature = null;
+        if (attendanceSheet && course.type === INTER_B2B) {
+          slotWithTrainerSignature = attendanceSheet.slots
+            .find(s => UtilsHelper.areObjectIdsEquals(s.trainerSignature.trainerId, payload.trainer));
+        }
+
+        if (slotWithTrainerSignature) signature.link = slotWithTrainerSignature.trainerSignature.signature;
+        else {
+          fileName = `${credentials._id}_course_${payload.course}`;
+          signature = await GCloudStorageHelper.uploadCourseFile({
+            fileName: `trainer_signature_${fileName}`,
+            file: payload.signature,
+          });
+        }
+        slots = (Array.isArray(payload.slots) ? payload.slots : [payload.slots]).map(s => ({
+          slotId: s,
+          trainerSignature: { trainerId: payload.trainer, signature: signature.link },
+        }));
+        if (attendanceSheet && course.type === INTER_B2B) {
+          promises.push(AttendanceSheet.findOneAndUpdate({ _id: attendanceSheet._id }, { $push: { slots } }));
+        } else {
+          promises.push(
+            AttendanceSheet.create({ ...omit(payload, ['signature', 'trainees']), trainee, companies, slots })
+          );
+        }
+      }
     }
   }
 
@@ -50,27 +81,23 @@ exports.create = async (payload, credentials) => {
     if (payload.slots) {
       slots = Array.isArray(payload.slots) ? payload.slots.map(s => ({ slotId: s })) : [{ slotId: payload.slots }];
     }
-  } else {
-    fileName = `${credentials._id}_course_${payload.course}`;
-    signature = await GCloudStorageHelper.uploadCourseFile({
-      fileName: `trainer_signature_${fileName}`,
-      file: payload.signature,
-    });
-    slots = (Array.isArray(payload.slots) ? payload.slots : [payload.slots]).map(s => ({
-      slotId: s,
-      trainerSignature: { trainerId: payload.trainer, signature: signature.link },
-    }));
+
+    promises.push(
+      AttendanceSheet.create({
+        ...omit(payload, 'trainees'),
+        ...payload.trainees && { trainee: payload.trainees },
+        companies,
+        ...(Object.keys(fileUploaded).length && { file: fileUploaded }),
+        ...(slots.length && { slots }),
+      })
+    );
   }
-
-  const attendanceSheet = await AttendanceSheet.create({
-    ...omit(payload, 'signature'),
-    companies,
-    ...(Object.keys(fileUploaded).length && { file: fileUploaded }),
-    ...(slots.length && { slots }),
-  });
-
-  if (get(attendanceSheet, 'slots[0].trainerSignature')) {
-    await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(attendanceSheet._id, formationExpoTokens);
+  const results = await Promise.all(promises);
+  if (Object.keys(formationExpoTokens).length) {
+    for (const result of results) {
+      const tokens = formationExpoTokens[result.trainee];
+      await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(result._id, tokens);
+    }
   }
 };
 
