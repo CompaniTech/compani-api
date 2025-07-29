@@ -73,25 +73,27 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
   if (!UtilsHelper.doesArrayIncludeId(course.trainers, req.payload.trainer)) throw Boom.forbidden();
 
   if ([INTRA, INTRA_HOLDING].includes(course.type)) {
-    if (req.payload.trainee) throw Boom.badRequest();
+    if (req.payload.trainees) throw Boom.badRequest();
     const isCourseSlotDate = course.slots.some(slot => CompaniDate(slot.startDate).isSame(req.payload.date, DAY));
     if (!isCourseSlotDate) throw Boom.forbidden();
 
     return null;
   }
-  if (req.payload.date) throw Boom.badRequest();
-  if (!course.trainees.some(t => UtilsHelper.areObjectIdsEquals(t, req.payload.trainee))) throw Boom.forbidden();
-
   const isSingleCourse = course.type === SINGLE;
-  if (isSingleCourse && !(req.payload.slots && req.payload.trainee)) throw Boom.badRequest();
-  if (req.payload.slots) {
-    if (!isSingleCourse) throw Boom.badRequest();
+  const traineesIds = Array.isArray(req.payload.trainees) ? req.payload.trainees : [req.payload.trainees];
+  if (req.payload.date) throw Boom.badRequest();
+  if (traineesIds.length > 1 && (!req.payload.signature || isSingleCourse)) throw Boom.badRequest();
+  if (traineesIds.some(t => !UtilsHelper.doesArrayIncludeId(course.trainees, t))) throw Boom.forbidden();
+  if (req.payload.signature && !req.payload.slots) throw Boom.badRequest();
 
+  if (isSingleCourse && !(req.payload.slots && traineesIds)) throw Boom.badRequest();
+  if (req.payload.slots) {
     const slotsIds = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
     const courseSlotCount = await CourseSlot.countDocuments({ _id: { $in: slotsIds }, course: course._id });
     if (courseSlotCount !== slotsIds.length) throw Boom.notFound();
 
-    const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
+    const attendanceSheetCount = await AttendanceSheet
+      .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slotsIds } });
     if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
   }
 
