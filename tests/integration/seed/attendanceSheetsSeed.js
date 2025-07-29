@@ -466,7 +466,7 @@ const attendanceSheetList = [
     _id: new ObjectId(),
     course: coursesList[1]._id,
     trainee: userList[2]._id,
-    companies: [authCompany._id],
+    companies: [otherCompany._id],
     slots: [
       {
         slotId: slotsList[12]._id,
