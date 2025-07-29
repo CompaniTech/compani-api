@@ -834,7 +834,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
         });
 
         expect(response.statusCode).toBe(200);
-        expect(response.result.data.attendanceSheets.length).toEqual(2);
+        expect(response.result.data.attendanceSheets.length).toEqual(1);
       });
 
     it('should get attendance sheets if user is trainer but not course trainer but is coach from course company',
@@ -898,7 +898,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.attendanceSheets.length).toEqual(1);
+      expect(response.result.data.attendanceSheets.length).toEqual(2);
     });
 
     it('should return 200 even if no company in course (intra_holding)', async () => {

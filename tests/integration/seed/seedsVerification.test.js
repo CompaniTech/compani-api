@@ -419,14 +419,15 @@ describe('SEEDS VERIFICATION', () => {
           expect(someIntraOrIntraHoldingAttendanceSheetHasTrainee).toBeFalsy();
         });
 
-        it('should pass if only single courses have slots in attendance sheet', () => {
+        it('should pass if only single or inter courses have slots in attendance sheet', () => {
           const everySingleASHasSlots = attendanceSheetList.every(a => a.course.type !== SINGLE || a.slots);
 
           expect(everySingleASHasSlots).toBeTruthy();
 
-          const someNonSingleASHasSlots = attendanceSheetList.some(a => a.course.type !== SINGLE && a.slots);
+          const someNonSingleOrInterASHasSlots = attendanceSheetList
+            .some(a => ![SINGLE, INTER_B2B].includes(a.course.type) && a.slots);
 
-          expect(someNonSingleASHasSlots).toBeFalsy();
+          expect(someNonSingleOrInterASHasSlots).toBeFalsy();
         });
 
         it('should pass if only intra_holding courses have several companies in attendance sheet', () => {
