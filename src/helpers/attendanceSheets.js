@@ -1,5 +1,6 @@
 const omit = require('lodash/omit');
 const get = require('lodash/get');
+const cloneDeep = require('lodash/cloneDeep');
 const AttendanceSheet = require('../models/AttendanceSheet');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
 const User = require('../models/User');
@@ -40,6 +41,7 @@ exports.create = async (payload, credentials) => {
       companies = [get(traineeCompanyAtCourseRegistration[0], 'company')];
 
       if (payload.signature) {
+        const signatureCopy = cloneDeep(payload.signature);
         if (get(formationExpoTokenList, 'length')) formationExpoTokens[trainee] = formationExpoTokenList;
         let signature = {};
         const attendanceSheet = await AttendanceSheet
@@ -55,7 +57,7 @@ exports.create = async (payload, credentials) => {
           fileName = `${credentials._id}_course_${payload.course}`;
           signature = await GCloudStorageHelper.uploadCourseFile({
             fileName: `trainer_signature_${fileName}`,
-            file: payload.signature,
+            file: signatureCopy,
           });
         }
         slots = (Array.isArray(payload.slots) ? payload.slots : [payload.slots]).map(s => ({
