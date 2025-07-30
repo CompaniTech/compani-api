@@ -27,7 +27,7 @@ exports.create = async (payload, credentials) => {
     fileName = CompaniDate(payload.date).format(DAY_MONTH_YEAR);
     companies = course.companies;
   } else {
-    const trainees = (Array.isArray(payload.trainees) ? payload.trainees : [payload.trainees]);
+    const trainees = Array.isArray(payload.trainees) ? payload.trainees : [payload.trainees];
     for (const trainee of trainees) {
       const { identity, formationExpoTokenList } = await User
         .findOne({ _id: trainee }, { identity: 1, formationExpoTokenList: 1 })
@@ -43,7 +43,6 @@ exports.create = async (payload, credentials) => {
       if (payload.signature) {
         const signatureCopy = cloneDeep(payload.signature);
         if (get(formationExpoTokenList, 'length')) formationExpoTokens[trainee] = formationExpoTokenList;
-        let signature = {};
         const attendanceSheet = await AttendanceSheet
           .findOne({ trainee, course: payload.course, slots: { $exists: true }, file: { $exists: false } }).lean();
         let slotWithTrainerSignature = null;
@@ -52,17 +51,18 @@ exports.create = async (payload, credentials) => {
             .find(s => UtilsHelper.areObjectIdsEquals(s.trainerSignature.trainerId, payload.trainer));
         }
 
-        if (slotWithTrainerSignature) signature.link = slotWithTrainerSignature.trainerSignature.signature;
+        let trainerSignature = {};
+        if (slotWithTrainerSignature) trainerSignature.link = slotWithTrainerSignature.trainerSignature.signature;
         else {
           fileName = `${credentials._id}_course_${payload.course}`;
-          signature = await GCloudStorageHelper.uploadCourseFile({
+          trainerSignature = await GCloudStorageHelper.uploadCourseFile({
             fileName: `trainer_signature_${fileName}`,
             file: signatureCopy,
           });
         }
         slots = (Array.isArray(payload.slots) ? payload.slots : [payload.slots]).map(s => ({
           slotId: s,
-          trainerSignature: { trainerId: payload.trainer, signature: signature.link },
+          trainerSignature: { trainerId: payload.trainer, signature: trainerSignature.link },
         }));
         if (attendanceSheet && course.type === INTER_B2B) {
           promises.push(AttendanceSheet.findOneAndUpdate({ _id: attendanceSheet._id }, { $push: { slots } }));
