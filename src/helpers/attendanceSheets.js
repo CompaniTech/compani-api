@@ -51,7 +51,7 @@ exports.create = async (payload, credentials) => {
             .find(s => UtilsHelper.areObjectIdsEquals(s.trainerSignature.trainerId, payload.trainer));
         }
 
-        let trainerSignature = {};
+        let trainerSignature = '';
         if (slotWithTrainerSignature) trainerSignature = slotWithTrainerSignature.trainerSignature.signature;
         else {
           fileName = `${credentials._id}_course_${payload.course}`;
