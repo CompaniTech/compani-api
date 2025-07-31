@@ -285,10 +285,10 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[1]._id });
       expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore);
       sinon.assert.notCalled(uploadCourseFile);
-      sinon.assert.notCalled(sendNotificationToUser);
+      sinon.assert.calledOnce(sendNotificationToUser);
     });
 
-    it('should  return 400 if single course but slot is missing', async () => {
+    it('should  return 400 if single course but slots is missing', async () => {
       const formData = {
         course: coursesList[7]._id.toHexString(),
         file: 'test',
@@ -309,7 +309,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should  return 400 if single course but trainee is missing', async () => {
+    it('should  return 400 if single course but trainees is missing', async () => {
       const formData = {
         slots: slotsList[4]._id.toHexString(),
         course: coursesList[7]._id.toHexString(),
@@ -330,7 +330,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should  return 400 if slot in payload but course is not a single or inter course', async () => {
+    it('should  return 400 if slots in payload but course is not a single or inter course', async () => {
       const formData = {
         slots: slotsList[2]._id.toHexString(),
         course: coursesList[5]._id.toHexString(),
@@ -352,7 +352,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should  return 404 if slot not in course', async () => {
+    it('should  return 404 if a slot is not in course', async () => {
       const slots = [slotsList[4]._id.toHexString(), slotsList[2]._id.toHexString()];
       const formData = {
         course: coursesList[7]._id.toHexString(),
@@ -375,7 +375,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 409 if slot already in existing attendance sheet for this trainee', async () => {
+    it('should return 409 if a slot is already in existing attendance sheet for this trainee', async () => {
       const slots = [slotsList[4]._id.toHexString(), slotsList[6]._id.toHexString()];
       const formData = {
         course: coursesList[7]._id.toHexString(),
@@ -398,7 +398,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(409);
     });
 
-    it('should return 400 trying to pass trainee for intra course', async () => {
+    it('should return 400 trying to pass trainees for intra course', async () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
@@ -605,7 +605,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 trying to pass unknowned trainee', async () => {
+    it('should return 403 trying to pass an unknowned trainee', async () => {
       const formData = {
         course: coursesList[1]._id.toHexString(),
         file: 'test',
@@ -1108,7 +1108,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 404 if slot is not in course', async () => {
+    it('should return 404 if a slot is not in course', async () => {
       const attendanceSheetId = attendanceSheetList[5]._id;
       const payload = { slots: [slotsList[3]._id] };
 
@@ -1122,7 +1122,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 409 if slot is already in an existing attendance sheet', async () => {
+    it('should return 409 if a slot is already in an existing attendance sheet', async () => {
       const attendanceSheetId = attendanceSheetList[6]._id;
       const payload = { slots: [slotsList[5]._id] };
 

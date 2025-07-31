@@ -52,17 +52,18 @@ exports.create = async (payload, credentials) => {
         }
 
         let trainerSignature = {};
-        if (slotWithTrainerSignature) trainerSignature.link = slotWithTrainerSignature.trainerSignature.signature;
+        if (slotWithTrainerSignature) trainerSignature = slotWithTrainerSignature.trainerSignature.signature;
         else {
           fileName = `${credentials._id}_course_${payload.course}`;
-          trainerSignature = await GCloudStorageHelper.uploadCourseFile({
+          const signature = await GCloudStorageHelper.uploadCourseFile({
             fileName: `trainer_signature_${fileName}`,
             file: signatureCopy,
           });
+          trainerSignature = signature.link;
         }
         slots = (Array.isArray(payload.slots) ? payload.slots : [payload.slots]).map(s => ({
           slotId: s,
-          trainerSignature: { trainerId: payload.trainer, signature: trainerSignature.link },
+          trainerSignature: { trainerId: payload.trainer, signature: trainerSignature },
         }));
         if (attendanceSheet && course.type === INTER_B2B) {
           promises.push(AttendanceSheet.findOneAndUpdate({ _id: attendanceSheet._id }, { $push: { slots } }));
