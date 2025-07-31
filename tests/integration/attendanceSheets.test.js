@@ -259,7 +259,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       sinon.assert.calledTwice(sendNotificationToUser);
     });
 
-    it('should upload trainer signature and update attendance sheet for inter course (mobile)', async () => {
+    it('should get existing trainer signature and update attendance sheet for inter course (mobile)', async () => {
       const slots = [slotsList[14]._id.toHexString()];
       const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[1]._id });
       const formData = {

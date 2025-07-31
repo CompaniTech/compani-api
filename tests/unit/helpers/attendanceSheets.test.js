@@ -428,7 +428,7 @@ describe('create', () => {
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
   });
 
-  it('should upload trainer signature and update attendance sheets for INTER', async () => {
+  it('hould get existing trainer signature and update attendance sheet for INTER', async () => {
     const courseId = new ObjectId();
     const traineesId = [new ObjectId(), new ObjectId()];
     const companyId = new ObjectId();
