@@ -98,7 +98,7 @@ exports.create = async (payload, credentials) => {
   const results = await Promise.all(promises);
   if (Object.keys(formationExpoTokens).length) {
     for (const result of results) {
-      const tokens = formationExpoTokens[result.trainee];
+      const tokens = formationExpoTokens[result.trainee] || [];
       await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(result._id, tokens);
     }
   }
