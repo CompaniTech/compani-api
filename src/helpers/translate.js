@@ -153,6 +153,7 @@ module.exports = {
     courseBillsFound: 'Course bills found.',
     courseBillsNotFound: 'Course bills not found.',
     courseBillCreated: 'Course bill created.',
+    courseBillsCreated: 'Course bills created.',
     courseBillUpdated: 'Course bill updated.',
     courseBillsUpdated: 'Course bills updated.',
     courseBillDeleted: 'Course bill deleted.',
@@ -160,6 +161,7 @@ module.exports = {
     courseBillingItemAlreadyAdded: 'Course billing item already added to bill.',
     courseCompanyAddressMissing: 'Course company address missing.',
     sumCourseBillsPercentageGreaterThan100: 'Sum of course bills percentage is greater than 100 %.',
+    courseBillPriceMissing: 'Course bill price is missing.',
     /* Course billing items */
     courseBillingItemExists: 'Course billing item exists.',
     courseBillingItemsFound: 'Course billing items found.',
@@ -387,6 +389,7 @@ module.exports = {
     courseBillsFound: 'Factures de la formation trouvées.',
     courseBillsNotFound: 'Factures de la formation non trouvées.',
     courseBillCreated: 'Facture de la formation créée.',
+    courseBillsCreated: 'Factures de la formation créées.',
     courseBillUpdated: 'Facture de la formation mise à jour.',
     courseBillsUpdated: 'Factures de la formation mises à jour.',
     courseBillDeleted: 'Facture de la formation supprimée.',
@@ -394,6 +397,7 @@ module.exports = {
     courseBillingItemAlreadyAdded: 'Article déjà ajouté à la facture.',
     courseCompanyAddressMissing: 'L\'adresse de la structure cliente est manquante.',
     sumCourseBillsPercentageGreaterThan100: 'La somme des pourcentages des factures est supérieure à 100%.',
+    courseBillPriceMissing: 'Le prix de la facture est manquant.',
     /* Course billing items */
     courseBillingItemExists: 'Article de facturation existant.',
     courseBillingItemsFound: 'Articles de facturation trouvés.',

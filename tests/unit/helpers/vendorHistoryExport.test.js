@@ -1912,13 +1912,14 @@ describe('exportCoursePaymentHistory', () => {
 
   it('should return an array with the header and 3 rows', async () => {
     const courseBillIds = [new ObjectId(), new ObjectId()];
+    const payerId = new ObjectId();
     const coursePaymentList = [
       {
         _id: new ObjectId(),
         nature: REFUND,
         number: 'REG-2',
         date: '2022-01-22T23:00:00.000Z',
-        courseBill: { _id: courseBillIds[0], number: 'FACT-2' },
+        courseBill: { _id: courseBillIds[0], number: 'FACT-2', payer: { _id: payerId } },
         type: CHECK,
         netInclTaxes: 22,
       },
@@ -1927,7 +1928,7 @@ describe('exportCoursePaymentHistory', () => {
         nature: PAYMENT,
         number: 'REG-1',
         date: '2022-01-01T23:00:00.000Z',
-        courseBill: { _id: courseBillIds[0], number: 'FACT-2' },
+        courseBill: { _id: courseBillIds[0], number: 'FACT-2', payer: { _id: payerId } },
         type: CHECK,
         netInclTaxes: 100,
       },
@@ -1936,7 +1937,7 @@ describe('exportCoursePaymentHistory', () => {
         nature: REFUND,
         number: 'REG-4',
         date: '2022-01-10T23:00:00.000Z',
-        courseBill: { _id: courseBillIds[1], number: 'FACT-1' },
+        courseBill: { _id: courseBillIds[1], number: 'FACT-1', payer: { _id: payerId } },
         type: CHECK,
         netInclTaxes: 200,
       },
@@ -1956,9 +1957,9 @@ describe('exportCoursePaymentHistory', () => {
     const result = await ExportHelper.exportCoursePaymentHistory('2022-01-07T23:00:00.000Z', '2022-01-30T22:59:59.000Z', credentials);
 
     expect(result).toEqual([
-      ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant'],
-      ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', 2, 'Chèque', '22,00'],
-      ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', 1, 'Chèque', '200,00'],
+      ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant'],
+      ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00'],
+      ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', payerId, 1, 'Chèque', '200,00'],
     ]);
     SinonMongoose.calledWithExactly(
       findCoursePayment,
@@ -1979,7 +1980,7 @@ describe('exportCoursePaymentHistory', () => {
             { nature: 1, number: 1, date: 1, courseBill: 1, type: 1, netInclTaxes: 1 },
           ],
         },
-        { query: 'populate', args: [{ path: 'courseBill', option: { isVendorUser: true }, select: 'number' }] },
+        { query: 'populate', args: [{ path: 'courseBill', option: { isVendorUser: true }, select: 'number payer' }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ],

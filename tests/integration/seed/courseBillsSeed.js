@@ -98,7 +98,7 @@ const userCompanies = [
 ];
 
 const coursesList = [
-  { // 0 - linked to bill 0 and 8, linked to creditNote 1, expectedBillsCount is 1
+  { // 0 - linked to bill 0, 8 and 16, linked to creditNote 1, expectedBillsCount is 1
     _id: new ObjectId(),
     type: INTRA,
     maxTrainees: 8,
@@ -108,7 +108,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     contact: vendorAdmin._id,
     trainees: [auxiliary._id],
-    expectedBillsCount: 1,
+    expectedBillsCount: 5,
     companies: [authCompany._id],
     certificateGenerationMode: GLOBAL,
   },
@@ -264,7 +264,7 @@ const coursesList = [
     expectedBillsCount: 1,
     certificateGenerationMode: GLOBAL,
   },
-  { // 12 - single course, expectedBillsCount is 2
+  { // 12 - single course, expectedBillsCount is 4
     _id: new ObjectId(),
     type: SINGLE,
     maxTrainees: 1,
@@ -274,7 +274,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     contact: vendorAdmin._id,
     trainees: [traineeFromOtherCompany._id],
-    expectedBillsCount: 2,
+    expectedBillsCount: 4,
     companies: [otherCompany._id],
     certificateGenerationMode: GLOBAL,
     prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
@@ -312,6 +312,38 @@ const coursesList = [
     prices: [
       { company: authCompany._id, global: 12000 },
     ],
+  },
+  { // 15 intra with prices
+    _id: new ObjectId(),
+    type: INTRA,
+    maxTrainees: 8,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 1',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [auxiliary._id],
+    expectedBillsCount: 4,
+    companies: [authCompany._id],
+    certificateGenerationMode: GLOBAL,
+    prices: [
+      { company: authCompany._id, global: 12000 },
+    ],
+  },
+  { // 16 - single course, expectedBillsCount is 0
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 3',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [traineeFromOtherCompany._id],
+    expectedBillsCount: 0,
+    companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
+    prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
   },
 ];
 
@@ -468,12 +500,13 @@ const courseBillsList = [
     _id: new ObjectId(),
     course: coursesList[12]._id,
     companies: [otherCompany._id],
-    mainFee: { price: 120, count: 1, countUnit: TRAINEE },
+    mainFee: { price: 120, count: 1, countUnit: TRAINEE, description: 'test' },
     payer: { company: otherCompany._id },
     billingPurchaseList: [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 90, count: 1 },
       { _id: new ObjectId(), billingItem: billingItemList[1]._id, price: 400, count: 1 },
     ],
+    maturityDate: '2025-07-14T22:00:00.000+00:00',
   },
   { // 13
     _id: new ObjectId(),
@@ -494,6 +527,28 @@ const courseBillsList = [
     billingPurchaseList: [
       { _id: new ObjectId(), billingItem: billingItemList[0]._id, price: 36, count: 1, percentage: 30 },
     ],
+  },
+  { // 15
+    _id: new ObjectId(),
+    course: coursesList[13]._id,
+    companies: [otherCompany._id],
+    mainFee: { count: 1, countUnit: TRAINEE },
+    payer: { company: otherCompany._id },
+  },
+  { // 16 courseBill without price linked to course without global price
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    companies: [authCompany._id],
+    mainFee: { count: 1, countUnit: GROUP },
+    payer: { company: authCompany._id },
+  },
+  { // 17
+    _id: new ObjectId(),
+    course: coursesList[12]._id,
+    companies: [otherCompany._id],
+    mainFee: { price: 100, count: 1, countUnit: TRAINEE, description: 'test' },
+    payer: { company: otherCompany._id },
+    maturityDate: '2025-08-14T22:00:00.000+00:00',
   },
 ];
 

@@ -20,8 +20,11 @@ const {
   BALANCE,
   COURSE,
   TRAINEE,
+  SINGLE,
+  MONTH_YEAR,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
+const { CompaniDuration } = require('./dates/companiDurations');
 
 exports.getNetInclTaxes = (bill) => {
   const mainFeeTotal = NumbersHelper.oldMultiply(bill.mainFee.price, bill.mainFee.count);
@@ -175,28 +178,65 @@ exports.list = async (query, credentials) => {
   );
 };
 
-exports.create = async (payload) => {
-  const courseBill = await CourseBill.create(payload);
+exports.createBillList = async (payload) => {
+  const course = await Course
+    .findOne({ _id: payload.course }, { type: 1, prices: 1, trainees: 1, trainers: 1 })
+    .populate({ path: 'trainees', select: 'identity' })
+    .populate({ path: 'trainers', select: 'identity' })
+    .lean();
 
-  if (payload.mainFee.percentage) {
-    const course = await Course.findOne({ _id: payload.course }, { prices: 1 }).lean();
-    const trainerFees = (course.prices || []).reduce((acc, price) => {
-      if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
-        return NumbersHelper.add(acc, price.trainerFees);
+  if (payload.quantity === 1) {
+    const billCreated = await CourseBill.create(omit(payload, 'quantity'));
+
+    if (payload.mainFee.percentage) {
+      const trainerFees = (course.prices || []).reduce((acc, price) => {
+        if (price.trainerFees && UtilsHelper.doesArrayIncludeId(payload.companies, price.company)) {
+          return NumbersHelper.add(acc, price.trainerFees);
+        }
+        return acc;
+      }, 0);
+
+      if (trainerFees) {
+        const trainerFeesPayload = {
+          price: NumbersHelper.toFixedToFloat(
+            NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
+          ),
+          count: 1,
+          percentage: payload.mainFee.percentage,
+          billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+        };
+        await exports.addBillingPurchase(billCreated._id, trainerFeesPayload);
       }
-      return acc;
-    }, 0);
+    }
+  } else if (course.type !== SINGLE) {
+    const billsToCreate = new Array(payload.quantity).fill({
+      course: payload.course,
+      mainFee: payload.mainFee,
+      companies: payload.companies,
+      payer: payload.payer,
+    });
+    await CourseBill.insertMany(billsToCreate);
+  } else {
+    const traineeName = course.trainees.length
+      ? UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL')
+      : '';
 
-    if (trainerFees) {
-      const trainerFeesPayload = {
-        price: NumbersHelper.toFixedToFloat(
-          NumbersHelper.divide(NumbersHelper.multiply(payload.mainFee.percentage, trainerFees), 100)
-        ),
-        count: 1,
-        percentage: payload.mainFee.percentage,
-        billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
-      };
-      await exports.addBillingPurchase(courseBill._id, trainerFeesPayload);
+    const trainersName = get(course, 'trainers', [])
+      .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
+
+    for (let i = 0; i < payload.quantity; i++) {
+      const billMaturityDate = CompaniDate(payload.maturityDate).add(`P${i}M`);
+      const description = 'Facture liée à des frais pédagogiques \r\n'
+        + 'Contrat de professionnalisation \r\n'
+        + `ACCOMPAGNEMENT ${billMaturityDate.format(MONTH_YEAR)} \r\n`
+        + `Nom de l'apprenant·e: ${traineeName} \r\n`
+        + `Nom du / des intervenants: ${trainersName}`;
+
+      await CourseBill.create({
+        ...omit(payload, ['quantity', 'maturityDate']),
+        mainFee: { ...payload.mainFee, description },
+        maturityDate: billMaturityDate.toISO(),
+      });
     }
   }
 };
@@ -252,6 +292,16 @@ exports.updateCourseBill = async (courseBillId, payload) => {
   }
 };
 
+const getMaturityDateDurationToAdd = (initialMaturityDate, newMaturityDate) => {
+  const maturityDateDiffInMonth = CompaniDate(newMaturityDate).diff(initialMaturityDate, 'months');
+  const monthToAdd = Math.trunc(CompaniDuration(maturityDateDiffInMonth).asMonths());
+  const dateAfterAddingMonth = CompaniDate(initialMaturityDate).add(`P${monthToAdd}M`);
+  const diffInDay = CompaniDate(newMaturityDate).diff(dateAfterAddingMonth, 'days');
+  const dayToAdd = Math.trunc(CompaniDuration(diffInDay).asDays());
+
+  return `P${monthToAdd}M${dayToAdd}D`;
+};
+
 exports.updateBillList = async (payload) => {
   if (payload.billedAt) {
     const lastBillNumber = await CourseBillsNumber.findOne({}).lean();
@@ -275,6 +325,73 @@ exports.updateBillList = async (payload) => {
 
     await CourseBillsNumber
       .updateOne({}, { $inc: { seq: modifiedCount } }, { new: true, upsert: true, setDefaultsOnInsert: true });
+  } else {
+    const courseBill = await CourseBill
+      .findOne({ _id: { $in: payload._ids[0] } }, { course: 1, maturityDate: 1 })
+      .populate({
+        path: 'course',
+        select: 'type trainees trainers',
+        populate: [{ path: 'trainees', select: 'identity' }, { path: 'trainers', select: 'identity' }],
+      })
+      .lean();
+
+    let payloadToSet = omit(payload, '_ids');
+    const payloadToUnset = {};
+    if (get(payload, 'mainFee.description') === '') {
+      payloadToSet = Object.keys(payload.mainFee).length === 1
+        ? payloadToSet = omit(payloadToSet, 'mainFee')
+        : payloadToSet = omit(payloadToSet, 'mainFee.description');
+      payloadToUnset['mainFee.description'] = '';
+    }
+
+    if (get(payload, 'payer.company')) payloadToUnset['payer.fundingOrganisation'] = '';
+    else if (get(payload, 'payer.fundingOrganisation')) payloadToUnset['payer.company'] = '';
+
+    const { course } = courseBill;
+    const isSingleCourse = course.type === SINGLE;
+
+    if (!isSingleCourse) {
+      await CourseBill.updateMany(
+        { _id: { $in: payload._ids } },
+        {
+          ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
+          ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+        }
+      );
+    } else {
+      let maturityDateDurationToAdd;
+      if (payload.maturityDate) {
+        maturityDateDurationToAdd = getMaturityDateDurationToAdd(courseBill.maturityDate, payload.maturityDate);
+      }
+
+      for (let i = 0; i < payload._ids.length; i++) {
+        const currentId = payload._ids[i];
+        const isFirstBill = i === 0;
+
+        if (!isFirstBill && payload.maturityDate) {
+          const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
+          const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDurationToAdd);
+          const traineeName = UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL');
+          const trainersName = course.trainers
+            .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
+          const newDescription = 'Facture liée à des frais pédagogiques \r\n'
+            + 'Contrat de professionnalisation \r\n'
+            + `ACCOMPAGNEMENT ${newMaturityDate.format('LLLL yyyy')}\r\n`
+            + `Nom de l'apprenant·e: ${traineeName} \r\n`
+            + `Nom du / des intervenants: ${trainersName}`;
+
+          payloadToSet['mainFee.description'] = newDescription;
+          payloadToSet.maturityDate = newMaturityDate.toISO();
+        }
+
+        const formattedPayload = {
+          ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
+          ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
+        };
+
+        await CourseBill.updateOne({ _id: currentId }, formattedPayload);
+      }
+    }
   }
 };
 

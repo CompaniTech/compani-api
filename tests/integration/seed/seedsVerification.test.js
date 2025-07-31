@@ -1124,9 +1124,15 @@ describe('SEEDS VERIFICATION', () => {
         });
 
         it('should pass if every price is positive', () => {
-          const everyPriceIsValid = courseBillList.every(bill => bill.mainFee.price > 0);
+          const everyPriceIsValid = courseBillList.every(bill => !has(bill, 'mainFee.price') || bill.mainFee.price > 0);
 
           expect(everyPriceIsValid).toBeTruthy();
+        });
+
+        it('should pass if every validated invoice has price', () => {
+          const priceIsMissing = courseBillList.some(bill => has(bill, 'billedAt') && !bill.mainFee.price > 0);
+
+          expect(priceIsMissing).toBeFalsy();
         });
 
         it('should pass if every count is a positive integer', () => {
