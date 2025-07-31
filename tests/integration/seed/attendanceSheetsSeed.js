@@ -48,6 +48,7 @@ const userList = [
     identity: { firstname: 'traineeFromINTERB2B', lastname: 'withOtherCompany' },
     local: { email: 'traineeFromINTERB2B@alenvi.io' },
     origin: WEBAPP,
+    formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
   },
   { // 3
     _id: new ObjectId(),
