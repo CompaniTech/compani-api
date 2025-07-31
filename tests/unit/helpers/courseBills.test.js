@@ -924,6 +924,77 @@ describe('createBillList', () => {
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
   });
+
+  it('should create several bills for SINGLE course without trainers', async () => {
+    const companyId = new ObjectId();
+    const payerId = new ObjectId();
+    const course = {
+      _id: new ObjectId(),
+      type: SINGLE,
+      prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
+      trainees: [{ identity: { firstname: 'Sarah', lastname: 'Pel' } }],
+    };
+    const payload = {
+      course: course._id,
+      quantity: 2,
+      mainFee: { count: 1, countUnit: TRAINEE },
+      companies: [companyId],
+      payer: { fundingOrganisation: payerId },
+      maturityDate: '2025-04-29T22:00:00.000Z',
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+
+    await CourseBillHelper.createBillList(payload);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOneCourse,
+      [
+        { query: 'findOne', args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1 }] },
+        { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      createCourseBill.getCall(0),
+      {
+        course: course._id,
+        mainFee: {
+          count: 1,
+          countUnit: TRAINEE,
+          description: 'Facture liée à des frais pédagogiques \r\n'
+          + 'Contrat de professionnalisation \r\n'
+          + 'ACCOMPAGNEMENT avril 2025 \r\n'
+          + 'Nom de l\'apprenant·e: Sarah PEL \r\n'
+          + 'Nom du / des intervenants: ',
+        },
+        companies: [companyId],
+        payer: { fundingOrganisation: payerId },
+        maturityDate: '2025-04-29T22:00:00.000Z',
+      }
+    );
+    sinon.assert.calledWithExactly(
+      createCourseBill.getCall(1),
+      {
+        course: course._id,
+        mainFee: {
+          count: 1,
+          countUnit: TRAINEE,
+          description: 'Facture liée à des frais pédagogiques \r\n'
+          + 'Contrat de professionnalisation \r\n'
+          + 'ACCOMPAGNEMENT mai 2025 \r\n'
+          + 'Nom de l\'apprenant·e: Sarah PEL \r\n'
+          + 'Nom du / des intervenants: ',
+        },
+        companies: [companyId],
+        payer: { fundingOrganisation: payerId },
+        maturityDate: '2025-05-29T22:00:00.000Z',
+      }
+    );
+    sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(insertManyCourseBills);
+  });
 });
 
 describe('updateCourseBill', () => {

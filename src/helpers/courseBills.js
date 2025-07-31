@@ -221,7 +221,7 @@ exports.createBillList = async (payload) => {
       ? UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL')
       : '';
 
-    const trainersName = course.trainers
+    const trainersName = get(course, 'trainers', [])
       .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
 
     for (let i = 0; i < payload.quantity; i++) {
