@@ -99,7 +99,7 @@ exports.create = async (payload, credentials) => {
   if (Object.keys(formationExpoTokens).length) {
     for (const result of results) {
       const tokens = formationExpoTokens[result.trainee] || [];
-      await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(result._id, tokens);
+      await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(result._id, payload.trainer, tokens);
     }
   }
 };
