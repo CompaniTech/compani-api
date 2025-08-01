@@ -418,11 +418,13 @@ describe('create', () => {
     sinon.assert.calledWithExactly(
       sendAttendanceSheetSignatureRequestNotification.getCall(0),
       attendanceSheetIds[0],
+      credentials._id,
       ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]']
     );
     sinon.assert.calledWithExactly(
       sendAttendanceSheetSignatureRequestNotification.getCall(1),
       attendanceSheetIds[1],
+      credentials._id,
       ['ExponentPushToken[jeSuisUnNouveauTokenExpo]']
     );
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
@@ -593,11 +595,13 @@ describe('create', () => {
     sinon.assert.calledWithExactly(
       sendAttendanceSheetSignatureRequestNotification.getCall(0),
       attendanceSheets[0]._id,
+      credentials._id,
       ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]']
     );
     sinon.assert.calledWithExactly(
       sendAttendanceSheetSignatureRequestNotification.getCall(1),
       attendanceSheets[1]._id,
+      credentials._id,
       ['ExponentPushToken[jeSuisUnNouveauTokenExpo]']
     );
     sinon.assert.notCalled(uploadCourseFile);
@@ -785,6 +789,7 @@ describe('create', () => {
     sinon.assert.calledOnceWithExactly(
       sendAttendanceSheetSignatureRequestNotification,
       attendanceSheetId,
+      credentials._id,
       ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]']
     );
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
