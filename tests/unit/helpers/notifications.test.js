@@ -290,28 +290,40 @@ describe('sendAttendanceSheetSignatureRequestNotification', () => {
       'ExponentPushToken[jeSuisUnAutreTokenExpo]',
     ];
     const attendanceSheetId = new ObjectId();
+    const trainerId = new ObjectId();
     const courseId = new ObjectId();
     const attendanceSheet = {
       _id: attendanceSheetId,
       trainer: { _id: new ObjectId(), identity: { firstname: 'Paul', lastname: 'Seul' } },
-      course: { _id: courseId, misc: 'skusku', subProgram: { program: { name: 'La communication avec Patrick' } } },
+      course: {
+        _id: courseId,
+        misc: 'skusku',
+        subProgram: { program: { name: 'La communication avec Patrick' } },
+        trainers: [
+          { _id: new ObjectId(), identity: { firstname: 'Paul', lastname: 'Accompagné' } },
+          { _id: trainerId, identity: { firstname: 'Paul', lastname: 'Seul' } },
+        ],
+      },
     };
 
     findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
 
-    await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(attendanceSheetId, formationExpoTokenList);
+    await NotificationHelper
+      .sendAttendanceSheetSignatureRequestNotification(attendanceSheetId, trainerId, formationExpoTokenList);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
       [
         { query: 'findOne', args: [{ _id: attendanceSheetId }, { course: 1 }] },
-        { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
         {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram misc',
-            populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+            select: 'subProgram misc trainers',
+            populate: [
+              { path: 'trainers', select: 'identity' },
+              { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+            ],
           }],
         },
         { query: 'lean', args: [] },
@@ -342,7 +354,7 @@ describe('sendAttendanceSheetSignatureRequestNotification', () => {
   it('should do nothing if trainee has no formationExpoTokenList', async () => {
     const attendanceSheetId = new ObjectId();
 
-    await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(attendanceSheetId, []);
+    await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(attendanceSheetId, new ObjectId(), []);
 
     sinon.assert.notCalled(findOne);
     sinon.assert.notCalled(sendNotificationToUser);
