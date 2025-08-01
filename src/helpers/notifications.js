@@ -70,36 +70,40 @@ exports.sendNewElearningCourseNotification = async (courseId, query) => {
   await Promise.all(notifications);
 };
 
-exports.sendAttendanceSheetSignatureRequestNotification = async (attendanceSheetId, formationExpoTokenList) => {
-  if (!formationExpoTokenList.length) return;
+exports.sendAttendanceSheetSignatureRequestNotification =
+  async (attendanceSheetId, trainerId, formationExpoTokenList) => {
+    if (!formationExpoTokenList.length) return;
 
-  const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }, { course: 1 })
-    .populate({ path: 'trainer', select: 'identity' })
-    .populate({
-      path: 'course',
-      select: 'subProgram misc',
-      populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
-    })
-    .lean();
-
-  const courseName = getCourseName(attendanceSheet.course);
-  const trainerName = UtilsHelper.formatIdentity(attendanceSheet.trainer.identity, 'FL');
-
-  const notifications = [];
-  for (const expoToken of formationExpoTokenList) {
-    notifications.push(
-      this.sendNotificationToUser({
-        title: 'Vous avez une demande d\'émargement à signer',
-        body: `${trainerName} vous demande d'émarger des créneaux pour la formation ${courseName}.`,
-        data: {
-          _id: attendanceSheetId,
-          courseId: attendanceSheet.course._id,
-          type: ATTENDANCE_SHEET_SIGNATURE_REQUEST,
-        },
-        expoToken,
+    const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }, { course: 1 })
+      .populate({
+        path: 'course',
+        select: 'subProgram misc trainers',
+        populate: [
+          { path: 'trainers', select: 'identity' },
+          { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+        ],
       })
-    );
-  }
+      .lean();
 
-  await Promise.all(notifications);
-};
+    const courseName = getCourseName(attendanceSheet.course);
+    const trainer = attendanceSheet.course.trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerId));
+    const trainerName = UtilsHelper.formatIdentity(trainer.identity || '', 'FL');
+
+    const notifications = [];
+    for (const expoToken of formationExpoTokenList) {
+      notifications.push(
+        this.sendNotificationToUser({
+          title: 'Vous avez une demande d\'émargement à signer',
+          body: `${trainerName} vous demande d'émarger des créneaux pour la formation ${courseName}.`,
+          data: {
+            _id: attendanceSheetId,
+            courseId: attendanceSheet.course._id,
+            type: ATTENDANCE_SHEET_SIGNATURE_REQUEST,
+          },
+          expoToken,
+        })
+      );
+    }
+
+    await Promise.all(notifications);
+  };

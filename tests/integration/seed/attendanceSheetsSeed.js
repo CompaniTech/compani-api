@@ -48,6 +48,7 @@ const userList = [
     identity: { firstname: 'traineeFromINTERB2B', lastname: 'withOtherCompany' },
     local: { email: 'traineeFromINTERB2B@alenvi.io' },
     origin: WEBAPP,
+    formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
   },
   { // 3
     _id: new ObjectId(),
@@ -315,6 +316,27 @@ const slotsList = [
     course: coursesList[7]._id,
     step: steps[0]._id,
   },
+  { // 12
+    _id: new ObjectId(),
+    startDate: '2021-03-26T09:00:00.000Z',
+    endDate: '2021-03-26T11:00:00.000Z',
+    course: coursesList[1]._id,
+    step: steps[0]._id,
+  },
+  { // 13
+    _id: new ObjectId(),
+    startDate: '2021-03-27T09:00:00.000Z',
+    endDate: '2021-03-27T11:00:00.000Z',
+    course: coursesList[1]._id,
+    step: steps[0]._id,
+  },
+  { // 14
+    _id: new ObjectId(),
+    startDate: '2021-03-28T09:00:00.000Z',
+    endDate: '2021-03-28T11:00:00.000Z',
+    course: coursesList[1]._id,
+    step: steps[0]._id,
+  },
 ];
 
 const attendanceSheetList = [
@@ -438,6 +460,38 @@ const attendanceSheetList = [
       }],
     }],
     file: { publicId: 'yo', link: 'www.test.com' },
+    origin: MOBILE,
+    trainer: trainer._id,
+  },
+  { // 11
+    _id: new ObjectId(),
+    course: coursesList[1]._id,
+    trainee: userList[2]._id,
+    companies: [otherCompany._id],
+    slots: [
+      {
+        slotId: slotsList[12]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [{
+          traineeId: userList[2]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        }],
+      },
+      {
+        slotId: slotsList[13]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [{
+          traineeId: userList[2]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        }],
+      },
+    ],
     origin: MOBILE,
     trainer: trainer._id,
   },
