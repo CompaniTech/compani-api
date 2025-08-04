@@ -831,7 +831,7 @@ describe('sign', () => {
     findOne.restore();
   });
 
-  it('should add trainee signature in attendance sheet', async () => {
+  it('should add trainee signature in attendance sheet (no slot signed)', async () => {
     const credentials = { _id: new ObjectId() };
     const attendanceSheetId = new ObjectId();
     const payload = { signature: 'test.png' };
@@ -867,6 +867,60 @@ describe('sign', () => {
               slotId,
               trainerSignature: { trainerId, signature: 'trainer.png' },
               traineesSignature: [{ traineeId: credentials._id, signature: 'link' }],
+            },
+          ],
+        },
+      }
+    );
+  });
+
+  it('should add trainee signature in attendance sheet (already signed slots)', async () => {
+    const credentials = { _id: new ObjectId() };
+    const attendanceSheetId = new ObjectId();
+    const payload = { signature: 'test.png' };
+    const slotIds = [new ObjectId(), new ObjectId()];
+    const trainerId = new ObjectId();
+
+    const attendanceSheet = {
+      slots: [
+        {
+          slotId: slotIds[0],
+          trainerSignature: {
+            trainerId,
+            signature: 'trainer.png',
+          },
+          traineesSignature: [{ traineeId: credentials._id, signature: 'trainee.png' }],
+        },
+        { slotId: slotIds[1], trainerSignature: { trainerId, signature: 'trainer.png' } },
+      ],
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
+
+    await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
+
+    sinon.assert.notCalled(uploadCourseFile);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
+    );
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      {
+        $set: {
+          slots: [
+            {
+              slotId: slotIds[0],
+              trainerSignature: { trainerId, signature: 'trainer.png' },
+              traineesSignature: [{ traineeId: credentials._id, signature: 'trainee.png' }],
+            },
+            {
+              slotId: slotIds[1],
+              trainerSignature: { trainerId, signature: 'trainer.png' },
+              traineesSignature: [{ traineeId: credentials._id, signature: 'trainee.png' }],
             },
           ],
         },
