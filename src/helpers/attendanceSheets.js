@@ -124,14 +124,34 @@ exports.update = async (attendanceSheetId, payload) =>
   AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots: payload.slots.map(s => ({ slotId: s })) } });
 
 exports.sign = async (attendanceSheetId, payload, credentials) => {
-  const signature = await GCloudStorageHelper.uploadCourseFile({
-    fileName: `trainee_signature_${credentials._id}`,
-    file: payload.signature,
-  });
-
   const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
-  const slots = attendanceSheet.slots
-    .map(s => ({ ...s, traineesSignature: [{ traineeId: credentials._id, signature: signature.link }] }));
+
+  let traineeSignature = '';
+  const slotWithTraineeSignature = attendanceSheet.slots
+    .find(s => (s.traineesSignature || [])
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id)));
+  if (slotWithTraineeSignature) {
+    traineeSignature = slotWithTraineeSignature.traineesSignature
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id)).signature;
+  } else {
+    const signature = await GCloudStorageHelper.uploadCourseFile({
+      fileName: `trainee_signature_${credentials._id}`,
+      file: payload.signature,
+    });
+    traineeSignature = signature.link;
+  }
+
+  const slots = attendanceSheet.slots.map((s) => {
+    const noSignatureForTrainee = !(s.traineesSignature || [])
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id));
+    if (s.trainerSignature && noSignatureForTrainee) {
+      return {
+        ...s,
+        traineesSignature: [...s.traineesSignature || [], { traineeId: credentials._id, signature: traineeSignature }],
+      };
+    }
+    return s;
+  });
 
   return AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots } });
 };
