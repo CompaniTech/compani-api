@@ -236,7 +236,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[1]._id.toHexString(),
         signature: 'test',
-        trainees: coursesList[1].trainees[0].toHexString(),
+        trainees: coursesList[1].trainees[2].toHexString(),
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -834,7 +834,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
         });
 
         expect(response.statusCode).toBe(200);
-        expect(response.result.data.attendanceSheets.length).toEqual(1);
+        expect(response.result.data.attendanceSheets.length).toEqual(2);
       });
 
     it('should get attendance sheets if user is trainer but not course trainer but is coach from course company',
@@ -1212,6 +1212,25 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       sinon.assert.calledOnce(uploadCourseFile);
     });
 
+    it('should upload trainee signature for inter course with signed slots (mobile)', async () => {
+      const formData = { signature: 'test' };
+
+      const form = generateFormData(formData);
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetList[12]._id}/signature`,
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[12]._id });
+      const attendanceSheetHasBothSignatures = attendanceSheet.slots
+        .every(s => s.trainerSignature && s.traineesSignature.length);
+      expect(attendanceSheetHasBothSignatures).toBeTruthy();
+      sinon.assert.notCalled(uploadCourseFile);
+    });
+
     it('should return 400 if no signature', async () => {
       const formData = {};
 
@@ -1257,7 +1276,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 404 if attendance has already been signed by trainee', async () => {
+    it('should return 404 if every slot has already been signed by trainee', async () => {
       const formData = { signature: 'test' };
 
       const form = generateFormData(formData);
