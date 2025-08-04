@@ -62,6 +62,7 @@ const userList = [
     identity: { firstname: 'thirdCompany', lastname: 'User' },
     local: { email: 'trainerFromThirdCompany@compani.fr' },
     origin: WEBAPP,
+    formationExpoTokenList: ['ExponentPushToken[0]', 'ExponentPushToken[1]'],
   },
 ];
 
@@ -490,6 +491,34 @@ const attendanceSheetList = [
           traineeId: userList[2]._id,
           signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
         }],
+      },
+    ],
+    origin: MOBILE,
+    trainer: trainer._id,
+  },
+  { // 12
+    _id: new ObjectId(),
+    course: coursesList[1]._id,
+    trainee: userList[1]._id,
+    companies: [authCompany._id],
+    slots: [
+      {
+        slotId: slotsList[12]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [{
+          traineeId: userList[1]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        }],
+      },
+      {
+        slotId: slotsList[13]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
       },
     ],
     origin: MOBILE,
