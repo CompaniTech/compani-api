@@ -131,12 +131,16 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
 };
 
 exports.authorizeAttendanceSheetSignature = async (req) => {
+  const { credentials } = req.auth;
   const attendanceSheet = await AttendanceSheet.findOne({ _id: req.params._id }).lean();
 
   if (!attendanceSheet) throw Boom.notFound();
-  if (attendanceSheet.slots.some(s => !s.trainerSignature || s.traineesSignature)) throw Boom.notFound();
+  if (attendanceSheet.slots.some(s => !s.trainerSignature)) throw Boom.notFound();
+  const hasTraineeSignedEverySlot = attendanceSheet.slots
+    .every(s => (s.traineesSignature || [])
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id)));
+  if (hasTraineeSignedEverySlot) throw Boom.notFound();
 
-  const { credentials } = req.auth;
   const loggedUserId = get(credentials, '_id');
   if (!UtilsHelper.areObjectIdsEquals(attendanceSheet.trainee, loggedUserId)) throw Boom.forbidden();
 
