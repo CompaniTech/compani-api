@@ -792,7 +792,16 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     const areLastSlotAttendancesValidated = !!(!isTutor && !get(course, 'slotsToPlan.length') && lastSlot &&
       await Attendance.countDocuments({ courseSlot: lastSlot._id }));
 
-    return { ...exports.formatCourseWithProgress(course, false, true), areLastSlotAttendancesValidated };
+    return {
+      ...exports.formatCourseWithProgress(course, false, true),
+      areLastSlotAttendancesValidated,
+      ...course.attendanceSheets && {
+        attendanceSheets: course.attendanceSheets.map(as => ({
+          ...as,
+          ...as.slots && { slots: as.slots.map(s => ({ ...omit(s, 'slotId'), ...s.slotId })) },
+        })),
+      },
+    };
   }
 
   return exports.formatCourseWithProgress(course, false, true);
