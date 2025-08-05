@@ -195,16 +195,16 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
         let formattedPrice = UtilsHelper.formatPrice(companyPrice.global);
 
         if (companyPrice.trainerFees) {
-          formattedPrice += `(+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
+          formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
         }
 
         price += `\n${company.name}: ${formattedPrice}`;
       });
     } else {
-      let formattedPrice = UtilsHelper.formatPrice(course.prices[0].price);
+      let formattedPrice = UtilsHelper.formatPrice(course.prices[0].global);
 
       if (course.prices[0].trainerFees) {
-        formattedPrice += UtilsHelper.formatPrice(course.prices[0].trainerFees);
+        formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
       }
 
       price += `\n${formattedPrice}`;
