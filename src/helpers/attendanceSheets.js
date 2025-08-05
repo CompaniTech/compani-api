@@ -150,7 +150,10 @@ exports.sign = async (attendanceSheetId, payload, credentials) => {
     if (s.trainerSignature && noSignatureForTrainee) {
       return {
         ...s,
-        traineesSignature: [...s.traineesSignature || [], { traineeId: credentials._id, signature: traineeSignature }],
+        traineesSignature: [
+          ...(s.traineesSignature || []),
+          { traineeId: credentials._id, signature: traineeSignature },
+        ],
       };
     }
     return s;
