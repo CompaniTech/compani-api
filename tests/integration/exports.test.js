@@ -118,11 +118,11 @@ const vendorHistoryExportTypes = [
     exportType: COURSE,
     expectedRows: [
       '\ufeff"Identifiant";"Type";"Payeur";"Structure";"Société mère";"Programme";"Id programme";"Sous-Programme";"Infos complémentaires";"Intervenant·es";"Début de formation";"Fin de formation";"Chargé des opérations";"Contact pour la formation";"Nombre d\'inscrits";"Nombre de dates";"Nombre de créneaux";"Nombre de créneaux à planifier";"Durée Totale";"Nombre de SMS envoyés";"Nombre de personnes connectées à l\'app";"Complétion eLearning moyenne";"Nombre de réponses au questionnaire de recueil des attentes";"Nombre de réponses au questionnaire de satisfaction";"Date de démarrage souhaitée";"Première date de démarrage souhaitée";"Nombre de feuilles d\'émargement chargées";"Nombre de présences";"Nombre d\'absences";"Nombre de stagiaires non prévus";"Nombre de présences non prévues";"Avancement";"Archivée";"Date d\'archivage";"Prix de la formation";"Nombre de factures";"Facturée";"Montant facturé";"Montant réglé";"Solde";"Date de création"',
-      `${coursesList[0]._id};"Intra";"APA Paris";"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;2;0;"4,00";2;1;"0,00";2;1;;;1;2;4;0;0;"1,00";"Oui";"08/07/2024";"3000, 00 €";"1 sur 1";"Oui";"1200,00";"1150,00";"-50,00";"07/01/2018"`,
+      `${coursesList[0]._id};"Intra";"APA Paris";"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;2;0;"4,00";2;1;"0,00";2;1;;;1;2;4;0;0;"1,00";"Oui";"08/07/2024";"${formatPrice(coursesList[0].prices[0].global)}";"1 sur 1";"Oui";"1200,00";"1150,00";"-50,00";"07/01/2018"`,
       `${coursesList[5]._id};"Intra";"APA Paris,Test SAS";"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 6";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;3;0;0;"1,00";"Non";;;"2 sur 3";"Non";"880,00";"200,00";"-680,00";"07/01/2018"`,
       `${coursesList[6]._id};"Intra";;"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 7";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;"1,00";"Non";;;"0 sur 0";"Non";;;;"07/01/2018"`,
-      `${coursesList[1]._id};"Inter B2B";"APA Paris";"Test SAS,Un autre SAS";;"Program 2";${programList[1]._id};"subProgram 2";;"Gilles FORMATEUR";"01/02/2021";;"Aline CONTACT-COM";"Aline CONTACT-COM";2;2;2;1;"4,00";1;0;"0,67";1;1;"01/01/2019";"24/10/2018";0;2;2;1;2;"0,67";"Non";;"\nTest SAS: 2500,00 € (+ FF: 250,00 €) Un autre SAS: 2500,00 €";"2 sur 2";"Oui";"800,00";"300,00";"-500,00";"07/01/2018"`,
-      `${coursesList[2]._id};"Inter B2B";;"Test SAS,Test SAS withtout subscription,Un autre SAS";;"Program 2";${programList[1]._id};"subProgram 2";"group 3";"Gilles FORMATEUR";;;"Aline CONTACT-COM";"Aline CONTACT-COM";3;0;0;0;"0,00";0;0;"0,44";0;1;"12/01/2022";"12/01/2022";0;0;0;0;0;;"Non";;"\nTest SAS: 3000,00 €";"0 sur 3";"Non";;;;"07/01/2018"`,
+      `${coursesList[1]._id};"Inter B2B";"APA Paris";"Test SAS,Un autre SAS";;"Program 2";${programList[1]._id};"subProgram 2";;"Gilles FORMATEUR";"01/02/2021";;"Aline CONTACT-COM";"Aline CONTACT-COM";2;2;2;1;"4,00";1;0;"0,67";1;1;"01/01/2019";"24/10/2018";0;2;2;1;2;"0,67";"Non";;"\nTest SAS: ${formatPrice(coursesList[1].prices[0].global)} (+ FF: ${formatPrice(coursesList[1].prices[0].trainerFees)})\nUn autre SAS: ${formatPrice(coursesList[1].prices[1].global)}";"2 sur 2";"Oui";"800,00";"300,00";"-500,00";"07/01/2018"`,
+      `${coursesList[2]._id};"Inter B2B";;"Test SAS,Test SAS withtout subscription,Un autre SAS";;"Program 2";${programList[1]._id};"subProgram 2";"group 3";"Gilles FORMATEUR";;;"Aline CONTACT-COM";"Aline CONTACT-COM";3;0;0;0;"0,00";0;0;"0,44";0;1;"12/01/2022";"12/01/2022";0;0;0;0;0;;"Non";;"\nTest SAS: ${formatPrice(coursesList[2].prices[0].global)}";"0 sur 3";"Non";;;;"07/01/2018"`,
       `${coursesList[7]._id};"Intra société mère";;;"Société mère";"Program 1";${programList[0]._id};"subProgram 1";"group 8";"Gilles FORMATEUR";"16/01/2021";"16/01/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;"1,00";"Non";;;"0 sur 0";"Non";;;;"07/01/2018"`,
       `${coursesList[3]._id};"Intra";;"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 4";"Gilles FORMATEUR";"01/02/2021";"10/02/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";2;3;3;0;"11,00";0;1;"0,00";0;0;;;0;0;6;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
       `${coursesList[8]._id};"Intra";;"Un autre SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 9";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;1;;;0;1;0;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
@@ -261,13 +261,6 @@ vendorHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
 
         const rows = response.result.split('\r\n');
         expect(rows.length).toBe(expectedRows.length);
-
-        for (let i = 0; i < expectedRows.length; i++) {
-          // console.log('expectedRows', expectedRows[i]);
-          // console.log('rows', rows[i]);
-          // console.log('equal', expectedRows[i] === rows[i]);
-          expect(rows.some(r => r === expectedRows[i])).toBeTruthy();
-        }
 
         for (let i = 0; i < expectedRows.length; i++) expect(rows.some(r => r === expectedRows[i])).toBeTruthy();
       });

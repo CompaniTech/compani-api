@@ -207,7 +207,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
         formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
       }
 
-      price += `\n${formattedPrice}`;
+      price += formattedPrice;
     }
   }
 
