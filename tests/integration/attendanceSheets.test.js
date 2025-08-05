@@ -1208,7 +1208,8 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       expect(response.statusCode).toBe(200);
       const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[8]._id });
       const attendanceSheetHasBothSignatures = attendanceSheet.slots
-        .every(s => s.trainerSignature && s.traineesSignature.length);
+        .every(s => s.trainerSignature &&
+            UtilsHelper.areObjectIdsEquals(s.traineesSignature[0].traineeId, userList[1]._id));
       expect(attendanceSheetHasBothSignatures).toBeTruthy();
       sinon.assert.calledOnce(uploadCourseFile);
     });
