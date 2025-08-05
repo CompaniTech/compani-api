@@ -188,12 +188,14 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
   if (course.prices) {
     if ([INTRA_HOLDING, INTER_B2B].includes(course.type)) {
       course.companies.forEach((company) => {
-        const companyPrice = course.prices.find(p => p.company && p.company._id === company._id);
+        const companyPrice = course.prices.find(p => UtilsHelper.areObjectIdsEquals(p.company, company._id));
 
-        let formattedPrice = UtilsHelper.formatPrice(companyPrice.price);
+        if (!companyPrice) return;
+
+        let formattedPrice = UtilsHelper.formatPrice(companyPrice.global);
 
         if (companyPrice.trainerFees) {
-          formattedPrice += UtilsHelper.formatPrice(companyPrice.trainerFees);
+          formattedPrice += `(+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
         }
 
         price += `\n${company.name}: ${formattedPrice}`;
