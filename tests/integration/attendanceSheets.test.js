@@ -3,6 +3,7 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const NotificationHelper = require('../../src/helpers/notifications');
+const UtilsHelper = require('../../src/helpers/utils');
 const app = require('../../server');
 const { populateDB, coursesList, attendanceSheetList, slotsList, userList } = require('./seed/attendanceSheetsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
@@ -1226,7 +1227,8 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       expect(response.statusCode).toBe(200);
       const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[12]._id });
       const attendanceSheetHasBothSignatures = attendanceSheet.slots
-        .every(s => s.trainerSignature && s.traineesSignature.length);
+        .every(s => s.trainerSignature &&
+            UtilsHelper.areObjectIdsEquals(s.traineesSignature[0].traineeId, userList[1]._id));
       expect(attendanceSheetHasBothSignatures).toBeTruthy();
       sinon.assert.notCalled(uploadCourseFile);
     });

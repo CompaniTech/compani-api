@@ -117,7 +117,10 @@ exports.list = async (query, credentials) => {
     .setOptions({ isVendorUser })
     .lean();
 
-  return attendanceSheets;
+  return attendanceSheets.map(as => ({
+    ...as,
+    ...as.slots && { slots: as.slots.map(s => ({ ...omit(s, 'slotId'), ...s.slotId })) },
+  }));
 };
 
 exports.update = async (attendanceSheetId, payload) =>
