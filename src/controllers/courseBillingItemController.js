@@ -34,4 +34,17 @@ const create = async (req) => {
   }
 };
 
-module.exports = { list, create };
+const remove = async (req) => {
+  try {
+    await CourseBillingItemHelper.remove(req.params);
+
+    return {
+      message: translate[language].courseBillingItemDeleted,
+    };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { list, create, remove };
