@@ -13,7 +13,9 @@ const {
   VENDOR_ADMIN,
   TRAINING_ORGANISATION_MANAGER,
   SINGLE,
+  INTER_B2B,
 } = require('../../helpers/constants');
+const DatesUtilsHelper = require('../../helpers/dates/utils');
 const translate = require('../../helpers/translate');
 
 const { language } = translate;
@@ -103,7 +105,11 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 exports.authorizeAttendanceSheetEdit = async (req) => {
   const attendanceSheet = await AttendanceSheet
     .findOne({ _id: req.params._id })
-    .populate({ path: 'course', select: 'type trainers' })
+    .populate({
+      path: 'course',
+      select: 'type trainers slots',
+      populate: { path: 'slots', select: 'endDate' },
+    })
     .lean();
 
   if (!attendanceSheet) throw Boom.notFound();
@@ -111,13 +117,17 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   const { credentials } = req.auth;
   if (!isVendorAndAuthorized(attendanceSheet.course.trainers, credentials)) throw Boom.forbidden();
 
-  const isSingleCourse = attendanceSheet.course.type === SINGLE;
-  if (!isSingleCourse) throw Boom.forbidden();
-
   if (req.payload.action) {
-    const hasBothSignatures = attendanceSheet.slots.every(s => s.trainerSignature && s.traineesSignature);
-    if (!hasBothSignatures) throw Boom.forbidden();
+    let canGenerate = attendanceSheet.slots.every(s => s.trainerSignature && s.traineesSignature);
+    if (attendanceSheet.file) canGenerate = false;
+    if (attendanceSheet.course.type === INTER_B2B) {
+      const lastSlot = [...attendanceSheet.course.slots.sort(DatesUtilsHelper.descendingSortBy('endDate'))][0];
+      if (CompaniDate().isBefore(lastSlot.endDate)) canGenerate = false;
+    }
+    if (!canGenerate) throw Boom.forbidden();
   } else {
+    if (attendanceSheet.course.type !== SINGLE) throw Boom.forbidden();
+
     const courseSlotCount = await CourseSlot
       .countDocuments({ _id: { $in: req.payload.slots }, course: attendanceSheet.course._id });
     if (courseSlotCount !== req.payload.slots.length) throw Boom.notFound();
