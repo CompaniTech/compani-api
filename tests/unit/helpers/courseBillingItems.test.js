@@ -1,6 +1,7 @@
 const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
+const has = require('lodash/has');
 const CourseBillingItem = require('../../../src/models/CourseBillingItem');
 const CourseBillingItemHelper = require('../../../src/helpers/courseBillingItems');
 const SinonMongoose = require('../sinonMongoose');
@@ -15,16 +16,27 @@ describe('list', () => {
   });
 
   it('should return all course billing items', async () => {
+    const credentials = { role: { vendor: 'training_organisation_manager' } };
     const courseBillingItems = [
       { name: 'article' },
       { name: 'frais formateur' },
     ];
-    find.returns(SinonMongoose.stubChainedQueries(courseBillingItems, ['lean']));
+    find.returns(SinonMongoose.stubChainedQueries(courseBillingItems));
 
-    const result = await CourseBillingItemHelper.list();
+    const result = await CourseBillingItemHelper.list(credentials);
 
     expect(result).toBe(courseBillingItems);
-    SinonMongoose.calledOnceWithExactly(find, [{ query: 'find' }, { query: 'lean' }]);
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        { query: 'find' },
+        {
+          query: 'populate',
+          args: [{ path: 'courseBillCount', options: { isVendorUser: has(credentials, 'role.vendor') } }],
+        },
+        { query: 'lean', args: [{ virtuals: true }] },
+      ]
+    );
   });
 });
 
