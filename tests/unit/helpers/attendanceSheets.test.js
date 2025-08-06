@@ -13,7 +13,14 @@ const SinonMongoose = require('../sinonMongoose');
 const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
 const InterAttendanceSheet = require('../../../src/data/pdf/attendanceSheet/interAttendanceSheet');
 const UtilsHelper = require('../../../src/helpers/utils');
-const { VENDOR_ADMIN, COACH, COURSE, TRAINEE, HOLDING_ADMIN, INTER_B2B } = require('../../../src/helpers/constants');
+const {
+  VENDOR_ADMIN,
+  COACH, COURSE,
+  TRAINEE,
+  HOLDING_ADMIN,
+  INTER_B2B,
+  SINGLE,
+} = require('../../../src/helpers/constants');
 
 describe('list', () => {
   let find;
@@ -950,7 +957,7 @@ describe('generate', () => {
     updateOne.restore();
   });
 
-  it('should generate attendance sheet', async () => {
+  it('should generate attendance sheet (single)', async () => {
     const attendanceSheetId = new ObjectId();
     const traineeId = new ObjectId();
     const trainerId = new ObjectId();
@@ -973,15 +980,29 @@ describe('generate', () => {
         },
       ],
       course: {
-        type: INTER_B2B,
+        type: SINGLE,
         misc: 'misc',
         companies: [{ name: 'Alenvi' }],
         subProgram: { program: { name: 'Program 1' } },
+        slots: [
+          {
+            _id: slotId,
+            startDate: '2020-03-04T09:00:00',
+            endDate: '2020-03-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          {
+            _id: new ObjectId(),
+            startDate: '2020-04-04T09:00:00',
+            endDate: '2020-04-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+        ],
       },
     };
 
     const formattedCourse = {
-      type: INTER_B2B,
+      type: SINGLE,
       misc: 'misc',
       companies: [{ name: 'Alenvi' }],
       slots: [{
@@ -1021,10 +1042,11 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type misc companies subProgram',
+            select: 'type misc companies subProgram slots',
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'slots', select: 'step startDate endDate address' },
             ],
           }],
         },
@@ -1038,6 +1060,133 @@ describe('generate', () => {
         signedSlots: [
           {
             slotId,
+            trainerSignature: { trainerId, signature: 'https://trainer.com' },
+            traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
+          },
+        ],
+      });
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: 'emargements_Carlos_SAINZ_04/03/2020', file: 'pdf', contentType: 'application/pdf' }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      { $set: { file: { publicId: 'yo', link: 'yo' } } }
+    );
+  });
+
+  it('should generate attendance sheet (inter)', async () => {
+    const attendanceSheetId = new ObjectId();
+    const traineeId = new ObjectId();
+    const trainerId = new ObjectId();
+    const slotIds = [new ObjectId(), new ObjectId()];
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      misc: 'misc',
+      trainee: { _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } },
+      trainer: { identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
+      slots: [
+        {
+          slotId: {
+            _id: slotIds[0],
+            startDate: '2020-03-04T09:00:00',
+            endDate: '2020-03-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          trainerSignature: { trainerId, signature: 'https://trainer.com' },
+          traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
+        },
+      ],
+      course: {
+        type: INTER_B2B,
+        misc: 'misc',
+        companies: [{ name: 'Alenvi' }],
+        subProgram: { program: { name: 'Program 1' } },
+        slots: [
+          {
+            _id: slotIds[0],
+            startDate: '2020-03-04T09:00:00',
+            endDate: '2020-03-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          {
+            _id: slotIds[1],
+            startDate: '2020-04-04T09:00:00',
+            endDate: '2020-04-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+        ],
+      },
+    };
+
+    const formattedCourse = {
+      type: INTER_B2B,
+      misc: 'misc',
+      companies: [{ name: 'Alenvi' }],
+      slots: [
+        {
+          _id: slotIds[0],
+          startDate: '2020-03-04T09:00:00',
+          endDate: '2020-03-04T11:00:00',
+          step: { type: 'on_site' },
+        },
+        {
+          _id: slotIds[1],
+          startDate: '2020-04-04T09:00:00',
+          endDate: '2020-04-04T11:00:00',
+          step: { type: 'on_site' },
+        },
+      ],
+      trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
+      trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
+      subProgram: { program: { name: 'Program 1' } },
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    formatInterCourseForPdf.returns({
+      trainees: [{ traineeName: 'Carlos SAINZ', course: { slots: [{ date: '04/03/2020' }] } }],
+    });
+
+    getPdf.returns('pdf');
+    uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
+    await attendanceSheetHelper.generate(attendanceSheetId);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots.slotId',
+            select: 'step startDate endDate address',
+            populate: { path: 'step', select: 'type' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type misc companies subProgram slots',
+            populate: [
+              { path: 'companies', select: 'name' },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'slots', select: 'step startDate endDate address' },
+            ],
+          }],
+        },
+        { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(formatInterCourseForPdf, formattedCourse);
+    sinon.assert.calledOnceWithExactly(
+      getPdf,
+      {
+        trainees: [{ traineeName: 'Carlos SAINZ', course: { slots: [{ date: '04/03/2020' }] } }],
+        signedSlots: [
+          {
+            slotId: slotIds[0],
             trainerSignature: { trainerId, signature: 'https://trainer.com' },
             traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
           },
