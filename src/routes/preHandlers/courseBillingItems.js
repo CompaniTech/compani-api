@@ -18,9 +18,9 @@ exports.authorizeBillingItemsDeletion = async (req) => {
   const { credentials } = req.auth;
 
   const courseBillingItems = await CourseBillingItem
-    .countDocuments(req.params)
+    .findOne(req.params)
     .populate({ path: 'courseBillCount', options: { isVendorUser: has(credentials, 'role.vendor') } })
-    .leaan();
+    .lean();
 
   if (!courseBillingItems) throw Boom.notFound();
 

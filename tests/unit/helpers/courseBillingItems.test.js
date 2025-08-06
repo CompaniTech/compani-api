@@ -1,4 +1,5 @@
 const { expect } = require('expect');
+const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
 const CourseBillingItem = require('../../../src/models/CourseBillingItem');
 const CourseBillingItemHelper = require('../../../src/helpers/courseBillingItems');
@@ -43,5 +44,24 @@ describe('create', () => {
     await CourseBillingItemHelper.create(newItem);
 
     sinon.assert.calledOnceWithExactly(create, newItem);
+  });
+});
+
+describe('remove', () => {
+  let deleteOne;
+
+  beforeEach(() => {
+    deleteOne = sinon.stub(CourseBillingItem, 'deleteOne');
+  });
+
+  afterEach(() => {
+    deleteOne.restore();
+  });
+
+  it('should delete a course billing item', async () => {
+    const billingItemId = new ObjectId();
+    await CourseBillingItemHelper.remove({ _id: billingItemId });
+
+    sinon.assert.calledOnceWithExactly(deleteOne, { _id: billingItemId });
   });
 });

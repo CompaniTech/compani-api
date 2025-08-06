@@ -1,4 +1,5 @@
 const { expect } = require('expect');
+const { ObjectId } = require('mongodb');
 const CourseBillingItem = require('../../src/models/CourseBillingItem');
 const app = require('../../server');
 const { populateDB, courseBillingItemsList } = require('./seed/courseBillingItemsSeed');
@@ -145,7 +146,7 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems/', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should delete course billing item #tag', async () => {
+    it('should delete course billing item', async () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursebillingitems/${courseBillingItemsList[0]._id}`,
@@ -156,6 +157,46 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems/', () => {
 
       expect(response.statusCode).toBe(200);
       expect(count).toBe(courseBillingItemsList.length - 1);
+    });
+
+    it('should return 404 if course billing item does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/coursebillingitems/${new ObjectId()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if course billing item has bills', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/coursebillingitems/${courseBillingItemsList[1]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'DELETE',
+          url: `/coursebillingitems/${courseBillingItemsList[0]._id}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
     });
   });
 });
