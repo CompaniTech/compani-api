@@ -241,7 +241,7 @@ clientHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
 });
 
 vendorHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
-  describe(`EXPORTS ROUTES - GET /exports/${exportType}/history #tag`, () => {
+  describe(`EXPORTS ROUTES - GET /exports/${exportType}/history`, () => {
     let authToken;
     before(populateDB);
 

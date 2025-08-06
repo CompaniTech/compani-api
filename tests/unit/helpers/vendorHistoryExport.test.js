@@ -64,17 +64,19 @@ describe('exportCourseHistory', () => {
     { _id: new ObjectId(), name: 'étape 3', type: E_LEARNING, activities: activityListIds },
   ];
 
+  const programIdList = [new ObjectId(), new ObjectId()];
+
   const subProgramList = [
     {
       _id: new ObjectId(),
       name: 'subProgram 1',
-      program: { name: 'Program 1' },
+      program: { _id: programIdList[0], name: 'Program 1' },
       steps: [stepList[0], stepList[1]],
     },
     {
       _id: new ObjectId(),
       name: 'subProgram 2',
-      program: { name: 'Program 2' },
+      program: { _id: programIdList[1], name: 'Program 2' },
       steps: [stepList[0], stepList[2]],
     },
   ];
@@ -155,6 +157,7 @@ describe('exportCourseHistory', () => {
       expectedBillsCount: 2,
       archivedAt: '2024-07-07T22:00:00.000Z',
       createdAt: '2018-01-07T17:33:55.000Z',
+      prices: [{ global: 3000, company: company._id }],
       bills: [
         {
           course: courseIdList[0],
@@ -193,6 +196,7 @@ describe('exportCourseHistory', () => {
       slotsToPlan: [courseSlotList[4]],
       slots: [courseSlotList[2], courseSlotList[3]],
       createdAt: '2018-01-07T17:33:55.000Z',
+      prices: [{ global: 2500, trainerFees: 250, company: otherCompany._id }],
       bills: [
         {
           course: courseIdList[1],
@@ -638,7 +642,7 @@ describe('exportCourseHistory', () => {
         'Test SAS',
         '',
         'Program 1',
-        '',
+        programIdList[0],
         'subProgram 1',
         'group 1',
         'Gilles FORMATEUR',
@@ -666,7 +670,7 @@ describe('exportCourseHistory', () => {
         '1,00',
         'Oui',
         '08/07/2024',
-        '',
+        `${UtilsHelper.formatPrice(courseList[0].prices[0].global)}`,
         '1 sur 2',
         'Non',
         '120,00',
@@ -681,7 +685,7 @@ describe('exportCourseHistory', () => {
         'Autre structure,Test SAS',
         '',
         'Program 2',
-        '',
+        programIdList[1],
         'subProgram 2',
         'group 2',
         'Gilles FORMATEUR, Rihanna FENTY',
@@ -709,7 +713,7 @@ describe('exportCourseHistory', () => {
         '0,67',
         'Non',
         '',
-        '',
+        `\nAutre structure: ${UtilsHelper.formatPrice(courseList[1].prices[0].global)} (+ FF: ${UtilsHelper.formatPrice(courseList[1].prices[0].trainerFees)})`,
         '2 sur 2',
         'Oui',
         '240,00',
@@ -724,7 +728,7 @@ describe('exportCourseHistory', () => {
         '',
         'Société mère',
         'Program 2',
-        '',
+        programIdList[1],
         'subProgram 2',
         'group 3',
         'Gilles FORMATEUR',
@@ -767,7 +771,7 @@ describe('exportCourseHistory', () => {
         'Test SAS',
         '',
         'Program 1',
-        '',
+        programIdList[0],
         'subProgram 1',
         'group 1',
         'Gilles FORMATEUR',
@@ -810,7 +814,7 @@ describe('exportCourseHistory', () => {
         'Autre structure',
         '',
         'Program 1',
-        '',
+        programIdList[0],
         'subProgram 1',
         'group 1',
         'Gilles FORMATEUR',
@@ -853,7 +857,7 @@ describe('exportCourseHistory', () => {
         'Test SAS',
         '',
         'Program 1',
-        '',
+        programIdList[0],
         'subProgram 1',
         'Trainee 1',
         'Gilles FORMATEUR',
