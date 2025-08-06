@@ -11,7 +11,7 @@ const GCloudStorageHelper = require('./gCloudStorage');
 const NotificationHelper = require('./notifications');
 const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
-const { DAY_MONTH_YEAR, COURSE, TRAINEE, INTER_B2B } = require('./constants');
+const { DAY_MONTH_YEAR, COURSE, TRAINEE, INTER_B2B, SINGLE } = require('./constants');
 
 exports.create = async (payload, credentials) => {
   let fileName;
@@ -174,17 +174,20 @@ exports.generate = async (attendanceSheetId) => {
     .populate({ path: 'trainer', select: 'identity' })
     .populate({
       path: 'course',
-      select: 'type misc companies subProgram',
+      select: 'type misc companies subProgram slots',
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+        { path: 'slots', select: 'step startDate endDate address' },
       ],
     })
     .lean();
 
   const formattedCourse = {
     ...attendanceSheet.course,
-    slots: attendanceSheet.slots.map(s => s.slotId),
+    slots: attendanceSheet.course.type === SINGLE
+      ? attendanceSheet.slots.map(s => s.slotId)
+      : attendanceSheet.course.slots,
     trainees: [attendanceSheet.trainee],
     trainers: [attendanceSheet.trainer],
   };
