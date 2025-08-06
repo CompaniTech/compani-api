@@ -64,17 +64,19 @@ describe('exportCourseHistory', () => {
     { _id: new ObjectId(), name: 'étape 3', type: E_LEARNING, activities: activityListIds },
   ];
 
+  const programIdList = [new ObjectId(), new ObjectId()];
+
   const subProgramList = [
     {
       _id: new ObjectId(),
       name: 'subProgram 1',
-      program: { name: 'Program 1' },
+      program: { _id: programIdList[0], name: 'Program 1' },
       steps: [stepList[0], stepList[1]],
     },
     {
       _id: new ObjectId(),
       name: 'subProgram 2',
-      program: { name: 'Program 2' },
+      program: { _id: programIdList[1], name: 'Program 2' },
       steps: [stepList[0], stepList[2]],
     },
   ];
@@ -155,6 +157,7 @@ describe('exportCourseHistory', () => {
       expectedBillsCount: 2,
       archivedAt: '2024-07-07T22:00:00.000Z',
       createdAt: '2018-01-07T17:33:55.000Z',
+      prices: [{ global: 3000, company: company._id }],
       bills: [
         {
           course: courseIdList[0],
@@ -193,6 +196,7 @@ describe('exportCourseHistory', () => {
       slotsToPlan: [courseSlotList[4]],
       slots: [courseSlotList[2], courseSlotList[3]],
       createdAt: '2018-01-07T17:33:55.000Z',
+      prices: [{ global: 2500, trainerFees: 250, company: otherCompany._id }],
       bills: [
         {
           course: courseIdList[1],
@@ -432,6 +436,7 @@ describe('exportCourseHistory', () => {
   let findQuestionnaireHistory;
   let findCourseHistory;
   let findActivityHistory;
+  let formatPrice;
 
   beforeEach(() => {
     findCourseSlot = sinon.stub(CourseSlot, 'find');
@@ -443,6 +448,7 @@ describe('exportCourseHistory', () => {
     findQuestionnaireHistory = sinon.stub(QuestionnaireHistory, 'find');
     findCourseHistory = sinon.stub(CourseHistory, 'find');
     findActivityHistory = sinon.stub(ActivityHistory, 'find');
+    formatPrice = sinon.stub(UtilsHelper, 'formatPrice');
   });
 
   afterEach(() => {
@@ -455,6 +461,7 @@ describe('exportCourseHistory', () => {
     findQuestionnaireHistory.restore();
     findCourseHistory.restore();
     findActivityHistory.restore();
+    formatPrice.restore();
   });
 
   it('should return an empty array if no course', async () => {
@@ -489,7 +496,7 @@ describe('exportCourseHistory', () => {
             ],
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt'] },
+        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'holding', select: 'name' }] },
         {
@@ -548,6 +555,7 @@ describe('exportCourseHistory', () => {
     sinon.assert.notCalled(findAttendanceSheet);
     sinon.assert.notCalled(findCourseHistory);
     sinon.assert.notCalled(findActivityHistory);
+    sinon.assert.notCalled(formatPrice);
   });
 
   it('should return an array with the header and 4 rows', async () => {
@@ -583,6 +591,9 @@ describe('exportCourseHistory', () => {
     findActivityHistory.onCall(3).returns(SinonMongoose.stubChainedQueries([], ['lean']));
     findActivityHistory.onCall(4).returns(SinonMongoose.stubChainedQueries([], ['lean']));
     findActivityHistory.onCall(5).returns(SinonMongoose.stubChainedQueries([], ['lean']));
+    formatPrice.onCall(0).returns('3000,00 €');
+    formatPrice.onCall(1).returns('2500,00 €');
+    formatPrice.onCall(2).returns('250,00 €');
 
     const result = await ExportHelper
       .exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
@@ -595,6 +606,7 @@ describe('exportCourseHistory', () => {
         'Structure',
         'Société mère',
         'Programme',
+        'Id programme',
         'Sous-Programme',
         'Infos complémentaires',
         'Intervenant·es',
@@ -622,6 +634,7 @@ describe('exportCourseHistory', () => {
         'Avancement',
         'Archivée',
         'Date d\'archivage',
+        'Prix de la formation',
         'Nombre de factures',
         'Facturée',
         'Montant facturé',
@@ -636,6 +649,7 @@ describe('exportCourseHistory', () => {
         'Test SAS',
         '',
         'Program 1',
+        programIdList[0],
         'subProgram 1',
         'group 1',
         'Gilles FORMATEUR',
@@ -663,6 +677,7 @@ describe('exportCourseHistory', () => {
         '1,00',
         'Oui',
         '08/07/2024',
+        '3000,00 €',
         '1 sur 2',
         'Non',
         '120,00',
@@ -677,6 +692,7 @@ describe('exportCourseHistory', () => {
         'Autre structure,Test SAS',
         '',
         'Program 2',
+        programIdList[1],
         'subProgram 2',
         'group 2',
         'Gilles FORMATEUR, Rihanna FENTY',
@@ -704,6 +720,7 @@ describe('exportCourseHistory', () => {
         '0,67',
         'Non',
         '',
+        '\nAutre structure: 2500,00 € (+ FF: 250,00 €)',
         '2 sur 2',
         'Oui',
         '240,00',
@@ -718,6 +735,7 @@ describe('exportCourseHistory', () => {
         '',
         'Société mère',
         'Program 2',
+        programIdList[1],
         'subProgram 2',
         'group 3',
         'Gilles FORMATEUR',
@@ -745,6 +763,7 @@ describe('exportCourseHistory', () => {
         '',
         'Non',
         '',
+        '',
         '0 sur 0',
         'Non',
         '',
@@ -759,6 +778,7 @@ describe('exportCourseHistory', () => {
         'Test SAS',
         '',
         'Program 1',
+        programIdList[0],
         'subProgram 1',
         'group 1',
         'Gilles FORMATEUR',
@@ -786,6 +806,7 @@ describe('exportCourseHistory', () => {
         '',
         'Non',
         '',
+        '',
         '3 sur 3',
         'Oui',
         '560,00',
@@ -800,6 +821,7 @@ describe('exportCourseHistory', () => {
         'Autre structure',
         '',
         'Program 1',
+        programIdList[0],
         'subProgram 1',
         'group 1',
         'Gilles FORMATEUR',
@@ -827,6 +849,7 @@ describe('exportCourseHistory', () => {
         '1,00',
         'Non',
         '',
+        '',
         '1 sur 2',
         'Non',
         '120,00',
@@ -841,6 +864,7 @@ describe('exportCourseHistory', () => {
         'Test SAS',
         '',
         'Program 1',
+        programIdList[0],
         'subProgram 1',
         'Trainee 1',
         'Gilles FORMATEUR',
@@ -867,6 +891,7 @@ describe('exportCourseHistory', () => {
         0,
         '1,00',
         'Non',
+        '',
         '',
         '2 sur 3',
         'Non',
@@ -901,7 +926,7 @@ describe('exportCourseHistory', () => {
             ],
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt'] },
+        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'holding', select: 'name' }] },
         {
@@ -1015,6 +1040,9 @@ describe('exportCourseHistory', () => {
       findActivityHistory,
       { $and: [{ activity: { $in: [] }, user: { $in: [traineeList[0]._id, traineeList[1]._id] } }] }
     );
+    sinon.assert.calledWithExactly(formatPrice.getCall(0), 3000);
+    sinon.assert.calledWithExactly(formatPrice.getCall(1), 2500);
+    sinon.assert.calledWithExactly(formatPrice.getCall(2), 250);
   });
 });
 

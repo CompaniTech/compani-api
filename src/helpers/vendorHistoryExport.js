@@ -30,6 +30,8 @@ const {
   END_COURSE,
   SINGLE,
   COURSE_TYPES,
+  INTRA_HOLDING,
+  INTER_B2B,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -181,6 +183,34 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
 
   const courseCompletion = await getCourseCompletion(course);
 
+  let price = '';
+
+  if (course.prices) {
+    if ([INTRA_HOLDING, INTER_B2B].includes(course.type)) {
+      course.companies.forEach((company) => {
+        const companyPrice = course.prices.find(p => UtilsHelper.areObjectIdsEquals(p.company, company._id));
+
+        if (!companyPrice) return;
+
+        let formattedPrice = UtilsHelper.formatPrice(companyPrice.global);
+
+        if (companyPrice.trainerFees) {
+          formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
+        }
+
+        price += `\n${company.name}: ${formattedPrice}`;
+      });
+    } else {
+      let formattedPrice = UtilsHelper.formatPrice(course.prices[0].global);
+
+      if (course.prices[0].trainerFees) {
+        formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
+      }
+
+      price += formattedPrice;
+    }
+  }
+
   return {
     Identifiant: course._id,
     Type: COURSE_TYPES[course.type],
@@ -188,6 +218,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     Structure: companiesName || '',
     'Société mère': get(course, 'holding.name') || '',
     Programme: get(course, 'subProgram.program.name') || '',
+    'Id programme': get(course, 'subProgram.program._id') || '',
     'Sous-Programme': get(course, 'subProgram.name') || '',
     'Infos complémentaires': course.misc,
     Intervenant·es: formatTrainersName(get(course, 'trainers', [])),
@@ -220,6 +251,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     Avancement: getProgress(pastSlots, course),
     Archivée: course.archivedAt ? 'Oui' : 'Non',
     'Date d\'archivage': course.archivedAt ? CompaniDate(course.archivedAt).format(DD_MM_YYYY) : '',
+    'Prix de la formation': price,
     'Nombre de factures': billsCountForExport,
     Facturée: isBilled ? 'Oui' : 'Non',
     'Montant facturé': UtilsHelper.formatFloatForExport(netInclTaxes),

@@ -1243,6 +1243,7 @@ const coursesList = [
     archivedAt: '2024-07-07T22:00:00.000Z',
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    prices: [{ global: 3000, company: authCompany._id }],
   },
   { // 1 with 2 bills
     _id: new ObjectId(),
@@ -1256,6 +1257,10 @@ const coursesList = [
     companies: [authCompany._id, otherCompany._id],
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    prices: [
+      { global: 2500, trainerFees: 250, company: authCompany._id },
+      { global: 2500, company: otherCompany._id },
+    ],
   },
   { // 2 without bills
     _id: new ObjectId(),
@@ -1270,6 +1275,7 @@ const coursesList = [
     companies: [authCompany._id, otherCompany._id, companyWithoutSubscription._id],
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    prices: [{ global: 3000, company: authCompany._id }],
   },
   { // 3 with 1 bill
     _id: new ObjectId(),
@@ -2312,4 +2318,5 @@ module.exports = {
   courseSlotList,
   distanceMatrixList,
   courseFundingOrganisation,
+  programList,
 };
