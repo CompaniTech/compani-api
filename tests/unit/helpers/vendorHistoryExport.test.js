@@ -1040,6 +1040,9 @@ describe('exportCourseHistory', () => {
       findActivityHistory,
       { $and: [{ activity: { $in: [] }, user: { $in: [traineeList[0]._id, traineeList[1]._id] } }] }
     );
+    sinon.assert.calledWithExactly(formatPrice.getCall(0), 3000);
+    sinon.assert.calledWithExactly(formatPrice.getCall(1), 2500);
+    sinon.assert.calledWithExactly(formatPrice.getCall(2), 250);
   });
 });
 
