@@ -9,7 +9,7 @@ const CourseBillingItemSchema = mongoose.Schema({
 CourseBillingItemSchema.virtual('courseBillCount', {
   ref: 'CourseBill',
   localField: '_id',
-  foreignfield: 'billingPurchaseList.billingItem',
+  foreignField: 'billingPurchaseList.billingItem',
   count: true,
 });
 

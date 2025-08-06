@@ -135,3 +135,27 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
     });
   });
 });
+
+describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems/', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should delete course billing item #tag', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/coursebillingitems/${courseBillingItemsList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      const count = await CourseBillingItem.countDocuments();
+
+      expect(response.statusCode).toBe(200);
+      expect(count).toBe(courseBillingItemsList.length - 1);
+    });
+  });
+});
