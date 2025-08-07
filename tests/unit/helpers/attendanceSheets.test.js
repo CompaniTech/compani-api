@@ -384,11 +384,11 @@ describe('create', () => {
     sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstName: 'Eren', lastname: 'JAEGER' }, 'FL');
     sinon.assert.calledWithExactly(
       uploadCourseFile.getCall(0),
-      { fileName: `trainer_signature_${credentials._id}_course_${courseId}`, file: 'signature.png' }
+      { fileName: `trainer_signature_${credentials._id}_course_${courseId}_${traineesId[0]}`, file: 'signature.png' }
     );
     sinon.assert.calledWithExactly(
       uploadCourseFile.getCall(1),
-      { fileName: `trainer_signature_${credentials._id}_course_${courseId}`, file: 'signature.png' }
+      { fileName: `trainer_signature_${credentials._id}_course_${courseId}_${traineesId[1]}`, file: 'signature.png' }
     );
     sinon.assert.calledWithExactly(
       create.getCall(0),
@@ -765,7 +765,7 @@ describe('create', () => {
     sinon.assert.calledOnceWithExactly(formatIdentity, { firstName: 'Mikasa', lastname: 'ACKERMAN' }, 'FL');
     sinon.assert.calledOnceWithExactly(
       uploadCourseFile,
-      { fileName: `trainer_signature_${credentials._id}_course_${courseId}`, file: 'signature.png' }
+      { fileName: `trainer_signature_${credentials._id}_course_${courseId}_${traineeId}`, file: 'signature.png' }
     );
     SinonMongoose.calledWithExactly(
       attendanceSheetFindOne,
