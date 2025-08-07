@@ -167,6 +167,7 @@ module.exports = {
     courseBillingItemsFound: 'Course billing items found.',
     courseBillingItemsNotFound: 'Course billing items not found.',
     courseBillingItemCreated: 'Course billing item created.',
+    courseBillingItemDeleted: 'Course billing item deleted.',
     /* Course slots */
     courseSlotCreated: 'Course slot created.',
     courseSlotUpdated: 'Course slot updated.',
@@ -403,6 +404,7 @@ module.exports = {
     courseBillingItemsFound: 'Articles de facturation trouvés.',
     courseBillingItemsNotFound: 'Articles de facturation non trouvés.',
     courseBillingItemCreated: 'Article de facturation créé.',
+    courseBillingItemDeleted: 'Article de facturation supprimé.',
     /* Course slots */
     courseSlotCreated: 'Créneau de formation créé.',
     courseSlotUpdated: 'Créneau de formation mis à jour.',
