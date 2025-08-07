@@ -36,7 +36,7 @@ const create = async (req) => {
 
 const remove = async (req) => {
   try {
-    await CourseBillingItemHelper.remove(req.params);
+    await CourseBillingItemHelper.delete(req.params);
 
     return {
       message: translate[language].courseBillingItemDeleted,

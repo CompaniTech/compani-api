@@ -72,7 +72,7 @@ describe('remove', () => {
 
   it('should delete a course billing item', async () => {
     const billingItemId = new ObjectId();
-    await CourseBillingItemHelper.remove({ _id: billingItemId });
+    await CourseBillingItemHelper.delete({ _id: billingItemId });
 
     sinon.assert.calledOnceWithExactly(deleteOne, { _id: billingItemId });
   });

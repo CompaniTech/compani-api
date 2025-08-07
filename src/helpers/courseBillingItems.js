@@ -8,4 +8,4 @@ exports.list = async credentials => CourseBillingItem
 
 exports.create = async payload => CourseBillingItem.create(payload);
 
-exports.remove = async params => CourseBillingItem.deleteOne(params);
+exports.delete = async params => CourseBillingItem.deleteOne(params);
