@@ -54,7 +54,7 @@ exports.create = async (payload, credentials) => {
         let trainerSignature = '';
         if (slotWithTrainerSignature) trainerSignature = slotWithTrainerSignature.trainerSignature.signature;
         else {
-          fileName = `${credentials._id}_course_${payload.course}`;
+          fileName = `${credentials._id}_course_${payload.course}_${trainee}`;
           const signature = await GCloudStorageHelper.uploadCourseFile({
             fileName: `trainer_signature_${fileName}`,
             file: signatureCopy,
