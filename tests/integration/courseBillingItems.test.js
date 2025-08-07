@@ -137,7 +137,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
   });
 });
 
-describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems/', () => {
+describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems', () => {
   let authToken;
   beforeEach(populateDB);
 
@@ -182,8 +182,8 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems/', () => {
 
   describe('Other roles', () => {
     const roles = [
-      { name: 'helper', expectedCode: 403 },
-      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
     ];
 
     roles.forEach((role) => {
