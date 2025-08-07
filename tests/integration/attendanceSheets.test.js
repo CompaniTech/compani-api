@@ -9,6 +9,7 @@ const { populateDB, coursesList, attendanceSheetList, slotsList, userList } = re
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
 const { WEBAPP, MOBILE, GENERATION } = require('../../src/helpers/constants');
+const { CompaniDate } = require('../../src/helpers/dates/companiDates');
 const AttendanceSheet = require('../../src/models/AttendanceSheet');
 const { holdingAdminFromOtherCompany, trainerAndCoach, trainer } = require('../seed/authUsersSeed');
 const { authCompany, otherCompany, otherHolding, authHolding } = require('../seed/authCompaniesSeed');
@@ -1041,6 +1042,26 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       sinon.assert.calledOnce(uploadCourseFile);
     });
 
+    it('should generate attendance sheet file for inter course', async () => {
+      const attendanceSheetId = attendanceSheetList[11]._id;
+      const payload = { action: GENERATION };
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const attendanceSheetUpdated = await AttendanceSheet
+        .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
+      expect(attendanceSheetUpdated).toEqual(1);
+      sinon.assert.calledOnce(uploadCourseFile);
+    });
+
     it('should return 404 if attendance sheet doesn\'t exist', async () => {
       const payload = { slots: [slotsList[4]._id] };
 
@@ -1081,9 +1102,44 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return 403 if is course is not single', async () => {
-      const attendanceSheetId = attendanceSheetList[3]._id;
+    it('should return 403 if course is inter and not finished yet', async () => {
+      const attendanceSheetId = attendanceSheetList[11]._id;
+      const payload = { action: GENERATION };
+
+      await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${slotsList[14]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { startDate: CompaniDate().add('P1D').toISO(), endDate: CompaniDate().add('P1DT2H').toISO() },
+      });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to add slot and course is not single', async () => {
+      const attendanceSheetId = attendanceSheetList[11]._id;
       const payload = { slots: [slotsList[1]._id] };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance sheet already has file', async () => {
+      const attendanceSheetId = attendanceSheetList[10]._id;
+      const payload = { action: GENERATION };
 
       const response = await app.inject({
         method: 'PUT',
