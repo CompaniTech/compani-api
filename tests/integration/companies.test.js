@@ -34,13 +34,14 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
+      process.env.ENCRYPTION_KEY = 'abc123defg456yuioqp';
     });
 
     it('should update company', async () => {
       const payload = {
         name: 'Alenvi Alenvi',
         iban: 'FR3514508000505917721779B12',
-        bic: 'RTYUIKJHBFRG',
+        bic: 'WERTFRPP',
       };
       const response = await app.inject({
         method: 'PUT',
@@ -50,7 +51,8 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.company).toMatchObject(payload);
+      const companyUpdated = await Company.findOne({ _id: companies[0]._id }).lean();
+      expect(companyUpdated).toMatchObject(payload);
     });
 
     it('should update billingRepresentative with holding admin from another company', async () => {
@@ -89,6 +91,38 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const updatedCompany = await Company
         .countDocuments({ _id: companies[0]._id, salesRepresentative: vendorAdmin._id });
       expect(updatedCompany).toBe(1);
+    });
+
+    it('should return 400 if iban is not valid', async () => {
+      const payload = {
+        name: 'Alenvi Alenvi',
+        iban: 'mauvaisIBAN',
+        bic: 'WERTFRPP',
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if bic is not valid', async () => {
+      const payload = {
+        name: 'Alenvi Alenvi',
+        iban: 'FR3514508000505917721779B12',
+        bic: 'AAAAAAAaaaaaaa',
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return 409 if other company has exact same name', async () => {
