@@ -181,7 +181,7 @@ const company = {
   _id: DETACHMENT_ALLOWED_COMPANY_IDS[0],
   name: 'Structure dans laquelle on peut detacher des apprenants',
   iban: 'FR3514508000505917721779B12',
-  bic: 'RTYUIKJHBFRG',
+  bic: 'ERTYFRPP',
   folderId: '0987654321',
   directDebitsFolderId: '1234567890',
   customersFolderId: 'mnbvcxz',
