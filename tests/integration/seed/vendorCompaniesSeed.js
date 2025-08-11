@@ -7,6 +7,7 @@ const vendorCompany = {
   siret: '12345678901234',
   iban: 'FR9210096000302523177152Q14',
   bic: 'BPCEFRPP',
+  ics: 'FR1234567890D',
   activityDeclarationNumber: '13736343575',
   address: {
     fullAddress: '12 rue du test 92160 Antony',

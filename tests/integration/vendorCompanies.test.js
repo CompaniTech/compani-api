@@ -33,6 +33,7 @@ describe('VENDOR COMPANY ROUTES - GET /vendorcompanies', () => {
         siret: '12345678901234',
         iban: 'FR9210096000302523177152Q14',
         bic: 'BPCEFRPP',
+        ics: 'FR1234567890D',
         address: {
           fullAddress: '12 rue du test 92160 Antony',
           street: '12 rue du test',
@@ -129,11 +130,12 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
         },
       },
       { key: 'siret', value: '12345678901235' },
-      { key: 'iban', value: 'FR0314508000306574351512P33' },
-      { key: 'bic', value: 'BPCEFRPPXXX' },
+      { key: 'iban', value: 'FR1517569000702248611955G54' },
+      { key: 'bic', value: 'ASDTFRPP' },
       { key: 'activityDeclarationNumber', value: '10736353175' },
       { key: 'billingRepresentative', value: vendorAdmin._id },
       { key: 'shareCapital', value: 3210000 },
+      { key: 'ics', value: 'FR234567ERTYU' },
     ];
     payloads.forEach((payload) => {
       it(`should update vendor company ${payload.key}`, async () => {
@@ -146,8 +148,8 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
 
         expect(response.statusCode).toBe(200);
 
-        const vendorCompany = await VendorCompany.countDocuments({ [payload.key]: payload.value });
-        expect(vendorCompany).toBeTruthy();
+        const vendorCompany = await VendorCompany.findOne().lean();
+        expect(vendorCompany[payload.key]).toEqual(payload.value);
       });
     });
 
@@ -170,6 +172,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
       { key: 'siret', value: '13244' },
       { key: 'iban', value: 'GD0314508000306574351512P33' },
       { key: 'bic', value: 'TJDKLK' },
+      { key: 'ics', value: 'WEDDD' },
       { key: 'activityDeclarationNumber', value: '' },
       { key: 'shareCapital', value: '' },
       { key: 'shareCapital', value: '123000€' },
