@@ -1,8 +1,8 @@
 const crypto = require('crypto');
 
-const ENCRYPTION_KEY = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
-
 exports.encrypt = (text) => {
+  const ENCRYPTION_KEY = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
+
   const iv = crypto.randomBytes(16);
   const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
 
@@ -13,6 +13,8 @@ exports.encrypt = (text) => {
 };
 
 exports.decrypt = (data) => {
+  const ENCRYPTION_KEY = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
+
   const [ivHex, encryptedData] = data.split(':');
   const iv = Buffer.from(ivHex, 'hex');
   const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv);
