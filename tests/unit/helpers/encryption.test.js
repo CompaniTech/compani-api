@@ -28,7 +28,6 @@ describe('ENCRYPTION', () => {
     it('should encrypt text', async () => {
       const iv = Buffer.alloc(16, 1);
       const ENCRYPTION_KEY = Buffer.from(process.env.ENCRYPTION_KEY);
-
       const cipherIv = {
         update: sinon.stub().returns('textEncrypted'),
         final: sinon.stub().returns('Final'),
@@ -58,7 +57,6 @@ describe('ENCRYPTION', () => {
         update: sinon.stub().returns('textA'),
         final: sinon.stub().returns('Crypter'),
       };
-
       scryptSyncStub.returns(ENCRYPTION_KEY);
       createDeCipherivStub.returns(decipherIv);
 
@@ -66,6 +64,7 @@ describe('ENCRYPTION', () => {
 
       expect(result).toEqual('textACrypter');
 
+      sinon.assert.calledOnceWithExactly(scryptSyncStub, process.env.ENCRYPTION_KEY, 'salt', 32);
       sinon.assert.calledOnceWithExactly(createDeCipherivStub, 'aes-256-cbc', ENCRYPTION_KEY, iv);
       sinon.assert.notCalled(randomBytesStub);
       sinon.assert.notCalled(createCipherivStub);
