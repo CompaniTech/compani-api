@@ -51,6 +51,8 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       });
 
       expect(response.statusCode).toBe(200);
+      const companyUpdated = await Company.findOne({ _id: companies[0]._id }).lean();
+      expect(companyUpdated).toMatchObject(payload);
     });
 
     it('should update billingRepresentative with holding admin from another company', async () => {
