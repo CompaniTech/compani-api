@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
-const { SIRET_VALIDATION, IBAN_VALIDATION, BIC_VALIDATION } = require('./utils');
+const { SIRET_VALIDATION, IBAN_VALIDATION, BIC_VALIDATION, ICS_VALIDATION } = require('./utils');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
 
 const VendorCompanySchema = mongoose.Schema({
@@ -10,6 +10,7 @@ const VendorCompanySchema = mongoose.Schema({
   activityDeclarationNumber: { type: String, required: true, unique: true },
   iban: { type: String, validate: IBAN_VALIDATION, required: true, unique: true },
   bic: { type: String, validate: BIC_VALIDATION, required: true, unique: true },
+  ics: { type: String, validate: ICS_VALIDATION, required: true, unique: true },
   billingRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   shareCapital: { type: Number, required: true },
 }, { timestamps: true });
