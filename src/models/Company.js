@@ -87,6 +87,8 @@ function cryptDatas(next) {
 
   if ($set.iban) $set.iban = encrypt($set.iban);
 
+  if ($set.bic) $set.bic = encrypt($set.bic);
+
   return next();
 }
 
@@ -95,6 +97,8 @@ async function decryptDatas(doc) {
 
   // eslint-disable-next-line no-param-reassign
   if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
+  // eslint-disable-next-line no-param-reassign
+  if (doc.bic && doc.bic.includes(':')) doc.bic = decrypt(doc.bic);
 }
 
 CompanySchema.virtual('holding', { ref: 'CompanyHolding', localField: '_id', foreignField: 'company', justOne: true });
