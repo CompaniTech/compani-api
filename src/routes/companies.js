@@ -16,7 +16,7 @@ const {
   authorizeGetCompanies,
   authorizeGetCompany,
 } = require('./preHandlers/companies');
-const { addressValidation } = require('./validations/utils');
+const { addressValidation, ibanValidation } = require('./validations/utils');
 const { LIST, DIRECTORY } = require('../helpers/constants');
 
 exports.plugin = {
@@ -32,7 +32,7 @@ exports.plugin = {
           payload: Joi.object().keys({
             name: Joi.string(),
             address: addressValidation,
-            iban: Joi.string(),
+            iban: ibanValidation,
             bic: Joi.string(),
             billingRepresentative: Joi.objectId(),
             salesRepresentative: Joi.objectId(),

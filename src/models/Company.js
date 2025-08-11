@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
-
 const { MONTH, TWO_WEEKS, COMPANY, ASSOCIATION } = require('../helpers/constants');
+const { encrypt, decrypt } = require('../helpers/encryption');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
 const driveResourceSchemaDefinition = require('./schemaDefinitions/driveResource');
@@ -81,13 +81,31 @@ function populateHoldings(docs, next) {
   return next();
 }
 
+function cryptDatas(next) {
+  const { $set, $unset } = this.getUpdate() || { $set: {}, $unset: {} };
+  if (!Object.keys($set).length && !Object.keys($unset).length) return next();
+
+  if ($set.iban) $set.iban = encrypt($set.iban);
+
+  return next();
+}
+
+async function decryptDatas(doc) {
+  if (!doc) return;
+
+  // eslint-disable-next-line no-param-reassign
+  if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
+}
+
 CompanySchema.virtual('holding', { ref: 'CompanyHolding', localField: '_id', foreignField: 'company', justOne: true });
+CompanySchema.pre('findOneAndUpdate', cryptDatas);
 
 queryMiddlewareList.map(middleware => CompanySchema.pre(middleware, formatQuery));
 
 CompanySchema.post('find', populateHoldings);
 CompanySchema.post('findOne', populateHolding);
 CompanySchema.post('findOneAndUpdate', populateHolding);
+CompanySchema.post('findOne', decryptDatas);
 
 module.exports = mongoose.model('Company', CompanySchema);
 module.exports.COMPANY_BILLING_PERIODS = COMPANY_BILLING_PERIODS;
