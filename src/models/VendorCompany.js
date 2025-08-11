@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { encrypt, decrypt } = require('../helpers/encryption');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const { SIRET_VALIDATION, IBAN_VALIDATION, BIC_VALIDATION, ICS_VALIDATION } = require('./utils');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
@@ -14,6 +15,33 @@ const VendorCompanySchema = mongoose.Schema({
   billingRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   shareCapital: { type: Number, required: true },
 }, { timestamps: true });
+
+function cryptDatas(next) {
+  const { $set, $unset } = this.getUpdate() || { $set: {}, $unset: {} };
+  if (!Object.keys($set).length && !Object.keys($unset).length) return next();
+
+  if ($set.iban) $set.iban = encrypt($set.iban);
+
+  if ($set.bic) $set.bic = encrypt($set.bic);
+
+  if ($set.ics) $set.ics = encrypt($set.ics);
+
+  return next();
+}
+
+async function decryptDatas(doc) {
+  if (!doc) return;
+
+  // eslint-disable-next-line no-param-reassign
+  if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
+  // eslint-disable-next-line no-param-reassign
+  if (doc.bic && doc.bic.includes(':')) doc.bic = decrypt(doc.bic);
+  // eslint-disable-next-line no-param-reassign
+  if (doc.ics && doc.ics.includes(':')) doc.ics = decrypt(doc.ics);
+}
+
+VendorCompanySchema.pre('updateOne', cryptDatas);
+VendorCompanySchema.post('findOne', decryptDatas);
 
 queryMiddlewareList.map(middleware => VendorCompanySchema.pre(middleware, formatQuery));
 
