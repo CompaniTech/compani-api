@@ -304,13 +304,19 @@ describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
 describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () => {
   let authToken;
   let deleteFileStub;
+  let addStub;
+  let getFileByIdStub;
   beforeEach(async () => {
     await populateDB();
     deleteFileStub = sinon.stub(Drive, 'deleteFile');
+    addStub = sinon.stub(Drive, 'add');
+    getFileByIdStub = sinon.stub(Drive, 'getFileById');
   });
 
   afterEach(() => {
     deleteFileStub.restore();
+    addStub.restore();
+    getFileByIdStub.restore();
   });
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -320,7 +326,9 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
 
     it('should remove mandate template', async () => {
       // upload a template
-      const form = generateFormData({ file: 'test.docx' });
+      const form = generateFormData({ file: 'otherTest.docx' });
+      addStub.returns({ id: 'otherfakeDriveId' });
+      getFileByIdStub.returns({ webViewLink: 'otherFakeWebViewLink' });
 
       await app.inject({
         method: 'POST',
@@ -328,6 +336,9 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
         payload: getStream(form),
         headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
       });
+
+      sinon.assert.calledOnce(addStub);
+      sinon.assert.calledOnce(getFileByIdStub);
       const vendorCompanyWithDebitMandateTemplate = await VendorCompany
         .countDocuments({ debitMandateTemplate: { $exists: true } });
       expect(vendorCompanyWithDebitMandateTemplate).toBe(1);
