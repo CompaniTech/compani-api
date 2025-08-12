@@ -33,3 +33,5 @@ exports.addFile = async (params) => {
   });
   return uploadedFile;
 };
+
+exports.deleteFile = async driveFileId => Gdrive.deleteFile({ fileId: driveFileId });

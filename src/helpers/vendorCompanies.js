@@ -22,3 +22,11 @@ exports.uploadDebitMandateTemplate = async (payload) => {
   const vendorCompanyPayload = { debitMandateTemplate: { driveId: uploadedFile.id, link: driveFileInfo.webViewLink } };
   await VendorCompany.updateOne({}, { $set: vendorCompanyPayload }).lean();
 };
+
+exports.removeDebitMandateTemplate = async () => {
+  const vendorCompany = await VendorCompany.findOne({}).lean();
+
+  await GDriveStorageHelper.deleteFile(vendorCompany.debitMandateTemplate.driveId);
+
+  await VendorCompany.updateOne({}, { $unset: { debitMandateTemplate: '' } });
+};
