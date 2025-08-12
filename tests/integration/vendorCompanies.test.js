@@ -1,9 +1,12 @@
 const { expect } = require('expect');
+const sinon = require('sinon');
 const app = require('../../server');
 const { getToken } = require('./helpers/authentication');
 const { populateDB } = require('./seed/vendorCompaniesSeed');
 const VendorCompany = require('../../src/models/VendorCompany');
+const Drive = require('../../src/models/Google/Drive');
 const { vendorAdmin, clientAdmin } = require('../seed/authUsersSeed');
+const { generateFormData, getStream } = require('./utils');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -227,6 +230,69 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
+  let authToken;
+  let addStub;
+  let getFileByIdStub;
+  beforeEach(async () => {
+    await populateDB();
+    addStub = sinon.stub(Drive, 'add');
+    getFileByIdStub = sinon.stub(Drive, 'getFileById');
+  });
+
+  afterEach(() => {
+    addStub.restore();
+    getFileByIdStub.restore();
+  });
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should upload mandate template', async () => {
+      const form = generateFormData({ file: 'test.docx' });
+      addStub.returns({ id: 'fakeDriveId' });
+      getFileByIdStub.returns({ webViewLink: 'fakeWebViewLink' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/vendorcompanies/mandate/upload',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      sinon.assert.calledOnce(addStub);
+      sinon.assert.calledOnce(getFileByIdStub);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      const form = generateFormData({ file: 'test.docx' });
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'POST',
+          url: '/vendorcompanies/mandate/upload',
+          payload: getStream(form),
+          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+        sinon.assert.notCalled(addStub);
+        sinon.assert.notCalled(getFileByIdStub);
       });
     });
   });
