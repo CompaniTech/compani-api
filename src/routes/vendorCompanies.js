@@ -2,7 +2,7 @@
 
 const Joi = require('joi');
 const { get, update, uploadTemplate, removeTemplate } = require('../controllers/vendorCompanyController');
-const { authorizeVendorCompanyUpdate } = require('./preHandlers/vendorCompanies');
+const { authorizeVendorCompanyUpdate, authorizeTemplateDeletion } = require('./preHandlers/vendorCompanies');
 const {
   addressValidation,
   siretValidation,
@@ -65,6 +65,7 @@ exports.plugin = {
       path: '/mandate/upload',
       options: {
         auth: { scope: ['vendorcompanies:edit'] },
+        pre: [{ method: authorizeTemplateDeletion }],
       },
       handler: removeTemplate,
     });
