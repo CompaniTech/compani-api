@@ -133,3 +133,21 @@ describe('addFile', () => {
     addStub.restore();
   });
 });
+
+describe('deleteFile', () => {
+  let deleteFile;
+
+  beforeEach(() => {
+    deleteFile = sinon.stub(Gdrive, 'deleteFile');
+  });
+
+  afterEach(() => {
+    deleteFile.restore();
+  });
+
+  it('should delete a file in google drive', async () => {
+    await GDriveStorageHelper.deleteFile('fileId');
+
+    sinon.assert.calledWithExactly(deleteFile, { fileId: 'fileId' });
+  });
+});

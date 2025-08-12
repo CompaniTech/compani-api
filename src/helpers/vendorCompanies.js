@@ -24,7 +24,7 @@ exports.uploadDebitMandateTemplate = async (payload) => {
 };
 
 exports.removeDebitMandateTemplate = async () => {
-  const vendorCompany = await VendorCompany.findOne({}).lean();
+  const vendorCompany = await VendorCompany.findOne().lean();
 
   await GDriveStorageHelper.deleteFile(vendorCompany.debitMandateTemplate.driveId);
 

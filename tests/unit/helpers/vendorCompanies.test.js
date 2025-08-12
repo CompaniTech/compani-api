@@ -111,3 +111,42 @@ describe('uploadDebitMandateTemplate', () => {
     );
   });
 });
+
+describe('removeDebitMandateTemplate', () => {
+  let findOne;
+  let updateOne;
+  let deleteFileStub;
+
+  beforeEach(() => {
+    findOne = sinon.stub(VendorCompany, 'findOne');
+    updateOne = sinon.stub(VendorCompany, 'updateOne');
+    deleteFileStub = sinon.stub(Drive, 'deleteFile');
+  });
+
+  afterEach(() => {
+    findOne.restore();
+    updateOne.restore();
+    deleteFileStub.restore();
+  });
+
+  it('should remove debit mandate template', async () => {
+    const vendorCompany = {
+      name: 'Company',
+      billingRepresentative: {
+        _id: new ObjectId(),
+        identity: { firstname: 'toto', lastname: 'zero' },
+        contact: {},
+        local: { email: 'toto@zero.io' },
+      },
+      ics: 'FR12345678909',
+      debitMandateTemplate: { link: 'link/123567890', driveId: '123567890' },
+    };
+    findOne.returns(SinonMongoose.stubChainedQueries(vendorCompany, ['lean']));
+
+    await VendorCompaniesHelper.removeDebitMandateTemplate();
+
+    SinonMongoose.calledOnceWithExactly(findOne, [{ query: 'findOne' }, { query: 'lean' }]);
+    sinon.assert.calledWithExactly(deleteFileStub, { fileId: '123567890' });
+    sinon.assert.calledOnceWithExactly(updateOne, {}, { $unset: { debitMandateTemplate: '' } });
+  });
+});
