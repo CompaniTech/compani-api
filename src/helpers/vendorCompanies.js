@@ -1,4 +1,6 @@
 const VendorCompany = require('../models/VendorCompany');
+const drive = require('../models/Google/Drive');
+const GDriveStorageHelper = require('./gDriveStorage');
 
 exports.get = async () => VendorCompany
   .findOne()
@@ -6,3 +8,17 @@ exports.get = async () => VendorCompany
   .lean();
 
 exports.update = async payload => VendorCompany.updateOne({}, { $set: payload });
+
+exports.uploadDebitMandateTemplate = async (payload) => {
+  const uploadedFile = await GDriveStorageHelper.addFile({
+    driveFolderId: process.env.DEBIT_MANDAT_FOLDER_ID,
+    name: 'template_mandat_prelevement_SEPA_Compani',
+    type: payload['Content-Type'],
+    body: payload.file,
+  });
+
+  const driveFileInfo = await drive.getFileById({ fileId: uploadedFile.id });
+
+  const vendorCompanyPayload = { debitMandateTemplate: { driveId: uploadedFile.id, link: driveFileInfo.webViewLink } };
+  await VendorCompany.updateOne({}, { $set: vendorCompanyPayload }).lean();
+};
