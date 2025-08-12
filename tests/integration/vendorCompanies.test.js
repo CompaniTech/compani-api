@@ -270,6 +270,9 @@ describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
       expect(response.statusCode).toBe(200);
       sinon.assert.calledOnce(addStub);
       sinon.assert.calledOnce(getFileByIdStub);
+      const count = await VendorCompany
+        .countDocuments({ debitMandateTemplate: { link: 'fakeWebViewLink', driveId: 'fakeDriveId' } });
+      expect(count).toBe(1);
     });
   });
 
@@ -293,6 +296,74 @@ describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
         expect(response.statusCode).toBe(role.expectedCode);
         sinon.assert.notCalled(addStub);
         sinon.assert.notCalled(getFileByIdStub);
+      });
+    });
+  });
+});
+
+describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () => {
+  let authToken;
+  let deleteFileStub;
+  beforeEach(async () => {
+    await populateDB();
+    deleteFileStub = sinon.stub(Drive, 'deleteFile');
+  });
+
+  afterEach(() => {
+    deleteFileStub.restore();
+  });
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should remove mandate template', async () => {
+      // upload a template
+      const form = generateFormData({ file: 'test.docx' });
+
+      await app.inject({
+        method: 'POST',
+        url: '/vendorcompanies/mandate/upload',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+      const vendorCompanyWithDebitMandateTemplate = await VendorCompany
+        .countDocuments({ debitMandateTemplate: { $exists: true } });
+      expect(vendorCompanyWithDebitMandateTemplate).toBe(1);
+
+      // remove template
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/vendorcompanies/mandate/upload',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      sinon.assert.calledOnce(deleteFileStub);
+      const vendorCompanyWithoutDebitMandateTemplate = await VendorCompany
+        .countDocuments({ debitMandateTemplate: { $exists: false } });
+      expect(vendorCompanyWithoutDebitMandateTemplate).toBe(1);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'DELETE',
+          url: '/vendorcompanies/mandate/upload',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+        sinon.assert.notCalled(deleteFileStub);
       });
     });
   });
