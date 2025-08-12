@@ -1,7 +1,7 @@
 'use-strict';
 
 const Joi = require('joi');
-const { get, update, uploadTemplate } = require('../controllers/vendorCompanyController');
+const { get, update, uploadTemplate, removeTemplate } = require('../controllers/vendorCompanyController');
 const { authorizeVendorCompanyUpdate } = require('./preHandlers/vendorCompanies');
 const {
   addressValidation,
@@ -58,6 +58,15 @@ exports.plugin = {
         },
       },
       handler: uploadTemplate,
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/mandate/upload',
+      options: {
+        auth: { scope: ['vendorcompanies:edit'] },
+      },
+      handler: removeTemplate,
     });
   },
 };

@@ -42,4 +42,15 @@ const uploadTemplate = async (req) => {
   }
 };
 
-module.exports = { get, update, uploadTemplate };
+const removeTemplate = async (req) => {
+  try {
+    await VendorCompaniesHelper.removeDebitMandateTemplate();
+
+    return { message: translate[language].vendorCompanyUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { get, update, uploadTemplate, removeTemplate };
