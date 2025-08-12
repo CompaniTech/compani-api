@@ -13,7 +13,7 @@ exports.uploadDebitMandateTemplate = async (payload) => {
   const uploadedFile = await GDriveStorageHelper.addFile({
     driveFolderId: process.env.DEBIT_MANDAT_FOLDER_ID,
     name: 'template_mandat_prelevement_SEPA_Compani',
-    type: payload['Content-Type'],
+    type: ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     body: payload.file,
   });
 

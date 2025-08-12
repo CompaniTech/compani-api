@@ -105,3 +105,31 @@ describe('createFolderForCompany', () => {
     }
   });
 });
+
+describe('addFile', () => {
+  it('should add file to google drive', async () => {
+    const addStub = sinon.stub(Gdrive, 'add');
+    const payload = {
+      name: 'Test',
+      driveFolderId: '0987654321',
+      type: 'application/pdf',
+      body: 'This is a file',
+    };
+    addStub.returns({ id: '123456780' });
+
+    const result = await GDriveStorageHelper.addFile(payload);
+
+    expect(result).toEqual({ id: '123456780' });
+    sinon.assert.calledWithExactly(
+      addStub,
+      {
+        name: payload.name,
+        parentFolderId: payload.driveFolderId,
+        type: payload.type,
+        body: payload.body,
+        folder: false,
+      }
+    );
+    addStub.restore();
+  });
+});
