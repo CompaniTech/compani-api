@@ -356,6 +356,17 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
         .countDocuments({ debitMandateTemplate: { $exists: false } });
       expect(vendorCompanyWithoutDebitMandateTemplate).toBe(1);
     });
+
+    it('should return 404 if debitMandateTemplate does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/vendorcompanies/mandate/upload',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+      sinon.assert.notCalled(deleteFileStub);
+    });
   });
 
   describe('Other roles', () => {
