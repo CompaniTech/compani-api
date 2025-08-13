@@ -5,6 +5,8 @@ const CompanyHolding = require('../models/CompanyHolding');
 const GDriveStorageHelper = require('./gDriveStorage');
 const HoldingHelper = require('./holdings');
 const { DIRECTORY } = require('./constants');
+const { formatRumNumber } = require('./utils');
+const { CompaniDate } = require('./dates/companiDates');
 
 exports.createCompany = async (companyPayload) => {
   const companyFolder = await GDriveStorageHelper.createFolderForCompany(companyPayload.name);
@@ -15,13 +17,18 @@ exports.createCompany = async (companyPayload) => {
   ]);
   const lastCompany = await Company.find().sort({ prefixNumber: -1 }).limit(1).lean();
 
+  const prefixNumber = lastCompany[0].prefixNumber + 1;
+  const date = CompaniDate().format('yyyyMM').slice(2);
+  const rum = formatRumNumber(prefixNumber, date, 1);
+
   const company = await Company.create({
     ...omit(companyPayload, 'holding'),
-    prefixNumber: lastCompany[0].prefixNumber + 1,
+    prefixNumber,
     directDebitsFolderId: directDebitsFolder.id,
     folderId: companyFolder.id,
     customersFolderId: customersFolder.id,
     auxiliariesFolderId: auxiliariesFolder.id,
+    debitMandates: [{ rum }],
   });
 
   if (companyPayload.holding) {
