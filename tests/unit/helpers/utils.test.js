@@ -1,9 +1,11 @@
 const { expect } = require('expect');
+const crypto = require('crypto');
 const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const UtilsHelper = require('../../../src/helpers/utils');
+const UtilsMock = require('../../utilsMock');
 
 describe('getLastVersion', () => {
   it('should return the last version based on the date key', () => {
@@ -722,5 +724,27 @@ describe('hasUserAccessToCompany', () => {
     const result = UtilsHelper.hasUserAccessToCompany(credentials, company);
 
     expect(result).toBeFalsy();
+  });
+});
+
+describe('formatRumNumber', () => {
+  let randomBytesStub;
+
+  beforeEach(() => {
+    randomBytesStub = sinon.stub(crypto, 'randomBytes');
+    UtilsMock.mockCurrentDate('2025-07-13T15:00:00.000Z');
+  });
+
+  afterEach(() => {
+    randomBytesStub.restore();
+    UtilsMock.unmockCurrentDate();
+  });
+
+  it('should format RUM number', () => {
+    randomBytesStub.returns('A7BC2488D00EE6832ACR');
+
+    const result = UtilsHelper.formatRumNumber(101, '2507', 1);
+
+    expect(result).toBe('R-101250700001A7BC2488D00EE6832ACR');
   });
 });
