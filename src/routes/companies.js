@@ -8,6 +8,7 @@ const {
   create,
   list,
   show,
+  generateDocxMandate,
 } = require('../controllers/companyController');
 const {
   authorizeCompanyUpdate,
@@ -15,6 +16,7 @@ const {
   doesCompanyExist,
   authorizeGetCompanies,
   authorizeGetCompany,
+  authorizeGetMandate,
 } = require('./preHandlers/companies');
 const { addressValidation, ibanValidation, bicValidation } = require('./validations/utils');
 const { LIST, DIRECTORY } = require('../helpers/constants');
@@ -91,6 +93,20 @@ exports.plugin = {
         auth: { scope: ['companies:read'] },
         pre: [{ method: doesCompanyExist }, { method: authorizeGetCompany }],
       },
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/{_id}/mandate',
+      options: {
+        auth: { scope: ['companies:edit'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          query: Joi.object({ rum: Joi.string().required() }),
+        },
+        pre: [{ method: authorizeGetMandate }],
+      },
+      handler: generateDocxMandate,
     });
   },
 };
