@@ -8,6 +8,7 @@ const UtilsHelper = require('../../helpers/utils');
 const { TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN, CLIENT_ADMIN, HOLDING_ADMIN } = require('../../helpers/constants');
 const User = require('../../models/User');
 const { checkVendorUserExistsAndHasRightRole } = require('./utils');
+const VendorCompany = require('../../models/VendorCompany');
 
 const { language } = translate;
 
@@ -111,6 +112,16 @@ exports.authorizeGetCompany = async (req) => {
 
   if ([TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(vendorRole)) return null;
   if (!UtilsHelper.hasUserAccessToCompany(credentials, req.params._id)) throw Boom.forbidden();
+
+  return null;
+};
+
+exports.authorizeGetMandate = async (req) => {
+  const company = await Company.findOne({ _id: req.params._id }).lean();
+  if (!company) throw Boom.notFound();
+
+  const vendorCompany = await VendorCompany.findOne().lean();
+  if (!vendorCompany.bic || !vendorCompany.iban || !vendorCompany.ics) throw Boom.forbidden();
 
   return null;
 };

@@ -1,12 +1,15 @@
 const flat = require('flat');
-const { omit } = require('lodash');
+const omit = require('lodash/omit');
+const get = require('lodash/get');
 const Company = require('../models/Company');
 const CompanyHolding = require('../models/CompanyHolding');
+const VendorCompany = require('../models/VendorCompany');
 const GDriveStorageHelper = require('./gDriveStorage');
 const HoldingHelper = require('./holdings');
-const { DIRECTORY } = require('./constants');
+const { DIRECTORY, DD_MM_YYYY } = require('./constants');
 const { formatRumNumber } = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
+const DocxHelper = require('./docx');
 
 exports.createCompany = async (companyPayload) => {
   const companyFolder = await GDriveStorageHelper.createFolderForCompany(companyPayload.name);
@@ -74,3 +77,23 @@ exports.getCompany = async companyId => Company
   .populate({ path: 'billingRepresentative', select: '_id picture contact identity local' })
   .populate({ path: 'salesRepresentative', select: '_id picture contact identity local' })
   .lean();
+
+exports.generateMandate = async (companyId, rum) => {
+  const vendorCompany = await VendorCompany.findOne().lean();
+  const company = await Company.findOne({ _id: companyId }).lean();
+
+  const data = {
+    vendorCompanyName: vendorCompany.name,
+    vendorCompanyIcs: vendorCompany.ics,
+    vendorCompanyAddress: vendorCompany.address.fullAddress || '',
+    companyName: company.name || '',
+    companyAddress: company.address.fullAddress || '',
+    companyBic: company.bic || '',
+    companyIban: company.iban || '',
+    companyRum: rum,
+    downloadDate: CompaniDate().format(DD_MM_YYYY),
+  };
+
+  const templateId = get(vendorCompany, 'debitMandateTemplate.driveId');
+  return DocxHelper.generateDocx({ file: { fileId: templateId }, data });
+};
