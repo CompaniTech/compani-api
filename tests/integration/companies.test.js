@@ -736,7 +736,7 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
   });
 });
 
-describe('COMPANIES ROUTES - GET /companies/:id/mandate #tag', () => {
+describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
   let authToken;
   let createDocxStub;
   let downloadFileByIdStub;
