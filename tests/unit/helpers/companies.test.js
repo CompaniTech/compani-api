@@ -11,6 +11,8 @@ const HoldingHelper = require('../../../src/helpers/holdings');
 const UtilsMock = require('../../utilsMock');
 const SinonMongoose = require('../sinonMongoose');
 const { DIRECTORY } = require('../../../src/helpers/constants');
+const VendorCompany = require('../../../src/models/VendorCompany');
+const DocxHelper = require('../../../src/helpers/docx');
 
 describe('createCompany', () => {
   let find;
@@ -290,5 +292,73 @@ describe('updateCompany', () => {
       { $set: flat({ name: 'Nouveau nom' }) },
       { new: true }
     );
+  });
+});
+
+describe('generateMandate', () => {
+  it('should generate a filled debit mandate', async () => {
+    const vendorCompanyFindOne = sinon.stub(VendorCompany, 'findOne');
+    const companyFindOne = sinon.stub(Company, 'findOne');
+    UtilsMock.mockCurrentDate('2025-07-13T15:00:00.000Z');
+    const generateDocx = sinon.stub(DocxHelper, 'generateDocx');
+
+    const mandateIds = [new ObjectId(), new ObjectId()];
+    const companyId = new ObjectId();
+    const vendorCompany = {
+      name: 'VendorCompany',
+      billingRepresentative: {
+        _id: new ObjectId(),
+        identity: { firstname: 'toto', lastname: 'zero' },
+        contact: {},
+        local: { email: 'toto@zero.io' },
+      },
+      address: { fullAddress: '12 rue des halles 75008 Paris' },
+      ics: 'FR12345678909',
+      debitMandateTemplate: { link: 'link/123567890', driveId: '123567890' },
+    };
+    const company = {
+      _id: companyId,
+      name: 'Une structure',
+      folderId: '1234567890',
+      directDebitsFolderId: '0987654321',
+      customersFolderId: 'qwertyuiop',
+      auxiliariesFolderId: 'asdfghj',
+      prefixNumber: 346,
+      bic: 'SDFGFRPP',
+      iban: 'FR3514508000505917721779B12',
+      debitMandates: [
+        { _id: mandateIds[0], rum: 'R-346250700001BFBB3E89C76FF54D55EB', createdAt: '2025-07-01T15:00:00.000Z' },
+        { _id: mandateIds[1], rum: 'R-3462508000028A30D5A2F5E6B5F18A96', createdAt: '2025-08-01T15:00:00.000Z' },
+      ],
+    };
+
+    const data = {
+      vendorCompanyName: vendorCompany.name,
+      vendorCompanyIcs: vendorCompany.ics,
+      vendorCompanyAddress: vendorCompany.address.fullAddress,
+      companyName: company.name,
+      companyAddress: '',
+      companyBic: company.bic,
+      companyIban: company.iban,
+      companyRum: company.debitMandates[1].rum,
+      downloadDate: '13/07/2025',
+    };
+    vendorCompanyFindOne.returns(SinonMongoose.stubChainedQueries(vendorCompany, ['lean']));
+    companyFindOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+    generateDocx.returns('template-filled.docx');
+
+    const res = await CompanyHelper.generateMandate(companyId, mandateIds[1]);
+
+    expect(res).toEqual('template-filled.docx');
+    SinonMongoose.calledOnceWithExactly(vendorCompanyFindOne, [{ query: 'findOne', args: [] }, { query: 'lean' }]);
+    SinonMongoose.calledOnceWithExactly(
+      companyFindOne,
+      [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(generateDocx, { file: { fileId: '123567890' }, data });
+    vendorCompanyFindOne.restore();
+    companyFindOne.restore();
+    generateDocx.restore();
+    UtilsMock.unmockCurrentDate();
   });
 });
