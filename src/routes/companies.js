@@ -102,7 +102,7 @@ exports.plugin = {
         auth: { scope: ['companies:edit'] },
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
-          query: Joi.object({ rum: Joi.string().required() }),
+          query: Joi.object({ mandateId: Joi.objectId().required() }),
         },
         pre: [{ method: authorizeGetMandate }],
       },
