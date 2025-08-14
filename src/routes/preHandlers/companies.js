@@ -8,7 +8,6 @@ const UtilsHelper = require('../../helpers/utils');
 const { TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN, CLIENT_ADMIN, HOLDING_ADMIN } = require('../../helpers/constants');
 const User = require('../../models/User');
 const { checkVendorUserExistsAndHasRightRole } = require('./utils');
-const VendorCompany = require('../../models/VendorCompany');
 
 const { language } = translate;
 
@@ -122,9 +121,6 @@ exports.authorizeGetMandate = async (req) => {
 
   const mandateExist = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, req.query.mandateId));
   if (!mandateExist) throw Boom.notFound();
-
-  const vendorCompany = await VendorCompany.findOne().lean();
-  if (!vendorCompany.bic || !vendorCompany.iban || !vendorCompany.ics) throw Boom.forbidden();
 
   return null;
 };
