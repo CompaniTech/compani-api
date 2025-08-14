@@ -9,6 +9,25 @@ const { authCompany, companyWithoutSubscription, otherCompany, otherHolding } = 
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { INTERVENTION, MOBILE, WEBAPP } = require('../../../src/helpers/constants');
+const VendorCompany = require('../../../src/models/VendorCompany');
+
+const vendorCompany = {
+  name: 'Compani',
+  siret: '12345678901234',
+  iban: 'FR9210096000302523177152Q14',
+  bic: 'BPCEFRPP',
+  ics: 'FR1234567894D',
+  activityDeclarationNumber: '13736343575',
+  address: {
+    fullAddress: '32 Rue du Loup 33000 Bordeaux',
+    street: '32 Rue du Loup',
+    city: 'Bordeaux',
+    zipCode: '33000',
+    location: { type: 'Point', coordinates: [-0.573054, 44.837914] },
+  },
+  shareCapital: 123000,
+  debitMandateTemplate: { driveId: '123456789', link: 'unlienversledoc' },
+};
 
 const companies = [
   {
@@ -19,6 +38,9 @@ const companies = [
     directDebitsFolderId: '1234567890',
     customersFolderId: 'mnbvcxz',
     auxiliariesFolderId: 'kjhgf',
+    debitMandates: [
+      { _id: new ObjectId(), rum: 'R-10425060000188CF46476EE0F6F9B702', createdAt: '2025-06-03T14:00:00.000Z' },
+    ],
   },
   {
     _id: new ObjectId(),
@@ -28,6 +50,9 @@ const companies = [
     directDebitsFolderId: '1234567890',
     customersFolderId: 'mnbvcxz',
     auxiliariesFolderId: 'kjhgf',
+    debitMandates: [
+      { _id: new ObjectId(), rum: 'R-1052507000011E5B79EB6E993416B4EA', createdAt: '2025-07-03T14:00:00.000Z' },
+    ],
   },
 ];
 
@@ -97,6 +122,7 @@ const populateDB = async () => {
     CompanyHolding.create(companyHoldings),
     User.create(usersList),
     UserCompany.create(userCompanies),
+    VendorCompany.create(vendorCompany),
   ]);
 };
 

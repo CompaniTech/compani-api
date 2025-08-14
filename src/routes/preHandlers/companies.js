@@ -114,3 +114,13 @@ exports.authorizeGetCompany = async (req) => {
 
   return null;
 };
+
+exports.authorizeGetMandate = async (req) => {
+  const company = await Company.findOne({ _id: req.params._id }).lean();
+  if (!company) throw Boom.notFound();
+
+  const mandateExist = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, req.query.mandateId));
+  if (!mandateExist) throw Boom.notFound();
+
+  return null;
+};

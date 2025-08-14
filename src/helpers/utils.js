@@ -5,6 +5,7 @@ const flat = require('flat');
 const { ObjectId } = require('mongodb');
 const { isObjectIdOrHexString } = require('mongoose');
 const Intl = require('intl');
+const crypto = require('crypto');
 const { CIVILITY_LIST, SHORT_DURATION_H_MM, HHhMM, SECOND } = require('./constants');
 const DatesHelper = require('./dates');
 const { CompaniDate } = require('./dates/companiDates');
@@ -261,3 +262,10 @@ exports.hasUserAccessToCompany = (credentials, company) => {
 };
 
 exports.formatName = list => list.map(item => item.name).join(', ');
+
+exports.formatRumNumber = (companyPrefixNumber, prefix, seq) => {
+  const len = 20;
+  const random = crypto.randomBytes(Math.ceil(len / 2)).toString('hex').slice(0, len).toUpperCase();
+
+  return `R-${companyPrefixNumber}${prefix}${seq.toString().padStart(5, '0')}${random}`;
+};
