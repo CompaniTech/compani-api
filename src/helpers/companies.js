@@ -6,6 +6,7 @@ const CompanyHolding = require('../models/CompanyHolding');
 const VendorCompany = require('../models/VendorCompany');
 const GDriveStorageHelper = require('./gDriveStorage');
 const HoldingHelper = require('./holdings');
+const UtilsHelper = require('./utils');
 const { DIRECTORY, DD_MM_YYYY } = require('./constants');
 const { formatRumNumber } = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
@@ -78,19 +79,20 @@ exports.getCompany = async companyId => Company
   .populate({ path: 'salesRepresentative', select: '_id picture contact identity local' })
   .lean();
 
-exports.generateMandate = async (companyId, rum) => {
+exports.generateMandate = async (companyId, mandateId) => {
   const vendorCompany = await VendorCompany.findOne().lean();
   const company = await Company.findOne({ _id: companyId }).lean();
+  const mandate = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, mandateId));
 
   const data = {
     vendorCompanyName: vendorCompany.name,
     vendorCompanyIcs: vendorCompany.ics,
     vendorCompanyAddress: vendorCompany.address.fullAddress || '',
     companyName: company.name || '',
-    companyAddress: company.address.fullAddress || '',
+    companyAddress: get(company, 'address.fullAddress') || '',
     companyBic: company.bic || '',
     companyIban: company.iban || '',
-    companyRum: rum,
+    companyRum: mandate.rum,
     downloadDate: CompaniDate().format(DD_MM_YYYY),
   };
 

@@ -120,6 +120,9 @@ exports.authorizeGetMandate = async (req) => {
   const company = await Company.findOne({ _id: req.params._id }).lean();
   if (!company) throw Boom.notFound();
 
+  const mandateExist = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, req.query.mandateId));
+  if (!mandateExist) throw Boom.notFound();
+
   const vendorCompany = await VendorCompany.findOne().lean();
   if (!vendorCompany.bic || !vendorCompany.iban || !vendorCompany.ics) throw Boom.forbidden();
 

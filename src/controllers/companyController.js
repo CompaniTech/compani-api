@@ -63,7 +63,7 @@ const show = async (req) => {
 
 const generateDocxMandate = async (req, h) => {
   try {
-    const file = await CompanyHelper.generateMandate(req.params._id, req.query.rum);
+    const file = await CompanyHelper.generateMandate(req.params._id, req.query.mandateId);
 
     return h.file(file, { confine: false })
       .header('content-disposition')
