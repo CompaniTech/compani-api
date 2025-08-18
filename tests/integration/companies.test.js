@@ -785,5 +785,35 @@ describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
 
       expect(response.statusCode).toBe(404);
     });
+
+    it('should return 400 if mandateId is missing', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/companies/${new ObjectId()}/mandate`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'coach', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'GET',
+          url: `/companies/${companies[0]._id}/mandate?mandateId=${companies[0].debitMandates[0]._id}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
   });
 });
