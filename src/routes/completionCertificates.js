@@ -23,7 +23,8 @@ exports.plugin = {
           query: Joi.object({
             months: Joi.alternatives().try(Joi.array().items(monthValidation).min(1), monthValidation),
             course: Joi.objectId(),
-          }).xor('months', 'course'),
+            company: Joi.objectId(),
+          }).xor('months', 'course', 'company'),
         },
         pre: [{ method: authorizeGetCompletionCertificates }],
       },
