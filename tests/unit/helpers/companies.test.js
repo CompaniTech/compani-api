@@ -362,3 +362,25 @@ describe('generateMandate', () => {
     UtilsMock.unmockCurrentDate();
   });
 });
+
+describe('updateMandate', () => {
+  it('should update mandate to add signedAt', async () => {
+    const findOneAndUpdate = sinon.stub(Company, 'findOneAndUpdate');
+    const companyId = new ObjectId();
+    const debitMandateId = new ObjectId();
+    const company = { _id: companyId, debitMandates: [{ _id: debitMandateId }] };
+    findOneAndUpdate.returns({ ...company, signedAt: '2025-06-23T22:00:00.000Z' });
+
+    const payload = { signedAt: '2025-06-23T22:00:00.000Z' };
+    await CompanyHelper.updateMandate(companyId, debitMandateId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      findOneAndUpdate,
+      { _id: companyId, 'debitMandates._id': debitMandateId },
+      { $set: flat({ 'debitMandates.$': { ...payload } }) },
+      { new: true, autopopulate: false }
+    );
+
+    findOneAndUpdate.restore();
+  });
+});

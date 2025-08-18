@@ -817,3 +817,66 @@ describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
     });
   });
 });
+
+describe('COMPANIES ROUTES - PUT /companies/{_id}/mandates/{mandateId}', () => {
+  let authToken;
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should update company', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { signedAt: '2025-06-23T22:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 404 if company is not found', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${new ObjectId()}/mandates/${companies[0].debitMandates[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { signedAt: '2025-06-23T22:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if mandate is not found', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}/mandates/${new ObjectId()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { signedAt: '2025-06-23T22:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[0]._id}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload: { signedAt: '2025-06-23T22:00:00.000Z' },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});

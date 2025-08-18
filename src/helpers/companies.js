@@ -99,3 +99,11 @@ exports.generateMandate = async (companyId, mandateId) => {
   const templateId = get(vendorCompany, 'debitMandateTemplate.driveId');
   return DocxHelper.generateDocx({ file: { fileId: templateId }, data });
 };
+
+exports.updateMandate = async (companyId, mandateId, payload) => {
+  await Company.findOneAndUpdate(
+    { _id: companyId, 'debitMandates._id': mandateId },
+    { $set: flat({ 'debitMandates.$': { ...payload } }) },
+    { new: true, autopopulate: false }
+  );
+};

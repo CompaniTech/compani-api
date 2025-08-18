@@ -74,10 +74,21 @@ const generateDocxMandate = async (req, h) => {
   }
 };
 
+const updateMandate = async (req) => {
+  try {
+    await CompanyHelper.updateMandate(req.params._id, req.params.mandateId, req.payload);
+
+    return { message: translate[language].companyMandateUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
 module.exports = {
   update,
   create,
   list,
   show,
   generateDocxMandate,
+  updateMandate,
 };
