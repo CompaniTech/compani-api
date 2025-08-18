@@ -9,6 +9,7 @@ const {
   list,
   show,
   generateDocxMandate,
+  updateMandate,
 } = require('../controllers/companyController');
 const {
   authorizeCompanyUpdate,
@@ -17,6 +18,7 @@ const {
   authorizeGetCompanies,
   authorizeGetCompany,
   authorizeGetMandate,
+  authorizeMandateUpdate,
 } = require('./preHandlers/companies');
 const { addressValidation, ibanValidation, bicValidation } = require('./validations/utils');
 const { LIST, DIRECTORY } = require('../helpers/constants');
@@ -107,6 +109,20 @@ exports.plugin = {
         pre: [{ method: authorizeGetMandate }],
       },
       handler: generateDocxMandate,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/{_id}/mandates/{mandateId}',
+      options: {
+        auth: { scope: ['companies:edit'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), mandateId: Joi.objectId().required() }),
+          payload: Joi.object({ signedAt: Joi.date() }),
+        },
+        pre: [{ method: authorizeMandateUpdate }],
+      },
+      handler: updateMandate,
     });
   },
 };
