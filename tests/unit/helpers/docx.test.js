@@ -5,6 +5,7 @@ const os = require('os');
 const fs = require('fs');
 const DocxTemplater = require('docxtemplater');
 const DocxHelper = require('../../../src/helpers/docx');
+const drive = require('../../../src/models/Google/Drive');
 
 describe('createDocx', () => {
   it('should return filled docx template path', async () => {
@@ -31,5 +32,24 @@ describe('createDocx', () => {
     readFileStub.restore();
     writeFileStub.restore();
     fakeDate.restore();
+  });
+});
+
+describe('generateDocx', () => {
+  it('should download docx template from drive and return filled template path', async () => {
+    const downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
+    const createDocxStub = sinon.stub(DocxHelper, 'createDocx');
+    const params = { file: { fileId: '1234567890' }, data: { name: 'Test' } };
+    const tmpFilePath = path.join(os.tmpdir(), 'template.docx');
+    const filledTemplate = path.join(os.tmpdir(), 'template-filled.docx');
+    createDocxStub.returns(filledTemplate);
+
+    const result = await DocxHelper.generateDocx(params);
+
+    expect(result).toBe(filledTemplate);
+    sinon.assert.calledWithExactly(downloadFileByIdStub, { ...params.file, tmpFilePath });
+    sinon.assert.calledWithExactly(createDocxStub, tmpFilePath, params.data);
+    downloadFileByIdStub.restore();
+    createDocxStub.restore();
   });
 });

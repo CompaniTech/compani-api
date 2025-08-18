@@ -1,10 +1,16 @@
 const flat = require('flat');
-const { omit } = require('lodash');
+const omit = require('lodash/omit');
+const get = require('lodash/get');
 const Company = require('../models/Company');
 const CompanyHolding = require('../models/CompanyHolding');
+const VendorCompany = require('../models/VendorCompany');
 const GDriveStorageHelper = require('./gDriveStorage');
 const HoldingHelper = require('./holdings');
-const { DIRECTORY } = require('./constants');
+const UtilsHelper = require('./utils');
+const { DIRECTORY, DD_MM_YYYY } = require('./constants');
+const { formatRumNumber } = require('./utils');
+const { CompaniDate } = require('./dates/companiDates');
+const DocxHelper = require('./docx');
 
 exports.createCompany = async (companyPayload) => {
   const companyFolder = await GDriveStorageHelper.createFolderForCompany(companyPayload.name);
@@ -15,13 +21,18 @@ exports.createCompany = async (companyPayload) => {
   ]);
   const lastCompany = await Company.find().sort({ prefixNumber: -1 }).limit(1).lean();
 
+  const prefixNumber = lastCompany[0].prefixNumber + 1;
+  const date = CompaniDate().format('yyyyMM').slice(2);
+  const rum = formatRumNumber(prefixNumber, date, 1);
+
   const company = await Company.create({
     ...omit(companyPayload, 'holding'),
-    prefixNumber: lastCompany[0].prefixNumber + 1,
+    prefixNumber,
     directDebitsFolderId: directDebitsFolder.id,
     folderId: companyFolder.id,
     customersFolderId: customersFolder.id,
     auxiliariesFolderId: auxiliariesFolder.id,
+    debitMandates: [{ rum }],
   });
 
   if (companyPayload.holding) {
@@ -67,3 +78,24 @@ exports.getCompany = async companyId => Company
   .populate({ path: 'billingRepresentative', select: '_id picture contact identity local' })
   .populate({ path: 'salesRepresentative', select: '_id picture contact identity local' })
   .lean();
+
+exports.generateMandate = async (companyId, mandateId) => {
+  const vendorCompany = await VendorCompany.findOne().lean();
+  const company = await Company.findOne({ _id: companyId }).lean();
+  const mandate = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, mandateId));
+
+  const data = {
+    vendorCompanyName: vendorCompany.name,
+    vendorCompanyIcs: vendorCompany.ics,
+    vendorCompanyAddress: vendorCompany.address.fullAddress || '',
+    companyName: company.name || '',
+    companyAddress: get(company, 'address.fullAddress') || '',
+    companyBic: company.bic || '',
+    companyIban: company.iban || '',
+    companyRum: mandate.rum,
+    downloadDate: CompaniDate().format(DD_MM_YYYY),
+  };
+
+  const templateId = get(vendorCompany, 'debitMandateTemplate.driveId');
+  return DocxHelper.generateDocx({ file: { fileId: templateId }, data });
+};

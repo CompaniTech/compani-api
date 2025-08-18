@@ -51,6 +51,7 @@ const vendorCompany = {
     location: { type: 'Point', coordinates: [-0.573054, 44.837914] },
   },
   shareCapital: 123000,
+  debitMandateTemplate: { driveId: '123456789', link: 'unlienversledoc' },
 };
 
 const companyWithoutAddress = {
@@ -61,6 +62,9 @@ const companyWithoutAddress = {
   directDebitsFolderId: '1234567890',
   customersFolderId: 'asfdhljk',
   auxiliariesFolderId: 'erqutop',
+  debitMandates: [
+    { _id: new ObjectId(), rum: 'R-4525060000188CF46476EE0F6F9B712', createdAt: '2025-06-03T16:00:00.000Z' },
+  ],
 };
 
 const traineeFromAuthCompany = {
