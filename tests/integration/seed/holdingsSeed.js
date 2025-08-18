@@ -19,6 +19,9 @@ const companies = [
     customersFolderId: 'qwerty',
     auxiliariesFolderId: 'asdfgh',
     subscriptions: { erp: false },
+    debitMandates: [
+      { _id: new ObjectId(), rum: 'R-10725060000188CF46476EE0F6F9B702', createdAt: '2025-06-03T14:00:00.000Z' },
+    ],
   },
   {
     _id: new ObjectId(),
@@ -31,6 +34,9 @@ const companies = [
     customersFolderId: 'poiuyt',
     auxiliariesFolderId: 'qsdfgh',
     subscriptions: { erp: false },
+    debitMandates: [
+      { _id: new ObjectId(), rum: 'R-10825060000188CF46476EE0F6F9B712', createdAt: '2025-06-03T16:00:00.000Z' },
+    ],
   },
 ];
 

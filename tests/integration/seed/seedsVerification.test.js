@@ -630,6 +630,18 @@ describe('SEEDS VERIFICATION', () => {
             );
           expect(doesEveryUserExistAndHasGoodRole).toBeTruthy();
         });
+
+        it('should pass if every company has debitMandates', () => {
+          const companiesWithDebitMandates = companyList.filter(company => company.debitMandates.length);
+          expect(companiesWithDebitMandates.length).toEqual(companyList.length);
+        });
+
+        it('should pass if every rum is unique', () => {
+          const companiesWithoutDuplicatesRum = [...new Set(
+            companyList.map(company => company.debitMandates.flatMap(dm => dm.rum))
+          )];
+          expect(companiesWithoutDuplicatesRum.length).toEqual(companyList.length);
+        });
       });
 
       describe('Collection CompanyHolding', () => {
