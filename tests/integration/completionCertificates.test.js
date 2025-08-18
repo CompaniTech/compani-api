@@ -8,6 +8,7 @@ const { populateDB, courseList, completionCertificateList } = require('./seed/co
 const { auxiliary, noRole } = require('../seed/authUsersSeed');
 const { GENERATION } = require('../../src/helpers/constants');
 const CompletionCertificate = require('../../src/models/CompletionCertificate');
+const { authCompany } = require('../seed/authCompaniesSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -15,7 +16,7 @@ describe('NODE ENV', () => {
   });
 });
 
-describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
+describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates #tag', () => {
   let authToken;
   beforeEach(populateDB);
 
@@ -44,6 +45,17 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.completionCertificates.length).toBe(3);
+    });
+
+    it('should get completion certificates for specific company', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?company=${authCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.completionCertificates.length).toBe(4);
     });
 
     it('should return 400 if month has wrong format', async () => {
@@ -90,7 +102,6 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
   describe('Other roles', () => {
     const roles = [
       { name: 'trainer', expectedCode: 403 },
-      { name: 'client_admin', expectedCode: 403 },
     ];
 
     roles.forEach((role) => {

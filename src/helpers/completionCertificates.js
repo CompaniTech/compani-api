@@ -14,11 +14,13 @@ const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
 
 exports.list = async (query) => {
-  const { months, course } = query;
+  const { months, course, company } = query;
 
   const findQuery = course
     ? { course }
     : { month: { $in: Array.isArray(months) ? months : [months] } };
+
+  console.log('find query', findQuery);
 
   const completionCertificates = await CompletionCertificate
     .find(findQuery)
@@ -41,6 +43,20 @@ exports.list = async (query) => {
     )
     .setOptions({ isVendorUser: true })
     .lean();
+
+  // console.log('helper company ids', company);
+
+  if (company) {
+    return completionCertificates.filter((completionCertificate) => {
+      if (!completionCertificate.file || !completionCertificate.course || !completionCertificate.course.companies) {
+        return false;
+      }
+
+      const companyIds = completionCertificate.course.companies.map(c => c._id.toString());
+      console.log('helper company ids', companyIds);
+      return companyIds.includes(company.toString());
+    });
+  }
 
   return completionCertificates;
 };

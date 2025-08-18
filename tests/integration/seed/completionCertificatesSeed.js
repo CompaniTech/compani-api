@@ -10,7 +10,7 @@ const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const Program = require('../../../src/models/Program');
 const { INTER_B2B, PUBLISHED, MONTHLY, VIDEO, E_LEARNING } = require('../../../src/helpers/constants');
-const { authCompany } = require('../../seed/authCompaniesSeed');
+const { authCompany, otherCompany } = require('../../seed/authCompaniesSeed');
 const {
   trainer,
   trainerAndCoach,
@@ -170,9 +170,9 @@ const attendancesList = [
 ];
 
 const completionCertificateList = [
-  { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '12-2024' },
-  { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '01-2025' },
-  { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '02-2025' },
+  { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '12-2024', company: authCompany._id },
+  { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '01-2025', company: otherCompany._id },
+  { _id: new ObjectId(), course: courseList[0]._id, trainee: noRole._id, month: '02-2025', company: authCompany._id },
   { _id: new ObjectId(), course: courseList[1]._id, trainee: auxiliary._id, month: '01-2025' },
   {
     _id: new ObjectId(),
@@ -180,6 +180,7 @@ const completionCertificateList = [
     trainee: auxiliary._id,
     month: '02-2025',
     file: { publicId: 'certif1', link: 'https://test.com/certif1' },
+    company: authCompany._id,
   },
   { _id: new ObjectId(), course: courseList[3]._id, trainee: auxiliary._id, month: '04-2025' },
 ];

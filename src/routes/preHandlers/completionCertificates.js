@@ -6,16 +6,24 @@ const CompletionCertificate = require('../../models/CompletionCertificate');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
-const { MM_YYYY, MONTH } = require('../../helpers/constants');
+const { MM_YYYY, MONTH, VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER } = require('../../helpers/constants');
 
 const { language } = translate;
 
 exports.authorizeGetCompletionCertificates = async (req) => {
-  const { course } = req.query;
+  const { course, company } = req.query;
+  const { credentials } = req.auth;
 
   if (course) {
     const courseExists = await Course.countDocuments({ _id: course });
     if (!courseExists) throw Boom.notFound();
+  }
+
+  console.log('credentials role', credentials.role);
+
+  if (company && ![VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(credentials.role)) {
+    console.log('company id ', credentials.company._id.toString());
+    if (!company || company.toString() !== credentials.company._id.toString()) throw Boom.forbidden();
   }
 
   return null;
