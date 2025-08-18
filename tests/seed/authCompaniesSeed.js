@@ -18,6 +18,9 @@ const authCompany = {
     location: { type: 'Point', coordinates: [0, 0] },
   },
   subscriptions: { erp: true },
+  debitMandates: [
+    { _id: new ObjectId(), rum: 'R-10125060000188CF46476EE0F6F9B702', createdAt: '2025-06-03T14:00:00.000Z' },
+  ],
 };
 
 const otherCompany = {
@@ -38,6 +41,9 @@ const otherCompany = {
     location: { type: 'Point', coordinates: [0, 0] },
   },
   subscriptions: { erp: true },
+  debitMandates: [
+    { _id: new ObjectId(), rum: 'R-10625060000188CF46476EE0F6F9B702', createdAt: '2025-06-03T14:00:00.000Z' },
+  ],
 };
 
 const companyWithoutSubscription = {
@@ -51,6 +57,9 @@ const companyWithoutSubscription = {
   customersFolderId: 'qwerty',
   auxiliariesFolderId: 'asdfgh',
   subscriptions: { erp: false },
+  debitMandates: [
+    { _id: new ObjectId(), rum: 'R-10325060000188CF46476EE0F6F9B702', createdAt: '2025-06-03T14:00:00.000Z' },
+  ],
 };
 
 const authHolding = { _id: new ObjectId(), name: 'Auth Holding' };
