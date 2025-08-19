@@ -19,6 +19,10 @@ const CompaniDateFactory = (inputDate) => {
       return pick(_date.toObject(), units);
     },
 
+    toMillis() {
+      return _date.toMillis();
+    },
+
     weekday() {
       return _date.weekday - 1;
       /*  fox luxon:  1 = Monday, 2 = Tuesday, ... 7 = Sunday
