@@ -188,6 +188,57 @@ describe('list', () => {
       ]
     );
   });
+
+  it('should get completion certificates for a specific company', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const credentials = { _id: new ObjectId(), role: { vendor: { name: 'training_organisation_manager' } } };
+
+    const trainee = { identity: { firstname: 'Rick', lastname: 'SANCHEZ' } };
+    const completionCertificates = [
+      {
+        course: {
+          _id: courseId,
+          companies: [{ _id: companyId }],
+          subProgram: { program: { name: 'program 1' } },
+          misc: 'course',
+        },
+        trainee,
+        month: '07_2025',
+        file: 'url/to/file.pdf',
+      },
+      {
+        course: {
+          _id: courseId,
+          companies: [{ _id: companyId }],
+          subProgram: { program: { name: 'program 2' } },
+          misc: 'course',
+        },
+        trainee,
+        month: '08_2025',
+        file: 'url/to/file2.pdf',
+      },
+    ];
+
+    findCompletionCertificates.returns(
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+    );
+
+    const query = { course: courseId, company: companyId };
+    const result = await CompletionCertificatesHelper.list(query);
+
+    expect(result).toEqual(completionCertificates);
+
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificates,
+      [
+        { query: 'find', args: [{ course: courseId }] },
+        { query: 'populate', args: [[{ path: 'trainee', select: 'identity' }]] },
+        { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
+        { query: 'lean' },
+      ]
+    );
+  });
 });
 
 describe('generate', () => {

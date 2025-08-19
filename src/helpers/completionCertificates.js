@@ -20,8 +20,6 @@ exports.list = async (query) => {
     ? { course }
     : { month: { $in: Array.isArray(months) ? months : [months] } };
 
-  console.log('find query', findQuery);
-
   const completionCertificates = await CompletionCertificate
     .find(findQuery)
     .populate([
@@ -44,17 +42,10 @@ exports.list = async (query) => {
     .setOptions({ isVendorUser: true })
     .lean();
 
-  // console.log('helper company ids', company);
-
   if (company) {
     return completionCertificates.filter((completionCertificate) => {
-      if (!completionCertificate.file || !completionCertificate.course || !completionCertificate.course.companies) {
-        return false;
-      }
-
-      const companyIds = completionCertificate.course.companies.map(c => c._id.toString());
-      console.log('helper company ids', companyIds);
-      return companyIds.includes(company.toString());
+      const companyIds = get(completionCertificate, 'course.companies', []).map(c => c._id);
+      return UtilsHelper.doesArrayIncludeId(companyIds, company) && completionCertificate.file;
     });
   }
 
