@@ -150,7 +150,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
     });
 
     it('should generate completion certificates file', async () => {
-      const completionCertificateId = completionCertificateList[0]._id;
+      const completionCertificateId = completionCertificateList[1]._id;
       const payload = { action: GENERATION };
       uploadCourseFile.returns({ publicId: '1234', link: 'https://test.com/completionCertificate.pdf' });
 
@@ -363,7 +363,7 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
     it('should return 403 if completion certificate has no file', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/completioncertificates/${completionCertificateList[0]._id}/file`,
+        url: `/completioncertificates/${completionCertificateList[1]._id}/file`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
