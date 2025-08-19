@@ -23,6 +23,7 @@ exports.routes = [
   { plugin: require('./email'), routes: { prefix: '/email' } },
   { plugin: require('./endToEnd'), routes: { prefix: '/end-to-end' } },
   { plugin: require('./exports'), routes: { prefix: '/exports' } },
+  { plugin: require('./Google/drive'), routes: { prefix: '/gdrive' } },
   { plugin: require('./holdings'), routes: { prefix: '/holdings' } },
   { plugin: require('./programs'), routes: { prefix: '/programs' } },
   { plugin: require('./questionnaireHistories'), routes: { prefix: '/questionnairehistories' } },
