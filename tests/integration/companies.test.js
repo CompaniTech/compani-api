@@ -24,6 +24,7 @@ const {
   vendorAdmin,
   userList: authUsersList,
 } = require('../seed/authUsersSeed');
+const { generateFormData, getStream } = require('./utils');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -877,6 +878,92 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/mandates/{mandateId}', () => {
 
         expect(response.statusCode).toBe(role.expectedCode);
       });
+    });
+  });
+});
+
+describe('COMPANIES ROUTES - POST /companies/{_id}/mandates/{mandateId}/upload-signed', () => {
+  let authToken;
+  let add;
+  let getFileById;
+  let form;
+  beforeEach(async () => {
+    await populateDB();
+    add = sinon.stub(drive, 'add');
+    getFileById = sinon.stub(drive, 'getFileById');
+    form = generateFormData({ file: 'mandat_signe.pdf' });
+  });
+
+  afterEach(() => {
+    add.restore();
+    getFileById.restore();
+  });
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should upload signed mandate', async () => {
+      add.returns({ id: 'fakeDriveId' });
+      getFileById.returns({ webViewLink: 'fakeWebViewLink' });
+      const response = await app.inject({
+        method: 'POST',
+        url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[0]._id}/upload-signed`,
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(200);
+      sinon.assert.calledOnce(add);
+      sinon.assert.calledOnce(getFileById);
+      const count = await Company
+        .countDocuments(
+          {
+            _id: companies[0]._id,
+            'debitMandates.0.file': { link: 'fakeWebViewLink', driveId: 'fakeDriveId' },
+          }
+        );
+      expect(count).toBe(1);
+    });
+
+    it('should return 404 if company is not found', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/companies/${new ObjectId()}/mandates/${companies[0].debitMandates[0]._id}/upload-signed`,
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(404);
+      sinon.assert.notCalled(add);
+      sinon.assert.notCalled(getFileById);
+    });
+
+    it('should return 404 if mandate is not found', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/companies/${companies[0]._id}/mandates/${new ObjectId()}/upload-signed`,
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(404);
+      sinon.assert.notCalled(add);
+      sinon.assert.notCalled(getFileById);
+    });
+
+    it('should return 400 if mandate is already signed', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[1]._id}/upload-signed`,
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+      sinon.assert.notCalled(add);
+      sinon.assert.notCalled(getFileById);
     });
   });
 });
