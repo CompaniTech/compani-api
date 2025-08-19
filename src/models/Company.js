@@ -68,6 +68,7 @@ const CompanySchema = mongoose.Schema({
         rum: { type: String, unique: true },
         createdAt: { type: Date, default: CompaniDate().toISO() },
         signedAt: { type: Date },
+        file: driveResourceSchemaDefinition,
       }),
     ],
   },

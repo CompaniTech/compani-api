@@ -84,6 +84,18 @@ const updateMandate = async (req) => {
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
   }
 };
+
+const uploadSignedMandate = async (req) => {
+  try {
+    await CompanyHelper.uploadMandate(req.params._id, req.params.mandateId, req.payload);
+
+    return { message: translate[language].fileCreated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   update,
   create,
@@ -91,4 +103,5 @@ module.exports = {
   show,
   generateDocxMandate,
   updateMandate,
+  uploadSignedMandate,
 };

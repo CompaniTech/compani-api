@@ -134,3 +134,11 @@ exports.authorizeMandateUpdate = async (req) => {
 
   return null;
 };
+
+exports.authorizeSignedMandateUpload = async (req) => {
+  const company = await Company.findOne({ _id: req.params._id }, { debitMandates: 1 }).lean();
+  const mandate = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, req.params.mandateId));
+  if (mandate.file) throw Boom.badRequest();
+
+  return null;
+};
