@@ -4,6 +4,7 @@ const get = require('lodash/get');
 const Company = require('../models/Company');
 const CompanyHolding = require('../models/CompanyHolding');
 const VendorCompany = require('../models/VendorCompany');
+const Drive = require('../models/Google/Drive');
 const GDriveStorageHelper = require('./gDriveStorage');
 const HoldingHelper = require('./holdings');
 const UtilsHelper = require('./utils');
@@ -105,5 +106,24 @@ exports.updateMandate = async (companyId, mandateId, payload) => {
     { _id: companyId, 'debitMandates._id': mandateId },
     { $set: flat({ 'debitMandates.$': { ...payload } }) },
     { new: true, autopopulate: false }
+  );
+};
+
+exports.uploadMandate = async (companyId, mandateId, payload) => {
+  const company = await Company.findOne({ _id: companyId }).lean();
+  const mandateNumber = company.debitMandates.findIndex(m => UtilsHelper.areObjectIdsEquals(m._id, mandateId)) + 1;
+
+  const uploadedFile = await GDriveStorageHelper.addFile({
+    driveFolderId: company.directDebitsFolderId,
+    name: `${company.name}_mandat_prelevement_signe_${mandateNumber}`,
+    type: 'application/pdf',
+    body: payload.file,
+  });
+  const driveFileInfo = await Drive.getFileById({ fileId: uploadedFile.id });
+  const file = { driveId: uploadedFile.id, link: driveFileInfo.webViewLink };
+
+  await Company.findOneAndUpdate(
+    { _id: companyId, 'debitMandates._id': mandateId },
+    { $set: UtilsHelper.flatQuery({ 'debitMandates.$': { _id: mandateId, file } }, { safe: true }) }
   );
 };

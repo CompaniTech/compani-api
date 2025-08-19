@@ -10,6 +10,7 @@ const {
   show,
   generateDocxMandate,
   updateMandate,
+  uploadSignedMandate,
 } = require('../controllers/companyController');
 const {
   authorizeCompanyUpdate,
@@ -19,8 +20,9 @@ const {
   authorizeGetCompany,
   authorizeGetMandate,
   authorizeMandateUpdate,
+  authorizeSignedMandateUpload,
 } = require('./preHandlers/companies');
-const { addressValidation, ibanValidation, bicValidation } = require('./validations/utils');
+const { addressValidation, ibanValidation, bicValidation, formDataPayload } = require('./validations/utils');
 const { LIST, DIRECTORY } = require('../helpers/constants');
 
 exports.plugin = {
@@ -118,11 +120,26 @@ exports.plugin = {
         auth: { scope: ['companies:edit'] },
         validate: {
           params: Joi.object({ _id: Joi.objectId().required(), mandateId: Joi.objectId().required() }),
-          payload: Joi.object({ signedAt: Joi.date() }),
+          payload: Joi.object({ signedAt: Joi.date(), file: Joi.any() }).xor('signedAt', 'file'),
         },
         pre: [{ method: authorizeMandateUpdate }],
       },
       handler: updateMandate,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/{_id}/mandates/{mandateId}/upload-signed',
+      options: {
+        auth: { scope: ['companies:edit'] },
+        payload: formDataPayload(),
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), mandateId: Joi.objectId().required() }),
+          payload: Joi.object({ file: Joi.any().required() }),
+        },
+        pre: [{ method: authorizeMandateUpdate }, { method: authorizeSignedMandateUpload }],
+      },
+      handler: uploadSignedMandate,
     });
   },
 };
