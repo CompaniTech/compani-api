@@ -8,7 +8,7 @@ const { populateDB, courseList, completionCertificateList } = require('./seed/co
 const { auxiliary, noRole } = require('../seed/authUsersSeed');
 const { GENERATION } = require('../../src/helpers/constants');
 const CompletionCertificate = require('../../src/models/CompletionCertificate');
-const { authCompany } = require('../seed/authCompaniesSeed');
+const { authCompany, otherCompany } = require('../seed/authCompaniesSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -16,7 +16,7 @@ describe('NODE ENV', () => {
   });
 });
 
-describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates #tag', () => {
+describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
   let authToken;
   beforeEach(populateDB);
 
@@ -50,12 +50,12 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates #tag', ()
     it('should get completion certificates for specific company', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/completioncertificates?company=${authCompany._id}`,
+        url: `/completioncertificates?months=12-2024&company=${authCompany._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.completionCertificates.length).toBe(4);
+      expect(response.result.data.completionCertificates.length).toBe(1);
     });
 
     it('should return 400 if month has wrong format', async () => {
@@ -96,6 +96,22 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates #tag', ()
       });
 
       expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('COACH', () => {
+    beforeEach(async () => {
+      authToken = await getToken('coach');
+    });
+
+    it('should return 403 if user is not in companies', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=12-2024&company=${otherCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
   });
 
