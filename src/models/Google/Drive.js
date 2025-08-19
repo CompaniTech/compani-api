@@ -69,7 +69,7 @@ exports.downloadFileById = async (params) => {
   const dest = fs.createWriteStream(params.tmpFilePath);
   const auth = jwtClient();
   await auth.authorize();
-
+  console.log('on est ici');
   return new Promise((resolve, reject) => {
     drive.files.get(
       { auth, fileId: `${params.fileId}`, alt: 'media' },
