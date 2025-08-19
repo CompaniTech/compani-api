@@ -40,6 +40,13 @@ const companies = [
     auxiliariesFolderId: 'kjhgf',
     debitMandates: [
       { _id: new ObjectId(), rum: 'R-10425060000188CF46476EE0F6F9B702', createdAt: '2025-06-03T14:00:00.000Z' },
+      {
+        _id: new ObjectId(),
+        rum: 'R-10425060000288CF46476EE0F6F9B702',
+        createdAt: '2025-06-13T14:00:00.000Z',
+        file: { driveId: '12345674578', link: 'unlien' },
+      },
+
     ],
   },
   {
