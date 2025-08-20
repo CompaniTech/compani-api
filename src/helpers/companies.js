@@ -89,11 +89,10 @@ exports.updateCompany = async (companyId, payload) => {
   const isMandateSigned = !!lastMandate.signedAt || !!lastMandate.file;
   const hasToCreateNewMandate = isMandateSigned && payload[field] !== company[field];
   if (hasToCreateNewMandate) {
-    const prefixNumber = company.prefixNumber + 1;
     const today = CompaniDate();
     const date = today.format('yyyyMM').slice(2);
     const mandateNumber = company.debitMandates.length + 1;
-    const rum = formatRumNumber(prefixNumber, date, mandateNumber);
+    const rum = formatRumNumber(company.prefixNumber, date, mandateNumber);
     debitMandate = { _id: new ObjectId(), rum, createdAt: today.toISO() };
   }
 
