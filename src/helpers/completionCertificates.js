@@ -43,10 +43,12 @@ exports.list = async (query) => {
     .lean();
 
   if (company) {
-    return completionCertificates.filter((completionCertificate) => {
+    const filteredCertificates = completionCertificates.filter((completionCertificate) => {
       const companyIds = get(completionCertificate, 'course.companies', []).map(c => c._id);
-      return UtilsHelper.doesArrayIncludeId(companyIds, company) && completionCertificate.file;
+      return UtilsHelper.doesArrayIncludeId(companyIds, company) && !!completionCertificate.file;
     });
+
+    return filteredCertificates;
   }
 
   return completionCertificates;
