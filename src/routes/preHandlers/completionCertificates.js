@@ -20,9 +20,8 @@ exports.authorizeGetCompletionCertificates = async (req) => {
   }
 
   const loggedUserHasVendorRole = has(credentials, 'role.vendor');
-
   if (!loggedUserHasVendorRole) {
-    if (!company || company !== credentials.company._id) throw Boom.forbidden();
+    if (!UtilsHelper.areObjectIdsEquals(company, credentials.company._id)) throw Boom.forbidden();
   }
 
   return null;
