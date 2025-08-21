@@ -19,12 +19,11 @@ exports.authorizeGetCompletionCertificates = async (req) => {
     if (!courseExists) throw Boom.notFound();
   }
 
-  const loggedUserHasClientRole = has(credentials, 'role.client');
-
-  if (!loggedUserHasClientRole && company) throw Boom.forbidden();
-
-  if (loggedUserHasClientRole && company && !UtilsHelper.areObjectIdsEquals(company, credentials.company._id)) {
-    throw Boom.forbidden();
+  if (company) {
+    const loggedUserHasClientRole = has(credentials, 'role.client');
+    if (!loggedUserHasClientRole || !UtilsHelper.areObjectIdsEquals(company, credentials.company._id)) {
+      throw Boom.forbidden();
+    }
   }
 
   return null;

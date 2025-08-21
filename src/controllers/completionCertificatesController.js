@@ -6,7 +6,7 @@ const { language } = translate;
 
 const list = async (req) => {
   try {
-    const completionCertificates = await CompletionCertificatesHelper.list(req.query);
+    const completionCertificates = await CompletionCertificatesHelper.list(req);
 
     return { message: translate[language].completionCertificatesFound, data: { completionCertificates } };
   } catch (e) {

@@ -192,7 +192,7 @@ describe('list', () => {
   it('should get completion certificates for a specific company (with course)', async () => {
     const courseId = new ObjectId();
     const companyId = new ObjectId();
-    const credentials = { _id: new ObjectId(), role: { vendor: { name: 'training_organisation_manager' } } };
+    const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyId } };
 
     const trainee = { identity: { firstname: 'Rick', lastname: 'SANCHEZ' } };
     const completionCertificates = [
@@ -225,7 +225,8 @@ describe('list', () => {
     );
 
     const query = { course: courseId, company: companyId };
-    const result = await CompletionCertificatesHelper.list(query);
+    const req = { query, auth: { credentials } };
+    const result = await CompletionCertificatesHelper.list(req);
 
     expect(result).toEqual(completionCertificates);
 
@@ -234,7 +235,13 @@ describe('list', () => {
       [
         { query: 'find', args: [{ course: courseId }] },
         { query: 'populate', args: [[{ path: 'trainee', select: 'identity' }]] },
-        { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
+        {
+          query: 'setOptions',
+          args: [{
+            isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')),
+            requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -242,7 +249,7 @@ describe('list', () => {
 
   it('should get completion certificates for a specified company (with month)', async () => {
     const companyId = new ObjectId();
-    const credentials = { _id: new ObjectId(), role: { vendor: { name: 'training_organisation_manager' } } };
+    const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyId } };
 
     const trainee = { identity: { firstname: 'Morty', lastname: 'SMITH' } };
     const completionCertificates = [
@@ -263,7 +270,8 @@ describe('list', () => {
     );
 
     const query = { months: '08_2025', company: companyId };
-    const result = await CompletionCertificatesHelper.list(query);
+    const req = { query, auth: { credentials } };
+    const result = await CompletionCertificatesHelper.list(req);
 
     expect(result).toEqual(completionCertificates);
 
@@ -289,7 +297,13 @@ describe('list', () => {
             { path: 'trainee', select: 'identity' },
           ]],
         },
-        { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
+        {
+          query: 'setOptions',
+          args: [{
+            isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')),
+            requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+          }],
+        },
         { query: 'lean' },
       ]
     );

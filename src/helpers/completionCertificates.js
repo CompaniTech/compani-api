@@ -1,5 +1,6 @@
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
+const has = require('lodash/has');
 const groupBy = require('lodash/groupBy');
 const pick = require('lodash/pick');
 const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
@@ -13,8 +14,9 @@ const UtilsHelper = require('./utils');
 const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
 
-exports.list = async (query) => {
-  const { months, course, company } = query;
+exports.list = async (req) => {
+  const { months, course, company } = req.query;
+  const { credentials } = req.auth;
 
   const findQuery = course
     ? { course }
@@ -39,7 +41,10 @@ exports.list = async (query) => {
         : []),
       { path: 'trainee', select: 'identity' }]
     )
-    .setOptions({ isVendorUser: true })
+    .setOptions({
+      isVendorUser: has(credentials, 'role.vendor.name'),
+      requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company),
+    })
     .lean();
 
   if (company) {
