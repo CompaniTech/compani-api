@@ -47,15 +47,14 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       expect(response.result.data.completionCertificates.length).toBe(3);
     });
 
-    it('should get completion certificates for specific company', async () => {
+    it('should return 403 if logged user has not client role for specific company', async () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?months=12-2024&company=${authCompany._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
-      expect(response.statusCode).toBe(200);
-      expect(response.result.data.completionCertificates.length).toBe(1);
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 400 if month has wrong format', async () => {
@@ -102,6 +101,17 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
   describe('COACH', () => {
     beforeEach(async () => {
       authToken = await getToken('coach');
+    });
+
+    it('should get completion certificates for specific company', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=12-2024&company=${authCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.completionCertificates.length).toBe(1);
     });
 
     it('should return 403 if user is not in companies', async () => {
