@@ -211,6 +211,8 @@ module.exports = {
       [this.REFUND]: 'Remboursement',
     };
   },
+  PENDING: 'pending',
+  RECEIVED: 'received',
   // SURCHARGES
   PUBLIC_HOLIDAY: 'publicHoliday',
   TWENTY_FIFTH_OF_DECEMBER: 'twentyFifthOfDecember',

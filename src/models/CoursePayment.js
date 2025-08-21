@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const { validateQuery, validateAggregation, formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const { PAYMENT_NATURES, PAYMENT_TYPES } = require('./Payment');
-const { CESU } = require('../helpers/constants');
+const { CESU, PENDING, RECEIVED } = require('../helpers/constants');
 
 const COURSE_PAYMENT_TYPES = PAYMENT_TYPES.filter(type => type !== CESU);
+const COURSE_PAYMENT_STATUS = [PENDING, RECEIVED];
 
 const CoursePaymentSchema = mongoose.Schema({
   number: { type: String, unique: true, immutable: true },
@@ -13,6 +14,7 @@ const CoursePaymentSchema = mongoose.Schema({
   netInclTaxes: { type: Number },
   nature: { type: String, enum: PAYMENT_NATURES, immutable: true },
   type: { type: String, enum: COURSE_PAYMENT_TYPES },
+  status: { type: String, enum: COURSE_PAYMENT_STATUS },
 }, { timestamps: true });
 
 CoursePaymentSchema.pre('find', validateQuery);
