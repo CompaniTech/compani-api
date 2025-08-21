@@ -47,7 +47,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       expect(response.result.data.completionCertificates.length).toBe(3);
     });
 
-    it('should return 403 if logged user has not client role for specific company', async () => {
+    it('should return 403 if logged user has no client role and company is in query', async () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?months=12-2024&company=${authCompany._id}`,
@@ -114,7 +114,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       expect(response.result.data.completionCertificates.length).toBe(1);
     });
 
-    it('should return 403 if user is not in companies', async () => {
+    it('should return 403 if user\'s company is not company defined in query', async () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?months=12-2024&company=${otherCompany._id}`,
