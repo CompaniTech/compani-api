@@ -56,7 +56,8 @@ describe('list', () => {
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
 
-    const result = await CompletionCertificatesHelper.list(query);
+    const req = { query, auth: { credentials } };
+    const result = await CompletionCertificatesHelper.list(req);
 
     expect(result).toEqual(completionCertificates);
 
@@ -109,7 +110,8 @@ describe('list', () => {
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
 
-    const result = await CompletionCertificatesHelper.list(query);
+    const req = { query, auth: { credentials } };
+    const result = await CompletionCertificatesHelper.list(req);
 
     expect(result).toEqual(completionCertificates);
 
@@ -174,7 +176,8 @@ describe('list', () => {
     );
 
     const query = { course: courseId };
-    const result = await CompletionCertificatesHelper.list(query);
+    const req = { query, auth: { credentials } };
+    const result = await CompletionCertificatesHelper.list(req);
 
     expect(result).toEqual(completionCertificates);
 

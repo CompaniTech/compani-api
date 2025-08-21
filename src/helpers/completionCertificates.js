@@ -43,7 +43,7 @@ exports.list = async (req) => {
     )
     .setOptions({
       isVendorUser: has(credentials, 'role.vendor.name'),
-      requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company),
+      ...(company && { requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) }),
     })
     .lean();
 
