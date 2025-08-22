@@ -1,7 +1,7 @@
 const CourseBill = require('../models/CourseBill');
 const CoursePayment = require('../models/CoursePayment');
 const CoursePaymentNumber = require('../models/CoursePaymentNumber');
-const { PAYMENT } = require('./constants');
+const { PAYMENT, PENDING, CHECK, DIRECT_DEBIT, RECEIVED } = require('./constants');
 
 exports.createCoursePayment = async (payload) => {
   const lastPaymentNumber = await CoursePaymentNumber
@@ -18,6 +18,7 @@ exports.createCoursePayment = async (payload) => {
     ...payload,
     companies: courseBill.companies,
     number: `${payload.nature === PAYMENT ? 'REG' : 'REMB'}-${lastPaymentNumber.seq.toString().padStart(5, '0')}`,
+    status: [CHECK, DIRECT_DEBIT].includes(payload.type) ? PENDING : RECEIVED,
   };
 
   await CoursePayment.create(formattedPayload);
