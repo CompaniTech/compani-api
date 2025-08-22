@@ -15,12 +15,15 @@ const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
 
 exports.list = async (query, credentials) => {
-  const { months, course, company } = query;
+  const { months, course } = query;
+
+  const companies = Array.isArray(query.companies) ? query.companies : [query.companies];
 
   const findQuery = course
     ? { course }
     : { month: { $in: Array.isArray(months) ? months : [months] } };
 
+  const requestingOwnInfos = companies.some(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
   const completionCertificates = await CompletionCertificate
     .find(findQuery)
     .populate([
@@ -40,17 +43,16 @@ exports.list = async (query, credentials) => {
         : []),
       { path: 'trainee', select: 'identity' }]
     )
-    .setOptions({
-      isVendorUser: has(credentials, 'role.vendor.name'),
-      ...(company && { requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) }),
-    })
+    .setOptions({ isVendorUser: has(credentials, 'role.vendor.name'), ...(companies.length && { requestingOwnInfos }) })
     .lean();
 
-  if (company) {
-    const filteredCertificates = completionCertificates.filter((completionCertificate) => {
-      const companyIds = get(completionCertificate, 'course.companies', []).map(c => c._id);
-      return UtilsHelper.doesArrayIncludeId(companyIds, company) && !!completionCertificate.file;
-    });
+  if (query.companies && companies.length) {
+    const filteredCertificates = companies.flatMap(company =>
+      completionCertificates.filter((certificate) => {
+        const companyIds = get(certificate, 'course.companies', []).map(c => c._id);
+        return UtilsHelper.doesArrayIncludeId(companyIds, company) && !!certificate.file;
+      })
+    );
 
     return filteredCertificates;
   }

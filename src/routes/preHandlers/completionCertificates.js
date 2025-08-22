@@ -11,7 +11,7 @@ const { MM_YYYY, MONTH } = require('../../helpers/constants');
 const { language } = translate;
 
 exports.authorizeGetCompletionCertificates = async (req) => {
-  const { course, company } = req.query;
+  const { course, companies: queryCompanies } = req.query;
   const { credentials } = req.auth;
 
   if (course) {
@@ -19,10 +19,12 @@ exports.authorizeGetCompletionCertificates = async (req) => {
     if (!courseExists) throw Boom.notFound();
   }
 
-  if (company) {
-    const loggedUserHasClientRole = has(credentials, 'role.client');
-    if (!loggedUserHasClientRole || !UtilsHelper.areObjectIdsEquals(company, credentials.company._id)) {
-      throw Boom.forbidden();
+  if (queryCompanies) {
+    const companies = Array.isArray(queryCompanies) ? queryCompanies : [queryCompanies];
+    if (companies.length) {
+      const loggedUserHasClientRole = has(credentials, 'role.client');
+      const hasAccessToCompany = companies.some(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
+      if (!loggedUserHasClientRole || !hasAccessToCompany) throw Boom.forbidden();
     }
   }
 
