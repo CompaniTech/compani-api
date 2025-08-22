@@ -3,12 +3,13 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const app = require('../../server');
-const { getToken } = require('./helpers/authentication');
+const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { populateDB, courseList, completionCertificateList } = require('./seed/completionCertificatesSeed');
 const { auxiliary, noRole } = require('../seed/authUsersSeed');
 const { GENERATION } = require('../../src/helpers/constants');
 const CompletionCertificate = require('../../src/models/CompletionCertificate');
-const { authCompany, otherCompany } = require('../seed/authCompaniesSeed');
+const { authCompany, otherCompany, companyWithoutSubscription } = require('../seed/authCompaniesSeed');
+const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -16,7 +17,7 @@ describe('NODE ENV', () => {
   });
 });
 
-describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
+describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates #tag', () => {
   let authToken;
   beforeEach(populateDB);
 
@@ -47,10 +48,10 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       expect(response.result.data.completionCertificates.length).toBe(3);
     });
 
-    it('should return 403 if logged user has no client role and company is in query', async () => {
+    it('should return 403 if logged user has no client role and companies is in query', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/completioncertificates?months=12-2024&company=${authCompany._id}`,
+        url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
@@ -103,25 +104,43 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       authToken = await getToken('coach');
     });
 
-    it('should get completion certificates for specific company', async () => {
+    it('should get completion certificates for specific companies', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/completioncertificates?months=12-2024&company=${authCompany._id}`,
+        url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.completionCertificates.length).toBe(1);
+      expect(response.result.data.completionCertificates.length).toBe(2);
     });
 
-    it('should return 403 if user\'s company is not company defined in query', async () => {
+    it('should return 403 if user\'s companies is not companies defined in query', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/completioncertificates?months=12-2024&company=${otherCompany._id}`,
+        url: `/completioncertificates?months=12-2024&companies=${otherCompany._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('HOLDING_ADMIN', () => {
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
+    });
+
+    it('should get completion certificates for holding companies', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=12-2024&companies=${otherCompany._id}`
+          + `&companies=${companyWithoutSubscription._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.completionCertificates.length).toBe(2);
     });
   });
 
