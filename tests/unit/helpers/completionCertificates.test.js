@@ -56,8 +56,7 @@ describe('list', () => {
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
 
-    const req = { query, auth: { credentials } };
-    const result = await CompletionCertificatesHelper.list(req);
+    const result = await CompletionCertificatesHelper.list(query, credentials);
 
     expect(result).toEqual(completionCertificates);
 
@@ -110,8 +109,7 @@ describe('list', () => {
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
 
-    const req = { query, auth: { credentials } };
-    const result = await CompletionCertificatesHelper.list(req);
+    const result = await CompletionCertificatesHelper.list(query, credentials);
 
     expect(result).toEqual(completionCertificates);
 
@@ -176,8 +174,7 @@ describe('list', () => {
     );
 
     const query = { course: courseId };
-    const req = { query, auth: { credentials } };
-    const result = await CompletionCertificatesHelper.list(req);
+    const result = await CompletionCertificatesHelper.list(query, credentials);
 
     expect(result).toEqual(completionCertificates);
 
@@ -192,69 +189,10 @@ describe('list', () => {
     );
   });
 
-  it('should get completion certificates for a specific company (with course)', async () => {
-    const courseId = new ObjectId();
-    const companyId = new ObjectId();
-    const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyId } };
-
-    const trainee = { identity: { firstname: 'Rick', lastname: 'SANCHEZ' } };
-    const completionCertificates = [
-      {
-        course: {
-          _id: courseId,
-          companies: [{ _id: companyId }],
-          subProgram: { program: { name: 'program 1' } },
-          misc: 'course',
-        },
-        trainee,
-        month: '07_2025',
-        file: 'url/to/file.pdf',
-      },
-      {
-        course: {
-          _id: courseId,
-          companies: [{ _id: companyId }],
-          subProgram: { program: { name: 'program 2' } },
-          misc: 'course',
-        },
-        trainee,
-        month: '08_2025',
-        file: 'url/to/file2.pdf',
-      },
-    ];
-
-    findCompletionCertificates.returns(
-      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
-    );
-
-    const query = { course: courseId, company: companyId };
-    const req = { query, auth: { credentials } };
-    const result = await CompletionCertificatesHelper.list(req);
-
-    expect(result).toEqual(completionCertificates);
-
-    SinonMongoose.calledOnceWithExactly(
-      findCompletionCertificates,
-      [
-        { query: 'find', args: [{ course: courseId }] },
-        { query: 'populate', args: [[{ path: 'trainee', select: 'identity' }]] },
-        {
-          query: 'setOptions',
-          args: [{
-            isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')),
-            requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
-          }],
-        },
-        { query: 'lean' },
-      ]
-    );
-  });
-
   it('should get completion certificates for a specified company (with month)', async () => {
     const companyId = new ObjectId();
     const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyId } };
 
-    const trainee = { identity: { firstname: 'Morty', lastname: 'SMITH' } };
     const completionCertificates = [
       {
         course: {
@@ -262,7 +200,7 @@ describe('list', () => {
           subProgram: { program: { name: 'program 1' } },
           misc: 'course',
         },
-        trainee,
+        trainee: { identity: { firstname: 'Rick', lastname: 'SANCHEZ' } },
         month: '08_2025',
         file: 'url/to/file.pdf',
       },
@@ -273,8 +211,7 @@ describe('list', () => {
     );
 
     const query = { months: '08_2025', company: companyId };
-    const req = { query, auth: { credentials } };
-    const result = await CompletionCertificatesHelper.list(req);
+    const result = await CompletionCertificatesHelper.list(query, credentials);
 
     expect(result).toEqual(completionCertificates);
 
