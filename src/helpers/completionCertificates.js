@@ -14,9 +14,8 @@ const UtilsHelper = require('./utils');
 const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
 
-exports.list = async (req) => {
-  const { months, course, company } = req.query;
-  const { credentials } = req.auth;
+exports.list = async (query, credentials) => {
+  const { months, course, company } = query;
 
   const findQuery = course
     ? { course }
