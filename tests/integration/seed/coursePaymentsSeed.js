@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { PAYMENT, DIRECT_DEBIT, INTRA, PUBLISHED, GROUP, GLOBAL } = require('../../../src/helpers/constants');
+const { PAYMENT, DIRECT_DEBIT, INTRA, PUBLISHED, GROUP, GLOBAL, PENDING } = require('../../../src/helpers/constants');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
@@ -69,6 +69,7 @@ const coursePaymentsList = [
     netInclTaxes: 1200,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
+    status: PENDING,
   },
 ];
 
