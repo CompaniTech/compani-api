@@ -54,7 +54,7 @@ exports.list = async (query, credentials) => {
       })
     );
 
-    return filteredCertificates;
+    return [...new Set(filteredCertificates)];
   }
 
   return completionCertificates;
