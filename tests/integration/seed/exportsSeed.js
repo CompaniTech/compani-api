@@ -94,6 +94,8 @@ const {
   END_COURSE,
   GLOBAL,
   SINGLE,
+  PENDING,
+  RECEIVED,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1481,6 +1483,7 @@ const coursePaymentList = [
     netInclTaxes: 1100,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
+    status: PENDING,
   },
   {
     number: 'REG-00002',
@@ -1490,6 +1493,7 @@ const coursePaymentList = [
     netInclTaxes: 400,
     nature: PAYMENT,
     type: BANK_TRANSFER,
+    status: RECEIVED,
   },
   {
     number: 'REG-00003',
@@ -1499,6 +1503,7 @@ const coursePaymentList = [
     netInclTaxes: 300,
     nature: PAYMENT,
     type: CASH,
+    status: RECEIVED,
   },
   {
     number: 'REMB-00001',
@@ -1508,6 +1513,7 @@ const coursePaymentList = [
     netInclTaxes: 200,
     nature: REFUND,
     type: CHECK,
+    status: PENDING,
   },
   {
     number: 'REMB-00002',
@@ -1517,6 +1523,7 @@ const coursePaymentList = [
     netInclTaxes: 200,
     nature: REFUND,
     type: CHECK,
+    status: PENDING,
   },
   {
     number: 'REG-00004',
@@ -1526,6 +1533,7 @@ const coursePaymentList = [
     netInclTaxes: 200,
     nature: PAYMENT,
     type: CHECK,
+    status: PENDING,
   },
   {
     number: 'REMB-00003',
@@ -1535,6 +1543,7 @@ const coursePaymentList = [
     netInclTaxes: 50,
     nature: REFUND,
     type: CHECK,
+    status: PENDING,
   },
   {
     number: 'REG-00005',
@@ -1544,6 +1553,7 @@ const coursePaymentList = [
     netInclTaxes: 150,
     nature: PAYMENT,
     type: CHECK,
+    status: PENDING,
   },
   {
     number: 'REMB-00004',
@@ -1553,6 +1563,7 @@ const coursePaymentList = [
     netInclTaxes: 100,
     nature: REFUND,
     type: CHECK,
+    status: PENDING,
   },
   {
     number: 'REG-00006',
@@ -1562,6 +1573,7 @@ const coursePaymentList = [
     netInclTaxes: 50,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
+    status: PENDING,
   },
 ];
 

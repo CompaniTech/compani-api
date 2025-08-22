@@ -14,7 +14,7 @@ const CoursePaymentSchema = mongoose.Schema({
   netInclTaxes: { type: Number },
   nature: { type: String, enum: PAYMENT_NATURES, immutable: true },
   type: { type: String, enum: COURSE_PAYMENT_TYPES },
-  status: { type: String, enum: COURSE_PAYMENT_STATUS },
+  status: { type: String, enum: COURSE_PAYMENT_STATUS, required: true },
 }, { timestamps: true });
 
 CoursePaymentSchema.pre('find', validateQuery);
