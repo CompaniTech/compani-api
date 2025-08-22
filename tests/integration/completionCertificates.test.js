@@ -3,11 +3,13 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const app = require('../../server');
-const { getToken } = require('./helpers/authentication');
+const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { populateDB, courseList, completionCertificateList } = require('./seed/completionCertificatesSeed');
 const { auxiliary, noRole } = require('../seed/authUsersSeed');
 const { GENERATION } = require('../../src/helpers/constants');
 const CompletionCertificate = require('../../src/models/CompletionCertificate');
+const { authCompany, otherCompany, companyWithoutSubscription } = require('../seed/authCompaniesSeed');
+const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -15,7 +17,7 @@ describe('NODE ENV', () => {
   });
 });
 
-describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
+describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates #tag', () => {
   let authToken;
   beforeEach(populateDB);
 
@@ -44,6 +46,16 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.completionCertificates.length).toBe(3);
+    });
+
+    it('should return 403 if logged user has no client role and companies is in query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 400 if month has wrong format', async () => {
@@ -87,10 +99,54 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
     });
   });
 
+  describe('COACH', () => {
+    beforeEach(async () => {
+      authToken = await getToken('coach');
+    });
+
+    it('should get completion certificates for specific companies', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.completionCertificates.length).toBe(2);
+    });
+
+    it('should return 403 if user\'s companies is not companies defined in query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=12-2024&companies=${otherCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('HOLDING_ADMIN', () => {
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
+    });
+
+    it('should get completion certificates for holding companies', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=12-2024&companies=${otherCompany._id}`
+          + `&companies=${companyWithoutSubscription._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.completionCertificates.length).toBe(2);
+    });
+  });
+
   describe('Other roles', () => {
     const roles = [
       { name: 'trainer', expectedCode: 403 },
-      { name: 'client_admin', expectedCode: 403 },
     ];
 
     roles.forEach((role) => {
@@ -123,7 +179,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
     });
 
     it('should generate completion certificates file', async () => {
-      const completionCertificateId = completionCertificateList[0]._id;
+      const completionCertificateId = completionCertificateList[1]._id;
       const payload = { action: GENERATION };
       uploadCourseFile.returns({ publicId: '1234', link: 'https://test.com/completionCertificate.pdf' });
 
@@ -336,7 +392,7 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
     it('should return 403 if completion certificate has no file', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/completioncertificates/${completionCertificateList[0]._id}/file`,
+        url: `/completioncertificates/${completionCertificateList[1]._id}/file`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

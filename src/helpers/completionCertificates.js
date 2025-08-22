@@ -1,5 +1,6 @@
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
+const has = require('lodash/has');
 const groupBy = require('lodash/groupBy');
 const pick = require('lodash/pick');
 const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
@@ -13,13 +14,16 @@ const UtilsHelper = require('./utils');
 const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
 
-exports.list = async (query) => {
+exports.list = async (query, credentials) => {
   const { months, course } = query;
+
+  const companies = Array.isArray(query.companies) ? query.companies : [query.companies];
 
   const findQuery = course
     ? { course }
     : { month: { $in: Array.isArray(months) ? months : [months] } };
 
+  const requestingOwnInfos = companies.some(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
   const completionCertificates = await CompletionCertificate
     .find(findQuery)
     .populate([
@@ -39,8 +43,19 @@ exports.list = async (query) => {
         : []),
       { path: 'trainee', select: 'identity' }]
     )
-    .setOptions({ isVendorUser: true })
+    .setOptions({ isVendorUser: has(credentials, 'role.vendor.name'), ...(companies.length && { requestingOwnInfos }) })
     .lean();
+
+  if (query.companies && companies.length) {
+    const filteredCertificates = companies.flatMap(company =>
+      completionCertificates.filter((certificate) => {
+        const companyIds = get(certificate, 'course.companies', []).map(c => c._id);
+        return UtilsHelper.doesArrayIncludeId(companyIds, company) && !!certificate.file;
+      })
+    );
+
+    return [...new Set(filteredCertificates)];
+  }
 
   return completionCertificates;
 };
