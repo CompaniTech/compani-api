@@ -6,6 +6,7 @@ const {
   IBAN_VALIDATION,
   BIC_VALIDATION,
   COUNTRY_CODE_VALIDATION,
+  ICS_VALIDATION,
 } = require('../../models/utils');
 const { CompaniDuration, ISO_DURATION_VALIDATION } = require('../../helpers/dates/companiDurations');
 const { PT0S } = require('../../helpers/constants');
@@ -76,6 +77,7 @@ const formDataPayload = (maxSize = 5242880) => ({
 const siretValidation = Joi.string().regex(SIRET_VALIDATION);
 const ibanValidation = Joi.string().regex(IBAN_VALIDATION);
 const bicValidation = Joi.string().regex(BIC_VALIDATION);
+const icsValidation = Joi.string().regex(ICS_VALIDATION);
 
 module.exports = {
   monthValidation,
@@ -93,4 +95,5 @@ module.exports = {
   bicValidation,
   durationStrictlyPositive,
   durationPositive,
+  icsValidation,
 };
