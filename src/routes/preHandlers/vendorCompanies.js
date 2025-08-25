@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
 const { get } = require('lodash');
 const User = require('../../models/User');
+const VendorCompany = require('../../models/VendorCompany');
 const { VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER } = require('../../helpers/constants');
 
 exports.authorizeVendorCompanyUpdate = async (req) => {
@@ -15,5 +16,12 @@ exports.authorizeVendorCompanyUpdate = async (req) => {
       throw Boom.forbidden();
     }
   }
+  return null;
+};
+
+exports.authorizeTemplateDeletion = async () => {
+  const vendorCompany = await VendorCompany.findOne({ debitMandateTemplate: { $exists: true } }).lean();
+  if (!vendorCompany) throw Boom.notFound();
+
   return null;
 };

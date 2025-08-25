@@ -3,6 +3,7 @@ const { encrypt, decrypt } = require('../helpers/encryption');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const { SIRET_VALIDATION, IBAN_VALIDATION, BIC_VALIDATION, ICS_VALIDATION } = require('./utils');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
+const driveResourceSchemaDefinition = require('./schemaDefinitions/driveResource');
 
 const VendorCompanySchema = mongoose.Schema({
   name: { type: String, required: true, unique: true },
@@ -14,6 +15,7 @@ const VendorCompanySchema = mongoose.Schema({
   ics: { type: String, validate: ICS_VALIDATION, required: true, unique: true },
   billingRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   shareCapital: { type: Number, required: true },
+  debitMandateTemplate: { type: driveResourceSchemaDefinition, _id: false, id: false },
 }, { timestamps: true });
 
 function cryptDatas(next) {
