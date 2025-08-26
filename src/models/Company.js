@@ -63,10 +63,12 @@ const CompanySchema = mongoose.Schema({
   },
   salesRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   debitMandates: {
-    type: [mongoose.Schema({
-      rum: { type: String, unique: true },
-      createdAt: { type: Date, default: CompaniDate().toISO() },
-    })],
+    type: [
+      mongoose.Schema({
+        rum: { type: String, unique: true },
+        createdAt: { type: Date, default: CompaniDate().toISO() },
+      }),
+    ],
   },
 }, { timestamps: true });
 

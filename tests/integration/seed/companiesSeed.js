@@ -5,11 +5,11 @@ const Event = require('../../../src/models/Event');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const CompanyHolding = require('../../../src/models/CompanyHolding');
+const VendorCompany = require('../../../src/models/VendorCompany');
 const { authCompany, companyWithoutSubscription, otherCompany, otherHolding } = require('../../seed/authCompaniesSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { clientAdminRoleId } = require('../../seed/authRolesSeed');
 const { INTERVENTION, MOBILE, WEBAPP } = require('../../../src/helpers/constants');
-const VendorCompany = require('../../../src/models/VendorCompany');
 
 const vendorCompany = {
   name: 'Compani',

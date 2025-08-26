@@ -5,14 +5,14 @@ const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const Company = require('../../../src/models/Company');
 const CompanyHolding = require('../../../src/models/CompanyHolding');
+const VendorCompany = require('../../../src/models/VendorCompany');
 const CompanyHelper = require('../../../src/helpers/companies');
+const DocxHelper = require('../../../src/helpers/docx');
 const GDriveStorageHelper = require('../../../src/helpers/gDriveStorage');
 const HoldingHelper = require('../../../src/helpers/holdings');
 const UtilsMock = require('../../utilsMock');
 const SinonMongoose = require('../sinonMongoose');
 const { DIRECTORY } = require('../../../src/helpers/constants');
-const VendorCompany = require('../../../src/models/VendorCompany');
-const DocxHelper = require('../../../src/helpers/docx');
 
 describe('createCompany', () => {
   let find;
