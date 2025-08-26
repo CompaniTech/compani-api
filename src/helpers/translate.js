@@ -220,6 +220,8 @@ module.exports = {
     /* VendorCompanies */
     vendorCompanyFound: 'Vendor company found.',
     vendorCompanyUpdated: 'Vendor company updated.',
+    TemplateUploaded: 'Template uploaded.',
+    TemplateRemoved: 'Template removed.',
     /* VendorCompanies */
     userAlreadyLinkedToCompany: 'User already linked to company.',
     userAlreadyLinkedToCompanyUntil: 'User already linked to company until {DATE}.',
@@ -457,6 +459,8 @@ module.exports = {
     /* VendorCompanies */
     vendorCompanyFound: 'Structure vendeuse trouvée.',
     vendorCompanyUpdated: 'Structure vendeuse mise à jour.',
+    TemplateUploaded: 'Template ajouté.',
+    TemplateRemoved: 'Template supprimé.',
     /* VendorCompanies */
     userAlreadyLinkedToCompany: 'Ce compte est déjà rattaché à une structure.',
     userAlreadyLinkedToCompanyUntil: 'Ce compte est déjà rattaché à une structure jusqu\'au {DATE}.',

@@ -1,14 +1,15 @@
 'use-strict';
 
 const Joi = require('joi');
-const { get, update } = require('../controllers/vendorCompanyController');
-const { authorizeVendorCompanyUpdate } = require('./preHandlers/vendorCompanies');
+const { get, update, uploadTemplate, removeTemplate } = require('../controllers/vendorCompanyController');
+const { authorizeVendorCompanyUpdate, authorizeTemplateDeletion } = require('./preHandlers/vendorCompanies');
 const {
   addressValidation,
   siretValidation,
   ibanValidation,
   bicValidation,
   icsValidation,
+  formDataPayload,
 } = require('./validations/utils');
 
 exports.plugin = {
@@ -44,6 +45,29 @@ exports.plugin = {
         pre: [{ method: authorizeVendorCompanyUpdate }],
       },
       handler: update,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/mandate/upload',
+      options: {
+        auth: { scope: ['vendorcompanies:edit'] },
+        payload: formDataPayload(),
+        validate: {
+          payload: Joi.object({ file: Joi.any().required() }),
+        },
+      },
+      handler: uploadTemplate,
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/mandate/upload',
+      options: {
+        auth: { scope: ['vendorcompanies:edit'] },
+        pre: [{ method: authorizeTemplateDeletion }],
+      },
+      handler: removeTemplate,
     });
   },
 };
