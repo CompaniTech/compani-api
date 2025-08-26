@@ -111,7 +111,7 @@ describe('addFile', () => {
     const addStub = sinon.stub(Gdrive, 'add');
     const payload = {
       name: 'Test',
-      driveFolderId: '0987654321',
+      parentFolderId: '0987654321',
       type: 'application/pdf',
       body: 'This is a file',
     };
@@ -124,7 +124,7 @@ describe('addFile', () => {
       addStub,
       {
         name: payload.name,
-        parentFolderId: payload.driveFolderId,
+        parentFolderId: payload.parentFolderId,
         type: payload.type,
         body: payload.body,
         folder: false,

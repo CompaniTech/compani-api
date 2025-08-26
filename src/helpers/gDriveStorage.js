@@ -23,14 +23,9 @@ exports.createFolderForCompany = async (companyName) => {
 };
 
 exports.addFile = async (params) => {
-  const parentFolderId = params.driveFolderId;
-  const uploadedFile = await Gdrive.add({
-    name: params.name,
-    parentFolderId,
-    folder: false,
-    type: params.type,
-    body: params.body,
-  });
+  const { parentFolderId, type, body, name } = params;
+  const uploadedFile = await Gdrive.add({ name, parentFolderId, folder: false, type, body });
+
   return uploadedFile;
 };
 
