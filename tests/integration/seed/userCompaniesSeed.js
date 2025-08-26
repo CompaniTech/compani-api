@@ -187,6 +187,9 @@ const company = {
   customersFolderId: 'mnbvcxz',
   auxiliariesFolderId: 'kjhgf',
   prefixNumber: 104,
+  debitMandates: [
+    { _id: new ObjectId(), rum: 'R-10425060000188CF46476EE0F6F9B732', createdAt: '2025-06-03T14:00:00.000Z' },
+  ],
 };
 
 const userCompanies = [

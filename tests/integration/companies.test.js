@@ -1,9 +1,12 @@
 const { expect } = require('expect');
 const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
+const path = require('path');
 const GDriveStorageHelper = require('../../src/helpers/gDriveStorage');
+const DocxHelper = require('../../src/helpers/docx');
 const Company = require('../../src/models/Company');
 const CompanyHolding = require('../../src/models/CompanyHolding');
+const drive = require('../../src/models/Google/Drive');
 const app = require('../../server');
 const { companies, populateDB, usersList } = require('./seed/companiesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
@@ -726,6 +729,86 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/companies/${authCompany._id}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
+  let authToken;
+  let createDocxStub;
+  let downloadFileByIdStub;
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      await populateDB();
+      authToken = await getToken('training_organisation_manager');
+      downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
+      createDocxStub = sinon.stub(DocxHelper, 'createDocx');
+      createDocxStub.returns(path.join(__dirname, 'assets/debit_mandate.docx'));
+    });
+
+    afterEach(() => {
+      downloadFileByIdStub.restore();
+      createDocxStub.restore();
+    });
+
+    it('should generate debit mandate with company infos', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/companies/${companies[0]._id}/mandate?mandateId=${companies[0].debitMandates[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 404 if company does not exist', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/companies/${new ObjectId()}/mandate?mandateId=${companies[0].debitMandates[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if debit mandate does not exist', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/companies/${companies[0]._id}/mandate?mandateId=${new ObjectId()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 400 if mandateId is missing', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/companies/${new ObjectId()}/mandate`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'coach', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'GET',
+          url: `/companies/${companies[0]._id}/mandate?mandateId=${companies[0].debitMandates[0]._id}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
 

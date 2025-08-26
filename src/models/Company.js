@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const { MONTH, TWO_WEEKS, COMPANY, ASSOCIATION } = require('../helpers/constants');
 const { encrypt, decrypt } = require('../helpers/encryption');
+const { CompaniDate } = require('../helpers/dates/companiDates');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
 const driveResourceSchemaDefinition = require('./schemaDefinitions/driveResource');
@@ -61,6 +62,14 @@ const CompanySchema = mongoose.Schema({
     },
   },
   salesRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  debitMandates: {
+    type: [
+      mongoose.Schema({
+        rum: { type: String, unique: true },
+        createdAt: { type: Date, default: CompaniDate().toISO() },
+      }),
+    ],
+  },
 }, { timestamps: true });
 
 function populateHolding(doc, next) {

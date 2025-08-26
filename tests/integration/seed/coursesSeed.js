@@ -1352,6 +1352,9 @@ const fourthCompany = {
   customersFolderId: 'qwerty',
   auxiliariesFolderId: 'asdfgh',
   subscriptions: { erp: false },
+  debitMandates: [
+    { _id: new ObjectId(), rum: 'R-10425060000188CF46476EE0F6F9B713', createdAt: '2025-06-03T16:00:00.000Z' },
+  ],
 };
 
 const companyHoldingList = [

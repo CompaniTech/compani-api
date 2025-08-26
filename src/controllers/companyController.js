@@ -61,9 +61,23 @@ const show = async (req) => {
   }
 };
 
+const generateDocxMandate = async (req, h) => {
+  try {
+    const file = await CompanyHelper.generateMandate(req.params._id, req.query.mandateId);
+
+    return h.file(file, { confine: false })
+      .header('content-disposition')
+      .type('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   update,
   create,
   list,
   show,
+  generateDocxMandate,
 };
