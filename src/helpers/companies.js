@@ -1,6 +1,7 @@
 const flat = require('flat');
 const omit = require('lodash/omit');
 const get = require('lodash/get');
+const { ObjectId } = require('mongodb');
 const Company = require('../models/Company');
 const CompanyHolding = require('../models/CompanyHolding');
 const VendorCompany = require('../models/VendorCompany');
@@ -12,6 +13,7 @@ const { DIRECTORY, DD_MM_YYYY } = require('./constants');
 const { formatRumNumber } = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
 const DocxHelper = require('./docx');
+const DatesHelper = require('./dates');
 
 exports.createCompany = async (companyPayload) => {
   const companyFolder = await GDriveStorageHelper.createFolderForCompany(companyPayload.name);
@@ -71,8 +73,35 @@ exports.list = async (query) => {
     : Company.find({ _id: { $nin: linkedCompanyList } }, { name: 1, salesRepresentative: 1 }).lean();
 };
 
-exports.updateCompany = async (companyId, payload) =>
-  Company.findOneAndUpdate({ _id: companyId }, { $set: flat(payload) }, { new: true });
+const getEditedField = (payload) => {
+  if (payload.bic) return 'bic';
+  if (payload.iban) return 'iban';
+  if (payload.address) return 'address';
+  return null;
+};
+
+exports.updateCompany = async (companyId, payload) => {
+  let debitMandate = {};
+  const company = await Company.findOne({ _id: companyId }).lean();
+  const lastMandate = company.debitMandates.sort(DatesHelper.descendingSort('createdAt'))[0];
+
+  const field = getEditedField(payload);
+  const isMandateSigned = !!lastMandate.signedAt || !!lastMandate.file;
+  const hasToCreateNewMandate = isMandateSigned && payload[field] !== company[field];
+  if (hasToCreateNewMandate) {
+    const today = CompaniDate();
+    const date = today.format('yyyyMM').slice(2);
+    const mandateNumber = company.debitMandates.length + 1;
+    const rum = formatRumNumber(company.prefixNumber, date, mandateNumber);
+    debitMandate = { _id: new ObjectId(), rum, createdAt: today.toISO() };
+  }
+
+  return Company.findOneAndUpdate(
+    { _id: companyId },
+    { $set: flat(payload), ...Object.keys(debitMandate).length && { $addToSet: { debitMandates: debitMandate } } },
+    { new: true }
+  ).lean();
+};
 
 exports.getCompany = async companyId => Company
   .findOne({ _id: companyId })

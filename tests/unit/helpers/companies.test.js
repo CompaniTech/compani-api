@@ -272,26 +272,202 @@ describe('getCompany', () => {
 
 describe('updateCompany', () => {
   let findOneAndUpdate;
+  let findOne;
+  let randomBytes;
   beforeEach(() => {
     findOneAndUpdate = sinon.stub(Company, 'findOneAndUpdate');
+    findOne = sinon.stub(Company, 'findOne');
+    UtilsMock.mockCurrentDate('2025-08-13T15:00:00.000Z');
+    randomBytes = sinon.stub(crypto, 'randomBytes');
   });
   afterEach(() => {
     findOneAndUpdate.restore();
+    findOne.restore();
+    UtilsMock.unmockCurrentDate();
+    randomBytes.restore();
   });
 
   it('should update company', async () => {
     const companyId = new ObjectId();
+    const company = {
+      _id: companyId,
+      bic: 'WERTFRPP',
+      prefixNumber: 100,
+      debitMandates: [{ _id: new ObjectId(), signedAt: '2025-07-13T15:00:00.000Z' }],
+    };
     const payload = { name: 'Nouveau nom' };
-    findOneAndUpdate.returns({ _id: companyId });
+    findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries({ ...company, ...payload }, ['lean']));
 
     const result = await CompanyHelper.updateCompany(companyId, payload);
 
-    expect(result).toEqual({ _id: companyId });
-    sinon.assert.calledWithExactly(
+    expect(result).toEqual({ ...company, name: 'Nouveau nom' });
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(randomBytes);
+    SinonMongoose.calledOnceWithExactly(
       findOneAndUpdate,
-      { _id: companyId },
-      { $set: flat({ name: 'Nouveau nom' }) },
-      { new: true }
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: companyId },
+            { $set: flat({ name: 'Nouveau nom' }) },
+            { new: true },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  const editedField = [
+    { key: 'bic', value: 'QWERFRPP' },
+    { key: 'iban', value: 'FR3514508000505917721779B12' },
+    {
+      key: 'address',
+      value: {
+        fullAddress: '34 Rue de Ponthieu 75008 Paris',
+        street: '34 Rue de Ponthieu',
+        city: 'Paris',
+        zipCode: '75008',
+        location: { type: 'Point' },
+      },
+    },
+  ];
+  editedField.forEach((param) => {
+    it(`should create a new mandate if the last mandate has been signed and ${param.key} is edited`, async () => {
+      const companyId = new ObjectId();
+      const company = {
+        _id: companyId,
+        prefixNumber: 105,
+        debitMandates: [{ _id: new ObjectId(), signedAt: '2025-07-13T15:00:00.000Z' }],
+      };
+      const rum = 'R-105250800002BFBB3E89C76FF54D55EE';
+      const newDebitMandate = { _id: sinon.match(Object), rum, createdAt: '2025-08-13T15:00:00.000Z' };
+      const updatedCompany = {
+        ...company,
+        [param.key]: param.value,
+        debitMandates: [...company.debitMandates, newDebitMandate],
+      };
+      findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+      randomBytes.returns('BFBB3E89C76FF54D55EE');
+      findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedCompany, ['lean']));
+
+      const payload = { [param.key]: param.value };
+      const result = await CompanyHelper.updateCompany(companyId, payload);
+
+      expect(result).toEqual(updatedCompany);
+
+      SinonMongoose.calledOnceWithExactly(
+        findOne,
+        [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+      );
+      sinon.assert.calledOnce(randomBytes);
+      SinonMongoose.calledOnceWithExactly(
+        findOneAndUpdate,
+        [
+          {
+            query: 'findOneAndUpdate',
+            args: [
+              { _id: companyId },
+              { $set: flat({ [param.key]: param.value }), $addToSet: { debitMandates: newDebitMandate } },
+              { new: true },
+            ],
+          },
+          { query: 'lean' },
+        ]
+      );
+    });
+  });
+
+  editedField.forEach((param) => {
+    it(`should create a new mandate if the last mandate has a file and ${param.key} is edited`, async () => {
+      const companyId = new ObjectId();
+      const company = {
+        _id: companyId,
+        prefixNumber: 105,
+        debitMandates: [{ _id: new ObjectId(), file: { driveId: '123425678', link: 'lienverslemandatsigne' } }],
+      };
+      const rum = 'R-105250800002BFBB3E89C76FF54D55EE';
+      const newDebitMandate = { _id: sinon.match(Object), rum, createdAt: '2025-08-13T15:00:00.000Z' };
+      const updatedCompany = {
+        ...company,
+        [param.key]: param.value,
+        debitMandates: [...company.debitMandates, newDebitMandate],
+      };
+      findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+      randomBytes.returns('BFBB3E89C76FF54D55EE');
+      findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedCompany, ['lean']));
+
+      const payload = { [param.key]: param.value };
+      const result = await CompanyHelper.updateCompany(companyId, payload);
+
+      expect(result).toEqual(updatedCompany);
+
+      SinonMongoose.calledOnceWithExactly(
+        findOne,
+        [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+      );
+      sinon.assert.calledOnce(randomBytes);
+      SinonMongoose.calledOnceWithExactly(
+        findOneAndUpdate,
+        [
+          {
+            query: 'findOneAndUpdate',
+            args: [
+              { _id: companyId },
+              { $set: flat({ [param.key]: param.value }), $addToSet: { debitMandates: newDebitMandate } },
+              { new: true },
+            ],
+          },
+          { query: 'lean' },
+        ]
+      );
+    });
+  });
+
+  it('should not create a new mandate if the last mandate has a file and bic is edited with same value', async () => {
+    const companyId = new ObjectId();
+    const company = {
+      _id: companyId,
+      prefixNumber: 105,
+      bic: 'DFGTFRPP',
+      debitMandates: [{ _id: new ObjectId(), file: { driveId: '123425678', link: 'lienverslemandatsigne' } }],
+    };
+    const rum = 'R-105250800002BFBB3E89C76FF54D55EE';
+    const newDebitMandate = { _id: sinon.match(Object), rum, createdAt: '2025-08-13T15:00:00.000Z' };
+    const updatedCompany = {
+      ...company,
+      bic: 'DFGTFRPP',
+      debitMandates: [...company.debitMandates, newDebitMandate],
+    };
+    findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+    randomBytes.returns('BFBB3E89C76FF54D55EE');
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedCompany, ['lean']));
+
+    const payload = { bic: 'DFGTFRPP' };
+    const result = await CompanyHelper.updateCompany(companyId, payload);
+
+    expect(result).toEqual(updatedCompany);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(randomBytes);
+    SinonMongoose.calledOnceWithExactly(
+      findOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [{ _id: companyId }, { $set: flat({ bic: 'DFGTFRPP' }) }, { new: true }],
+        },
+        { query: 'lean' },
+      ]
     );
   });
 });
