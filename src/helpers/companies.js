@@ -13,7 +13,7 @@ const { DIRECTORY, DD_MM_YYYY } = require('./constants');
 const { formatRumNumber } = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
 const DocxHelper = require('./docx');
-const DatesUtilsHelper = require('./dates');
+const DatesHelper = require('./dates');
 
 exports.createCompany = async (companyPayload) => {
   const companyFolder = await GDriveStorageHelper.createFolderForCompany(companyPayload.name);
@@ -83,7 +83,7 @@ const getEditedField = (payload) => {
 exports.updateCompany = async (companyId, payload) => {
   let debitMandate = {};
   const company = await Company.findOne({ _id: companyId }).lean();
-  const lastMandate = company.debitMandates.sort(DatesUtilsHelper.descendingSort('createdAt'))[0];
+  const lastMandate = company.debitMandates.sort(DatesHelper.descendingSort('createdAt'))[0];
 
   const field = getEditedField(payload);
   const isMandateSigned = !!lastMandate.signedAt || !!lastMandate.file;

@@ -270,7 +270,7 @@ describe('getCompany', () => {
   });
 });
 
-describe('updateCompany #tag', () => {
+describe('updateCompany', () => {
   let findOneAndUpdate;
   let findOne;
   let randomBytes;
@@ -374,10 +374,7 @@ describe('updateCompany #tag', () => {
             query: 'findOneAndUpdate',
             args: [
               { _id: companyId },
-              {
-                $set: flat({ [param.key]: param.value }),
-                ...Object.keys(newDebitMandate).length && { $addToSet: { debitMandates: newDebitMandate } },
-              },
+              { $set: flat({ [param.key]: param.value }), $addToSet: { debitMandates: newDebitMandate } },
               { new: true },
             ],
           },
@@ -423,10 +420,7 @@ describe('updateCompany #tag', () => {
             query: 'findOneAndUpdate',
             args: [
               { _id: companyId },
-              {
-                $set: flat({ [param.key]: param.value }),
-                ...Object.keys(newDebitMandate).length && { $addToSet: { debitMandates: newDebitMandate } },
-              },
+              { $set: flat({ [param.key]: param.value }), $addToSet: { debitMandates: newDebitMandate } },
               { new: true },
             ],
           },
