@@ -114,7 +114,7 @@ exports.uploadMandate = async (companyId, mandateId, payload) => {
   const mandateNumber = company.debitMandates.findIndex(m => UtilsHelper.areObjectIdsEquals(m._id, mandateId)) + 1;
 
   const uploadedFile = await GDriveStorageHelper.addFile({
-    driveFolderId: company.directDebitsFolderId,
+    parentFolderId: company.directDebitsFolderId,
     name: `${company.name}_mandat_prelevement_signe_${mandateNumber}`,
     type: 'application/pdf',
     body: payload.file,

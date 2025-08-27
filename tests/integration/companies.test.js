@@ -827,7 +827,7 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/mandates/{mandateId}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should update company', async () => {
+    it('should update mandate', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[0]._id}`,
