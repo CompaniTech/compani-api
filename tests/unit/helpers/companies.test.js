@@ -5,6 +5,7 @@ const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const Company = require('../../../src/models/Company');
 const CompanyHolding = require('../../../src/models/CompanyHolding');
+const Drive = require('../../../src/models/Google/Drive');
 const VendorCompany = require('../../../src/models/VendorCompany');
 const CompanyHelper = require('../../../src/helpers/companies');
 const DocxHelper = require('../../../src/helpers/docx');
@@ -360,5 +361,92 @@ describe('generateMandate', () => {
     companyFindOne.restore();
     generateDocx.restore();
     UtilsMock.unmockCurrentDate();
+  });
+});
+
+describe('updateMandate', () => {
+  it('should update mandate to add signedAt', async () => {
+    const findOneAndUpdate = sinon.stub(Company, 'findOneAndUpdate');
+    const companyId = new ObjectId();
+    const debitMandateId = new ObjectId();
+    const company = { _id: companyId, debitMandates: [{ _id: debitMandateId }] };
+    findOneAndUpdate.returns({ ...company, signedAt: '2025-06-23T22:00:00.000Z' });
+
+    const payload = { signedAt: '2025-06-23T22:00:00.000Z' };
+    await CompanyHelper.updateMandate(companyId, debitMandateId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      findOneAndUpdate,
+      { _id: companyId, 'debitMandates._id': debitMandateId },
+      { $set: flat({ 'debitMandates.$': { ...payload } }) },
+      { new: true, autopopulate: false }
+    );
+
+    findOneAndUpdate.restore();
+  });
+});
+
+describe('uploadMandate', () => {
+  let findOne;
+  let add;
+  let getFileById;
+  let findOneAndUpdate;
+  beforeEach(() => {
+    findOne = sinon.stub(Company, 'findOne');
+    add = sinon.stub(Drive, 'add');
+    findOneAndUpdate = sinon.stub(Company, 'findOneAndUpdate');
+    getFileById = sinon.stub(Drive, 'getFileById');
+  });
+  afterEach(() => {
+    findOne.restore();
+    add.restore();
+    getFileById.restore();
+    findOneAndUpdate.restore();
+  });
+
+  it('should upload signed mandate on drive', async () => {
+    const companyId = new ObjectId();
+    const debitMandateId = new ObjectId();
+    const company = {
+      _id: companyId,
+      name: 'Structure',
+      directDebitsFolderId: 'qwerty2489506',
+      debitMandates: [{ _id: debitMandateId }],
+    };
+    const uploadedFile = { id: new ObjectId() };
+    const driveFileInfo = { webViewLink: 'lienVersMandatSigne' };
+    findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+    add.returns(uploadedFile);
+    getFileById.returns(driveFileInfo);
+
+    const payload = { file: 'File.pdf' };
+    await CompanyHelper.uploadMandate(companyId, debitMandateId, payload);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledWithExactly(
+      add,
+      {
+        name: 'Structure_mandat_prelevement_signe_1',
+        parentFolderId: company.directDebitsFolderId,
+        folder: false,
+        type: 'application/pdf',
+        body: 'File.pdf',
+      }
+    );
+    sinon.assert.calledWithExactly(getFileById, { fileId: uploadedFile.id });
+    sinon.assert.calledOnceWithExactly(
+      findOneAndUpdate,
+      { _id: companyId, 'debitMandates._id': debitMandateId },
+      {
+        $set: {
+          'debitMandates.$._id': debitMandateId,
+          'debitMandates.$.file.driveId': uploadedFile.id,
+          'debitMandates.$.file.link': 'lienVersMandatSigne',
+        },
+      }
+    );
   });
 });
