@@ -99,7 +99,7 @@ const coursesList = [
     subProgram: subProgramList[0]._id,
     type: INTRA,
     maxTrainees: 8,
-    trainees: [userList[1]._id],
+    trainees: [userList[1]._id, userList[0]._id],
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
@@ -230,6 +230,13 @@ const courseHistoriesList = [
     company: otherCompany._id,
     createdBy: trainerOrganisationManager._id,
   },
+  {
+    action: TRAINEE_ADDITION,
+    course: coursesList[0]._id,
+    trainee: userList[0]._id,
+    company: authCompany._id,
+    createdBy: trainerOrganisationManager._id,
+  },
 ];
 
 const slotsList = [
@@ -336,6 +343,27 @@ const slotsList = [
     startDate: '2021-03-28T09:00:00.000Z',
     endDate: '2021-03-28T11:00:00.000Z',
     course: coursesList[1]._id,
+    step: steps[0]._id,
+  },
+  { // 15
+    _id: new ObjectId(),
+    startDate: '2021-01-23T09:00:00.000Z',
+    endDate: '2021-01-23T11:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+  },
+  { // 16
+    _id: new ObjectId(),
+    startDate: '2021-01-23T14:00:00.000Z',
+    endDate: '2021-01-23T15:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+  },
+  { // 17
+    _id: new ObjectId(),
+    startDate: '2021-01-24T14:00:00.000Z',
+    endDate: '2021-01-24T15:00:00.000Z',
+    course: coursesList[0]._id,
     step: steps[0]._id,
   },
 ];
@@ -522,6 +550,34 @@ const attendanceSheetList = [
       },
     ],
     origin: MOBILE,
+    trainer: trainer._id,
+  },
+  { // 13
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    file: { publicId: 'mon upload', link: 'www.test.com' },
+    date: '2021-01-24T09:00:00.000Z',
+    slots: [
+      {
+        slotId: slotsList[17]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          {
+            traineeId: userList[0]._id,
+            signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+          },
+          {
+            traineeId: userList[1]._id,
+            signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee2.png',
+          },
+        ],
+      },
+    ],
+    companies: [authCompany._id],
+    origin: WEBAPP,
     trainer: trainer._id,
   },
 ];

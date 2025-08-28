@@ -9,7 +9,7 @@ const {
   updateAttendanceSheet,
   signAttendanceSheet,
 } = require('../controllers/attendanceSheetController');
-const { formDataPayload } = require('./validations/utils');
+const { formDataPayload, attendanceSheetSlotsValidation } = require('./validations/utils');
 const {
   authorizeAttendanceSheetCreation,
   authorizeAttendanceSheetDeletion,
@@ -52,10 +52,7 @@ exports.plugin = {
             trainer: Joi.objectId().required(),
             date: Joi.date(),
             origin: Joi.string().valid(...ORIGIN_OPTIONS).default(MOBILE),
-            slots: Joi
-              .alternatives()
-              .try(Joi.array().items(Joi.objectId()).min(1), Joi.objectId())
-              .when('signature', { is: Joi.exist(), then: Joi.required() }),
+            slots: attendanceSheetSlotsValidation.when('signature', { is: Joi.exist(), then: Joi.required() }),
             signature: Joi.any(),
           }).xor('trainees', 'date').xor('file', 'signature'),
         },
