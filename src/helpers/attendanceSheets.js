@@ -26,6 +26,32 @@ exports.create = async (payload, credentials) => {
   if (payload.date) {
     fileName = CompaniDate(payload.date).format(DAY_MONTH_YEAR);
     companies = course.companies;
+    if (payload.signature) {
+      const signature = await GCloudStorageHelper.uploadCourseFile({
+        fileName: `trainer_signature_${fileName}`,
+        file: payload.signature,
+      });
+
+      const slotList = Array.isArray(payload.slots) ? payload.slots : [payload.slots];
+      for (const slot of slotList) {
+        const trainees = Array.isArray(slot.trainees) ? slot.trainees : [slot.trainees];
+        for (const trainee of trainees) {
+          if (!formationExpoTokens[trainee]) {
+            const { formationExpoTokenList } = await User
+              .findOne({ _id: trainee }, { identity: 1, formationExpoTokenList: 1 })
+              .lean();
+            if (get(formationExpoTokenList, 'length')) formationExpoTokens[trainee] = formationExpoTokenList;
+          }
+        }
+        const formattedSlot = {
+          slotId: slot.slotId,
+          trainerSignature: { trainerId: payload.trainer, signature: signature.link },
+          traineesSignature: trainees.map(t => ({ traineeId: t })),
+        };
+        slots.push(formattedSlot);
+      }
+      promises.push(AttendanceSheet.create({ ...omit(payload, 'signature'), companies, slots }));
+    }
   } else {
     const trainees = Array.isArray(payload.trainees) ? payload.trainees : [payload.trainees];
     for (const trainee of trainees) {
@@ -98,7 +124,9 @@ exports.create = async (payload, credentials) => {
   const results = await Promise.all(promises);
   if (Object.keys(formationExpoTokens).length) {
     for (const result of results) {
-      const tokens = formationExpoTokens[result.trainee] || [];
+      const tokens = payload.date
+        ? Object.values(formationExpoTokens).flat()
+        : formationExpoTokens[result.trainee] || [];
       await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(result._id, payload.trainer, tokens);
     }
   }
@@ -214,7 +242,9 @@ exports.delete = async (attendanceSheetId) => {
     const signatures = [];
     for (const slot of slots) {
       if (slot.trainerSignature) signatures.push(slot.trainerSignature.signature);
-      if (slot.traineesSignature) signatures.push(...slot.traineesSignature.map(s => s.signature));
+      if (slot.traineesSignature) {
+        signatures.push(...slot.traineesSignature.filter(s => s.signature).map(s => s.signature));
+      }
     }
 
     for (const signature of [...new Set(signatures)]) {
