@@ -20,6 +20,7 @@ const {
   HOLDING_ADMIN,
   INTER_B2B,
   SINGLE,
+  INTRA,
 } = require('../../../src/helpers/constants');
 
 describe('list', () => {
@@ -217,6 +218,117 @@ describe('create', () => {
     sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
     sinon.assert.notCalled(attendanceSheetFindOne);
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+  });
+
+  it('should upload trainer signature and create attendance sheets for INTRA', async () => {
+    const courseId = new ObjectId();
+    const traineesId = [new ObjectId(), new ObjectId()];
+    const companyId = new ObjectId();
+    const attendanceSheetId = new ObjectId();
+    const slots = [
+      { slotId: new ObjectId(), trainees: traineesId }, { slotId: new ObjectId(), trainees: [traineesId[0]] },
+    ];
+    const credentials = { _id: new ObjectId() };
+
+    const course = { _id: courseId, companies: [companyId], type: INTRA };
+    const payload = {
+      course: courseId,
+      date: '2025-08-28T10:00:00.000Z',
+      signature: 'signature.png',
+      slots,
+      trainer: credentials._id,
+    };
+    const users = [
+      {
+        _id: traineesId[0],
+        identity: { firstName: 'Mikasa', lastname: 'ACKERMAN' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
+      },
+      {
+        _id: traineesId[1],
+        identity: { firstName: 'Eren', lastname: 'JAEGER' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
+      },
+    ];
+    const formattedSlots = [
+      {
+        slotId: slots[0].slotId,
+        trainerSignature: { trainerId: credentials._id, signature: 'http://signature' },
+        traineesSignature: [{ traineeId: traineesId[0] }, { traineeId: traineesId[1] }],
+      },
+      {
+        slotId: slots[1].slotId,
+        trainerSignature: { trainerId: credentials._id, signature: 'http://signature' },
+        traineesSignature: [{ traineeId: traineesId[0] }],
+      },
+    ];
+
+    uploadCourseFile.returns({ publicId: '123', link: 'http://signature' });
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    userFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(users[0], ['lean']));
+    userFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(users[1], ['lean']));
+    create.returns({
+      _id: attendanceSheetId,
+      slots: formattedSlots,
+      course: courseId,
+      date: '2025-08-28T10:00:00.000Z',
+    });
+
+    await attendanceSheetHelper.create(payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ _id: traineesId[0] }, { identity: 1, formationExpoTokenList: 1 }],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ _id: traineesId[1] }, { identity: 1, formationExpoTokenList: 1 }],
+        },
+        { query: 'lean' },
+      ],
+      1
+    );
+    sinon.assert.calledWithExactly(
+      uploadCourseFile,
+      { fileName: 'trainer_signature_28 août 2025', file: 'signature.png' }
+    );
+    sinon.assert.calledWithExactly(
+      create,
+      {
+        trainer: credentials._id,
+        slots: formattedSlots,
+        course: courseId,
+        date: '2025-08-28T10:00:00.000Z',
+        companies: [companyId],
+      }
+    );
+    sinon.assert.calledWithExactly(
+      sendAttendanceSheetSignatureRequestNotification.getCall(0),
+      attendanceSheetId,
+      credentials._id,
+      [
+        'ExponentPushToken[jeSuisUnTokenExpo]',
+        'ExponentPushToken[jeSuisUnAutreTokenExpo]',
+        'ExponentPushToken[jeSuisUnNouveauTokenExpo]',
+      ]
+    );
+    sinon.assert.notCalled(attendanceSheetFindOne);
+    sinon.assert.notCalled(formatIdentity);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
   });
 
@@ -1269,10 +1381,13 @@ describe('delete', () => {
           trainerId: new ObjectId(),
           signature: 'gcs.com/bucket/media-trainer_signature_abcde_course_67890',
         },
-        traineesSignature: [{
-          traineeId: new ObjectId(),
-          signature: 'gcs.com/bucket/media-trainee_signature_12345_course_67890',
-        }],
+        traineesSignature: [
+          {
+            traineeId: new ObjectId(),
+            signature: 'gcs.com/bucket/media-trainee_signature_12345_course_67890',
+          },
+          { traineeId: new ObjectId() },
+        ],
       }],
     };
 

@@ -79,6 +79,33 @@ const ibanValidation = Joi.string().regex(IBAN_VALIDATION);
 const bicValidation = Joi.string().regex(BIC_VALIDATION);
 const icsValidation = Joi.string().regex(ICS_VALIDATION);
 
+const slotObjectSchema = Joi.object({
+  slotId: Joi.objectId().required(),
+  trainees: Joi.alternatives().try(Joi.array().items(Joi.objectId()).min(1), Joi.objectId()).required(),
+});
+
+const parseAndValidateSlot = (value, helpers) => {
+  let parsed;
+  try {
+    parsed = JSON.parse(value);
+  } catch (_) {
+    return helpers.error('any.invalid', { message: 'Invalid JSON' });
+  }
+
+  const { error, value: validated } = slotObjectSchema.validate(parsed);
+  if (error) {
+    return helpers.error('any.invalid', { message: error.message });
+  }
+  return validated;
+};
+
+const attendanceSheetSlotsValidation = Joi.alternatives().try(
+  Joi.array().items(Joi.objectId()).min(1),
+  Joi.objectId(),
+  Joi.array().items(Joi.string().custom(parseAndValidateSlot)),
+  Joi.string().custom(parseAndValidateSlot)
+);
+
 module.exports = {
   monthValidation,
   phoneNumberValidation,
@@ -96,4 +123,5 @@ module.exports = {
   durationStrictlyPositive,
   durationPositive,
   icsValidation,
+  attendanceSheetSlotsValidation,
 };
