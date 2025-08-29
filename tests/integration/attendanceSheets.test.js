@@ -290,6 +290,75 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       sinon.assert.calledOnce(sendNotificationToUser);
     });
 
+    it('should upload trainer signature and create attendance sheet for intra course (several slots and trainees)'
+      + '(mobile)', async () => {
+      const slots = [
+        {
+          slotId: slotsList[15]._id.toHexString(),
+          trainees: [userList[0]._id.toHexString(), userList[1]._id.toHexString()],
+        },
+        {
+          slotId: slotsList[16]._id.toHexString(),
+          trainees: [userList[0]._id.toHexString(), userList[1]._id.toHexString()],
+        },
+      ];
+      const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: new Date('2021-01-23').toISOString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
+      expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledTwice(sendNotificationToUser);
+    });
+
+    it('should upload trainer signature and create attendance sheet for intra course (single slot and trainee)'
+      + '(mobile)', async () => {
+      const slots = [{ slotId: slotsList[15]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: new Date('2021-01-23').toISOString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
+      expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledTwice(sendNotificationToUser);
+    });
+
     it('should  return 400 if single course but slots is missing', async () => {
       const formData = {
         course: coursesList[7]._id.toHexString(),
@@ -565,6 +634,173 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if sign intra attendance sheet but slots have wrong format (mobile)', async () => {
+      const slots = [slotsList[15]._id.toHexString(), slotsList[16]._id.toHexString()];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: new Date('2021-01-23').toISOString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+    it('should return 400 if sign inter attendance sheet but slots have wrong format'
+      + '(mobile)', async () => {
+      const slots = [{ slotId: slotsList[12]._id.toHexString(), trainees: [coursesList[1].trainees[2].toHexString()] }];
+      const formData = {
+        course: coursesList[1]._id.toHexString(),
+        signature: 'test',
+        trainees: coursesList[1].trainees[2].toHexString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if slots without signature in intra attendance sheet (mobile)', async () => {
+      const slots = [{ slotId: slotsList[15]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        date: new Date('2021-01-23').toISOString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if trainees in slots are not in course (mobile)', async () => {
+      const slots = [{ slotId: slotsList[15]._id.toHexString(), trainees: [userList[2]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: new Date('2021-01-23').toISOString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if slotId in slots are not in course (mobile)', async () => {
+      const slots = [{ slotId: slotsList[12]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: new Date('2021-01-23').toISOString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if slots don\'t match with date on intra (mobile)', async () => {
+      const slots = [{ slotId: slotsList[16]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: new Date('2021-01-24').toISOString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 409 if there is already an attendance sheet for payload slots on intra (mobile)', async () => {
+      const slots = [{ slotId: slotsList[17]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: new Date('2021-01-24').toISOString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(409);
     });
 
     it('should return a 403 if trainer is from an other company', async () => {

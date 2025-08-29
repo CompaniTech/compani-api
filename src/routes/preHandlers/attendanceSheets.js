@@ -78,6 +78,25 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     if (req.payload.trainees) throw Boom.badRequest();
     const isCourseSlotDate = course.slots.some(slot => CompaniDate(slot.startDate).isSame(req.payload.date, DAY));
     if (!isCourseSlotDate) throw Boom.forbidden();
+    if (req.payload.signature) {
+      const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
+      if (!slots.every(s => Object.keys(s).includes('trainees') && Object.keys(s).includes('slotId'))) {
+        throw Boom.badRequest();
+      }
+      if (!slots.every(s => s.trainees.every(t => UtilsHelper.doesArrayIncludeId(course.trainees, t)))) {
+        throw Boom.notFound();
+      }
+      const slotsIds = slots.map(s => s.slotId);
+      const courseSlots = await CourseSlot.find({ _id: { $in: slotsIds }, course: course._id });
+      if (courseSlots.length !== slotsIds.length) throw Boom.notFound();
+
+      const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
+      if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
+
+      const areSlotsSameDateAsDate = courseSlots
+        .every(slot => CompaniDate(slot.startDate).isSame(req.payload.date, DAY));
+      if (!areSlotsSameDateAsDate) throw Boom.notFound();
+    } else if (req.payload.slots) throw Boom.badRequest();
 
     return null;
   }
@@ -90,12 +109,15 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 
   if (isSingleCourse && !(req.payload.slots && traineesIds)) throw Boom.badRequest();
   if (req.payload.slots) {
-    const slotsIds = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
-    const courseSlotCount = await CourseSlot.countDocuments({ _id: { $in: slotsIds }, course: course._id });
-    if (courseSlotCount !== slotsIds.length) throw Boom.notFound();
+    const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
+    if (slots.some(s => Object.keys(s).includes('trainees') || Object.keys(s).includes('slotId'))) {
+      throw Boom.badRequest();
+    }
+    const courseSlotCount = await CourseSlot.countDocuments({ _id: { $in: slots }, course: course._id });
+    if (courseSlotCount !== slots.length) throw Boom.notFound();
 
     const attendanceSheetCount = await AttendanceSheet
-      .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slotsIds } });
+      .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slots } });
     if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
   }
 
