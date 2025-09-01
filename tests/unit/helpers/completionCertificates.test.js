@@ -17,13 +17,16 @@ const UtilsMock = require('../../utilsMock');
 
 describe('list', () => {
   let findCompletionCertificates;
+  let hasUserAccessToCompany;
 
   beforeEach(() => {
     findCompletionCertificates = sinon.stub(CompletionCertificate, 'find');
+    hasUserAccessToCompany = sinon.stub(UtilsHelper, 'hasUserAccessToCompany');
   });
 
   afterEach(() => {
     findCompletionCertificates.restore();
+    hasUserAccessToCompany.restore();
   });
 
   it('should get completion certificates for specified months (months is an array)', async () => {
@@ -51,6 +54,8 @@ describe('list', () => {
         month: '07_2024',
       },
     ];
+
+    hasUserAccessToCompany.returns(false);
 
     findCompletionCertificates.returns(
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
@@ -82,7 +87,7 @@ describe('list', () => {
             { path: 'trainee', select: 'identity' },
           ]],
         },
-        { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
+        { query: 'setOptions', args: [{ isVendorUser: true, requestingOwnInfos: false }] },
         { query: 'lean' },
       ]
     );
@@ -104,6 +109,8 @@ describe('list', () => {
         month: '06_2024',
       },
     ];
+
+    hasUserAccessToCompany.returns(false);
 
     findCompletionCertificates.returns(
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
@@ -135,7 +142,7 @@ describe('list', () => {
             { path: 'trainee', select: 'identity' },
           ]],
         },
-        { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
+        { query: 'setOptions', args: [{ isVendorUser: true, requestingOwnInfos: false }] },
         { query: 'lean' },
       ]
     );
@@ -169,6 +176,8 @@ describe('list', () => {
       },
     ];
 
+    hasUserAccessToCompany.returns(false);
+
     findCompletionCertificates.returns(
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
@@ -183,7 +192,7 @@ describe('list', () => {
       [
         { query: 'find', args: [{ course: courseId }] },
         { query: 'populate', args: [[{ path: 'trainee', select: 'identity' }]] },
-        { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
+        { query: 'setOptions', args: [{ isVendorUser: true, requestingOwnInfos: false }] },
         { query: 'lean' },
       ]
     );
@@ -205,6 +214,8 @@ describe('list', () => {
         file: 'url/to/file.pdf',
       },
     ];
+
+    hasUserAccessToCompany.returns(true);
 
     findCompletionCertificates.returns(
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
@@ -241,9 +252,69 @@ describe('list', () => {
           query: 'setOptions',
           args: [{
             isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')),
-            requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+            requestingOwnInfos: true,
           }],
         },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should get completion certificates for holding_admin', async () => {
+    const companyId = new ObjectId();
+    const credentials = {
+      _id: new ObjectId(),
+      role: { client: 'admin', holding: 'holding_admin' },
+      company: { _id: companyId },
+    };
+
+    const completionCertificates = [
+      {
+        course: {
+          companies: [{ _id: companyId }],
+          subProgram: { program: { name: 'program 1' } },
+          misc: 'course',
+        },
+        trainee: { identity: { firstname: 'Morty', lastname: 'SMITH' } },
+        month: '09_2025',
+        file: 'url/to/file.pdf',
+      },
+    ];
+
+    hasUserAccessToCompany.returns(true);
+
+    findCompletionCertificates.returns(
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+    );
+
+    const query = { months: '09_2025', company: companyId };
+    const result = await CompletionCertificatesHelper.list(query, credentials);
+
+    expect(result).toEqual(completionCertificates);
+
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificates,
+      [
+        { query: 'find', args: [{ month: { $in: ['09_2025'] } }] },
+        {
+          query: 'populate',
+          args: [[
+            {
+              path: 'course',
+              select: 'companies subProgram misc',
+              populate: [
+                {
+                  path: 'companies',
+                  select: 'name',
+                  populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+                },
+                { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              ],
+            },
+            { path: 'trainee', select: 'identity' },
+          ]],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: false, requestingOwnInfos: true }] },
         { query: 'lean' },
       ]
     );

@@ -17,7 +17,7 @@ describe('NODE ENV', () => {
   });
 });
 
-describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates #tag', () => {
+describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
   let authToken;
   beforeEach(populateDB);
 
@@ -141,6 +141,17 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates #tag', ()
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.completionCertificates.length).toBe(2);
+    });
+
+    it('should return 403 if companies is not in holding', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`
+          + `&companies=${new ObjectId()}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
   });
 
