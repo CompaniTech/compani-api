@@ -348,6 +348,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       Formation: CourseHelper.composeCourseName(slot.course),
       Étape: get(slot, 'step.name') || '',
       Type: STEP_TYPES[get(slot, 'step.type')] || '',
+      Apprenant: slot.course.type === SINGLE ? slot.course.misc : '',
       'Date de création': CompaniDate(slot.createdAt).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de début': CompaniDate(slot.startDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de fin': CompaniDate(slot.endDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
@@ -445,6 +446,7 @@ const formatCommonInfos = (bill, netInclTaxes) => {
     'Id formation': bill.course._id,
     Formation: courseName,
     Programme: bill.course.subProgram.program.name,
+    Apprenant: bill.course.type === SINGLE ? bill.course.misc : '',
     Structure: bill.companies.map(c => c.name).join(', '),
     'Id payeur': bill.payer._id,
     Payeur: bill.payer.name,
@@ -565,7 +567,12 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
     { courseBill: { $in: paymentsOnPeriod.map(p => p.courseBill) } },
     { nature: 1, number: 1, date: 1, courseBill: 1, type: 1, netInclTaxes: 1 }
   )
-    .populate({ path: 'courseBill', option: { isVendorUser }, select: 'number payer' })
+    .populate({
+      path: 'courseBill',
+      option: { isVendorUser },
+      select: 'number payer course',
+      populate: { path: 'course', select: 'type misc' },
+    })
     .setOptions({ isVendorUser })
     .lean();
 
@@ -585,6 +592,7 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
             'Numéro du paiement (parmi ceux de la même facture)': paymentIndex + 1,
             'Moyen de paiement': PAYMENT_TYPES_LIST[payment.type],
             Montant: UtilsHelper.formatFloatForExport(payment.netInclTaxes),
+            Apprenant: payment.courseBill.course.type === SINGLE ? payment.courseBill.course.misc : '',
           });
         }
         return acc;
