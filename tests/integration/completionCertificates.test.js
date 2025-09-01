@@ -320,7 +320,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
     });
 
     it('should return 403 if there is no slot nor activity history for trainee', async () => {
-      const payload = { trainee: auxiliary._id, course: courseList[1]._id, month: '12-2024' };
+      const payload = { trainee: auxiliary._id, course: courseList[4]._id, month: '12-2024' };
 
       const response = await app.inject({
         method: 'POST',
