@@ -11,11 +11,21 @@ const { MM_YYYY, MONTH } = require('../../helpers/constants');
 const { language } = translate;
 
 exports.authorizeGetCompletionCertificates = async (req) => {
-  const { course } = req.query;
+  const { course, companies: queryCompanies } = req.query;
+  const { credentials } = req.auth;
 
   if (course) {
     const courseExists = await Course.countDocuments({ _id: course });
     if (!courseExists) throw Boom.notFound();
+  }
+
+  if (queryCompanies) {
+    const companies = Array.isArray(queryCompanies) ? queryCompanies : [queryCompanies];
+    if (companies.length) {
+      const loggedUserHasClientRole = has(credentials, 'role.client');
+      const hasAccessToCompany = companies.every(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
+      if (!loggedUserHasClientRole || !hasAccessToCompany) throw Boom.forbidden();
+    }
   }
 
   return null;
