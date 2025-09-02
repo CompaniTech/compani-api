@@ -23,7 +23,7 @@ exports.authorizeGetCompletionCertificates = async (req) => {
     const companies = Array.isArray(queryCompanies) ? queryCompanies : [queryCompanies];
     if (companies.length) {
       const loggedUserHasClientRole = has(credentials, 'role.client');
-      const hasAccessToCompany = companies.some(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
+      const hasAccessToCompany = companies.every(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
       if (!loggedUserHasClientRole || !hasAccessToCompany) throw Boom.forbidden();
     }
   }

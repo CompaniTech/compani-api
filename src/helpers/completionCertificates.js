@@ -17,7 +17,9 @@ const GCloudStorageHelper = require('./gCloudStorage');
 exports.list = async (query, credentials) => {
   const { months, course } = query;
 
-  const companies = Array.isArray(query.companies) ? query.companies : [query.companies];
+  let companies = [];
+
+  if (query.companies) { companies = Array.isArray(query.companies) ? query.companies : [query.companies]; }
 
   const findQuery = course
     ? { course }
@@ -46,15 +48,13 @@ exports.list = async (query, credentials) => {
     .setOptions({ isVendorUser: has(credentials, 'role.vendor.name'), ...(companies.length && { requestingOwnInfos }) })
     .lean();
 
-  if (query.companies && companies.length) {
-    const filteredCertificates = companies.flatMap(company =>
-      completionCertificates.filter((certificate) => {
-        const companyIds = get(certificate, 'course.companies', []).map(c => c._id);
-        return UtilsHelper.doesArrayIncludeId(companyIds, company) && !!certificate.file;
-      })
-    );
+  if (companies.length) {
+    const filteredCertificates = completionCertificates.filter((certificate) => {
+      const companyIds = get(certificate, 'course.companies', []).map(c => c._id);
+      return !!certificate.file && companies.some(c => UtilsHelper.doesArrayIncludeId(companyIds, c));
+    });
 
-    return [...new Set(filteredCertificates)];
+    return filteredCertificates;
   }
 
   return completionCertificates;
