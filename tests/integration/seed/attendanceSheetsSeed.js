@@ -24,7 +24,7 @@ const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const UserCompany = require('../../../src/models/UserCompany');
 const User = require('../../../src/models/User');
 const { vendorAdminRoleId, trainerRoleId } = require('../../seed/authRolesSeed');
-const { trainerOrganisationManager, trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
+const { trainerOrganisationManager, trainer, trainerAndCoach, vendorAdmin } = require('../../seed/authUsersSeed');
 
 const userList = [
   { // 0
@@ -120,10 +120,10 @@ const coursesList = [
     subProgram: subProgramList[0]._id,
     type: INTRA,
     maxTrainees: 8,
-    trainees: [userList[1]._id],
+    trainees: [userList[1]._id, userList[0]._id],
     companies: [authCompany._id],
     trainers: [userList[3]._id],
-    operationsRepresentative: userList[0]._id,
+    operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
   },
   { // 3 - archived
@@ -399,8 +399,19 @@ const attendanceSheetList = [
   { // 3
     _id: new ObjectId(),
     course: coursesList[2]._id,
-    file: { publicId: 'fromOtherCompany', link: 'www.test.com' },
     date: '2020-01-25T09:00:00.000Z',
+    slots: [
+      {
+        slotId: slotsList[1]._id,
+        trainerSignature: {
+          trainerId: userList[3]._id._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          { traineeId: userList[1]._id },
+        ],
+      },
+    ],
     companies: [authCompany._id],
     origin: MOBILE,
     trainer: userList[3]._id,

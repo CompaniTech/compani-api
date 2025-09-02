@@ -155,15 +155,20 @@ exports.update = async (attendanceSheetId, payload) =>
   AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots: payload.slots.map(s => ({ slotId: s })) } });
 
 exports.sign = async (attendanceSheetId, payload, credentials) => {
-  const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
+  const attendanceSheet = await AttendanceSheet
+    .findOne({ _id: attendanceSheetId })
+    .populate({ path: 'course', select: 'type' })
+    .lean();
 
   let traineeSignature = '';
   const slotWithTraineeSignature = attendanceSheet.slots
     .find(s => (s.traineesSignature || [])
-      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id)));
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id) && !!signature.signature)
+    );
   if (slotWithTraineeSignature) {
     traineeSignature = slotWithTraineeSignature.traineesSignature
-      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id)).signature;
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id) && !!signature.signature)
+      .signature;
   } else {
     const signature = await GCloudStorageHelper.uploadCourseFile({
       fileName: `trainee_signature_${credentials._id}`,
@@ -187,7 +192,36 @@ exports.sign = async (attendanceSheetId, payload, credentials) => {
     return s;
   });
 
-  return AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots } });
+  if ([SINGLE, INTER_B2B].includes(attendanceSheet.course.type)) {
+    return AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots } });
+  }
+
+  return AttendanceSheet.updateOne(
+    {
+      _id: attendanceSheetId,
+      'slots.trainerSignature': { $exists: true },
+      'slots.traineesSignature': {
+        $elemMatch: {
+          traineeId: credentials._id,
+          signature: { $exists: false },
+        },
+      },
+    },
+    {
+      $set: {
+        'slots.$[slot].traineesSignature.$[trainee].signature': traineeSignature,
+      },
+    },
+    {
+      arrayFilters: [
+        { 'slot.trainerSignature': { $exists: true } },
+        {
+          'trainee.traineeId': credentials._id,
+          'trainee.signature': { $exists: false },
+        },
+      ],
+    }
+  );
 };
 
 exports.generate = async (attendanceSheetId) => {

@@ -174,11 +174,16 @@ exports.authorizeAttendanceSheetSignature = async (req) => {
   if (attendanceSheet.slots.some(s => !s.trainerSignature)) throw Boom.notFound();
   const hasTraineeSignedEverySlot = attendanceSheet.slots
     .every(s => (s.traineesSignature || [])
-      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id)));
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id) && !!signature.signature)
+    );
   if (hasTraineeSignedEverySlot) throw Boom.notFound();
 
   const loggedUserId = get(credentials, '_id');
-  if (!UtilsHelper.areObjectIdsEquals(attendanceSheet.trainee, loggedUserId)) throw Boom.forbidden();
+  const isTraineeInAttendanceSheet = UtilsHelper.areObjectIdsEquals(attendanceSheet.trainee, loggedUserId) ||
+  attendanceSheet.slots
+    .find(s => (s.traineesSignature || [])
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, loggedUserId)));
+  if (!isTraineeInAttendanceSheet) throw Boom.forbidden();
 
   return null;
 };
