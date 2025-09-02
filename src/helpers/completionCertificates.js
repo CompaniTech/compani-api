@@ -55,7 +55,7 @@ exports.list = async (query, credentials) => {
   if (companies.length) {
     const filteredCertificates = completionCertificates.filter((certificate) => {
       const traineeCompanyId = get(certificate, 'trainee.company._id');
-      return !!certificate.file && companies.some(c => UtilsHelper.doesArrayIncludeId([traineeCompanyId], c));
+      return !!certificate.file && UtilsHelper.doesArrayIncludeId(companies, traineeCompanyId);
     });
 
     return filteredCertificates;
