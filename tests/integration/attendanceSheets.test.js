@@ -1526,6 +1526,27 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       sinon.assert.notCalled(uploadCourseFile);
     });
 
+    it('should upload trainee signature for intra course (mobile)', async () => {
+      const formData = { signature: 'test' };
+
+      const form = generateFormData(formData);
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetList[3]._id}/signature`,
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[3]._id });
+      const attendanceSheetHasBothSignatures = attendanceSheet.slots
+        .every(s => s.trainerSignature &&
+            UtilsHelper.areObjectIdsEquals(s.traineesSignature[0].traineeId, userList[1]._id));
+      expect(attendanceSheetHasBothSignatures).toBeTruthy();
+      sinon.assert.calledOnce(uploadCourseFile);
+    });
+
     it('should return 400 if no signature', async () => {
       const formData = {};
 
@@ -1584,6 +1605,23 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if trainee not in attendance list (intra course)', async () => {
+      authToken = await getTokenByCredentials(userList[0].local);
+
+      const formData = { signature: 'test' };
+
+      const form = generateFormData(formData);
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetList[3]._id}/signature`,
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
   });
 

@@ -947,16 +947,17 @@ describe('sign', () => {
   it('should add trainee signature in attendance sheet (no slot signed)', async () => {
     const credentials = { _id: new ObjectId() };
     const attendanceSheetId = new ObjectId();
-    const payload = { signature: 'test.png' };
     const slotId = new ObjectId();
     const trainerId = new ObjectId();
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      slots: [{ slotId, trainerSignature: { trainerId, signature: 'trainer.png' } }],
+      course: { type: SINGLE },
+    };
+    const payload = { signature: 'test.png' };
 
     uploadCourseFile.returns({ publicId: 'id', link: 'link' });
-    findOne.returns(
-      SinonMongoose.stubChainedQueries(
-        { slots: [{ slotId, trainerSignature: { trainerId, signature: 'trainer.png' } }] },
-        ['lean']
-      ));
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
 
     await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
 
@@ -967,7 +968,11 @@ describe('sign', () => {
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
-      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
+        { query: 'lean' },
+      ]
     );
 
     sinon.assert.calledOnceWithExactly(
@@ -995,6 +1000,7 @@ describe('sign', () => {
     const trainerId = new ObjectId();
 
     const attendanceSheet = {
+      course: { type: INTER_B2B },
       slots: [
         {
           slotId: slotIds[0],
@@ -1008,7 +1014,7 @@ describe('sign', () => {
       ],
     };
 
-    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
 
     await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
 
@@ -1016,7 +1022,11 @@ describe('sign', () => {
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
-      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
+        { query: 'lean' },
+      ]
     );
 
     sinon.assert.calledOnceWithExactly(
@@ -1037,6 +1047,66 @@ describe('sign', () => {
             },
           ],
         },
+      }
+    );
+  });
+
+  it('should add trainee signature in attendance sheet (intra course)', async () => {
+    const credentials = { _id: new ObjectId() };
+    const attendanceSheetId = new ObjectId();
+    const slotId = new ObjectId();
+    const trainerId = new ObjectId();
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      slots: [{ slotId, trainerSignature: { trainerId, signature: 'trainer.png' } }],
+      course: { type: INTRA },
+    };
+    const payload = { signature: 'test.png' };
+
+    uploadCourseFile.returns({ publicId: 'id', link: 'link' });
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+
+    await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
+
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: `trainee_signature_${credentials._id}`, file: 'test.png' }
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
+        { query: 'lean' },
+      ]
+    );
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      {
+        _id: attendanceSheetId,
+        'slots.trainerSignature': { $exists: true },
+        'slots.traineesSignature': {
+          $elemMatch: {
+            traineeId: credentials._id,
+            signature: { $exists: false },
+          },
+        },
+      },
+      {
+        $set: {
+          'slots.$[slot].traineesSignature.$[trainee].signature': 'link',
+        },
+      },
+      {
+        arrayFilters: [
+          { 'slot.trainerSignature': { $exists: true } },
+          {
+            'trainee.traineeId': credentials._id,
+            'trainee.signature': { $exists: false },
+          },
+        ],
       }
     );
   });
