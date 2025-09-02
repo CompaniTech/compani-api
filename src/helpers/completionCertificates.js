@@ -19,7 +19,7 @@ exports.list = async (query, credentials) => {
 
   let companies = [];
 
-  if (query.companies) { companies = Array.isArray(query.companies) ? query.companies : [query.companies]; }
+  if (query.companies) companies = Array.isArray(query.companies) ? query.companies : [query.companies];
 
   const findQuery = course
     ? { course }
@@ -43,15 +43,19 @@ exports.list = async (query, credentials) => {
           ],
         }]
         : []),
-      { path: 'trainee', select: 'identity' }]
+      {
+        path: 'trainee',
+        select: 'identity',
+        populate: { path: 'company', populate: { path: 'company', select: ' _id' } },
+      }]
     )
     .setOptions({ isVendorUser: has(credentials, 'role.vendor.name'), ...(companies.length && { requestingOwnInfos }) })
     .lean();
 
   if (companies.length) {
     const filteredCertificates = completionCertificates.filter((certificate) => {
-      const companyIds = get(certificate, 'course.companies', []).map(c => c._id);
-      return !!certificate.file && companies.some(c => UtilsHelper.doesArrayIncludeId(companyIds, c));
+      const traineeCompanyId = get(certificate, 'trainee.company._id');
+      return !!certificate.file && companies.some(c => UtilsHelper.doesArrayIncludeId([traineeCompanyId], c));
     });
 
     return filteredCertificates;

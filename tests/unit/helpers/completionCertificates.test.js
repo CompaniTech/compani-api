@@ -14,7 +14,7 @@ const { OFFICIAL, BLENDED, E_LEARNING } = require('../../../src/helpers/constant
 const UtilsHelper = require('../../../src/helpers/utils');
 const UtilsMock = require('../../utilsMock');
 
-describe('list #tag', () => {
+describe('list', () => {
   let findCompletionCertificates;
   let hasUserAccessToCompany;
 

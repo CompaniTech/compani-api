@@ -112,7 +112,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.completionCertificates.length).toBe(2);
+      expect(response.result.data.completionCertificates.length).toBe(1);
     });
 
     it('should return 403 if user\'s companies is not companies defined in query', async () => {
@@ -190,7 +190,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
     });
 
     it('should generate completion certificates file', async () => {
-      const completionCertificateId = completionCertificateList[1]._id;
+      const completionCertificateId = completionCertificateList[0]._id;
       const payload = { action: GENERATION };
       uploadCourseFile.returns({ publicId: '1234', link: 'https://test.com/completionCertificate.pdf' });
 
@@ -320,7 +320,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
     });
 
     it('should return 403 if there is no slot nor activity history for trainee', async () => {
-      const payload = { trainee: auxiliary._id, course: courseList[4]._id, month: '12-2024' };
+      const payload = { trainee: auxiliary._id, course: courseList[1]._id, month: '11-2024' };
 
       const response = await app.inject({
         method: 'POST',
@@ -403,7 +403,7 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
     it('should return 403 if completion certificate has no file', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/completioncertificates/${completionCertificateList[1]._id}/file`,
+        url: `/completioncertificates/${completionCertificateList[0]._id}/file`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
