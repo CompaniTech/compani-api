@@ -333,6 +333,60 @@ describe('list', () => {
     );
     sinon.assert.calledOnceWithExactly(hasUserAccessToCompany, credentials, companyId);
   });
+
+  it('should get completion certificates for a specific company (with course)', async () => {
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyId } };
+
+    const trainee = { identity: { firstname: 'Stan', lastname: 'SMITH' } };
+    const completionCertificates = [
+      {
+        course: {
+          _id: courseId,
+          companies: [{ _id: companyId }],
+          subProgram: { program: { name: 'program 1' } },
+          misc: 'course',
+        },
+        trainee,
+        month: '07_2025',
+        file: 'url/to/file.pdf',
+      },
+      {
+        course: {
+          _id: courseId,
+          companies: [{ _id: companyId }],
+          subProgram: { program: { name: 'program 2' } },
+          misc: 'course',
+        },
+        trainee,
+        month: '08_2025',
+        file: 'url/to/file2.pdf',
+      },
+    ];
+
+    hasUserAccessToCompany.returns(true);
+
+    findCompletionCertificates.returns(
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+    );
+
+    const query = { course: courseId, companies: companyId };
+    const result = await CompletionCertificatesHelper.list(query, credentials);
+
+    expect(result).toEqual(completionCertificates);
+
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificates,
+      [
+        { query: 'find', args: [{ course: courseId }] },
+        { query: 'populate', args: [[{ path: 'trainee', select: 'identity' }]] },
+        { query: 'setOptions', args: [{ isVendorUser: false, requestingOwnInfos: true }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(hasUserAccessToCompany, credentials, companyId);
+  });
 });
 
 describe('generate', () => {
