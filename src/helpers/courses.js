@@ -753,7 +753,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     .populate({ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' })
     .populate({
       path: 'attendanceSheets',
-      match: { trainee: credentials._id },
+      match: { $or: [{ trainee: credentials._id }, { 'slots.traineesSignature.traineeId': credentials._id }] },
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
