@@ -104,7 +104,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       authToken = await getToken('coach');
     });
 
-    it('should get completion certificates for specific companies', async () => {
+    it('should get completion certificates for specific companies (with month)', async () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`,
@@ -113,6 +113,17 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.completionCertificates.length).toBe(1);
+    });
+
+    it('should get completion certificates for specific companies (with course)', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/completioncertificates?course=${courseList[1]._id}&companies=${authCompany._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.completionCertificates.length).toBe(2);
     });
 
     it('should return 403 if user\'s companies is not companies defined in query', async () => {
