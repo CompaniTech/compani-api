@@ -339,7 +339,6 @@ describe('list', () => {
     const companyId = new ObjectId();
     const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyId } };
 
-    const trainee = { identity: { firstname: 'Stan', lastname: 'SMITH' } };
     const completionCertificates = [
       {
         course: {
@@ -348,7 +347,7 @@ describe('list', () => {
           subProgram: { program: { name: 'program 1' } },
           misc: 'course',
         },
-        trainee,
+        trainee: { identity: { firstname: 'Stan', lastname: 'SMITH' }, company: { _id: companyId } },
         month: '07_2025',
         file: 'url/to/file.pdf',
       },
@@ -359,7 +358,7 @@ describe('list', () => {
           subProgram: { program: { name: 'program 2' } },
           misc: 'course',
         },
-        trainee,
+        trainee: { identity: { firstname: 'Francine', lastname: 'SMITH' }, company: { _id: companyId } },
         month: '08_2025',
         file: 'url/to/file2.pdf',
       },
@@ -380,7 +379,14 @@ describe('list', () => {
       findCompletionCertificates,
       [
         { query: 'find', args: [{ course: courseId }] },
-        { query: 'populate', args: [[{ path: 'trainee', select: 'identity' }]] },
+        {
+          query: 'populate',
+          args: [[{
+            path: 'trainee',
+            select: 'identity',
+            populate: { path: 'company', populate: { path: 'company', select: ' _id' } },
+          }]],
+        },
         { query: 'setOptions', args: [{ isVendorUser: false, requestingOwnInfos: true }] },
         { query: 'lean' },
       ]
