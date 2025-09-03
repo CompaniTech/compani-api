@@ -16,16 +16,13 @@ const UtilsMock = require('../../utilsMock');
 
 describe('list', () => {
   let findCompletionCertificates;
-  let hasUserAccessToCompany;
 
   beforeEach(() => {
     findCompletionCertificates = sinon.stub(CompletionCertificate, 'find');
-    hasUserAccessToCompany = sinon.stub(UtilsHelper, 'hasUserAccessToCompany');
   });
 
   afterEach(() => {
     findCompletionCertificates.restore();
-    hasUserAccessToCompany.restore();
   });
 
   it('should get completion certificates for specified months (months is an array)', async () => {
@@ -92,7 +89,6 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(hasUserAccessToCompany);
   });
 
   it('should get completion certificates for a specified month (months is a string)', async () => {
@@ -150,7 +146,6 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(hasUserAccessToCompany);
   });
 
   it('should get completion certificates for a specific course', async () => {
@@ -209,32 +204,40 @@ describe('list', () => {
   });
 
   it('should get completion certificates for a specified company (with month)', async () => {
-    const companyId = new ObjectId();
-    const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyId } };
+    const companyIds = [new ObjectId(), new ObjectId()];
+    const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyIds[0] } };
 
     const completionCertificates = [
       {
         course: {
-          companies: [{ _id: companyId }],
+          companies: [{ _id: companyIds[0] }],
           subProgram: { program: { name: 'program 1' } },
           misc: 'course',
         },
-        trainee: { identity: { firstname: 'Rick', lastname: 'SANCHEZ' }, company: { _id: companyId } },
+        trainee: { identity: { firstname: 'Rick', lastname: 'SANCHEZ' }, company: { _id: companyIds[0] } },
+        month: '08_2025',
+        file: 'url/to/file.pdf',
+      },
+      {
+        course: {
+          companies: [{ _id: companyIds[1] }],
+          subProgram: { program: { name: 'program 1' } },
+          misc: 'course',
+        },
+        trainee: { identity: { firstname: 'Austin', lastname: 'BUTLER' }, company: { _id: companyIds[1] } },
         month: '08_2025',
         file: 'url/to/file.pdf',
       },
     ];
 
-    hasUserAccessToCompany.returns(true);
-
     findCompletionCertificates.returns(
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
 
-    const query = { months: '08_2025', companies: companyId };
+    const query = { months: '08_2025', companies: companyIds[0] };
     const result = await CompletionCertificatesHelper.list(query, credentials);
 
-    expect(result).toEqual(completionCertificates);
+    expect(result).toEqual([completionCertificates[0]]);
 
     SinonMongoose.calledOnceWithExactly(
       findCompletionCertificates,
@@ -266,37 +269,45 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(hasUserAccessToCompany, credentials, companyId);
   });
 
   it('should get completion certificates for holding_admin', async () => {
-    const companyId = new ObjectId();
+    const companyIds = [new ObjectId(), new ObjectId()];
     const credentials = {
       _id: new ObjectId(),
       role: { client: 'admin', holding: 'holding_admin' },
-      company: { _id: companyId },
+      company: { _id: companyIds[0] },
+      holding: { _id: new ObjectId(), companies: companyIds },
     };
 
     const completionCertificates = [
       {
         course: {
-          companies: [{ _id: companyId }],
+          companies: [{ _id: companyIds[0] }, { _id: companyIds[1] }],
           subProgram: { program: { name: 'program 1' } },
           misc: 'course',
         },
-        trainee: { identity: { firstname: 'Morty', lastname: 'SMITH' }, company: { _id: companyId } },
+        trainee: { identity: { firstname: 'Morty', lastname: 'SMITH' }, company: { _id: companyIds[0] } },
+        month: '09_2025',
+        file: 'url/to/file.pdf',
+      },
+      {
+        course: {
+          companies: [{ _id: companyIds[0] }, { _id: companyIds[1] }],
+          subProgram: { program: { name: 'program 1' } },
+          misc: 'course',
+        },
+        trainee: { identity: { firstname: 'Austin', lastname: 'BUTLER' }, company: { _id: companyIds[1] } },
         month: '09_2025',
         file: 'url/to/file.pdf',
       },
     ];
 
-    hasUserAccessToCompany.returns(true);
-
     findCompletionCertificates.returns(
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
 
-    const query = { months: '09_2025', companies: companyId };
+    const query = { months: '09_2025', companies: companyIds };
     const result = await CompletionCertificatesHelper.list(query, credentials);
 
     expect(result).toEqual(completionCertificates);
@@ -331,49 +342,57 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(hasUserAccessToCompany, credentials, companyId);
   });
 
   it('should get completion certificates for a specific company (with course)', async () => {
     const courseId = new ObjectId();
-    const companyId = new ObjectId();
-    const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyId } };
+    const companyIds = [new ObjectId(), new ObjectId()];
+    const credentials = { _id: new ObjectId(), role: { client: { name: 'coach' } }, company: { _id: companyIds[0] } };
 
     const completionCertificates = [
       {
         course: {
           _id: courseId,
-          companies: [{ _id: companyId }],
+          companies: [{ _id: companyIds[0] }, { _id: companyIds[1] }],
           subProgram: { program: { name: 'program 1' } },
           misc: 'course',
         },
-        trainee: { identity: { firstname: 'Stan', lastname: 'SMITH' }, company: { _id: companyId } },
+        trainee: { identity: { firstname: 'Stan', lastname: 'SMITH' }, company: { _id: companyIds[0] } },
         month: '07_2025',
         file: 'url/to/file.pdf',
       },
       {
         course: {
           _id: courseId,
-          companies: [{ _id: companyId }],
+          companies: [{ _id: companyIds[0] }, { _id: companyIds[1] }],
           subProgram: { program: { name: 'program 2' } },
           misc: 'course',
         },
-        trainee: { identity: { firstname: 'Francine', lastname: 'SMITH' }, company: { _id: companyId } },
+        trainee: { identity: { firstname: 'Francine', lastname: 'SMITH' }, company: { _id: companyIds[0] } },
+        month: '08_2025',
+        file: 'url/to/file2.pdf',
+      },
+      {
+        course: {
+          _id: courseId,
+          companies: [{ _id: companyIds[0] }, { _id: companyIds[1] }],
+          subProgram: { program: { name: 'program 2' } },
+          misc: 'course',
+        },
+        trainee: { identity: { firstname: 'Austin', lastname: 'BUTLER' }, company: { _id: companyIds[1] } },
         month: '08_2025',
         file: 'url/to/file2.pdf',
       },
     ];
 
-    hasUserAccessToCompany.returns(true);
-
     findCompletionCertificates.returns(
       SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
     );
 
-    const query = { course: courseId, companies: companyId };
+    const query = { course: courseId, companies: companyIds[0] };
     const result = await CompletionCertificatesHelper.list(query, credentials);
 
-    expect(result).toEqual(completionCertificates);
+    expect(result).toEqual([completionCertificates[0], completionCertificates[1]]);
 
     SinonMongoose.calledOnceWithExactly(
       findCompletionCertificates,
@@ -391,7 +410,6 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(hasUserAccessToCompany, credentials, companyId);
   });
 });
 

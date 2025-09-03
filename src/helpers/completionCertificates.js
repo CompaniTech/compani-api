@@ -25,7 +25,7 @@ exports.list = async (query, credentials) => {
     ? { course }
     : { month: { $in: Array.isArray(months) ? months : [months] } };
 
-  const requestingOwnInfos = companies.some(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
+  const requestingOwnInfos = companies.every(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
   const completionCertificates = await CompletionCertificate
     .find(findQuery)
     .populate([
