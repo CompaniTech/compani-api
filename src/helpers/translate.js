@@ -197,6 +197,8 @@ module.exports = {
     attendancesNotFound: 'Attendances not found.',
     attendanceDeleted: 'Attendance deleted.',
     attendanceExists: 'An attendance exists.',
+    attendanceIsLinkedToAttendanceSheet: 'Deletion forbidden : attendance is linked to attendance sheet.',
+    attendanceIsLinkedToCompletionCertificate: 'Deletion forbidden : attendance is linked to completion certificate.',
     /* Questionnaires */
     questionnairesFound: 'Questionnaires found.',
     questionnairesNotFound: 'Questionnaires not found.',
@@ -414,7 +416,7 @@ module.exports = {
     courseSlotNotFound: 'Créneau de formation non trouvé.',
     courseSlotConflict: 'Créneau de formation en conflit.',
     courseSlotWithAttendances: 'Impossible: ce créneau de formation est émargé.',
-    courseSlotsAlreadyInAttendanceSheet: 'Certains créneaux sont déjà rattachés à une feuille d’émargement.',
+    courseSlotsAlreadyInAttendanceSheet: 'Certains créneaux sont déjà rattachés à une feuille d\'émargement.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
     courseFundingOrganisationsNotFound: 'Financeurs non trouvés.',
@@ -436,6 +438,9 @@ module.exports = {
     attendancesNotFound: 'Émargements non trouvés.',
     attendanceDeleted: 'Émargement supprimé.',
     attendanceExists: 'Un émargement existe.',
+    attendanceIsLinkedToAttendanceSheet: 'Suppression impossible : l’émargement est relié à une feuille d\'émargement.',
+    attendanceIsLinkedToCompletionCertificate: 'Suppression impossible : l’émargement est relié à un certificat de '
+      + 'réalisation.',
     /* Questionnaires */
     questionnairesFound: 'Liste des questionnaires trouvée.',
     questionnairesNotFound: 'Liste des questionnaires non trouvée.',

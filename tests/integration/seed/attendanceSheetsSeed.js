@@ -425,7 +425,7 @@ const attendanceSheetList = [
       {
         slotId: slotsList[1]._id,
         trainerSignature: {
-          trainerId: userList[3]._id._id,
+          trainerId: userList[3]._id,
           signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
         },
         traineesSignature: [

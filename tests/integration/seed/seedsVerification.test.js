@@ -478,6 +478,25 @@ describe('SEEDS VERIFICATION', () => {
               UtilsHelper.doesArrayIncludeId(attendanceSheet.course.trainers, attendanceSheet.trainer));
           expect(areTrainerInCourse).toBeTruthy();
         });
+
+        it('should pass if all attendance sheet\'s trainerIds in slot are attendance sheet\'s trainers', () => {
+          const areTrainersInSlotAttendanceSheetTrainer = attendanceSheetList
+            .every(attendanceSheet => !attendanceSheet.slots || attendanceSheet.slots
+              .every(s => !s.trainerSignature ||
+                UtilsHelper.areObjectIdsEquals(s.trainerSignature.trainerId, attendanceSheet.trainer))
+            );
+          expect(areTrainersInSlotAttendanceSheetTrainer).toBeTruthy();
+        });
+
+        it('should pass if all attendance sheet\'s traineeIds in slot are attendance sheet\'s trainees', () => {
+          const areTrainersInSlotAttendanceSheetTrainer = attendanceSheetList
+            .every(attendanceSheet => !attendanceSheet.trainee || !attendanceSheet.slots || attendanceSheet.slots
+              .every(s => !s.traineesSignature ||
+                s.traineesSignature
+                  .every(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, attendanceSheet.trainee._id)))
+            );
+          expect(areTrainersInSlotAttendanceSheetTrainer).toBeTruthy();
+        });
       });
 
       describe('Collection Card', () => {
