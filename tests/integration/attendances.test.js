@@ -879,6 +879,36 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if attendance is linked to attendance sheet (intra)', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[2]._id}&trainee=${traineeList[9]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance is linked to attendance sheet (single)', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[11]._id}&trainee=${traineeList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance is linked to completion certificate', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[12]._id}&trainee=${traineeList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {

@@ -3,8 +3,10 @@ const get = require('lodash/get');
 const has = require('lodash/has');
 const CourseSlot = require('../../models/CourseSlot');
 const Course = require('../../models/Course');
+const CompletionCertificate = require('../../models/CompletionCertificate');
 const User = require('../../models/User');
 const Attendance = require('../../models/Attendance');
+const AttendanceSheet = require('../../models/AttendanceSheet');
 const UserCompany = require('../../models/UserCompany');
 const {
   TRAINER,
@@ -15,6 +17,7 @@ const {
   INTRA_HOLDING,
   BLENDED,
   SINGLE,
+  MM_YYYY,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const translate = require('../../helpers/translate');
@@ -171,6 +174,21 @@ exports.authorizeAttendanceDeletion = async (req) => {
   const { credentials } = req.auth;
   const trainersIds = courseSlot.course.trainers;
   if (get(credentials, 'role.vendor.name') === TRAINER) isTrainerAuthorized(credentials._id, trainersIds);
+
+  const isLinkedToAttendanceSheet = await AttendanceSheet.countDocuments({
+    'slots.slotId': courseSlot._id,
+    $or: [{ trainee: traineeId }, { 'slots.traineesSignature.traineeId': traineeId }],
+  });
+  if (isLinkedToAttendanceSheet) throw Boom.forbidden(translate[language].attendanceIsLinkedToAttendanceSheet);
+
+  const isLinkedToCompletionCertificate = await CompletionCertificate.countDocuments({
+    month: CompaniDate(courseSlot.startDate).format(MM_YYYY),
+    trainee: traineeId,
+    file: { $exists: true },
+  });
+  if (isLinkedToCompletionCertificate) {
+    throw Boom.forbidden(translate[language].attendanceIsLinkedToCompletionCertificate);
+  }
 
   return null;
 };
