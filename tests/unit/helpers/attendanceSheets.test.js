@@ -284,10 +284,7 @@ describe('create', () => {
     SinonMongoose.calledWithExactly(
       userFindOne,
       [
-        {
-          query: 'findOne',
-          args: [{ _id: traineesId[0] }, { identity: 1, formationExpoTokenList: 1 }],
-        },
+        { query: 'findOne', args: [{ _id: traineesId[0] }, { formationExpoTokenList: 1 }] },
         { query: 'lean' },
       ],
       0
@@ -295,10 +292,7 @@ describe('create', () => {
     SinonMongoose.calledWithExactly(
       userFindOne,
       [
-        {
-          query: 'findOne',
-          args: [{ _id: traineesId[1] }, { identity: 1, formationExpoTokenList: 1 }],
-        },
+        { query: 'findOne', args: [{ _id: traineesId[1] }, { formationExpoTokenList: 1 }] },
         { query: 'lean' },
       ],
       1

@@ -41,7 +41,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        date: new Date('2020-01-23').toISOString(),
+        date: '2020-01-22T23:00:00.000Z',
         origin: WEBAPP,
         trainer: trainer._id.toHexString(),
       };
@@ -69,7 +69,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        date: new Date('2020-01-23').toISOString(),
+        date: '2020-01-22T23:00:00.000Z',
         trainer: trainer._id.toHexString(),
       };
 
@@ -306,7 +306,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         signature: 'test',
-        date: new Date('2021-01-23').toISOString(),
+        date: '2021-01-22T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -336,7 +336,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         signature: 'test',
-        date: new Date('2021-01-23').toISOString(),
+        date: '2021-01-22T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -619,7 +619,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        date: new Date('2020-01-23').toISOString(),
+        date: '2020-01-22T23:00:00.000Z',
         origin: 'poiuytr',
         trainer: trainer._id.toHexString(),
       };
@@ -641,7 +641,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         signature: 'test',
-        date: new Date('2021-01-23').toISOString(),
+        date: '2021-01-22T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -659,8 +659,8 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
 
       expect(response.statusCode).toBe(400);
     });
-    it('should return 400 if sign inter attendance sheet but slots have wrong format'
-      + '(mobile)', async () => {
+
+    it('should return 400 if sign inter attendance sheet but slots have wrong format (mobile)', async () => {
       const slots = [{ slotId: slotsList[12]._id.toHexString(), trainees: [coursesList[1].trainees[2].toHexString()] }];
       const formData = {
         course: coursesList[1]._id.toHexString(),
@@ -688,7 +688,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const slots = [{ slotId: slotsList[15]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
       const formData = {
         course: coursesList[0]._id.toHexString(),
-        date: new Date('2021-01-23').toISOString(),
+        date: '2021-01-22T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -712,7 +712,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         signature: 'test',
-        date: new Date('2021-01-23').toISOString(),
+        date: '2021-01-22T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -736,7 +736,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         signature: 'test',
-        date: new Date('2021-01-23').toISOString(),
+        date: '2021-01-22T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -760,7 +760,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         signature: 'test',
-        date: new Date('2021-01-24').toISOString(),
+        date: '2021-01-23T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -784,7 +784,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         signature: 'test',
-        date: new Date('2021-01-24').toISOString(),
+        date: '2021-01-23T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -867,7 +867,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        date: new Date('2018-01-23').toISOString(),
+        date: '2018-01-22T23:00:00.000Z',
         trainer: trainer._id.toHexString(),
       };
 
@@ -994,7 +994,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         const formData = {
           course: coursesList[0]._id.toHexString(),
           file: 'test',
-          date: new Date('2020-01-23').toISOString(),
+          date: '2020-01-22T23:00:00.000Z',
           trainer: trainer._id.toHexString(),
         };
         const form = generateFormData(formData);
