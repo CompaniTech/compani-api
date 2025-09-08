@@ -1939,7 +1939,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
         method: 'PUT',
         url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { price: 12, count: 1, description: 'description' },
+        payload: { description: 'description' },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1975,6 +1975,17 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
 
         expect(response.statusCode).toBe(400);
       });
+    });
+
+    it('should return 400 if not trainer fees with percentage but price and count are missing in payload', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { description: 'test' },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return 404 if course bill doesn\'t exist', async () => {
