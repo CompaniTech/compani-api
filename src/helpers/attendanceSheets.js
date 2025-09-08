@@ -38,7 +38,7 @@ exports.create = async (payload, credentials) => {
         for (const trainee of trainees) {
           if (!formationExpoTokens[trainee]) {
             const { formationExpoTokenList } = await User
-              .findOne({ _id: trainee }, { identity: 1, formationExpoTokenList: 1 })
+              .findOne({ _id: trainee }, { formationExpoTokenList: 1 })
               .lean();
             if (get(formationExpoTokenList, 'length')) formationExpoTokens[trainee] = formationExpoTokenList;
           }
