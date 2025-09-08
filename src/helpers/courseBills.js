@@ -1,4 +1,5 @@
 const get = require('lodash/get');
+const has = require('lodash/has');
 const omit = require('lodash/omit');
 const mapValues = require('lodash/mapValues');
 const keyBy = require('lodash/keyBy');
@@ -209,13 +210,35 @@ exports.createBillList = async (payload) => {
       }
     }
   } else if (course.type !== SINGLE) {
+    const doBillCompaniesHaveGlobalFees = payload.companies
+      .every(company => (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, company)));
     const billsToCreate = new Array(payload.quantity).fill({
       course: payload.course,
-      mainFee: payload.mainFee,
+      mainFee: {
+        ...payload.mainFee,
+        price: 0,
+        ...doBillCompaniesHaveGlobalFees && { percentage: 0 },
+      },
       companies: payload.companies,
       payer: payload.payer,
     });
-    await CourseBill.insertMany(billsToCreate);
+    const createdBills = await CourseBill.insertMany(billsToCreate);
+
+    const doBillCompaniesHaveTrainerFees = payload.companies.some(company =>
+      (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, company) && p.trainerFees)
+    );
+    if (doBillCompaniesHaveTrainerFees) {
+      const trainerFeesPayload = {
+        price: 0,
+        count: 1,
+        percentage: 0,
+        billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+      };
+
+      for (const createdBill of createdBills) {
+        await exports.addBillingPurchase(createdBill._id, trainerFeesPayload);
+      }
+    }
   } else {
     const traineeName = course.trainees.length
       ? UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL')
@@ -270,19 +293,25 @@ exports.updateCourseBill = async (courseBillId, payload) => {
     };
   }
 
-  const courseBill = await CourseBill.findOneAndUpdate({ _id: courseBillId }, formattedPayload);
+  const courseBill = await CourseBill
+    .findOneAndUpdate({ _id: courseBillId }, formattedPayload, { new: true })
+    .populate({ path: 'course', select: 'prices' })
+    .lean();
   if (get(payload, 'mainFee.percentage')) {
     const billingPurchase = courseBill.billingPurchaseList.find(bp =>
-      UtilsHelper.areObjectIdsEquals(bp.billingItem, process.env.TRAINER_FEES_BILLING_ITEM) && bp.percentage
+      UtilsHelper.areObjectIdsEquals(bp.billingItem, process.env.TRAINER_FEES_BILLING_ITEM) && has(bp, 'percentage')
     );
     if (billingPurchase) {
+      const trainerFees = (courseBill.course.prices || []).reduce((acc, price) => {
+        if (price.trainerFees && UtilsHelper.doesArrayIncludeId(courseBill.companies, price.company)) {
+          return NumbersHelper.add(acc, price.trainerFees);
+        }
+        return acc;
+      }, 0);
       const billingPurchasePayload = {
         count: 1,
         price: NumbersHelper.toFixedToFloat(
-          NumbersHelper.multiply(
-            billingPurchase.price,
-            NumbersHelper.divide(get(payload, 'mainFee.percentage'), billingPurchase.percentage)
-          )
+          NumbersHelper.divide(NumbersHelper.multiply(get(payload, 'mainFee.percentage'), trainerFees), 100)
         ),
         percentage: get(payload, 'mainFee.percentage'),
       };
