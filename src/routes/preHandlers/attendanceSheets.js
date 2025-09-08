@@ -80,9 +80,11 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     if (!isCourseSlotDate) throw Boom.forbidden();
     if (req.payload.signature) {
       const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
-      if (!slots.every(s => Object.keys(s).includes('trainees') && Object.keys(s).includes('slotId'))) {
-        throw Boom.badRequest();
-      }
+      const everySlotContainsGoodKeys = slots.every((s) => {
+        const keys = Object.keys(s);
+        return keys.includes('trainees') && keys.includes('slotId');
+      });
+      if (!everySlotContainsGoodKeys) throw Boom.badRequest();
       if (!slots.every(s => s.trainees.every(t => UtilsHelper.doesArrayIncludeId(course.trainees, t)))) {
         throw Boom.notFound();
       }
@@ -110,9 +112,11 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
   if (isSingleCourse && !(req.payload.slots && traineesIds)) throw Boom.badRequest();
   if (req.payload.slots) {
     const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
-    if (slots.some(s => Object.keys(s).includes('trainees') || Object.keys(s).includes('slotId'))) {
-      throw Boom.badRequest();
-    }
+    const someSlotsContainWrongKeys = slots.some((s) => {
+      const keys = Object.keys(s);
+      return keys.includes('trainees') || keys.includes('slotId');
+    });
+    if (someSlotsContainWrongKeys) throw Boom.badRequest();
     const courseSlotCount = await CourseSlot.countDocuments({ _id: { $in: slots }, course: course._id });
     if (courseSlotCount !== slots.length) throw Boom.notFound();
 
