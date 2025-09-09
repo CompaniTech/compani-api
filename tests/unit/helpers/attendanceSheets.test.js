@@ -1086,26 +1086,13 @@ describe('sign', () => {
       updateOne,
       {
         _id: attendanceSheetId,
-        'slots.trainerSignature': { $exists: true },
-        'slots.traineesSignature': {
-          $elemMatch: {
-            traineeId: credentials._id,
-            signature: { $exists: false },
-          },
-        },
+        'slots.traineesSignature': { $elemMatch: { traineeId: credentials._id, signature: { $exists: false } } },
       },
-      {
-        $set: {
-          'slots.$[slot].traineesSignature.$[trainee].signature': 'link',
-        },
-      },
+      { $set: { 'slots.$[slot].traineesSignature.$[trainee].signature': 'link' } },
       {
         arrayFilters: [
           { 'slot.trainerSignature': { $exists: true } },
-          {
-            'trainee.traineeId': credentials._id,
-            'trainee.signature': { $exists: false },
-          },
+          { 'trainee.traineeId': credentials._id, 'trainee.signature': { $exists: false } },
         ],
       }
     );
