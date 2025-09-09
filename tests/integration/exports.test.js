@@ -144,7 +144,7 @@ const vendorHistoryExportTypes = [
       `${courseSlotList[9]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 2";"distanciel";;"14/10/2020 23:00:10";"10/02/2021 09:00:00";"10/02/2021 13:00:00";"4,00";;0;2;0`,
       `${courseSlotList[10]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 1";"présentiel";;"14/10/2020 23:00:30";"03/02/2021 09:00:00";"03/02/2021 13:00:00";"4,00";"24 Avenue Daumesnil 75012 Paris";0;2;0`,
       `${courseSlotList[11]._id};${coursesList[8]._id};"Un autre SAS - Program 1 - group 9";"étape 2";"distanciel";;"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";1;0;0`,
-      `${courseSlotList[12]._id};${coursesList[9]._id};"Program 1 - Paul Trainee";"étape 2";"distanciel";"Paul Trainee";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";0;1;0`,
+      `${courseSlotList[12]._id};${coursesList[9]._id};"Program 1 - Paul Trainee";"étape 2";"distanciel";"Paul TRAINEE";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";0;1;0`,
     ],
     query: 'startDate=2021-02-01T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
   },

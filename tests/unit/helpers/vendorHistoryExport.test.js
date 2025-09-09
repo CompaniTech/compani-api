@@ -1052,17 +1052,17 @@ describe('exportCourseSlotHistory', () => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
 
   const traineeList = [
-    { _id: new ObjectId() },
-    { _id: new ObjectId() },
-    { _id: new ObjectId() },
-    { _id: new ObjectId() },
-    { _id: new ObjectId() },
+    { _id: new ObjectId(), identity: { firstname: 'Paul', lastname: 'Seul' } },
+    { _id: new ObjectId(), identity: { firstname: 'Taylor', lastname: 'Swift' } },
+    { _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } },
+    { _id: new ObjectId(), identity: { firstname: 'Emma', lastname: 'Stone' } },
+    { _id: new ObjectId(), identity: { firstname: 'Cole', lastname: 'Palmer' } },
   ];
 
   const courseList = [
     {
       _id: courseIdList[0],
-      trainees: [traineeList[0]._id, traineeList[1]._id, traineeList[2]._id],
+      trainees: [traineeList[0], traineeList[1], traineeList[2]],
       type: INTRA,
       companies: [{ _id: new ObjectId(), name: 'Enbonne Company' }],
       subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Program 1' } },
@@ -1070,7 +1070,7 @@ describe('exportCourseSlotHistory', () => {
     },
     {
       _id: courseIdList[1],
-      trainees: [traineeList[3]._id, traineeList[4]._id],
+      trainees: [traineeList[3], traineeList[4]],
       type: INTER_B2B,
       subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Program 2' } },
       companies: [],
@@ -1078,7 +1078,7 @@ describe('exportCourseSlotHistory', () => {
     },
     {
       _id: courseIdList[2],
-      trainees: [traineeList[3]._id],
+      trainees: [traineeList[3]],
       type: SINGLE,
       subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Program 3' } },
       companies: [],
@@ -1183,6 +1183,7 @@ describe('exportCourseSlotHistory', () => {
             select: 'type trainees misc subProgram companies',
             populate: [
               { path: 'companies', select: 'name' },
+              { path: 'trainees', select: 'identity' },
               { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
@@ -1286,7 +1287,7 @@ describe('exportCourseSlotHistory', () => {
         'Program 3 - Archie Pelle',
         'étape 1',
         'présentiel',
-        'Archie Pelle',
+        'Emma STONE',
         '12/12/2020 11:00:03',
         '02/02/2022 09:00:00',
         '02/02/2022 11:00:00',
@@ -1312,6 +1313,7 @@ describe('exportCourseSlotHistory', () => {
             select: 'type trainees misc subProgram companies',
             populate: [
               { path: 'companies', select: 'name' },
+              { path: 'trainees', select: 'identity' },
               { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
@@ -1574,6 +1576,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       slots: [{ startDate: '2021-01-13T12:00:00.000Z' }, { startDate: '2021-03-13T12:00:00.000Z' }],
       slotsToPlan: [],
       type: SINGLE,
+      trainees: [{ _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } }],
     },
     {
       _id: new ObjectId(),
@@ -1582,6 +1585,10 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       slots: [],
       slotsToPlan: [],
       type: INTER_B2B,
+      trainees: [
+        { _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } },
+        { _id: new ObjectId(), identity: { firstname: 'Emma', lastname: 'Stone' } },
+      ],
     },
     {
       _id: new ObjectId(),
@@ -1592,6 +1599,10 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       ],
       slotsToPlan: [],
       type: INTRA,
+      trainees: [
+        { _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } },
+        { _id: new ObjectId(), identity: { firstname: 'Emma', lastname: 'Stone' } },
+      ],
     },
     {
       _id: new ObjectId(),
@@ -1607,6 +1618,10 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       ],
       slotsToPlan: [{ _id: new ObjectId() }],
       type: INTRA,
+      trainees: [
+        { _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } },
+        { _id: new ObjectId(), identity: { firstname: 'Emma', lastname: 'Stone' } },
+      ],
     },
   ];
   const payerList = [
@@ -1705,11 +1720,12 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram misc type',
+            select: 'subProgram misc type trainees',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               { path: 'slots', select: 'startDate' },
               { path: 'slotsToPlan', select: '_id' },
+              { path: 'trainees', select: 'identity' },
             ],
           }],
         },
@@ -1743,8 +1759,11 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
               { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
               {
                 path: 'course',
-                select: 'subProgram misc type',
-                populate: { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+                select: 'subProgram misc type trainees',
+                populate: [
+                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+                  { path: 'trainees', select: 'identity' },
+                ],
               },
             ],
           }],
@@ -1791,7 +1810,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         courseList[0]._id,
         'Program 1 - Archie Pelle',
         'Program 1',
-        'Archie Pelle',
+        'Austin BUTLER',
         'Test SAS',
         payerList[0]._id,
         'APA Paris',
@@ -1875,7 +1894,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         courseList[0]._id,
         'Program 1 - Archie Pelle',
         'Program 1',
-        'Archie Pelle',
+        'Austin BUTLER',
         'Test SAS',
         payerList[0]._id,
         'APA Paris',
@@ -1901,11 +1920,12 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram misc type',
+            select: 'subProgram misc type trainees',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               { path: 'slots', select: 'startDate' },
               { path: 'slotsToPlan', select: '_id' },
+              { path: 'trainees', select: 'identity' },
             ],
           }],
         },
@@ -1939,8 +1959,11 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
               { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
               {
                 path: 'course',
-                select: 'subProgram misc type',
-                populate: { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+                select: 'subProgram misc type trainees',
+                populate: [
+                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+                  { path: 'trainees', select: 'identity' },
+                ],
               },
             ],
           }],
@@ -1994,7 +2017,7 @@ describe('exportCoursePaymentHistory', () => {
           _id: courseBillIds[0],
           number: 'FACT-2',
           payer: { _id: payerId },
-          course: { type: SINGLE, misc: 'Archie Pelle' },
+          course: { type: SINGLE, trainees: [{ _id: new ObjectId(), identity: { firstname: 'Archie', lastname: 'Pelle' } }] },
         },
         type: CHECK,
         netInclTaxes: 22,
@@ -2008,7 +2031,7 @@ describe('exportCoursePaymentHistory', () => {
           _id: courseBillIds[0],
           number: 'FACT-2',
           payer: { _id: payerId },
-          course: { type: SINGLE, misc: 'Archie Pelle' },
+          course: { type: SINGLE, trainees: [{ _id: new ObjectId(), identity: { firstname: 'Archie', lastname: 'Pelle' } }] },
         },
         type: CHECK,
         netInclTaxes: 100,
@@ -2022,7 +2045,7 @@ describe('exportCoursePaymentHistory', () => {
           _id: courseBillIds[1],
           number: 'FACT-1',
           payer: { _id: payerId },
-          course: { type: INTRA, misc: 'group 1' },
+          course: { type: INTRA, trainees: [{ _id: new ObjectId(), identity: { firstname: 'Archie', lastname: 'Pelle' } }] },
         },
         type: CHECK,
         netInclTaxes: 200,
@@ -2044,7 +2067,7 @@ describe('exportCoursePaymentHistory', () => {
 
     expect(result).toEqual([
       ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant', 'Apprenant'],
-      ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00', 'Archie Pelle'],
+      ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00', 'Archie PELLE'],
       ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', payerId, 1, 'Chèque', '200,00', ''],
     ]);
     SinonMongoose.calledWithExactly(
@@ -2072,7 +2095,7 @@ describe('exportCoursePaymentHistory', () => {
             path: 'courseBill',
             option: { isVendorUser: true },
             select: 'number payer course',
-            populate: { path: 'course', select: 'type misc' },
+            populate: { path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } },
           }],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
