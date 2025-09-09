@@ -1977,12 +1977,23 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       });
     });
 
-    it('should return 400 if not trainer fees with percentage but price and count are missing in payload', async () => {
+    it('should return 400 if not trainer fees with percentage but price is missing in payload', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
-        payload: { description: 'test' },
+        payload: { count: 1, description: 'test' },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if not trainer fees with percentage but count is missing in payload', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { price: 12, description: 'test' },
       });
 
       expect(response.statusCode).toBe(400);
