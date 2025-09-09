@@ -199,26 +199,13 @@ exports.sign = async (attendanceSheetId, payload, credentials) => {
   return AttendanceSheet.updateOne(
     {
       _id: attendanceSheetId,
-      'slots.trainerSignature': { $exists: true },
-      'slots.traineesSignature': {
-        $elemMatch: {
-          traineeId: credentials._id,
-          signature: { $exists: false },
-        },
-      },
+      'slots.traineesSignature': { $elemMatch: { traineeId: credentials._id, signature: { $exists: false } } },
     },
-    {
-      $set: {
-        'slots.$[slot].traineesSignature.$[trainee].signature': traineeSignature,
-      },
-    },
+    { $set: { 'slots.$[slot].traineesSignature.$[trainee].signature': traineeSignature } },
     {
       arrayFilters: [
         { 'slot.trainerSignature': { $exists: true } },
-        {
-          'trainee.traineeId': credentials._id,
-          'trainee.signature': { $exists: false },
-        },
+        { 'trainee.traineeId': credentials._id, 'trainee.signature': { $exists: false } },
       ],
     }
   );
