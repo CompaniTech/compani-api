@@ -8,6 +8,9 @@ const {
   create,
   list,
   show,
+  generateDocxMandate,
+  updateMandate,
+  uploadSignedMandate,
 } = require('../controllers/companyController');
 const {
   authorizeCompanyUpdate,
@@ -15,8 +18,17 @@ const {
   doesCompanyExist,
   authorizeGetCompanies,
   authorizeGetCompany,
+  authorizeGetMandate,
+  authorizeMandateUpdate,
+  authorizeSignedMandateUpload,
 } = require('./preHandlers/companies');
-const { addressValidation } = require('./validations/utils');
+const {
+  addressValidation,
+  ibanValidation,
+  bicValidation,
+  formDataPayload,
+  requiredDateToISOString,
+} = require('./validations/utils');
 const { LIST, DIRECTORY } = require('../helpers/constants');
 
 exports.plugin = {
@@ -32,8 +44,8 @@ exports.plugin = {
           payload: Joi.object().keys({
             name: Joi.string(),
             address: addressValidation,
-            iban: Joi.string(),
-            bic: Joi.string(),
+            iban: ibanValidation,
+            bic: bicValidation,
             billingRepresentative: Joi.objectId(),
             salesRepresentative: Joi.objectId(),
           }),
@@ -91,6 +103,49 @@ exports.plugin = {
         auth: { scope: ['companies:read'] },
         pre: [{ method: doesCompanyExist }, { method: authorizeGetCompany }],
       },
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/{_id}/mandate',
+      options: {
+        auth: { scope: ['companies:edit'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          query: Joi.object({ mandateId: Joi.objectId().required() }),
+        },
+        pre: [{ method: authorizeGetMandate }],
+      },
+      handler: generateDocxMandate,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/{_id}/mandates/{mandateId}',
+      options: {
+        auth: { scope: ['companies:edit'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), mandateId: Joi.objectId().required() }),
+          payload: Joi.object({ signedAt: requiredDateToISOString }),
+        },
+        pre: [{ method: authorizeMandateUpdate }],
+      },
+      handler: updateMandate,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/{_id}/mandates/{mandateId}/upload-signed',
+      options: {
+        auth: { scope: ['companies:edit'] },
+        payload: formDataPayload(),
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), mandateId: Joi.objectId().required() }),
+          payload: Joi.object({ file: Joi.any().required() }),
+        },
+        pre: [{ method: authorizeMandateUpdate }, { method: authorizeSignedMandateUpload }],
+      },
+      handler: uploadSignedMandate,
     });
   },
 };

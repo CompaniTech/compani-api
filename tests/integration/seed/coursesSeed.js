@@ -1345,13 +1345,16 @@ const fourthCompany = {
   _id: new ObjectId(),
   name: '4th company',
   prefixNumber: 104,
-  iban: '1234',
-  bic: '5678',
+  iban: 'FR3514508000505917721779B12',
+  bic: 'QWERFRPP',
   folderId: '1234567890',
   directDebitsFolderId: '1234567890',
   customersFolderId: 'qwerty',
   auxiliariesFolderId: 'asdfgh',
   subscriptions: { erp: false },
+  debitMandates: [
+    { _id: new ObjectId(), rum: 'R-10425060000188CF46476EE0F6F9B713', createdAt: '2025-06-03T16:00:00.000Z' },
+  ],
 };
 
 const companyHoldingList = [

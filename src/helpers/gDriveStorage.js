@@ -21,3 +21,12 @@ exports.createFolderForCompany = async (companyName) => {
 
   return folder;
 };
+
+exports.addFile = async (params) => {
+  const { parentFolderId, type, body, name } = params;
+  const uploadedFile = await Gdrive.add({ name, parentFolderId, folder: false, type, body });
+
+  return uploadedFile;
+};
+
+exports.deleteFile = async driveFileId => Gdrive.deleteFile({ fileId: driveFileId });

@@ -1,12 +1,17 @@
 const sinon = require('sinon');
 const flat = require('flat');
+const crypto = require('crypto');
 const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const Company = require('../../../src/models/Company');
 const CompanyHolding = require('../../../src/models/CompanyHolding');
+const Drive = require('../../../src/models/Google/Drive');
+const VendorCompany = require('../../../src/models/VendorCompany');
 const CompanyHelper = require('../../../src/helpers/companies');
+const DocxHelper = require('../../../src/helpers/docx');
 const GDriveStorageHelper = require('../../../src/helpers/gDriveStorage');
 const HoldingHelper = require('../../../src/helpers/holdings');
+const UtilsMock = require('../../utilsMock');
 const SinonMongoose = require('../sinonMongoose');
 const { DIRECTORY } = require('../../../src/helpers/constants');
 
@@ -16,12 +21,15 @@ describe('createCompany', () => {
   let createFolderForCompanyStub;
   let createFolderStub;
   let updateHolding;
+  let randomBytesStub;
   beforeEach(() => {
     find = sinon.stub(Company, 'find');
     createCompany = sinon.stub(Company, 'create');
     createFolderForCompanyStub = sinon.stub(GDriveStorageHelper, 'createFolderForCompany');
     createFolderStub = sinon.stub(GDriveStorageHelper, 'createFolder');
     updateHolding = sinon.stub(HoldingHelper, 'update');
+    randomBytesStub = sinon.stub(crypto, 'randomBytes');
+    UtilsMock.mockCurrentDate('2025-07-13T15:00:00.000Z');
   });
   afterEach(() => {
     find.restore();
@@ -29,16 +37,20 @@ describe('createCompany', () => {
     createFolderForCompanyStub.restore();
     createFolderStub.restore();
     updateHolding.restore();
+    randomBytesStub.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should create a company (without holding)', async () => {
     const payload = { name: 'Test SAS' };
-    const createdCompany = {
+    const companyTocreate = {
       ...payload,
       folderId: '1234567890',
       directDebitsFolderId: '0987654321',
       customersFolderId: 'qwertyuiop',
       auxiliariesFolderId: 'asdfghj',
+      prefixNumber: 346,
+      debitMandates: [{ rum: 'R-346250700001BFBB3E89C76FF54D55EB' }],
     };
     createFolderForCompanyStub.returns({ id: '1234567890' });
     createFolderStub.onCall(0).returns({ id: '0987654321' });
@@ -48,17 +60,18 @@ describe('createCompany', () => {
       [{ _id: new ObjectId(), prefixNumber: 345 }],
       ['sort', 'limit', 'lean']
     ));
-    createCompany.returns(createdCompany);
+    randomBytesStub.returns('BFBB3E89C76FF54D55EB');
+    createCompany.returns(companyTocreate);
 
     const result = await CompanyHelper.createCompany(payload);
 
-    expect(result).toMatchObject(createdCompany);
+    expect(result).toMatchObject(companyTocreate);
     sinon.assert.notCalled(updateHolding);
     sinon.assert.calledOnceWithExactly(createFolderForCompanyStub, payload.name);
     sinon.assert.calledWithExactly(createFolderStub.getCall(0), 'direct debits', '1234567890');
     sinon.assert.calledWithExactly(createFolderStub.getCall(1), 'customers', '1234567890');
     sinon.assert.calledWithExactly(createFolderStub.getCall(2), 'auxiliaries', '1234567890');
-    sinon.assert.calledOnceWithExactly(createCompany, { ...createdCompany, prefixNumber: 346 });
+    sinon.assert.calledOnceWithExactly(createCompany, companyTocreate);
     SinonMongoose.calledOnceWithExactly(
       find,
       [
@@ -68,16 +81,20 @@ describe('createCompany', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.calledOnce(randomBytesStub);
   });
 
   it('should create a company (with holding)', async () => {
-    const payload = { name: 'Test SAS', holding: new ObjectId() };
+    const payload = { name: 'Autre Test SAS', holding: new ObjectId() };
     const formattedPayload = {
-      name: 'Test SAS',
+      name: 'Autre Test SAS',
       folderId: '1234567890',
       directDebitsFolderId: '0987654321',
       customersFolderId: 'qwertyuiop',
       auxiliariesFolderId: 'asdfghj',
+      prefixNumber: 347,
+      debitMandates: [{ rum: 'R-347250700001E4236E8840086E1945A' }],
+
     };
     const company = { _id: new ObjectId(), ...formattedPayload };
 
@@ -86,10 +103,11 @@ describe('createCompany', () => {
     createFolderStub.onCall(1).returns({ id: 'qwertyuiop' });
     createFolderStub.onCall(2).returns({ id: 'asdfghj' });
     find.returns(SinonMongoose.stubChainedQueries(
-      [{ _id: new ObjectId(), prefixNumber: 345 }],
+      [{ _id: new ObjectId(), prefixNumber: 346 }],
       ['sort', 'limit', 'lean']
     ));
     createCompany.returns(company);
+    randomBytesStub.returns('E4236E8840086E1945A');
 
     const result = await CompanyHelper.createCompany(payload);
 
@@ -98,7 +116,7 @@ describe('createCompany', () => {
     sinon.assert.calledWithExactly(createFolderStub.getCall(0), 'direct debits', '1234567890');
     sinon.assert.calledWithExactly(createFolderStub.getCall(1), 'customers', '1234567890');
     sinon.assert.calledWithExactly(createFolderStub.getCall(2), 'auxiliaries', '1234567890');
-    sinon.assert.calledOnceWithExactly(createCompany, { ...formattedPayload, prefixNumber: 346 });
+    sinon.assert.calledOnceWithExactly(createCompany, formattedPayload);
     sinon.assert.calledOnceWithExactly(updateHolding, payload.holding, { companies: [company._id] });
     SinonMongoose.calledOnceWithExactly(
       find,
@@ -109,6 +127,7 @@ describe('createCompany', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.calledOnce(randomBytesStub);
   });
 });
 
@@ -253,26 +272,357 @@ describe('getCompany', () => {
 
 describe('updateCompany', () => {
   let findOneAndUpdate;
+  let findOne;
+  let randomBytes;
   beforeEach(() => {
     findOneAndUpdate = sinon.stub(Company, 'findOneAndUpdate');
+    findOne = sinon.stub(Company, 'findOne');
+    UtilsMock.mockCurrentDate('2025-08-13T15:00:00.000Z');
+    randomBytes = sinon.stub(crypto, 'randomBytes');
   });
   afterEach(() => {
     findOneAndUpdate.restore();
+    findOne.restore();
+    UtilsMock.unmockCurrentDate();
+    randomBytes.restore();
   });
 
   it('should update company', async () => {
     const companyId = new ObjectId();
+    const company = {
+      _id: companyId,
+      bic: 'WERTFRPP',
+      prefixNumber: 100,
+      debitMandates: [{ _id: new ObjectId(), signedAt: '2025-07-13T15:00:00.000Z' }],
+    };
     const payload = { name: 'Nouveau nom' };
-    findOneAndUpdate.returns({ _id: companyId });
+    findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries({ ...company, ...payload }, ['lean']));
 
     const result = await CompanyHelper.updateCompany(companyId, payload);
 
-    expect(result).toEqual({ _id: companyId });
-    sinon.assert.calledWithExactly(
+    expect(result).toEqual({ ...company, name: 'Nouveau nom' });
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(randomBytes);
+    SinonMongoose.calledOnceWithExactly(
       findOneAndUpdate,
-      { _id: companyId },
-      { $set: flat({ name: 'Nouveau nom' }) },
-      { new: true }
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: companyId },
+            { $set: flat({ name: 'Nouveau nom' }) },
+            { new: true },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  const editedField = [
+    { key: 'bic', value: 'QWERFRPP' },
+    { key: 'iban', value: 'FR3514508000505917721779B12' },
+    {
+      key: 'address',
+      value: {
+        fullAddress: '34 Rue de Ponthieu 75008 Paris',
+        street: '34 Rue de Ponthieu',
+        city: 'Paris',
+        zipCode: '75008',
+        location: { type: 'Point' },
+      },
+    },
+  ];
+  editedField.forEach((param) => {
+    it(`should create a new mandate if the last mandate has been signed and ${param.key} is edited`, async () => {
+      const companyId = new ObjectId();
+      const company = {
+        _id: companyId,
+        prefixNumber: 105,
+        debitMandates: [{ _id: new ObjectId(), signedAt: '2025-07-13T15:00:00.000Z' }],
+      };
+      const rum = 'R-105250800002BFBB3E89C76FF54D55EE';
+      const newDebitMandate = { _id: sinon.match(Object), rum, createdAt: '2025-08-13T15:00:00.000Z' };
+      const updatedCompany = {
+        ...company,
+        [param.key]: param.value,
+        debitMandates: [...company.debitMandates, newDebitMandate],
+      };
+      findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+      randomBytes.returns('BFBB3E89C76FF54D55EE');
+      findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedCompany, ['lean']));
+
+      const payload = { [param.key]: param.value };
+      const result = await CompanyHelper.updateCompany(companyId, payload);
+
+      expect(result).toEqual(updatedCompany);
+
+      SinonMongoose.calledOnceWithExactly(
+        findOne,
+        [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+      );
+      sinon.assert.calledOnce(randomBytes);
+      SinonMongoose.calledOnceWithExactly(
+        findOneAndUpdate,
+        [
+          {
+            query: 'findOneAndUpdate',
+            args: [
+              { _id: companyId },
+              { $set: flat({ [param.key]: param.value }), $addToSet: { debitMandates: newDebitMandate } },
+              { new: true },
+            ],
+          },
+          { query: 'lean' },
+        ]
+      );
+    });
+  });
+
+  editedField.forEach((param) => {
+    it(`should create a new mandate if the last mandate has a file and ${param.key} is edited`, async () => {
+      const companyId = new ObjectId();
+      const company = {
+        _id: companyId,
+        prefixNumber: 105,
+        debitMandates: [{ _id: new ObjectId(), file: { driveId: '123425678', link: 'lienverslemandatsigne' } }],
+      };
+      const rum = 'R-105250800002BFBB3E89C76FF54D55EE';
+      const newDebitMandate = { _id: sinon.match(Object), rum, createdAt: '2025-08-13T15:00:00.000Z' };
+      const updatedCompany = {
+        ...company,
+        [param.key]: param.value,
+        debitMandates: [...company.debitMandates, newDebitMandate],
+      };
+      findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+      randomBytes.returns('BFBB3E89C76FF54D55EE');
+      findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedCompany, ['lean']));
+
+      const payload = { [param.key]: param.value };
+      const result = await CompanyHelper.updateCompany(companyId, payload);
+
+      expect(result).toEqual(updatedCompany);
+
+      SinonMongoose.calledOnceWithExactly(
+        findOne,
+        [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+      );
+      sinon.assert.calledOnce(randomBytes);
+      SinonMongoose.calledOnceWithExactly(
+        findOneAndUpdate,
+        [
+          {
+            query: 'findOneAndUpdate',
+            args: [
+              { _id: companyId },
+              { $set: flat({ [param.key]: param.value }), $addToSet: { debitMandates: newDebitMandate } },
+              { new: true },
+            ],
+          },
+          { query: 'lean' },
+        ]
+      );
+    });
+  });
+
+  it('should not create a new mandate if the last mandate has a file and bic is edited with same value', async () => {
+    const companyId = new ObjectId();
+    const company = {
+      _id: companyId,
+      prefixNumber: 105,
+      bic: 'DFGTFRPP',
+      debitMandates: [{ _id: new ObjectId(), file: { driveId: '123425678', link: 'lienverslemandatsigne' } }],
+    };
+    const rum = 'R-105250800002BFBB3E89C76FF54D55EE';
+    const newDebitMandate = { _id: sinon.match(Object), rum, createdAt: '2025-08-13T15:00:00.000Z' };
+    const updatedCompany = {
+      ...company,
+      bic: 'DFGTFRPP',
+      debitMandates: [...company.debitMandates, newDebitMandate],
+    };
+    findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+    randomBytes.returns('BFBB3E89C76FF54D55EE');
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedCompany, ['lean']));
+
+    const payload = { bic: 'DFGTFRPP' };
+    const result = await CompanyHelper.updateCompany(companyId, payload);
+
+    expect(result).toEqual(updatedCompany);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(randomBytes);
+    SinonMongoose.calledOnceWithExactly(
+      findOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [{ _id: companyId }, { $set: flat({ bic: 'DFGTFRPP' }) }, { new: true }],
+        },
+        { query: 'lean' },
+      ]
+    );
+  });
+});
+
+describe('generateMandate', () => {
+  it('should generate a filled debit mandate', async () => {
+    const vendorCompanyFindOne = sinon.stub(VendorCompany, 'findOne');
+    const companyFindOne = sinon.stub(Company, 'findOne');
+    UtilsMock.mockCurrentDate('2025-07-13T15:00:00.000Z');
+    const generateDocx = sinon.stub(DocxHelper, 'generateDocx');
+
+    const mandateIds = [new ObjectId(), new ObjectId()];
+    const companyId = new ObjectId();
+    const vendorCompany = {
+      name: 'VendorCompany',
+      billingRepresentative: {
+        _id: new ObjectId(),
+        identity: { firstname: 'toto', lastname: 'zero' },
+        contact: {},
+        local: { email: 'toto@zero.io' },
+      },
+      address: { fullAddress: '12 rue des halles 75008 Paris' },
+      ics: 'FR12345678909',
+      debitMandateTemplate: { link: 'link/123567890', driveId: '123567890' },
+    };
+    const company = {
+      _id: companyId,
+      name: 'Une structure',
+      folderId: '1234567890',
+      directDebitsFolderId: '0987654321',
+      customersFolderId: 'qwertyuiop',
+      auxiliariesFolderId: 'asdfghj',
+      prefixNumber: 346,
+      bic: 'SDFGFRPP',
+      iban: 'FR3514508000505917721779B12',
+      debitMandates: [
+        { _id: mandateIds[0], rum: 'R-346250700001BFBB3E89C76FF54D55EB', createdAt: '2025-07-01T15:00:00.000Z' },
+        { _id: mandateIds[1], rum: 'R-3462508000028A30D5A2F5E6B5F18A96', createdAt: '2025-08-01T15:00:00.000Z' },
+      ],
+    };
+
+    const data = {
+      vendorCompanyName: vendorCompany.name,
+      vendorCompanyIcs: vendorCompany.ics,
+      vendorCompanyAddress: vendorCompany.address.fullAddress,
+      companyName: company.name,
+      companyAddress: '',
+      companyBic: company.bic,
+      companyIban: company.iban,
+      companyRum: company.debitMandates[1].rum,
+      downloadDate: '13/07/2025',
+    };
+    vendorCompanyFindOne.returns(SinonMongoose.stubChainedQueries(vendorCompany, ['lean']));
+    companyFindOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+    generateDocx.returns('template-filled.docx');
+
+    const res = await CompanyHelper.generateMandate(companyId, mandateIds[1]);
+
+    expect(res).toEqual('template-filled.docx');
+    SinonMongoose.calledOnceWithExactly(vendorCompanyFindOne, [{ query: 'findOne', args: [] }, { query: 'lean' }]);
+    SinonMongoose.calledOnceWithExactly(
+      companyFindOne,
+      [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(generateDocx, { file: { fileId: '123567890' }, data });
+    vendorCompanyFindOne.restore();
+    companyFindOne.restore();
+    generateDocx.restore();
+    UtilsMock.unmockCurrentDate();
+  });
+});
+
+describe('updateMandate', () => {
+  it('should update mandate to add signedAt', async () => {
+    const findOneAndUpdate = sinon.stub(Company, 'findOneAndUpdate');
+    const companyId = new ObjectId();
+    const debitMandateId = new ObjectId();
+    const company = { _id: companyId, debitMandates: [{ _id: debitMandateId }] };
+    findOneAndUpdate.returns({ ...company, signedAt: '2025-06-23T22:00:00.000Z' });
+
+    const payload = { signedAt: '2025-06-23T22:00:00.000Z' };
+    await CompanyHelper.updateMandate(companyId, debitMandateId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      findOneAndUpdate,
+      { _id: companyId, 'debitMandates._id': debitMandateId },
+      { $set: flat({ 'debitMandates.$': { ...payload } }) },
+      { new: true, autopopulate: false }
+    );
+
+    findOneAndUpdate.restore();
+  });
+});
+
+describe('uploadMandate', () => {
+  let findOne;
+  let add;
+  let getFileById;
+  let findOneAndUpdate;
+  beforeEach(() => {
+    findOne = sinon.stub(Company, 'findOne');
+    add = sinon.stub(Drive, 'add');
+    findOneAndUpdate = sinon.stub(Company, 'findOneAndUpdate');
+    getFileById = sinon.stub(Drive, 'getFileById');
+  });
+  afterEach(() => {
+    findOne.restore();
+    add.restore();
+    getFileById.restore();
+    findOneAndUpdate.restore();
+  });
+
+  it('should upload signed mandate on drive', async () => {
+    const companyId = new ObjectId();
+    const debitMandateId = new ObjectId();
+    const company = {
+      _id: companyId,
+      name: 'Structure',
+      directDebitsFolderId: 'qwerty2489506',
+      debitMandates: [{ _id: debitMandateId }],
+    };
+    const uploadedFile = { id: new ObjectId() };
+    const driveFileInfo = { webViewLink: 'lienVersMandatSigne' };
+    findOne.returns(SinonMongoose.stubChainedQueries(company, ['lean']));
+    add.returns(uploadedFile);
+    getFileById.returns(driveFileInfo);
+
+    const payload = { file: 'File.pdf' };
+    await CompanyHelper.uploadMandate(companyId, debitMandateId, payload);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: companyId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledWithExactly(
+      add,
+      {
+        name: 'Structure_mandat_prelevement_signe_1',
+        parentFolderId: company.directDebitsFolderId,
+        folder: false,
+        type: 'application/pdf',
+        body: 'File.pdf',
+      }
+    );
+    sinon.assert.calledWithExactly(getFileById, { fileId: uploadedFile.id });
+    sinon.assert.calledOnceWithExactly(
+      findOneAndUpdate,
+      { _id: companyId, 'debitMandates._id': debitMandateId },
+      {
+        $set: {
+          'debitMandates.$._id': debitMandateId,
+          'debitMandates.$.file.driveId': uploadedFile.id,
+          'debitMandates.$.file.link': 'lienVersMandatSigne',
+        },
+      }
     );
   });
 });

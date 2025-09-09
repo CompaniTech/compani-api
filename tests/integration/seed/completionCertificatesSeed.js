@@ -1,4 +1,5 @@
 const { ObjectId } = require('mongodb');
+const { v4: uuidv4 } = require('uuid');
 const Activity = require('../../../src/models/Activity');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Attendance = require('../../../src/models/Attendance');
@@ -8,9 +9,11 @@ const CourseSlot = require('../../../src/models/CourseSlot');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
+const User = require('../../../src/models/User');
+const UserCompany = require('../../../src/models/UserCompany');
 const Program = require('../../../src/models/Program');
-const { INTER_B2B, PUBLISHED, MONTHLY, VIDEO, E_LEARNING } = require('../../../src/helpers/constants');
-const { authCompany } = require('../../seed/authCompaniesSeed');
+const { INTER_B2B, PUBLISHED, MONTHLY, VIDEO, E_LEARNING, WEBAPP } = require('../../../src/helpers/constants');
+const { authCompany, otherCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
 const {
   trainer,
   trainerAndCoach,
@@ -61,6 +64,40 @@ const programsList = [
   { _id: new ObjectId(), name: 'Program 1', subPrograms: [subProgramList[0]._id, subProgramList[1]._id] },
 ];
 
+const traineeFromOtherCompany = {
+  _id: new ObjectId(),
+  identity: { firstname: 'Fred', lastname: 'Astaire' },
+  local: { email: 'traineeOtherCompany@alenvi.io', password: '123456!eR' },
+  contact: { phone: '0734856751', countryCode: '+33' },
+  refreshToken: uuidv4(),
+  origin: WEBAPP,
+};
+
+const traineeFromCompanyWithoutSubscription = {
+  _id: new ObjectId(),
+  identity: { firstname: 'Trainee', lastname: 'WithExpoToken' },
+  local: { email: 'traineeFromCompanyWithoutSubscription@alenvi.io' },
+  contact: { phone: '0734856751', countryCode: '+33' },
+  refreshToken: uuidv4(),
+  origin: WEBAPP,
+  formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
+};
+
+const userCompanies = [
+  { // 0
+    _id: new ObjectId(),
+    user: traineeFromOtherCompany._id,
+    company: otherCompany._id,
+    startDate: '2020-01-01T23:00:00.000Z',
+  },
+  { // 1
+    _id: new ObjectId(),
+    user: traineeFromCompanyWithoutSubscription._id,
+    company: companyWithoutSubscription._id,
+    startDate: '2021-01-01T10:00:00.000Z',
+  },
+];
+
 const courseList = [
   { // 0 Course with monthly certificateGenerationMode
     _id: new ObjectId(),
@@ -102,6 +139,16 @@ const courseList = [
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
     archivedAt: '2025-04-06T00:00:00.000Z',
+  },
+  { // 4 Inter course with monthly certificateGenerationMode and with otherCompany and companyWithoutSubscription
+    _id: new ObjectId(),
+    subProgram: subProgramList[2]._id,
+    type: INTER_B2B,
+    trainees: [traineeFromCompanyWithoutSubscription._id, traineeFromOtherCompany],
+    companies: [otherCompany._id, companyWithoutSubscription._id],
+    operationsRepresentative: trainerOrganisationManager._id,
+    trainers: [trainer._id],
+    certificateGenerationMode: MONTHLY,
   },
 ];
 
@@ -182,6 +229,27 @@ const completionCertificateList = [
     file: { publicId: 'certif1', link: 'https://test.com/certif1' },
   },
   { _id: new ObjectId(), course: courseList[3]._id, trainee: auxiliary._id, month: '04-2025' },
+  {
+    _id: new ObjectId(),
+    course: courseList[1]._id,
+    trainee: auxiliary._id,
+    month: '12-2024',
+    file: { publicId: 'certif1123', link: 'https://test.com/certif1234' },
+  },
+  {
+    _id: new ObjectId(),
+    course: courseList[4]._id,
+    trainee: traineeFromCompanyWithoutSubscription._id,
+    month: '12-2024',
+    file: { publicId: 'certif12', link: 'https://test.com/certif1234' },
+  },
+  {
+    _id: new ObjectId(),
+    course: courseList[4]._id,
+    trainee: traineeFromOtherCompany._id,
+    month: '12-2024',
+    file: { publicId: 'certif12', link: 'https://test.com/certif1234' },
+  },
 ];
 
 const populateDB = async () => {
@@ -198,6 +266,8 @@ const populateDB = async () => {
     Step.create(stepList),
     SubProgram.create(subProgramList),
     Program.create(programsList),
+    User.create([traineeFromOtherCompany, traineeFromCompanyWithoutSubscription]),
+    UserCompany.create(userCompanies),
   ]);
 };
 

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
-
 const { MONTH, TWO_WEEKS, COMPANY, ASSOCIATION } = require('../helpers/constants');
+const { encrypt, decrypt } = require('../helpers/encryption');
+const { CompaniDate } = require('../helpers/dates/companiDates');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
 const driveResourceSchemaDefinition = require('./schemaDefinitions/driveResource');
@@ -61,6 +62,16 @@ const CompanySchema = mongoose.Schema({
     },
   },
   salesRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  debitMandates: {
+    type: [
+      mongoose.Schema({
+        rum: { type: String, unique: true },
+        createdAt: { type: Date, default: CompaniDate().toISO() },
+        signedAt: { type: Date },
+        file: driveResourceSchemaDefinition,
+      }),
+    ],
+  },
 }, { timestamps: true });
 
 function populateHolding(doc, next) {
@@ -81,13 +92,35 @@ function populateHoldings(docs, next) {
   return next();
 }
 
+function cryptDatas(next) {
+  const { $set, $unset } = this.getUpdate() || { $set: {}, $unset: {} };
+  if (!Object.keys($set).length && !Object.keys($unset).length) return next();
+
+  if ($set.iban) $set.iban = encrypt($set.iban);
+
+  if ($set.bic) $set.bic = encrypt($set.bic);
+
+  return next();
+}
+
+async function decryptDatas(doc) {
+  if (!doc) return;
+
+  // eslint-disable-next-line no-param-reassign
+  if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
+  // eslint-disable-next-line no-param-reassign
+  if (doc.bic && doc.bic.includes(':')) doc.bic = decrypt(doc.bic);
+}
+
 CompanySchema.virtual('holding', { ref: 'CompanyHolding', localField: '_id', foreignField: 'company', justOne: true });
+CompanySchema.pre('findOneAndUpdate', cryptDatas);
 
 queryMiddlewareList.map(middleware => CompanySchema.pre(middleware, formatQuery));
 
 CompanySchema.post('find', populateHoldings);
 CompanySchema.post('findOne', populateHolding);
 CompanySchema.post('findOneAndUpdate', populateHolding);
+CompanySchema.post('findOne', decryptDatas);
 
 module.exports = mongoose.model('Company', CompanySchema);
 module.exports.COMPANY_BILLING_PERIODS = COMPANY_BILLING_PERIODS;

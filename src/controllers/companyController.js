@@ -61,9 +61,47 @@ const show = async (req) => {
   }
 };
 
+const generateDocxMandate = async (req, h) => {
+  try {
+    const file = await CompanyHelper.generateMandate(req.params._id, req.query.mandateId);
+
+    return h.file(file, { confine: false })
+      .header('content-disposition')
+      .type('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const updateMandate = async (req) => {
+  try {
+    await CompanyHelper.updateMandate(req.params._id, req.params.mandateId, req.payload);
+
+    return { message: translate[language].companyMandateUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const uploadSignedMandate = async (req) => {
+  try {
+    await CompanyHelper.uploadMandate(req.params._id, req.params.mandateId, req.payload);
+
+    return { message: translate[language].fileCreated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   update,
   create,
   list,
   show,
+  generateDocxMandate,
+  updateMandate,
+  uploadSignedMandate,
 };

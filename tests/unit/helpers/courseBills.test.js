@@ -822,7 +822,7 @@ describe('createBillList', () => {
     sinon.assert.notCalled(insertManyCourseBills);
   });
 
-  it('should create several bills', async () => {
+  it('should create several bills (without course price)', async () => {
     const course = { _id: new ObjectId(), type: INTER_B2B };
     const payload = {
       course: course._id,
@@ -842,6 +842,7 @@ describe('createBillList', () => {
         count: 1,
         countUnit: GROUP,
         description: 'Test',
+        price: 0,
       },
       companies: payload.companies,
       payer: payload.payer,
@@ -850,6 +851,78 @@ describe('createBillList', () => {
     const expectedBills = new Array(3).fill(expectedBill);
 
     sinon.assert.calledOnceWithExactly(insertManyCourseBills, expectedBills);
+    sinon.assert.notCalled(createCourseBill);
+    sinon.assert.notCalled(addBillingPurchase);
+  });
+
+  it('should create several bills (with global price and trainer fees)', async () => {
+    const companyId = new ObjectId();
+    const course = {
+      _id: new ObjectId(),
+      type: INTER_B2B,
+      prices: [{ company: companyId, global: 2000, trainerFees: 200 }],
+    };
+    const payload = {
+      course: course._id,
+      quantity: 3,
+      mainFee: { count: 1, countUnit: GROUP, description: 'Test' },
+      companies: [companyId],
+      payer: { fundingOrganisation: new ObjectId() },
+    };
+
+    const createdBills = [{ _id: new ObjectId() }, { _id: new ObjectId() }, { _id: new ObjectId() }];
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+    insertManyCourseBills.returns(createdBills);
+
+    await CourseBillHelper.createBillList(payload);
+
+    const expectedBill = {
+      course: payload.course,
+      mainFee: {
+        count: 1,
+        countUnit: GROUP,
+        description: 'Test',
+        price: 0,
+        percentage: 0,
+      },
+      companies: payload.companies,
+      payer: payload.payer,
+    };
+
+    const expectedBills = new Array(3).fill(expectedBill);
+
+    sinon.assert.calledOnceWithExactly(insertManyCourseBills, expectedBills);
+    sinon.assert.calledWithExactly(
+      addBillingPurchase.getCall(0),
+      createdBills[0]._id,
+      {
+        price: 0,
+        count: 1,
+        percentage: 0,
+        billingItem: TRAINER_FEES_BILLING_ITEM,
+      }
+    );
+    sinon.assert.calledWithExactly(
+      addBillingPurchase.getCall(1),
+      createdBills[1]._id,
+      {
+        price: 0,
+        count: 1,
+        percentage: 0,
+        billingItem: TRAINER_FEES_BILLING_ITEM,
+      }
+    );
+    sinon.assert.calledWithExactly(
+      addBillingPurchase.getCall(2),
+      createdBills[2]._id,
+      {
+        price: 0,
+        count: 1,
+        percentage: 0,
+        billingItem: TRAINER_FEES_BILLING_ITEM,
+      }
+    );
     sinon.assert.notCalled(createCourseBill);
   });
 
@@ -1021,12 +1094,25 @@ describe('updateCourseBill', () => {
     const courseBillId = new ObjectId();
     const fundingOrganisationId = new ObjectId();
     const payload = { payer: { fundingOrganisation: fundingOrganisationId } };
+
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries({}));
+
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
-    sinon.assert.calledOnceWithExactly(
+    SinonMongoose.calledOnceWithExactly(
       findOneAndUpdate,
-      { _id: courseBillId },
-      { $set: { 'payer.fundingOrganisation': fundingOrganisationId }, $unset: { 'payer.company': '' } }
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: courseBillId },
+            { $set: { 'payer.fundingOrganisation': fundingOrganisationId }, $unset: { 'payer.company': '' } },
+            { new: true },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices' }] },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
     sinon.assert.notCalled(updateBillingPurchase);
@@ -1036,12 +1122,25 @@ describe('updateCourseBill', () => {
     const courseBillId = new ObjectId();
     const companyId = new ObjectId();
     const payload = { payer: { company: companyId } };
+
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries({}));
+
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
-    sinon.assert.calledOnceWithExactly(
+    SinonMongoose.calledOnceWithExactly(
       findOneAndUpdate,
-      { _id: courseBillId },
-      { $set: { 'payer.company': companyId }, $unset: { 'payer.fundingOrganisation': '' } }
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: courseBillId },
+            { $set: { 'payer.company': companyId }, $unset: { 'payer.fundingOrganisation': '' } },
+            { new: true },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices' }] },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
     sinon.assert.notCalled(updateBillingPurchase);
@@ -1050,9 +1149,19 @@ describe('updateCourseBill', () => {
   it('should update a course bill mainFee (without percentage)', async () => {
     const courseBillId = new ObjectId();
     const payload = { 'mainFee.price': 200, 'mainFee.count': 1, description: 'skududu skududu' };
+
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries({}));
+
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
-    sinon.assert.calledOnceWithExactly(findOneAndUpdate, { _id: courseBillId }, { $set: payload });
+    SinonMongoose.calledOnceWithExactly(
+      findOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
+        { query: 'populate', args: [{ path: 'course', select: 'prices' }] },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
     sinon.assert.notCalled(updateBillingPurchase);
   });
@@ -1060,19 +1169,30 @@ describe('updateCourseBill', () => {
   it('should update a course bill mainFee (with trainer fees without percentage)', async () => {
     const courseBillId = new ObjectId();
     const billingPurchaseId = new ObjectId();
+    const companyId = new ObjectId();
     const courseBill = {
       _id: courseBillId,
       mainFee: { price: 100, count: 1, percentage: 10 },
       billingPurchaseList: [
         { _id: billingPurchaseId, billingItem: TRAINER_FEES_BILLING_ITEM, price: 10, count: 1 },
       ],
+      companies: [companyId],
+      course: { prices: [{ company: companyId, global: 1000 }] },
     };
     const payload = { 'mainFee.price': 200, 'mainFee.count': 1, 'mainFee.percentage': 20 };
 
-    findOneAndUpdate.returns(courseBill);
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseBill));
+
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
-    sinon.assert.calledOnceWithExactly(findOneAndUpdate, { _id: courseBillId }, { $set: payload });
+    SinonMongoose.calledOnceWithExactly(
+      findOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
+        { query: 'populate', args: [{ path: 'course', select: 'prices' }] },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.notCalled(updateBillingPurchase);
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
   });
@@ -1080,19 +1200,30 @@ describe('updateCourseBill', () => {
   it('should update a course bill mainFee (with trainer fees with percentage)', async () => {
     const courseBillId = new ObjectId();
     const billingPurchaseId = new ObjectId();
+    const companyId = new ObjectId();
     const courseBill = {
       _id: courseBillId,
       mainFee: { price: 100, count: 1, percentage: 10 },
       billingPurchaseList: [
         { _id: billingPurchaseId, billingItem: TRAINER_FEES_BILLING_ITEM, price: 10, count: 1, percentage: 10 },
       ],
+      companies: [companyId],
+      course: { prices: [{ company: companyId, global: 1000, trainerFees: 100 }] },
     };
     const payload = { 'mainFee.price': 200, 'mainFee.count': 1, 'mainFee.percentage': 20 };
 
-    findOneAndUpdate.returns(courseBill);
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseBill));
+
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
-    sinon.assert.calledOnceWithExactly(findOneAndUpdate, { _id: courseBillId }, { $set: payload });
+    SinonMongoose.calledOnceWithExactly(
+      findOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
+        { query: 'populate', args: [{ path: 'course', select: 'prices' }] },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.calledOnceWithExactly(
       updateBillingPurchase,
       courseBillId,
@@ -1105,12 +1236,25 @@ describe('updateCourseBill', () => {
   it('should remove a course bill mainFee description', async () => {
     const courseBillId = new ObjectId();
     const payload = { mainFee: { price: 200, count: 1, description: '' } };
+
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries({}));
+
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
-    sinon.assert.calledOnceWithExactly(
+    SinonMongoose.calledOnceWithExactly(
       findOneAndUpdate,
-      { _id: courseBillId },
-      { $set: { 'mainFee.price': 200, 'mainFee.count': 1 }, $unset: { 'mainFee.description': '' } }
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: courseBillId },
+            { $set: { 'mainFee.price': 200, 'mainFee.count': 1 }, $unset: { 'mainFee.description': '' } },
+            { new: true },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices' }] },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.notCalled(findOneAndUpdateCourseBillsNumber);
     sinon.assert.notCalled(updateBillingPurchase);
@@ -1122,6 +1266,7 @@ describe('updateCourseBill', () => {
     const lastBillNumber = { seq: 1 };
 
     findOneAndUpdateCourseBillsNumber.returns(SinonMongoose.stubChainedQueries(lastBillNumber, ['lean']));
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries({}));
 
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
@@ -1135,13 +1280,23 @@ describe('updateCourseBill', () => {
         { query: 'lean' },
       ]);
 
-    sinon.assert.calledOnceWithExactly(
+    SinonMongoose.calledOnceWithExactly(
       findOneAndUpdate,
-      { _id: courseBillId },
-      {
-        $set: { billedAt: payload.billedAt, number: `FACT-${lastBillNumber.seq.toString().padStart(5, '0')}` },
-        $unset: { maturityDate: '' },
-      }
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: courseBillId },
+            {
+              $set: { billedAt: payload.billedAt, number: `FACT-${lastBillNumber.seq.toString().padStart(5, '0')}` },
+              $unset: { maturityDate: '' },
+            },
+            { new: true },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices' }] },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.notCalled(updateBillingPurchase);
   });

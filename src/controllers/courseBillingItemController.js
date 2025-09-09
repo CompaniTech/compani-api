@@ -6,7 +6,7 @@ const { language } = translate;
 
 const list = async (req) => {
   try {
-    const courseBillingItems = await CourseBillingItemHelper.list();
+    const courseBillingItems = await CourseBillingItemHelper.list(req.auth.credentials);
 
     return {
       message: courseBillingItems.length
@@ -34,4 +34,17 @@ const create = async (req) => {
   }
 };
 
-module.exports = { list, create };
+const remove = async (req) => {
+  try {
+    await CourseBillingItemHelper.delete(req.params);
+
+    return {
+      message: translate[language].courseBillingItemDeleted,
+    };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { list, create, remove };

@@ -114,3 +114,31 @@ exports.authorizeGetCompany = async (req) => {
 
   return null;
 };
+
+exports.authorizeGetMandate = async (req) => {
+  const company = await Company.findOne({ _id: req.params._id }).lean();
+  if (!company) throw Boom.notFound();
+
+  const mandateExist = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, req.query.mandateId));
+  if (!mandateExist) throw Boom.notFound();
+
+  return null;
+};
+
+exports.authorizeMandateUpdate = async (req) => {
+  const company = await Company.findOne({ _id: req.params._id }, { debitMandates: 1 }).lean();
+  if (!company) throw Boom.notFound();
+
+  const mandate = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, req.params.mandateId));
+  if (!mandate) throw Boom.notFound();
+
+  return null;
+};
+
+exports.authorizeSignedMandateUpload = async (req) => {
+  const company = await Company.findOne({ _id: req.params._id }, { debitMandates: 1 }).lean();
+  const mandate = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, req.params.mandateId));
+  if (mandate.file) throw Boom.badRequest();
+
+  return null;
+};

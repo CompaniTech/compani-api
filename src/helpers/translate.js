@@ -167,6 +167,7 @@ module.exports = {
     courseBillingItemsFound: 'Course billing items found.',
     courseBillingItemsNotFound: 'Course billing items not found.',
     courseBillingItemCreated: 'Course billing item created.',
+    courseBillingItemDeleted: 'Course billing item deleted.',
     /* Course slots */
     courseSlotCreated: 'Course slot created.',
     courseSlotUpdated: 'Course slot updated.',
@@ -219,6 +220,8 @@ module.exports = {
     /* VendorCompanies */
     vendorCompanyFound: 'Vendor company found.',
     vendorCompanyUpdated: 'Vendor company updated.',
+    TemplateUploaded: 'Template uploaded.',
+    TemplateRemoved: 'Template removed.',
     /* VendorCompanies */
     userAlreadyLinkedToCompany: 'User already linked to company.',
     userAlreadyLinkedToCompanyUntil: 'User already linked to company until {DATE}.',
@@ -403,6 +406,7 @@ module.exports = {
     courseBillingItemsFound: 'Articles de facturation trouvés.',
     courseBillingItemsNotFound: 'Articles de facturation non trouvés.',
     courseBillingItemCreated: 'Article de facturation créé.',
+    courseBillingItemDeleted: 'Article de facturation supprimé.',
     /* Course slots */
     courseSlotCreated: 'Créneau de formation créé.',
     courseSlotUpdated: 'Créneau de formation mis à jour.',
@@ -455,6 +459,8 @@ module.exports = {
     /* VendorCompanies */
     vendorCompanyFound: 'Structure vendeuse trouvée.',
     vendorCompanyUpdated: 'Structure vendeuse mise à jour.',
+    TemplateUploaded: 'Template ajouté.',
+    TemplateRemoved: 'Template supprimé.',
     /* VendorCompanies */
     userAlreadyLinkedToCompany: 'Ce compte est déjà rattaché à une structure.',
     userAlreadyLinkedToCompanyUntil: 'Ce compte est déjà rattaché à une structure jusqu\'au {DATE}.',

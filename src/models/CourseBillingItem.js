@@ -6,6 +6,13 @@ const CourseBillingItemSchema = mongoose.Schema({
   name: { type: String, required: true },
 }, { timestamps: true });
 
+CourseBillingItemSchema.virtual('courseBillCount', {
+  ref: 'CourseBill',
+  localField: '_id',
+  foreignField: 'billingPurchaseList.billingItem',
+  count: true,
+});
+
 queryMiddlewareList.map(middleware => CourseBillingItemSchema.pre(middleware, formatQuery));
 
 module.exports = mongoose.model('CourseBillingItem', CourseBillingItemSchema);

@@ -25,6 +25,7 @@ const vendorCompany = {
   siret: '12345678901234',
   iban: 'FR9210096000302523177152Q14',
   bic: 'BPCEFRPP',
+  ics: 'FR1234567894D',
   activityDeclarationNumber: '13736343575',
   address: {
     fullAddress: '32 Rue du Loup 33000 Bordeaux',
@@ -34,6 +35,7 @@ const vendorCompany = {
     location: { type: 'Point', coordinates: [-0.573054, 44.837914] },
   },
   shareCapital: 123000,
+  debitMandateTemplate: { driveId: '123456789', link: 'unlienversledoc' },
 };
 
 const coursesList = [

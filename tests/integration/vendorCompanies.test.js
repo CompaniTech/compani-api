@@ -1,9 +1,12 @@
 const { expect } = require('expect');
+const sinon = require('sinon');
 const app = require('../../server');
 const { getToken } = require('./helpers/authentication');
 const { populateDB } = require('./seed/vendorCompaniesSeed');
 const VendorCompany = require('../../src/models/VendorCompany');
+const Drive = require('../../src/models/Google/Drive');
 const { vendorAdmin, clientAdmin } = require('../seed/authUsersSeed');
+const { generateFormData, getStream } = require('./utils');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -33,6 +36,7 @@ describe('VENDOR COMPANY ROUTES - GET /vendorcompanies', () => {
         siret: '12345678901234',
         iban: 'FR9210096000302523177152Q14',
         bic: 'BPCEFRPP',
+        ics: 'FR1234567890D',
         address: {
           fullAddress: '12 rue du test 92160 Antony',
           street: '12 rue du test',
@@ -129,11 +133,12 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
         },
       },
       { key: 'siret', value: '12345678901235' },
-      { key: 'iban', value: 'FR0314508000306574351512P33' },
-      { key: 'bic', value: 'BPCEFRPPXXX' },
+      { key: 'iban', value: 'FR1517569000702248611955G54' },
+      { key: 'bic', value: 'ASDTFRPP' },
       { key: 'activityDeclarationNumber', value: '10736353175' },
       { key: 'billingRepresentative', value: vendorAdmin._id },
       { key: 'shareCapital', value: 3210000 },
+      { key: 'ics', value: 'FR234567ERTYU' },
     ];
     payloads.forEach((payload) => {
       it(`should update vendor company ${payload.key}`, async () => {
@@ -146,8 +151,8 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
 
         expect(response.statusCode).toBe(200);
 
-        const vendorCompany = await VendorCompany.countDocuments({ [payload.key]: payload.value });
-        expect(vendorCompany).toBeTruthy();
+        const vendorCompany = await VendorCompany.findOne().lean();
+        expect(vendorCompany[payload.key]).toEqual(payload.value);
       });
     });
 
@@ -170,6 +175,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
       { key: 'siret', value: '13244' },
       { key: 'iban', value: 'GD0314508000306574351512P33' },
       { key: 'bic', value: 'TJDKLK' },
+      { key: 'ics', value: 'WEDDD' },
       { key: 'activityDeclarationNumber', value: '' },
       { key: 'shareCapital', value: '' },
       { key: 'shareCapital', value: '123000€' },
@@ -224,6 +230,162 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
+  let authToken;
+  let addStub;
+  let getFileByIdStub;
+  beforeEach(async () => {
+    await populateDB();
+    addStub = sinon.stub(Drive, 'add');
+    getFileByIdStub = sinon.stub(Drive, 'getFileById');
+  });
+
+  afterEach(() => {
+    addStub.restore();
+    getFileByIdStub.restore();
+  });
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should upload mandate template', async () => {
+      const form = generateFormData({ file: 'test.docx' });
+      addStub.returns({ id: 'fakeDriveId' });
+      getFileByIdStub.returns({ webViewLink: 'fakeWebViewLink' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/vendorcompanies/mandate/upload',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      sinon.assert.calledOnce(addStub);
+      sinon.assert.calledOnce(getFileByIdStub);
+      const count = await VendorCompany
+        .countDocuments({ debitMandateTemplate: { link: 'fakeWebViewLink', driveId: 'fakeDriveId' } });
+      expect(count).toBe(1);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      const form = generateFormData({ file: 'test.docx' });
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'POST',
+          url: '/vendorcompanies/mandate/upload',
+          payload: getStream(form),
+          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+        sinon.assert.notCalled(addStub);
+        sinon.assert.notCalled(getFileByIdStub);
+      });
+    });
+  });
+});
+
+describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () => {
+  let authToken;
+  let deleteFileStub;
+  let addStub;
+  let getFileByIdStub;
+  beforeEach(async () => {
+    await populateDB();
+    deleteFileStub = sinon.stub(Drive, 'deleteFile');
+    addStub = sinon.stub(Drive, 'add');
+    getFileByIdStub = sinon.stub(Drive, 'getFileById');
+  });
+
+  afterEach(() => {
+    deleteFileStub.restore();
+    addStub.restore();
+    getFileByIdStub.restore();
+  });
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should remove mandate template', async () => {
+      // upload a template
+      const form = generateFormData({ file: 'otherTest.docx' });
+      addStub.returns({ id: 'otherfakeDriveId' });
+      getFileByIdStub.returns({ webViewLink: 'otherFakeWebViewLink' });
+
+      await app.inject({
+        method: 'POST',
+        url: '/vendorcompanies/mandate/upload',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      sinon.assert.calledOnce(addStub);
+      sinon.assert.calledOnce(getFileByIdStub);
+      const vendorCompanyWithDebitMandateTemplate = await VendorCompany
+        .countDocuments({ debitMandateTemplate: { $exists: true } });
+      expect(vendorCompanyWithDebitMandateTemplate).toBe(1);
+
+      // remove template
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/vendorcompanies/mandate/upload',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      sinon.assert.calledOnce(deleteFileStub);
+      const vendorCompanyWithoutDebitMandateTemplate = await VendorCompany
+        .countDocuments({ debitMandateTemplate: { $exists: false } });
+      expect(vendorCompanyWithoutDebitMandateTemplate).toBe(1);
+    });
+
+    it('should return 404 if debitMandateTemplate does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: '/vendorcompanies/mandate/upload',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+      sinon.assert.notCalled(deleteFileStub);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'DELETE',
+          url: '/vendorcompanies/mandate/upload',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+        sinon.assert.notCalled(deleteFileStub);
       });
     });
   });

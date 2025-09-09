@@ -31,4 +31,26 @@ const update = async (req) => {
   }
 };
 
-module.exports = { get, update };
+const uploadTemplate = async (req) => {
+  try {
+    await VendorCompaniesHelper.uploadDebitMandateTemplate(req.payload);
+
+    return { message: translate[language].templateUploaded };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const removeTemplate = async (req) => {
+  try {
+    await VendorCompaniesHelper.removeDebitMandateTemplate();
+
+    return { message: translate[language].templateRemoved };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { get, update, uploadTemplate, removeTemplate };
