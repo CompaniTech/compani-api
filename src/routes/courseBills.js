@@ -182,8 +182,8 @@ exports.plugin = {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required(), billingPurchaseId: Joi.objectId().required() }),
           payload: Joi.object({
-            price: Joi.number().positive().required(),
-            count: Joi.number().positive().integer().required(),
+            price: Joi.number().positive(),
+            count: Joi.number().positive().integer(),
             description: Joi.string().allow(''),
           }),
         },
