@@ -6,7 +6,7 @@ const { courseBillsList, coursePaymentsList, populateDB } = require('./seed/cour
 
 const { getToken } = require('./helpers/authentication');
 const { authCompany } = require('../seed/authCompaniesSeed');
-const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING } = require('../../src/helpers/constants');
+const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING, RECEIVED } = require('../../src/helpers/constants');
 const CoursePayment = require('../../src/models/CoursePayment');
 const CoursePaymentNumber = require('../../src/models/CoursePaymentNumber');
 
@@ -142,13 +142,14 @@ describe('COURSE PAYMENTS ROUTES - POST /coursepayments', () => {
   });
 });
 
-describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
+describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id} #tag', () => {
   let authToken;
   beforeEach(populateDB);
   const payload = {
     date: '2022-03-09T00:00:00.000Z',
     netInclTaxes: 1200.20,
     type: DIRECT_DEBIT,
+    status: RECEIVED,
   };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -174,9 +175,10 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
       { key: 'netInclTaxes', value: -200 },
       { key: 'netInclTaxes', value: '200€' },
       { key: 'type', value: 'cesu' },
+      { key: 'status', value: 'wrongStatus' },
     ];
     wrongValues.forEach((param) => {
-      it(`should return a 400 error if '${param}' param is missing`, async () => {
+      it(`should return a 400 if '${param.key}' has wrong value`, async () => {
         const res = await app.inject({
           method: 'PUT',
           url: `/coursepayments/${coursePaymentsList[0]._id}`,
@@ -185,6 +187,17 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
         });
         expect(res.statusCode).toBe(400);
       });
+    });
+
+    it('should return 400 if date is missing in payload', async () => {
+      const paymentResponse = await app.inject({
+        method: 'PUT',
+        url: `/coursepayments/${coursePaymentsList[0]._id}`,
+        payload: omit(payload, 'date'),
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(paymentResponse.statusCode).toBe(400);
     });
 
     it('should return a 404 if payment doesn\'t exist', async () => {

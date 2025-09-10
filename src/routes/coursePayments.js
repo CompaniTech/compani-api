@@ -6,7 +6,7 @@ Joi.objectId = require('joi-objectid')(Joi);
 const { create, update } = require('../controllers/coursePaymentController');
 const { authorizeCoursePaymentCreation, authorizeCoursePaymentUpdate } = require('./preHandlers/coursePayments');
 const { PAYMENT_NATURES } = require('../models/Payment');
-const { COURSE_PAYMENT_TYPES } = require('../models/CoursePayment');
+const { COURSE_PAYMENT_TYPES, COURSE_PAYMENT_STATUS } = require('../models/CoursePayment');
 const { requiredDateToISOString } = require('./validations/utils');
 
 exports.plugin = {
@@ -42,6 +42,7 @@ exports.plugin = {
             netInclTaxes: Joi.number().min(0),
             type: Joi.string().valid(...COURSE_PAYMENT_TYPES),
             date: requiredDateToISOString,
+            status: Joi.string().valid(...COURSE_PAYMENT_STATUS),
           }),
         },
         pre: [{ method: authorizeCoursePaymentUpdate }],
