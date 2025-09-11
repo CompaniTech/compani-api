@@ -17,7 +17,7 @@ describe('getPdfContent', () => {
     downloadImages.restore();
   });
 
-  it('it should format and return pdf content (intra)', async () => {
+  it('it should format and return pdf content without signed slots (intra)', async () => {
     const paths = [
       'src/data/pdf/tmp/conscience.png',
       'src/data/pdf/tmp/compani.png',
@@ -172,11 +172,9 @@ describe('getPdfContent', () => {
     };
 
     const signaturePaths = [
-      'src/data/pdf/tmp/trainee1_slot1.png',
-      'src/data/pdf/tmp/trainee1_slot2.png',
-      'src/data/pdf/tmp/trainee2_slot1.png',
-      'src/data/pdf/tmp/trainer_slot1.png',
-      'src/data/pdf/tmp/trainer_slot2.png',
+      'src/data/pdf/tmp/trainee1.png',
+      'src/data/pdf/tmp/trainee2.png',
+      'src/data/pdf/tmp/trainer.png',
     ];
 
     const trainerId = new ObjectId();
@@ -227,17 +225,17 @@ describe('getPdfContent', () => {
         [
           { text: 'Carlos SAINZ', italics: true, margin: [0, 8, 0, 0] },
           { image: signaturePaths[0], width: 64, alignment: 'center' },
-          { image: signaturePaths[1], width: 64, alignment: 'center' },
+          { image: signaturePaths[0], width: 64, alignment: 'center' },
         ],
         [
           { text: 'Charles LECLERC', italics: true, margin: [0, 8, 0, 0] },
-          { image: signaturePaths[2], width: 64, alignment: 'center' },
+          { image: signaturePaths[1], width: 64, alignment: 'center' },
           { text: '' },
         ],
         [
           { text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] },
-          { image: signaturePaths[3], width: 64, alignment: 'center' },
-          { image: signaturePaths[4], width: 64, alignment: 'center' },
+          { image: signaturePaths[2], width: 64, alignment: 'center' },
+          { image: signaturePaths[2], width: 64, alignment: 'center' },
         ],
       ],
       widths: ['50%', '*', '*'],
@@ -301,8 +299,6 @@ describe('getPdfContent', () => {
     downloadImages.onCall(1).returns([signaturePaths[0]]);
     downloadImages.onCall(2).returns([signaturePaths[1]]);
     downloadImages.onCall(3).returns([signaturePaths[2]]);
-    downloadImages.onCall(4).returns([signaturePaths[3]]);
-    downloadImages.onCall(5).returns([signaturePaths[4]]);
 
     const result = await IntraAttendanceSheet.getPdfContent(data);
 
@@ -315,18 +311,10 @@ describe('getPdfContent', () => {
     );
     sinon.assert.calledWithExactly(
       downloadImages.getCall(2),
-      [{ url: 'https://storage.googleapis.com/compani-main/trainee1.png', name: 'trainee_signature.png' }]
-    );
-    sinon.assert.calledWithExactly(
-      downloadImages.getCall(3),
       [{ url: 'https://storage.googleapis.com/compani-main/trainee2.png', name: 'trainee_signature.png' }]
     );
     sinon.assert.calledWithExactly(
-      downloadImages.getCall(4),
-      [{ url: 'https://storage.googleapis.com/compani-main/trainer.png', name: 'trainer_signature.png' }]
-    );
-    sinon.assert.calledWithExactly(
-      downloadImages.getCall(5),
+      downloadImages.getCall(3),
       [{ url: 'https://storage.googleapis.com/compani-main/trainer.png', name: 'trainer_signature.png' }]
     );
   });
