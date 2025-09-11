@@ -1,14 +1,17 @@
 const UtilsPdfHelper = require('./utils');
 const PdfHelper = require('../../../helpers/pdf');
+const FileHelper = require('../../../helpers/file');
+const UtilsHelper = require('../../../helpers/utils');
 const { COPPER_500, INTRA_HOLDING } = require('../../../helpers/constants');
 
 exports.getPdfContent = async (data) => {
-  const { dates } = data;
+  const { dates, signedSlots, trainees } = data;
   const [conscience, compani, decision, signature] = await UtilsPdfHelper.getImages();
 
   const content = [];
   const isIntraHoldingCourse = dates[0].course.type === INTRA_HOLDING;
-  dates.forEach((date, i) => {
+  const slotsSignatures = [];
+  for (const [i, date] of dates.entries()) {
     const title = `Feuille d'émargement - ${date.date}`;
     const columns = [
       [
@@ -29,13 +32,45 @@ exports.getPdfContent = async (data) => {
       ],
     ];
     date.slots.forEach(slot => body[0].push({ text: `${slot.startHour} - ${slot.endHour}`, style: 'header' }));
-    const numberOfRows = 11;
+    const numberOfRows = signedSlots
+      ? Math.max(0, ...signedSlots.map(slot => slot.traineesSignature.length + 1 || 0))
+      : 11;
+
     for (let row = 1; row <= numberOfRows; row++) {
       body.push([]);
       const numberOfColumns = isIntraHoldingCourse ? date.slots.length + 1 : date.slots.length;
       for (let column = 0; column <= numberOfColumns; column++) {
-        if (row === numberOfRows && column === 0) {
-          body[row].push({ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] });
+        if (row === numberOfRows) {
+          if (column === 0) {
+            body[row].push({ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] });
+          } else if (signedSlots) {
+            const slot = date.slots[column - 1]._id;
+            const trainerSignatureUrl = signedSlots
+              .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot)).trainerSignature.signature;
+            const imageList = [{ url: trainerSignatureUrl, name: 'trainer_signature.png' }];
+            const [trainerSignature] = await FileHelper.downloadImages(imageList);
+            slotsSignatures.push(trainerSignature);
+            body[row].push({ image: trainerSignature, width: 64, alignment: 'center' });
+          } else body[row].push({ text: '' });
+        } else if (signedSlots) {
+          if (column === 0) {
+            body[row].push({
+              text: UtilsHelper.formatIdentity(trainees[row - 1].identity, 'FL'),
+              italics: true,
+              margin: [0, 8, 0, 0],
+            });
+          } else {
+            const slot = date.slots[column - 1]._id;
+            const traineeSignatureUrl = signedSlots
+              .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot)).traineesSignature
+              .find(sign => UtilsHelper.areObjectIdsEquals(sign.traineeId, trainees[row - 1]._id));
+            if (traineeSignatureUrl) {
+              const imageList = [{ url: traineeSignatureUrl.signature, name: 'trainee_signature.png' }];
+              const [traineeSignature] = await FileHelper.downloadImages(imageList);
+              slotsSignatures.push(traineeSignature);
+              body[row].push({ image: traineeSignature, width: 64, alignment: 'center' });
+            } else body[row].push({ text: '' });
+          }
         } else body[row].push({ text: '' });
       }
     }
@@ -51,7 +86,7 @@ exports.getPdfContent = async (data) => {
     }];
 
     content.push(header, table);
-  });
+  }
 
   return {
     template: {
@@ -64,7 +99,7 @@ exports.getPdfContent = async (data) => {
       },
       footer: UtilsPdfHelper.getFooter(signature),
     },
-    images: [conscience, compani, decision, signature],
+    images: [conscience, compani, decision, signature, ...slotsSignatures],
   };
 };
 
