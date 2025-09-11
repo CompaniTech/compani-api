@@ -10,7 +10,7 @@ exports.getPdfContent = async (data) => {
 
   const content = [];
   const isIntraHoldingCourse = dates[0].course.type === INTRA_HOLDING;
-  const slotsSignatures = [];
+  const slotsSignatures = {};
   for (const [i, date] of dates.entries()) {
     const title = `Feuille d'émargement - ${date.date}`;
     const columns = [
@@ -45,12 +45,14 @@ exports.getPdfContent = async (data) => {
             body[row].push({ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] });
           } else if (signedSlots) {
             const slot = date.slots[column - 1]._id;
-            const trainerSignatureUrl = signedSlots
-              .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot)).trainerSignature.signature;
-            const imageList = [{ url: trainerSignatureUrl, name: 'trainer_signature.png' }];
-            const [trainerSignature] = await FileHelper.downloadImages(imageList);
-            slotsSignatures.push(trainerSignature);
-            body[row].push({ image: trainerSignature, width: 64, alignment: 'center' });
+            const trainerSlotSignature = signedSlots
+              .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot)).trainerSignature;
+            if (!slotsSignatures[trainerSlotSignature.trainerId]) {
+              const imageList = [{ url: trainerSlotSignature.signature, name: 'trainer_signature.png' }];
+              const [trainerSignature] = await FileHelper.downloadImages(imageList);
+              slotsSignatures[trainerSlotSignature.trainerId] = trainerSignature;
+            }
+            body[row].push({ image: slotsSignatures[trainerSlotSignature.trainerId], width: 64, alignment: 'center' });
           } else body[row].push({ text: '' });
         } else if (signedSlots) {
           if (column === 0) {
@@ -61,14 +63,18 @@ exports.getPdfContent = async (data) => {
             });
           } else {
             const slot = date.slots[column - 1]._id;
-            const traineeSignatureUrl = signedSlots
+            const traineeSlotSignature = signedSlots
               .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot)).traineesSignature
               .find(sign => UtilsHelper.areObjectIdsEquals(sign.traineeId, trainees[row - 1]._id));
-            if (traineeSignatureUrl) {
-              const imageList = [{ url: traineeSignatureUrl.signature, name: 'trainee_signature.png' }];
-              const [traineeSignature] = await FileHelper.downloadImages(imageList);
-              slotsSignatures.push(traineeSignature);
-              body[row].push({ image: traineeSignature, width: 64, alignment: 'center' });
+            if (traineeSlotSignature) {
+              if (!slotsSignatures[traineeSlotSignature.traineeId]) {
+                const imageList = [{ url: traineeSlotSignature.signature, name: 'trainee_signature.png' }];
+                const [traineeSignature] = await FileHelper.downloadImages(imageList);
+                slotsSignatures[traineeSlotSignature.traineeId] = traineeSignature;
+              }
+              body[row].push(
+                { image: slotsSignatures[traineeSlotSignature.traineeId], width: 64, alignment: 'center' }
+              );
             } else body[row].push({ text: '' });
           }
         } else body[row].push({ text: '' });
@@ -99,7 +105,7 @@ exports.getPdfContent = async (data) => {
       },
       footer: UtilsPdfHelper.getFooter(signature),
     },
-    images: [conscience, compani, decision, signature, ...slotsSignatures],
+    images: [conscience, compani, decision, signature, ...Object.values(slotsSignatures)],
   };
 };
 
