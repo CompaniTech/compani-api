@@ -144,7 +144,8 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   if (!isVendorAndAuthorized(attendanceSheet.course.trainers, credentials)) throw Boom.forbidden();
 
   if (req.payload.action) {
-    let canGenerate = attendanceSheet.slots.every(s => s.trainerSignature && s.traineesSignature);
+    let canGenerate = attendanceSheet.slots
+      .every(s => s.trainerSignature && s.traineesSignature.every(signature => signature.signature));
     if (attendanceSheet.file) canGenerate = false;
     if (attendanceSheet.course.type === INTER_B2B) {
       const lastSlot = [...attendanceSheet.course.slots.sort(DatesUtilsHelper.descendingSortBy('endDate'))][0];

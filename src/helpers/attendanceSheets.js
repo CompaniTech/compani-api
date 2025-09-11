@@ -3,6 +3,7 @@ const get = require('lodash/get');
 const cloneDeep = require('lodash/cloneDeep');
 const AttendanceSheet = require('../models/AttendanceSheet');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
+const IntraAttendanceSheet = require('../data/pdf/attendanceSheet/intraAttendanceSheet');
 const User = require('../models/User');
 const Course = require('../models/Course');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -223,9 +224,10 @@ exports.generate = async (attendanceSheetId) => {
     .populate({ path: 'trainer', select: 'identity' })
     .populate({
       path: 'course',
-      select: 'type misc companies subProgram slots',
+      select: 'type misc companies subProgram slots trainees',
       populate: [
         { path: 'companies', select: 'name' },
+        { path: 'trainees', select: 'identity' },
         { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
         { path: 'slots', select: 'step startDate endDate address' },
       ],
@@ -234,18 +236,30 @@ exports.generate = async (attendanceSheetId) => {
 
   const formattedCourse = {
     ...attendanceSheet.course,
-    slots: attendanceSheet.course.type === SINGLE
-      ? attendanceSheet.slots.map(s => s.slotId)
-      : attendanceSheet.course.slots,
-    trainees: [attendanceSheet.trainee],
+    slots: attendanceSheet.course.type === INTER_B2B
+      ? attendanceSheet.course.slots
+      : attendanceSheet.slots.map(s => s.slotId),
+    ...attendanceSheet.trainee && { trainees: [attendanceSheet.trainee] },
     trainers: [attendanceSheet.trainer],
   };
-  const formattedCourseForInter = await CoursesHelper.formatInterCourseForPdf(formattedCourse);
+  let pdf;
+  let fileName;
   const signedSlots = attendanceSheet.slots.map(s => ({ slotId: s.slotId._id, ...omit(s, 'slotId') }));
-  const pdf = await InterAttendanceSheet.getPdf({ ...formattedCourseForInter, signedSlots });
-  const slotsDates = [...new Set(formattedCourseForInter.trainees[0].course.slots.map(slot => slot.date))].join(', ');
-  const fileName = `emargements_${formattedCourseForInter.trainees[0].traineeName}_${slotsDates}`
-    .replaceAll(/ - | |'/g, '_');
+
+  if ([INTER_B2B, SINGLE].includes(attendanceSheet.course.type)) {
+    const formattedCourseForInter = await CoursesHelper.formatInterCourseForPdf(formattedCourse);
+    pdf = await InterAttendanceSheet.getPdf({ ...formattedCourseForInter, signedSlots });
+    const slotsDates = [...new Set(formattedCourseForInter.trainees[0].course.slots.map(slot => slot.date))].join(', ');
+    fileName = `emargements_${formattedCourseForInter.trainees[0].traineeName}_${slotsDates}`
+      .replaceAll(/ - | |'/g, '_');
+  } else {
+    const formattedCourseForIntra = await CoursesHelper.formatIntraCourseForPdf(formattedCourse);
+    const traineesWithSignature = signedSlots.flatMap(s => s.traineesSignature.map(t => t.traineeId));
+    const trainees = attendanceSheet.course.trainees
+      .filter(t => UtilsHelper.doesArrayIncludeId(traineesWithSignature, t._id));
+    pdf = await IntraAttendanceSheet.getPdf({ ...formattedCourseForIntra, signedSlots, trainees });
+    fileName = `emargements_${formattedCourseForIntra.dates[0].date}`;
+  }
   const fileUploaded = await GCloudStorageHelper
     .uploadCourseFile({ fileName, file: pdf, contentType: 'application/pdf' });
 
