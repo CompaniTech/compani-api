@@ -23,3 +23,4 @@ queryMiddlewareList.map(middleware => CoursePaymentSchema.pre(middleware, format
 
 module.exports = mongoose.model('CoursePayment', CoursePaymentSchema);
 module.exports.COURSE_PAYMENT_TYPES = COURSE_PAYMENT_TYPES;
+module.exports.COURSE_PAYMENT_STATUS = COURSE_PAYMENT_STATUS;

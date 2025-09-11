@@ -6,7 +6,7 @@ const { courseBillsList, coursePaymentsList, populateDB } = require('./seed/cour
 
 const { getToken } = require('./helpers/authentication');
 const { authCompany } = require('../seed/authCompaniesSeed');
-const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING } = require('../../src/helpers/constants');
+const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING, RECEIVED } = require('../../src/helpers/constants');
 const CoursePayment = require('../../src/models/CoursePayment');
 const CoursePaymentNumber = require('../../src/models/CoursePaymentNumber');
 
@@ -149,6 +149,7 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
     date: '2022-03-09T00:00:00.000Z',
     netInclTaxes: 1200.20,
     type: DIRECT_DEBIT,
+    status: RECEIVED,
   };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -174,15 +175,30 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
       { key: 'netInclTaxes', value: -200 },
       { key: 'netInclTaxes', value: '200€' },
       { key: 'type', value: 'cesu' },
+      { key: 'status', value: 'wrongStatus' },
     ];
     wrongValues.forEach((param) => {
-      it(`should return a 400 error if '${param}' param is missing`, async () => {
+      it(`should return a 400 if '${param.key}' has wrong value`, async () => {
         const res = await app.inject({
           method: 'PUT',
           url: `/coursepayments/${coursePaymentsList[0]._id}`,
           payload: { ...payload, [param.key]: param.value },
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
+        expect(res.statusCode).toBe(400);
+      });
+    });
+
+    const missingParams = ['date', 'netInclTaxes', 'type', 'status'];
+    missingParams.forEach((param) => {
+      it(`should return a 400 if '${param}' is missing`, async () => {
+        const res = await app.inject({
+          method: 'PUT',
+          url: `/coursepayments/${coursePaymentsList[0]._id}`,
+          payload: omit(payload, param),
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
         expect(res.statusCode).toBe(400);
       });
     });

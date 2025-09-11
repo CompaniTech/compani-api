@@ -194,6 +194,7 @@ describe('updateCoursePayment', () => {
       date: '2022-03-08T00:00:00.000Z',
       netInclTaxes: 190,
       type: DIRECT_DEBIT,
+      status: RECEIVED,
     };
 
     await CoursePaymentsHelper.updateCoursePayment(coursePaymentId, payload);
