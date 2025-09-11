@@ -142,7 +142,7 @@ describe('COURSE PAYMENTS ROUTES - POST /coursepayments', () => {
   });
 });
 
-describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id} #tag', () => {
+describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
   let authToken;
   beforeEach(populateDB);
   const payload = {
@@ -189,15 +189,18 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id} #tag', () => {
       });
     });
 
-    it('should return 400 if date is missing in payload', async () => {
-      const paymentResponse = await app.inject({
-        method: 'PUT',
-        url: `/coursepayments/${coursePaymentsList[0]._id}`,
-        payload: omit(payload, 'date'),
-        headers: { Cookie: `alenvi_token=${authToken}` },
-      });
+    const missingParams = ['date', 'netInclTaxes', 'type', 'status'];
+    missingParams.forEach((param) => {
+      it(`should return a 400 if '${param}' is missing`, async () => {
+        const res = await app.inject({
+          method: 'PUT',
+          url: `/coursepayments/${coursePaymentsList[0]._id}`,
+          payload: omit(payload, param),
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
 
-      expect(paymentResponse.statusCode).toBe(400);
+        expect(res.statusCode).toBe(400);
+      });
     });
 
     it('should return a 404 if payment doesn\'t exist', async () => {
