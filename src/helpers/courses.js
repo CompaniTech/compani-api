@@ -990,6 +990,7 @@ exports.removeCourseTrainee = async (courseId, traineeId, user) => Promise.all([
 ]);
 
 exports.formatIntraCourseSlotsForPdf = slot => ({
+  _id: slot._id,
   startHour: CompaniDate(slot.startDate).format(HHhMM),
   endHour: CompaniDate(slot.endDate).format(HHhMM),
 });
