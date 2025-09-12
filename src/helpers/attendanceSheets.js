@@ -12,7 +12,7 @@ const GCloudStorageHelper = require('./gCloudStorage');
 const NotificationHelper = require('./notifications');
 const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
-const { DAY_MONTH_YEAR, COURSE, TRAINEE, INTER_B2B, SINGLE } = require('./constants');
+const { DAY_MONTH_YEAR, COURSE, TRAINEE, INTER_B2B, SINGLE, INTRA_HOLDING } = require('./constants');
 
 exports.create = async (payload, credentials) => {
   let fileName;
@@ -34,6 +34,7 @@ exports.create = async (payload, credentials) => {
       });
 
       const slotList = Array.isArray(payload.slots) ? payload.slots : [payload.slots];
+      const tempCompanies = [];
       for (const slot of slotList) {
         const trainees = Array.isArray(slot.trainees) ? slot.trainees : [slot.trainees];
         for (const trainee of trainees) {
@@ -42,6 +43,14 @@ exports.create = async (payload, credentials) => {
               .findOne({ _id: trainee }, { formationExpoTokenList: 1 })
               .lean();
             if (get(formationExpoTokenList, 'length')) formationExpoTokens[trainee] = formationExpoTokenList;
+            if (course.type === INTRA_HOLDING) {
+              const traineeCompanyAtCourseRegistration = await CourseHistoriesHelper
+                .getCompanyAtCourseRegistrationList(
+                  { key: COURSE, value: payload.course }, { key: TRAINEE, value: [trainee] }
+                );
+              const company = get(traineeCompanyAtCourseRegistration[0], 'company');
+              if (!UtilsHelper.doesArrayIncludeId(tempCompanies, company)) tempCompanies.push(company);
+            }
           }
         }
         const formattedSlot = {
@@ -51,6 +60,7 @@ exports.create = async (payload, credentials) => {
         };
         slots.push(formattedSlot);
       }
+      if (course.type === INTRA_HOLDING) companies = tempCompanies;
       promises.push(AttendanceSheet.create({ ...omit(payload, 'signature'), companies, slots }));
     }
   } else {
