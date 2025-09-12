@@ -65,6 +65,7 @@ module.exports = {
     paymentCreated: 'Payment created.',
     paymentUpdated: 'Payment updated.',
     paymentRemoved: 'Payment removed.',
+    paymentsFound: 'Payments found.',
     /* Programs */
     programsFound: 'Programs found.',
     programsNotFound: 'Programs not found.',
@@ -303,6 +304,7 @@ module.exports = {
     paymentNotFound: 'Règlement non trouvé.',
     paymentUpdated: 'Règlement modifié.',
     paymentRemoved: 'Règlement supprimé.',
+    paymentsFound: 'Règlements trouvés.',
     /* Programs */
     programsFound: 'Liste des programmes trouvée.',
     programsNotFound: 'Liste des programmes non trouvée.',

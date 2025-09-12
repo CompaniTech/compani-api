@@ -3,7 +3,7 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 
-const { create, update } = require('../controllers/coursePaymentController');
+const { create, update, list } = require('../controllers/coursePaymentController');
 const { authorizeCoursePaymentCreation, authorizeCoursePaymentUpdate } = require('./preHandlers/coursePayments');
 const { PAYMENT_NATURES } = require('../models/Payment');
 const { COURSE_PAYMENT_TYPES, COURSE_PAYMENT_STATUS } = require('../models/CoursePayment');
@@ -48,6 +48,26 @@ exports.plugin = {
         pre: [{ method: authorizeCoursePaymentUpdate }],
       },
       handler: update,
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/',
+      options: {
+        auth: { scope: ['coursepayments:read'] },
+        validate: {
+          query: Joi.object({
+            status: Joi
+              .alternatives()
+              .try(
+                Joi.string().valid(...COURSE_PAYMENT_STATUS),
+                Joi.array().items(Joi.string().valid(...COURSE_PAYMENT_STATUS)).min(1)
+              )
+              .required(),
+          }),
+        },
+      },
+      handler: list,
     });
   },
 };
