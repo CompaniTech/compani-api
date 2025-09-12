@@ -359,6 +359,40 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       sinon.assert.calledTwice(sendNotificationToUser);
     });
 
+    it('should upload trainer signature and create attendance sheet for intra holding course (mobile)', async () => {
+      const slots = [
+        {
+          slotId: slotsList[2]._id.toHexString(),
+          trainees: [userList[2]._id.toHexString(), userList[4]._id.toHexString()],
+        },
+      ];
+      const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[5]._id });
+      const formData = {
+        course: coursesList[5]._id.toHexString(),
+        signature: 'test',
+        date: '2020-01-24T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[5]._id });
+      expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledThrice(sendNotificationToUser);
+    });
+
     it('should  return 400 if single course but slots is missing', async () => {
       const formData = {
         course: coursesList[7]._id.toHexString(),
