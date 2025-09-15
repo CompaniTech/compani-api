@@ -1607,6 +1607,21 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       expect(response.statusCode).toBe(404);
     });
 
+    it('should return 404 if every slot which concerns trainee has already been signed (intra)', async () => {
+      const formData = { signature: 'test' };
+
+      const form = generateFormData(formData);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetList[13]._id}/signature`,
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
     it('should return 403 if trainee not in attendance list (intra course)', async () => {
       authToken = await getTokenByCredentials(userList[0].local);
 
