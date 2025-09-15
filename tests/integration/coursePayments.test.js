@@ -238,3 +238,45 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
     });
   });
 });
+
+describe('COURSE PAYMENTS ROUTES - GET /coursepayments', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should list paymensts', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/coursepayments?status=${PENDING}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.coursePayments.length).toEqual(1);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name, role.erp);
+        const response = await app.inject({
+          method: 'GET',
+          url: `/coursepayments?status=${PENDING}`,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});

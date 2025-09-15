@@ -1,5 +1,14 @@
 const { ObjectId } = require('mongodb');
-const { PAYMENT, DIRECT_DEBIT, INTRA, PUBLISHED, GROUP, GLOBAL, PENDING } = require('../../../src/helpers/constants');
+const {
+  PAYMENT,
+  DIRECT_DEBIT,
+  INTRA,
+  PUBLISHED,
+  GROUP,
+  GLOBAL,
+  PENDING,
+  RECEIVED,
+} = require('../../../src/helpers/constants');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
@@ -55,7 +64,7 @@ const courseBillNumber = { _id: new ObjectId(), seq: 1 };
 
 const coursePaymentNumber = {
   _id: new ObjectId(),
-  seq: 1,
+  seq: 2,
   nature: PAYMENT,
 };
 
@@ -70,6 +79,17 @@ const coursePaymentsList = [
     nature: PAYMENT,
     type: DIRECT_DEBIT,
     status: PENDING,
+  },
+  { // 1
+    _id: new ObjectId(),
+    number: 'REG-00003',
+    date: '2022-03-08T00:00:00.000Z',
+    companies: [authCompany._id],
+    courseBill: courseBillsList[1]._id,
+    netInclTaxes: 120,
+    nature: PAYMENT,
+    type: DIRECT_DEBIT,
+    status: RECEIVED,
   },
 ];
 
