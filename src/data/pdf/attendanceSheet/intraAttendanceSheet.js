@@ -86,7 +86,7 @@ exports.getPdfContent = async (data) => {
     if (isIntraHoldingCourse) widths.push(body[0].length < 4 ? '30%' : '25%');
     widths.push(...Array(date.slots.length).fill('*'));
     const table = [{
-      table: { body, widths, heights },
+      table: { body, widths, heights, dontBreakRows: true },
       marginBottom: 8,
       pageBreak: i === dates.length - 1 ? 'none' : 'after',
     }];
