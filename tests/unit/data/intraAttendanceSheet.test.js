@@ -64,6 +64,7 @@ describe('getPdfContent', () => {
       ],
       widths: ['50%', '*'],
       heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      dontBreakRows: true,
     };
     const pdf = {
       content: [
@@ -240,6 +241,7 @@ describe('getPdfContent', () => {
       ],
       widths: ['50%', '*', '*'],
       heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      dontBreakRows: true,
     };
     const pdf = {
       content: [
@@ -370,6 +372,7 @@ describe('getPdfContent', () => {
       ],
       widths: ['50%', '30%', '*'],
       heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      dontBreakRows: true,
     };
     const pdf = {
       content: [
@@ -512,6 +515,7 @@ describe('getPdfContent', () => {
       ],
       widths: ['40%', '25%', '*', '*'],
       heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      dontBreakRows: true,
     };
     const pdf = {
       content: [
