@@ -30,6 +30,10 @@ exports.updateCoursePayment = async (coursePaymentId, payload) => {
 
 exports.list = async query => CoursePayment
   .find({ status: query.status, nature: PAYMENT })
-  .populate({ path: 'courseBill', select: 'number' })
+  .populate({
+    path: 'courseBill',
+    select: 'number payer',
+    populate: [{ path: 'payer.company', select: 'name' }, { path: 'payer.fundingOrganisation', select: 'name' }],
+  })
   .setOptions({ isVendorUser: true })
   .lean();
