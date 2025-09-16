@@ -147,7 +147,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 if isChronological is not in payload', async () => {
+    it('should return 403 if isChronological in payload but card template is not ORDER_THE_SEQUENCE', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/cards/${transitionId}`,
