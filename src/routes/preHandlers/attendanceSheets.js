@@ -168,15 +168,13 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
 
 exports.authorizeAttendanceSheetSignature = async (req) => {
   const { credentials } = req.auth;
-  const attendanceSheet = await AttendanceSheet.findOne({ _id: req.params._id }).lean();
+  const attendanceSheet = await AttendanceSheet
+    .findOne({ _id: req.params._id })
+    .populate({ path: 'course', select: 'type' })
+    .lean();
 
   if (!attendanceSheet) throw Boom.notFound();
   if (attendanceSheet.slots.some(s => !s.trainerSignature)) throw Boom.notFound();
-  const hasTraineeSignedEverySlot = attendanceSheet.slots
-    .every(s => (s.traineesSignature || [])
-      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, credentials._id) && !!signature.signature)
-    );
-  if (hasTraineeSignedEverySlot) throw Boom.notFound();
 
   const loggedUserId = get(credentials, '_id');
   const isTraineeInAttendanceSheet = UtilsHelper.areObjectIdsEquals(attendanceSheet.trainee, loggedUserId) ||
@@ -185,6 +183,17 @@ exports.authorizeAttendanceSheetSignature = async (req) => {
       .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, loggedUserId)));
   if (!isTraineeInAttendanceSheet) throw Boom.forbidden();
 
+  const hasTraineeSignedEverySlot = attendanceSheet.slots
+    .every((s) => {
+      const traineeSignatureMissing = [SINGLE, INTER_B2B].includes(attendanceSheet.course.type)
+        ? !(s.traineesSignature || [])
+          .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, loggedUserId) && !!signature.signature)
+        : (s.traineesSignature || [])
+          .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, loggedUserId) && !signature.signature);
+
+      return !traineeSignatureMissing;
+    });
+  if (hasTraineeSignedEverySlot) throw Boom.notFound();
   return null;
 };
 
