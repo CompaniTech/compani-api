@@ -63,17 +63,17 @@ exports.getPdfContent = async (data) => {
             });
           } else {
             const slot = date.slots[column - 1]._id;
-            const traineeSlotSignature = signedSlots
-              .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot)).traineesSignature
+            const { traineesSignature } = signedSlots.find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot));
+            const traineeSignature = traineesSignature
               .find(sign => UtilsHelper.areObjectIdsEquals(sign.traineeId, trainees[row - 1]._id));
-            if (traineeSlotSignature) {
-              if (!slotsSignatures[traineeSlotSignature.traineeId]) {
-                const imageList = [{ url: traineeSlotSignature.signature, name: 'trainee_signature.png' }];
-                const [traineeSignature] = await FileHelper.downloadImages(imageList);
-                slotsSignatures[traineeSlotSignature.traineeId] = traineeSignature;
+            if (traineeSignature) {
+              if (!slotsSignatures[traineeSignature.traineeId]) {
+                const imageList = [{ url: traineeSignature.signature, name: 'trainee_signature.png' }];
+                const [traineeSignatureFile] = await FileHelper.downloadImages(imageList);
+                slotsSignatures[traineeSignature.traineeId] = traineeSignatureFile;
               }
               body[row].push(
-                { image: slotsSignatures[traineeSlotSignature.traineeId], width: 64, alignment: 'center' }
+                { image: slotsSignatures[traineeSignature.traineeId], width: 64, alignment: 'center' }
               );
             } else body[row].push({ text: '' });
           }
