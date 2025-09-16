@@ -248,7 +248,7 @@ describe('COURSE PAYMENTS ROUTES - GET /coursepayments', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should list paymensts', async () => {
+    it('should list payments', async () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursepayments?status=${PENDING}`,

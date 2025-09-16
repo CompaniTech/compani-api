@@ -215,19 +215,47 @@ describe('list', () => {
 
   it('should list payments', async () => {
     const paymentList = [
-      { _id: new ObjectId(), status: RECEIVED, nature: PAYMENT, courseBill: { number: 'FACT_00001' } },
-      { _id: new ObjectId(), status: RECEIVED, nature: PAYMENT, courseBill: { number: 'FACT_00002' } },
+      {
+        _id: new ObjectId(),
+        status: RECEIVED,
+        nature: PAYMENT,
+        courseBill: { number: 'FACT_00001', payer: { company: { name: 'Structure' } }, isPayerCompany: true },
+      },
+      {
+        _id: new ObjectId(),
+        status: RECEIVED,
+        nature: PAYMENT,
+        courseBill: {
+          number: 'FACT_00002',
+          payer: { company: { fundingOrganisation: 'Financeur' } },
+          isPayerCompany: false,
+        },
+      },
     ];
-    find.returns(SinonMongoose.stubChainedQueries(paymentList));
+    find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'lean']));
 
     const result = await CoursePaymentsHelper.list({ status: RECEIVED });
 
     expect(result).toEqual(paymentList);
+
     SinonMongoose.calledOnceWithExactly(
       find,
       [
         { query: 'find', args: [{ status: RECEIVED, nature: PAYMENT }] },
-        { query: 'populate', args: [{ path: 'courseBill', select: 'number' }] },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'courseBill',
+              select: 'number payer',
+              populate: [
+                { path: 'payer.company', select: 'name' },
+                { path: 'payer.fundingOrganisation', select: 'name' },
+              ],
+            },
+          ],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean', args: [] },
       ]
     );
