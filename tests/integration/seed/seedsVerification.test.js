@@ -511,7 +511,7 @@ describe('SEEDS VERIFICATION', () => {
           },
           {
             name: ORDER_THE_SEQUENCE,
-            allowedKeys: ['question', 'orderedAnswers', 'explanation'],
+            allowedKeys: ['question', 'orderedAnswers', 'explanation', 'isChronological'],
           },
           {
             name: MULTIPLE_CHOICE_QUESTION,
