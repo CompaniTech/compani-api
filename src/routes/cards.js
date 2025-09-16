@@ -51,6 +51,7 @@ exports.plugin = {
             }),
             canSwitchAnswers: Joi.boolean(),
             isMandatory: Joi.boolean(),
+            isChronological: Joi.boolean(),
           }),
         },
         auth: { scope: ['programs:edit'] },
