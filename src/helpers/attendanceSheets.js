@@ -237,7 +237,11 @@ exports.generate = async (attendanceSheetId) => {
       select: 'type misc companies subProgram slots trainees',
       populate: [
         { path: 'companies', select: 'name' },
-        { path: 'trainees', select: 'identity' },
+        {
+          path: 'trainees',
+          select: 'identity',
+          populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+        },
         { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
         { path: 'slots', select: 'step startDate endDate address' },
       ],
@@ -263,6 +267,10 @@ exports.generate = async (attendanceSheetId) => {
     fileName = `emargements_${formattedCourseForInter.trainees[0].traineeName}_${slotsDates}`
       .replaceAll(/ - | |'/g, '_');
   } else {
+    if (formattedCourse.type === INTRA_HOLDING) {
+      formattedCourse.companies = [...formattedCourse.companies]
+        .filter(c => UtilsHelper.doesArrayIncludeId(attendanceSheet.companies, c._id));
+    }
     const formattedCourseForIntra = await CoursesHelper.formatIntraCourseForPdf(formattedCourse);
     const traineesWithSignature = signedSlots.flatMap(s => s.traineesSignature.map(t => t.traineeId));
     const trainees = attendanceSheet.course.trainees

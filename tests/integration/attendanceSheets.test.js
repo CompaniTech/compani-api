@@ -1332,6 +1332,46 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       sinon.assert.calledOnce(uploadCourseFile);
     });
 
+    it('should generate attendance sheet file for intra course', async () => {
+      const attendanceSheetId = attendanceSheetList[13]._id;
+      const payload = { action: GENERATION };
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const attendanceSheetUpdated = await AttendanceSheet
+        .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
+      expect(attendanceSheetUpdated).toEqual(1);
+      sinon.assert.calledOnce(uploadCourseFile);
+    });
+
+    it('should generate attendance sheet file for intra holding course', async () => {
+      const attendanceSheetId = attendanceSheetList[14]._id;
+      const payload = { action: GENERATION };
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const attendanceSheetUpdated = await AttendanceSheet
+        .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
+      expect(attendanceSheetUpdated).toEqual(1);
+      sinon.assert.calledOnce(uploadCourseFile);
+    });
+
     it('should return 404 if attendance sheet doesn\'t exist', async () => {
       const payload = { slots: [slotsList[4]._id] };
 

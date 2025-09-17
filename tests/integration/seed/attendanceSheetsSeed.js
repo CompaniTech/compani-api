@@ -387,6 +387,13 @@ const slotsList = [
     course: coursesList[0]._id,
     step: steps[0]._id,
   },
+  { // 19
+    _id: new ObjectId(),
+    startDate: '2021-01-25T09:00:00.000Z',
+    endDate: '2021-01-25T11:00:00.000Z',
+    course: coursesList[5]._id,
+    step: steps[0]._id,
+  },
 ];
 
 const attendanceSheetList = [
@@ -587,7 +594,6 @@ const attendanceSheetList = [
   { // 13
     _id: new ObjectId(),
     course: coursesList[0]._id,
-    file: { publicId: 'mon upload', link: 'www.test.com' },
     date: '2021-01-24T09:00:00.000Z',
     slots: [
       {
@@ -603,7 +609,7 @@ const attendanceSheetList = [
           },
           {
             traineeId: userList[1]._id,
-            signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee2.png',
+            signature: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png',
           },
         ],
       },
@@ -622,6 +628,33 @@ const attendanceSheetList = [
       },
     ],
     companies: [authCompany._id],
+    origin: WEBAPP,
+    trainer: trainer._id,
+  },
+  { // 14
+    _id: new ObjectId(),
+    course: coursesList[5]._id,
+    date: '2021-01-25T09:00:00.000Z',
+    slots: [
+      {
+        slotId: slotsList[19]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          {
+            traineeId: userList[2]._id,
+            signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+          },
+          {
+            traineeId: userList[4]._id,
+            signature: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png',
+          },
+        ],
+      },
+    ],
+    companies: [otherHolding._id, companyWithoutSubscription._id],
     origin: WEBAPP,
     trainer: trainer._id,
   },

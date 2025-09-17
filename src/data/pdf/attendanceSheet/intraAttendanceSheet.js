@@ -31,6 +31,7 @@ exports.getPdfContent = async (data) => {
         ...(isIntraHoldingCourse ? [{ text: 'Structure', style: 'header' }] : []),
       ],
     ];
+    const indexOffset = isIntraHoldingCourse ? 2 : 1;
     date.slots.forEach(slot => body[0].push({ text: `${slot.startHour} - ${slot.endHour}`, style: 'header' }));
     const numberOfRows = signedSlots
       ? Math.max(0, ...signedSlots.map(slot => slot.traineesSignature.length + 1 || 0))
@@ -44,25 +45,33 @@ exports.getPdfContent = async (data) => {
           if (column === 0) {
             body[row].push({ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] });
           } else if (signedSlots) {
-            const slot = date.slots[column - 1]._id;
-            const trainerSlotSignature = signedSlots
-              .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot)).trainerSignature;
-            if (!slotsSignatures[trainerSlotSignature.trainerId]) {
-              const imageList = [{ url: trainerSlotSignature.signature, name: 'trainer_signature.png' }];
-              const [trainerSignature] = await FileHelper.downloadImages(imageList);
-              slotsSignatures[trainerSlotSignature.trainerId] = trainerSignature;
+            if (column === 1 && isIntraHoldingCourse) body[row].push({ text: '' });
+            else {
+              const slot = date.slots[column - indexOffset]._id;
+              const trainerSlotSignature = signedSlots
+                .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot)).trainerSignature;
+              if (!slotsSignatures[trainerSlotSignature.trainerId]) {
+                const imageList = [{ url: trainerSlotSignature.signature, name: 'trainer_signature.png' }];
+                const [trainerSignature] = await FileHelper.downloadImages(imageList);
+                slotsSignatures[trainerSlotSignature.trainerId] = trainerSignature;
+              }
+              body[row].push({
+                image: slotsSignatures[trainerSlotSignature.trainerId],
+                width: 64,
+                alignment: 'center',
+              });
             }
-            body[row].push({ image: slotsSignatures[trainerSlotSignature.trainerId], width: 64, alignment: 'center' });
           } else body[row].push({ text: '' });
         } else if (signedSlots) {
           if (column === 0) {
             body[row].push({
               text: UtilsHelper.formatIdentity(trainees[row - 1].identity, 'FL'),
-              italics: true,
               margin: [0, 8, 0, 0],
             });
+          } else if (column === 1 && isIntraHoldingCourse) {
+            body[row].push({ text: trainees[row - 1].company.name, margin: [0, 8, 0, 0], alignment: 'center' });
           } else {
-            const slot = date.slots[column - 1]._id;
+            const slot = date.slots[column - indexOffset]._id;
             const { traineesSignature } = signedSlots.find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot));
             const traineeSignature = traineesSignature
               .find(sign => UtilsHelper.areObjectIdsEquals(sign.traineeId, trainees[row - 1]._id));
