@@ -23,6 +23,7 @@ const {
   TRAINEE,
   SINGLE,
   MONTH_YEAR,
+  RECEIVED,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -476,6 +477,7 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
     .populate({
       path: 'coursePayments',
       select: 'nature netInclTaxes date',
+      match: { status: RECEIVED },
       options: { sort: { date: -1 }, isVendorUser, requestingOwnInfos },
     })
     .populate({ path: 'courseCreditNote', options: { isVendorUser, requestingOwnInfos } })
