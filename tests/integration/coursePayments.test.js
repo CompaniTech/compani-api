@@ -43,10 +43,10 @@ describe('COURSE PAYMENTS ROUTES - POST /coursepayments', () => {
       expect(paymentResponse.statusCode).toBe(200);
 
       const newPayment = await CoursePayment
-        .countDocuments({ ...payload, number: 'REG-00002', companies: [authCompany._id], status: PENDING });
+        .countDocuments({ ...payload, number: 'REG-00003', companies: [authCompany._id], status: PENDING });
       const paymentNumber = await CoursePaymentNumber.findOne({ nature: PAYMENT }).lean();
       expect(newPayment).toBeTruthy();
-      expect(paymentNumber.seq).toBe(2);
+      expect(paymentNumber.seq).toBe(3);
 
       const refundResponse = await app.inject({
         method: 'POST',

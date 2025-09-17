@@ -82,10 +82,10 @@ const coursePaymentsList = [
   },
   { // 1
     _id: new ObjectId(),
-    number: 'REG-00003',
+    number: 'REG-00002',
     date: '2022-03-08T00:00:00.000Z',
     companies: [authCompany._id],
-    courseBill: courseBillsList[1]._id,
+    courseBill: courseBillsList[0]._id,
     netInclTaxes: 120,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
