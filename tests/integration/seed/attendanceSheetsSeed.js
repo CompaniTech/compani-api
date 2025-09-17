@@ -218,6 +218,13 @@ const courseHistoriesList = [
   },
   {
     action: TRAINEE_ADDITION,
+    course: coursesList[1]._id,
+    trainee: userList[4]._id,
+    company: companyWithoutSubscription._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+  {
+    action: TRAINEE_ADDITION,
     course: coursesList[3]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
@@ -249,6 +256,13 @@ const courseHistoriesList = [
     course: coursesList[5]._id,
     trainee: userList[4]._id,
     company: companyWithoutSubscription._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+  {
+    action: TRAINEE_ADDITION,
+    course: coursesList[7]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
     createdBy: trainerOrganisationManager._id,
   },
 ];
