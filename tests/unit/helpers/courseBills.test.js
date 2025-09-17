@@ -26,6 +26,7 @@ const {
   SINGLE,
   GROUP,
   INTER_B2B,
+  RECEIVED,
 } = require('../../../src/helpers/constants');
 
 describe('getNetInclTaxes', () => {
@@ -1847,6 +1848,7 @@ describe('generateBillPdf', () => {
             {
               path: 'coursePayments',
               select: 'nature netInclTaxes date',
+              match: { status: RECEIVED },
               options: { sort: { date: -1 }, isVendorUser: false, requestingOwnInfos: true },
             },
           ],
