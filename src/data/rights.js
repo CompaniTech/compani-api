@@ -25,6 +25,7 @@ const rights = [
   { permission: 'completioncertificates:edit', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Ajouter, générer et télécharger les certificats de réalisation mensuels' },
   { permission: 'coursebills:read', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, CLIENT_ADMIN, HOLDING_ADMIN], description: 'Consulter les informations de facturation' },
   { permission: 'coursebills:edit', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Editer une facture ou un avoir' },
+  { permission: 'coursepayments:read', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Consulter les paiements' },
   { permission: 'courses:create', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Créer une formation' },
   { permission: 'courses:edit', rolesConcerned: [CLIENT_ADMIN, COACH, VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER, HOLDING_ADMIN], description: 'Editer les formations' },
   { permission: 'courses:read', rolesConcerned: [CLIENT_ADMIN, COACH, VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER, HOLDING_ADMIN], description: 'Consulter les données des formations' },
