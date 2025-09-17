@@ -4,8 +4,10 @@ const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const User = require('../../../src/models/User');
 const Course = require('../../../src/models/Course');
+const Attendance = require('../../../src/models/Attendance');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const attendanceSheetHelper = require('../../../src/helpers/attendanceSheets');
+const AttendanceHelper = require('../../../src/helpers/attendances');
 const CoursesHelper = require('../../../src/helpers/courses');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
 const NotificationHelper = require('../../../src/helpers/notifications');
@@ -146,6 +148,7 @@ describe('list', () => {
 describe('create', () => {
   let uploadCourseFile;
   let userFindOne;
+  let attendanceCountDocuments;
   let attendanceSheetFindOne;
   let attendanceSheetFindOneAndUpdate;
   let formatIdentity;
@@ -153,10 +156,12 @@ describe('create', () => {
   let courseFindOne;
   let getCompanyAtCourseRegistrationList;
   let sendAttendanceSheetSignatureRequestNotification;
+  let createAttendance;
 
   beforeEach(() => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     userFindOne = sinon.stub(User, 'findOne');
+    attendanceCountDocuments = sinon.stub(Attendance, 'countDocuments');
     attendanceSheetFindOne = sinon.stub(AttendanceSheet, 'findOne');
     attendanceSheetFindOneAndUpdate = sinon.stub(AttendanceSheet, 'findOneAndUpdate');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
@@ -167,11 +172,13 @@ describe('create', () => {
       NotificationHelper,
       'sendAttendanceSheetSignatureRequestNotification'
     );
+    createAttendance = sinon.stub(AttendanceHelper, 'create');
   });
 
   afterEach(() => {
     uploadCourseFile.restore();
     userFindOne.restore();
+    attendanceCountDocuments.restore();
     attendanceSheetFindOne.restore();
     attendanceSheetFindOneAndUpdate.restore();
     formatIdentity.restore();
@@ -179,6 +186,7 @@ describe('create', () => {
     courseFindOne.restore();
     getCompanyAtCourseRegistrationList.restore();
     sendAttendanceSheetSignatureRequestNotification.restore();
+    createAttendance.restore();
   });
 
   it('should create an attendance sheet for INTRA course', async () => {
@@ -220,6 +228,8 @@ describe('create', () => {
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+    sinon.assert.notCalled(attendanceCountDocuments);
+    sinon.assert.notCalled(createAttendance);
   });
 
   it('should upload trainer signature and create attendance sheets for INTRA', async () => {
@@ -275,6 +285,9 @@ describe('create', () => {
       course: courseId,
       date: '2025-08-28T10:00:00.000Z',
     });
+    attendanceCountDocuments.onCall(0).returns(1);
+    attendanceCountDocuments.onCall(1).returns(0);
+    attendanceCountDocuments.onCall(2).returns(0);
 
     await attendanceSheetHelper.create(payload, credentials);
 
@@ -321,6 +334,28 @@ describe('create', () => {
         'ExponentPushToken[jeSuisUnAutreTokenExpo]',
         'ExponentPushToken[jeSuisUnNouveauTokenExpo]',
       ]
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(0),
+      { trainee: traineesId[0], courseSlot: slots[0].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(1),
+      { trainee: traineesId[1], courseSlot: slots[0].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(2),
+      { trainee: traineesId[0], courseSlot: slots[1].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(0),
+      { trainee: traineesId[1], courseSlot: slots[0].slotId },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(1),
+      { trainee: traineesId[0], courseSlot: slots[1].slotId },
+      credentials
     );
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(formatIdentity);
@@ -382,6 +417,9 @@ describe('create', () => {
       course: courseId,
       date: '2025-08-28T10:00:00.000Z',
     });
+    attendanceCountDocuments.onCall(0).returns(1);
+    attendanceCountDocuments.onCall(1).returns(0);
+    attendanceCountDocuments.onCall(2).returns(0);
 
     await attendanceSheetHelper.create(payload, credentials);
 
@@ -438,6 +476,28 @@ describe('create', () => {
         'ExponentPushToken[jeSuisUnAutreTokenExpo]',
         'ExponentPushToken[jeSuisUnNouveauTokenExpo]',
       ]
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(0),
+      { trainee: traineesId[0], courseSlot: slots[0].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(1),
+      { trainee: traineesId[1], courseSlot: slots[0].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(2),
+      { trainee: traineesId[0], courseSlot: slots[1].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(0),
+      { trainee: traineesId[1], courseSlot: slots[0].slotId },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(1),
+      { trainee: traineesId[0], courseSlot: slots[1].slotId },
+      credentials
     );
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(formatIdentity);
@@ -508,6 +568,8 @@ describe('create', () => {
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+    sinon.assert.notCalled(attendanceCountDocuments);
+    sinon.assert.notCalled(createAttendance);
   });
 
   it('should upload trainer signature and create attendance sheets for INTER', async () => {
@@ -553,6 +615,10 @@ describe('create', () => {
     getCompanyAtCourseRegistrationList.onCall(1).returns([{ trainee: traineesId[1], company: companyId }]);
     create.onCall(0).returns({ _id: attendanceSheetIds[0], slots: formattedSlots, trainee: traineesId[0] });
     create.onCall(1).returns({ _id: attendanceSheetIds[1], slots: formattedSlots, trainee: traineesId[1] });
+    attendanceCountDocuments.onCall(0).returns(1);
+    attendanceCountDocuments.onCall(1).returns(0);
+    attendanceCountDocuments.onCall(2).returns(0);
+    attendanceCountDocuments.onCall(3).returns(0);
 
     await attendanceSheetHelper.create(payload, credentials);
 
@@ -658,6 +724,37 @@ describe('create', () => {
       credentials._id,
       ['ExponentPushToken[jeSuisUnNouveauTokenExpo]']
     );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(0),
+      { trainee: traineesId[0], courseSlot: slots[0] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(1),
+      { trainee: traineesId[1], courseSlot: slots[0] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(2),
+      { trainee: traineesId[0], courseSlot: slots[1] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(3),
+      { trainee: traineesId[1], courseSlot: slots[1] }
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(0),
+      { trainee: traineesId[1], courseSlot: slots[0] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(1),
+      { trainee: traineesId[0], courseSlot: slots[1] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(2),
+      { trainee: traineesId[1], courseSlot: slots[1] },
+      credentials
+    );
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
   });
 
@@ -736,6 +833,10 @@ describe('create', () => {
     formatIdentity.onCall(1).returns('Eren JAEGER');
     getCompanyAtCourseRegistrationList.onCall(0).returns([{ trainee: traineesId[0], company: companyId }]);
     getCompanyAtCourseRegistrationList.onCall(1).returns([{ trainee: traineesId[1], company: companyId }]);
+    attendanceCountDocuments.onCall(0).returns(1);
+    attendanceCountDocuments.onCall(1).returns(0);
+    attendanceCountDocuments.onCall(2).returns(0);
+    attendanceCountDocuments.onCall(3).returns(0);
 
     await attendanceSheetHelper.create(payload, credentials);
 
@@ -835,6 +936,37 @@ describe('create', () => {
       credentials._id,
       ['ExponentPushToken[jeSuisUnNouveauTokenExpo]']
     );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(0),
+      { trainee: traineesId[0], courseSlot: slots[0] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(1),
+      { trainee: traineesId[1], courseSlot: slots[0] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(2),
+      { trainee: traineesId[0], courseSlot: slots[1] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(3),
+      { trainee: traineesId[1], courseSlot: slots[1] }
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(0),
+      { trainee: traineesId[1], courseSlot: slots[0] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(1),
+      { trainee: traineesId[0], courseSlot: slots[1] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(2),
+      { trainee: traineesId[1], courseSlot: slots[1] },
+      credentials
+    );
     sinon.assert.notCalled(uploadCourseFile);
     sinon.assert.notCalled(create);
   });
@@ -857,6 +989,7 @@ describe('create', () => {
     formatIdentity.returns('Eren JÄGER');
     getCompanyAtCourseRegistrationList.returns([{ trainee: traineeId, company: companyId }]);
     create.returns({ _id: attendanceSheetId });
+    attendanceCountDocuments.returns(0);
 
     await attendanceSheetHelper.create(payload, credentials);
 
@@ -885,6 +1018,8 @@ describe('create', () => {
       { key: COURSE, value: courseId },
       { key: TRAINEE, value: [traineeId] }
     );
+    sinon.assert.calledOnceWithExactly(attendanceCountDocuments, { trainee: traineeId, courseSlot: slotId });
+    sinon.assert.calledOnceWithExactly(createAttendance, { trainee: traineeId, courseSlot: slotId }, credentials);
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
@@ -911,6 +1046,8 @@ describe('create', () => {
     formatIdentity.returns('Mikasa ACKERMAN');
     getCompanyAtCourseRegistrationList.returns([{ trainee: traineeId, company: companyId }]);
     create.returns({ _id: attendanceSheetId });
+    attendanceCountDocuments.onCall(0).returns(0);
+    attendanceCountDocuments.onCall(1).returns(1);
 
     await attendanceSheetHelper.create(payload, credentials);
 
@@ -939,6 +1076,9 @@ describe('create', () => {
       { key: COURSE, value: courseId },
       { key: TRAINEE, value: [traineeId] }
     );
+    sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(0), { trainee: traineeId, courseSlot: slots[0] });
+    sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(1), { trainee: traineeId, courseSlot: slots[1] });
+    sinon.assert.calledOnceWithExactly(createAttendance, { trainee: traineeId, courseSlot: slots[0] }, credentials);
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
@@ -975,6 +1115,8 @@ describe('create', () => {
     formatIdentity.returns('Mikasa ACKERMAN');
     getCompanyAtCourseRegistrationList.returns([{ trainee: traineeId, company: companyId }]);
     create.returns({ _id: attendanceSheetId, slots: formattedSlots, trainee: traineeId });
+    attendanceCountDocuments.onCall(0).returns(0);
+    attendanceCountDocuments.onCall(1).returns(1);
 
     await attendanceSheetHelper.create(payload, credentials);
 
@@ -1023,6 +1165,9 @@ describe('create', () => {
       credentials._id,
       ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]']
     );
+    sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(0), { trainee: traineeId, courseSlot: slots[0] });
+    sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(1), { trainee: traineeId, courseSlot: slots[1] });
+    sinon.assert.calledOnceWithExactly(createAttendance, { trainee: traineeId, courseSlot: slots[0] }, credentials);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
   });
 });

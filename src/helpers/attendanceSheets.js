@@ -2,10 +2,12 @@ const omit = require('lodash/omit');
 const get = require('lodash/get');
 const cloneDeep = require('lodash/cloneDeep');
 const AttendanceSheet = require('../models/AttendanceSheet');
+const Attendance = require('../models/Attendance');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
 const IntraAttendanceSheet = require('../data/pdf/attendanceSheet/intraAttendanceSheet');
 const User = require('../models/User');
 const Course = require('../models/Course');
+const AttendanceHelper = require('./attendances');
 const CourseHistoriesHelper = require('./courseHistories');
 const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
@@ -132,7 +134,23 @@ exports.create = async (payload, credentials) => {
       })
     );
   }
+
+  const attendancesPromises = [];
+  if (slots.length) {
+    for (const slot of slots) {
+      const trainees = [];
+      if (payload.trainees) trainees.push(...(Array.isArray(payload.trainees) ? payload.trainees : [payload.trainees]));
+      else trainees.push(...slot.traineesSignature.map(signature => signature.traineeId));
+      for (const trainee of trainees) {
+        const attendance = await Attendance.countDocuments({ trainee, courseSlot: slot.slotId });
+        if (!attendance) {
+          attendancesPromises.push(AttendanceHelper.create({ trainee, courseSlot: slot.slotId }, credentials));
+        }
+      }
+    }
+  }
   const results = await Promise.all(promises);
+  await Promise.all(attendancesPromises);
   if (Object.keys(formationExpoTokens).length) {
     for (const result of results) {
       const tokens = payload.date
