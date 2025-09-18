@@ -10,6 +10,7 @@ const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
 const { WEBAPP, MOBILE, GENERATION } = require('../../src/helpers/constants');
 const { CompaniDate } = require('../../src/helpers/dates/companiDates');
+const Attendance = require('../../src/models/Attendance');
 const AttendanceSheet = require('../../src/models/AttendanceSheet');
 const { holdingAdminFromOtherCompany, trainerAndCoach, trainer } = require('../seed/authUsersSeed');
 const { authCompany, otherCompany, otherHolding, authHolding } = require('../seed/authCompaniesSeed');
@@ -1763,24 +1764,28 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       sinon.assert.calledOnce(deleteCourseFile);
     });
 
-    it('should delete an attendance sheet (with signatures but no file)', async () => {
+    it('should delete an attendance sheet (with signatures and attendances but no file)', async () => {
       const attendanceSheetId = attendanceSheetList[9]._id;
       const attendanceSheetsLength = await AttendanceSheet.countDocuments();
+      const attendanceLength = await Attendance.countDocuments();
       const response = await app.inject({
         method: 'DELETE',
-        url: `/attendancesheets/${attendanceSheetId}`,
+        url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
       expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
+      const attendanceAfter = await Attendance.countDocuments();
+      expect(attendanceAfter).toEqual(attendanceLength - 1);
       sinon.assert.calledTwice(deleteCourseFile);
     });
 
     it('should delete an attendance sheet (with both signatures and file)', async () => {
       const attendanceSheetId = attendanceSheetList[10]._id;
       const attendanceSheetsLength = await AttendanceSheet.countDocuments();
+      const attendanceLength = await Attendance.countDocuments();
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetId}`,
@@ -1790,7 +1795,38 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(200);
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
       expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
+      const attendanceAfter = await Attendance.countDocuments();
+      expect(attendanceAfter).toEqual(attendanceLength);
       sinon.assert.calledThrice(deleteCourseFile);
+    });
+
+    it('should delete an intra_holding attendance sheet and its attendances', async () => {
+      const attendanceSheetId = attendanceSheetList[14]._id;
+      const attendanceSheetsLength = await AttendanceSheet.countDocuments();
+      const attendanceLength = await Attendance.countDocuments();
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
+      expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
+      const attendanceAfter = await Attendance.countDocuments();
+      expect(attendanceAfter).toEqual(attendanceLength - 1);
+      sinon.assert.calledThrice(deleteCourseFile);
+    });
+
+    it('should return 400 if shouldDeleteAttendances but no slots in attendance sheet', async () => {
+      const attendanceSheetId = attendanceSheetList[0]._id;
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return a 404 if attendance sheet does not exist', async () => {

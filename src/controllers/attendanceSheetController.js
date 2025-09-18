@@ -56,7 +56,7 @@ const signAttendanceSheet = async (req) => {
 
 const deleteAttendanceSheet = async (req) => {
   try {
-    await AttendanceSheetHelper.delete(req.params._id);
+    await AttendanceSheetHelper.delete(req.params._id, req.query.shouldDeleteAttendances);
 
     return { message: translate[language].attendanceSheetDeleted };
   } catch (e) {
