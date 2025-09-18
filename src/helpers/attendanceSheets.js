@@ -268,7 +268,7 @@ exports.generate = async (attendanceSheetId) => {
       .replaceAll(/ - | |'/g, '_');
   } else {
     if (formattedCourse.type === INTRA_HOLDING) {
-      formattedCourse.companies = [...formattedCourse.companies]
+      formattedCourse.companies = formattedCourse.companies
         .filter(c => UtilsHelper.doesArrayIncludeId(attendanceSheet.companies, c._id));
     }
     const formattedCourseForIntra = await CoursesHelper.formatIntraCourseForPdf(formattedCourse);
