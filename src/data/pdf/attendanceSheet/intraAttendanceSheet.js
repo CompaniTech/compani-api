@@ -34,7 +34,12 @@ exports.getPdfContent = async (data) => {
     const indexOffset = isIntraHoldingCourse ? 2 : 1;
     date.slots.forEach(slot => body[0].push({ text: `${slot.startHour} - ${slot.endHour}`, style: 'header' }));
     const numberOfRows = signedSlots
-      ? Math.max(0, ...signedSlots.map(slot => slot.traineesSignature.length + 1 || 0))
+      ? Math.max(
+        0,
+        [
+          ...new Set(signedSlots.flatMap(slot => slot.traineesSignature.map(s => s.traineeId.toHexString()))),
+        ].length + 1 || 0
+      )
       : 11;
 
     for (let row = 1; row <= numberOfRows; row++) {
