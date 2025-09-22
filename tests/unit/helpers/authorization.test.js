@@ -124,6 +124,7 @@ describe('validate', () => {
           'scripts:run',
           'trainermissions:edit',
           'trainermissions:read',
+          'xml:create',
           `company-${companyId}`,
           `company-${otherCompanyId}`,
         ],
