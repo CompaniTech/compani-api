@@ -177,13 +177,13 @@ exports.authorizeAttendanceDeletion = async (req) => {
 
   const isLinkedToAttendanceSheet = await AttendanceSheet.countDocuments({
     'slots.slotId': courseSlot._id,
-    $or: [{ trainee: traineeId }, { 'slots.traineesSignature.traineeId': traineeId }],
+    ...traineeId && { $or: [{ trainee: traineeId }, { 'slots.traineesSignature.traineeId': traineeId }] },
   });
   if (isLinkedToAttendanceSheet) throw Boom.forbidden(translate[language].attendanceIsLinkedToAttendanceSheet);
 
   const isLinkedToCompletionCertificate = await CompletionCertificate.countDocuments({
     month: CompaniDate(courseSlot.startDate).format(MM_YYYY),
-    trainee: traineeId,
+    ...traineeId && { trainee: traineeId },
     file: { $exists: true },
   });
   if (isLinkedToCompletionCertificate) {
