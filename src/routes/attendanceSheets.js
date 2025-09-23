@@ -100,6 +100,7 @@ exports.plugin = {
       options: {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
+          query: Joi.object({ shouldDeleteAttendances: Joi.boolean() }),
         },
         auth: { scope: ['attendances:edit'] },
         pre: [{ method: authorizeAttendanceSheetDeletion }],

@@ -212,5 +212,7 @@ exports.authorizeAttendanceSheetDeletion = async (req) => {
 
   if (!isVendorAndAuthorized(get(attendanceSheet, 'course.trainers'), credentials)) throw Boom.forbidden();
 
+  if (req.query.shouldDeleteAttendances && !attendanceSheet.slots) throw Boom.badRequest();
+
   return null;
 };

@@ -302,7 +302,7 @@ exports.generate = async (attendanceSheetId) => {
   await AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { file: fileUploaded } });
 };
 
-exports.delete = async (attendanceSheetId) => {
+exports.delete = async (attendanceSheetId, shouldDeleteAttendances) => {
   const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
 
   await AttendanceSheet.deleteOne({ _id: attendanceSheet._id });
@@ -311,13 +311,23 @@ exports.delete = async (attendanceSheetId) => {
     const promises = [];
     const { slots } = attendanceSheet;
     const signatures = [];
+    const traineesIds = [];
+    if (attendanceSheet.trainee && shouldDeleteAttendances) traineesIds.push(attendanceSheet.trainee);
     for (const slot of slots) {
       if (slot.trainerSignature) signatures.push(slot.trainerSignature.signature);
       if (slot.traineesSignature) {
         signatures.push(...slot.traineesSignature.filter(s => s.signature).map(s => s.signature));
       }
+      if (!traineesIds.length && shouldDeleteAttendances) {
+        traineesIds.push(...slot.traineesSignature.map(signature => signature.traineeId));
+      }
     }
 
+    if (shouldDeleteAttendances) {
+      promises.push(
+        Attendance.deleteMany({ courseSlot: { $in: slots.map(s => s.slotId) }, trainee: { $in: traineesIds } })
+      );
+    }
     for (const signature of [...new Set(signatures)]) {
       promises.push(GCloudStorageHelper.deleteCourseFile(signature.split('/').pop()));
     }
