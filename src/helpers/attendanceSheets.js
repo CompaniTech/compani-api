@@ -180,8 +180,27 @@ exports.list = async (query, credentials) => {
   }));
 };
 
-exports.update = async (attendanceSheetId, payload) =>
-  AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots: payload.slots.map(s => ({ slotId: s })) } });
+exports.update = async (attendanceSheetId, payload, credentials) => {
+  if (payload.shouldUpdateAttendances) {
+    const attendanceSheetToEdit = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
+    const attendanceSheetSlots = attendanceSheetToEdit.slots.map(s => s.slotId);
+    const { trainee } = attendanceSheetToEdit;
+    const attendancesToDelete = attendanceSheetSlots
+      .filter(slot => !UtilsHelper.doesArrayIncludeId(payload.slots, slot));
+
+    const attendancesPromises = [];
+    for (const slot of payload.slots) {
+      const attendance = await Attendance.countDocuments({ trainee, courseSlot: slot });
+      if (!attendance) {
+        attendancesPromises.push(AttendanceHelper.create({ trainee, courseSlot: slot }, credentials));
+      }
+    }
+    attendancesPromises.push(Attendance.deleteMany({ courseSlot: { $in: attendancesToDelete }, trainee }));
+    await Promise.all(attendancesPromises);
+  }
+  return AttendanceSheet
+    .updateOne({ _id: attendanceSheetId }, { $set: { slots: payload.slots.map(s => ({ slotId: s })) } });
+};
 
 exports.sign = async (attendanceSheetId, payload, credentials) => {
   const attendanceSheet = await AttendanceSheet

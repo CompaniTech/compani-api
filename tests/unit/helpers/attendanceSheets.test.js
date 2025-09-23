@@ -1174,20 +1174,72 @@ describe('create', () => {
 
 describe('update', () => {
   let updateOne;
+  let findOne;
+  let AttendanceHelperCreate;
+  let AttendanceDeleteMany;
+  let AttendanceCountDocuments;
   beforeEach(() => {
     updateOne = sinon.stub(AttendanceSheet, 'updateOne');
+    findOne = sinon.stub(AttendanceSheet, 'findOne');
+    AttendanceHelperCreate = sinon.stub(AttendanceHelper, 'create');
+    AttendanceDeleteMany = sinon.stub(Attendance, 'deleteMany');
+    AttendanceCountDocuments = sinon.stub(Attendance, 'countDocuments');
   });
   afterEach(() => {
     updateOne.restore();
+    findOne.restore();
+    AttendanceHelperCreate.restore();
+    AttendanceDeleteMany.restore();
+    AttendanceCountDocuments.restore();
   });
 
-  it('should update an attendance sheet', async () => {
+  it('should update an attendance sheet (without updating attendances)', async () => {
+    const credentials = { _id: new ObjectId() };
     const slotId = new ObjectId();
     const attendanceSheetId = new ObjectId();
     const payload = { slots: [slotId] };
-    await attendanceSheetHelper.update(attendanceSheetId, payload);
+    await attendanceSheetHelper.update(attendanceSheetId, payload, credentials);
 
     sinon.assert.calledOnceWithExactly(updateOne, { _id: attendanceSheetId }, { $set: { slots: [{ slotId }] } });
+    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(AttendanceCountDocuments);
+    sinon.assert.notCalled(AttendanceHelperCreate);
+    sinon.assert.notCalled(AttendanceDeleteMany);
+  });
+
+  it('should update an attendance sheet and update attendances', async () => {
+    const credentials = { _id: new ObjectId() };
+    const slotIdToCreate = new ObjectId();
+    const slotIdToDelete = new ObjectId();
+    const commonSlotId = new ObjectId();
+    const attendanceSheetId = new ObjectId();
+    const trainee = new ObjectId();
+    const payload = { slots: [slotIdToCreate, commonSlotId], shouldUpdateAttendances: true };
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      trainee,
+      slots: [{ slotId: slotIdToDelete }, { slotId: commonSlotId }],
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
+    AttendanceCountDocuments.onCall(0).returns(0);
+    AttendanceCountDocuments.onCall(1).returns(1);
+
+    await attendanceSheetHelper.update(attendanceSheetId, payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledWithExactly(AttendanceCountDocuments.getCall(0), { trainee, courseSlot: slotIdToCreate });
+    sinon.assert.calledWithExactly(AttendanceCountDocuments.getCall(1), { trainee, courseSlot: commonSlotId });
+    sinon.assert.calledOnceWithExactly(AttendanceHelperCreate, { trainee, courseSlot: slotIdToCreate }, credentials);
+    sinon.assert.calledOnceWithExactly(AttendanceDeleteMany, { courseSlot: { $in: [slotIdToDelete] }, trainee });
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      { $set: { slots: [{ slotId: slotIdToCreate }, { slotId: commonSlotId }] } }
+    );
   });
 });
 

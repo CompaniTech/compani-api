@@ -33,7 +33,7 @@ const create = async (req) => {
 
 const updateAttendanceSheet = async (req) => {
   try {
-    if (req.payload.slots) await AttendanceSheetHelper.update(req.params._id, req.payload);
+    if (req.payload.slots) await AttendanceSheetHelper.update(req.params._id, req.payload, req.auth.credentials);
     else await AttendanceSheetHelper.generate(req.params._id);
 
     return { message: translate[language].attendanceSheetUpdated };
