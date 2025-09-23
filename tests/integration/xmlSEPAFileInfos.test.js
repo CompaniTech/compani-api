@@ -11,7 +11,7 @@ describe('NODE ENV', () => {
   });
 });
 
-describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos #tag', () => {
+describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
   let authToken;
   beforeEach(populateDB);
 
@@ -88,6 +88,22 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos #tag', () => {
     it('should return 404 if a payment is not a direct_debit', async () => {
       const payload = {
         payments: [coursePaymentList[0]._id, coursePaymentList[1]._id],
+        name: 'Compani - Septembre 2025',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if a payment is not pending', async () => {
+      const payload = {
+        payments: [coursePaymentList[0]._id, coursePaymentList[5]._id],
         name: 'Compani - Septembre 2025',
       };
 

@@ -14,6 +14,7 @@ const {
   GLOBAL,
   GROUP,
   BANK_TRANSFER,
+  XML_GENERATED,
 } = require('../../../src/helpers/constants');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const { trainingOrganisationManagerRoleId } = require('../../seed/authRolesSeed');
@@ -222,6 +223,17 @@ const coursePaymentList = [
     nature: PAYMENT,
     type: DIRECT_DEBIT,
     status: PENDING,
+  },
+  { // 5
+    _id: new ObjectId(),
+    number: 'REG-00006',
+    date: '2025-03-11T00:00:00.000Z',
+    companies: [authCompany._id],
+    courseBill: courseBillList[2]._id,
+    netInclTaxes: 200,
+    nature: PAYMENT,
+    type: DIRECT_DEBIT,
+    status: XML_GENERATED,
   },
 ];
 

@@ -238,6 +238,10 @@ module.exports = {
     trainerMissionsFound: 'Trainer missions found',
     trainerMissionsNotFound: 'Trainer missions not found',
     trainerMissionUpdated: 'Trainer mission updated',
+    /* XmlSEPAFileInfos */
+    xmlSEPAFileInfosAlreadyExist: 'Forbidden : xmlSEPAFileInfos already exist.',
+    xmlSEPAFileWrongPayment: 'Forbidden : wrong payment type or status.',
+    xmlSEPAFileWrongPayer: 'Forbidden : payer is not a company.',
   },
   'fr-FR': {
     /* Token errors */
@@ -478,5 +482,10 @@ module.exports = {
     trainerMissionsFound: 'Ordres de mission trouvés',
     trainerMissionsNotFound: 'Ordres de mission non trouvés',
     trainerMissionUpdated: 'Ordre de mission mis à jour',
+    /* XmlSEPAFileInfos */
+    xmlSEPAFileInfosAlreadyExist: `Impossible : il existe déjà un fichier xml associé à ce nom de lot ou à un
+      paiement sélectionné.`,
+    xmlSEPAFileWrongPayment: 'Impossible : un paiement sélectionné n\'est pas un prélèvement en attente.',
+    xmlSEPAFileWrongPayer: 'Impossible : le payeur associé à un paiement est un financeur.',
   },
 };
