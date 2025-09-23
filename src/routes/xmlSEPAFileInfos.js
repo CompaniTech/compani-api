@@ -1,7 +1,7 @@
 'use-strict';
 
 const Joi = require('joi');
-const { downloadXmlSEPAFile } = require('../controllers/xmlSEPAFileInfosController');
+const { create } = require('../controllers/xmlSEPAFileInfosController');
 const { authorizeXMLFileDownload } = require('./preHandlers/xmlSEPAFileInfos');
 
 exports.plugin = {
@@ -20,7 +20,7 @@ exports.plugin = {
         },
         pre: [{ method: authorizeXMLFileDownload }],
       },
-      handler: downloadXmlSEPAFile,
+      handler: create,
     });
   },
 };

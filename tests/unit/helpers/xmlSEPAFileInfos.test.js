@@ -6,7 +6,7 @@ const { XML_GENERATED } = require('../../../src/helpers/constants');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const CoursePayment = require('../../../src/models/CoursePayment');
 
-describe('downloadXmlSEPAFile', () => {
+describe('create', () => {
   let create;
   let paymentUpdateMany;
   beforeEach(() => {
@@ -22,7 +22,7 @@ describe('downloadXmlSEPAFile', () => {
     const coursePaymentIds = [new ObjectId(), new ObjectId()];
     const payload = { payments: coursePaymentIds, name: 'Compani - Septembre 2025' };
 
-    const result = await XmlSEPAFileInfosHelper.downloadXmlSEPAFile(payload);
+    const result = await XmlSEPAFileInfosHelper.create(payload);
 
     expect(result).toEqual({ name: 'Prelevements_SEPA_Compani - Septembre 2025.xml' });
 

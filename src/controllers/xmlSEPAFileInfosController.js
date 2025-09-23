@@ -2,12 +2,12 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const XmlSEPAFileInfosHelper = require('../helpers/xmlSEPAFileInfos');
 
-const downloadXmlSEPAFile = async (req) => {
+const create = async (req) => {
   try {
     req.log('teletransmissionController - generateDeliveryXml - query', req.query);
     req.log('teletransmissionController - generateDeliveryXml - company', get(req, 'auth.credentials.company._id'));
 
-    const doc = await XmlSEPAFileInfosHelper.downloadXmlSEPAFile(req.payload);
+    const doc = await XmlSEPAFileInfosHelper.create(req.payload);
 
     return doc;
   } catch (e) {
@@ -16,4 +16,4 @@ const downloadXmlSEPAFile = async (req) => {
   }
 };
 
-module.exports = { downloadXmlSEPAFile };
+module.exports = { create };
