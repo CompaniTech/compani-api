@@ -676,10 +676,10 @@ const attendanceSheetList = [
 ];
 
 const attendancesList = [
-  { _id: new ObjectId(), courseSlot: slotsList[5]._id, trainee: userList[1]._id, company: authCompany._id },
   { _id: new ObjectId(), courseSlot: slotsList[10]._id, trainee: userList[1]._id, company: authCompany._id },
   { _id: new ObjectId(), courseSlot: slotsList[11]._id, trainee: userList[1]._id, company: authCompany._id },
   { _id: new ObjectId(), courseSlot: slotsList[19]._id, trainee: userList[2]._id, company: otherCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[5]._id, trainee: userList[1]._id, company: authCompany._id },
 ];
 
 const populateDB = async () => {
