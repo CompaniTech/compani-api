@@ -38,6 +38,7 @@ const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const UserHolding = require('../../../src/models/UserHolding');
 const VendorCompany = require('../../../src/models/VendorCompany');
+const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const { ascendingSort } = require('../../../src/helpers/dates');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const { CompaniDuration } = require('../../../src/helpers/dates/companiDurations');
@@ -97,6 +98,7 @@ const {
   END_COURSE,
   MONTHLY,
   SINGLE,
+  XML_GENERATED,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -130,6 +132,7 @@ const trainingContractsSeed = require('./trainingContractsSeed');
 const userCompaniesSeed = require('./userCompaniesSeed');
 const usersSeed = require('./usersSeed');
 const vendorCompaniesSeed = require('./vendorCompaniesSeed');
+const xmlSEPAFileInfosSeed = require('./xmlSEPAFileInfosSeed');
 
 const seedList = [
   { label: 'ACTIVITY', value: activitiesSeed },
@@ -164,6 +167,7 @@ const seedList = [
   { label: 'USERCOMPANY', value: userCompaniesSeed },
   { label: 'USER', value: usersSeed },
   { label: 'VENDORCOMPANY', value: vendorCompaniesSeed },
+  { label: 'XMLSEPAFILEINFOS', value: xmlSEPAFileInfosSeed },
 ];
 
 const transform = doc => (doc || null);
@@ -2631,6 +2635,35 @@ describe('SEEDS VERIFICATION', () => {
               [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER]
                 .includes(get(vendorCompany.billingRepresentative, 'role.vendor.name')));
           expect(doesEveryUserExistAndHasGoodRole).toBeTruthy();
+        });
+      });
+
+      describe('Collection XmlSEPAFileInfos', () => {
+        let xmlSEPAFileInfosList;
+        before(async () => {
+          xmlSEPAFileInfosList = await XmlSEPAFileInfos
+            .find()
+            .populate({ path: 'coursePayments', select: 'status' })
+            .setOptions({ isVendorUser: true })
+            .lean();
+        });
+
+        it('should pass if every xmlSEPAFileInfos\'s payments are linked to a unique xml file', () => {
+          const paymentsWithoutDuplicates = [
+            ...new Set(xmlSEPAFileInfosList
+              .flatMap(fileInfos => fileInfos.coursePayments.map(payment => payment._id.toHexString()))
+            ),
+          ];
+
+          expect(paymentsWithoutDuplicates.length)
+            .toEqual(xmlSEPAFileInfosList.flatMap(fileInfos => fileInfos.coursePayments).length);
+        });
+
+        it('should pass if every xmlSEPAFileInfos\'s payment\'s status is XML_GENERATED', () => {
+          const everyPaymentHasGoodStatus = xmlSEPAFileInfosList
+            .every(fileInfos => fileInfos.coursePayments.every(payment => payment.status === XML_GENERATED));
+
+          expect(everyPaymentHasGoodStatus).toBeTruthy();
         });
       });
     });

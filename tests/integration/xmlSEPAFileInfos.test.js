@@ -4,6 +4,8 @@ const omit = require('lodash/omit');
 const app = require('../../server');
 const { coursePaymentList, populateDB } = require('./seed/xmlSEPAFileInfosSeed');
 const { getToken } = require('./helpers/authentication');
+const { XML_GENERATED } = require('../../src/helpers/constants');
+const CoursePayment = require('../../src/models/CoursePayment');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -35,6 +37,9 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.result).toEqual({ name: 'Prelevements_SEPA_Compani - Septembre 2025.xml' });
+      const paymentsCountAfter = await CoursePayment
+        .countDocuments({ _id: { $in: [coursePaymentList[0]._id, coursePaymentList[2]._id] }, status: XML_GENERATED });
+      expect(paymentsCountAfter).toEqual(2);
     });
 
     const missingParams = ['payments', 'name'];
@@ -140,7 +145,20 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
         payload,
       });
 
-      expect(response.statusCode).toBe(403);
+      expect(response.statusCode).toBe(409);
+    });
+
+    it('should return 409 if a xml file exists with same name', async () => {
+      const payload = { payments: [coursePaymentList[0]._id], name: 'sepaInfos' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(409);
     });
   });
 });

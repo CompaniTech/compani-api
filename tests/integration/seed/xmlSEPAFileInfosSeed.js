@@ -15,6 +15,7 @@ const {
   GROUP,
   BANK_TRANSFER,
   XML_GENERATED,
+  RECEIVED,
 } = require('../../../src/helpers/constants');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const { trainingOrganisationManagerRoleId } = require('../../seed/authRolesSeed');
@@ -218,11 +219,11 @@ const coursePaymentList = [
     number: 'REG-00005',
     date: '2025-03-11T00:00:00.000Z',
     companies: [authCompany._id],
-    courseBill: courseBillList[2]._id,
+    courseBill: courseBillList[1]._id,
     netInclTaxes: 200,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
-    status: PENDING,
+    status: XML_GENERATED,
   },
   { // 5
     _id: new ObjectId(),
@@ -233,11 +234,11 @@ const coursePaymentList = [
     netInclTaxes: 200,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
-    status: XML_GENERATED,
+    status: RECEIVED,
   },
 ];
 
-const xmlSEPAFileInfos = { payments: [coursePaymentList[4]._id], name: 'sepaInfos' };
+const xmlSEPAFileInfos = { coursePayments: [coursePaymentList[4]._id], name: 'sepaInfos' };
 
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();

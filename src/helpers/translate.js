@@ -483,9 +483,9 @@ module.exports = {
     trainerMissionsNotFound: 'Ordres de mission non trouvés',
     trainerMissionUpdated: 'Ordre de mission mis à jour',
     /* XmlSEPAFileInfos */
-    xmlSEPAFileInfosAlreadyExist: `Impossible : il existe déjà un fichier xml associé à ce nom de lot ou à un
-      paiement sélectionné.`,
-    xmlSEPAFileWrongPayment: 'Impossible : un paiement sélectionné n\'est pas un prélèvement en attente.',
-    xmlSEPAFileWrongPayer: 'Impossible : le payeur associé à un paiement est un financeur.',
+    xmlSEPAFileInfosAlreadyExist: `Impossible : il existe déjà un fichier XML associé à ce nom de lot ou à un
+      des paiements sélectionnés.`,
+    xmlSEPAFileWrongPayment: 'Impossible : un des paiements sélectionnés n\'est pas un prélèvement en attente.',
+    xmlSEPAFileWrongPayer: 'Impossible : le payeur associé à un des paiements est un financeur.',
   },
 };
