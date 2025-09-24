@@ -25,7 +25,7 @@ const { authCompany } = require('../../seed/authCompaniesSeed');
 const { trainerAndCoach, trainer, userList } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 
-const programIdList = [new ObjectId(), new ObjectId()];
+const programId = new ObjectId();
 
 const stepList = [
   { _id: new ObjectId(), name: 'étape 1', type: ON_SITE, status: PUBLISHED, theoreticalDuration: 9000 },
@@ -35,7 +35,7 @@ const stepList = [
 const subProgram = {
   _id: new ObjectId(),
   name: 'subProgram 1',
-  program: programIdList[0],
+  program: programId,
   steps: [stepList[0]._id, stepList[1]._id],
   status: PUBLISHED,
 };
