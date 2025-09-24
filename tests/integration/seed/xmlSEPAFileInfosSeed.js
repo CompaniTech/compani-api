@@ -21,7 +21,7 @@ const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
-const { authCompany } = require('../../seed/authCompaniesSeed');
+const { authCompany, otherCompany } = require('../../seed/authCompaniesSeed');
 const { trainerAndCoach, trainer, userList } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 
@@ -49,7 +49,7 @@ const course = {
   trainers: [trainer._id, trainerAndCoach._id],
   operationsRepresentative: userList[7]._id,
   contact: userList[7]._id,
-  expectedBillsCount: 2,
+  expectedBillsCount: 3,
   trainees: [userList[0]._id],
   companies: [authCompany._id],
   archivedAt: '2024-07-07T22:00:00.000Z',
@@ -81,11 +81,20 @@ const courseBillList = [
     companies: [authCompany._id],
     payer: { fundingOrganisation: courseFundingOrganisation._id },
     billedAt: '2025-03-08T00:00:00.000Z',
+    number: 'FACT-00002',
+  },
+  { // 2 - payer has no signed debit mandate
+    _id: new ObjectId(),
+    course: course._id,
+    mainFee: { price: 1200, count: 1, countUnit: GROUP },
+    companies: [authCompany._id],
+    payer: { company: otherCompany._id },
+    billedAt: '2025-03-08T00:00:00.000Z',
     number: 'FACT-00003',
   },
 ];
 
-const courseBillNumber = { _id: new ObjectId(), seq: 2 };
+const courseBillNumber = { _id: new ObjectId(), seq: 3 };
 
 const coursePaymentList = [
   { // 0
@@ -154,9 +163,20 @@ const coursePaymentList = [
     type: DIRECT_DEBIT,
     status: RECEIVED,
   },
+  { // 6
+    _id: new ObjectId(),
+    number: 'REG-00007',
+    date: '2025-03-11T00:00:00.000Z',
+    companies: [authCompany._id],
+    courseBill: courseBillList[2]._id,
+    netInclTaxes: 200,
+    nature: PAYMENT,
+    type: DIRECT_DEBIT,
+    status: PENDING,
+  },
 ];
 
-const coursePaymentNumber = { _id: new ObjectId(), seq: 6, nature: PAYMENT };
+const coursePaymentNumber = { _id: new ObjectId(), seq: 7, nature: PAYMENT };
 
 const xmlSEPAFileInfos = { coursePayments: [coursePaymentList[4]._id], name: 'sepaInfos' };
 

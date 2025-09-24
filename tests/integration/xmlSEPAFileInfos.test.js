@@ -135,6 +135,19 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if a payer has no signedMandate', async () => {
+      const payload = { payments: [coursePaymentList[6]._id], name: 'Compani - Septembre 2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 409 if a payment is already linked to a xml file', async () => {
       const payload = { payments: [coursePaymentList[4]._id], name: 'Compani - Juillet 2025' };
 
