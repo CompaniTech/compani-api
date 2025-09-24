@@ -213,6 +213,7 @@ module.exports = {
   },
   PENDING: 'pending',
   RECEIVED: 'received',
+  XML_GENERATED: 'xml_generated',
   // SURCHARGES
   PUBLIC_HOLIDAY: 'publicHoliday',
   TWENTY_FIFTH_OF_DECEMBER: 'twentyFifthOfDecember',
