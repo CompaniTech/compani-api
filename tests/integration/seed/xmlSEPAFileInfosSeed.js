@@ -17,12 +17,14 @@ const {
   XML_GENERATED,
   RECEIVED,
 } = require('../../../src/helpers/constants');
-const CoursePayment = require('../../../src/models/CoursePayment');
 const { trainingOrganisationManagerRoleId } = require('../../seed/authRolesSeed');
 const Course = require('../../../src/models/Course');
 const User = require('../../../src/models/User');
 const CourseBill = require('../../../src/models/CourseBill');
+const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
 const CourseFundingOrganisation = require('../../../src/models/CourseFundingOrganisation');
+const CoursePayment = require('../../../src/models/CoursePayment');
+const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -164,10 +166,12 @@ const courseBillList = [
     mainFee: { price: 1200, count: 1, countUnit: GROUP },
     companies: [authCompany._id],
     payer: { fundingOrganisation: courseFundingOrganisation._id },
-    billedAt: '2025-06-08T00:00:00.000Z',
+    billedAt: '2025-03-08T00:00:00.000Z',
     number: 'FACT-00003',
   },
 ];
+
+const courseBillNumber = { _id: new ObjectId(), seq: 3 };
 
 const coursePaymentList = [
   { // 0
@@ -195,7 +199,7 @@ const coursePaymentList = [
   { // 2
     _id: new ObjectId(),
     number: 'REG-00003',
-    date: '2025-03-11T00:00:00.000Z',
+    date: '2025-06-11T00:00:00.000Z',
     companies: [authCompany._id],
     courseBill: courseBillList[1]._id,
     netInclTaxes: 200,
@@ -217,7 +221,7 @@ const coursePaymentList = [
   { // 4 coursePayment linked to xmlSEPAFileInfos
     _id: new ObjectId(),
     number: 'REG-00005',
-    date: '2025-03-11T00:00:00.000Z',
+    date: '2025-06-11T00:00:00.000Z',
     companies: [authCompany._id],
     courseBill: courseBillList[1]._id,
     netInclTaxes: 200,
@@ -238,6 +242,8 @@ const coursePaymentList = [
   },
 ];
 
+const coursePaymentNumber = { _id: new ObjectId(), seq: 6, nature: PAYMENT };
+
 const xmlSEPAFileInfos = { coursePayments: [coursePaymentList[4]._id], name: 'sepaInfos' };
 
 const populateDB = async () => {
@@ -246,8 +252,10 @@ const populateDB = async () => {
   await Promise.all([
     Course.create(coursesList),
     CourseBill.create(courseBillList),
+    CourseBillsNumber.create(courseBillNumber),
     CourseFundingOrganisation.create(courseFundingOrganisation),
     CoursePayment.create(coursePaymentList),
+    CoursePaymentNumber.create(coursePaymentNumber),
     Step.create(stepList),
     SubProgram.create(subProgramList),
     User.create([...traineeList, operationsRepresentative]),
