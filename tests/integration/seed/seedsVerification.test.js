@@ -99,6 +99,7 @@ const {
   MONTHLY,
   SINGLE,
   XML_GENERATED,
+  DIRECT_DEBIT,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -2643,12 +2644,21 @@ describe('SEEDS VERIFICATION', () => {
         before(async () => {
           xmlSEPAFileInfosList = await XmlSEPAFileInfos
             .find()
-            .populate({ path: 'coursePayments', select: 'status' })
+            .populate({
+              path: 'coursePayments',
+              select: 'status courseBill type',
+              populate: { path: 'courseBill' },
+            })
             .setOptions({ isVendorUser: true })
             .lean();
         });
 
-        it('should pass if every xmlSEPAFileInfos\'s payments are linked to a unique xml file', () => {
+        it('should pass if every xmlSEPAFileInfos\'s payment exists and is linked to a unique xml file', () => {
+          const everyPaymentExist = xmlSEPAFileInfosList.every(fileInfos =>
+            fileInfos.coursePayments.every(payment => payment._id));
+
+          expect(everyPaymentExist).toBeTruthy();
+
           const paymentsWithoutDuplicates = [
             ...new Set(xmlSEPAFileInfosList
               .flatMap(fileInfos => fileInfos.coursePayments.map(payment => payment._id.toHexString()))
@@ -2664,6 +2674,20 @@ describe('SEEDS VERIFICATION', () => {
             .every(fileInfos => fileInfos.coursePayments.every(payment => payment.status === XML_GENERATED));
 
           expect(everyPaymentHasGoodStatus).toBeTruthy();
+        });
+
+        it('should pass if every xmlSEPAFileInfos\'s payment\'s type is DIRECT_DEBIT', () => {
+          const everyPaymentHasGoodType = xmlSEPAFileInfosList
+            .every(fileInfos => fileInfos.coursePayments.every(payment => payment.type === DIRECT_DEBIT));
+
+          expect(everyPaymentHasGoodType).toBeTruthy();
+        });
+
+        it('should pass if every xmlSEPAFileInfos\'s payment has a payer company', () => {
+          const everyPaymentHasGoodPayer = xmlSEPAFileInfosList
+            .every(fileInfos => fileInfos.coursePayments.every(payment => payment.courseBill.isPayerCompany));
+
+          expect(everyPaymentHasGoodPayer).toBeTruthy();
         });
       });
     });
