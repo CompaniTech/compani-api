@@ -71,6 +71,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required() }),
           payload: Joi.object({
             slots: Joi.array().items(Joi.objectId()).min(1),
+            shouldUpdateAttendances: Joi.boolean(),
             action: Joi.string().valid(GENERATION),
           }).xor('slots', 'action'),
         },

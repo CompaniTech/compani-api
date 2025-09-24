@@ -144,6 +144,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   if (!isVendorAndAuthorized(attendanceSheet.course.trainers, credentials)) throw Boom.forbidden();
 
   if (req.payload.action) {
+    if (req.payload.shouldUpdateAttendances) throw Boom.badRequest();
     let canGenerate = attendanceSheet.slots
       .every(s => s.trainerSignature && s.traineesSignature.every(signature => signature.signature));
     if (attendanceSheet.file) canGenerate = false;
