@@ -1,13 +1,9 @@
 const { ObjectId } = require('mongodb');
-const { v4: uuidv4 } = require('uuid');
 const {
   PAYMENT,
   DIRECT_DEBIT,
   PENDING, INTRA,
   INTER_B2B,
-  WEBAPP,
-  LOGIN_CODE,
-  IDENTITY_VERIFICATION,
   ON_SITE,
   PUBLISHED,
   REMOTE,
@@ -17,9 +13,7 @@ const {
   XML_GENERATED,
   RECEIVED,
 } = require('../../../src/helpers/constants');
-const { trainingOrganisationManagerRoleId } = require('../../seed/authRolesSeed');
 const Course = require('../../../src/models/Course');
-const User = require('../../../src/models/User');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
 const CourseFundingOrganisation = require('../../../src/models/CourseFundingOrganisation');
@@ -27,51 +21,10 @@ const CoursePayment = require('../../../src/models/CoursePayment');
 const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
-const UserCompany = require('../../../src/models/UserCompany');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const { authCompany, otherCompany } = require('../../seed/authCompaniesSeed');
-const { trainerAndCoach, trainer } = require('../../seed/authUsersSeed');
+const { trainerAndCoach, trainer, userList } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-
-const traineeList = [
-  { // 0
-    _id: new ObjectId(),
-    identity: { firstname: 'Jacques', lastname: 'Henry' },
-    origin: WEBAPP,
-    local: { email: 'trainee1@compani.fr' },
-    firstMobileConnectionDate: '2025-01-16T10:30:19.543Z',
-    firstMobileConnectionMode: LOGIN_CODE,
-  },
-  { // 1
-    _id: new ObjectId(),
-    identity: { firstname: 'Paul', lastname: 'Trainee' },
-    origin: WEBAPP,
-    local: { email: 'trainee2@compani.fr' },
-    firstMobileConnectionDate: '2025-01-16T10:30:19.543Z',
-    firstMobileConnectionMode: IDENTITY_VERIFICATION,
-  },
-  { // 2
-    _id: new ObjectId(),
-    identity: { firstname: 'Marie', lastname: 'Paul' },
-    local: { email: 'trainee3@compani.fr' },
-    origin: WEBAPP,
-  },
-];
-
-const operationsRepresentative = {
-  _id: new ObjectId(),
-  identity: { firstname: 'Aline', lastname: 'Contact-Com' },
-  origin: WEBAPP,
-  refreshToken: uuidv4(),
-  local: { email: 'srepresentative@compani.fr' },
-  role: { vendor: trainingOrganisationManagerRoleId },
-};
-
-const userCompanies = [
-  { _id: new ObjectId(), user: traineeList[0]._id, company: authCompany._id, startDate: '2019-05-01T08:00:00.000Z' },
-  { _id: new ObjectId(), user: traineeList[1]._id, company: otherCompany._id, startDate: '2019-05-01T08:00:00.000Z' },
-  { _id: new ObjectId(), user: traineeList[2]._id, company: authCompany._id, startDate: '2019-05-01T08:00:00.000Z' },
-];
 
 const programIdList = [new ObjectId(), new ObjectId()];
 
@@ -106,24 +59,24 @@ const coursesList = [
     subProgram: subProgramList[0]._id,
     misc: 'group 1',
     trainers: [trainer._id, trainerAndCoach._id],
-    operationsRepresentative: operationsRepresentative._id,
-    contact: operationsRepresentative._id,
+    operationsRepresentative: userList[7]._id,
+    contact: userList[7]._id,
     expectedBillsCount: 1,
-    trainees: [traineeList[0]._id, traineeList[2]._id],
+    trainees: [userList[0]._id],
     companies: [authCompany._id],
     archivedAt: '2024-07-07T22:00:00.000Z',
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
     prices: [{ global: 3000, company: authCompany._id }],
   },
-  { // 1 with 2 bills
+  { // 1 with 1 bill
     _id: new ObjectId(),
     type: INTER_B2B,
     subProgram: subProgramList[1]._id,
     trainers: [trainer._id],
-    operationsRepresentative: operationsRepresentative._id,
-    contact: operationsRepresentative._id,
-    trainees: [traineeList[0]._id, traineeList[1]._id],
+    operationsRepresentative: userList[7]._id,
+    contact: userList[7]._id,
+    trainees: [userList[14]._id],
     estimatedStartDate: '2019-01-01T08:00:00.000Z',
     companies: [authCompany._id, otherCompany._id],
     createdAt: '2018-01-07T22:00:00.000Z',
@@ -156,22 +109,13 @@ const courseBillList = [
     course: coursesList[1]._id,
     mainFee: { price: 1200, count: 1, countUnit: GROUP },
     companies: [authCompany._id],
-    payer: { company: otherCompany._id },
-    billedAt: '2025-06-08T00:00:00.000Z',
-    number: 'FACT-00002',
-  },
-  { // 2
-    _id: new ObjectId(),
-    course: coursesList[1]._id,
-    mainFee: { price: 1200, count: 1, countUnit: GROUP },
-    companies: [authCompany._id],
     payer: { fundingOrganisation: courseFundingOrganisation._id },
     billedAt: '2025-03-08T00:00:00.000Z',
     number: 'FACT-00003',
   },
 ];
 
-const courseBillNumber = { _id: new ObjectId(), seq: 3 };
+const courseBillNumber = { _id: new ObjectId(), seq: 2 };
 
 const coursePaymentList = [
   { // 0
@@ -190,7 +134,7 @@ const coursePaymentList = [
     number: 'REG-00002',
     date: '2025-06-09T00:00:00.000Z',
     companies: [authCompany._id],
-    courseBill: courseBillList[1]._id,
+    courseBill: courseBillList[0]._id,
     netInclTaxes: 400,
     nature: PAYMENT,
     type: BANK_TRANSFER,
@@ -201,7 +145,7 @@ const coursePaymentList = [
     number: 'REG-00003',
     date: '2025-06-11T00:00:00.000Z',
     companies: [authCompany._id],
-    courseBill: courseBillList[1]._id,
+    courseBill: courseBillList[0]._id,
     netInclTaxes: 200,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
@@ -212,7 +156,7 @@ const coursePaymentList = [
     number: 'REG-00004',
     date: '2025-03-11T00:00:00.000Z',
     companies: [authCompany._id],
-    courseBill: courseBillList[2]._id,
+    courseBill: courseBillList[1]._id,
     netInclTaxes: 200,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
@@ -223,7 +167,7 @@ const coursePaymentList = [
     number: 'REG-00005',
     date: '2025-06-11T00:00:00.000Z',
     companies: [authCompany._id],
-    courseBill: courseBillList[1]._id,
+    courseBill: courseBillList[0]._id,
     netInclTaxes: 200,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
@@ -234,7 +178,7 @@ const coursePaymentList = [
     number: 'REG-00006',
     date: '2025-03-11T00:00:00.000Z',
     companies: [authCompany._id],
-    courseBill: courseBillList[2]._id,
+    courseBill: courseBillList[1]._id,
     netInclTaxes: 200,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
@@ -258,8 +202,6 @@ const populateDB = async () => {
     CoursePaymentNumber.create(coursePaymentNumber),
     Step.create(stepList),
     SubProgram.create(subProgramList),
-    User.create([...traineeList, operationsRepresentative]),
-    UserCompany.create(userCompanies),
     XmlSEPAFileInfos.create(xmlSEPAFileInfos),
   ]);
 };
