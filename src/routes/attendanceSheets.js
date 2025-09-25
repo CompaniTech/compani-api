@@ -9,7 +9,7 @@ const {
   updateAttendanceSheet,
   signAttendanceSheet,
 } = require('../controllers/attendanceSheetController');
-const { formDataPayload } = require('./validations/utils');
+const { formDataPayload, attendanceSheetSlotsValidation } = require('./validations/utils');
 const {
   authorizeAttendanceSheetCreation,
   authorizeAttendanceSheetDeletion,
@@ -48,16 +48,13 @@ exports.plugin = {
           payload: Joi.object({
             course: Joi.objectId().required(),
             file: Joi.any(),
-            trainee: Joi.objectId(),
+            trainees: Joi.alternatives().try(Joi.array().items(Joi.objectId()).min(1), Joi.objectId()),
             trainer: Joi.objectId().required(),
             date: Joi.date(),
             origin: Joi.string().valid(...ORIGIN_OPTIONS).default(MOBILE),
-            slots: Joi
-              .alternatives()
-              .try(Joi.array().items(Joi.objectId()).min(1), Joi.objectId())
-              .when('signature', { is: Joi.exist(), then: Joi.required() }),
+            slots: attendanceSheetSlotsValidation.when('signature', { is: Joi.exist(), then: Joi.required() }),
             signature: Joi.any(),
-          }).xor('trainee', 'date').xor('file', 'signature'),
+          }).xor('trainees', 'date').xor('file', 'signature'),
         },
         auth: { scope: ['attendances:edit'] },
         pre: [{ method: authorizeAttendanceSheetCreation }],
@@ -74,6 +71,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required() }),
           payload: Joi.object({
             slots: Joi.array().items(Joi.objectId()).min(1),
+            shouldUpdateAttendances: Joi.boolean(),
             action: Joi.string().valid(GENERATION),
           }).xor('slots', 'action'),
         },
@@ -103,6 +101,7 @@ exports.plugin = {
       options: {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
+          query: Joi.object({ shouldDeleteAttendances: Joi.boolean() }),
         },
         auth: { scope: ['attendances:edit'] },
         pre: [{ method: authorizeAttendanceSheetDeletion }],

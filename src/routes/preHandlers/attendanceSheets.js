@@ -13,7 +13,9 @@ const {
   VENDOR_ADMIN,
   TRAINING_ORGANISATION_MANAGER,
   SINGLE,
+  INTER_B2B,
 } = require('../../helpers/constants');
+const DatesUtilsHelper = require('../../helpers/dates/utils');
 const translate = require('../../helpers/translate');
 
 const { language } = translate;
@@ -73,25 +75,53 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
   if (!UtilsHelper.doesArrayIncludeId(course.trainers, req.payload.trainer)) throw Boom.forbidden();
 
   if ([INTRA, INTRA_HOLDING].includes(course.type)) {
-    if (req.payload.trainee) throw Boom.badRequest();
+    if (req.payload.trainees) throw Boom.badRequest();
     const isCourseSlotDate = course.slots.some(slot => CompaniDate(slot.startDate).isSame(req.payload.date, DAY));
     if (!isCourseSlotDate) throw Boom.forbidden();
+    if (req.payload.signature) {
+      const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
+      const everySlotContainsGoodKeys = slots.every((s) => {
+        const keys = Object.keys(s);
+        return keys.includes('trainees') && keys.includes('slotId');
+      });
+      if (!everySlotContainsGoodKeys) throw Boom.badRequest();
+      if (!slots.every(s => s.trainees.every(t => UtilsHelper.doesArrayIncludeId(course.trainees, t)))) {
+        throw Boom.notFound();
+      }
+      const slotsIds = slots.map(s => s.slotId);
+      const courseSlots = await CourseSlot.find({ _id: { $in: slotsIds }, course: course._id });
+      if (courseSlots.length !== slotsIds.length) throw Boom.notFound();
+
+      const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
+      if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
+
+      const areSlotsSameDateAsDate = courseSlots
+        .every(slot => CompaniDate(slot.startDate).isSame(req.payload.date, DAY));
+      if (!areSlotsSameDateAsDate) throw Boom.notFound();
+    } else if (req.payload.slots) throw Boom.badRequest();
 
     return null;
   }
-  if (req.payload.date) throw Boom.badRequest();
-  if (!course.trainees.some(t => UtilsHelper.areObjectIdsEquals(t, req.payload.trainee))) throw Boom.forbidden();
-
   const isSingleCourse = course.type === SINGLE;
-  if (isSingleCourse && !(req.payload.slots && req.payload.trainee)) throw Boom.badRequest();
+  const traineesIds = Array.isArray(req.payload.trainees) ? req.payload.trainees : [req.payload.trainees];
+  if (req.payload.date) throw Boom.badRequest();
+  if (traineesIds.length > 1 && (!req.payload.signature || isSingleCourse)) throw Boom.badRequest();
+  if (traineesIds.some(t => !UtilsHelper.doesArrayIncludeId(course.trainees, t))) throw Boom.forbidden();
+  if (req.payload.signature && !req.payload.slots) throw Boom.badRequest();
+
+  if (isSingleCourse && !(req.payload.slots && traineesIds)) throw Boom.badRequest();
   if (req.payload.slots) {
-    if (!isSingleCourse) throw Boom.badRequest();
+    const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
+    const someSlotsContainWrongKeys = slots.some((s) => {
+      const keys = Object.keys(s);
+      return keys.includes('trainees') || keys.includes('slotId');
+    });
+    if (someSlotsContainWrongKeys) throw Boom.badRequest();
+    const courseSlotCount = await CourseSlot.countDocuments({ _id: { $in: slots }, course: course._id });
+    if (courseSlotCount !== slots.length) throw Boom.notFound();
 
-    const slotsIds = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
-    const courseSlotCount = await CourseSlot.countDocuments({ _id: { $in: slotsIds }, course: course._id });
-    if (courseSlotCount !== slotsIds.length) throw Boom.notFound();
-
-    const attendanceSheetCount = await AttendanceSheet.countDocuments({ slots: { $in: slotsIds } });
+    const attendanceSheetCount = await AttendanceSheet
+      .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slots } });
     if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
   }
 
@@ -101,7 +131,11 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 exports.authorizeAttendanceSheetEdit = async (req) => {
   const attendanceSheet = await AttendanceSheet
     .findOne({ _id: req.params._id })
-    .populate({ path: 'course', select: 'type trainers' })
+    .populate({
+      path: 'course',
+      select: 'type trainers slots',
+      populate: { path: 'slots', select: 'endDate' },
+    })
     .lean();
 
   if (!attendanceSheet) throw Boom.notFound();
@@ -109,19 +143,25 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   const { credentials } = req.auth;
   if (!isVendorAndAuthorized(attendanceSheet.course.trainers, credentials)) throw Boom.forbidden();
 
-  const isSingleCourse = attendanceSheet.course.type === SINGLE;
-  if (!isSingleCourse) throw Boom.forbidden();
-
-  const hasBothSignatures = get(attendanceSheet, 'signatures.trainer') && get(attendanceSheet, 'signatures.trainee');
   if (req.payload.action) {
-    if (!hasBothSignatures) throw Boom.forbidden();
+    if (req.payload.shouldUpdateAttendances) throw Boom.badRequest();
+    let canGenerate = attendanceSheet.slots
+      .every(s => s.trainerSignature && s.traineesSignature.every(signature => signature.signature));
+    if (attendanceSheet.file) canGenerate = false;
+    if (attendanceSheet.course.type === INTER_B2B) {
+      const lastSlot = [...attendanceSheet.course.slots.sort(DatesUtilsHelper.descendingSortBy('endDate'))][0];
+      if (CompaniDate().isBefore(lastSlot.endDate)) canGenerate = false;
+    }
+    if (!canGenerate) throw Boom.forbidden();
   } else {
+    if (attendanceSheet.course.type !== SINGLE) throw Boom.forbidden();
+
     const courseSlotCount = await CourseSlot
       .countDocuments({ _id: { $in: req.payload.slots }, course: attendanceSheet.course._id });
     if (courseSlotCount !== req.payload.slots.length) throw Boom.notFound();
 
     const slotAlreadyLinkedToAS = await AttendanceSheet
-      .countDocuments({ _id: { $ne: attendanceSheet._id }, slots: { $in: req.payload.slots } });
+      .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
     if (slotAlreadyLinkedToAS) throw Boom.conflict();
   }
 
@@ -129,16 +169,33 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
 };
 
 exports.authorizeAttendanceSheetSignature = async (req) => {
+  const { credentials } = req.auth;
   const attendanceSheet = await AttendanceSheet
-    .findOne({ _id: req.params._id, 'signatures.trainer': { $exists: true }, 'signatures.trainee': { $exists: false } })
+    .findOne({ _id: req.params._id })
+    .populate({ path: 'course', select: 'type' })
     .lean();
 
   if (!attendanceSheet) throw Boom.notFound();
+  if (attendanceSheet.slots.some(s => !s.trainerSignature)) throw Boom.notFound();
 
-  const { credentials } = req.auth;
   const loggedUserId = get(credentials, '_id');
-  if (!UtilsHelper.areObjectIdsEquals(attendanceSheet.trainee, loggedUserId)) throw Boom.forbidden();
+  const isTraineeInAttendanceSheet = UtilsHelper.areObjectIdsEquals(attendanceSheet.trainee, loggedUserId) ||
+  attendanceSheet.slots
+    .find(s => (s.traineesSignature || [])
+      .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, loggedUserId)));
+  if (!isTraineeInAttendanceSheet) throw Boom.forbidden();
 
+  const hasTraineeSignedEverySlot = attendanceSheet.slots
+    .every((s) => {
+      const traineeSignatureMissing = [SINGLE, INTER_B2B].includes(attendanceSheet.course.type)
+        ? !(s.traineesSignature || [])
+          .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, loggedUserId) && !!signature.signature)
+        : (s.traineesSignature || [])
+          .find(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, loggedUserId) && !signature.signature);
+
+      return !traineeSignatureMissing;
+    });
+  if (hasTraineeSignedEverySlot) throw Boom.notFound();
   return null;
 };
 
@@ -155,6 +212,8 @@ exports.authorizeAttendanceSheetDeletion = async (req) => {
   if (get(attendanceSheet, 'course.archivedAt')) throw Boom.forbidden();
 
   if (!isVendorAndAuthorized(get(attendanceSheet, 'course.trainers'), credentials)) throw Boom.forbidden();
+
+  if (req.query.shouldDeleteAttendances && !attendanceSheet.slots) throw Boom.badRequest();
 
   return null;
 };

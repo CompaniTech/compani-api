@@ -3,11 +3,14 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const NotificationHelper = require('../../src/helpers/notifications');
+const UtilsHelper = require('../../src/helpers/utils');
 const app = require('../../server');
 const { populateDB, coursesList, attendanceSheetList, slotsList, userList } = require('./seed/attendanceSheetsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
 const { WEBAPP, MOBILE, GENERATION } = require('../../src/helpers/constants');
+const { CompaniDate } = require('../../src/helpers/dates/companiDates');
+const Attendance = require('../../src/models/Attendance');
 const AttendanceSheet = require('../../src/models/AttendanceSheet');
 const { holdingAdminFromOtherCompany, trainerAndCoach, trainer } = require('../seed/authUsersSeed');
 const { authCompany, otherCompany, otherHolding, authHolding } = require('../seed/authCompaniesSeed');
@@ -39,7 +42,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        date: new Date('2020-01-23').toISOString(),
+        date: '2020-01-22T23:00:00.000Z',
         origin: WEBAPP,
         trainer: trainer._id.toHexString(),
       };
@@ -67,7 +70,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        date: new Date('2020-01-23').toISOString(),
+        date: '2020-01-22T23:00:00.000Z',
         trainer: trainer._id.toHexString(),
       };
 
@@ -94,7 +97,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[1]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[1].trainees[0].toHexString(),
+        trainees: coursesList[1].trainees[0].toHexString(),
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -152,7 +155,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         slots: slotsList[4]._id.toHexString(),
         course: coursesList[7]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: WEBAPP,
         trainer: trainer._id.toHexString(),
       };
@@ -179,7 +182,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[7]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: WEBAPP,
         trainer: trainer._id.toHexString(),
       };
@@ -207,7 +210,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[7]._id.toHexString(),
         signature: 'test',
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -230,11 +233,172 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       sinon.assert.calledTwice(sendNotificationToUser);
     });
 
-    it('should  return 400 if single course but slot is missing', async () => {
+    it('should upload trainer signature and create attendance sheet for inter course (mobile)', async () => {
+      const slots = [slotsList[12]._id.toHexString(), slotsList[13]._id.toHexString()];
+      const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[1]._id });
+      const formData = {
+        course: coursesList[1]._id.toHexString(),
+        signature: 'test',
+        trainees: coursesList[1].trainees[2].toHexString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach(slot => form.append('slots', slot));
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[1]._id });
+      expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledTwice(sendNotificationToUser);
+    });
+
+    it('should get existing trainer signature and update attendance sheet for inter course (mobile)', async () => {
+      const slots = [slotsList[14]._id.toHexString()];
+      const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[1]._id });
+      const formData = {
+        course: coursesList[1]._id.toHexString(),
+        signature: 'test',
+        trainees: coursesList[1].trainees[1].toHexString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach(slot => form.append('slots', slot));
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[1]._id });
+      expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore);
+      sinon.assert.notCalled(uploadCourseFile);
+      sinon.assert.calledOnce(sendNotificationToUser);
+    });
+
+    it('should upload trainer signature and create attendance sheet for intra course (several slots and trainees)'
+      + '(mobile)', async () => {
+      const slots = [
+        {
+          slotId: slotsList[15]._id.toHexString(),
+          trainees: [userList[0]._id.toHexString(), userList[1]._id.toHexString()],
+        },
+        {
+          slotId: slotsList[16]._id.toHexString(),
+          trainees: [userList[0]._id.toHexString(), userList[1]._id.toHexString()],
+        },
+      ];
+      const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: '2021-01-22T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
+      expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledTwice(sendNotificationToUser);
+    });
+
+    it('should upload trainer signature and create attendance sheet for intra course (single slot and trainee)'
+      + '(mobile)', async () => {
+      const slots = [{ slotId: slotsList[15]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: '2021-01-22T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
+      expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledTwice(sendNotificationToUser);
+    });
+
+    it('should upload trainer signature and create attendance sheet for intra holding course (mobile)', async () => {
+      const slots = [
+        {
+          slotId: slotsList[2]._id.toHexString(),
+          trainees: [userList[2]._id.toHexString(), userList[4]._id.toHexString()],
+        },
+      ];
+      const attendanceSheetsLengthBefore = await AttendanceSheet.countDocuments({ course: coursesList[5]._id });
+      const formData = {
+        course: coursesList[5]._id.toHexString(),
+        signature: 'test',
+        date: '2020-01-24T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[5]._id });
+      expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledThrice(sendNotificationToUser);
+    });
+
+    it('should  return 400 if single course but slots is missing', async () => {
       const formData = {
         course: coursesList[7]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: WEBAPP,
         trainer: trainer._id.toHexString(),
       };
@@ -251,7 +415,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should  return 400 if single course but trainee is missing', async () => {
+    it('should  return 400 if single course but trainees is missing', async () => {
       const formData = {
         slots: slotsList[4]._id.toHexString(),
         course: coursesList[7]._id.toHexString(),
@@ -272,12 +436,12 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should  return 400 if slot in payload but course is not a single course', async () => {
+    it('should  return 400 if slots in payload but course is not a single or inter course', async () => {
       const formData = {
         slots: slotsList[2]._id.toHexString(),
         course: coursesList[5]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[5].trainees[0].toHexString(),
+        trainees: coursesList[5].trainees[0].toHexString(),
         origin: WEBAPP,
         trainer: trainer._id.toHexString(),
       };
@@ -294,12 +458,12 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should  return 404 if slot not in course', async () => {
+    it('should  return 404 if a slot is not in course', async () => {
       const slots = [slotsList[4]._id.toHexString(), slotsList[2]._id.toHexString()];
       const formData = {
         course: coursesList[7]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: WEBAPP,
         trainer: trainer._id.toHexString(),
       };
@@ -317,12 +481,12 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 409 if slot already in existing attendance sheet', async () => {
+    it('should return 409 if a slot is already in existing attendance sheet for this trainee', async () => {
       const slots = [slotsList[4]._id.toHexString(), slotsList[6]._id.toHexString()];
       const formData = {
         course: coursesList[7]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: WEBAPP,
         trainer: trainer._id.toHexString(),
       };
@@ -340,11 +504,11 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(409);
     });
 
-    it('should return 400 trying to pass trainee for intra course', async () => {
+    it('should return 400 trying to pass trainees for intra course', async () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[0].trainees[0].toHexString(),
+        trainees: coursesList[0].trainees[0].toHexString(),
         trainer: trainer._id.toHexString(),
       };
 
@@ -360,11 +524,11 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return 400 trying to pass trainee for intra_holding course', async () => {
+    it('should return 400 trying to pass trainees for intra_holding course', async () => {
       const formData = {
         course: coursesList[5]._id.toHexString(),
         file: 'test',
-        trainee: coursesList[5].trainees[0].toHexString(),
+        trainees: coursesList[5].trainees[0].toHexString(),
         trainer: trainer._id.toHexString(),
       };
 
@@ -400,7 +564,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return 400 if both date and trainee are missing in payload', async () => {
+    it('should return 400 if both date and trainees are missing in payload', async () => {
       const formData = {
         course: coursesList[2]._id.toHexString(),
         file: 'test',
@@ -423,7 +587,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[7]._id.toHexString(),
         signature: 'test',
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -446,7 +610,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         course: coursesList[7]._id.toHexString(),
         signature: 'test',
         file: 'test2',
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -468,7 +632,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const slots = [slotsList[4]._id.toHexString(), slotsList[7]._id.toHexString()];
       const formData = {
         course: coursesList[7]._id.toHexString(),
-        trainee: coursesList[7].trainees[0].toHexString(),
+        trainees: coursesList[7].trainees[0].toHexString(),
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -490,7 +654,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        date: new Date('2020-01-23').toISOString(),
+        date: '2020-01-22T23:00:00.000Z',
         origin: 'poiuytr',
         trainer: trainer._id.toHexString(),
       };
@@ -505,6 +669,173 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if sign intra attendance sheet but slots have wrong format (mobile)', async () => {
+      const slots = [slotsList[15]._id.toHexString(), slotsList[16]._id.toHexString()];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: '2021-01-22T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if sign inter attendance sheet but slots have wrong format (mobile)', async () => {
+      const slots = [{ slotId: slotsList[12]._id.toHexString(), trainees: [coursesList[1].trainees[2].toHexString()] }];
+      const formData = {
+        course: coursesList[1]._id.toHexString(),
+        signature: 'test',
+        trainees: coursesList[1].trainees[2].toHexString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if slots without signature in intra attendance sheet (mobile)', async () => {
+      const slots = [{ slotId: slotsList[15]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        date: '2021-01-22T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if trainees in slots are not in course (mobile)', async () => {
+      const slots = [{ slotId: slotsList[15]._id.toHexString(), trainees: [userList[2]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: '2021-01-22T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if slotId in slots are not in course (mobile)', async () => {
+      const slots = [{ slotId: slotsList[12]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: '2021-01-22T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if slots don\'t match with date on intra (mobile)', async () => {
+      const slots = [{ slotId: slotsList[16]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: '2021-01-23T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 409 if there is already an attendance sheet for payload slots on intra (mobile)', async () => {
+      const slots = [{ slotId: slotsList[17]._id.toHexString(), trainees: [userList[1]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: '2021-01-23T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(409);
     });
 
     it('should return a 403 if trainer is from an other company', async () => {
@@ -547,11 +878,11 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 trying to pass unknowned trainee', async () => {
+    it('should return 403 trying to pass an unknowned trainee', async () => {
       const formData = {
         course: coursesList[1]._id.toHexString(),
         file: 'test',
-        trainee: new ObjectId().toHexString(),
+        trainees: new ObjectId().toHexString(),
         trainer: trainer._id.toHexString(),
       };
 
@@ -571,7 +902,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[0]._id.toHexString(),
         file: 'test',
-        date: new Date('2018-01-23').toISOString(),
+        date: '2018-01-22T23:00:00.000Z',
         trainer: trainer._id.toHexString(),
       };
 
@@ -592,7 +923,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: course._id.toHexString(),
         file: 'test',
-        trainee: course.trainees[0].toHexString(),
+        trainees: course.trainees[0].toHexString(),
         trainer: trainer._id.toHexString(),
       };
 
@@ -627,6 +958,54 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return  400 if course is single and more than one trainee', async () => {
+      const slots = [slotsList[4]._id.toHexString(), slotsList[7]._id.toHexString()];
+      const trainees = [coursesList[7].trainees[0].toHexString(), userList[2]._id.toHexString()];
+      const formData = {
+        course: coursesList[7]._id.toHexString(),
+        signature: 'test',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach(slot => form.append('slots', slot));
+      trainees.forEach(trainee => form.append('trainees', trainee));
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if more than one trainee but no signature', async () => {
+      const slots = [slotsList[12]._id.toHexString(), slotsList[13]._id.toHexString()];
+      const trainees = coursesList[1].trainees.map(t => t.toHexString());
+      const formData = {
+        course: coursesList[1]._id.toHexString(),
+        file: 'test',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach(slot => form.append('slots', slot));
+      trainees.forEach(trainee => form.append('trainees', trainee));
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
   });
 
   describe('Other roles', () => {
@@ -650,7 +1029,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         const formData = {
           course: coursesList[0]._id.toHexString(),
           file: 'test',
-          date: new Date('2020-01-23').toISOString(),
+          date: '2020-01-22T23:00:00.000Z',
           trainer: trainer._id.toHexString(),
         };
         const form = generateFormData(formData);
@@ -728,7 +1107,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
         });
 
         expect(response.statusCode).toBe(200);
-        expect(response.result.data.attendanceSheets.length).toEqual(1);
+        expect(response.result.data.attendanceSheets.length).toEqual(2);
       });
 
     it('should get attendance sheets if user is trainer but not course trainer but is coach from course company',
@@ -792,7 +1171,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.attendanceSheets.length).toEqual(1);
+      expect(response.result.data.attendanceSheets.length).toEqual(2);
     });
 
     it('should return 200 even if no company in course (intra_holding)', async () => {
@@ -897,7 +1276,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
     it('should update attendance sheet slots for a single course', async () => {
       const attendanceSheetId = attendanceSheetList[5]._id;
-      const payload = { slots: [slotsList[4]._id] };
+      const payload = { slots: [slotsList[4]._id], shouldUpdateAttendances: true };
 
       const response = await app.inject({
         method: 'PUT',
@@ -908,8 +1287,15 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const attendanceSheetUpdated = await AttendanceSheet.countDocuments({ _id: attendanceSheetId, ...payload });
+      const attendanceSheetUpdated = await AttendanceSheet
+        .countDocuments({ _id: attendanceSheetId, 'slots.slotId': slotsList[4]._id });
       expect(attendanceSheetUpdated).toEqual(1);
+      const deletedAttendance = await Attendance
+        .countDocuments({ courseSlot: slotsList[5]._id, trainee: userList[1]._id });
+      expect(deletedAttendance).toEqual(0);
+      const createdAttendance = await Attendance
+        .countDocuments({ courseSlot: slotsList[4]._id, trainee: userList[1]._id });
+      expect(createdAttendance).toEqual(1);
       sinon.assert.notCalled(uploadCourseFile);
     });
 
@@ -931,6 +1317,80 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
         .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
       expect(attendanceSheetUpdated).toEqual(1);
       sinon.assert.calledOnce(uploadCourseFile);
+    });
+
+    it('should generate attendance sheet file for inter course', async () => {
+      const attendanceSheetId = attendanceSheetList[11]._id;
+      const payload = { action: GENERATION };
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const attendanceSheetUpdated = await AttendanceSheet
+        .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
+      expect(attendanceSheetUpdated).toEqual(1);
+      sinon.assert.calledOnce(uploadCourseFile);
+    });
+
+    it('should generate attendance sheet file for intra course', async () => {
+      const attendanceSheetId = attendanceSheetList[13]._id;
+      const payload = { action: GENERATION };
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const attendanceSheetUpdated = await AttendanceSheet
+        .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
+      expect(attendanceSheetUpdated).toEqual(1);
+      sinon.assert.calledOnce(uploadCourseFile);
+    });
+
+    it('should generate attendance sheet file for intra holding course', async () => {
+      const attendanceSheetId = attendanceSheetList[14]._id;
+      const payload = { action: GENERATION };
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const attendanceSheetUpdated = await AttendanceSheet
+        .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
+      expect(attendanceSheetUpdated).toEqual(1);
+      sinon.assert.calledOnce(uploadCourseFile);
+    });
+
+    it('should return 400 if generation and shouldUpdateAttendances in payload', async () => {
+      const attendanceSheetId = attendanceSheetList[14]._id;
+      const payload = { action: GENERATION, shouldUpdateAttendances: true };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return 404 if attendance sheet doesn\'t exist', async () => {
@@ -973,9 +1433,44 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return 403 if is course is not single', async () => {
-      const attendanceSheetId = attendanceSheetList[3]._id;
+    it('should return 403 if course is inter and not finished yet', async () => {
+      const attendanceSheetId = attendanceSheetList[11]._id;
+      const payload = { action: GENERATION };
+
+      await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${slotsList[14]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { startDate: CompaniDate().add('P1D').toISO(), endDate: CompaniDate().add('P1DT2H').toISO() },
+      });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to add slot and course is not single', async () => {
+      const attendanceSheetId = attendanceSheetList[11]._id;
       const payload = { slots: [slotsList[1]._id] };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance sheet already has file', async () => {
+      const attendanceSheetId = attendanceSheetList[10]._id;
+      const payload = { action: GENERATION };
 
       const response = await app.inject({
         method: 'PUT',
@@ -1001,7 +1496,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 404 if slot is not in course', async () => {
+    it('should return 404 if a slot is not in course', async () => {
       const attendanceSheetId = attendanceSheetList[5]._id;
       const payload = { slots: [slotsList[3]._id] };
 
@@ -1015,7 +1510,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 409 if slot is already in an existing attendance sheet', async () => {
+    it('should return 409 if a slot is already in an existing attendance sheet', async () => {
       const attendanceSheetId = attendanceSheetList[6]._id;
       const payload = { slots: [slotsList[5]._id] };
 
@@ -1098,12 +1593,52 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       });
 
       expect(response.statusCode).toBe(200);
-      const attendanceSheetsWithBothSignatures = await AttendanceSheet.countDocuments({
-        _id: attendanceSheetList[8]._id,
-        'signatures.trainer': { $exists: true },
-        'signatures.trainee': { $exists: true },
+      const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[8]._id });
+      const attendanceSheetHasBothSignatures = attendanceSheet.slots
+        .every(s => s.trainerSignature &&
+            UtilsHelper.areObjectIdsEquals(s.traineesSignature[0].traineeId, userList[1]._id));
+      expect(attendanceSheetHasBothSignatures).toBeTruthy();
+      sinon.assert.calledOnce(uploadCourseFile);
+    });
+
+    it('should upload trainee signature for inter course with signed slots (mobile)', async () => {
+      const formData = { signature: 'test' };
+
+      const form = generateFormData(formData);
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetList[12]._id}/signature`,
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
       });
-      expect(attendanceSheetsWithBothSignatures).toBe(1);
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[12]._id });
+      const attendanceSheetHasBothSignatures = attendanceSheet.slots
+        .every(s => s.trainerSignature &&
+            UtilsHelper.areObjectIdsEquals(s.traineesSignature[0].traineeId, userList[1]._id));
+      expect(attendanceSheetHasBothSignatures).toBeTruthy();
+      sinon.assert.notCalled(uploadCourseFile);
+    });
+
+    it('should upload trainee signature for intra course (mobile)', async () => {
+      const formData = { signature: 'test' };
+
+      const form = generateFormData(formData);
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetList[3]._id}/signature`,
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[3]._id });
+      const attendanceSheetHasBothSignatures = attendanceSheet.slots
+        .every(s => s.trainerSignature &&
+            UtilsHelper.areObjectIdsEquals(s.traineesSignature[0].traineeId, userList[1]._id));
+      expect(attendanceSheetHasBothSignatures).toBeTruthy();
       sinon.assert.calledOnce(uploadCourseFile);
     });
 
@@ -1152,7 +1687,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 404 if attendance has already been signed by trainee', async () => {
+    it('should return 404 if every slot has already been signed by trainee', async () => {
       const formData = { signature: 'test' };
 
       const form = generateFormData(formData);
@@ -1165,6 +1700,38 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if every slot which concerns trainee has already been signed (intra)', async () => {
+      const formData = { signature: 'test' };
+
+      const form = generateFormData(formData);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetList[13]._id}/signature`,
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if trainee not in attendance list (intra course)', async () => {
+      authToken = await getTokenByCredentials(userList[0].local);
+
+      const formData = { signature: 'test' };
+
+      const form = generateFormData(formData);
+      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetList[3]._id}/signature`,
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
   });
 
@@ -1217,24 +1784,28 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       sinon.assert.calledOnce(deleteCourseFile);
     });
 
-    it('should delete an attendance sheet (with signatures but no file)', async () => {
+    it('should delete an attendance sheet (with signatures and attendances but no file)', async () => {
       const attendanceSheetId = attendanceSheetList[9]._id;
       const attendanceSheetsLength = await AttendanceSheet.countDocuments();
+      const attendanceLength = await Attendance.countDocuments();
       const response = await app.inject({
         method: 'DELETE',
-        url: `/attendancesheets/${attendanceSheetId}`,
+        url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
       expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
+      const attendanceAfter = await Attendance.countDocuments();
+      expect(attendanceAfter).toEqual(attendanceLength - 1);
       sinon.assert.calledTwice(deleteCourseFile);
     });
 
     it('should delete an attendance sheet (with both signatures and file)', async () => {
       const attendanceSheetId = attendanceSheetList[10]._id;
       const attendanceSheetsLength = await AttendanceSheet.countDocuments();
+      const attendanceLength = await Attendance.countDocuments();
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetId}`,
@@ -1244,7 +1815,38 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(200);
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
       expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
+      const attendanceAfter = await Attendance.countDocuments();
+      expect(attendanceAfter).toEqual(attendanceLength);
       sinon.assert.calledThrice(deleteCourseFile);
+    });
+
+    it('should delete an intra_holding attendance sheet and its attendances', async () => {
+      const attendanceSheetId = attendanceSheetList[14]._id;
+      const attendanceSheetsLength = await AttendanceSheet.countDocuments();
+      const attendanceLength = await Attendance.countDocuments();
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
+      expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
+      const attendanceAfter = await Attendance.countDocuments();
+      expect(attendanceAfter).toEqual(attendanceLength - 1);
+      sinon.assert.calledThrice(deleteCourseFile);
+    });
+
+    it('should return 400 if shouldDeleteAttendances but no slots in attendance sheet', async () => {
+      const attendanceSheetId = attendanceSheetList[0]._id;
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return a 404 if attendance sheet does not exist', async () => {

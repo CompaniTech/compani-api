@@ -424,16 +424,6 @@ describe('SEEDS VERIFICATION', () => {
           expect(someIntraOrIntraHoldingAttendanceSheetHasTrainee).toBeFalsy();
         });
 
-        it('should pass if only single courses have slots in attendance sheet', () => {
-          const everySingleASHasSlots = attendanceSheetList.every(a => a.course.type !== SINGLE || a.slots);
-
-          expect(everySingleASHasSlots).toBeTruthy();
-
-          const someNonSingleASHasSlots = attendanceSheetList.some(a => a.course.type !== SINGLE && a.slots);
-
-          expect(someNonSingleASHasSlots).toBeFalsy();
-        });
-
         it('should pass if only intra_holding courses have several companies in attendance sheet', () => {
           const doSheetsHaveGoodCompaniesNumber = attendanceSheetList
             .every(a => a.companies.length === 1 || a.course.type === INTRA_HOLDING);
@@ -459,7 +449,7 @@ describe('SEEDS VERIFICATION', () => {
             .every((a) => {
               const slotsIds = a.course.slots.map(slot => slot._id);
 
-              return a.slots.every(slot => UtilsHelper.doesArrayIncludeId(slotsIds, slot));
+              return a.slots.every(slot => UtilsHelper.doesArrayIncludeId(slotsIds, slot.slotId));
             });
 
           expect(everySheetDateIsSlotDate).toBeTruthy();
@@ -492,6 +482,25 @@ describe('SEEDS VERIFICATION', () => {
             .every(attendanceSheet => !!attendanceSheet.trainer &&
               UtilsHelper.doesArrayIncludeId(attendanceSheet.course.trainers, attendanceSheet.trainer));
           expect(areTrainerInCourse).toBeTruthy();
+        });
+
+        it('should pass if all attendance sheet\'s trainerIds in slot are attendance sheet\'s trainers', () => {
+          const areTrainersInSlotAttendanceSheetTrainer = attendanceSheetList
+            .every(attendanceSheet => !attendanceSheet.slots || attendanceSheet.slots
+              .every(s => !s.trainerSignature ||
+                UtilsHelper.areObjectIdsEquals(s.trainerSignature.trainerId, attendanceSheet.trainer))
+            );
+          expect(areTrainersInSlotAttendanceSheetTrainer).toBeTruthy();
+        });
+
+        it('should pass if all attendance sheet\'s traineeIds in slot are attendance sheet\'s trainees', () => {
+          const areTrainersInSlotAttendanceSheetTrainer = attendanceSheetList
+            .every(attendanceSheet => !attendanceSheet.trainee || !attendanceSheet.slots || attendanceSheet.slots
+              .every(s => !s.traineesSignature ||
+                s.traineesSignature
+                  .every(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, attendanceSheet.trainee._id)))
+            );
+          expect(areTrainersInSlotAttendanceSheetTrainer).toBeTruthy();
         });
       });
 
