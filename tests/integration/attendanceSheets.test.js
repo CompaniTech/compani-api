@@ -1590,7 +1590,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 if try to create attendance on a slot linked to completion certificate', async () => {
+    it('should return 403 if try to update attendances on a slot linked to completion certificate', async () => {
       const attendanceSheetId = attendanceSheetList[5]._id;
       const payload = { slots: [slotsList[21]._id], shouldUpdateAttendances: true };
 

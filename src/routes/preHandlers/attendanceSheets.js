@@ -63,6 +63,17 @@ exports.authorizeAttendanceSheetsGet = async (req) => {
   return null;
 };
 
+const checkCompletionCertificates = async (slots, courseId, trainees) => {
+  const slotsMonths = slots.map(s => CompaniDate(s.startDate).format(MM_YYYY));
+  const completionCertificates = await CompletionCertificate.countDocuments({
+    course: courseId,
+    month: { $in: slotsMonths },
+    trainee: { $in: trainees },
+    file: { $exists: true },
+  });
+  if (completionCertificates) throw Boom.forbidden(translate[language].someSlotsAreLinkedToCompletionCertificate);
+};
+
 exports.authorizeAttendanceSheetCreation = async (req) => {
   const course = await Course
     .findOne({ _id: req.payload.course }, { archivedAt: 1, type: 1, slots: 1, trainees: 1, trainers: 1, companies: 1 })
@@ -98,14 +109,7 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
       if (courseSlots.length !== slotsIds.length) throw Boom.notFound();
 
       const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
-      const slotsWithoutAttendancesMonths = slotsWithoutAttendances.map(s => CompaniDate(s.startDate).format(MM_YYYY));
-      const completionCertificates = await CompletionCertificate.countDocuments({
-        course: course._id,
-        month: { $in: slotsWithoutAttendancesMonths },
-        trainee: { $in: slots.flatMap(s => s.trainees) },
-        file: { $exists: true },
-      });
-      if (completionCertificates) throw Boom.forbidden(translate[language].someSlotsAreLinkedToCompletionCertificate);
+      await checkCompletionCertificates(slotsWithoutAttendances, course._id, slots.flatMap(s => s.trainees));
 
       const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
       if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
@@ -139,14 +143,7 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     if (courseSlots.length !== slots.length) throw Boom.notFound();
 
     const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
-    const slotsWithoutAttendancesMonths = slotsWithoutAttendances.map(s => CompaniDate(s.startDate).format(MM_YYYY));
-    const completionCertificates = await CompletionCertificate.countDocuments({
-      course: course._id,
-      month: { $in: slotsWithoutAttendancesMonths },
-      trainee: { $in: traineesIds },
-      file: { $exists: true },
-    });
-    if (completionCertificates) throw Boom.forbidden(translate[language].someSlotsAreLinkedToCompletionCertificate);
+    await checkCompletionCertificates(slotsWithoutAttendances, course._id, traineesIds);
 
     const attendanceSheetCount = await AttendanceSheet
       .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slots } });
@@ -200,14 +197,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
       const courseSlotsToEdit = await CourseSlot
         .find({ _id: { $in: [...attendancesToAdd, ...attendancesToDelete] } })
         .lean();
-      const slotsToEditMonths = courseSlotsToEdit.map(s => CompaniDate(s.startDate).format(MM_YYYY));
-      const completionCertificates = await CompletionCertificate.countDocuments({
-        course: attendanceSheet.course._id,
-        month: { $in: slotsToEditMonths },
-        trainee: attendanceSheet.trainee,
-        file: { $exists: true },
-      });
-      if (completionCertificates) throw Boom.forbidden(translate[language].someSlotsAreLinkedToCompletionCertificate);
+      await checkCompletionCertificates(courseSlotsToEdit, attendanceSheet.course._id, [attendanceSheet.trainee]);
     }
   }
 
@@ -264,17 +254,10 @@ exports.authorizeAttendanceSheetDeletion = async (req) => {
   if (req.query.shouldDeleteAttendances) {
     const attendanceSheetSlots = attendanceSheet.slots.map(s => s.slotId);
     const courseSlots = await CourseSlot.find({ _id: { $in: attendanceSheetSlots } }).lean();
-    const slotsMonths = courseSlots.map(s => CompaniDate(s.startDate).format(MM_YYYY));
     const trainees = attendanceSheet.trainee
       ? [attendanceSheet.trainee]
       : attendanceSheet.slots.flatMap(s => (s.traineesSignature || []).map(signature => signature.traineeId));
-    const completionCertificates = await CompletionCertificate.countDocuments({
-      course: attendanceSheet.course._id,
-      month: { $in: slotsMonths },
-      trainee: { $in: trainees },
-      file: { $exists: true },
-    });
-    if (completionCertificates) throw Boom.forbidden(translate[language].attendanceIsLinkedToCompletionCertificate);
+    await checkCompletionCertificates(courseSlots, attendanceSheet.course._id, trainees);
   }
 
   return null;
