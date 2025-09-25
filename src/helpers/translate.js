@@ -200,6 +200,7 @@ module.exports = {
     attendanceExists: 'An attendance exists.',
     attendanceIsLinkedToAttendanceSheet: 'Deletion forbidden : attendance is linked to attendance sheet.',
     attendanceIsLinkedToCompletionCertificate: 'Deletion forbidden : attendance is linked to completion certificate.',
+    someSlotsAreLinkedToCompletionCertificate: 'Edition forbidden : some slots are linked to completion certificate.',
     /* Questionnaires */
     questionnairesFound: 'Questionnaires found.',
     questionnairesNotFound: 'Questionnaires not found.',
@@ -447,6 +448,8 @@ module.exports = {
     attendanceIsLinkedToAttendanceSheet: 'Suppression impossible : l’émargement est relié à une feuille d\'émargement.',
     attendanceIsLinkedToCompletionCertificate: 'Suppression impossible : l’émargement est relié à un certificat de '
       + 'réalisation.',
+    someSlotsAreLinkedToCompletionCertificate: 'Édition impossible : certains créneaux sélectionnés sont liés à un '
+    + 'certificat de réalisation.',
     /* Questionnaires */
     questionnairesFound: 'Liste des questionnaires trouvée.',
     questionnairesNotFound: 'Liste des questionnaires non trouvée.',

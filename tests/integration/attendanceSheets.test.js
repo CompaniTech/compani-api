@@ -1537,6 +1537,20 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to create attendance on a slot linked to completion certificate', async () => {
+      const attendanceSheetId = attendanceSheetList[5]._id;
+      const payload = { slots: [slotsList[21]._id], shouldUpdateAttendances: true };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {

@@ -353,6 +353,13 @@ const slotsList = [
     course: coursesList[10],
     step: steps[0]._id,
   },
+  { // 13
+    _id: new ObjectId(),
+    startDate: '2025-02-26T10:00:00.000Z',
+    endDate: '2025-02-26T14:00:00.000Z',
+    course: coursesList[10],
+    step: steps[0]._id,
+  },
 ];
 
 const attendancesList = [

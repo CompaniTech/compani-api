@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
 const UtilsHelper = require('../../helpers/utils');
+const CompletionCertificate = require('../../models/CompletionCertificate');
 const Course = require('../../models/Course');
 const CourseSlot = require('../../models/CourseSlot');
 const AttendanceSheet = require('../../models/AttendanceSheet');
@@ -14,6 +15,7 @@ const {
   TRAINING_ORGANISATION_MANAGER,
   SINGLE,
   INTER_B2B,
+  MM_YYYY,
 } = require('../../helpers/constants');
 const DatesUtilsHelper = require('../../helpers/dates/utils');
 const translate = require('../../helpers/translate');
@@ -163,6 +165,24 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     const slotAlreadyLinkedToAS = await AttendanceSheet
       .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
     if (slotAlreadyLinkedToAS) throw Boom.conflict();
+    if (req.payload.shouldUpdateAttendances) {
+      const attendanceSheetSlots = attendanceSheet.slots.map(s => s.slotId);
+      const attendancesToDelete = attendanceSheetSlots
+        .filter(slot => !UtilsHelper.doesArrayIncludeId(req.payload.slots, slot));
+      const attendancesToAdd = req.payload.slots
+        .filter(slot => !UtilsHelper.doesArrayIncludeId(attendanceSheetSlots, slot));
+      const courseSlotsToEdit = await CourseSlot
+        .find({ _id: { $in: [...attendancesToAdd, ...attendancesToDelete] } })
+        .lean();
+      const slotsToEditMonths = courseSlotsToEdit.map(s => CompaniDate(s.startDate).format(MM_YYYY));
+      const completionCertificates = await CompletionCertificate.countDocuments({
+        course: attendanceSheet.course._id,
+        month: { $in: slotsToEditMonths },
+        trainee: attendanceSheet.trainee,
+        file: { $exists: true },
+      });
+      if (completionCertificates) throw Boom.forbidden(translate[language].someSlotsAreLinkedToCompletionCertificate);
+    }
   }
 
   return null;

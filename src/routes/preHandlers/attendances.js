@@ -101,7 +101,7 @@ exports.authorizeUnsubscribedAttendancesGet = async (req) => {
 };
 
 exports.authorizeAttendanceCreation = async (req) => {
-  const courseSlot = await CourseSlot.findOne({ _id: req.payload.courseSlot }, { course: 1 })
+  const courseSlot = await CourseSlot.findOne({ _id: req.payload.courseSlot }, { course: 1, startDate: 1 })
     .populate({
       path: 'course',
       select: 'trainers companies archivedAt trainees type holding subProgram',
@@ -154,6 +154,16 @@ exports.authorizeAttendanceCreation = async (req) => {
     }
   }
 
+  const isLinkedToCompletionCertificate = await CompletionCertificate.countDocuments({
+    course: course._id,
+    month: CompaniDate(courseSlot.startDate).format(MM_YYYY),
+    ...req.payload.trainee && { trainee: req.payload.trainee },
+    file: { $exists: true },
+  });
+  if (isLinkedToCompletionCertificate) {
+    throw Boom.forbidden(translate[language].attendanceIsLinkedToCompletionCertificate);
+  }
+
   return null;
 };
 
@@ -182,6 +192,7 @@ exports.authorizeAttendanceDeletion = async (req) => {
   if (isLinkedToAttendanceSheet) throw Boom.forbidden(translate[language].attendanceIsLinkedToAttendanceSheet);
 
   const isLinkedToCompletionCertificate = await CompletionCertificate.countDocuments({
+    course: course._id,
     month: CompaniDate(courseSlot.startDate).format(MM_YYYY),
     ...traineeId && { trainee: traineeId },
     file: { $exists: true },
