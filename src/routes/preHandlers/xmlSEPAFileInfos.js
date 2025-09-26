@@ -24,7 +24,7 @@ exports.authorizeXMLFileDownload = async (req) => {
       populate: {
         path: 'payer',
         select: 'company fundingorganisation',
-        populate: [{ path: 'company', select: 'name debitMandates' }],
+        populate: [{ path: 'company', select: 'name debitMandates bic iban' }],
       },
     })
     .setOptions({ isVendorUser: true })
@@ -39,7 +39,13 @@ exports.authorizeXMLFileDownload = async (req) => {
     const lastMandate = UtilsHelper.getLastVersion(payment.courseBill.payer.debitMandates, 'createdAt');
     return !!get(lastMandate, 'signedAt') && !!get(lastMandate, 'file.link');
   });
-  if (!everyPayerHasSignedMandate) throw Boom.forbidden(translate[language].xmlSEPAFileGenerationMissingSignedMandate);
+  if (!everyPayerHasSignedMandate) {
+    throw Boom.forbidden(translate[language].xmlSEPAFileGenerationFailedMissingSignedMandate);
+  }
+
+  const everyPayerHasBICAndIBAN = paymentList
+    .every(payment => payment.courseBill.payer.bic && payment.courseBill.payer.iban);
+  if (!everyPayerHasBICAndIBAN) throw Boom.forbidden(translate[language].xmlSEPAFileGenerationFailedMissingBankDetails);
 
   return null;
 };

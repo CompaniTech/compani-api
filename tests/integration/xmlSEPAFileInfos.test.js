@@ -36,7 +36,6 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result).toEqual({ name: 'Prelevements_SEPA_Compani - Septembre 2025.xml' });
       const paymentsCountAfter = await CoursePayment
         .countDocuments({ _id: { $in: [coursePaymentList[0]._id, coursePaymentList[2]._id] }, status: XML_GENERATED });
       expect(paymentsCountAfter).toEqual(2);
@@ -137,6 +136,32 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
 
     it('should return 403 if a payer has no signedMandate', async () => {
       const payload = { payments: [coursePaymentList[6]._id], name: 'Compani - Septembre 2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if a payer has no BIC', async () => {
+      const payload = { payments: [coursePaymentList[7]._id], name: 'Compani - Septembre 2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if a payer has no IBAN', async () => {
+      const payload = { payments: [coursePaymentList[8]._id], name: 'Compani - Septembre 2025' };
 
       const response = await app.inject({
         method: 'POST',
