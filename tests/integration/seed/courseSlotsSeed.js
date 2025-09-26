@@ -10,6 +10,7 @@ const User = require('../../../src/models/User');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const Attendance = require('../../../src/models/Attendance');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
 const { vendorAdmin, trainerAndCoach } = require('../../seed/authUsersSeed');
@@ -21,6 +22,7 @@ const {
   INTRA_HOLDING,
   GLOBAL,
   SINGLE,
+  MONTHLY,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, auxiliaryRoleId } = require('../../seed/authRolesSeed');
@@ -122,7 +124,7 @@ const coursesList = [
     type: SINGLE,
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
-    certificateGenerationMode: GLOBAL,
+    certificateGenerationMode: MONTHLY,
     maxTrainees: 1,
     expectedBills: 0,
   },
@@ -277,6 +279,13 @@ const courseSlotsList = [
     course: coursesList[1]._id,
     step: stepsList[0]._id,
   },
+  { // 13 slot in completion certificate month
+    _id: new ObjectId(),
+    startDate: '2020-05-13T09:00:00',
+    endDate: '2020-05-13T12:00:00',
+    course: coursesList[1]._id,
+    step: stepsList[0]._id,
+  },
 ];
 
 const attendance = {
@@ -297,12 +306,21 @@ const attendanceSheet = {
   trainer: trainer._id,
 };
 
+const completionCertificate = {
+  trainee: traineeFromOtherCompany._id,
+  month: '05-2020',
+  company: otherCompany._id,
+  course: coursesList[1]._id,
+  file: { publicId: 'comp-certif', link: 'www.certif.com' },
+};
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
   await Promise.all([
     Activity.create(activitiesList),
     Card.create(cardsList),
+    CompletionCertificate.create(completionCertificate),
     SubProgram.create(subProgramsList),
     Program.create(programsList),
     Course.create(coursesList),
