@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const groupBy = require('lodash/groupBy');
 const pick = require('lodash/pick');
 const randomize = require('randomatic');
+const { decrypt } = require('./encryption');
 const CoursePayment = require('../models/CoursePayment');
 const VendorCompany = require('../models/VendorCompany');
 const xmlSEPAFileInfos = require('../models/XmlSEPAFileInfos');
@@ -104,7 +105,14 @@ const generateSEPAFile = async (paymentIds, name) => {
     .setOptions({ isVendorUser: true })
     .lean();
 
-  const paymentsGroupByPayer = groupBy(payments, p => p.courseBill.payer._id);
+  const paymentsWithDecryptedPayer = payments.map((p) => {
+    const { payer } = p.courseBill;
+    if (payer.iban.includes(':')) payer.iban = decrypt(payer.iban);
+    if (payer.bic.includes(':')) payer.bic = decrypt(payer.bic);
+    return { p, courseBill: { ...p.courseBill, payer } };
+  });
+
+  const paymentsGroupByPayer = groupBy(paymentsWithDecryptedPayer, p => p.courseBill.payer._id);
   const vendorCompany = await VendorCompany.findOne({}).lean();
   const randomId = randomize('0', 21);
   const totalSum = getFixedNumber(payments.reduce((acc, next) => acc + next.netInclTaxes, 0), 2);
