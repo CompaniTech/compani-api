@@ -189,7 +189,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
       .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
     if (slotAlreadyLinkedToAS) throw Boom.conflict();
     if (req.payload.shouldUpdateAttendances) {
-      const attendanceSheetSlots = attendanceSheet.slots.map(s => s.slotId);
+      const attendanceSheetSlots = (attendanceSheet.slots || []).map(s => s.slotId);
       const attendancesToDelete = attendanceSheetSlots
         .filter(slot => !UtilsHelper.doesArrayIncludeId(req.payload.slots, slot));
       const attendancesToAdd = req.payload.slots

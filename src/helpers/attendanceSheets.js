@@ -183,7 +183,7 @@ exports.list = async (query, credentials) => {
 exports.update = async (attendanceSheetId, payload, credentials) => {
   if (payload.shouldUpdateAttendances) {
     const attendanceSheetToEdit = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
-    const attendanceSheetSlots = attendanceSheetToEdit.slots.map(s => s.slotId);
+    const attendanceSheetSlots = (attendanceSheetToEdit.slots || []).map(s => s.slotId);
     const { trainee } = attendanceSheetToEdit;
     const attendancesToDelete = attendanceSheetSlots
       .filter(slot => !UtilsHelper.doesArrayIncludeId(payload.slots, slot));
