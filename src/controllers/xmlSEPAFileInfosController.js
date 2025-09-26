@@ -11,7 +11,7 @@ const create = async (req, h) => {
 
     return h.file(doc.file, { confine: false, filename: doc.fileName, mode: 'attachment' })
       .header('Access-Control-Expose-Headers', 'Content-Disposition')
-      .type('application/xml');
+      .type('application/octet-stream');
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
