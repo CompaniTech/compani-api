@@ -425,7 +425,7 @@ module.exports = {
     courseSlotConflict: 'Créneau de formation en conflit.',
     courseSlotWithAttendances: 'Impossible: ce créneau de formation est émargé.',
     courseSlotsAlreadyInAttendanceSheet: 'Certains créneaux sont déjà rattachés à une feuille d\'émargement.',
-    courseSlotDateInCompletionCertificate: 'Impossible d\'ajouter un créneau : il existe un certificat de réalisation'
+    courseSlotDateInCompletionCertificate: 'Impossible d\'éditer le créneau : il existe un certificat de réalisation'
     + ' sur cette date.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
