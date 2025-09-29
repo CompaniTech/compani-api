@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const { v4: uuidv4 } = require('uuid');
 const Attendance = require('../../../src/models/Attendance');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Course = require('../../../src/models/Course');
 const CourseHistory = require('../../../src/models/CourseHistory');
 const CourseSlot = require('../../../src/models/CourseSlot');
@@ -104,7 +105,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
-    certificateGenerationMode: GLOBAL,
+    certificateGenerationMode: MONTHLY,
   },
   { // 1
     _id: new ObjectId(),
@@ -409,6 +410,27 @@ const slotsList = [
     course: coursesList[5]._id,
     step: steps[0]._id,
   },
+  { // 20
+    _id: new ObjectId(),
+    startDate: '2025-09-25T09:00:00.000Z',
+    endDate: '2025-09-25T11:00:00.000Z',
+    course: coursesList[7]._id,
+    step: steps[0]._id,
+  },
+  { // 21
+    _id: new ObjectId(),
+    startDate: '2025-09-20T09:00:00.000Z',
+    endDate: '2025-09-20T11:00:00.000Z',
+    course: coursesList[7]._id,
+    step: steps[0]._id,
+  },
+  { // 22
+    _id: new ObjectId(),
+    startDate: '2025-09-18T09:00:00.000Z',
+    endDate: '2025-09-18T11:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+  },
 ];
 
 const attendanceSheetList = [
@@ -680,6 +702,31 @@ const attendancesList = [
   { _id: new ObjectId(), courseSlot: slotsList[11]._id, trainee: userList[1]._id, company: authCompany._id },
   { _id: new ObjectId(), courseSlot: slotsList[19]._id, trainee: userList[2]._id, company: otherCompany._id },
   { _id: new ObjectId(), courseSlot: slotsList[5]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[20]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[15]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[16]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[17]._id, trainee: userList[1]._id, company: authCompany._id },
+];
+
+const completionCertificates = [
+  {
+    course: coursesList[7]._id,
+    trainee: userList[1]._id,
+    month: '09-2025',
+    file: { publicId: 'certif-upload', link: 'www.certif.com' },
+  },
+  {
+    course: coursesList[0]._id,
+    trainee: userList[1]._id,
+    month: '01-2021',
+    file: { publicId: 'certif-upload', link: 'www.certif.com' },
+  },
+  {
+    course: coursesList[0]._id,
+    trainee: userList[1]._id,
+    month: '09-2025',
+    file: { publicId: 'certif-upload', link: 'www.certif.com' },
+  },
 ];
 
 const populateDB = async () => {
@@ -696,6 +743,7 @@ const populateDB = async () => {
     Step.create(steps),
     SubProgram.create(subProgramList),
     Program.create(programsList),
+    CompletionCertificate.create(completionCertificates),
   ]);
 };
 

@@ -1193,20 +1193,6 @@ describe('update', () => {
     AttendanceCountDocuments.restore();
   });
 
-  it('should update an attendance sheet (without updating attendances)', async () => {
-    const credentials = { _id: new ObjectId() };
-    const slotId = new ObjectId();
-    const attendanceSheetId = new ObjectId();
-    const payload = { slots: [slotId] };
-    await attendanceSheetHelper.update(attendanceSheetId, payload, credentials);
-
-    sinon.assert.calledOnceWithExactly(updateOne, { _id: attendanceSheetId }, { $set: { slots: [{ slotId }] } });
-    sinon.assert.notCalled(findOne);
-    sinon.assert.notCalled(AttendanceCountDocuments);
-    sinon.assert.notCalled(AttendanceHelperCreate);
-    sinon.assert.notCalled(AttendanceDeleteMany);
-  });
-
   it('should update an attendance sheet and update attendances', async () => {
     const credentials = { _id: new ObjectId() };
     const slotIdToCreate = new ObjectId();
@@ -1214,7 +1200,7 @@ describe('update', () => {
     const commonSlotId = new ObjectId();
     const attendanceSheetId = new ObjectId();
     const trainee = new ObjectId();
-    const payload = { slots: [slotIdToCreate, commonSlotId], shouldUpdateAttendances: true };
+    const payload = { slots: [slotIdToCreate, commonSlotId] };
     const attendanceSheet = {
       _id: attendanceSheetId,
       trainee,

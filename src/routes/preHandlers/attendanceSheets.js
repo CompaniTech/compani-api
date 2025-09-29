@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
 const UtilsHelper = require('../../helpers/utils');
+const CompletionCertificate = require('../../models/CompletionCertificate');
 const Course = require('../../models/Course');
 const CourseSlot = require('../../models/CourseSlot');
 const AttendanceSheet = require('../../models/AttendanceSheet');
@@ -14,6 +15,7 @@ const {
   TRAINING_ORGANISATION_MANAGER,
   SINGLE,
   INTER_B2B,
+  MM_YYYY,
 } = require('../../helpers/constants');
 const DatesUtilsHelper = require('../../helpers/dates/utils');
 const translate = require('../../helpers/translate');
@@ -61,6 +63,17 @@ exports.authorizeAttendanceSheetsGet = async (req) => {
   return null;
 };
 
+const checkCompletionCertificates = async (slots, courseId, trainees) => {
+  const slotsMonths = slots.map(s => CompaniDate(s.startDate).format(MM_YYYY));
+  const completionCertificates = await CompletionCertificate.countDocuments({
+    course: courseId,
+    month: { $in: slotsMonths },
+    trainee: { $in: trainees },
+    file: { $exists: true },
+  });
+  if (completionCertificates) throw Boom.forbidden(translate[language].someSlotsAreLinkedToCompletionCertificate);
+};
+
 exports.authorizeAttendanceSheetCreation = async (req) => {
   const course = await Course
     .findOne({ _id: req.payload.course }, { archivedAt: 1, type: 1, slots: 1, trainees: 1, trainers: 1, companies: 1 })
@@ -89,8 +102,14 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
         throw Boom.notFound();
       }
       const slotsIds = slots.map(s => s.slotId);
-      const courseSlots = await CourseSlot.find({ _id: { $in: slotsIds }, course: course._id });
+      const courseSlots = await CourseSlot
+        .find({ _id: { $in: slotsIds }, course: course._id })
+        .populate({ path: 'attendances', options: { isVendorUser: true } })
+        .lean();
       if (courseSlots.length !== slotsIds.length) throw Boom.notFound();
+
+      const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
+      await checkCompletionCertificates(slotsWithoutAttendances, course._id, slots.flatMap(s => s.trainees));
 
       const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
       if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
@@ -117,8 +136,14 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
       return keys.includes('trainees') || keys.includes('slotId');
     });
     if (someSlotsContainWrongKeys) throw Boom.badRequest();
-    const courseSlotCount = await CourseSlot.countDocuments({ _id: { $in: slots }, course: course._id });
-    if (courseSlotCount !== slots.length) throw Boom.notFound();
+    const courseSlots = await CourseSlot
+      .find({ _id: { $in: slots }, course: course._id })
+      .populate({ path: 'attendances', options: { isVendorUser: true } })
+      .lean();
+    if (courseSlots.length !== slots.length) throw Boom.notFound();
+
+    const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
+    await checkCompletionCertificates(slotsWithoutAttendances, course._id, traineesIds);
 
     const attendanceSheetCount = await AttendanceSheet
       .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slots } });
@@ -144,7 +169,6 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   if (!isVendorAndAuthorized(attendanceSheet.course.trainers, credentials)) throw Boom.forbidden();
 
   if (req.payload.action) {
-    if (req.payload.shouldUpdateAttendances) throw Boom.badRequest();
     let canGenerate = attendanceSheet.slots
       .every(s => s.trainerSignature && s.traineesSignature.every(signature => signature.signature));
     if (attendanceSheet.file) canGenerate = false;
@@ -163,6 +187,16 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     const slotAlreadyLinkedToAS = await AttendanceSheet
       .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
     if (slotAlreadyLinkedToAS) throw Boom.conflict();
+
+    const attendanceSheetSlots = (attendanceSheet.slots || []).map(s => s.slotId);
+    const attendancesToDelete = attendanceSheetSlots
+      .filter(slot => !UtilsHelper.doesArrayIncludeId(req.payload.slots, slot));
+    const attendancesToAdd = req.payload.slots
+      .filter(slot => !UtilsHelper.doesArrayIncludeId(attendanceSheetSlots, slot));
+    const courseSlotsToEdit = await CourseSlot
+      .find({ _id: { $in: [...attendancesToAdd, ...attendancesToDelete] } })
+      .lean();
+    await checkCompletionCertificates(courseSlotsToEdit, attendanceSheet.course._id, [attendanceSheet.trainee]);
   }
 
   return null;
@@ -214,6 +248,15 @@ exports.authorizeAttendanceSheetDeletion = async (req) => {
   if (!isVendorAndAuthorized(get(attendanceSheet, 'course.trainers'), credentials)) throw Boom.forbidden();
 
   if (req.query.shouldDeleteAttendances && !attendanceSheet.slots) throw Boom.badRequest();
+
+  if (req.query.shouldDeleteAttendances) {
+    const attendanceSheetSlots = attendanceSheet.slots.map(s => s.slotId);
+    const courseSlots = await CourseSlot.find({ _id: { $in: attendanceSheetSlots } }).lean();
+    const trainees = attendanceSheet.trainee
+      ? [attendanceSheet.trainee]
+      : attendanceSheet.slots.flatMap(s => (s.traineesSignature || []).map(signature => signature.traineeId));
+    await checkCompletionCertificates(courseSlots, attendanceSheet.course._id, trainees);
+  }
 
   return null;
 };
