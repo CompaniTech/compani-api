@@ -1328,7 +1328,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
     it('should update attendance sheet slots for a single course', async () => {
       const attendanceSheetId = attendanceSheetList[5]._id;
-      const payload = { slots: [slotsList[4]._id], shouldUpdateAttendances: true };
+      const payload = { slots: [slotsList[4]._id] };
 
       const response = await app.inject({
         method: 'PUT',
@@ -1429,20 +1429,6 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
         .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
       expect(attendanceSheetUpdated).toEqual(1);
       sinon.assert.calledOnce(uploadCourseFile);
-    });
-
-    it('should return 400 if generation and shouldUpdateAttendances in payload', async () => {
-      const attendanceSheetId = attendanceSheetList[14]._id;
-      const payload = { action: GENERATION, shouldUpdateAttendances: true };
-
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(400);
     });
 
     it('should return 404 if attendance sheet doesn\'t exist', async () => {
@@ -1592,7 +1578,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
     it('should return 403 if try to update attendances on a slot linked to completion certificate', async () => {
       const attendanceSheetId = attendanceSheetList[5]._id;
-      const payload = { slots: [slotsList[21]._id], shouldUpdateAttendances: true };
+      const payload = { slots: [slotsList[21]._id] };
 
       const response = await app.inject({
         method: 'PUT',

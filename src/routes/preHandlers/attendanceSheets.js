@@ -169,7 +169,6 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   if (!isVendorAndAuthorized(attendanceSheet.course.trainers, credentials)) throw Boom.forbidden();
 
   if (req.payload.action) {
-    if (req.payload.shouldUpdateAttendances) throw Boom.badRequest();
     let canGenerate = attendanceSheet.slots
       .every(s => s.trainerSignature && s.traineesSignature.every(signature => signature.signature));
     if (attendanceSheet.file) canGenerate = false;
@@ -188,17 +187,16 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     const slotAlreadyLinkedToAS = await AttendanceSheet
       .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
     if (slotAlreadyLinkedToAS) throw Boom.conflict();
-    if (req.payload.shouldUpdateAttendances) {
-      const attendanceSheetSlots = (attendanceSheet.slots || []).map(s => s.slotId);
-      const attendancesToDelete = attendanceSheetSlots
-        .filter(slot => !UtilsHelper.doesArrayIncludeId(req.payload.slots, slot));
-      const attendancesToAdd = req.payload.slots
-        .filter(slot => !UtilsHelper.doesArrayIncludeId(attendanceSheetSlots, slot));
-      const courseSlotsToEdit = await CourseSlot
-        .find({ _id: { $in: [...attendancesToAdd, ...attendancesToDelete] } })
-        .lean();
-      await checkCompletionCertificates(courseSlotsToEdit, attendanceSheet.course._id, [attendanceSheet.trainee]);
-    }
+
+    const attendanceSheetSlots = (attendanceSheet.slots || []).map(s => s.slotId);
+    const attendancesToDelete = attendanceSheetSlots
+      .filter(slot => !UtilsHelper.doesArrayIncludeId(req.payload.slots, slot));
+    const attendancesToAdd = req.payload.slots
+      .filter(slot => !UtilsHelper.doesArrayIncludeId(attendanceSheetSlots, slot));
+    const courseSlotsToEdit = await CourseSlot
+      .find({ _id: { $in: [...attendancesToAdd, ...attendancesToDelete] } })
+      .lean();
+    await checkCompletionCertificates(courseSlotsToEdit, attendanceSheet.course._id, [attendanceSheet.trainee]);
   }
 
   return null;

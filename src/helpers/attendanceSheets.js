@@ -181,25 +181,24 @@ exports.list = async (query, credentials) => {
 };
 
 exports.update = async (attendanceSheetId, payload, credentials) => {
-  if (payload.shouldUpdateAttendances) {
-    const attendanceSheetToEdit = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
-    const attendanceSheetSlots = (attendanceSheetToEdit.slots || []).map(s => s.slotId);
-    const { trainee } = attendanceSheetToEdit;
-    const attendancesToDelete = attendanceSheetSlots
-      .filter(slot => !UtilsHelper.doesArrayIncludeId(payload.slots, slot));
+  const attendanceSheetToEdit = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
+  const attendanceSheetSlots = (attendanceSheetToEdit.slots || []).map(s => s.slotId);
+  const { trainee } = attendanceSheetToEdit;
+  const attendancesToDelete = attendanceSheetSlots
+    .filter(slot => !UtilsHelper.doesArrayIncludeId(payload.slots, slot));
 
-    const attendancesPromises = [];
-    for (const slot of payload.slots) {
-      const attendance = await Attendance.countDocuments({ trainee, courseSlot: slot });
-      if (!attendance) {
-        attendancesPromises.push(AttendanceHelper.create({ trainee, courseSlot: slot }, credentials));
-      }
+  const promises = [];
+  for (const slot of payload.slots) {
+    const attendance = await Attendance.countDocuments({ trainee, courseSlot: slot });
+    if (!attendance) {
+      promises.push(AttendanceHelper.create({ trainee, courseSlot: slot }, credentials));
     }
-    attendancesPromises.push(Attendance.deleteMany({ courseSlot: { $in: attendancesToDelete }, trainee }));
-    await Promise.all(attendancesPromises);
   }
-  return AttendanceSheet
-    .updateOne({ _id: attendanceSheetId }, { $set: { slots: payload.slots.map(s => ({ slotId: s })) } });
+  promises.push(Attendance.deleteMany({ courseSlot: { $in: attendancesToDelete }, trainee }));
+  promises.push(
+    AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots: payload.slots.map(s => ({ slotId: s })) } })
+  );
+  return Promise.all(promises);
 };
 
 exports.sign = async (attendanceSheetId, payload, credentials) => {
