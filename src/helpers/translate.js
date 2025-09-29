@@ -177,7 +177,7 @@ module.exports = {
     courseSlotConflict: 'Course slot in conflict.',
     courseSlotWithAttendances: 'Course slot has attendances.',
     courseSlotsAlreadyInAttendanceSheet: 'Course slots already in attendance sheet.',
-    courseSlotLinkedToCompletionCertificate: 'Course slot is linked to completion certificate.',
+    courseSlotDateInCompletionCertificate: 'Impossible to add course slot : completion certificate on this date.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Course funding organisations found.',
     courseFundingOrganisationsNotFound: 'Course funding organisations not found.',
@@ -425,7 +425,8 @@ module.exports = {
     courseSlotConflict: 'Créneau de formation en conflit.',
     courseSlotWithAttendances: 'Impossible: ce créneau de formation est émargé.',
     courseSlotsAlreadyInAttendanceSheet: 'Certains créneaux sont déjà rattachés à une feuille d\'émargement.',
-    courseSlotLinkedToCompletionCertificate: 'Le créneau est lié à un certificat de réalisation.',
+    courseSlotDateInCompletionCertificate: 'Impossible d\'ajouter un créneau : il existe un certificat de réalisation'
+    + 'sur cette date.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
     courseFundingOrganisationsNotFound: 'Financeurs non trouvés.',

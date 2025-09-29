@@ -44,6 +44,7 @@ const checkPayload = async (courseSlot, payload) => {
 
   const attendanceSheets = await AttendanceSheet.countDocuments({ 'slots.slotId': courseSlot._id });
   if (attendanceSheets) throw Boom.forbidden(translate[language].courseSlotWithAttendances);
+
   const slotMonth = courseSlot.startDate ? CompaniDate(courseSlot.startDate).format(MM_YYYY) : '';
   const payloadMonth = startDate ? CompaniDate(startDate).format(MM_YYYY) : '';
   const slotsMonths = compact([slotMonth, payloadMonth]);
@@ -52,7 +53,7 @@ const checkPayload = async (courseSlot, payload) => {
     month: { $in: slotsMonths },
     file: { $exists: true },
   });
-  if (completionCertificates) throw Boom.forbidden(translate[language].courseSlotLinkedToCompletionCertificate);
+  if (completionCertificates) throw Boom.forbidden(translate[language].courseSlotDateInCompletionCertificate);
 
   if (!hasOneDate) {
     const attendances = await Attendance.countDocuments({ courseSlot: courseSlot._id });
