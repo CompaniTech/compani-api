@@ -2140,10 +2140,7 @@ describe('delete', () => {
       findOne,
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
     );
-    sinon.assert.calledOnceWithExactly(
-      attendanceDeleteMany,
-      { courseSlot: { $in: [slotId] }, trainee: { $in: [traineeId] } }
-    );
+    sinon.assert.calledOnceWithExactly(attendanceDeleteMany, { courseSlot: { $in: [slotId] }, trainee: traineeId });
   });
 
   it('should remove an attendance sheet (with both signatures and file)', async () => {
@@ -2181,9 +2178,6 @@ describe('delete', () => {
       findOne,
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
     );
-    sinon.assert.calledOnceWithExactly(
-      attendanceDeleteMany,
-      { courseSlot: { $in: [slotId] }, trainee: { $in: traineesIds } }
-    );
+    sinon.assert.calledOnceWithExactly(attendanceDeleteMany, { courseSlot: slotId, trainee: { $in: traineesIds } });
   });
 });

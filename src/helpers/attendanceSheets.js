@@ -329,22 +329,20 @@ exports.delete = async (attendanceSheetId, shouldDeleteAttendances) => {
     const promises = [];
     const { slots } = attendanceSheet;
     const signatures = [];
-    const traineesIds = [];
-    if (attendanceSheet.trainee && shouldDeleteAttendances) traineesIds.push(attendanceSheet.trainee);
+    if (attendanceSheet.trainee && shouldDeleteAttendances) {
+      promises.push(
+        Attendance.deleteMany({ courseSlot: { $in: slots.map(s => s.slotId) }, trainee: attendanceSheet.trainee })
+      );
+    }
     for (const slot of slots) {
       if (slot.trainerSignature) signatures.push(slot.trainerSignature.signature);
       if (slot.traineesSignature) {
         signatures.push(...slot.traineesSignature.filter(s => s.signature).map(s => s.signature));
       }
       if (!attendanceSheet.trainee && shouldDeleteAttendances) {
-        traineesIds.push(...slot.traineesSignature.map(signature => signature.traineeId));
+        const traineesIds = slot.traineesSignature.map(signature => signature.traineeId);
+        promises.push(Attendance.deleteMany({ courseSlot: slot.slotId, trainee: { $in: traineesIds } }));
       }
-    }
-
-    if (shouldDeleteAttendances) {
-      promises.push(
-        Attendance.deleteMany({ courseSlot: { $in: slots.map(s => s.slotId) }, trainee: { $in: traineesIds } })
-      );
     }
     for (const signature of [...new Set(signatures)]) {
       promises.push(GCloudStorageHelper.deleteCourseFile(signature.split('/').pop()));
