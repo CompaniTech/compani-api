@@ -185,10 +185,17 @@ exports.authorizeAttendanceDeletion = async (req) => {
   const trainersIds = courseSlot.course.trainers;
   if (get(credentials, 'role.vendor.name') === TRAINER) isTrainerAuthorized(credentials._id, trainersIds);
 
-  const isLinkedToAttendanceSheet = await AttendanceSheet.countDocuments({
-    'slots.slotId': courseSlot._id,
-    ...traineeId && { $or: [{ trainee: traineeId }, { 'slots.traineesSignature.traineeId': traineeId }] },
-  });
+  const isLinkedToAttendanceSheet = await AttendanceSheet.countDocuments(
+    {
+      'slots.slotId': courseSlot._id,
+      ...(traineeId && {
+        $or: [
+          { trainee: traineeId },
+          { slots: { $elemMatch: { slotId: courseSlot._id, 'traineesSignature.traineeId': traineeId } } },
+        ],
+      }),
+    }
+  );
   if (isLinkedToAttendanceSheet) throw Boom.forbidden(translate[language].attendanceIsLinkedToAttendanceSheet);
 
   const isLinkedToCompletionCertificate = await CompletionCertificate.countDocuments({

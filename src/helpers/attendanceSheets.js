@@ -336,7 +336,7 @@ exports.delete = async (attendanceSheetId, shouldDeleteAttendances) => {
       if (slot.traineesSignature) {
         signatures.push(...slot.traineesSignature.filter(s => s.signature).map(s => s.signature));
       }
-      if (!traineesIds.length && shouldDeleteAttendances) {
+      if (!attendanceSheet.trainee && shouldDeleteAttendances) {
         traineesIds.push(...slot.traineesSignature.map(signature => signature.traineeId));
       }
     }
