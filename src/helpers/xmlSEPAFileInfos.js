@@ -13,7 +13,7 @@ const { XML_GENERATED } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { getFixedNumber, getLastVersion } = require('./utils');
 
-const generateSEPAHeader = data => ({
+exports.generateSEPAHeader = data => ({
   MsgId: data.sepaId,
   CreDtTm: data.createdDate,
   NbOfTxs: data.transactionsCount,
@@ -24,7 +24,7 @@ const generateSEPAHeader = data => ({
   },
 });
 
-const generatePaymentInfo = data => ({
+exports.generatePaymentInfo = data => ({
   PmtInfId: data.id,
   PmtMtd: data.method,
   NbOfTxs: data.txNumber,
@@ -55,7 +55,7 @@ const generatePaymentInfo = data => ({
   DrctDbtTxInf: [],
 });
 
-const generateTransactionInfos = transaction => ({
+exports.generateTransactionInfos = transaction => ({
   PmtId: {
     EndToEndId: transaction.number,
   },
@@ -75,7 +75,7 @@ const generateTransactionInfos = transaction => ({
   RmtInf: { Ustrd: transaction.globalTransactionName },
 });
 
-const formatTransactionNumber = (payments) => {
+exports.formatTransactionNumber = (payments) => {
   let transactionNumber = '';
   const paymentsGroupByCourseBill = groupBy(payments, p => p.courseBill.number);
   for (const courseBillNumber of Object.keys(paymentsGroupByCourseBill)) {
@@ -91,7 +91,7 @@ const formatTransactionNumber = (payments) => {
   return transactionNumber;
 };
 
-const generateSEPAFile = async (paymentIds, name) => {
+exports.generateSEPAFile = async (paymentIds, name) => {
   const xmlContent = XmlHelper.createDocument();
   const outputPath = path.join(os.tmpdir(), name);
 
@@ -117,7 +117,7 @@ const generateSEPAFile = async (paymentIds, name) => {
   const randomId = randomize('0', 21);
   const totalSum = getFixedNumber(payments.reduce((acc, next) => acc + next.netInclTaxes, 0), 2);
 
-  xmlContent.Document.CstmrDrctDbtInitn.GrpHdr = generateSEPAHeader({
+  xmlContent.Document.CstmrDrctDbtInitn.GrpHdr = exports.generateSEPAHeader({
     sepaId: `MSG00000${randomId}G`,
     createdDate: CompaniDate().toISO(),
     transactionsCount: Object.keys(paymentsGroupByPayer).length,
@@ -126,7 +126,7 @@ const generateSEPAFile = async (paymentIds, name) => {
     ics: vendorCompany.ics,
   });
 
-  const paymentInfo = generatePaymentInfo({
+  const paymentInfo = exports.generatePaymentInfo({
     id: `MSG${randomId}R`,
     sequenceType: 'RCUR',
     method: 'DD',
@@ -152,7 +152,7 @@ const generateSEPAFile = async (paymentIds, name) => {
 
     const formattedTransaction = {
       _id: new ObjectId(),
-      number: formatTransactionNumber(payerPayments),
+      number: exports.formatTransactionNumber(payerPayments),
       amount: transactionAmount,
       debitorName: payerInfos.name,
       debitorIBAN: payerInfos.iban,
@@ -161,7 +161,7 @@ const generateSEPAFile = async (paymentIds, name) => {
       mandateSignatureDate: lastMandate.signedAt,
       globalTransactionName: name.trim(),
     };
-    paymentInfo.DrctDbtTxInf.push(generateTransactionInfos(formattedTransaction));
+    paymentInfo.DrctDbtTxInf.push(exports.generateTransactionInfos(formattedTransaction));
   }
 
   xmlContent.Document.CstmrDrctDbtInitn.PmtInf = [paymentInfo];
@@ -176,7 +176,7 @@ const generateSEPAFile = async (paymentIds, name) => {
 exports.create = async (payload) => {
   const { payments, name } = payload;
 
-  const file = generateSEPAFile(payments, name);
+  const file = exports.generateSEPAFile(payments, name);
 
   await xmlSEPAFileInfos.create({ coursePayments: payments, name });
   await CoursePayment.updateMany({ _id: { $in: payments } }, { $set: { status: XML_GENERATED } });
