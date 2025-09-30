@@ -171,6 +171,7 @@ exports.list = async (query, credentials) => {
     .find({ course: query.course, ...(companies.length && { companies: { $in: companies } }) })
     .populate({ path: 'trainee', select: 'identity' })
     .populate({ path: 'slots.slotId', select: 'startDate endDate step' })
+    .sort({ updatedAt: -1 })
     .setOptions({ isVendorUser })
     .lean();
 
