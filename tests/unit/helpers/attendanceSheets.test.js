@@ -46,7 +46,7 @@ describe('list', () => {
       companies: [new ObjectId()],
     }];
 
-    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await attendanceSheetHelper.list({ course: courseId }, credentials);
 
@@ -57,6 +57,7 @@ describe('list', () => {
         { query: 'find', args: [{ course: courseId }] },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'slots.slotId', select: 'startDate endDate step' }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'setOptions', args: [{ isVendorUser: !!get(credentials, 'role.vendor') }] },
         { query: 'lean' },
       ]
@@ -84,7 +85,7 @@ describe('list', () => {
       },
     ];
 
-    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await attendanceSheetHelper.list({ course: courseId, company: authCompanyId }, credentials);
 
@@ -95,6 +96,7 @@ describe('list', () => {
         { query: 'find', args: [{ course: courseId, companies: { $in: [authCompanyId] } }] },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'slots.slotId', select: 'startDate endDate step' }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'setOptions', args: [{ isVendorUser: !!get(credentials, 'role.vendor') }] },
         { query: 'lean' },
       ]
@@ -127,7 +129,7 @@ describe('list', () => {
       },
     ];
 
-    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await attendanceSheetHelper.list({ course: courseId, holding: holdingId }, credentials);
 
@@ -138,6 +140,7 @@ describe('list', () => {
         { query: 'find', args: [{ course: courseId, companies: { $in: [authCompanyId, otherCompanyId] } }] },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'slots.slotId', select: 'startDate endDate step' }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'setOptions', args: [{ isVendorUser: !!get(credentials, 'role.vendor') }] },
         { query: 'lean' },
       ]
