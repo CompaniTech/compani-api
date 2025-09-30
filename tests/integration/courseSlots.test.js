@@ -322,6 +322,42 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 as trying to remove dates and course slot has completion certificate', async () => {
+      const payload = { startDate: '', endDate: '' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[13]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 as trying to update dates and course slot has completion certificate', async () => {
+      const payload = { startDate: '2020-05-10T09:00:00', endDate: '2020-05-10T11:00:00' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[13]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 as trying to update dates on completion certificate month', async () => {
+      const payload = { startDate: '2020-05-14T09:00:00', endDate: '2020-05-14T11:00:00' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[6]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 409 if slots conflict', async () => {
       const payload = {
         startDate: courseSlotsList[0].startDate,

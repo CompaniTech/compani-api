@@ -6,7 +6,7 @@ const { courseBillsList, coursePaymentsList, populateDB } = require('./seed/cour
 
 const { getToken } = require('./helpers/authentication');
 const { authCompany } = require('../seed/authCompaniesSeed');
-const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING } = require('../../src/helpers/constants');
+const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING, RECEIVED } = require('../../src/helpers/constants');
 const CoursePayment = require('../../src/models/CoursePayment');
 const CoursePaymentNumber = require('../../src/models/CoursePaymentNumber');
 
@@ -43,10 +43,10 @@ describe('COURSE PAYMENTS ROUTES - POST /coursepayments', () => {
       expect(paymentResponse.statusCode).toBe(200);
 
       const newPayment = await CoursePayment
-        .countDocuments({ ...payload, number: 'REG-00002', companies: [authCompany._id], status: PENDING });
+        .countDocuments({ ...payload, number: 'REG-00003', companies: [authCompany._id], status: PENDING });
       const paymentNumber = await CoursePaymentNumber.findOne({ nature: PAYMENT }).lean();
       expect(newPayment).toBeTruthy();
-      expect(paymentNumber.seq).toBe(2);
+      expect(paymentNumber.seq).toBe(3);
 
       const refundResponse = await app.inject({
         method: 'POST',
@@ -149,6 +149,7 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
     date: '2022-03-09T00:00:00.000Z',
     netInclTaxes: 1200.20,
     type: DIRECT_DEBIT,
+    status: RECEIVED,
   };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -174,15 +175,30 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
       { key: 'netInclTaxes', value: -200 },
       { key: 'netInclTaxes', value: '200€' },
       { key: 'type', value: 'cesu' },
+      { key: 'status', value: 'wrongStatus' },
     ];
     wrongValues.forEach((param) => {
-      it(`should return a 400 error if '${param}' param is missing`, async () => {
+      it(`should return a 400 if '${param.key}' has wrong value`, async () => {
         const res = await app.inject({
           method: 'PUT',
           url: `/coursepayments/${coursePaymentsList[0]._id}`,
           payload: { ...payload, [param.key]: param.value },
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
+        expect(res.statusCode).toBe(400);
+      });
+    });
+
+    const missingParams = ['date', 'netInclTaxes', 'type', 'status'];
+    missingParams.forEach((param) => {
+      it(`should return a 400 if '${param}' is missing`, async () => {
+        const res = await app.inject({
+          method: 'PUT',
+          url: `/coursepayments/${coursePaymentsList[0]._id}`,
+          payload: omit(payload, param),
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
         expect(res.statusCode).toBe(400);
       });
     });
@@ -214,6 +230,48 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
           method: 'PUT',
           url: `/coursepayments/${coursePaymentsList[0]._id}`,
           payload,
+          headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('COURSE PAYMENTS ROUTES - GET /coursepayments', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should list payments', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/coursepayments?status=${PENDING}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.coursePayments.length).toEqual(1);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name, role.erp);
+        const response = await app.inject({
+          method: 'GET',
+          url: `/coursepayments?status=${PENDING}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
         });
 

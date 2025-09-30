@@ -1,6 +1,8 @@
 const { ObjectId } = require('mongodb');
 const { v4: uuidv4 } = require('uuid');
+const Attendance = require('../../../src/models/Attendance');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Course = require('../../../src/models/Course');
 const CourseHistory = require('../../../src/models/CourseHistory');
 const CourseSlot = require('../../../src/models/CourseSlot');
@@ -24,7 +26,7 @@ const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const UserCompany = require('../../../src/models/UserCompany');
 const User = require('../../../src/models/User');
 const { vendorAdminRoleId, trainerRoleId } = require('../../seed/authRolesSeed');
-const { trainerOrganisationManager, trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
+const { trainerOrganisationManager, trainer, trainerAndCoach, vendorAdmin } = require('../../seed/authUsersSeed');
 
 const userList = [
   { // 0
@@ -48,6 +50,7 @@ const userList = [
     identity: { firstname: 'traineeFromINTERB2B', lastname: 'withOtherCompany' },
     local: { email: 'traineeFromINTERB2B@alenvi.io' },
     origin: WEBAPP,
+    formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
   },
   { // 3
     _id: new ObjectId(),
@@ -61,6 +64,7 @@ const userList = [
     identity: { firstname: 'thirdCompany', lastname: 'User' },
     local: { email: 'trainerFromThirdCompany@compani.fr' },
     origin: WEBAPP,
+    formationExpoTokenList: ['ExponentPushToken[0]', 'ExponentPushToken[1]'],
   },
 ];
 
@@ -97,11 +101,11 @@ const coursesList = [
     subProgram: subProgramList[0]._id,
     type: INTRA,
     maxTrainees: 8,
-    trainees: [userList[1]._id],
+    trainees: [userList[1]._id, userList[0]._id],
     companies: [authCompany._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
-    certificateGenerationMode: GLOBAL,
+    certificateGenerationMode: MONTHLY,
   },
   { // 1
     _id: new ObjectId(),
@@ -118,10 +122,10 @@ const coursesList = [
     subProgram: subProgramList[0]._id,
     type: INTRA,
     maxTrainees: 8,
-    trainees: [userList[1]._id],
+    trainees: [userList[1]._id, userList[0]._id],
     companies: [authCompany._id],
     trainers: [userList[3]._id],
-    operationsRepresentative: userList[0]._id,
+    operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
   },
   { // 3 - archived
@@ -151,8 +155,8 @@ const coursesList = [
     subProgram: subProgramList[0]._id,
     type: INTRA_HOLDING,
     maxTrainees: 8,
-    trainees: [userList[2]._id],
-    companies: [otherCompany._id],
+    trainees: [userList[2]._id, userList[4]._id],
+    companies: [otherCompany._id, companyWithoutSubscription._id],
     holding: otherHolding._id,
     trainers: [trainer._id],
     operationsRepresentative: userList[0]._id,
@@ -216,6 +220,13 @@ const courseHistoriesList = [
   },
   {
     action: TRAINEE_ADDITION,
+    course: coursesList[1]._id,
+    trainee: userList[4]._id,
+    company: companyWithoutSubscription._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+  {
+    action: TRAINEE_ADDITION,
     course: coursesList[3]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
@@ -226,6 +237,34 @@ const courseHistoriesList = [
     course: coursesList[4]._id,
     trainee: userList[2]._id,
     company: otherCompany._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+  {
+    action: TRAINEE_ADDITION,
+    course: coursesList[0]._id,
+    trainee: userList[0]._id,
+    company: authCompany._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+  {
+    action: TRAINEE_ADDITION,
+    course: coursesList[5]._id,
+    trainee: userList[2]._id,
+    company: otherCompany._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+  {
+    action: TRAINEE_ADDITION,
+    course: coursesList[5]._id,
+    trainee: userList[4]._id,
+    company: companyWithoutSubscription._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+  {
+    action: TRAINEE_ADDITION,
+    course: coursesList[7]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
     createdBy: trainerOrganisationManager._id,
   },
 ];
@@ -315,6 +354,83 @@ const slotsList = [
     course: coursesList[7]._id,
     step: steps[0]._id,
   },
+  { // 12
+    _id: new ObjectId(),
+    startDate: '2021-03-26T09:00:00.000Z',
+    endDate: '2021-03-26T11:00:00.000Z',
+    course: coursesList[1]._id,
+    step: steps[0]._id,
+  },
+  { // 13
+    _id: new ObjectId(),
+    startDate: '2021-03-27T09:00:00.000Z',
+    endDate: '2021-03-27T11:00:00.000Z',
+    course: coursesList[1]._id,
+    step: steps[0]._id,
+  },
+  { // 14
+    _id: new ObjectId(),
+    startDate: '2021-03-28T09:00:00.000Z',
+    endDate: '2021-03-28T11:00:00.000Z',
+    course: coursesList[1]._id,
+    step: steps[0]._id,
+  },
+  { // 15
+    _id: new ObjectId(),
+    startDate: '2021-01-23T09:00:00.000Z',
+    endDate: '2021-01-23T11:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+  },
+  { // 16
+    _id: new ObjectId(),
+    startDate: '2021-01-23T14:00:00.000Z',
+    endDate: '2021-01-23T15:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+  },
+  { // 17
+    _id: new ObjectId(),
+    startDate: '2021-01-24T14:00:00.000Z',
+    endDate: '2021-01-24T15:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+  },
+  { // 18
+    _id: new ObjectId(),
+    startDate: '2021-01-24T09:00:00.000Z',
+    endDate: '2021-01-24T12:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+  },
+  { // 19
+    _id: new ObjectId(),
+    startDate: '2021-01-25T09:00:00.000Z',
+    endDate: '2021-01-25T11:00:00.000Z',
+    course: coursesList[5]._id,
+    step: steps[0]._id,
+  },
+  { // 20
+    _id: new ObjectId(),
+    startDate: '2025-09-25T09:00:00.000Z',
+    endDate: '2025-09-25T11:00:00.000Z',
+    course: coursesList[7]._id,
+    step: steps[0]._id,
+  },
+  { // 21
+    _id: new ObjectId(),
+    startDate: '2025-09-20T09:00:00.000Z',
+    endDate: '2025-09-20T11:00:00.000Z',
+    course: coursesList[7]._id,
+    step: steps[0]._id,
+  },
+  { // 22
+    _id: new ObjectId(),
+    startDate: '2025-09-18T09:00:00.000Z',
+    endDate: '2025-09-18T11:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+  },
 ];
 
 const attendanceSheetList = [
@@ -348,8 +464,19 @@ const attendanceSheetList = [
   { // 3
     _id: new ObjectId(),
     course: coursesList[2]._id,
-    file: { publicId: 'fromOtherCompany', link: 'www.test.com' },
     date: '2020-01-25T09:00:00.000Z',
+    slots: [
+      {
+        slotId: slotsList[1]._id,
+        trainerSignature: {
+          trainerId: userList[3]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          { traineeId: userList[1]._id },
+        ],
+      },
+    ],
     companies: [authCompany._id],
     origin: MOBILE,
     trainer: userList[3]._id,
@@ -369,7 +496,7 @@ const attendanceSheetList = [
     file: { publicId: 'mon upload', link: 'www.test.com' },
     trainee: userList[1]._id,
     companies: [authCompany._id],
-    slots: [slotsList[5]._id],
+    slots: [{ slotId: slotsList[5]._id }],
     origin: WEBAPP,
     trainer: trainer._id,
   },
@@ -379,7 +506,7 @@ const attendanceSheetList = [
     file: { publicId: 'mon upload', link: 'www.test.com' },
     trainee: userList[1]._id,
     companies: [authCompany._id],
-    slots: [slotsList[6]._id],
+    slots: [{ slotId: slotsList[6]._id }],
     origin: WEBAPP,
     trainer: trainer._id,
   },
@@ -389,46 +516,216 @@ const attendanceSheetList = [
     file: { publicId: 'mon upload', link: 'www.test.com' },
     trainee: userList[1]._id,
     companies: [authCompany._id],
-    slots: [slotsList[8]._id],
+    slots: [{ slotId: slotsList[8]._id }],
     origin: WEBAPP,
     trainer: userList[3]._id,
   },
   { // 8
     _id: new ObjectId(),
     course: coursesList[8]._id,
-    signatures: { trainer: 'www.test.com' },
     trainee: userList[1]._id,
     companies: [authCompany._id],
-    slots: [slotsList[9]._id],
+    slots: [{ slotId: slotsList[9]._id, trainerSignature: { trainerId: userList[3]._id, signature: 'www.test.com' } }],
     origin: MOBILE,
     trainer: userList[3]._id,
   },
   { // 9
     _id: new ObjectId(),
     course: coursesList[7]._id,
-    signatures: {
-      trainer: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
-      trainee: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
-    },
     trainee: userList[1]._id,
     companies: [authCompany._id],
-    slots: [slotsList[10]._id],
+    slots: [{
+      slotId: slotsList[10]._id,
+      trainerSignature: {
+        trainerId: trainer._id,
+        signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+      },
+      traineesSignature: [{
+        traineeId: userList[1]._id,
+        signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+      }],
+    }],
     origin: MOBILE,
     trainer: trainer._id,
   },
   { // 10
     _id: new ObjectId(),
     course: coursesList[7]._id,
-    signatures: {
-      trainer: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
-      trainee: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
-    },
     trainee: userList[1]._id,
     companies: [authCompany._id],
-    slots: [slotsList[11]._id],
+    slots: [{
+      slotId: slotsList[11]._id,
+      trainerSignature: {
+        trainerId: trainer._id,
+        signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+      },
+      traineesSignature: [{
+        traineeId: userList[1]._id,
+        signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+      }],
+    }],
     file: { publicId: 'yo', link: 'www.test.com' },
     origin: MOBILE,
     trainer: trainer._id,
+  },
+  { // 11
+    _id: new ObjectId(),
+    course: coursesList[1]._id,
+    trainee: userList[2]._id,
+    companies: [otherCompany._id],
+    slots: [
+      {
+        slotId: slotsList[12]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [{
+          traineeId: userList[2]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        }],
+      },
+      {
+        slotId: slotsList[13]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [{
+          traineeId: userList[2]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        }],
+      },
+    ],
+    origin: MOBILE,
+    trainer: trainer._id,
+  },
+  { // 12
+    _id: new ObjectId(),
+    course: coursesList[1]._id,
+    trainee: userList[1]._id,
+    companies: [authCompany._id],
+    slots: [
+      {
+        slotId: slotsList[12]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [{
+          traineeId: userList[1]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        }],
+      },
+      {
+        slotId: slotsList[13]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+      },
+    ],
+    origin: MOBILE,
+    trainer: trainer._id,
+  },
+  { // 13
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    date: '2021-01-24T09:00:00.000Z',
+    slots: [
+      {
+        slotId: slotsList[17]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          {
+            traineeId: userList[0]._id,
+            signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+          },
+          {
+            traineeId: userList[1]._id,
+            signature: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png',
+          },
+        ],
+      },
+      {
+        slotId: slotsList[18]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          {
+            traineeId: userList[0]._id,
+            signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+          },
+        ],
+      },
+    ],
+    companies: [authCompany._id],
+    origin: WEBAPP,
+    trainer: trainer._id,
+  },
+  { // 14
+    _id: new ObjectId(),
+    course: coursesList[5]._id,
+    date: '2021-01-25T09:00:00.000Z',
+    slots: [
+      {
+        slotId: slotsList[19]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          {
+            traineeId: userList[2]._id,
+            signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+          },
+          {
+            traineeId: userList[4]._id,
+            signature: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png',
+          },
+        ],
+      },
+    ],
+    companies: [otherHolding._id, companyWithoutSubscription._id],
+    origin: WEBAPP,
+    trainer: trainer._id,
+  },
+];
+
+const attendancesList = [
+  { _id: new ObjectId(), courseSlot: slotsList[10]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[11]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[19]._id, trainee: userList[2]._id, company: otherCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[5]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[20]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[15]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[16]._id, trainee: userList[1]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[17]._id, trainee: userList[1]._id, company: authCompany._id },
+];
+
+const completionCertificates = [
+  {
+    course: coursesList[7]._id,
+    trainee: userList[1]._id,
+    month: '09-2025',
+    file: { publicId: 'certif-upload', link: 'www.certif.com' },
+  },
+  {
+    course: coursesList[0]._id,
+    trainee: userList[1]._id,
+    month: '01-2021',
+    file: { publicId: 'certif-upload', link: 'www.certif.com' },
+  },
+  {
+    course: coursesList[0]._id,
+    trainee: userList[1]._id,
+    month: '09-2025',
+    file: { publicId: 'certif-upload', link: 'www.certif.com' },
   },
 ];
 
@@ -436,6 +733,7 @@ const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
   await Promise.all([
+    Attendance.create(attendancesList),
     AttendanceSheet.create(attendanceSheetList),
     Course.create(coursesList),
     CourseSlot.create(slotsList),
@@ -445,6 +743,7 @@ const populateDB = async () => {
     Step.create(steps),
     SubProgram.create(subProgramList),
     Program.create(programsList),
+    CompletionCertificate.create(completionCertificates),
   ]);
 };
 

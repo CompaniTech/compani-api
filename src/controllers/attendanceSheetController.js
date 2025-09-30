@@ -33,7 +33,7 @@ const create = async (req) => {
 
 const updateAttendanceSheet = async (req) => {
   try {
-    if (req.payload.slots) await AttendanceSheetHelper.update(req.params._id, req.payload);
+    if (req.payload.slots) await AttendanceSheetHelper.update(req.params._id, req.payload, req.auth.credentials);
     else await AttendanceSheetHelper.generate(req.params._id);
 
     return { message: translate[language].attendanceSheetUpdated };
@@ -56,7 +56,7 @@ const signAttendanceSheet = async (req) => {
 
 const deleteAttendanceSheet = async (req) => {
   try {
-    await AttendanceSheetHelper.delete(req.params._id);
+    await AttendanceSheetHelper.delete(req.params._id, req.query.shouldDeleteAttendances);
 
     return { message: translate[language].attendanceSheetDeleted };
   } catch (e) {

@@ -4,16 +4,28 @@ const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const User = require('../../../src/models/User');
 const Course = require('../../../src/models/Course');
+const Attendance = require('../../../src/models/Attendance');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const attendanceSheetHelper = require('../../../src/helpers/attendanceSheets');
+const AttendanceHelper = require('../../../src/helpers/attendances');
 const CoursesHelper = require('../../../src/helpers/courses');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
 const NotificationHelper = require('../../../src/helpers/notifications');
 const SinonMongoose = require('../sinonMongoose');
 const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
 const InterAttendanceSheet = require('../../../src/data/pdf/attendanceSheet/interAttendanceSheet');
+const IntraAttendanceSheet = require('../../../src/data/pdf/attendanceSheet/intraAttendanceSheet');
 const UtilsHelper = require('../../../src/helpers/utils');
-const { VENDOR_ADMIN, COACH, COURSE, TRAINEE, HOLDING_ADMIN, INTER_B2B } = require('../../../src/helpers/constants');
+const {
+  VENDOR_ADMIN,
+  COACH, COURSE,
+  TRAINEE,
+  HOLDING_ADMIN,
+  INTER_B2B,
+  SINGLE,
+  INTRA,
+  INTRA_HOLDING,
+} = require('../../../src/helpers/constants');
 
 describe('list', () => {
   let find;
@@ -34,7 +46,7 @@ describe('list', () => {
       companies: [new ObjectId()],
     }];
 
-    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await attendanceSheetHelper.list({ course: courseId }, credentials);
 
@@ -44,7 +56,8 @@ describe('list', () => {
       [
         { query: 'find', args: [{ course: courseId }] },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate step' }] },
+        { query: 'populate', args: [{ path: 'slots.slotId', select: 'startDate endDate step' }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'setOptions', args: [{ isVendorUser: !!get(credentials, 'role.vendor') }] },
         { query: 'lean' },
       ]
@@ -72,7 +85,7 @@ describe('list', () => {
       },
     ];
 
-    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await attendanceSheetHelper.list({ course: courseId, company: authCompanyId }, credentials);
 
@@ -82,7 +95,8 @@ describe('list', () => {
       [
         { query: 'find', args: [{ course: courseId, companies: { $in: [authCompanyId] } }] },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate step' }] },
+        { query: 'populate', args: [{ path: 'slots.slotId', select: 'startDate endDate step' }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'setOptions', args: [{ isVendorUser: !!get(credentials, 'role.vendor') }] },
         { query: 'lean' },
       ]
@@ -115,7 +129,7 @@ describe('list', () => {
       },
     ];
 
-    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(attendanceSheets, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await attendanceSheetHelper.list({ course: courseId, holding: holdingId }, credentials);
 
@@ -125,7 +139,8 @@ describe('list', () => {
       [
         { query: 'find', args: [{ course: courseId, companies: { $in: [authCompanyId, otherCompanyId] } }] },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate step' }] },
+        { query: 'populate', args: [{ path: 'slots.slotId', select: 'startDate endDate step' }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'setOptions', args: [{ isVendorUser: !!get(credentials, 'role.vendor') }] },
         { query: 'lean' },
       ]
@@ -136,34 +151,45 @@ describe('list', () => {
 describe('create', () => {
   let uploadCourseFile;
   let userFindOne;
+  let attendanceCountDocuments;
+  let attendanceSheetFindOne;
+  let attendanceSheetFindOneAndUpdate;
   let formatIdentity;
   let create;
   let courseFindOne;
   let getCompanyAtCourseRegistrationList;
   let sendAttendanceSheetSignatureRequestNotification;
+  let createAttendance;
 
   beforeEach(() => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     userFindOne = sinon.stub(User, 'findOne');
+    attendanceCountDocuments = sinon.stub(Attendance, 'countDocuments');
+    attendanceSheetFindOne = sinon.stub(AttendanceSheet, 'findOne');
+    attendanceSheetFindOneAndUpdate = sinon.stub(AttendanceSheet, 'findOneAndUpdate');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
     create = sinon.stub(AttendanceSheet, 'create');
     courseFindOne = sinon.stub(Course, 'findOne');
-    getCompanyAtCourseRegistrationList = sinon
-      .stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
+    getCompanyAtCourseRegistrationList = sinon.stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
     sendAttendanceSheetSignatureRequestNotification = sinon.stub(
       NotificationHelper,
       'sendAttendanceSheetSignatureRequestNotification'
     );
+    createAttendance = sinon.stub(AttendanceHelper, 'create');
   });
 
   afterEach(() => {
     uploadCourseFile.restore();
     userFindOne.restore();
+    attendanceCountDocuments.restore();
+    attendanceSheetFindOne.restore();
+    attendanceSheetFindOneAndUpdate.restore();
     formatIdentity.restore();
     create.restore();
     courseFindOne.restore();
     getCompanyAtCourseRegistrationList.restore();
     sendAttendanceSheetSignatureRequestNotification.restore();
+    createAttendance.restore();
   });
 
   it('should create an attendance sheet for INTRA course', async () => {
@@ -195,7 +221,7 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: courseId }, { companies: 1 }] },
+        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] },
         { query: 'lean' },
       ]
     );
@@ -203,6 +229,282 @@ describe('create', () => {
     sinon.assert.notCalled(formatIdentity);
     sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
+    sinon.assert.notCalled(attendanceSheetFindOne);
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+    sinon.assert.notCalled(attendanceCountDocuments);
+    sinon.assert.notCalled(createAttendance);
+  });
+
+  it('should upload trainer signature and create attendance sheets for INTRA', async () => {
+    const courseId = new ObjectId();
+    const traineesId = [new ObjectId(), new ObjectId()];
+    const companyId = new ObjectId();
+    const attendanceSheetId = new ObjectId();
+    const slots = [
+      { slotId: new ObjectId(), trainees: traineesId }, { slotId: new ObjectId(), trainees: [traineesId[0]] },
+    ];
+    const credentials = { _id: new ObjectId() };
+
+    const course = { _id: courseId, companies: [companyId], type: INTRA };
+    const payload = {
+      course: courseId,
+      date: '2025-08-28T10:00:00.000Z',
+      signature: 'signature.png',
+      slots,
+      trainer: credentials._id,
+    };
+    const users = [
+      {
+        _id: traineesId[0],
+        identity: { firstName: 'Mikasa', lastname: 'ACKERMAN' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
+      },
+      {
+        _id: traineesId[1],
+        identity: { firstName: 'Eren', lastname: 'JAEGER' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
+      },
+    ];
+    const formattedSlots = [
+      {
+        slotId: slots[0].slotId,
+        trainerSignature: { trainerId: credentials._id, signature: 'http://signature' },
+        traineesSignature: [{ traineeId: traineesId[0] }, { traineeId: traineesId[1] }],
+      },
+      {
+        slotId: slots[1].slotId,
+        trainerSignature: { trainerId: credentials._id, signature: 'http://signature' },
+        traineesSignature: [{ traineeId: traineesId[0] }],
+      },
+    ];
+
+    uploadCourseFile.returns({ publicId: '123', link: 'http://signature' });
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    userFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(users[0], ['lean']));
+    userFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(users[1], ['lean']));
+    create.returns({
+      _id: attendanceSheetId,
+      slots: formattedSlots,
+      course: courseId,
+      date: '2025-08-28T10:00:00.000Z',
+    });
+    attendanceCountDocuments.onCall(0).returns(1);
+    attendanceCountDocuments.onCall(1).returns(0);
+    attendanceCountDocuments.onCall(2).returns(0);
+
+    await attendanceSheetHelper.create(payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        { query: 'findOne', args: [{ _id: traineesId[0] }, { formationExpoTokenList: 1 }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        { query: 'findOne', args: [{ _id: traineesId[1] }, { formationExpoTokenList: 1 }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    sinon.assert.calledWithExactly(
+      uploadCourseFile,
+      { fileName: 'trainer_signature_28 août 2025', file: 'signature.png' }
+    );
+    sinon.assert.calledWithExactly(
+      create,
+      {
+        trainer: credentials._id,
+        slots: formattedSlots,
+        course: courseId,
+        date: '2025-08-28T10:00:00.000Z',
+        companies: [companyId],
+      }
+    );
+    sinon.assert.calledWithExactly(
+      sendAttendanceSheetSignatureRequestNotification.getCall(0),
+      attendanceSheetId,
+      credentials._id,
+      [
+        'ExponentPushToken[jeSuisUnTokenExpo]',
+        'ExponentPushToken[jeSuisUnAutreTokenExpo]',
+        'ExponentPushToken[jeSuisUnNouveauTokenExpo]',
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(0),
+      { trainee: traineesId[0], courseSlot: slots[0].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(1),
+      { trainee: traineesId[1], courseSlot: slots[0].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(2),
+      { trainee: traineesId[0], courseSlot: slots[1].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(0),
+      { trainee: traineesId[1], courseSlot: slots[0].slotId },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(1),
+      { trainee: traineesId[0], courseSlot: slots[1].slotId },
+      credentials
+    );
+    sinon.assert.notCalled(attendanceSheetFindOne);
+    sinon.assert.notCalled(formatIdentity);
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+  });
+
+  it('should upload trainer signature and create attendance sheets for INTRA HOLDING', async () => {
+    const courseId = new ObjectId();
+    const traineesId = [new ObjectId(), new ObjectId()];
+    const companyIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const attendanceSheetId = new ObjectId();
+    const slots = [
+      { slotId: new ObjectId(), trainees: traineesId }, { slotId: new ObjectId(), trainees: [traineesId[0]] },
+    ];
+    const credentials = { _id: new ObjectId() };
+
+    const course = { _id: courseId, companies: companyIds, type: INTRA_HOLDING };
+    const payload = {
+      course: courseId,
+      date: '2025-08-28T10:00:00.000Z',
+      signature: 'signature.png',
+      slots,
+      trainer: credentials._id,
+    };
+    const users = [
+      {
+        _id: traineesId[0],
+        identity: { firstName: 'Mikasa', lastname: 'ACKERMAN' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
+      },
+      {
+        _id: traineesId[1],
+        identity: { firstName: 'Eren', lastname: 'JAEGER' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
+      },
+    ];
+    const formattedSlots = [
+      {
+        slotId: slots[0].slotId,
+        trainerSignature: { trainerId: credentials._id, signature: 'http://signature' },
+        traineesSignature: [{ traineeId: traineesId[0] }, { traineeId: traineesId[1] }],
+      },
+      {
+        slotId: slots[1].slotId,
+        trainerSignature: { trainerId: credentials._id, signature: 'http://signature' },
+        traineesSignature: [{ traineeId: traineesId[0] }],
+      },
+    ];
+
+    uploadCourseFile.returns({ publicId: '123', link: 'http://signature' });
+    getCompanyAtCourseRegistrationList.onCall(0).returns([{ trainee: traineesId[0], company: companyIds[0] }]);
+    getCompanyAtCourseRegistrationList.onCall(1).returns([{ trainee: traineesId[1], company: companyIds[1] }]);
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    userFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(users[0], ['lean']));
+    userFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(users[1], ['lean']));
+    create.returns({
+      _id: attendanceSheetId,
+      slots: formattedSlots,
+      course: courseId,
+      date: '2025-08-28T10:00:00.000Z',
+    });
+    attendanceCountDocuments.onCall(0).returns(1);
+    attendanceCountDocuments.onCall(1).returns(0);
+    attendanceCountDocuments.onCall(2).returns(0);
+
+    await attendanceSheetHelper.create(payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        { query: 'findOne', args: [{ _id: traineesId[0] }, { formationExpoTokenList: 1 }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        { query: 'findOne', args: [{ _id: traineesId[1] }, { formationExpoTokenList: 1 }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    sinon.assert.calledWithExactly(
+      getCompanyAtCourseRegistrationList.getCall(0),
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: [traineesId[0]] }
+    );
+    sinon.assert.calledWithExactly(
+      getCompanyAtCourseRegistrationList.getCall(1),
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: [traineesId[1]] }
+    );
+    sinon.assert.calledWithExactly(
+      uploadCourseFile,
+      { fileName: 'trainer_signature_28 août 2025', file: 'signature.png' }
+    );
+    sinon.assert.calledWithExactly(
+      create,
+      {
+        trainer: credentials._id,
+        slots: formattedSlots,
+        course: courseId,
+        date: '2025-08-28T10:00:00.000Z',
+        companies: [companyIds[0], companyIds[1]],
+      }
+    );
+    sinon.assert.calledWithExactly(
+      sendAttendanceSheetSignatureRequestNotification.getCall(0),
+      attendanceSheetId,
+      credentials._id,
+      [
+        'ExponentPushToken[jeSuisUnTokenExpo]',
+        'ExponentPushToken[jeSuisUnAutreTokenExpo]',
+        'ExponentPushToken[jeSuisUnNouveauTokenExpo]',
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(0),
+      { trainee: traineesId[0], courseSlot: slots[0].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(1),
+      { trainee: traineesId[1], courseSlot: slots[0].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(2),
+      { trainee: traineesId[0], courseSlot: slots[1].slotId }
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(0),
+      { trainee: traineesId[1], courseSlot: slots[0].slotId },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(1),
+      { trainee: traineesId[0], courseSlot: slots[1].slotId },
+      credentials
+    );
+    sinon.assert.notCalled(attendanceSheetFindOne);
+    sinon.assert.notCalled(formatIdentity);
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
   });
 
   it('should create an attendance sheet for INTER course', async () => {
@@ -213,7 +515,7 @@ describe('create', () => {
     const credentials = { _id: new ObjectId() };
 
     const course = { _id: courseId, companies: [new ObjectId()] };
-    const payload = { trainee: traineeId, course: courseId, file: 'test.pdf' };
+    const payload = { trainees: traineeId, course: courseId, file: 'test.pdf' };
     const user = {
       _id: traineeId,
       identity: { firstName: 'monsieur', lastname: 'patate' },
@@ -232,7 +534,7 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: courseId }, { companies: 1 }] },
+        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] },
         { query: 'lean' },
       ]
     );
@@ -267,6 +569,409 @@ describe('create', () => {
       { key: TRAINEE, value: [traineeId] }
     );
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
+    sinon.assert.notCalled(attendanceSheetFindOne);
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+    sinon.assert.notCalled(attendanceCountDocuments);
+    sinon.assert.notCalled(createAttendance);
+  });
+
+  it('should upload trainer signature and create attendance sheets for INTER', async () => {
+    const courseId = new ObjectId();
+    const traineesId = [new ObjectId(), new ObjectId()];
+    const companyId = new ObjectId();
+    const attendanceSheetIds = [new ObjectId(), new ObjectId()];
+    const slots = [new ObjectId(), new ObjectId()];
+    const credentials = { _id: new ObjectId() };
+
+    const course = { _id: courseId, companies: [new ObjectId()], type: INTER_B2B };
+    const payload = {
+      trainees: traineesId,
+      course: courseId,
+      signature: 'signature.png',
+      slots,
+      trainer: credentials._id,
+    };
+    const users = [
+      {
+        _id: traineesId[0],
+        identity: { firstName: 'Mikasa', lastname: 'ACKERMAN' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
+      },
+      {
+        _id: traineesId[1],
+        identity: { firstName: 'Eren', lastname: 'JAEGER' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
+      },
+    ];
+    const formattedSlots = slots
+      .map(s => ({ slotId: s, trainerSignature: { trainerId: credentials._id, signature: 'http://signature' } }));
+
+    uploadCourseFile.returns({ publicId: '123', link: 'http://signature' });
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    attendanceSheetFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    attendanceSheetFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    userFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(users[0], ['lean']));
+    userFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(users[1], ['lean']));
+    formatIdentity.onCall(0).returns('Mikasa ACKERMAN');
+    formatIdentity.onCall(1).returns('Eren JAEGER');
+    getCompanyAtCourseRegistrationList.onCall(0).returns([{ trainee: traineesId[0], company: companyId }]);
+    getCompanyAtCourseRegistrationList.onCall(1).returns([{ trainee: traineesId[1], company: companyId }]);
+    create.onCall(0).returns({ _id: attendanceSheetIds[0], slots: formattedSlots, trainee: traineesId[0] });
+    create.onCall(1).returns({ _id: attendanceSheetIds[1], slots: formattedSlots, trainee: traineesId[1] });
+    attendanceCountDocuments.onCall(0).returns(1);
+    attendanceCountDocuments.onCall(1).returns(0);
+    attendanceCountDocuments.onCall(2).returns(0);
+    attendanceCountDocuments.onCall(3).returns(0);
+
+    await attendanceSheetHelper.create(payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledWithExactly(
+      attendanceSheetFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ trainee: traineesId[0], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      attendanceSheetFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ trainee: traineesId[1], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+        },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ _id: traineesId[0] }, { identity: 1, formationExpoTokenList: 1 }],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ _id: traineesId[1] }, { identity: 1, formationExpoTokenList: 1 }],
+        },
+        { query: 'lean' },
+      ],
+      1
+    );
+    sinon.assert.calledWithExactly(formatIdentity.getCall(0), { firstName: 'Mikasa', lastname: 'ACKERMAN' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstName: 'Eren', lastname: 'JAEGER' }, 'FL');
+    sinon.assert.calledWithExactly(
+      uploadCourseFile.getCall(0),
+      { fileName: `trainer_signature_${credentials._id}_course_${courseId}_${traineesId[0]}`, file: 'signature.png' }
+    );
+    sinon.assert.calledWithExactly(
+      uploadCourseFile.getCall(1),
+      { fileName: `trainer_signature_${credentials._id}_course_${courseId}_${traineesId[1]}`, file: 'signature.png' }
+    );
+    sinon.assert.calledWithExactly(
+      create.getCall(0),
+      {
+        trainee: traineesId[0],
+        trainer: credentials._id,
+        course: courseId,
+        slots: slots
+          .map(s => ({ slotId: s, trainerSignature: { trainerId: credentials._id, signature: 'http://signature' } })),
+        companies: [companyId],
+      }
+    );
+    sinon.assert.calledWithExactly(
+      create.getCall(1),
+      {
+        trainee: traineesId[1],
+        trainer: credentials._id,
+        course: courseId,
+        slots: slots
+          .map(s => ({ slotId: s, trainerSignature: { trainerId: credentials._id, signature: 'http://signature' } })),
+        companies: [companyId],
+      }
+    );
+    sinon.assert.calledWithExactly(
+      getCompanyAtCourseRegistrationList.getCall(0),
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: [traineesId[0]] }
+    );
+    sinon.assert.calledWithExactly(
+      getCompanyAtCourseRegistrationList.getCall(1),
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: [traineesId[1]] }
+    );
+    sinon.assert.calledWithExactly(
+      sendAttendanceSheetSignatureRequestNotification.getCall(0),
+      attendanceSheetIds[0],
+      credentials._id,
+      ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]']
+    );
+    sinon.assert.calledWithExactly(
+      sendAttendanceSheetSignatureRequestNotification.getCall(1),
+      attendanceSheetIds[1],
+      credentials._id,
+      ['ExponentPushToken[jeSuisUnNouveauTokenExpo]']
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(0),
+      { trainee: traineesId[0], courseSlot: slots[0] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(1),
+      { trainee: traineesId[1], courseSlot: slots[0] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(2),
+      { trainee: traineesId[0], courseSlot: slots[1] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(3),
+      { trainee: traineesId[1], courseSlot: slots[1] }
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(0),
+      { trainee: traineesId[1], courseSlot: slots[0] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(1),
+      { trainee: traineesId[0], courseSlot: slots[1] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(2),
+      { trainee: traineesId[1], courseSlot: slots[1] },
+      credentials
+    );
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+  });
+
+  it('should get existing trainer signature and update attendance sheet for INTER', async () => {
+    const courseId = new ObjectId();
+    const traineesId = [new ObjectId(), new ObjectId()];
+    const companyId = new ObjectId();
+    const slots = [new ObjectId(), new ObjectId()];
+    const credentials = { _id: new ObjectId() };
+
+    const attendanceSheets = [
+      {
+        _id: new ObjectId(),
+        slots: [
+          {
+            slotId: new ObjectId(),
+            trainerSignature: { trainerId: credentials._id, signature: 'trainer.png' },
+            traineesSignature: [{ traineeId: traineesId[0], signature: 'trainee1.png' }],
+          },
+        ],
+        trainee: traineesId[0],
+      },
+      {
+        _id: new ObjectId(),
+        slots: [
+          {
+            slotId: new ObjectId(),
+            trainerSignature: { trainerId: credentials._id, signature: 'trainer.png' },
+            traineesSignature: [{ traineeId: traineesId[1], signature: 'trainee2.png' }],
+
+          },
+
+        ],
+        trainee: traineesId[1],
+      },
+    ];
+
+    const updatedAttendanceSheets = attendanceSheets.map(as => ({
+      ...as,
+      slots: [
+        ...as.slots,
+        { slotId: slots[0], trainerSignature: { trainerId: credentials._id, signature: 'trainer.png' } },
+        { slotId: slots[1], trainerSignature: { trainerId: credentials._id, signature: 'trainer.png' } },
+      ],
+    }));
+
+    const course = { _id: courseId, type: INTER_B2B, companies: [new ObjectId()] };
+    const payload = {
+      trainees: traineesId,
+      course: courseId,
+      signature: 'signature.png',
+      slots,
+      trainer: credentials._id,
+    };
+    const users = [
+      {
+        _id: traineesId[0],
+        identity: { firstName: 'Mikasa', lastname: 'ACKERMAN' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
+      },
+      {
+        _id: traineesId[1],
+        identity: { firstName: 'Eren', lastname: 'JAEGER' },
+        formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
+      },
+    ];
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    attendanceSheetFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(attendanceSheets[0], ['lean']));
+    attendanceSheetFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(attendanceSheets[1], ['lean']));
+    attendanceSheetFindOneAndUpdate.onCall(0).returns(updatedAttendanceSheets[0]);
+    attendanceSheetFindOneAndUpdate.onCall(1).returns(updatedAttendanceSheets[1]);
+    userFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(users[0], ['lean']));
+    userFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(users[1], ['lean']));
+    formatIdentity.onCall(0).returns('Mikasa ACKERMAN');
+    formatIdentity.onCall(1).returns('Eren JAEGER');
+    getCompanyAtCourseRegistrationList.onCall(0).returns([{ trainee: traineesId[0], company: companyId }]);
+    getCompanyAtCourseRegistrationList.onCall(1).returns([{ trainee: traineesId[1], company: companyId }]);
+    attendanceCountDocuments.onCall(0).returns(1);
+    attendanceCountDocuments.onCall(1).returns(0);
+    attendanceCountDocuments.onCall(2).returns(0);
+    attendanceCountDocuments.onCall(3).returns(0);
+
+    await attendanceSheetHelper.create(payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledWithExactly(
+      attendanceSheetFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ trainee: traineesId[0], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      attendanceSheetFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ trainee: traineesId[1], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+        },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ _id: traineesId[0] }, { identity: 1, formationExpoTokenList: 1 }],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      userFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ _id: traineesId[1] }, { identity: 1, formationExpoTokenList: 1 }],
+        },
+        { query: 'lean' },
+      ],
+      1
+    );
+    sinon.assert.calledWithExactly(formatIdentity.getCall(0), { firstName: 'Mikasa', lastname: 'ACKERMAN' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstName: 'Eren', lastname: 'JAEGER' }, 'FL');
+    sinon.assert.calledWithExactly(
+      attendanceSheetFindOneAndUpdate.getCall(0),
+      { _id: attendanceSheets[0]._id },
+      {
+        $push: {
+          slots: [
+            { slotId: slots[0], trainerSignature: { trainerId: credentials._id, signature: 'trainer.png' } },
+            { slotId: slots[1], trainerSignature: { trainerId: credentials._id, signature: 'trainer.png' } },
+          ],
+        },
+      }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceSheetFindOneAndUpdate.getCall(1),
+      { _id: attendanceSheets[1]._id },
+      {
+        $push: {
+          slots: [
+            { slotId: slots[0], trainerSignature: { trainerId: credentials._id, signature: 'trainer.png' } },
+            { slotId: slots[1], trainerSignature: { trainerId: credentials._id, signature: 'trainer.png' } },
+          ],
+        },
+      }
+    );
+    sinon.assert.calledWithExactly(
+      getCompanyAtCourseRegistrationList.getCall(0),
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: [traineesId[0]] }
+    );
+    sinon.assert.calledWithExactly(
+      getCompanyAtCourseRegistrationList.getCall(1),
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: [traineesId[1]] }
+    );
+    sinon.assert.calledWithExactly(
+      sendAttendanceSheetSignatureRequestNotification.getCall(0),
+      attendanceSheets[0]._id,
+      credentials._id,
+      ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]']
+    );
+    sinon.assert.calledWithExactly(
+      sendAttendanceSheetSignatureRequestNotification.getCall(1),
+      attendanceSheets[1]._id,
+      credentials._id,
+      ['ExponentPushToken[jeSuisUnNouveauTokenExpo]']
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(0),
+      { trainee: traineesId[0], courseSlot: slots[0] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(1),
+      { trainee: traineesId[1], courseSlot: slots[0] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(2),
+      { trainee: traineesId[0], courseSlot: slots[1] }
+    );
+    sinon.assert.calledWithExactly(
+      attendanceCountDocuments.getCall(3),
+      { trainee: traineesId[1], courseSlot: slots[1] }
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(0),
+      { trainee: traineesId[1], courseSlot: slots[0] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(1),
+      { trainee: traineesId[0], courseSlot: slots[1] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      createAttendance.getCall(2),
+      { trainee: traineesId[1], courseSlot: slots[1] },
+      credentials
+    );
+    sinon.assert.notCalled(uploadCourseFile);
+    sinon.assert.notCalled(create);
   });
 
   it('should create an attendance sheet with one slot for single course', async () => {
@@ -278,7 +983,7 @@ describe('create', () => {
     const credentials = { _id: new ObjectId() };
 
     const course = { _id: courseId, companies: [new ObjectId()] };
-    const payload = { trainee: traineeId, course: courseId, file: 'test.pdf', slots: slotId };
+    const payload = { trainees: traineeId, course: courseId, file: 'test.pdf', slots: slotId };
     const user = { _id: traineeId, identity: { firstName: 'Eren', lastname: 'JÄGER' }, formationExpoTokenList: [] };
 
     uploadCourseFile.returns({ publicId: 'test', link: 'test' });
@@ -287,12 +992,13 @@ describe('create', () => {
     formatIdentity.returns('Eren JÄGER');
     getCompanyAtCourseRegistrationList.returns([{ trainee: traineeId, company: companyId }]);
     create.returns({ _id: attendanceSheetId });
+    attendanceCountDocuments.returns(0);
 
     await attendanceSheetHelper.create(payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
@@ -305,7 +1011,7 @@ describe('create', () => {
       {
         trainee: traineeId,
         course: courseId,
-        slots: [slotId],
+        slots: [{ slotId }],
         companies: [companyId],
         file: { publicId: 'test', link: 'test' },
       }
@@ -315,7 +1021,11 @@ describe('create', () => {
       { key: COURSE, value: courseId },
       { key: TRAINEE, value: [traineeId] }
     );
+    sinon.assert.calledOnceWithExactly(attendanceCountDocuments, { trainee: traineeId, courseSlot: slotId });
+    sinon.assert.calledOnceWithExactly(createAttendance, { trainee: traineeId, courseSlot: slotId }, credentials);
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
+    sinon.assert.notCalled(attendanceSheetFindOne);
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
   });
 
   it('should create an attendance sheet with multiple slots for single course', async () => {
@@ -327,7 +1037,7 @@ describe('create', () => {
     const credentials = { _id: new ObjectId() };
 
     const course = { _id: courseId, companies: [new ObjectId()] };
-    const payload = { trainee: traineeId, course: courseId, file: 'test.pdf', slots };
+    const payload = { trainees: traineeId, course: courseId, file: 'test.pdf', slots };
     const user = {
       _id: traineeId,
       identity: { firstName: 'Mikasa', lastname: 'ACKERMAN' },
@@ -339,12 +1049,14 @@ describe('create', () => {
     formatIdentity.returns('Mikasa ACKERMAN');
     getCompanyAtCourseRegistrationList.returns([{ trainee: traineeId, company: companyId }]);
     create.returns({ _id: attendanceSheetId });
+    attendanceCountDocuments.onCall(0).returns(0);
+    attendanceCountDocuments.onCall(1).returns(1);
 
     await attendanceSheetHelper.create(payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
@@ -357,7 +1069,7 @@ describe('create', () => {
       {
         trainee: traineeId,
         course: courseId,
-        slots,
+        slots: slots.map(s => ({ slotId: s })),
         companies: [companyId],
         file: { publicId: 'test', link: 'test' },
       }
@@ -367,10 +1079,15 @@ describe('create', () => {
       { key: COURSE, value: courseId },
       { key: TRAINEE, value: [traineeId] }
     );
+    sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(0), { trainee: traineeId, courseSlot: slots[0] });
+    sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(1), { trainee: traineeId, courseSlot: slots[1] });
+    sinon.assert.calledOnceWithExactly(createAttendance, { trainee: traineeId, courseSlot: slots[0] }, credentials);
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
+    sinon.assert.notCalled(attendanceSheetFindOne);
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
   });
 
-  it('should upload trainer signature and create an attendance sheet', async () => {
+  it('should upload trainer signature and create an attendance sheet (single)', async () => {
     const courseId = new ObjectId();
     const traineeId = new ObjectId();
     const companyId = new ObjectId();
@@ -379,25 +1096,36 @@ describe('create', () => {
     const credentials = { _id: new ObjectId() };
 
     const course = { _id: courseId, companies: [new ObjectId()] };
-    const payload = { trainee: traineeId, course: courseId, signature: 'signature.png', slots };
+    const payload = {
+      trainees: traineeId,
+      course: courseId,
+      signature: 'signature.png',
+      slots,
+      trainer: credentials._id,
+    };
     const user = {
       _id: traineeId,
       identity: { firstName: 'Mikasa', lastname: 'ACKERMAN' },
       formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
     };
+    const formattedSlots = slots
+      .map(s => ({ slotId: s, trainerSignature: { trainerId: credentials._id, signature: 'http://signature' } }));
 
     uploadCourseFile.returns({ publicId: '123', link: 'http://signature' });
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    attendanceSheetFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
     userFindOne.returns(SinonMongoose.stubChainedQueries(user, ['lean']));
     formatIdentity.returns('Mikasa ACKERMAN');
     getCompanyAtCourseRegistrationList.returns([{ trainee: traineeId, company: companyId }]);
-    create.returns({ _id: attendanceSheetId, signatures: { trainer: 'http://signature' } });
+    create.returns({ _id: attendanceSheetId, slots: formattedSlots, trainee: traineeId });
+    attendanceCountDocuments.onCall(0).returns(0);
+    attendanceCountDocuments.onCall(1).returns(1);
 
     await attendanceSheetHelper.create(payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
@@ -406,16 +1134,27 @@ describe('create', () => {
     sinon.assert.calledOnceWithExactly(formatIdentity, { firstName: 'Mikasa', lastname: 'ACKERMAN' }, 'FL');
     sinon.assert.calledOnceWithExactly(
       uploadCourseFile,
-      { fileName: `trainer_signature_${credentials._id}_course_${courseId}`, file: 'signature.png' }
+      { fileName: `trainer_signature_${credentials._id}_course_${courseId}_${traineeId}`, file: 'signature.png' }
+    );
+    SinonMongoose.calledWithExactly(
+      attendanceSheetFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [{ trainee: traineeId, course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+        },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.calledOnceWithExactly(
       create,
       {
         trainee: traineeId,
+        trainer: credentials._id,
         course: courseId,
-        slots,
+        slots: slots
+          .map(s => ({ slotId: s, trainerSignature: { trainerId: credentials._id, signature: 'http://signature' } })),
         companies: [companyId],
-        signatures: { trainer: 'http://signature' },
       }
     );
     sinon.assert.calledOnceWithExactly(
@@ -426,49 +1165,103 @@ describe('create', () => {
     sinon.assert.calledOnceWithExactly(
       sendAttendanceSheetSignatureRequestNotification,
       attendanceSheetId,
+      credentials._id,
       ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]']
     );
+    sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(0), { trainee: traineeId, courseSlot: slots[0] });
+    sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(1), { trainee: traineeId, courseSlot: slots[1] });
+    sinon.assert.calledOnceWithExactly(createAttendance, { trainee: traineeId, courseSlot: slots[0] }, credentials);
+    sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
   });
 });
 
 describe('update', () => {
   let updateOne;
+  let findOne;
+  let AttendanceHelperCreate;
+  let AttendanceDeleteMany;
+  let AttendanceCountDocuments;
   beforeEach(() => {
     updateOne = sinon.stub(AttendanceSheet, 'updateOne');
+    findOne = sinon.stub(AttendanceSheet, 'findOne');
+    AttendanceHelperCreate = sinon.stub(AttendanceHelper, 'create');
+    AttendanceDeleteMany = sinon.stub(Attendance, 'deleteMany');
+    AttendanceCountDocuments = sinon.stub(Attendance, 'countDocuments');
   });
   afterEach(() => {
     updateOne.restore();
+    findOne.restore();
+    AttendanceHelperCreate.restore();
+    AttendanceDeleteMany.restore();
+    AttendanceCountDocuments.restore();
   });
 
-  it('should update an attendance sheet', async () => {
-    const slotId = new ObjectId();
+  it('should update an attendance sheet and update attendances', async () => {
+    const credentials = { _id: new ObjectId() };
+    const slotIdToCreate = new ObjectId();
+    const slotIdToDelete = new ObjectId();
+    const commonSlotId = new ObjectId();
     const attendanceSheetId = new ObjectId();
-    const payload = { slots: [slotId] };
-    await attendanceSheetHelper.update(attendanceSheetId, payload);
+    const trainee = new ObjectId();
+    const payload = { slots: [slotIdToCreate, commonSlotId] };
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      trainee,
+      slots: [{ slotId: slotIdToDelete }, { slotId: commonSlotId }],
+    };
 
-    sinon.assert.calledOnceWithExactly(updateOne, { _id: attendanceSheetId }, { $set: payload });
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
+    AttendanceCountDocuments.onCall(0).returns(0);
+    AttendanceCountDocuments.onCall(1).returns(1);
+
+    await attendanceSheetHelper.update(attendanceSheetId, payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledWithExactly(AttendanceCountDocuments.getCall(0), { trainee, courseSlot: slotIdToCreate });
+    sinon.assert.calledWithExactly(AttendanceCountDocuments.getCall(1), { trainee, courseSlot: commonSlotId });
+    sinon.assert.calledOnceWithExactly(AttendanceHelperCreate, { trainee, courseSlot: slotIdToCreate }, credentials);
+    sinon.assert.calledOnceWithExactly(AttendanceDeleteMany, { courseSlot: { $in: [slotIdToDelete] }, trainee });
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      { $set: { slots: [{ slotId: slotIdToCreate }, { slotId: commonSlotId }] } }
+    );
   });
 });
 
 describe('sign', () => {
   let uploadCourseFile;
   let updateOne;
+  let findOne;
 
   beforeEach(() => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     updateOne = sinon.stub(AttendanceSheet, 'updateOne');
+    findOne = sinon.stub(AttendanceSheet, 'findOne');
   });
   afterEach(() => {
     uploadCourseFile.restore();
     updateOne.restore();
+    findOne.restore();
   });
 
-  it('should add trainee signature in attendance sheet', async () => {
+  it('should add trainee signature in attendance sheet (no slot signed)', async () => {
     const credentials = { _id: new ObjectId() };
     const attendanceSheetId = new ObjectId();
+    const slotId = new ObjectId();
+    const trainerId = new ObjectId();
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      slots: [{ slotId, trainerSignature: { trainerId, signature: 'trainer.png' } }],
+      course: { type: SINGLE },
+    };
     const payload = { signature: 'test.png' };
 
     uploadCourseFile.returns({ publicId: 'id', link: 'link' });
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
 
     await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
 
@@ -477,10 +1270,135 @@ describe('sign', () => {
       { fileName: `trainee_signature_${credentials._id}`, file: 'test.png' }
     );
 
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
+        { query: 'lean' },
+      ]
+    );
+
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: attendanceSheetId },
-      { $set: { 'signatures.trainee': 'link' } }
+      {
+        $set: {
+          slots: [
+            {
+              slotId,
+              trainerSignature: { trainerId, signature: 'trainer.png' },
+              traineesSignature: [{ traineeId: credentials._id, signature: 'link' }],
+            },
+          ],
+        },
+      }
+    );
+  });
+
+  it('should add trainee signature in attendance sheet (already signed slots)', async () => {
+    const credentials = { _id: new ObjectId() };
+    const attendanceSheetId = new ObjectId();
+    const payload = { signature: 'test.png' };
+    const slotIds = [new ObjectId(), new ObjectId()];
+    const trainerId = new ObjectId();
+
+    const attendanceSheet = {
+      course: { type: INTER_B2B },
+      slots: [
+        {
+          slotId: slotIds[0],
+          trainerSignature: {
+            trainerId,
+            signature: 'trainer.png',
+          },
+          traineesSignature: [{ traineeId: credentials._id, signature: 'trainee.png' }],
+        },
+        { slotId: slotIds[1], trainerSignature: { trainerId, signature: 'trainer.png' } },
+      ],
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+
+    await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
+
+    sinon.assert.notCalled(uploadCourseFile);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
+        { query: 'lean' },
+      ]
+    );
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      {
+        $set: {
+          slots: [
+            {
+              slotId: slotIds[0],
+              trainerSignature: { trainerId, signature: 'trainer.png' },
+              traineesSignature: [{ traineeId: credentials._id, signature: 'trainee.png' }],
+            },
+            {
+              slotId: slotIds[1],
+              trainerSignature: { trainerId, signature: 'trainer.png' },
+              traineesSignature: [{ traineeId: credentials._id, signature: 'trainee.png' }],
+            },
+          ],
+        },
+      }
+    );
+  });
+
+  it('should add trainee signature in attendance sheet (intra course)', async () => {
+    const credentials = { _id: new ObjectId() };
+    const attendanceSheetId = new ObjectId();
+    const slotId = new ObjectId();
+    const trainerId = new ObjectId();
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      slots: [{ slotId, trainerSignature: { trainerId, signature: 'trainer.png' } }],
+      course: { type: INTRA },
+    };
+    const payload = { signature: 'test.png' };
+
+    uploadCourseFile.returns({ publicId: 'id', link: 'link' });
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+
+    await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
+
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: `trainee_signature_${credentials._id}`, file: 'test.png' }
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
+        { query: 'lean' },
+      ]
+    );
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      {
+        _id: attendanceSheetId,
+        'slots.traineesSignature': { $elemMatch: { traineeId: credentials._id, signature: { $exists: false } } },
+      },
+      { $set: { 'slots.$[slot].traineesSignature.$[trainee].signature': 'link' } },
+      {
+        arrayFilters: [
+          { 'slot.trainerSignature': { $exists: true } },
+          { 'trainee.traineeId': credentials._id, 'trainee.signature': { $exists: false } },
+        ],
+      }
     );
   });
 });
@@ -488,47 +1406,85 @@ describe('sign', () => {
 describe('generate', () => {
   let findOne;
   let formatInterCourseForPdf;
-  let getPdf;
+  let formatIntraCourseForPdf;
+  let getPdfInter;
+  let getPdfIntra;
   let uploadCourseFile;
   let updateOne;
   beforeEach(() => {
     findOne = sinon.stub(AttendanceSheet, 'findOne');
     formatInterCourseForPdf = sinon.stub(CoursesHelper, 'formatInterCourseForPdf');
-    getPdf = sinon.stub(InterAttendanceSheet, 'getPdf');
+    formatIntraCourseForPdf = sinon.stub(CoursesHelper, 'formatIntraCourseForPdf');
+    getPdfInter = sinon.stub(InterAttendanceSheet, 'getPdf');
+    getPdfIntra = sinon.stub(IntraAttendanceSheet, 'getPdf');
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     updateOne = sinon.stub(AttendanceSheet, 'updateOne');
   });
   afterEach(() => {
     findOne.restore();
     formatInterCourseForPdf.restore();
-    getPdf.restore();
+    formatIntraCourseForPdf.restore();
+    getPdfInter.restore();
+    getPdfIntra.restore();
     uploadCourseFile.restore();
     updateOne.restore();
   });
 
-  it('should generate attendance sheet', async () => {
+  it('should generate attendance sheet (single)', async () => {
     const attendanceSheetId = new ObjectId();
     const traineeId = new ObjectId();
+    const trainerId = new ObjectId();
+    const slotId = new ObjectId();
     const attendanceSheet = {
       _id: attendanceSheetId,
       misc: 'misc',
       trainee: { _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } },
-      signatures: { trainer: 'https://trainer.com', trainee: 'https://trainee.com' },
       trainer: { identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
-      slots: [{ startDate: '2020-03-04T09:00:00', endDate: '2020-03-04T11:00:00', step: { type: 'on_site' } }],
+      slots: [
+        {
+          slotId: {
+            _id: slotId,
+            startDate: '2020-03-04T09:00:00',
+            endDate: '2020-03-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          trainerSignature: { trainerId, signature: 'https://trainer.com' },
+          traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
+        },
+      ],
       course: {
-        type: INTER_B2B,
+        type: SINGLE,
         misc: 'misc',
         companies: [{ name: 'Alenvi' }],
+        trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
         subProgram: { program: { name: 'Program 1' } },
+        slots: [
+          {
+            _id: slotId,
+            startDate: '2020-03-04T09:00:00',
+            endDate: '2020-03-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          {
+            _id: new ObjectId(),
+            startDate: '2020-04-04T09:00:00',
+            endDate: '2020-04-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+        ],
       },
     };
 
     const formattedCourse = {
-      type: INTER_B2B,
+      type: SINGLE,
       misc: 'misc',
       companies: [{ name: 'Alenvi' }],
-      slots: [{ startDate: '2020-03-04T09:00:00', endDate: '2020-03-04T11:00:00', step: { type: 'on_site' } }],
+      slots: [{
+        _id: slotId,
+        startDate: '2020-03-04T09:00:00',
+        endDate: '2020-03-04T11:00:00',
+        step: { type: 'on_site' },
+      }],
       trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
       subProgram: { program: { name: 'Program 1' } },
@@ -539,7 +1495,7 @@ describe('generate', () => {
       trainees: [{ traineeName: 'Carlos SAINZ', course: { slots: [{ date: '04/03/2020' }] } }],
     });
 
-    getPdf.returns('pdf');
+    getPdfInter.returns('pdf');
     uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
     await attendanceSheetHelper.generate(attendanceSheetId);
 
@@ -549,7 +1505,7 @@ describe('generate', () => {
         {
           query: 'populate',
           args: [{
-            path: 'slots',
+            path: 'slots.slotId',
             select: 'step startDate endDate address',
             populate: { path: 'step', select: 'type' },
           }],
@@ -560,10 +1516,16 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type misc companies subProgram',
+            select: 'type misc companies subProgram slots trainees',
             populate: [
               { path: 'companies', select: 'name' },
+              {
+                path: 'trainees',
+                select: 'identity',
+                populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+              },
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'slots', select: 'step startDate endDate address' },
             ],
           }],
         },
@@ -571,10 +1533,16 @@ describe('generate', () => {
     );
     sinon.assert.calledOnceWithExactly(formatInterCourseForPdf, formattedCourse);
     sinon.assert.calledOnceWithExactly(
-      getPdf,
+      getPdfInter,
       {
         trainees: [{ traineeName: 'Carlos SAINZ', course: { slots: [{ date: '04/03/2020' }] } }],
-        signatures: { trainer: 'https://trainer.com', trainee: 'https://trainee.com' },
+        signedSlots: [
+          {
+            slotId,
+            trainerSignature: { trainerId, signature: 'https://trainer.com' },
+            traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
+          },
+        ],
       });
     sinon.assert.calledOnceWithExactly(
       uploadCourseFile,
@@ -585,6 +1553,532 @@ describe('generate', () => {
       { _id: attendanceSheetId },
       { $set: { file: { publicId: 'yo', link: 'yo' } } }
     );
+    sinon.assert.notCalled(formatIntraCourseForPdf);
+    sinon.assert.notCalled(getPdfIntra);
+  });
+
+  it('should generate attendance sheet (inter)', async () => {
+    const attendanceSheetId = new ObjectId();
+    const traineeId = new ObjectId();
+    const trainerId = new ObjectId();
+    const slotIds = [new ObjectId(), new ObjectId()];
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      misc: 'misc',
+      trainee: { _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } },
+      trainer: { identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
+      slots: [
+        {
+          slotId: {
+            _id: slotIds[0],
+            startDate: '2020-03-04T09:00:00',
+            endDate: '2020-03-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          trainerSignature: { trainerId, signature: 'https://trainer.com' },
+          traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
+        },
+      ],
+      course: {
+        type: INTER_B2B,
+        misc: 'misc',
+        companies: [{ name: 'Alenvi' }],
+        trainees: [
+          { _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } },
+          { _id: new ObjectId(), identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+        ],
+        subProgram: { program: { name: 'Program 1' } },
+        slots: [
+          {
+            _id: slotIds[0],
+            startDate: '2020-03-04T09:00:00',
+            endDate: '2020-03-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          {
+            _id: slotIds[1],
+            startDate: '2020-04-04T09:00:00',
+            endDate: '2020-04-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+        ],
+      },
+    };
+
+    const formattedCourse = {
+      type: INTER_B2B,
+      misc: 'misc',
+      companies: [{ name: 'Alenvi' }],
+      slots: [
+        {
+          _id: slotIds[0],
+          startDate: '2020-03-04T09:00:00',
+          endDate: '2020-03-04T11:00:00',
+          step: { type: 'on_site' },
+        },
+        {
+          _id: slotIds[1],
+          startDate: '2020-04-04T09:00:00',
+          endDate: '2020-04-04T11:00:00',
+          step: { type: 'on_site' },
+        },
+      ],
+      trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
+      trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
+      subProgram: { program: { name: 'Program 1' } },
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    formatInterCourseForPdf.returns({
+      trainees: [{ traineeName: 'Carlos SAINZ', course: { slots: [{ date: '04/03/2020' }] } }],
+    });
+
+    getPdfInter.returns('pdf');
+    uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
+    await attendanceSheetHelper.generate(attendanceSheetId);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots.slotId',
+            select: 'step startDate endDate address',
+            populate: { path: 'step', select: 'type' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type misc companies subProgram slots trainees',
+            populate: [
+              { path: 'companies', select: 'name' },
+              {
+                path: 'trainees',
+                select: 'identity',
+                populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+              },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'slots', select: 'step startDate endDate address' },
+            ],
+          }],
+        },
+        { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(formatInterCourseForPdf, formattedCourse);
+    sinon.assert.calledOnceWithExactly(
+      getPdfInter,
+      {
+        trainees: [{ traineeName: 'Carlos SAINZ', course: { slots: [{ date: '04/03/2020' }] } }],
+        signedSlots: [
+          {
+            slotId: slotIds[0],
+            trainerSignature: { trainerId, signature: 'https://trainer.com' },
+            traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
+          },
+        ],
+      });
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: 'emargements_Carlos_SAINZ_04/03/2020', file: 'pdf', contentType: 'application/pdf' }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      { $set: { file: { publicId: 'yo', link: 'yo' } } }
+    );
+    sinon.assert.notCalled(formatIntraCourseForPdf);
+    sinon.assert.notCalled(getPdfIntra);
+  });
+
+  it('should generate attendance sheet (intra)', async () => {
+    const attendanceSheetId = new ObjectId();
+    const traineeIds = [new ObjectId(), new ObjectId()];
+    const trainerId = new ObjectId();
+    const slotIds = [new ObjectId(), new ObjectId()];
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      misc: 'misc',
+      date: '2020-01-030T23:00:00',
+      trainer: { identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
+      slots: [
+        {
+          slotId: {
+            _id: slotIds[0],
+            startDate: '2020-01-04T09:00:00',
+            endDate: '2020-01-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          trainerSignature: { trainerId, signature: 'https://trainer.com' },
+          traineesSignature: [
+            { traineeId: traineeIds[0], signature: 'https://trainee1.com' },
+            { traineeId: traineeIds[1], signature: 'https://trainee2.com' },
+          ],
+        },
+        {
+          slotId: {
+            _id: slotIds[1],
+            startDate: '2020-01-04T14:00:00',
+            endDate: '2020-01-04T16:00:00',
+            step: { type: 'on_site' },
+          },
+          trainerSignature: { trainerId, signature: 'https://trainer.com' },
+          traineesSignature: [
+            { traineeId: traineeIds[0], signature: 'https://trainee1.com' },
+            { traineeId: traineeIds[1], signature: 'https://trainee2.com' },
+          ],
+        },
+      ],
+      course: {
+        type: INTRA,
+        misc: 'misc',
+        companies: [{ name: 'Alenvi' }],
+        trainees: [
+          { _id: traineeIds[0], identity: { lastname: 'Sainz', firstname: 'Carlos' } },
+          { _id: traineeIds[1], identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+        ],
+        subProgram: { program: { name: 'Program 1' } },
+        slots: [
+          {
+            _id: slotIds[0],
+            startDate: '2020-01-04T09:00:00',
+            endDate: '2020-01-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          {
+            _id: slotIds[1],
+            startDate: '2020-01-04T14:00:00',
+            endDate: '2020-01-04T16:00:00',
+            step: { type: 'on_site' },
+          },
+        ],
+      },
+    };
+
+    const formattedCourse = {
+      type: INTRA,
+      misc: 'misc',
+      companies: [{ name: 'Alenvi' }],
+      trainees: [
+        { _id: traineeIds[0], identity: { lastname: 'Sainz', firstname: 'Carlos' } },
+        { _id: traineeIds[1], identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+      ],
+      slots: [
+        {
+          _id: slotIds[0],
+          startDate: '2020-01-04T09:00:00',
+          endDate: '2020-01-04T11:00:00',
+          step: { type: 'on_site' },
+        },
+        {
+          _id: slotIds[1],
+          startDate: '2020-01-04T14:00:00',
+          endDate: '2020-01-04T16:00:00',
+          step: { type: 'on_site' },
+        },
+      ],
+      trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
+      subProgram: { program: { name: 'Program 1' } },
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    formatIntraCourseForPdf.returns({
+      dates: [
+        { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '9h00', endHour: '11h00' }] },
+        { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '14h00', endHour: '16h00' }] },
+      ],
+    });
+
+    getPdfIntra.returns('pdf');
+    uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
+    await attendanceSheetHelper.generate(attendanceSheetId);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots.slotId',
+            select: 'step startDate endDate address',
+            populate: { path: 'step', select: 'type' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type misc companies subProgram slots trainees',
+            populate: [
+              { path: 'companies', select: 'name' },
+              {
+                path: 'trainees',
+                select: 'identity',
+                populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+              },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'slots', select: 'step startDate endDate address' },
+            ],
+          }],
+        },
+        { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(formatIntraCourseForPdf, formattedCourse);
+    sinon.assert.calledOnceWithExactly(
+      getPdfIntra,
+      {
+        dates: [
+          { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '9h00', endHour: '11h00' }] },
+          { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '14h00', endHour: '16h00' }] },
+        ],
+        signedSlots: [
+          {
+            slotId: slotIds[0],
+            trainerSignature: { trainerId, signature: 'https://trainer.com' },
+            traineesSignature: [
+              { traineeId: traineeIds[0], signature: 'https://trainee1.com' },
+              { traineeId: traineeIds[1], signature: 'https://trainee2.com' },
+            ],
+          },
+          {
+            slotId: slotIds[1],
+            trainerSignature: { trainerId, signature: 'https://trainer.com' },
+            traineesSignature: [
+              { traineeId: traineeIds[0], signature: 'https://trainee1.com' },
+              { traineeId: traineeIds[1], signature: 'https://trainee2.com' },
+            ],
+          },
+        ],
+        trainees: [
+          { _id: traineeIds[0], identity: { lastname: 'Sainz', firstname: 'Carlos' } },
+          { _id: traineeIds[1], identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+        ],
+      });
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: 'emargements_04/01/2020', file: 'pdf', contentType: 'application/pdf' }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      { $set: { file: { publicId: 'yo', link: 'yo' } } }
+    );
+    sinon.assert.notCalled(formatInterCourseForPdf);
+    sinon.assert.notCalled(getPdfInter);
+  });
+
+  it('should generate attendance sheet (intra holding)', async () => {
+    const attendanceSheetId = new ObjectId();
+    const traineeIds = [new ObjectId(), new ObjectId()];
+    const trainerId = new ObjectId();
+    const slotIds = [new ObjectId(), new ObjectId()];
+    const companyIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      misc: 'misc',
+      date: '2020-01-030T23:00:00',
+      companies: [companyIds[0], companyIds[1]],
+      trainer: { identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
+      slots: [
+        {
+          slotId: {
+            _id: slotIds[0],
+            startDate: '2020-01-04T09:00:00',
+            endDate: '2020-01-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          trainerSignature: { trainerId, signature: 'https://trainer.com' },
+          traineesSignature: [
+            { traineeId: traineeIds[0], signature: 'https://trainee1.com' },
+            { traineeId: traineeIds[1], signature: 'https://trainee2.com' },
+          ],
+        },
+        {
+          slotId: {
+            _id: slotIds[1],
+            startDate: '2020-01-04T14:00:00',
+            endDate: '2020-01-04T16:00:00',
+            step: { type: 'on_site' },
+          },
+          trainerSignature: { trainerId, signature: 'https://trainer.com' },
+          traineesSignature: [
+            { traineeId: traineeIds[0], signature: 'https://trainee1.com' },
+            { traineeId: traineeIds[1], signature: 'https://trainee2.com' },
+          ],
+        },
+      ],
+      course: {
+        type: INTRA_HOLDING,
+        misc: 'misc',
+        companies: [
+          { _id: companyIds[0], name: 'Alenvi' },
+          { _id: companyIds[1], name: 'Biens Communs' },
+          { _id: companyIds[2], name: 'Home' },
+        ],
+        trainees: [
+          {
+            _id: traineeIds[0],
+            identity: { lastname: 'Sainz', firstname: 'Carlos' },
+            company: { _id: companyIds[0], name: 'Alenvi' },
+          },
+          {
+            _id: traineeIds[1],
+            identity: { lastname: 'Leclerc', firstname: 'Charles' },
+            company: { _id: companyIds[1], name: 'Biens Communs' },
+          },
+        ],
+        subProgram: { program: { name: 'Program 1' } },
+        slots: [
+          {
+            _id: slotIds[0],
+            startDate: '2020-01-04T09:00:00',
+            endDate: '2020-01-04T11:00:00',
+            step: { type: 'on_site' },
+          },
+          {
+            _id: slotIds[1],
+            startDate: '2020-01-04T14:00:00',
+            endDate: '2020-01-04T16:00:00',
+            step: { type: 'on_site' },
+          },
+        ],
+      },
+    };
+
+    const formattedCourse = {
+      type: INTRA_HOLDING,
+      misc: 'misc',
+      companies: [{ _id: companyIds[0], name: 'Alenvi' }, { _id: companyIds[1], name: 'Biens Communs' }],
+      trainees: [
+        {
+          _id: traineeIds[0],
+          identity: { lastname: 'Sainz', firstname: 'Carlos' },
+          company: { _id: companyIds[0], name: 'Alenvi' },
+        },
+        {
+          _id: traineeIds[1],
+          identity: { lastname: 'Leclerc', firstname: 'Charles' },
+          company: { _id: companyIds[1], name: 'Biens Communs' },
+        },
+      ],
+      slots: [
+        {
+          _id: slotIds[0],
+          startDate: '2020-01-04T09:00:00',
+          endDate: '2020-01-04T11:00:00',
+          step: { type: 'on_site' },
+        },
+        {
+          _id: slotIds[1],
+          startDate: '2020-01-04T14:00:00',
+          endDate: '2020-01-04T16:00:00',
+          step: { type: 'on_site' },
+        },
+      ],
+      trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
+      subProgram: { program: { name: 'Program 1' } },
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    formatIntraCourseForPdf.returns({
+      dates: [
+        { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '9h00', endHour: '11h00' }] },
+        { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '14h00', endHour: '16h00' }] },
+      ],
+    });
+
+    getPdfIntra.returns('pdf');
+    uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
+    await attendanceSheetHelper.generate(attendanceSheetId);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots.slotId',
+            select: 'step startDate endDate address',
+            populate: { path: 'step', select: 'type' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type misc companies subProgram slots trainees',
+            populate: [
+              { path: 'companies', select: 'name' },
+              {
+                path: 'trainees',
+                select: 'identity',
+                populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+              },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'slots', select: 'step startDate endDate address' },
+            ],
+          }],
+        },
+        { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(formatIntraCourseForPdf, formattedCourse);
+    sinon.assert.calledOnceWithExactly(
+      getPdfIntra,
+      {
+        dates: [
+          { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '9h00', endHour: '11h00' }] },
+          { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '14h00', endHour: '16h00' }] },
+        ],
+        signedSlots: [
+          {
+            slotId: slotIds[0],
+            trainerSignature: { trainerId, signature: 'https://trainer.com' },
+            traineesSignature: [
+              { traineeId: traineeIds[0], signature: 'https://trainee1.com' },
+              { traineeId: traineeIds[1], signature: 'https://trainee2.com' },
+            ],
+          },
+          {
+            slotId: slotIds[1],
+            trainerSignature: { trainerId, signature: 'https://trainer.com' },
+            traineesSignature: [
+              { traineeId: traineeIds[0], signature: 'https://trainee1.com' },
+              { traineeId: traineeIds[1], signature: 'https://trainee2.com' },
+            ],
+          },
+        ],
+        trainees: [
+          {
+            _id: traineeIds[0],
+            identity: { lastname: 'Sainz', firstname: 'Carlos' },
+            company: { _id: companyIds[0], name: 'Alenvi' },
+          },
+          {
+            _id: traineeIds[1],
+            identity: { lastname: 'Leclerc', firstname: 'Charles' },
+            company: { _id: companyIds[1], name: 'Biens Communs' },
+          },
+        ],
+      });
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: 'emargements_04/01/2020', file: 'pdf', contentType: 'application/pdf' }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      { $set: { file: { publicId: 'yo', link: 'yo' } } }
+    );
+    sinon.assert.notCalled(formatInterCourseForPdf);
+    sinon.assert.notCalled(getPdfInter);
   });
 });
 
@@ -592,15 +2086,18 @@ describe('delete', () => {
   let findOne;
   let deleteOne;
   let deleteCourseFile;
+  let attendanceDeleteMany;
   beforeEach(() => {
     findOne = sinon.stub(AttendanceSheet, 'findOne');
     deleteOne = sinon.stub(AttendanceSheet, 'deleteOne');
     deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+    attendanceDeleteMany = sinon.stub(Attendance, 'deleteMany');
   });
   afterEach(() => {
     findOne.restore();
     deleteOne.restore();
     deleteCourseFile.restore();
+    attendanceDeleteMany.restore();
   });
 
   it('should remove an attendance sheet (without signatures)', async () => {
@@ -617,20 +2114,28 @@ describe('delete', () => {
       findOne,
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
     );
+    sinon.assert.notCalled(attendanceDeleteMany);
   });
 
   it('should remove an attendance sheet (with one signature)', async () => {
     const attendanceSheetId = new ObjectId();
+    const slotId = new ObjectId();
+    const traineeId = new ObjectId();
     const attendanceSheet = {
       _id: attendanceSheetId,
-      signatures: {
-        trainer: 'gcs.com/bucket/media-trainer_signature_abcde_course_67890',
-      },
+      trainee: traineeId,
+      slots: [{
+        slotId,
+        trainerSignature: {
+          trainerId: new ObjectId(),
+          signature: 'gcs.com/bucket/media-trainer_signature_abcde_course_67890',
+        },
+      }],
     };
 
     findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
 
-    await attendanceSheetHelper.delete(attendanceSheetId);
+    await attendanceSheetHelper.delete(attendanceSheetId, true);
 
     sinon.assert.calledOnceWithExactly(deleteCourseFile, 'media-trainer_signature_abcde_course_67890');
     sinon.assert.calledOnceWithExactly(deleteOne, { _id: attendanceSheetId });
@@ -638,22 +2143,35 @@ describe('delete', () => {
       findOne,
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
     );
+    sinon.assert.calledOnceWithExactly(attendanceDeleteMany, { courseSlot: { $in: [slotId] }, trainee: traineeId });
   });
 
   it('should remove an attendance sheet (with both signatures and file)', async () => {
     const attendanceSheetId = new ObjectId();
+    const slotId = new ObjectId();
+    const traineesIds = [new ObjectId(), new ObjectId()];
     const attendanceSheet = {
       _id: attendanceSheetId,
       file: { publicId: 'yo' },
-      signatures: {
-        trainer: 'gcs.com/bucket/media-trainer_signature_abcde_course_67890',
-        trainee: 'gcs.com/bucket/media-trainee_signature_12345_course_67890',
-      },
+      slots: [{
+        slotId,
+        trainerSignature: {
+          trainerId: new ObjectId(),
+          signature: 'gcs.com/bucket/media-trainer_signature_abcde_course_67890',
+        },
+        traineesSignature: [
+          {
+            traineeId: traineesIds[0],
+            signature: 'gcs.com/bucket/media-trainee_signature_12345_course_67890',
+          },
+          { traineeId: traineesIds[1] },
+        ],
+      }],
     };
 
     findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
 
-    await attendanceSheetHelper.delete(attendanceSheetId);
+    await attendanceSheetHelper.delete(attendanceSheetId, true);
 
     sinon.assert.calledWithExactly(deleteCourseFile.getCall(0), 'media-trainer_signature_abcde_course_67890');
     sinon.assert.calledWithExactly(deleteCourseFile.getCall(1), 'media-trainee_signature_12345_course_67890');
@@ -663,5 +2181,6 @@ describe('delete', () => {
       findOne,
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] }, { query: 'lean' }]
     );
+    sinon.assert.calledOnceWithExactly(attendanceDeleteMany, { courseSlot: slotId, trainee: { $in: traineesIds } });
   });
 });

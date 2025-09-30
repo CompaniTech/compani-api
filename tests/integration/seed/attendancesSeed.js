@@ -1,7 +1,10 @@
 const { ObjectId } = require('mongodb');
 const { v4: uuidv4 } = require('uuid');
 const Attendance = require('../../../src/models/Attendance');
+const AttendanceSheet = require('../../../src/models/AttendanceSheet');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const Course = require('../../../src/models/Course');
+const CourseHistory = require('../../../src/models/CourseHistory');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Program = require('../../../src/models/Program');
 const Step = require('../../../src/models/Step');
@@ -18,11 +21,12 @@ const {
   INTRA_HOLDING,
   GLOBAL,
   SINGLE,
+  MONTHLY,
+  MOBILE,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, vendorAdminRoleId } = require('../../seed/authRolesSeed');
 const { trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
-const CourseHistory = require('../../../src/models/CourseHistory');
 
 const userList = [
   {
@@ -244,6 +248,17 @@ const coursesList = [
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
   },
+  { // 10 single course
+    _id: new ObjectId(),
+    subProgram: subProgramList[0],
+    type: SINGLE,
+    trainees: [traineeList[0]._id],
+    companies: [authCompany._id],
+    maxTrainees: 1,
+    trainers: [trainer._id],
+    operationsRepresentative: userList[2]._id,
+    certificateGenerationMode: MONTHLY,
+  },
 ];
 
 const slotsList = [
@@ -324,6 +339,27 @@ const slotsList = [
     course: coursesList[1],
     step: steps[0]._id,
   },
+  { // 11
+    _id: new ObjectId(),
+    startDate: '2025-01-25T10:00:00.000Z',
+    endDate: '2025-01-25T14:00:00.000Z',
+    course: coursesList[10],
+    step: steps[0]._id,
+  },
+  { // 12
+    _id: new ObjectId(),
+    startDate: '2025-02-25T10:00:00.000Z',
+    endDate: '2025-02-25T14:00:00.000Z',
+    course: coursesList[10],
+    step: steps[0]._id,
+  },
+  { // 13
+    _id: new ObjectId(),
+    startDate: '2025-02-26T10:00:00.000Z',
+    endDate: '2025-02-26T14:00:00.000Z',
+    course: coursesList[10],
+    step: steps[0]._id,
+  },
 ];
 
 const attendancesList = [
@@ -341,6 +377,8 @@ const attendancesList = [
     trainee: traineeList[7]._id,
     company: companyWithoutSubscription._id,
   },
+  { _id: new ObjectId(), courseSlot: slotsList[11]._id, trainee: traineeList[0]._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[12]._id, trainee: traineeList[0]._id, company: authCompany._id },
 ];
 
 const userCompanyList = [
@@ -361,6 +399,64 @@ const userCompanyList = [
   { user: traineeList[8]._id, company: authCompany._id, startDate: '2023-01-01T23:00:00.000Z' },
   { user: traineeList[9]._id, company: otherCompany._id, startDate: '2023-01-01T23:00:00.000Z' },
 ];
+
+const attendanceSheetList = [
+  {
+    _id: new ObjectId(),
+    course: coursesList[10]._id,
+    trainee: traineeList[0]._id,
+    companies: [authCompany._id],
+    slots: [{
+      slotId: slotsList[11]._id,
+      trainerSignature: {
+        trainerId: trainer._id,
+        signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+      },
+      traineesSignature: [{
+        traineeId: traineeList[0]._id,
+        signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+      }],
+    }],
+    file: { publicId: 'yo', link: 'www.test.com' },
+    origin: MOBILE,
+    trainer: trainer._id,
+
+  },
+  {
+    _id: new ObjectId(),
+    course: coursesList[2]._id,
+    date: '2020-01-21T23:00:00.000Z',
+    companies: [otherCompany._id],
+    slots: [{
+      slotId: slotsList[2]._id,
+      trainerSignature: {
+        trainerId: userList[0]._id,
+        signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+      },
+      traineesSignature: [
+        {
+          traineeId: traineeList[9]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        },
+        {
+          traineeId: traineeList[2]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee-2.png',
+        },
+      ],
+    }],
+    file: { publicId: 'yo', link: 'www.test.com' },
+    origin: MOBILE,
+    trainer: userList[0]._id,
+  },
+];
+
+const completionCertificate = {
+  _id: new ObjectId(),
+  course: coursesList[10]._id,
+  trainee: traineeList[0]._id,
+  month: '02-2025',
+  file: { publicId: 'certif1', link: 'https://test.com/certif1' },
+};
 
 const courseHistoryList = [
   {
@@ -466,6 +562,8 @@ const populateDB = async () => {
 
   await Promise.all([
     Attendance.create(attendancesList),
+    AttendanceSheet.create(attendanceSheetList),
+    CompletionCertificate.create(completionCertificate),
     Course.create(coursesList),
     CourseSlot.create(slotsList),
     User.create([...userList, ...traineeList]),

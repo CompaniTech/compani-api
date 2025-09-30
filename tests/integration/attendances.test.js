@@ -224,6 +224,17 @@ describe('ATTENDANCES ROUTES - POST /attendances', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to create attendance on a slot linked to completion certificate', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendances',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { trainee: traineeList[0]._id, courseSlot: slotsList[13]._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {
@@ -874,6 +885,66 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendances?courseSlot=${slotsList[5]._id}&trainee=${traineeList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance is linked to attendance sheet (intra) (with traineeId)', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[2]._id}&trainee=${traineeList[9]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance is linked to attendance sheet (single) (with traineeId)', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[11]._id}&trainee=${traineeList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance is linked to completion certificate (with traineeId)', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[12]._id}&trainee=${traineeList[0]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance is linked to attendance sheet (intra) (without traineeId)', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[2]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance is linked to attendance sheet (single) (without traineeId)', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[11]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if attendance is linked to completion certificate (without traineeId)', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[12]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

@@ -323,6 +323,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       select: 'type trainees misc subProgram companies',
       populate: [
         { path: 'companies', select: 'name' },
+        { path: 'trainees', select: 'identity' },
         { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
       ],
     })
@@ -339,7 +340,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
   for (const slot of courseSlots) {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
     const subscribedAttendances = slot.attendances
-      .filter(attendance => UtilsHelper.doesArrayIncludeId(slot.course.trainees, attendance.trainee))
+      .filter(attendance => UtilsHelper.doesArrayIncludeId(slot.course.trainees.map(t => t._id), attendance.trainee))
       .length;
 
     rows.push({
@@ -348,6 +349,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       Formation: CourseHelper.composeCourseName(slot.course),
       Étape: get(slot, 'step.name') || '',
       Type: STEP_TYPES[get(slot, 'step.type')] || '',
+      Apprenant: slot.course.type === SINGLE ? UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL') : '',
       'Date de création': CompaniDate(slot.createdAt).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de début': CompaniDate(slot.startDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de fin': CompaniDate(slot.endDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
@@ -445,6 +447,7 @@ const formatCommonInfos = (bill, netInclTaxes) => {
     'Id formation': bill.course._id,
     Formation: courseName,
     Programme: bill.course.subProgram.program.name,
+    Apprenant: bill.course.type === SINGLE ? UtilsHelper.formatIdentity(bill.course.trainees[0].identity, 'FL') : '',
     Structure: bill.companies.map(c => c.name).join(', '),
     'Id payeur': bill.payer._id,
     Payeur: bill.payer.name,
@@ -459,11 +462,12 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
     .populate(
       {
         path: 'course',
-        select: 'subProgram misc type',
+        select: 'subProgram misc type trainees',
         populate: [
           { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
           { path: 'slots', select: 'startDate' },
           { path: 'slotsToPlan', select: '_id' },
+          { path: 'trainees', select: 'identity' },
         ],
       }
     )
@@ -486,8 +490,11 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
         { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
         {
           path: 'course',
-          select: 'subProgram misc type',
-          populate: { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+          select: 'subProgram misc type trainees',
+          populate: [
+            { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+            { path: 'trainees', select: 'identity' },
+          ],
         },
       ],
     })
@@ -565,7 +572,12 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
     { courseBill: { $in: paymentsOnPeriod.map(p => p.courseBill) } },
     { nature: 1, number: 1, date: 1, courseBill: 1, type: 1, netInclTaxes: 1 }
   )
-    .populate({ path: 'courseBill', option: { isVendorUser }, select: 'number payer' })
+    .populate({
+      path: 'courseBill',
+      option: { isVendorUser },
+      select: 'number payer course',
+      populate: { path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } },
+    })
     .setOptions({ isVendorUser })
     .lean();
 
@@ -585,6 +597,9 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
             'Numéro du paiement (parmi ceux de la même facture)': paymentIndex + 1,
             'Moyen de paiement': PAYMENT_TYPES_LIST[payment.type],
             Montant: UtilsHelper.formatFloatForExport(payment.netInclTaxes),
+            Apprenant: payment.courseBill.course.type === SINGLE
+              ? UtilsHelper.formatIdentity(payment.courseBill.course.trainees[0].identity, 'FL')
+              : '',
           });
         }
         return acc;

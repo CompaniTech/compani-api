@@ -2855,9 +2855,11 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{
               path: 'attendanceSheets',
-              match: { trainee: loggedUser._id },
+              match: { $or: [{ trainee: loggedUser._id }, { 'slots.traineesSignature.traineeId': loggedUser._id }] },
               options: { requestingOwnInfos: true },
-              populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
+              populate: [
+                { path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' },
+              ],
             }],
           },
           { query: 'select', args: ['_id misc format type trainees'] },
@@ -3014,9 +3016,11 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{
               path: 'attendanceSheets',
-              match: { trainee: loggedUser._id },
+              match: { $or: [{ trainee: loggedUser._id }, { 'slots.traineesSignature.traineeId': loggedUser._id }] },
               options: { requestingOwnInfos: true },
-              populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
+              populate: [
+                { path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' },
+              ],
             }],
           },
           { query: 'select', args: ['_id misc format type trainees'] },
@@ -3172,9 +3176,11 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{
               path: 'attendanceSheets',
-              match: { trainee: loggedUser._id },
+              match: { $or: [{ trainee: loggedUser._id }, { 'slots.traineesSignature.traineeId': loggedUser._id }] },
               options: { requestingOwnInfos: true },
-              populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
+              populate: [
+                { path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' },
+              ],
             }],
           },
           { query: 'select', args: ['_id misc format type trainees'] },
@@ -3306,9 +3312,11 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{
               path: 'attendanceSheets',
-              match: { trainee: loggedUser._id },
+              match: { $or: [{ trainee: loggedUser._id }, { 'slots.traineesSignature.traineeId': loggedUser._id }] },
               options: { requestingOwnInfos: true },
-              populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
+              populate: [
+                { path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' },
+              ],
             }],
           },
           { query: 'select', args: ['_id misc format type trainees'] },
@@ -3442,9 +3450,11 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{
               path: 'attendanceSheets',
-              match: { trainee: loggedUser._id },
+              match: { $or: [{ trainee: loggedUser._id }, { 'slots.traineesSignature.traineeId': loggedUser._id }] },
               options: { requestingOwnInfos: true },
-              populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
+              populate: [
+                { path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' },
+              ],
             }],
           },
           { query: 'select', args: ['_id misc format type trainees'] },

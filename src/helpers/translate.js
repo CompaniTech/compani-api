@@ -65,6 +65,7 @@ module.exports = {
     paymentCreated: 'Payment created.',
     paymentUpdated: 'Payment updated.',
     paymentRemoved: 'Payment removed.',
+    paymentsFound: 'Payments found.',
     /* Programs */
     programsFound: 'Programs found.',
     programsNotFound: 'Programs not found.',
@@ -176,6 +177,7 @@ module.exports = {
     courseSlotConflict: 'Course slot in conflict.',
     courseSlotWithAttendances: 'Course slot has attendances.',
     courseSlotsAlreadyInAttendanceSheet: 'Course slots already in attendance sheet.',
+    courseSlotDateInCompletionCertificate: 'Impossible to add course slot : completion certificate on this date.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Course funding organisations found.',
     courseFundingOrganisationsNotFound: 'Course funding organisations not found.',
@@ -197,6 +199,9 @@ module.exports = {
     attendancesNotFound: 'Attendances not found.',
     attendanceDeleted: 'Attendance deleted.',
     attendanceExists: 'An attendance exists.',
+    attendanceIsLinkedToAttendanceSheet: 'Operation forbidden : attendance is linked to attendance sheet.',
+    attendanceIsLinkedToCompletionCertificate: 'Operation forbidden : attendance is linked to completion certificate.',
+    someSlotsAreLinkedToCompletionCertificate: 'Edition forbidden : some slots are linked to completion certificate.',
     /* Questionnaires */
     questionnairesFound: 'Questionnaires found.',
     questionnairesNotFound: 'Questionnaires not found.',
@@ -237,6 +242,10 @@ module.exports = {
     trainerMissionsFound: 'Trainer missions found',
     trainerMissionsNotFound: 'Trainer missions not found',
     trainerMissionUpdated: 'Trainer mission updated',
+    /* XmlSEPAFileInfos */
+    xmlSEPAFileInfosAlreadyExist: 'Forbidden : xmlSEPAFileInfos already exist.',
+    xmlSEPAFileWrongPayment: 'Forbidden : wrong payment type or status.',
+    xmlSEPAFileWrongPayer: 'Forbidden : payer is not a company.',
   },
   'fr-FR': {
     /* Token errors */
@@ -303,6 +312,7 @@ module.exports = {
     paymentNotFound: 'Règlement non trouvé.',
     paymentUpdated: 'Règlement modifié.',
     paymentRemoved: 'Règlement supprimé.',
+    paymentsFound: 'Règlements trouvés.',
     /* Programs */
     programsFound: 'Liste des programmes trouvée.',
     programsNotFound: 'Liste des programmes non trouvée.',
@@ -414,7 +424,9 @@ module.exports = {
     courseSlotNotFound: 'Créneau de formation non trouvé.',
     courseSlotConflict: 'Créneau de formation en conflit.',
     courseSlotWithAttendances: 'Impossible: ce créneau de formation est émargé.',
-    courseSlotsAlreadyInAttendanceSheet: 'Certains créneaux sont déjà rattachés à une feuille d’émargement.',
+    courseSlotsAlreadyInAttendanceSheet: 'Certains créneaux sont déjà rattachés à une feuille d\'émargement.',
+    courseSlotDateInCompletionCertificate: 'Impossible d\'éditer le créneau : il existe un certificat de réalisation'
+    + ' sur cette date.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
     courseFundingOrganisationsNotFound: 'Financeurs non trouvés.',
@@ -436,6 +448,11 @@ module.exports = {
     attendancesNotFound: 'Émargements non trouvés.',
     attendanceDeleted: 'Émargement supprimé.',
     attendanceExists: 'Un émargement existe.',
+    attendanceIsLinkedToAttendanceSheet: 'Opération impossible : l’émargement est relié à une feuille d\'émargement.',
+    attendanceIsLinkedToCompletionCertificate: 'Opération impossible : l’émargement est relié à un certificat de '
+      + 'réalisation.',
+    someSlotsAreLinkedToCompletionCertificate: 'Édition impossible : certains créneaux sélectionnés sont liés à un '
+    + 'certificat de réalisation.',
     /* Questionnaires */
     questionnairesFound: 'Liste des questionnaires trouvée.',
     questionnairesNotFound: 'Liste des questionnaires non trouvée.',
@@ -476,5 +493,10 @@ module.exports = {
     trainerMissionsFound: 'Ordres de mission trouvés',
     trainerMissionsNotFound: 'Ordres de mission non trouvés',
     trainerMissionUpdated: 'Ordre de mission mis à jour',
+    /* XmlSEPAFileInfos */
+    xmlSEPAFileInfosAlreadyExist: `Impossible : il existe déjà un fichier XML associé à ce nom de lot ou à un
+      des paiements sélectionnés.`,
+    xmlSEPAFileWrongPayment: 'Impossible : un des paiements sélectionnés n\'est pas un prélèvement en attente.',
+    xmlSEPAFileWrongPayer: 'Impossible : le payeur associé à un des paiements est un financeur.',
   },
 };

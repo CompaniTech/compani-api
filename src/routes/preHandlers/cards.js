@@ -71,6 +71,8 @@ exports.authorizeCardUpdate = async (req) => {
 
   if (card.template !== SURVEY && has(payload, 'labels')) throw Boom.forbidden();
 
+  if (card.template !== ORDER_THE_SEQUENCE && has(payload, 'isChronological')) throw Boom.forbidden();
+
   switch (card.template) {
     case FILL_THE_GAPS:
       return checkFillTheGap(card, req.payload);

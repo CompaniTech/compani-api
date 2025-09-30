@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 const { validateQuery, validateAggregation, formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const { PAYMENT_NATURES, PAYMENT_TYPES } = require('./Payment');
-const { CESU, PENDING, RECEIVED } = require('../helpers/constants');
+const { CESU, PENDING, RECEIVED, XML_GENERATED } = require('../helpers/constants');
 
 const COURSE_PAYMENT_TYPES = PAYMENT_TYPES.filter(type => type !== CESU);
-const COURSE_PAYMENT_STATUS = [PENDING, RECEIVED];
+const COURSE_PAYMENT_STATUS = [PENDING, RECEIVED, XML_GENERATED];
 
 const CoursePaymentSchema = mongoose.Schema({
   number: { type: String, unique: true, immutable: true },
@@ -23,3 +23,4 @@ queryMiddlewareList.map(middleware => CoursePaymentSchema.pre(middleware, format
 
 module.exports = mongoose.model('CoursePayment', CoursePaymentSchema);
 module.exports.COURSE_PAYMENT_TYPES = COURSE_PAYMENT_TYPES;
+module.exports.COURSE_PAYMENT_STATUS = COURSE_PAYMENT_STATUS;

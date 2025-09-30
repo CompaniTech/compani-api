@@ -25,6 +25,7 @@ const rights = [
   { permission: 'completioncertificates:edit', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Ajouter, générer et télécharger les certificats de réalisation mensuels' },
   { permission: 'coursebills:read', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, CLIENT_ADMIN, HOLDING_ADMIN], description: 'Consulter les informations de facturation' },
   { permission: 'coursebills:edit', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Editer une facture ou un avoir' },
+  { permission: 'coursepayments:read', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Consulter les paiements' },
   { permission: 'courses:create', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Créer une formation' },
   { permission: 'courses:edit', rolesConcerned: [CLIENT_ADMIN, COACH, VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER, HOLDING_ADMIN], description: 'Editer les formations' },
   { permission: 'courses:read', rolesConcerned: [CLIENT_ADMIN, COACH, VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER, HOLDING_ADMIN], description: 'Consulter les données des formations' },
@@ -47,6 +48,7 @@ const rights = [
   { permission: 'users:edit', rolesConcerned: [CLIENT_ADMIN, COACH, VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER, HOLDING_ADMIN], description: 'Editer un(e) utilisateur(rice)' },
   { permission: 'users:exist', rolesConcerned: [CLIENT_ADMIN, COACH, VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER], description: 'Verifier si un email existe déjà en base' },
   { permission: 'users:list', rolesConcerned: [CLIENT_ADMIN, COACH, AUXILIARY, PLANNING_REFERENT, VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER, HOLDING_ADMIN], description: 'Accéder à la liste des utilisateurs' },
+  { permission: 'xml:create', rolesConcerned: [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER], description: 'Télécharger le fichier de prélèvements SEPA' },
 ];
 
 module.exports = { rights };

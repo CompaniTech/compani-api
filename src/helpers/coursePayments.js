@@ -27,3 +27,13 @@ exports.createCoursePayment = async (payload) => {
 exports.updateCoursePayment = async (coursePaymentId, payload) => {
   await CoursePayment.updateOne({ _id: coursePaymentId }, { $set: payload });
 };
+
+exports.list = async query => CoursePayment
+  .find({ status: query.status, nature: PAYMENT })
+  .populate({
+    path: 'courseBill',
+    select: 'number payer',
+    populate: [{ path: 'payer.company', select: 'name' }, { path: 'payer.fundingOrganisation', select: 'name' }],
+  })
+  .setOptions({ isVendorUser: true })
+  .lean();

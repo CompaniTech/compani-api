@@ -39,4 +39,5 @@ exports.routes = [
   { plugin: require('./userCompanies'), routes: { prefix: '/usercompanies' } },
   { plugin: require('./vendorCompanies'), routes: { prefix: '/vendorcompanies' } },
   { plugin: require('./version'), routes: { prefix: '/version' } },
+  { plugin: require('./xmlSEPAFileInfos'), routes: { prefix: '/xmlsepafileinfos' } },
 ];

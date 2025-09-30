@@ -3,8 +3,10 @@ const get = require('lodash/get');
 const has = require('lodash/has');
 const CourseSlot = require('../../models/CourseSlot');
 const Course = require('../../models/Course');
+const CompletionCertificate = require('../../models/CompletionCertificate');
 const User = require('../../models/User');
 const Attendance = require('../../models/Attendance');
+const AttendanceSheet = require('../../models/AttendanceSheet');
 const UserCompany = require('../../models/UserCompany');
 const {
   TRAINER,
@@ -15,6 +17,7 @@ const {
   INTRA_HOLDING,
   BLENDED,
   SINGLE,
+  MM_YYYY,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const translate = require('../../helpers/translate');
@@ -98,7 +101,7 @@ exports.authorizeUnsubscribedAttendancesGet = async (req) => {
 };
 
 exports.authorizeAttendanceCreation = async (req) => {
-  const courseSlot = await CourseSlot.findOne({ _id: req.payload.courseSlot }, { course: 1 })
+  const courseSlot = await CourseSlot.findOne({ _id: req.payload.courseSlot }, { course: 1, startDate: 1 })
     .populate({
       path: 'course',
       select: 'trainers companies archivedAt trainees type holding subProgram',
@@ -151,6 +154,16 @@ exports.authorizeAttendanceCreation = async (req) => {
     }
   }
 
+  const isLinkedToCompletionCertificate = await CompletionCertificate.countDocuments({
+    course: course._id,
+    month: CompaniDate(courseSlot.startDate).format(MM_YYYY),
+    ...req.payload.trainee && { trainee: req.payload.trainee },
+    file: { $exists: true },
+  });
+  if (isLinkedToCompletionCertificate) {
+    throw Boom.forbidden(translate[language].attendanceIsLinkedToCompletionCertificate);
+  }
+
   return null;
 };
 
@@ -171,6 +184,29 @@ exports.authorizeAttendanceDeletion = async (req) => {
   const { credentials } = req.auth;
   const trainersIds = courseSlot.course.trainers;
   if (get(credentials, 'role.vendor.name') === TRAINER) isTrainerAuthorized(credentials._id, trainersIds);
+
+  const isLinkedToAttendanceSheet = await AttendanceSheet.countDocuments(
+    {
+      'slots.slotId': courseSlot._id,
+      ...(traineeId && {
+        $or: [
+          { trainee: traineeId },
+          { slots: { $elemMatch: { slotId: courseSlot._id, 'traineesSignature.traineeId': traineeId } } },
+        ],
+      }),
+    }
+  );
+  if (isLinkedToAttendanceSheet) throw Boom.forbidden(translate[language].attendanceIsLinkedToAttendanceSheet);
+
+  const isLinkedToCompletionCertificate = await CompletionCertificate.countDocuments({
+    course: course._id,
+    month: CompaniDate(courseSlot.startDate).format(MM_YYYY),
+    ...traineeId && { trainee: traineeId },
+    file: { $exists: true },
+  });
+  if (isLinkedToCompletionCertificate) {
+    throw Boom.forbidden(translate[language].attendanceIsLinkedToCompletionCertificate);
+  }
 
   return null;
 };

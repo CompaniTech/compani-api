@@ -1,13 +1,15 @@
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
+const compact = require('lodash/compact');
 const CourseSlot = require('../../models/CourseSlot');
 const Course = require('../../models/Course');
+const CompletionCertificate = require('../../models/CompletionCertificate');
 const Step = require('../../models/Step');
 const Attendance = require('../../models/Attendance');
 const AttendanceSheet = require('../../models/AttendanceSheet');
 const translate = require('../../helpers/translate');
 const { checkAuthorization } = require('./courses');
-const { E_LEARNING, ON_SITE, REMOTE, INTRA, INTRA_HOLDING } = require('../../helpers/constants');
+const { E_LEARNING, ON_SITE, REMOTE, INTRA, INTRA_HOLDING, MM_YYYY } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
 
@@ -40,8 +42,18 @@ const checkPayload = async (courseSlot, payload) => {
   const hasBothDates = !!(startDate && endDate);
   const hasOneDate = !!(startDate || endDate);
 
-  const attendanceSheets = await AttendanceSheet.countDocuments({ slots: courseSlot._id });
+  const attendanceSheets = await AttendanceSheet.countDocuments({ 'slots.slotId': courseSlot._id });
   if (attendanceSheets) throw Boom.forbidden(translate[language].courseSlotWithAttendances);
+
+  const slotMonth = courseSlot.startDate ? CompaniDate(courseSlot.startDate).format(MM_YYYY) : '';
+  const payloadMonth = startDate ? CompaniDate(startDate).format(MM_YYYY) : '';
+  const slotsMonths = compact([slotMonth, payloadMonth]);
+  const completionCertificates = await CompletionCertificate.countDocuments({
+    course: courseId,
+    month: { $in: slotsMonths },
+    file: { $exists: true },
+  });
+  if (completionCertificates) throw Boom.forbidden(translate[language].courseSlotDateInCompletionCertificate);
 
   if (!hasOneDate) {
     const attendances = await Attendance.countDocuments({ courseSlot: courseSlot._id });
@@ -69,7 +81,7 @@ const checkPayload = async (courseSlot, payload) => {
 exports.authorizeUpdate = async (req) => {
   try {
     const courseSlot = await CourseSlot
-      .findOne({ _id: req.params._id }, { course: 1, step: 1 })
+      .findOne({ _id: req.params._id }, { course: 1, step: 1, startDate: 1 })
       .populate({ path: 'step', select: 'type' })
       .lean();
     if (!courseSlot) throw Boom.notFound(translate[language].courseSlotNotFound);

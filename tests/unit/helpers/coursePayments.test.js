@@ -1,4 +1,5 @@
 const sinon = require('sinon');
+const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const CoursePaymentsHelper = require('../../../src/helpers/coursePayments');
 const {
@@ -194,9 +195,69 @@ describe('updateCoursePayment', () => {
       date: '2022-03-08T00:00:00.000Z',
       netInclTaxes: 190,
       type: DIRECT_DEBIT,
+      status: RECEIVED,
     };
 
     await CoursePaymentsHelper.updateCoursePayment(coursePaymentId, payload);
     sinon.assert.calledOnceWithExactly(updateOne, { _id: coursePaymentId }, { $set: payload });
+  });
+});
+
+describe('list', () => {
+  let find;
+  beforeEach(() => {
+    find = sinon.stub(CoursePayment, 'find');
+  });
+
+  afterEach(() => {
+    find.restore();
+  });
+
+  it('should list payments', async () => {
+    const paymentList = [
+      {
+        _id: new ObjectId(),
+        status: RECEIVED,
+        nature: PAYMENT,
+        courseBill: { number: 'FACT_00001', payer: { company: { name: 'Structure' } }, isPayerCompany: true },
+      },
+      {
+        _id: new ObjectId(),
+        status: RECEIVED,
+        nature: PAYMENT,
+        courseBill: {
+          number: 'FACT_00002',
+          payer: { company: { fundingOrganisation: 'Financeur' } },
+          isPayerCompany: false,
+        },
+      },
+    ];
+    find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'lean']));
+
+    const result = await CoursePaymentsHelper.list({ status: RECEIVED });
+
+    expect(result).toEqual(paymentList);
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        { query: 'find', args: [{ status: RECEIVED, nature: PAYMENT }] },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'courseBill',
+              select: 'number payer',
+              populate: [
+                { path: 'payer.company', select: 'name' },
+                { path: 'payer.fundingOrganisation', select: 'name' },
+              ],
+            },
+          ],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean', args: [] },
+      ]
+    );
   });
 });

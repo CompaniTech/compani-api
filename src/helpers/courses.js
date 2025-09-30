@@ -753,9 +753,9 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     .populate({ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' })
     .populate({
       path: 'attendanceSheets',
-      match: { trainee: credentials._id },
+      match: { $or: [{ trainee: credentials._id }, { 'slots.traineesSignature.traineeId': credentials._id }] },
       options: { requestingOwnInfos: true },
-      populate: [{ path: 'slots', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
+      populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
     .select('_id misc format type trainees')
     .lean({ autopopulate: true, virtuals: true });
@@ -792,7 +792,16 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     const areLastSlotAttendancesValidated = !!(!isTutor && !get(course, 'slotsToPlan.length') && lastSlot &&
       await Attendance.countDocuments({ courseSlot: lastSlot._id }));
 
-    return { ...exports.formatCourseWithProgress(course, false, true), areLastSlotAttendancesValidated };
+    return {
+      ...exports.formatCourseWithProgress(course, false, true),
+      areLastSlotAttendancesValidated,
+      ...course.attendanceSheets && {
+        attendanceSheets: course.attendanceSheets.map(as => ({
+          ...as,
+          ...as.slots && { slots: as.slots.map(s => ({ ...omit(s, 'slotId'), ...s.slotId })) },
+        })),
+      },
+    };
   }
 
   return exports.formatCourseWithProgress(course, false, true);
@@ -981,6 +990,7 @@ exports.removeCourseTrainee = async (courseId, traineeId, user) => Promise.all([
 ]);
 
 exports.formatIntraCourseSlotsForPdf = slot => ({
+  _id: slot._id,
   startHour: CompaniDate(slot.startDate).format(HHhMM),
   endHour: CompaniDate(slot.endDate).format(HHhMM),
 });
@@ -989,6 +999,7 @@ exports.formatInterCourseSlotsForPdf = (slot) => {
   const duration = UtilsHelper.getDuration(slot.startDate, slot.endDate);
 
   return {
+    _id: slot._id,
     address: get(slot, 'address.fullAddress') || null,
     date: CompaniDate(slot.startDate).format(DD_MM_YYYY),
     startHour: CompaniDate(slot.startDate).format(HH_MM),

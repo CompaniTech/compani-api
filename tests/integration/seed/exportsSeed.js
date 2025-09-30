@@ -1374,7 +1374,7 @@ const coursesList = [
     type: SINGLE,
     maxTrainees: 1,
     subProgram: subProgramList[0]._id,
-    misc: 'single',
+    misc: 'Paul Trainee',
     trainers: [trainer._id],
     operationsRepresentative: operationsRepresentative._id,
     contact: operationsRepresentative._id,
