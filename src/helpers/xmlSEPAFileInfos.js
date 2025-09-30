@@ -109,10 +109,10 @@ exports.generateSEPAFile = async (paymentIds, name) => {
     const { payer } = p.courseBill;
     if (payer.iban.includes(':')) payer.iban = decrypt(payer.iban);
     if (payer.bic.includes(':')) payer.bic = decrypt(payer.bic);
-    return { p, courseBill: { ...p.courseBill, payer } };
+    return { ...p, courseBill: { ...p.courseBill, payer } };
   });
 
-  const paymentsGroupByPayer = groupBy(paymentsWithDecryptedPayer, p => p.courseBill.payer._id);
+  const paymentsGroupByPayer = groupBy(paymentsWithDecryptedPayer, 'courseBill.payer._id');
   const vendorCompany = await VendorCompany.findOne({}).lean();
   const randomId = randomize('0', 21);
   const totalSum = getFixedNumber(payments.reduce((acc, next) => acc + next.netInclTaxes, 0), 2);
