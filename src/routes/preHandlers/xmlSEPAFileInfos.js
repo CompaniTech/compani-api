@@ -35,6 +35,11 @@ exports.authorizeXMLFileDownload = async (req) => {
   if (paymentList.some(payment => !get(payment, 'courseBill.isPayerCompany'))) {
     throw Boom.forbidden(translate[language].xmlSEPAFileWrongPayer);
   }
+
+  const everyPayerHasBICAndIBAN = paymentList
+    .every(payment => payment.courseBill.payer.bic && payment.courseBill.payer.iban);
+  if (!everyPayerHasBICAndIBAN) throw Boom.forbidden(translate[language].xmlSEPAFileGenerationFailedMissingBankDetails);
+
   const everyPayerHasSignedMandate = paymentList.every((payment) => {
     const lastMandate = UtilsHelper.getLastVersion(payment.courseBill.payer.debitMandates, 'createdAt');
     return !!get(lastMandate, 'signedAt') && !!get(lastMandate, 'file.link');
@@ -42,10 +47,6 @@ exports.authorizeXMLFileDownload = async (req) => {
   if (!everyPayerHasSignedMandate) {
     throw Boom.forbidden(translate[language].xmlSEPAFileGenerationFailedMissingSignedMandate);
   }
-
-  const everyPayerHasBICAndIBAN = paymentList
-    .every(payment => payment.courseBill.payer.bic && payment.courseBill.payer.iban);
-  if (!everyPayerHasBICAndIBAN) throw Boom.forbidden(translate[language].xmlSEPAFileGenerationFailedMissingBankDetails);
 
   return null;
 };

@@ -9,7 +9,7 @@ const CoursePayment = require('../models/CoursePayment');
 const VendorCompany = require('../models/VendorCompany');
 const xmlSEPAFileInfos = require('../models/XmlSEPAFileInfos');
 const XmlHelper = require('./xml');
-const { XML_GENERATED } = require('./constants');
+const { XML_GENERATED, YYYY_MM_DD } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { getFixedNumber, getLastVersion } = require('./utils');
 
@@ -28,10 +28,10 @@ exports.generatePaymentInfo = data => ({
   PmtInfId: data.id,
   PmtMtd: data.method,
   NbOfTxs: data.txNumber,
-  CtrlSum: getFixedNumber(data.sum, 2),
+  CtrlSum: data.sum,
   PmtTpInf: {
     SvcLvl: { Cd: 'SEPA' },
-    LclInstrm: { Cd: 'CORE' },
+    LclInstrm: { Cd: 'B2B' },
     SeqTp: data.sequenceType,
   },
   ReqdColltnDt: data.collectionDate,
@@ -132,7 +132,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
     method: 'DD',
     txNumber: Object.keys(paymentsGroupByPayer).length,
     sum: totalSum,
-    collectionDate: CompaniDate().toDate(),
+    collectionDate: CompaniDate().format(YYYY_MM_DD),
     creditor: {
       name: vendorCompany.name.split(' ')[0],
       iban: vendorCompany.iban,
@@ -158,7 +158,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
       debitorIBAN: payerInfos.iban,
       debitorBIC: payerInfos.bic,
       debitorRUM: lastMandate.rum,
-      mandateSignatureDate: lastMandate.signedAt,
+      mandateSignatureDate: CompaniDate(lastMandate.signedAt).format(YYYY_MM_DD),
       globalTransactionName: name.trim(),
     };
     paymentInfo.DrctDbtTxInf.push(exports.generateTransactionInfos(formattedTransaction));
