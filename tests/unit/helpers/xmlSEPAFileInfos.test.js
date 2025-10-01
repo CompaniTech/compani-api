@@ -1,7 +1,9 @@
 const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
-const randomize = require('randomatic');
+const proxyquire = require('proxyquire');
 const { expect } = require('expect');
+const path = require('path');
+const os = require('os');
 const XmlSEPAFileInfosHelper = require('../../../src/helpers/xmlSEPAFileInfos');
 const UtilsHelper = require('../../../src/helpers/utils');
 const XmlHelper = require('../../../src/helpers/xml');
@@ -10,7 +12,7 @@ const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const VendorCompany = require('../../../src/models/VendorCompany');
 const SinonMongoose = require('../sinonMongoose');
-const UtilsMock = require('../utilsMock');
+const UtilsMock = require('../../utilsMock');
 
 describe('generateSEPAHeader', () => {
   it('should return a sepa header object', () => {
@@ -68,13 +70,13 @@ describe('generatePaymentInfo', () => {
       PmtInfId: data.id,
       PmtMtd: data.method,
       NbOfTxs: data.txNumber,
-      CtrlSum: '350.00',
+      CtrlSum: 350,
       PmtTpInf: {
         SvcLvl: {
           Cd: 'SEPA',
         },
         LclInstrm: {
-          Cd: 'CORE',
+          Cd: 'B2B',
         },
         SeqTp: data.sequenceType,
       },
@@ -172,6 +174,7 @@ describe('formatTransactionNumber', () => {
 });
 
 describe('generateSEPAFile', () => {
+  let createDocument;
   let coursePaymentFind;
   let formatTransactionNumber;
   let vendorCompanyFindOne;
@@ -181,21 +184,26 @@ describe('generateSEPAFile', () => {
   let getLastVersion;
   let generateTransactionInfos;
   let generateXML;
-  let randomizeStub;
+  let XmlSEPAFileInfosHelperWithFakeRandomatic;
   beforeEach(() => {
-    formatTransactionNumber = sinon.stub(XmlSEPAFileInfosHelper, 'formatTransactionNumber');
+    createDocument = sinon.stub(XmlHelper, 'createDocument');
+    const fakeRandomize = sinon.fake.returns('837495028164920173652');
+    XmlSEPAFileInfosHelperWithFakeRandomatic = proxyquire('../../../src/helpers/xmlSEPAFileInfos', {
+      randomatic: fakeRandomize,
+    });
+    formatTransactionNumber = sinon.stub(XmlSEPAFileInfosHelperWithFakeRandomatic, 'formatTransactionNumber');
     coursePaymentFind = sinon.stub(CoursePayment, 'find');
     vendorCompanyFindOne = sinon.stub(VendorCompany, 'findOne');
     getFixedNumber = sinon.stub(UtilsHelper, 'getFixedNumber');
-    generateSEPAHeader = sinon.stub(XmlSEPAFileInfosHelper, 'generateSEPAHeader');
-    generatePaymentInfo = sinon.stub(XmlSEPAFileInfosHelper, 'generatePaymentInfo');
+    generateSEPAHeader = sinon.stub(XmlSEPAFileInfosHelperWithFakeRandomatic, 'generateSEPAHeader');
+    generatePaymentInfo = sinon.stub(XmlSEPAFileInfosHelperWithFakeRandomatic, 'generatePaymentInfo');
     getLastVersion = sinon.stub(UtilsHelper, 'getLastVersion');
-    generateTransactionInfos = sinon.stub(XmlSEPAFileInfosHelper, 'generateTransactionInfos');
+    generateTransactionInfos = sinon.stub(XmlSEPAFileInfosHelperWithFakeRandomatic, 'generateTransactionInfos');
     generateXML = sinon.stub(XmlHelper, 'generateXML');
     UtilsMock.mockCurrentDate('2025-09-29T13:45:25.437Z');
-    randomizeStub = sinon.stub('randomize', randomize);
   });
   afterEach(() => {
+    createDocument.restore();
     coursePaymentFind.restore();
     formatTransactionNumber.restore();
     vendorCompanyFindOne.restore();
@@ -206,11 +214,11 @@ describe('generateSEPAFile', () => {
     generateTransactionInfos.restore();
     generateXML.restore();
     UtilsMock.unmockCurrentDate();
-    randomizeStub.restore();
   });
 
-  it('should generate SEPA file', () => {
+  it('should generate SEPA file', async () => {
     const paymentIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const payerIds = [new ObjectId(), new ObjectId()];
     const payments = [
       {
         _id: paymentIds[0],
@@ -219,6 +227,7 @@ describe('generateSEPAFile', () => {
         courseBill: {
           number: 'FACT-0001',
           payer: {
+            _id: payerIds[0],
             name: 'Alenvi',
             bic: 'QWERFRPP',
             iban: 'FR2217569000708935247791H65',
@@ -240,6 +249,7 @@ describe('generateSEPAFile', () => {
         courseBill: {
           number: 'FACT-0001',
           payer: {
+            _id: payerIds[0],
             name: 'Alenvi',
             bic: 'QWERFRPP',
             iban: 'FR2217569000708935247791H65',
@@ -259,8 +269,9 @@ describe('generateSEPAFile', () => {
         number: 'REG-00014',
         netInclTaxes: 1500,
         courseBill: {
-          number: 'FACT-0001',
+          number: 'FACT-0002',
           payer: {
+            _id: payerIds[1],
             name: 'Biens Communs',
             bic: 'ABCDFRPP',
             iban: 'FR8017569000309797129722R84',
@@ -296,44 +307,145 @@ describe('generateSEPAFile', () => {
       ics: 'FR12345678909',
       debitMandateTemplate: { link: 'link/123567890', driveId: '123567890' },
     };
+    const outputPath = path.join(os.tmpdir(), 'Compani - Septembre 2025');
+    const xmlContent = {
+      Document: {
+        '@xmlns': 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02',
+        '@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+        '@xsi:schemaLocation': 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02 pain.008.001.02.xsd',
+        CstmrDrctDbtInitn: {
+          GrpHdr: {
+            MsgId: 'MSG00000837495028164920173652G',
+            CreDtTm: '2025-09-29T13:45:25.437Z',
+            NbOfTxs: 2,
+            CtrlSum: 2500,
+            InitgPty: {
+              Nm: 'VendorCompany',
+              Id: { OrgId: { Othr: { Id: 'FR12345678909' } } },
+            },
+          },
+          PmtInf: [
+            {
+              PmtInfId: 'MSG00000837495028164920173652G',
+              PmtMtd: 'DD',
+              NbOfTxs: 2,
+              CtrlSum: 2500,
+              PmtTpInf: {
+                SvcLvl: { Cd: 'SEPA' },
+                LclInstrm: { Cd: 'B2B' },
+                SeqTp: 'RCUR',
+              },
+              ReqdColltnDt: '2025/09/29',
+              Cdtr: { Nm: 'VendorCompany' },
+              CdtrAcct: {
+                Id: { IBAN: 'FR2817569000407686668287H77' },
+                Ccy: 'EUR',
+              },
+              CdtrAgt: { FinInstnId: { BIC: 'ERTYFRPP' } },
+              ChrgBr: 'SLEV',
+              CdtrSchmeId: {
+                Id: {
+                  PrvtId: {
+                    Othr: {
+                      Id: 'FR12345678909',
+                      SchmeNm: { Prtry: 'SEPA' },
+                    },
+                  },
+                },
+              },
+              DrctDbtTxInf: [
+                {
+                  PmtId: {
+                    EndToEndId: 'FACT-0001:REG-00012,REG-00013',
+                  },
+                  InstdAmt: {
+                    '@Ccy': 'EUR',
+                    '#text': 1000,
+                  },
+                  DrctDbtTx: {
+                    MndtRltdInf: {
+                      MndtId: 'R-1234567865',
+                      DtOfSgntr: '2024/07/24',
+                    },
+                  },
+                  DbtrAgt: { FinInstnId: { BIC: 'QWERFRPP' } },
+                  Dbtr: { Nm: 'Alenvi' },
+                  DbtrAcct: { Id: { IBAN: 'FR2217569000708935247791H65' } },
+                  RmtInf: { Ustrd: 'Compani - Septembre 2025' },
+                },
+                {
+                  PmtId: {
+                    EndToEndId: 'FACT-0002:REG-00014',
+                  },
+                  InstdAmt: {
+                    '@Ccy': 'EUR',
+                    '#text': 1500,
+                  },
+                  DrctDbtTx: {
+                    MndtRltdInf: {
+                      MndtId: 'R-123456789',
+                      DtOfSgntr: '2025/08/24',
+                    },
+                  },
+                  DbtrAgt: { FinInstnId: { BIC: 'ABCDFRPP' } },
+                  Dbtr: { Nm: 'Biens Communs' },
+                  DbtrAcct: { Id: { IBAN: 'FR8017569000309797129722R84' } },
+                  RmtInf: { Ustrd: 'Compani - Septembre 2025' },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    };
 
+    createDocument.returns({
+      Document: {
+        '@xmlns': 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02',
+        '@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+        '@xsi:schemaLocation': 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02 pain.008.001.02.xsd',
+        CstmrDrctDbtInitn: {
+          GrpHdr: {},
+          PmtInf: [],
+        },
+      },
+    });
     coursePaymentFind.returns(SinonMongoose.stubChainedQueries(payments, ['populate', 'setOptions', 'lean']));
     vendorCompanyFindOne.returns(SinonMongoose.stubChainedQueries(vendorCompany, ['lean']));
-    getFixedNumber.onCall(0).returns(2500.00);
-    randomize.returns('472918364029184756302');
+    getFixedNumber.onCall(0).returns(2500);
     generateSEPAHeader.returns({
-      MsgId: 'MSG00000472918364029184756302G',
+      MsgId: 'MSG00000837495028164920173652G',
       CreDtTm: '2025-09-29T13:45:25.437Z',
       NbOfTxs: 2,
-      CtrlSum: 2500.00,
+      CtrlSum: 2500,
       InitgPty: {
         Nm: 'VendorCompany',
         Id: { OrgId: { Othr: { Id: 'FR12345678909' } } },
       },
     });
     generatePaymentInfo.returns({
-      PmtInfId: 'MSG00000472918364029184756302G',
+      PmtInfId: 'MSG00000837495028164920173652G',
       PmtMtd: 'DD',
       NbOfTxs: 2,
-      CtrlSum: getFixedNumber(, 2),
+      CtrlSum: 2500,
       PmtTpInf: {
         SvcLvl: { Cd: 'SEPA' },
-        LclInstrm: { Cd: 'CORE' },
-        SeqTp: data.sequenceType,
+        LclInstrm: { Cd: 'B2B' },
+        SeqTp: 'RCUR',
       },
-      ReqdColltnDt: data.collectionDate,
-      Cdtr: { Nm: data.creditor.name },
+      ReqdColltnDt: '2025/09/29',
+      Cdtr: { Nm: 'VendorCompany' },
       CdtrAcct: {
-        Id: { IBAN: data.creditor.iban },
+        Id: { IBAN: 'FR2817569000407686668287H77' },
         Ccy: 'EUR',
       },
-      CdtrAgt: { FinInstnId: { BIC: data.creditor.bic } },
+      CdtrAgt: { FinInstnId: { BIC: 'ERTYFRPP' } },
       ChrgBr: 'SLEV',
       CdtrSchmeId: {
         Id: {
           PrvtId: {
             Othr: {
-              Id: data.creditor.ics,
+              Id: 'FR12345678909',
               SchmeNm: { Prtry: 'SEPA' },
             },
           },
@@ -341,14 +453,68 @@ describe('generateSEPAFile', () => {
       },
       DrctDbtTxInf: [],
     });
-
-    const result = XmlSEPAFileInfosHelper.generateSEPAFile(paymentIds, 'Compani - Septembre 2025');
-
-    expect(result).toEqual({
-      file: '',
-      fileName: 'Prelevements_SEPA_Compani-Septembre2025.xml',
+    getFixedNumber.onCall(1).returns(1000);
+    getLastVersion.onCall(0).returns({
+      rum: 'R-1234567865',
+      signedAt: '2024-07-23T22:00:00.000Z',
+      file: { publicId: '12355', link: 'unLien/12355' },
+      createdAt: '2024-06-23T22:00:00.000Z',
     });
+    formatTransactionNumber.onCall(0).returns('FACT-0001:REG-00012,REG-00013');
+    generateTransactionInfos.onCall(0).returns({
+      PmtId: {
+        EndToEndId: 'FACT-0001:REG-00012,REG-00013',
+      },
+      InstdAmt: {
+        '@Ccy': 'EUR',
+        '#text': 1000,
+      },
+      DrctDbtTx: {
+        MndtRltdInf: {
+          MndtId: 'R-1234567865',
+          DtOfSgntr: '2024/07/24',
+        },
+      },
+      DbtrAgt: { FinInstnId: { BIC: 'QWERFRPP' } },
+      Dbtr: { Nm: 'Alenvi' },
+      DbtrAcct: { Id: { IBAN: 'FR2217569000708935247791H65' } },
+      RmtInf: { Ustrd: 'Compani - Septembre 2025' },
+    });
+    getFixedNumber.onCall(2).returns(1500);
+    getLastVersion.onCall(1).returns({
+      rum: 'R-123456789',
+      signedAt: '2025-08-23T22:00:00.000Z',
+      file: { publicId: '12355', link: 'unLien/12355' },
+      createdAt: '2025-06-23T22:00:00.000Z',
+    });
+    formatTransactionNumber.onCall(1).returns('FACT-0002:REG-00014');
+    generateTransactionInfos.onCall(1).returns({
+      PmtId: {
+        EndToEndId: 'FACT-0002:REG-00014',
+      },
+      InstdAmt: {
+        '@Ccy': 'EUR',
+        '#text': 1500,
+      },
+      DrctDbtTx: {
+        MndtRltdInf: {
+          MndtId: 'R-123456789',
+          DtOfSgntr: '2025/08/24',
+        },
+      },
+      DbtrAgt: { FinInstnId: { BIC: 'ABCDFRPP' } },
+      Dbtr: { Nm: 'Biens Communs' },
+      DbtrAcct: { Id: { IBAN: 'FR8017569000309797129722R84' } },
+      RmtInf: { Ustrd: 'Compani - Septembre 2025' },
+    });
+    generateXML.returns('SEPA.xml');
 
+    const result = await XmlSEPAFileInfosHelperWithFakeRandomatic
+      .generateSEPAFile(paymentIds, 'Compani - Septembre 2025');
+
+    expect(result).toEqual({ file: 'SEPA.xml', fileName: 'Prelevements_SEPA_Compani-Septembre2025.xml' });
+
+    sinon.assert.calledOnceWithExactly(createDocument);
     SinonMongoose.calledOnceWithExactly(
       coursePaymentFind,
       [
@@ -367,16 +533,15 @@ describe('generateSEPAFile', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(vendorCompanyFindOne, [{ query: 'find', args: [{}] }, { query: 'lean' }]);
-    sinon.assert.calledOnceWithExactly(randomize, '0', 21);
-    sinon.assert.calledWithExactly(getFixedNumber.getCall(0), 2500);
-    sinon.assert.calledOnceWithExactly(
+    SinonMongoose.calledOnceWithExactly(vendorCompanyFindOne, [{ query: 'findOne', args: [{}] }, { query: 'lean' }]);
+    sinon.assert.calledWithExactly(getFixedNumber.getCall(0), 2500, 2);
+    sinon.assert.calledWithExactly(
       generateSEPAHeader,
       {
-        sepaId: 'MSG00000472918364029184756302G',
+        sepaId: 'MSG00000837495028164920173652G',
         createdDate: '2025-09-29T13:45:25.437Z',
         transactionsCount: 2,
-        totalSum: 2500.00,
+        totalSum: 2500,
         creditorName: 'VendorCompany',
         ics: 'FR12345678909',
       }
@@ -384,12 +549,12 @@ describe('generateSEPAFile', () => {
     sinon.assert.calledOnceWithExactly(
       generatePaymentInfo,
       {
-        id: 'MSG00000472918364029184756302G',
+        id: 'MSG00000837495028164920173652R',
         sequenceType: 'RCUR',
         method: 'DD',
         txNumber: 2,
-        sum: 2500.00,
-        collectionDate: '2025-09-29T13:45:25.437Z',
+        sum: 2500,
+        collectionDate: '2025/09/29',
         creditor: {
           name: 'VendorCompany',
           iban: 'FR2817569000407686668287H77',
@@ -398,7 +563,65 @@ describe('generateSEPAFile', () => {
         },
       }
     );
-    // sinon.assert.calledWithExactly(getFixedNumber.getCall(1), );
+    sinon.assert.calledWithExactly(getFixedNumber.getCall(1), 1000, 2);
+    sinon.assert.calledWithExactly(
+      getLastVersion.getCall(0),
+      [{
+        rum: 'R-1234567865',
+        signedAt: '2024-07-23T22:00:00.000Z',
+        file: { publicId: '12355', link: 'unLien/12355' },
+        createdAt: '2024-06-23T22:00:00.000Z',
+      }],
+      'createdAt'
+    );
+    sinon.assert.calledWithExactly(formatTransactionNumber.getCall(0), [payments[0], payments[1]]);
+    sinon.assert.calledWithExactly(
+      generateTransactionInfos.getCall(0),
+      {
+        number: 'FACT-0001:REG-00012,REG-00013',
+        amount: 1000,
+        debitorName: 'Alenvi',
+        debitorIBAN: 'FR2217569000708935247791H65',
+        debitorBIC: 'QWERFRPP',
+        debitorRUM: 'R-1234567865',
+        mandateSignatureDate: '2024/07/24',
+        globalTransactionName: 'Compani - Septembre 2025',
+      }
+    );
+    sinon.assert.calledWithExactly(getFixedNumber.getCall(2), 1500, 2);
+    sinon.assert.calledWithExactly(
+      getLastVersion.getCall(1),
+      [
+        {
+          rum: 'R-123456789',
+          signedAt: '2025-08-23T22:00:00.000Z',
+          file: { publicId: '12355', link: 'unLien/12355' },
+          createdAt: '2025-06-23T22:00:00.000Z',
+        },
+        {
+          rum: 'R-123456786',
+          signedAt: '2025-07-28T22:00:00.000Z',
+          file: { publicId: '12355', link: 'unLien/12355' },
+          createdAt: '2024-07-23T22:00:00.000Z',
+        },
+      ],
+      'createdAt'
+    );
+    sinon.assert.calledWithExactly(formatTransactionNumber.getCall(1), [payments[2]]);
+    sinon.assert.calledWithExactly(
+      generateTransactionInfos.getCall(1),
+      {
+        number: 'FACT-0002:REG-00014',
+        amount: 1500,
+        debitorName: 'Biens Communs',
+        debitorIBAN: 'FR8017569000309797129722R84',
+        debitorBIC: 'ABCDFRPP',
+        debitorRUM: 'R-123456789',
+        mandateSignatureDate: '2025/08/24',
+        globalTransactionName: 'Compani - Septembre 2025',
+      }
+    );
+    sinon.assert.calledOnceWithMatch(generateXML, xmlContent, outputPath);
   });
 });
 

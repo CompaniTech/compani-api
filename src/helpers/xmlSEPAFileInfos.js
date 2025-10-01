@@ -1,6 +1,5 @@
 const os = require('os');
 const path = require('path');
-const { ObjectId } = require('mongodb');
 const groupBy = require('lodash/groupBy');
 const pick = require('lodash/pick');
 const randomize = require('randomatic');
@@ -11,7 +10,7 @@ const xmlSEPAFileInfos = require('../models/XmlSEPAFileInfos');
 const XmlHelper = require('./xml');
 const { XML_GENERATED, YYYY_MM_DD } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
-const { getFixedNumber, getLastVersion } = require('./utils');
+const UtilsHelper = require('./utils');
 
 exports.generateSEPAHeader = data => ({
   MsgId: data.sepaId,
@@ -115,7 +114,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
   const paymentsGroupByPayer = groupBy(paymentsWithDecryptedPayer, 'courseBill.payer._id');
   const vendorCompany = await VendorCompany.findOne({}).lean();
   const randomId = randomize('0', 21);
-  const totalSum = getFixedNumber(payments.reduce((acc, next) => acc + next.netInclTaxes, 0), 2);
+  const totalSum = UtilsHelper.getFixedNumber(payments.reduce((acc, next) => acc + next.netInclTaxes, 0), 2);
 
   xmlContent.Document.CstmrDrctDbtInitn.GrpHdr = exports.generateSEPAHeader({
     sepaId: `MSG00000${randomId}G`,
@@ -127,7 +126,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
   });
 
   const paymentInfo = exports.generatePaymentInfo({
-    id: `MSG${randomId}R`,
+    id: `MSG00000${randomId}R`,
     sequenceType: 'RCUR',
     method: 'DD',
     txNumber: Object.keys(paymentsGroupByPayer).length,
@@ -143,15 +142,14 @@ exports.generateSEPAFile = async (paymentIds, name) => {
 
   for (const payer of Object.keys(paymentsGroupByPayer)) {
     const payerPayments = paymentsGroupByPayer[payer];
-    const transactionAmount = getFixedNumber(
+    const transactionAmount = UtilsHelper.getFixedNumber(
       payerPayments.reduce((acc, next) => acc + next.netInclTaxes, 0),
       2
     );
     const payerInfos = pick(payerPayments[0].courseBill.payer, ['iban', 'bic', 'debitMandates', 'name']);
-    const lastMandate = getLastVersion(payerInfos.debitMandates, 'createdAt');
+    const lastMandate = UtilsHelper.getLastVersion(payerInfos.debitMandates, 'createdAt');
 
     const formattedTransaction = {
-      _id: new ObjectId(),
       number: exports.formatTransactionNumber(payerPayments),
       amount: transactionAmount,
       debitorName: payerInfos.name,
