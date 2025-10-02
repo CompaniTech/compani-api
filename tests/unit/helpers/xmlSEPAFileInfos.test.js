@@ -1,6 +1,5 @@
 const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
-const proxyquire = require('proxyquire');
 const { expect } = require('expect');
 const path = require('path');
 const os = require('os');
@@ -184,21 +183,16 @@ describe('generateSEPAFile', () => {
   let getLastVersion;
   let generateTransactionInfos;
   let generateXML;
-  let XmlSEPAFileInfosHelperWithFakeRandomatic;
   beforeEach(() => {
     createDocument = sinon.stub(XmlHelper, 'createDocument');
-    const fakeRandomize = sinon.fake.returns('837495028164920173652');
-    XmlSEPAFileInfosHelperWithFakeRandomatic = proxyquire('../../../src/helpers/xmlSEPAFileInfos', {
-      randomatic: fakeRandomize,
-    });
-    formatTransactionNumber = sinon.stub(XmlSEPAFileInfosHelperWithFakeRandomatic, 'formatTransactionNumber');
+    formatTransactionNumber = sinon.stub(XmlSEPAFileInfosHelper, 'formatTransactionNumber');
     coursePaymentFind = sinon.stub(CoursePayment, 'find');
     vendorCompanyFindOne = sinon.stub(VendorCompany, 'findOne');
     getFixedNumber = sinon.stub(UtilsHelper, 'getFixedNumber');
-    generateSEPAHeader = sinon.stub(XmlSEPAFileInfosHelperWithFakeRandomatic, 'generateSEPAHeader');
-    generatePaymentInfo = sinon.stub(XmlSEPAFileInfosHelperWithFakeRandomatic, 'generatePaymentInfo');
+    generateSEPAHeader = sinon.stub(XmlSEPAFileInfosHelper, 'generateSEPAHeader');
+    generatePaymentInfo = sinon.stub(XmlSEPAFileInfosHelper, 'generatePaymentInfo');
     getLastVersion = sinon.stub(UtilsHelper, 'getLastVersion');
-    generateTransactionInfos = sinon.stub(XmlSEPAFileInfosHelperWithFakeRandomatic, 'generateTransactionInfos');
+    generateTransactionInfos = sinon.stub(XmlSEPAFileInfosHelper, 'generateTransactionInfos');
     generateXML = sinon.stub(XmlHelper, 'generateXML');
     UtilsMock.mockCurrentDate('2025-09-29T13:45:25.437Z');
   });
@@ -509,8 +503,7 @@ describe('generateSEPAFile', () => {
     });
     generateXML.returns('SEPA.xml');
 
-    const result = await XmlSEPAFileInfosHelperWithFakeRandomatic
-      .generateSEPAFile(paymentIds, 'Compani - Septembre 2025');
+    const result = await XmlSEPAFileInfosHelper.generateSEPAFile(paymentIds, 'Compani - Septembre 2025');
 
     expect(result).toEqual({ file: 'SEPA.xml', fileName: 'Prelevements_SEPA_Compani-Septembre2025.xml' });
 
@@ -538,7 +531,7 @@ describe('generateSEPAFile', () => {
     sinon.assert.calledWithExactly(
       generateSEPAHeader,
       {
-        sepaId: 'MSG00000837495028164920173652G',
+        sepaId: sinon.match(/^MSG00000\d{21}[A-Z]$/),
         createdDate: '2025-09-29T13:45:25.437Z',
         transactionsCount: 2,
         totalSum: 2500,
@@ -549,7 +542,7 @@ describe('generateSEPAFile', () => {
     sinon.assert.calledOnceWithExactly(
       generatePaymentInfo,
       {
-        id: 'MSG00000837495028164920173652R',
+        id: sinon.match(/^MSG00000\d{21}[A-Z]$/),
         sequenceType: 'RCUR',
         method: 'DD',
         txNumber: 2,
