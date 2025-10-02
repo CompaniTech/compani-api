@@ -21,11 +21,11 @@ const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
+const Company = require('../../../src/models/Company');
+const VendorCompany = require('../../../src/models/VendorCompany');
 const { authCompany, otherCompany } = require('../../seed/authCompaniesSeed');
 const { trainerAndCoach, trainer, userList } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const Company = require('../../../src/models/Company');
-const VendorCompany = require('../../../src/models/VendorCompany');
 
 const programId = new ObjectId();
 

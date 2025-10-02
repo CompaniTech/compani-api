@@ -39,14 +39,6 @@ describe('generateSEPAHeader', () => {
 });
 
 describe('generatePaymentInfo', () => {
-  let getFixedNb;
-  beforeEach(() => {
-    getFixedNb = sinon.stub(UtilsHelper, 'getFixedNumber');
-  });
-  afterEach(() => {
-    getFixedNb.restore();
-  });
-
   it('should return SEPA payment info object', () => {
     const data = {
       id: 'MSG123456R',
@@ -62,7 +54,6 @@ describe('generatePaymentInfo', () => {
         ics: '1234567',
       },
     };
-    getFixedNb.returns(data.sum.toFixed(2));
     const result = XmlSEPAFileInfosHelper.generatePaymentInfo(data);
 
     expect(result).toEqual({
@@ -505,7 +496,7 @@ describe('generateSEPAFile', () => {
 
     const result = await XmlSEPAFileInfosHelper.generateSEPAFile(paymentIds, 'Compani - Septembre 2025');
 
-    expect(result).toEqual({ file: 'SEPA.xml', fileName: 'Prelevements_SEPA_Compani-Septembre2025.xml' });
+    expect(result).toEqual('SEPA.xml');
 
     sinon.assert.calledOnceWithExactly(createDocument);
     SinonMongoose.calledOnceWithExactly(

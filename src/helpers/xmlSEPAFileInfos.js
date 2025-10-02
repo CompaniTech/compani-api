@@ -159,11 +159,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
 
   xmlContent.Document.CstmrDrctDbtInitn.PmtInf = [paymentInfo];
 
-  const nameWithousSpaces = name.replace(/ /g, '');
-  return {
-    file: await XmlHelper.generateXML(xmlContent, outputPath),
-    fileName: `Prelevements_SEPA_${nameWithousSpaces}.xml`,
-  };
+  return XmlHelper.generateXML(xmlContent, outputPath);
 };
 
 exports.create = async (payload) => {

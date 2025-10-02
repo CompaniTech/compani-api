@@ -7,10 +7,10 @@ const create = async (req, h) => {
     req.log('teletransmissionController - generateDeliveryXml - query', req.query);
     req.log('teletransmissionController - generateDeliveryXml - company', get(req, 'auth.credentials.company._id'));
 
-    const doc = await XmlSEPAFileInfosHelper.create(req.payload);
+    const file = await XmlSEPAFileInfosHelper.create(req.payload);
 
-    return h.file(doc.file, { confine: false, filename: doc.fileName, mode: 'attachment' })
-      .header('Access-Control-Expose-Headers', 'Content-Disposition')
+    return h.file(file, { confine: false, mode: 'attachment' })
+      .header('Content-Disposition')
       .type('application/octet-stream');
   } catch (e) {
     req.log('error', e);

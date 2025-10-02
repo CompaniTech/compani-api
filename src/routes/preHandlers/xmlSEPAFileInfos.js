@@ -23,7 +23,7 @@ exports.authorizeXMLFileDownload = async (req) => {
       select: 'payer isPayerCompany',
       populate: {
         path: 'payer',
-        select: 'company fundingorganisation',
+        select: 'company',
         populate: [{ path: 'company', select: 'name debitMandates bic iban' }],
       },
     })
