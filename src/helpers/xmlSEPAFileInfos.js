@@ -75,19 +75,14 @@ exports.generateTransactionInfos = transaction => ({
 });
 
 exports.formatTransactionNumber = (payments) => {
-  let transactionNumber = '';
   const paymentsGroupByCourseBill = groupBy(payments, p => p.courseBill.number);
+  const transactionNumber = [];
   for (const courseBillNumber of Object.keys(paymentsGroupByCourseBill)) {
-    transactionNumber += `${courseBillNumber}:`;
     const courseBillPayments = paymentsGroupByCourseBill[courseBillNumber];
-    if (courseBillPayments.length === 1) {
-      transactionNumber += `${courseBillPayments[0].number}`;
-    } else {
-      const courseBillPaymentsNumbers = courseBillPayments.map(p => p.number).join(',');
-      transactionNumber += `${courseBillPaymentsNumbers},`;
-    }
+    const paymentNumberList = courseBillPayments.map(p => p.number).join(',');
+    transactionNumber.push(`${courseBillNumber}:${paymentNumberList}`);
   }
-  return transactionNumber;
+  return transactionNumber.join(',');
 };
 
 exports.generateSEPAFile = async (paymentIds, name) => {
