@@ -126,7 +126,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
     method: 'DD',
     txNumber: Object.keys(paymentsGroupByPayer).length,
     sum: totalSum,
-    collectionDate: CompaniDate().format(YYYY_MM_DD),
+    collectionDate: CompaniDate().add('P1D').format(YYYY_MM_DD),
     creditor: {
       name: vendorCompany.name.split(' ')[0],
       iban: vendorCompany.iban,

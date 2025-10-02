@@ -54,7 +54,7 @@ describe('generatePaymentInfo', () => {
       method: 'DD',
       txNumber: 3,
       sum: 350,
-      collectionDate: '2025-09-29T13:45:25.437Z',
+      collectionDate: '2025/09/30',
       creditor: {
         name: 'Test',
         iban: 'FR3514508000505917721779B12',
@@ -79,7 +79,7 @@ describe('generatePaymentInfo', () => {
         },
         SeqTp: data.sequenceType,
       },
-      ReqdColltnDt: '2025-09-29T13:45:25.437Z',
+      ReqdColltnDt: '2025/09/30',
       Cdtr: {
         Nm: data.creditor.name,
       },
@@ -329,7 +329,7 @@ describe('generateSEPAFile', () => {
                 LclInstrm: { Cd: 'B2B' },
                 SeqTp: 'RCUR',
               },
-              ReqdColltnDt: '2025/09/29',
+              ReqdColltnDt: '2025/09/30',
               Cdtr: { Nm: 'VendorCompany' },
               CdtrAcct: {
                 Id: { IBAN: 'FR2817569000407686668287H77' },
@@ -427,7 +427,7 @@ describe('generateSEPAFile', () => {
         LclInstrm: { Cd: 'B2B' },
         SeqTp: 'RCUR',
       },
-      ReqdColltnDt: '2025/09/29',
+      ReqdColltnDt: '2025/09/30',
       Cdtr: { Nm: 'VendorCompany' },
       CdtrAcct: {
         Id: { IBAN: 'FR2817569000407686668287H77' },
@@ -547,7 +547,7 @@ describe('generateSEPAFile', () => {
         method: 'DD',
         txNumber: 2,
         sum: 2500,
-        collectionDate: '2025/09/29',
+        collectionDate: '2025/09/30',
         creditor: {
           name: 'VendorCompany',
           iban: 'FR2817569000407686668287H77',
