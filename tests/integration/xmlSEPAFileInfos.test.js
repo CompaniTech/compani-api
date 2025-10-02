@@ -36,6 +36,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       });
 
       expect(response.statusCode).toBe(200);
+      expect(response.result).toBeDefined();
       const paymentsCountAfter = await CoursePayment
         .countDocuments({ _id: { $in: [coursePaymentList[0]._id, coursePaymentList[2]._id] }, status: XML_GENERATED });
       expect(paymentsCountAfter).toEqual(2);
