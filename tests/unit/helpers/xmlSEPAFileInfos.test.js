@@ -13,11 +13,11 @@ const VendorCompany = require('../../../src/models/VendorCompany');
 const SinonMongoose = require('../sinonMongoose');
 const UtilsMock = require('../../utilsMock');
 
-describe('generateSEPAHeader', () => {
+describe('generateSEPAHeader #tag', () => {
   it('should return a sepa header object', () => {
     const data = {
       sepaId: 'MSG00000123456018054830052445G',
-      createdDate: '2025-06-23T22:00:00.000Z',
+      createdDate: '2025-06-24T22:00:00',
       transactionsCount: 2,
       totalSum: 110,
       creditorName: 'Test',
@@ -27,7 +27,7 @@ describe('generateSEPAHeader', () => {
 
     expect(result).toEqual(expect.objectContaining({
       MsgId: 'MSG00000123456018054830052445G',
-      CreDtTm: '2025-06-23T22:00:00.000Z',
+      CreDtTm: '2025-06-24T22:00:00',
       NbOfTxs: 2,
       CtrlSum: 110,
       InitgPty: {
@@ -292,7 +292,7 @@ describe('generateSEPAFile', () => {
         CstmrDrctDbtInitn: {
           GrpHdr: {
             MsgId: sinon.match(/^MSG00000\d{21}G$/),
-            CreDtTm: '2025-09-29T13:45:25.437Z',
+            CreDtTm: '2025-09-29T15:45:25',
             NbOfTxs: 2,
             CtrlSum: 2500.00,
             InitgPty: {
@@ -432,7 +432,7 @@ describe('generateSEPAFile', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(vendorCompanyFindOne, [{ query: 'findOne', args: [{}] }, { query: 'lean' }]);
+    SinonMongoose.calledOnceWithExactly(vendorCompanyFindOne, [{ query: 'findOne', args: [] }, { query: 'lean' }]);
     sinon.assert.calledWithExactly(getFixedNumber.getCall(0), 2500, 2);
     sinon.assert.calledWithExactly(getFixedNumber.getCall(1), 1000, 2);
     sinon.assert.calledWithExactly(

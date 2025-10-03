@@ -110,13 +110,13 @@ exports.generateSEPAFile = async (paymentIds, name) => {
   });
 
   const paymentsGroupByPayer = groupBy(paymentsWithDecryptedPayer, 'courseBill.payer._id');
-  const vendorCompany = await VendorCompany.findOne({}).lean();
+  const vendorCompany = await VendorCompany.findOne().lean();
   const randomId = randomize('0', 21);
   const totalSum = UtilsHelper.getFixedNumber(payments.reduce((acc, next) => acc + next.netInclTaxes, 0), 2);
 
   xmlContent.Document.CstmrDrctDbtInitn.GrpHdr = exports.generateSEPAHeader({
     sepaId: `MSG00000${randomId}G`,
-    createdDate: CompaniDate().toISO(),
+    createdDate: CompaniDate().toLocalISO().slice(0, 19),
     transactionsCount: Object.keys(paymentsGroupByPayer).length,
     totalSum,
     creditorName: vendorCompany.name,
