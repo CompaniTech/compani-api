@@ -166,37 +166,25 @@ describe('formatTransactionNumber', () => {
 describe('generateSEPAFile', () => {
   let createDocument;
   let coursePaymentFind;
-  let formatTransactionNumber;
   let vendorCompanyFindOne;
-  let generateSEPAHeader;
-  let generatePaymentInfo;
   let getFixedNumber;
   let getLastVersion;
-  let generateTransactionInfos;
   let generateXML;
   beforeEach(() => {
     createDocument = sinon.stub(XmlHelper, 'createDocument');
-    formatTransactionNumber = sinon.stub(XmlSEPAFileInfosHelper, 'formatTransactionNumber');
     coursePaymentFind = sinon.stub(CoursePayment, 'find');
     vendorCompanyFindOne = sinon.stub(VendorCompany, 'findOne');
     getFixedNumber = sinon.stub(UtilsHelper, 'getFixedNumber');
-    generateSEPAHeader = sinon.stub(XmlSEPAFileInfosHelper, 'generateSEPAHeader');
-    generatePaymentInfo = sinon.stub(XmlSEPAFileInfosHelper, 'generatePaymentInfo');
     getLastVersion = sinon.stub(UtilsHelper, 'getLastVersion');
-    generateTransactionInfos = sinon.stub(XmlSEPAFileInfosHelper, 'generateTransactionInfos');
     generateXML = sinon.stub(XmlHelper, 'generateXML');
     UtilsMock.mockCurrentDate('2025-09-29T13:45:25.437Z');
   });
   afterEach(() => {
     createDocument.restore();
     coursePaymentFind.restore();
-    formatTransactionNumber.restore();
     vendorCompanyFindOne.restore();
     getFixedNumber.restore();
-    generateSEPAHeader.restore();
-    generatePaymentInfo.restore();
     getLastVersion.restore();
-    generateTransactionInfos.restore();
     generateXML.restore();
     UtilsMock.unmockCurrentDate();
   });
@@ -293,17 +281,17 @@ describe('generateSEPAFile', () => {
       debitMandateTemplate: { link: 'link/123567890', driveId: '123567890' },
     };
     const outputPath = path.join(os.tmpdir(), 'Compani - Septembre 2025');
-    const xmlContent = {
+    const xmlContentMatch = {
       Document: {
         '@xmlns': 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02',
         '@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
         '@xsi:schemaLocation': 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02 pain.008.001.02.xsd',
         CstmrDrctDbtInitn: {
           GrpHdr: {
-            MsgId: 'MSG00000837495028164920173652G',
+            MsgId: sinon.match(/^MSG00000\d{21}G$/),
             CreDtTm: '2025-09-29T13:45:25.437Z',
             NbOfTxs: 2,
-            CtrlSum: 2500,
+            CtrlSum: 2500.00,
             InitgPty: {
               Nm: 'VendorCompany',
               Id: { OrgId: { Othr: { Id: 'FR12345678909' } } },
@@ -311,10 +299,10 @@ describe('generateSEPAFile', () => {
           },
           PmtInf: [
             {
-              PmtInfId: 'MSG00000837495028164920173652G',
+              PmtInfId: sinon.match(/^MSG00000\d{21}R$/),
               PmtMtd: 'DD',
               NbOfTxs: 2,
-              CtrlSum: 2500,
+              CtrlSum: 2500.00,
               PmtTpInf: {
                 SvcLvl: { Cd: 'SEPA' },
                 LclInstrm: { Cd: 'B2B' },
@@ -345,7 +333,7 @@ describe('generateSEPAFile', () => {
                   },
                   InstdAmt: {
                     '@Ccy': 'EUR',
-                    '#text': 1000,
+                    '#text': 1000.00,
                   },
                   DrctDbtTx: {
                     MndtRltdInf: {
@@ -364,7 +352,7 @@ describe('generateSEPAFile', () => {
                   },
                   InstdAmt: {
                     '@Ccy': 'EUR',
-                    '#text': 1500,
+                    '#text': 1500.00,
                   },
                   DrctDbtTx: {
                     MndtRltdInf: {
@@ -397,100 +385,20 @@ describe('generateSEPAFile', () => {
     });
     coursePaymentFind.returns(SinonMongoose.stubChainedQueries(payments, ['populate', 'setOptions', 'lean']));
     vendorCompanyFindOne.returns(SinonMongoose.stubChainedQueries(vendorCompany, ['lean']));
-    getFixedNumber.onCall(0).returns(2500);
-    generateSEPAHeader.returns({
-      MsgId: 'MSG00000837495028164920173652G',
-      CreDtTm: '2025-09-29T13:45:25.437Z',
-      NbOfTxs: 2,
-      CtrlSum: 2500,
-      InitgPty: {
-        Nm: 'VendorCompany',
-        Id: { OrgId: { Othr: { Id: 'FR12345678909' } } },
-      },
-    });
-    generatePaymentInfo.returns({
-      PmtInfId: 'MSG00000837495028164920173652G',
-      PmtMtd: 'DD',
-      NbOfTxs: 2,
-      CtrlSum: 2500,
-      PmtTpInf: {
-        SvcLvl: { Cd: 'SEPA' },
-        LclInstrm: { Cd: 'B2B' },
-        SeqTp: 'RCUR',
-      },
-      ReqdColltnDt: '2025/09/30',
-      Cdtr: { Nm: 'VendorCompany' },
-      CdtrAcct: {
-        Id: { IBAN: 'FR2817569000407686668287H77' },
-        Ccy: 'EUR',
-      },
-      CdtrAgt: { FinInstnId: { BIC: 'ERTYFRPP' } },
-      ChrgBr: 'SLEV',
-      CdtrSchmeId: {
-        Id: {
-          PrvtId: {
-            Othr: {
-              Id: 'FR12345678909',
-              SchmeNm: { Prtry: 'SEPA' },
-            },
-          },
-        },
-      },
-      DrctDbtTxInf: [],
-    });
-    getFixedNumber.onCall(1).returns(1000);
+    getFixedNumber.onCall(0).returns(2500.00);
+    getFixedNumber.onCall(1).returns(1000.00);
     getLastVersion.onCall(0).returns({
       rum: 'R-1234567865',
       signedAt: '2024-07-23T22:00:00.000Z',
       file: { publicId: '12355', link: 'unLien/12355' },
       createdAt: '2024-06-23T22:00:00.000Z',
     });
-    formatTransactionNumber.onCall(0).returns('FACT-0001:REG-00012,REG-00013');
-    generateTransactionInfos.onCall(0).returns({
-      PmtId: {
-        EndToEndId: 'FACT-0001:REG-00012,REG-00013',
-      },
-      InstdAmt: {
-        '@Ccy': 'EUR',
-        '#text': 1000,
-      },
-      DrctDbtTx: {
-        MndtRltdInf: {
-          MndtId: 'R-1234567865',
-          DtOfSgntr: '2024/07/24',
-        },
-      },
-      DbtrAgt: { FinInstnId: { BIC: 'QWERFRPP' } },
-      Dbtr: { Nm: 'Alenvi' },
-      DbtrAcct: { Id: { IBAN: 'FR2217569000708935247791H65' } },
-      RmtInf: { Ustrd: 'Compani - Septembre 2025' },
-    });
-    getFixedNumber.onCall(2).returns(1500);
+    getFixedNumber.onCall(2).returns(1500.00);
     getLastVersion.onCall(1).returns({
       rum: 'R-123456789',
       signedAt: '2025-08-23T22:00:00.000Z',
       file: { publicId: '12355', link: 'unLien/12355' },
       createdAt: '2025-06-23T22:00:00.000Z',
-    });
-    formatTransactionNumber.onCall(1).returns('FACT-0002:REG-00014');
-    generateTransactionInfos.onCall(1).returns({
-      PmtId: {
-        EndToEndId: 'FACT-0002:REG-00014',
-      },
-      InstdAmt: {
-        '@Ccy': 'EUR',
-        '#text': 1500,
-      },
-      DrctDbtTx: {
-        MndtRltdInf: {
-          MndtId: 'R-123456789',
-          DtOfSgntr: '2025/08/24',
-        },
-      },
-      DbtrAgt: { FinInstnId: { BIC: 'ABCDFRPP' } },
-      Dbtr: { Nm: 'Biens Communs' },
-      DbtrAcct: { Id: { IBAN: 'FR8017569000309797129722R84' } },
-      RmtInf: { Ustrd: 'Compani - Septembre 2025' },
     });
     generateXML.returns('SEPA.xml');
 
@@ -519,34 +427,6 @@ describe('generateSEPAFile', () => {
     );
     SinonMongoose.calledOnceWithExactly(vendorCompanyFindOne, [{ query: 'findOne', args: [{}] }, { query: 'lean' }]);
     sinon.assert.calledWithExactly(getFixedNumber.getCall(0), 2500, 2);
-    sinon.assert.calledWithExactly(
-      generateSEPAHeader,
-      {
-        sepaId: sinon.match(/^MSG00000\d{21}[A-Z]$/),
-        createdDate: '2025-09-29T13:45:25.437Z',
-        transactionsCount: 2,
-        totalSum: 2500,
-        creditorName: 'VendorCompany',
-        ics: 'FR12345678909',
-      }
-    );
-    sinon.assert.calledOnceWithExactly(
-      generatePaymentInfo,
-      {
-        id: sinon.match(/^MSG00000\d{21}[A-Z]$/),
-        sequenceType: 'RCUR',
-        method: 'DD',
-        txNumber: 2,
-        sum: 2500,
-        collectionDate: '2025/09/30',
-        creditor: {
-          name: 'VendorCompany',
-          iban: 'FR2817569000407686668287H77',
-          bic: 'ERTYFRPP',
-          ics: 'FR12345678909',
-        },
-      }
-    );
     sinon.assert.calledWithExactly(getFixedNumber.getCall(1), 1000, 2);
     sinon.assert.calledWithExactly(
       getLastVersion.getCall(0),
@@ -557,20 +437,6 @@ describe('generateSEPAFile', () => {
         createdAt: '2024-06-23T22:00:00.000Z',
       }],
       'createdAt'
-    );
-    sinon.assert.calledWithExactly(formatTransactionNumber.getCall(0), [payments[0], payments[1]]);
-    sinon.assert.calledWithExactly(
-      generateTransactionInfos.getCall(0),
-      {
-        number: 'FACT-0001:REG-00012,REG-00013',
-        amount: 1000,
-        debitorName: 'Alenvi',
-        debitorIBAN: 'FR2217569000708935247791H65',
-        debitorBIC: 'QWERFRPP',
-        debitorRUM: 'R-1234567865',
-        mandateSignatureDate: '2024/07/24',
-        globalTransactionName: 'Compani - Septembre 2025',
-      }
     );
     sinon.assert.calledWithExactly(getFixedNumber.getCall(2), 1500, 2);
     sinon.assert.calledWithExactly(
@@ -591,21 +457,7 @@ describe('generateSEPAFile', () => {
       ],
       'createdAt'
     );
-    sinon.assert.calledWithExactly(formatTransactionNumber.getCall(1), [payments[2]]);
-    sinon.assert.calledWithExactly(
-      generateTransactionInfos.getCall(1),
-      {
-        number: 'FACT-0002:REG-00014',
-        amount: 1500,
-        debitorName: 'Biens Communs',
-        debitorIBAN: 'FR8017569000309797129722R84',
-        debitorBIC: 'ABCDFRPP',
-        debitorRUM: 'R-123456789',
-        mandateSignatureDate: '2025/08/24',
-        globalTransactionName: 'Compani - Septembre 2025',
-      }
-    );
-    sinon.assert.calledOnceWithMatch(generateXML, xmlContent, outputPath);
+    sinon.assert.calledOnceWithMatch(generateXML, xmlContentMatch, outputPath);
   });
 });
 
