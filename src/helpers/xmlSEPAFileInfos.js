@@ -124,7 +124,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
   });
 
   const paymentInfo = exports.generatePaymentInfo({
-    _id: `MSG00000${randomId}R`,
+    _id: `MSG00000${randomId}G`,
     sequenceType: 'RCUR',
     method: 'DD',
     txNumber: Object.keys(paymentsGroupByPayer).length,

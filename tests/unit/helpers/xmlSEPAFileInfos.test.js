@@ -302,7 +302,7 @@ describe('generateSEPAFile', () => {
           },
           PmtInf: [
             {
-              PmtInfId: sinon.match(/^MSG00000\d{21}R$/),
+              PmtInfId: sinon.match(/^MSG00000\d{21}G$/),
               PmtMtd: 'DD',
               NbOfTxs: 2,
               CtrlSum: 2500.00,
