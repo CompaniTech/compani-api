@@ -105,8 +105,9 @@ describe('generatePaymentInfo', () => {
 
 describe('generateTransactionInfos', () => {
   it('should return SEPA transaction info object', () => {
+    const id = new ObjectId();
     const data = {
-      _id: new ObjectId(),
+      id,
       number: 'FACT-02200:REG-02001,REG-02012,FACT-01239:REG-02010',
       amount: 1500,
       debitorName: 'Payeur',
@@ -121,6 +122,7 @@ describe('generateTransactionInfos', () => {
 
     expect(result).toEqual({
       PmtId: {
+        InstrId: id,
         EndToEndId: 'FACT-02200:REG-02001,REG-02012,FACT-01239:REG-02010',
       },
       InstdAmt: {
@@ -131,6 +133,7 @@ describe('generateTransactionInfos', () => {
         MndtRltdInf: {
           MndtId: 'RUM-101123456787654',
           DtOfSgntr: '2025-06-23T22:00:00.000Z',
+          AmdmntInd: false,
         },
       },
       DbtrAgt: { FinInstnId: { BIC: 'ASDFFRPP' } },
@@ -308,7 +311,7 @@ describe('generateSEPAFile', () => {
                 LclInstrm: { Cd: 'CORE' },
                 SeqTp: 'RCUR',
               },
-              ReqdColltnDt: '2025/09/30',
+              ReqdColltnDt: '2025-09-30',
               Cdtr: { Nm: 'VendorCompany' },
               CdtrAcct: {
                 Id: { IBAN: 'FR2817569000407686668287H77' },
@@ -329,6 +332,7 @@ describe('generateSEPAFile', () => {
               DrctDbtTxInf: [
                 {
                   PmtId: {
+                    InstrId: sinon.match(/^[0-9a-fA-F]{24}$/),
                     EndToEndId: 'FACT-0001:REG-00012,REG-00013',
                   },
                   InstdAmt: {
@@ -338,7 +342,8 @@ describe('generateSEPAFile', () => {
                   DrctDbtTx: {
                     MndtRltdInf: {
                       MndtId: 'R-1234567865',
-                      DtOfSgntr: '2024/07/24',
+                      DtOfSgntr: '2024-07-24',
+                      AmdmntInd: false,
                     },
                   },
                   DbtrAgt: { FinInstnId: { BIC: 'QWERFRPP' } },
@@ -348,6 +353,7 @@ describe('generateSEPAFile', () => {
                 },
                 {
                   PmtId: {
+                    InstrId: sinon.match(/^[0-9a-fA-F]{24}$/),
                     EndToEndId: 'FACT-0002:REG-00014',
                   },
                   InstdAmt: {
@@ -357,7 +363,8 @@ describe('generateSEPAFile', () => {
                   DrctDbtTx: {
                     MndtRltdInf: {
                       MndtId: 'R-123456789',
-                      DtOfSgntr: '2025/08/24',
+                      DtOfSgntr: '2025-08-24',
+                      AmdmntInd: false,
                     },
                   },
                   DbtrAgt: { FinInstnId: { BIC: 'ABCDFRPP' } },

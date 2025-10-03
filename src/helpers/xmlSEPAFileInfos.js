@@ -1,5 +1,6 @@
 const os = require('os');
 const path = require('path');
+const { ObjectId } = require('mongodb');
 const groupBy = require('lodash/groupBy');
 const pick = require('lodash/pick');
 const randomize = require('randomatic');
@@ -56,6 +57,7 @@ exports.generatePaymentInfo = data => ({
 
 exports.generateTransactionInfos = transaction => ({
   PmtId: {
+    InstrId: transaction.id,
     EndToEndId: transaction.number,
   },
   InstdAmt: {
@@ -66,6 +68,7 @@ exports.generateTransactionInfos = transaction => ({
     MndtRltdInf: {
       MndtId: transaction.debitorRUM,
       DtOfSgntr: transaction.mandateSignatureDate,
+      AmdmntInd: false,
     },
   },
   DbtrAgt: { FinInstnId: { BIC: transaction.debitorBIC } },
@@ -145,6 +148,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
     const lastMandate = UtilsHelper.getLastVersion(payerInfos.debitMandates, 'createdAt');
 
     const formattedTransaction = {
+      id: new ObjectId().toHexString(),
       number: exports.formatTransactionNumber(payerPayments),
       amount: transactionAmount,
       debitorName: payerInfos.name,
