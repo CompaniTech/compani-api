@@ -25,7 +25,7 @@ exports.generateSEPAHeader = data => ({
 });
 
 exports.generatePaymentInfo = data => ({
-  PmtInfId: data.id,
+  PmtInfId: data._id,
   PmtMtd: data.method,
   NbOfTxs: data.txNumber,
   CtrlSum: data.sum,
@@ -57,7 +57,7 @@ exports.generatePaymentInfo = data => ({
 
 exports.generateTransactionInfos = transaction => ({
   PmtId: {
-    InstrId: transaction.id,
+    InstrId: transaction._id,
     EndToEndId: transaction.number,
   },
   InstdAmt: {
@@ -124,7 +124,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
   });
 
   const paymentInfo = exports.generatePaymentInfo({
-    id: `MSG00000${randomId}R`,
+    _id: `MSG00000${randomId}R`,
     sequenceType: 'RCUR',
     method: 'DD',
     txNumber: Object.keys(paymentsGroupByPayer).length,
@@ -148,7 +148,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
     const lastMandate = UtilsHelper.getLastVersion(payerInfos.debitMandates, 'createdAt');
 
     const formattedTransaction = {
-      id: new ObjectId().toHexString(),
+      _id: new ObjectId().toHexString(),
       number: exports.formatTransactionNumber(payerPayments),
       amount: transactionAmount,
       debitorName: payerInfos.name,

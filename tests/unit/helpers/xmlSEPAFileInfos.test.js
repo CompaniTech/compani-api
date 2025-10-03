@@ -41,7 +41,7 @@ describe('generateSEPAHeader', () => {
 describe('generatePaymentInfo', () => {
   it('should return SEPA payment info object', () => {
     const data = {
-      id: 'MSG123456R',
+      _id: 'MSG123456R',
       sequenceType: 'RCUR',
       method: 'DD',
       txNumber: 3,
@@ -57,7 +57,7 @@ describe('generatePaymentInfo', () => {
     const result = XmlSEPAFileInfosHelper.generatePaymentInfo(data);
 
     expect(result).toEqual({
-      PmtInfId: data.id,
+      PmtInfId: data._id,
       PmtMtd: data.method,
       NbOfTxs: data.txNumber,
       CtrlSum: 350,
@@ -105,9 +105,9 @@ describe('generatePaymentInfo', () => {
 
 describe('generateTransactionInfos', () => {
   it('should return SEPA transaction info object', () => {
-    const id = new ObjectId();
+    const _id = new ObjectId();
     const data = {
-      id,
+      _id,
       number: 'FACT-02200:REG-02001,REG-02012,FACT-01239:REG-02010',
       amount: 1500,
       debitorName: 'Payeur',
@@ -122,7 +122,7 @@ describe('generateTransactionInfos', () => {
 
     expect(result).toEqual({
       PmtId: {
-        InstrId: id,
+        InstrId: _id,
         EndToEndId: 'FACT-02200:REG-02001,REG-02012,FACT-01239:REG-02010',
       },
       InstdAmt: {
