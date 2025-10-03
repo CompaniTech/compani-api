@@ -30,7 +30,7 @@ exports.generatePaymentInfo = data => ({
   CtrlSum: data.sum,
   PmtTpInf: {
     SvcLvl: { Cd: 'SEPA' },
-    LclInstrm: { Cd: 'B2B' },
+    LclInstrm: { Cd: 'CORE' },
     SeqTp: data.sequenceType,
   },
   ReqdColltnDt: data.collectionDate,

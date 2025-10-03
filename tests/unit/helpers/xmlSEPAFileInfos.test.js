@@ -66,7 +66,7 @@ describe('generatePaymentInfo', () => {
           Cd: 'SEPA',
         },
         LclInstrm: {
-          Cd: 'B2B',
+          Cd: 'CORE',
         },
         SeqTp: data.sequenceType,
       },
@@ -305,7 +305,7 @@ describe('generateSEPAFile', () => {
               CtrlSum: 2500.00,
               PmtTpInf: {
                 SvcLvl: { Cd: 'SEPA' },
-                LclInstrm: { Cd: 'B2B' },
+                LclInstrm: { Cd: 'CORE' },
                 SeqTp: 'RCUR',
               },
               ReqdColltnDt: '2025/09/30',
