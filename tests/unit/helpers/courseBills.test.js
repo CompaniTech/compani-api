@@ -27,6 +27,7 @@ const {
   GROUP,
   INTER_B2B,
   RECEIVED,
+  XML_GENERATED,
 } = require('../../../src/helpers/constants');
 
 describe('getNetInclTaxes', () => {
@@ -179,7 +180,7 @@ describe('list', () => {
           { billingItem: billingItemList[1]._id, price: 400, count: 1 },
         ],
         coursePayments: [
-          { nature: PAYMENT, netInclTaxes: 300 },
+          { nature: PAYMENT, netInclTaxes: 300, status: XML_GENERATED, XmlSEPAFileInfos: { name: 'test' } },
           { nature: PAYMENT, netInclTaxes: 100 },
           { nature: REFUND, netInclTaxes: 50 },
         ],
@@ -206,7 +207,7 @@ describe('list', () => {
         { billingItem: billingItemList[1]._id, price: 400, count: 1 },
       ],
       coursePayments: [
-        { nature: PAYMENT, netInclTaxes: 300 },
+        { nature: PAYMENT, netInclTaxes: 300, status: XML_GENERATED, XmlSEPAFileInfos: { name: 'test' } },
         { nature: PAYMENT, netInclTaxes: 100 },
         { nature: REFUND, netInclTaxes: 50 },
       ],
@@ -261,6 +262,14 @@ describe('list', () => {
               isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
                 .includes(get(credentials, 'role.vendor.name')),
               requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+            },
+            populate: {
+              path: 'xmlSEPAFileInfos',
+              select: 'name',
+              options: {
+                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
+                  .includes(get(credentials, 'role.vendor.name')),
+              },
             },
           }],
         },
@@ -391,6 +400,14 @@ describe('list', () => {
               isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
                 .includes(get(credentials, 'role.vendor.name')),
               requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+            },
+            populate: {
+              path: 'xmlSEPAFileInfos',
+              select: 'name',
+              options: {
+                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
+                  .includes(get(credentials, 'role.vendor.name')),
+              },
             },
           }],
         },

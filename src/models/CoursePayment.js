@@ -17,6 +17,11 @@ const CoursePaymentSchema = mongoose.Schema({
   status: { type: String, enum: COURSE_PAYMENT_STATUS, required: true },
 }, { timestamps: true });
 
+CoursePaymentSchema.virtual(
+  'xmlSEPAFileInfos',
+  { ref: 'XmlSEPAFileInfos', localField: '_id', foreignField: 'coursePayments', justOne: true }
+);
+
 CoursePaymentSchema.pre('find', validateQuery);
 CoursePaymentSchema.pre('aggregate', validateAggregation);
 queryMiddlewareList.map(middleware => CoursePaymentSchema.pre(middleware, formatQuery));

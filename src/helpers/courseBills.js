@@ -94,6 +94,13 @@ const balance = async (company, credentials) => {
         isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
         requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company),
       },
+      populate: {
+        path: 'xmlSEPAFileInfos',
+        select: 'name',
+        options: {
+          isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
+        },
+      },
     })
     .setOptions({
       isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
