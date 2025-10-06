@@ -29,6 +29,8 @@ const {
   INTRA_HOLDING,
   SELF_POSITIONNING,
   SINGLE,
+  RECEIVED,
+  PENDING,
 } = require('../../../src/helpers/constants');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
@@ -167,7 +169,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00001',
           courseCreditNote: { courseBill: new ObjectId() },
-          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED }],
         },
         {
           course: courseIdList[0],
@@ -177,7 +179,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00002',
           courseCreditNote: null,
-          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT, status: RECEIVED }],
         },
       ],
     },
@@ -206,7 +208,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00003',
           courseCreditNote: { courseBill: new ObjectId() },
-          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED }],
         },
         {
           course: courseIdList[1],
@@ -216,7 +218,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00004',
           courseCreditNote: null,
-          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED }],
         },
         {
           course: courseIdList[1],
@@ -226,7 +228,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00005',
           courseCreditNote: null,
-          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT, status: PENDING }],
         },
       ],
     },
@@ -272,7 +274,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00010',
           courseCreditNote: { courseBill: new ObjectId() },
-          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED }],
         },
         {
           course: courseIdList[3],
@@ -282,7 +284,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00011',
           courseCreditNote: null,
-          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT, status: RECEIVED }],
         },
         {
           course: courseIdList[3],
@@ -301,7 +303,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00013',
           courseCreditNote: null,
-          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED }],
         },
         { // non-validated invoice
           course: courseIdList[3],
@@ -338,7 +340,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00010',
           courseCreditNote: null,
-          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED }],
         },
       ],
     },
@@ -366,7 +368,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00010',
           courseCreditNote: { courseBill: new ObjectId() },
-          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED }],
         },
         {
           course: courseIdList[5],
@@ -376,7 +378,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00011',
           courseCreditNote: null,
-          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT }],
+          coursePayments: [{ netInclTaxes: 110, nature: PAYMENT, status: RECEIVED }],
         },
         {
           course: courseIdList[5],
@@ -539,7 +541,7 @@ describe('exportCourseHistory', () => {
               { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') }, select: '_id' },
               {
                 path: 'coursePayments',
-                select: 'netInclTaxes nature',
+                select: 'netInclTaxes nature status',
                 options: { isVendorUser: !!get(credentials, 'role.vendor') },
               },
             ],
@@ -724,8 +726,8 @@ describe('exportCourseHistory', () => {
         '2 sur 2',
         'Oui',
         '240,00',
-        '120,00',
-        '-120,00',
+        '10,00',
+        '-230,00',
         '07/01/2018',
       ],
       [
@@ -969,7 +971,7 @@ describe('exportCourseHistory', () => {
               { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') }, select: '_id' },
               {
                 path: 'coursePayments',
-                select: 'netInclTaxes nature',
+                select: 'netInclTaxes nature status',
                 options: { isVendorUser: !!get(credentials, 'role.vendor') },
               },
             ],
@@ -1638,7 +1640,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       billedAt: '2022-03-08T00:00:00.000Z',
       number: 'FACT-00001',
       courseCreditNote: { number: 'AV-00001', date: '2022-03-09T00:00:00.000Z' },
-      coursePayments: [{ netInclTaxes: 10, nature: PAYMENT }],
+      coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED }],
     },
     {
       course: courseList[1],
@@ -1648,7 +1650,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       billedAt: '2022-03-08T00:00:00.000Z',
       number: 'FACT-00002',
       courseCreditNote: null,
-      coursePayments: [{ netInclTaxes: 110, nature: PAYMENT }],
+      coursePayments: [{ netInclTaxes: 110, nature: PAYMENT, status: RECEIVED }],
     },
     {
       course: courseList[2],
@@ -1658,7 +1660,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       billedAt: '2022-03-10T00:00:00.000Z',
       number: 'FACT-00003',
       courseCreditNote: null,
-      coursePayments: [{ netInclTaxes: 32, nature: PAYMENT }],
+      coursePayments: [{ netInclTaxes: 32, nature: PAYMENT, status: RECEIVED }],
     },
     {
       course: courseList[3],
@@ -1668,7 +1670,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       billedAt: '2022-01-10T00:00:00.000Z',
       number: 'FACT-00004',
       courseCreditNote: null,
-      coursePayments: [{ netInclTaxes: 35, nature: PAYMENT }],
+      coursePayments: [{ netInclTaxes: 35, nature: PAYMENT, status: PENDING }],
     },
   ];
   const courseCreditNoteList = [
@@ -1735,7 +1737,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         { query: 'populate', args: [{ path: 'courseCreditNote', select: 'number', options: { isVendorUser } }] },
         {
           query: 'populate',
-          args: [{ path: 'coursePayments', options: { isVendorUser }, select: 'netInclTaxes nature' }],
+          args: [{ path: 'coursePayments', options: { isVendorUser }, select: 'netInclTaxes nature status' }],
         },
         { query: 'setOptions', args: [{ isVendorUser }] },
         { query: 'lean' },
@@ -1878,10 +1880,10 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         payerList[2]._id,
         'ZXCV',
         '35,00',
-        '35,00',
-        '',
-        '',
         '0,00',
+        '',
+        '',
+        '-35,00',
         '0,86',
         '11/01/2021',
         '13/01/2021',
@@ -1935,7 +1937,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         { query: 'populate', args: [{ path: 'courseCreditNote', select: 'number', options: { isVendorUser } }] },
         {
           query: 'populate',
-          args: [{ path: 'coursePayments', options: { isVendorUser }, select: 'netInclTaxes nature' }],
+          args: [{ path: 'coursePayments', options: { isVendorUser }, select: 'netInclTaxes nature status' }],
         },
         { query: 'setOptions', args: [{ isVendorUser }] },
         { query: 'lean' },
