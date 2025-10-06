@@ -47,7 +47,7 @@ exports.computeAmounts = (courseBill) => {
   if (!courseBill) return { netInclTaxes: 0, paid: 0, total: 0 };
 
   const netInclTaxes = exports.getNetInclTaxes(courseBill);
-  const totalPayments = BalanceHelper.computePayments(courseBill.coursePayments);
+  const totalPayments = BalanceHelper.computePayments(courseBill.coursePayments.filter(p => p.status === RECEIVED));
   const creditNote = courseBill.courseCreditNote ? netInclTaxes : 0;
   const paid = totalPayments + creditNote;
 
