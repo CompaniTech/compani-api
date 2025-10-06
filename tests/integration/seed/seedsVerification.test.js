@@ -2656,7 +2656,10 @@ describe('SEEDS VERIFICATION', () => {
             .populate({
               path: 'coursePayments',
               select: 'status courseBill type',
-              populate: { path: 'courseBill' },
+              populate: {
+                path: 'courseBill',
+                populate: { path: 'payer.company', select: 'debitMandates' },
+              },
             })
             .setOptions({ isVendorUser: true })
             .lean();
@@ -2697,6 +2700,15 @@ describe('SEEDS VERIFICATION', () => {
             .every(fileInfos => fileInfos.coursePayments.every(payment => payment.courseBill.isPayerCompany));
 
           expect(everyPaymentHasGoodPayer).toBeTruthy();
+        });
+
+        it('should pass if every xmlSEPAFileInfos\'s payment has a payer with a signed mandate', () => {
+          const everyPaymentHasPayerWithSignedMandate = xmlSEPAFileInfosList
+            .every(fileInfos => fileInfos.coursePayments.every((payment) => {
+              const lastMandate = UtilsHelper.getLastVersion(payment.courseBill.payer.debitMandates, 'createdAt');
+              return !!get(lastMandate, 'signedAt') && !!get(lastMandate, 'file.link');
+            }));
+          expect(everyPaymentHasPayerWithSignedMandate).toBeTruthy();
         });
       });
     });

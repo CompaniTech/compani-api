@@ -24,6 +24,7 @@ module.exports = {
   // COMPANIDATE FORMATS
   HHhMM: 'HH\'h\'mm',
   DD_MM_YYYY: 'dd/LL/yyyy',
+  YYYY_MM_DD: 'yyyy-LL-dd',
   DAY_MONTH_YEAR: 'DDD',
   HH_MM: 'T',
   HH_MM_SS: 'HH:mm:ss',
