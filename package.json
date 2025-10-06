@@ -36,7 +36,7 @@
     "@hapi/good-squeeze": "~6.0.0",
     "@hapi/hapi": "~21.4.3",
     "@hapi/inert": "~7.1.0",
-    "axios": "~1.9.0",
+    "axios": "~1.12.2",
     "bcryptjs": "~3.0.2",
     "bignumber.js": "~9.3.0",
     "cron": "~4.3.1",
