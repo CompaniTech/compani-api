@@ -13,7 +13,7 @@ const VendorCompany = require('../../../src/models/VendorCompany');
 const SinonMongoose = require('../sinonMongoose');
 const UtilsMock = require('../../utilsMock');
 
-describe('generateSEPAHeader #tag', () => {
+describe('generateSEPAHeader', () => {
   it('should return a sepa header object', () => {
     const data = {
       sepaId: 'MSG00000123456018054830052445G',

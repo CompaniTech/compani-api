@@ -3,6 +3,7 @@ const get = require('lodash/get');
 const { DIRECT_DEBIT, PENDING } = require('../../helpers/constants');
 const CoursePayment = require('../../models/CoursePayment');
 const xmlSEPAFileInfos = require('../../models/XmlSEPAFileInfos');
+const VendorCompany = require('../../models/VendorCompany');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
 
@@ -46,6 +47,12 @@ exports.authorizeXMLFileDownload = async (req) => {
   });
   if (!everyPayerHasSignedMandate) {
     throw Boom.forbidden(translate[language].xmlSEPAFileGenerationFailedMissingSignedMandate);
+  }
+
+  const vendorCompanyHasBankDetails = await VendorCompany
+    .countDocuments({ bic: { $exists: true }, iban: { $exists: true }, ics: { $exists: true } });
+  if (!vendorCompanyHasBankDetails) {
+    throw Boom.forbidden(translate[language].xmlSEPAFileGenerationFailedMissingVendorInfos);
   }
 
   return null;

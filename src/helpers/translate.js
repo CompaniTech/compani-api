@@ -248,6 +248,7 @@ module.exports = {
     xmlSEPAFileWrongPayer: 'Forbidden : payer is not a company.',
     xmlSEPAFileGenerationFailedMissingSignedMandate: 'Forbidden : payer has no signed mandate.',
     xmlSEPAFileGenerationFailedMissingBankDetails: 'Forbidden : payer has no BIC or IBAN.',
+    xmlSEPAFileGenerationFailedMissingVendorInfos: 'Forbidden : vendor company has no BIC, IBAN or ICS.',
   },
   'fr-FR': {
     /* Token errors */
@@ -504,5 +505,7 @@ module.exports = {
       mandat signé.`,
     xmlSEPAFileGenerationFailedMissingBankDetails: `Impossible : un payeur associé à un des paiements n'a pas de
       BIC ou d'IBAN renseigné.`,
+    xmlSEPAFileGenerationFailedMissingVendorInfos: `Impossible : le BIC, l'IBAN ou l'ICS de la structure vendeuse est
+      manquant.`,
   },
 };
