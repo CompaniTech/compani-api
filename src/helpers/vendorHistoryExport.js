@@ -32,6 +32,7 @@ const {
   COURSE_TYPES,
   INTRA_HOLDING,
   INTER_B2B,
+  PAYMENT_STATUS_LIST,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -570,7 +571,7 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
 
   const allPaymentsForCourseBills = await CoursePayment.find(
     { courseBill: { $in: paymentsOnPeriod.map(p => p.courseBill) } },
-    { nature: 1, number: 1, date: 1, courseBill: 1, type: 1, netInclTaxes: 1 }
+    { nature: 1, number: 1, date: 1, courseBill: 1, type: 1, netInclTaxes: 1, status: 1 }
   )
     .populate({
       path: 'courseBill',
@@ -578,6 +579,7 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
       select: 'number payer course',
       populate: { path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } },
     })
+    .populate({ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser } })
     .setOptions({ isVendorUser })
     .lean();
 
@@ -597,6 +599,8 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
             'Numéro du paiement (parmi ceux de la même facture)': paymentIndex + 1,
             'Moyen de paiement': PAYMENT_TYPES_LIST[payment.type],
             Montant: UtilsHelper.formatFloatForExport(payment.netInclTaxes),
+            Statut: PAYMENT_STATUS_LIST[payment.status],
+            'Nom de lot fichier XML': get(payment, 'xmlSEPAFileInfos.name', ''),
             Apprenant: payment.courseBill.course.type === SINGLE
               ? UtilsHelper.formatIdentity(payment.courseBill.course.trainees[0].identity, 'FL')
               : '',

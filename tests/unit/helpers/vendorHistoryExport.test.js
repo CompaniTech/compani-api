@@ -2023,6 +2023,7 @@ describe('exportCoursePaymentHistory', () => {
         },
         type: CHECK,
         netInclTaxes: 22,
+        status: RECEIVED,
       },
       {
         _id: new ObjectId(),
@@ -2037,6 +2038,7 @@ describe('exportCoursePaymentHistory', () => {
         },
         type: CHECK,
         netInclTaxes: 100,
+        status: RECEIVED,
       },
       {
         _id: new ObjectId(),
@@ -2051,6 +2053,7 @@ describe('exportCoursePaymentHistory', () => {
         },
         type: CHECK,
         netInclTaxes: 200,
+        status: RECEIVED,
       },
     ];
     findCoursePayment
@@ -2068,9 +2071,9 @@ describe('exportCoursePaymentHistory', () => {
     const result = await ExportHelper.exportCoursePaymentHistory('2022-01-07T23:00:00.000Z', '2022-01-30T22:59:59.000Z', credentials);
 
     expect(result).toEqual([
-      ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant', 'Apprenant'],
-      ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00', 'Archie PELLE'],
-      ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', payerId, 1, 'Chèque', '200,00', ''],
+      ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant', 'Statut', 'Nom de lot fichier XML', 'Apprenant'],
+      ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00', 'Reçu', '', 'Archie PELLE'],
+      ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', payerId, 1, 'Chèque', '200,00', 'Reçu', '', ''],
     ]);
     SinonMongoose.calledWithExactly(
       findCoursePayment,
@@ -2088,7 +2091,7 @@ describe('exportCoursePaymentHistory', () => {
           query: 'find',
           args: [
             { courseBill: { $in: courseBillIds } },
-            { nature: 1, number: 1, date: 1, courseBill: 1, type: 1, netInclTaxes: 1 },
+            { nature: 1, number: 1, date: 1, courseBill: 1, type: 1, netInclTaxes: 1, status: 1 },
           ],
         },
         {
@@ -2100,6 +2103,7 @@ describe('exportCoursePaymentHistory', () => {
             populate: { path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } },
           }],
         },
+        { query: 'populate', args: [{ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ],

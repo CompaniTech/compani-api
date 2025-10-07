@@ -215,6 +215,13 @@ module.exports = {
   PENDING: 'pending',
   RECEIVED: 'received',
   XML_GENERATED: 'xml_generated',
+  get PAYMENT_STATUS_LIST() {
+    return {
+      [this.PENDING]: 'En attente',
+      [this.RECEIVED]: 'Reçu',
+      [this.XML_GENERATED]: 'Fichier XML associé',
+    };
+  },
   // SURCHARGES
   PUBLIC_HOLIDAY: 'publicHoliday',
   TWENTY_FIFTH_OF_DECEMBER: 'twentyFifthOfDecember',
