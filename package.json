@@ -76,8 +76,8 @@
     "@hapi/eslint-plugin": "~7.0.0",
     "eslint": "~9.37.0",
     "eslint-config-airbnb-base": "~15.0.0",
-    "eslint-plugin-import": "~2.31.0",
-    "eslint-plugin-mocha": "~11.1.0",
+    "eslint-plugin-import": "~2.32.0",
+    "eslint-plugin-mocha": "~11.2.0",
     "expect": "~29.7.0",
     "mocha": "~11.5.0",
     "sinon": "~20.0.0"
