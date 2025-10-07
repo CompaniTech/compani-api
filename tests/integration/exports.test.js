@@ -118,7 +118,7 @@ const vendorHistoryExportTypes = [
     exportType: COURSE,
     expectedRows: [
       '\ufeff"Identifiant";"Type";"Payeur";"Structure";"Société mère";"Programme";"Id programme";"Sous-Programme";"Infos complémentaires";"Intervenant·es";"Début de formation";"Fin de formation";"Chargé des opérations";"Contact pour la formation";"Nombre d\'inscrits";"Nombre de dates";"Nombre de créneaux";"Nombre de créneaux à planifier";"Durée Totale";"Nombre de SMS envoyés";"Nombre de personnes connectées à l\'app";"Complétion eLearning moyenne";"Nombre de réponses au questionnaire de recueil des attentes";"Nombre de réponses au questionnaire de satisfaction";"Date de démarrage souhaitée";"Première date de démarrage souhaitée";"Nombre de feuilles d\'émargement chargées";"Nombre de présences";"Nombre d\'absences";"Nombre de stagiaires non prévus";"Nombre de présences non prévues";"Avancement";"Archivée";"Date d\'archivage";"Prix de la formation";"Nombre de factures";"Facturée";"Montant facturé";"Montant réglé";"Solde";"Date de création"',
-      `${coursesList[0]._id};"Intra";"APA Paris";"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;2;0;"4,00";2;1;"0,00";2;1;;;1;2;4;0;0;"1,00";"Oui";"08/07/2024";"${formatPrice(coursesList[0].prices[0].global)}";"1 sur 1";"Oui";"1200,00";"0,00";"-1200,00";"07/01/2018"`,
+      `${coursesList[0]._id};"Intra";"Test SAS";"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;2;0;"4,00";2;1;"0,00";2;1;;;1;2;4;0;0;"1,00";"Oui";"08/07/2024";"${formatPrice(coursesList[0].prices[0].global)}";"1 sur 1";"Oui";"1200,00";"0,00";"-1200,00";"07/01/2018"`,
       `${coursesList[5]._id};"Intra";"APA Paris,Test SAS";"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 6";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;3;0;0;"1,00";"Non";;;"2 sur 3";"Non";"880,00";"0,00";"-880,00";"07/01/2018"`,
       `${coursesList[6]._id};"Intra";;"Test SAS";;"Program 1";${programList[0]._id};"subProgram 1";"group 7";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;"1,00";"Non";;;"0 sur 0";"Non";;;;"07/01/2018"`,
       `${coursesList[1]._id};"Inter B2B";"APA Paris";"Test SAS,Un autre SAS";;"Program 2";${programList[1]._id};"subProgram 2";;"Gilles FORMATEUR";"01/02/2021";;"Aline CONTACT-COM";"Aline CONTACT-COM";2;2;2;1;"4,00";1;0;"0,67";1;1;"01/01/2019";"24/10/2018";0;2;2;1;2;"0,67";"Non";;"\nTest SAS: ${formatPrice(coursesList[1].prices[0].global)} (+ FF: ${formatPrice(coursesList[1].prices[0].trainerFees)})\nUn autre SAS: ${formatPrice(coursesList[1].prices[1].global)}";"2 sur 2";"Oui";"800,00";"500,00";"-300,00";"07/01/2018"`,
@@ -162,7 +162,7 @@ const vendorHistoryExportTypes = [
     exportType: COURSE_BILL,
     expectedRows: [
       '\ufeff"Nature";"Identifiant";"Date";"Id formation";"Formation";"Programme";"Apprenant";"Structure";"Id payeur";"Payeur";"Montant TTC";"Montant réglé";"Document lié";"Montant soldé";"Solde";"Avancement";"Début de la formation";"Milieu de la formation";"Fin de la formation"',
-      `"Facture";"FACT-00001";"08/03/2022";${coursesList[0]._id};"Test SAS - Program 1 - group 1";"Program 1";;"Test SAS";${courseFundingOrganisation._id};"APA Paris";"1200,00";"0,00";;;"-1200,00";"1,00";"01/05/2021";"01/05/2021";"01/05/2021"`,
+      `"Facture";"FACT-00001";"08/03/2022";${coursesList[0]._id};"Test SAS - Program 1 - group 1";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"1200,00";"0,00";;;"-1200,00";"1,00";"01/05/2021";"01/05/2021";"01/05/2021"`,
       `"Facture";"FACT-00002";"08/03/2022";${coursesList[3]._id};"Test SAS - Program 1 - group 4";"Program 1";;"Test SAS";${courseFundingOrganisation._id};"APA Paris";"1200,00";"0,00";"AV-00001";"1200,00";"0,00";"1,00";"01/02/2021";"03/02/2021";"10/02/2021"`,
       `"Facture";"FACT-00005";"08/03/2022";${coursesList[1]._id};"Program 2";"Program 2";;"Un autre SAS";${courseFundingOrganisation._id};"APA Paris";"400,00";"100,00";;;"-300,00";"0,67";"01/02/2021";"02/02/2021";`,
       `"Avoir";"AV-00002";"09/03/2022";${coursesList[5]._id};"Test SAS - Program 1 - group 6";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"240,00";;"FACT-00008";;;;;;`,
@@ -173,9 +173,9 @@ const vendorHistoryExportTypes = [
     exportType: COURSE_PAYMENT,
     expectedRows: [
       '\ufeff"Nature";"Identifiant";"Date";"Facture associée";"Id payeur facture";"Numéro du paiement (parmi ceux de la même facture)";"Moyen de paiement";"Montant";"Statut";"Nom de lot fichier XML";"Apprenant"',
-      `"Paiement";"REG-00001";"09/03/2022";"FACT-00001";${courseFundingOrganisation._id};1;"Prélèvement";"1100,00";"Fichier XML associé";"Prélèvements Septembre 2025";`,
+      `"Paiement";"REG-00001";"09/03/2022";"FACT-00001";${authCompany._id};1;"Prélèvement";"1100,00";"Fichier XML associé";"Prélèvements Septembre 2025";`,
       `"Paiement";"REG-00003";"09/03/2022";"FACT-00005";${courseFundingOrganisation._id};1;"Espèces";"300,00";"Reçu";;`,
-      `"Paiement";"REG-00006";"01/04/2022";"FACT-00001";${courseFundingOrganisation._id};2;"Prélèvement";"50,00";"En attente";;`,
+      `"Paiement";"REG-00006";"01/04/2022";"FACT-00001";${authCompany._id};2;"Prélèvement";"50,00";"En attente";;`,
       `"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";${courseFundingOrganisation._id};2;"Chèque";"200,00";"Reçu";;`,
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',

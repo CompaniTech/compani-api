@@ -1407,7 +1407,7 @@ const courseBillList = [
     course: coursesList[0]._id,
     mainFee: { price: 1200, count: 1, countUnit: GROUP },
     companies: [authCompany._id],
-    payer: { fundingOrganisation: courseFundingOrganisation._id },
+    payer: { company: authCompany._id },
     billedAt: '2022-03-08T00:00:00.000Z',
     number: 'FACT-00001',
   },
