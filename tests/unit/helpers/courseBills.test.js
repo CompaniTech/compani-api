@@ -2,7 +2,6 @@ const { expect } = require('expect');
 const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const has = require('lodash/has');
-const get = require('lodash/get');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
@@ -17,8 +16,6 @@ const {
   BALANCE,
   PAYMENT,
   REFUND,
-  TRAINING_ORGANISATION_MANAGER,
-  VENDOR_ADMIN,
   DASHBOARD,
   INTRA,
   COURSE,
@@ -248,8 +245,7 @@ describe('list', () => {
           args: [{
             path: 'courseCreditNote',
             options: {
-              isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                .includes(get(credentials, 'role.vendor.name')),
+              isVendorUser: true,
               requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
             },
           }],
@@ -259,24 +255,20 @@ describe('list', () => {
           args: [{
             path: 'coursePayments',
             options: {
-              isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                .includes(get(credentials, 'role.vendor.name')),
+              isVendorUser: true,
               requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
             },
             populate: {
               path: 'xmlSEPAFileInfos',
               select: 'name',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
-              },
+              options: { isVendorUser: true },
             },
           }],
         },
         {
           query: 'setOptions',
           args: [{
-            isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
+            isVendorUser: true,
             requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
           }],
         },
@@ -386,8 +378,7 @@ describe('list', () => {
           args: [{
             path: 'courseCreditNote',
             options: {
-              isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                .includes(get(credentials, 'role.vendor.name')),
+              isVendorUser: false,
               requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
             },
           }],
@@ -397,24 +388,20 @@ describe('list', () => {
           args: [{
             path: 'coursePayments',
             options: {
-              isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                .includes(get(credentials, 'role.vendor.name')),
+              isVendorUser: false,
               requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
             },
             populate: {
               path: 'xmlSEPAFileInfos',
               select: 'name',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
-              },
+              options: { isVendorUser: false },
             },
           }],
         },
         {
           query: 'setOptions',
           args: [{
-            isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
+            isVendorUser: false,
             requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
           }],
         },
@@ -528,7 +515,7 @@ describe('list', () => {
             { path: 'courseCreditNote', options: { isVendorUser: true } },
           ]],
         },
-        { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
@@ -631,7 +618,7 @@ describe('list', () => {
             { path: 'courseCreditNote', options: { isVendorUser: true } },
           ]],
         },
-        { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
@@ -684,7 +671,7 @@ describe('list', () => {
             { path: 'courseCreditNote', options: { isVendorUser: true } },
           ]],
         },
-        { query: 'setOptions', args: [{ isVendorUser: has(credentials, 'role.vendor') }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
