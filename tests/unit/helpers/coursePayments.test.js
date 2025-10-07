@@ -10,6 +10,7 @@ const {
   RECEIVED,
   CHECK,
   CASH,
+  XML_GENERATED,
 } = require('../../../src/helpers/constants');
 const CourseBill = require('../../../src/models/CourseBill');
 const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
@@ -231,6 +232,13 @@ describe('list', () => {
           isPayerCompany: false,
         },
       },
+      {
+        _id: new ObjectId(),
+        status: XML_GENERATED,
+        nature: PAYMENT,
+        courseBill: { number: 'FACT_00001', payer: { company: { name: 'Structure' } }, isPayerCompany: true },
+        xmlSEPAFileInfos: { name: 'lot de prelevements 1' },
+      },
     ];
     find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'lean']));
 
@@ -254,6 +262,10 @@ describe('list', () => {
               ],
             },
           ],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } }],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean', args: [] },
