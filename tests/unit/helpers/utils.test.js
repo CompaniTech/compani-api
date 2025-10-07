@@ -86,7 +86,7 @@ describe('mergeLastVersionWithBaseObject', () => {
     getLastVersion.returns(null);
 
     expect(() => UtilsHelper.mergeLastVersionWithBaseObject(baseObj, 'createdAt'))
-      .toThrowError('Unable to find last version from base object !');
+      .toThrow('Unable to find last version from base object !');
   });
 });
 
