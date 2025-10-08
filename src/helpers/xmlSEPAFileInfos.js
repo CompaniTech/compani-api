@@ -77,17 +77,6 @@ exports.generateTransactionInfos = transaction => ({
   RmtInf: { Ustrd: transaction.globalTransactionName },
 });
 
-exports.formatTransactionNumber = (payments) => {
-  const paymentsGroupByCourseBill = groupBy(payments, p => p.courseBill.number);
-  const transactionNumber = [];
-  for (const courseBillNumber of Object.keys(paymentsGroupByCourseBill)) {
-    const courseBillPayments = paymentsGroupByCourseBill[courseBillNumber];
-    const paymentNumberList = courseBillPayments.map(p => p.number).join(',');
-    transactionNumber.push(`${courseBillNumber}:${paymentNumberList}`);
-  }
-  return transactionNumber.join(',');
-};
-
 exports.generateSEPAFile = async (paymentIds, name) => {
   const xmlContent = XmlHelper.createDocument();
   const outputPath = path.join(os.tmpdir(), name);
@@ -149,7 +138,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
 
     const formattedTransaction = {
       _id: new ObjectId().toHexString(),
-      number: exports.formatTransactionNumber(payerPayments),
+      number: [...new Set(payerPayments.map(p => p.courseBill.number))].join(',').slice(0, 35),
       amount: transactionAmount,
       debitorName: payerInfos.name,
       debitorIBAN: payerInfos.iban,

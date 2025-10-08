@@ -108,7 +108,7 @@ describe('generateTransactionInfos', () => {
     const _id = new ObjectId();
     const data = {
       _id,
-      number: 'FACT-02200:REG-02001,REG-02012,FACT-01239:REG-02010',
+      number: 'FACT-02200,FACT-01239',
       amount: 1500,
       debitorName: 'Payeur',
       debitorIBAN: 'FR3514508000505917721779B12',
@@ -123,7 +123,7 @@ describe('generateTransactionInfos', () => {
     expect(result).toEqual({
       PmtId: {
         InstrId: _id,
-        EndToEndId: 'FACT-02200:REG-02001,REG-02012,FACT-01239:REG-02010',
+        EndToEndId: 'FACT-02200,FACT-01239',
       },
       InstdAmt: {
         '@Ccy': 'EUR',
@@ -141,28 +141,6 @@ describe('generateTransactionInfos', () => {
       DbtrAcct: { Id: { IBAN: 'FR3514508000505917721779B12' } },
       RmtInf: { Ustrd: 'Compani-Septembre2025' },
     });
-  });
-});
-
-describe('formatTransactionNumber', () => {
-  it('should format transaction number', () => {
-    const payments = [
-      {
-        courseBill: { number: 'FACT-02200' },
-        number: 'REG-02001',
-      },
-      {
-        courseBill: { number: 'FACT-02200' },
-        number: 'REG-02012',
-      },
-      {
-        courseBill: { number: 'FACT-01239' },
-        number: 'REG-02010',
-      },
-    ];
-
-    const result = XmlSEPAFileInfosHelper.formatTransactionNumber(payments);
-    expect(result).toEqual('FACT-02200:REG-02001,REG-02012,FACT-01239:REG-02010');
   });
 });
 
@@ -333,7 +311,7 @@ describe('generateSEPAFile', () => {
                 {
                   PmtId: {
                     InstrId: sinon.match(/^[0-9a-fA-F]{24}$/),
-                    EndToEndId: 'FACT-0001:REG-00012,REG-00013',
+                    EndToEndId: 'FACT-0001',
                   },
                   InstdAmt: {
                     '@Ccy': 'EUR',
@@ -354,7 +332,7 @@ describe('generateSEPAFile', () => {
                 {
                   PmtId: {
                     InstrId: sinon.match(/^[0-9a-fA-F]{24}$/),
-                    EndToEndId: 'FACT-0002:REG-00014',
+                    EndToEndId: 'FACT-0002',
                   },
                   InstdAmt: {
                     '@Ccy': 'EUR',
