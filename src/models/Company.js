@@ -100,6 +100,14 @@ function cryptDatas(next) {
 
   if ($set.bic) $set.bic = encrypt($set.bic);
 
+  if ($set['debitMandates.$.file.link']) {
+    $set['debitMandates.$.file.link'] = encrypt($set['debitMandates.$.file.link']);
+  }
+
+  if ($set['debitMandates.$.file.driveId']) {
+    $set['debitMandates.$.file.driveId'] = encrypt($set['debitMandates.$.file.driveId']);
+  }
+
   return next();
 }
 
@@ -110,6 +118,15 @@ async function decryptDatas(doc) {
   if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
   // eslint-disable-next-line no-param-reassign
   if (doc.bic && doc.bic.includes(':')) doc.bic = decrypt(doc.bic);
+
+  if (doc.debitMandates && doc.debitMandates.length) {
+    doc.debitMandates.forEach((mandate) => {
+    // eslint-disable-next-line no-param-reassign
+      if (mandate.file && mandate.file.link.includes(':')) mandate.file.link = decrypt(mandate.file.link);
+      // eslint-disable-next-line no-param-reassign
+      if (mandate.file && mandate.file.driveId.includes(':')) mandate.file.driveId = decrypt(mandate.file.driveId);
+    });
+  }
 }
 
 CompanySchema.virtual('holding', { ref: 'CompanyHolding', localField: '_id', foreignField: 'company', justOne: true });
