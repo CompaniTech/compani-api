@@ -43,10 +43,10 @@ describe('COURSE PAYMENTS ROUTES - POST /coursepayments', () => {
       expect(paymentResponse.statusCode).toBe(200);
 
       const newPayment = await CoursePayment
-        .countDocuments({ ...payload, number: 'REG-00003', companies: [authCompany._id], status: PENDING });
+        .countDocuments({ ...payload, number: 'REG-00004', companies: [authCompany._id], status: PENDING });
       const paymentNumber = await CoursePaymentNumber.findOne({ nature: PAYMENT }).lean();
       expect(newPayment).toBeTruthy();
-      expect(paymentNumber.seq).toBe(3);
+      expect(paymentNumber.seq).toBe(4);
 
       const refundResponse = await app.inject({
         method: 'POST',
@@ -256,7 +256,7 @@ describe('COURSE PAYMENTS ROUTES - GET /coursepayments', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.coursePayments.length).toEqual(1);
+      expect(response.result.data.coursePayments.length).toEqual(2);
     });
   });
 
@@ -273,6 +273,66 @@ describe('COURSE PAYMENTS ROUTES - GET /coursepayments', () => {
           method: 'GET',
           url: `/coursepayments?status=${PENDING}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('COURSE PAYMENTs ROUTES - POST /coursepayments/list-edition', () => {
+  let authToken;
+  beforeEach(populateDB);
+  const payload = { _ids: [coursePaymentsList[0]._id, coursePaymentsList[2]._id], status: RECEIVED };
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should edit payments', async () => {
+      const receivedPaymentsBeforeUpdate = await CoursePayment.countDocuments({ status: RECEIVED });
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursepayments/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const receivedPaymentsAfterUpdate = await CoursePayment.countDocuments({ status: RECEIVED });
+      expect(receivedPaymentsAfterUpdate).toBe(receivedPaymentsBeforeUpdate + 2);
+    });
+
+    it('should return 404 if one course payment doesn\'t exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursepayments/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [coursePaymentsList[0]._id, coursePaymentsList[2]._id, new ObjectId()], status: RECEIVED },
+
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursepayments/list-edition',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload,
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

@@ -38,3 +38,6 @@ exports.list = async query => CoursePayment
   .populate({ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } })
   .setOptions({ isVendorUser: true })
   .lean();
+
+exports.updateList = async payload => CoursePayment
+  .updateMany({ _id: { $in: payload._ids } }, { $set: { status: payload.status } });

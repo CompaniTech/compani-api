@@ -28,3 +28,15 @@ exports.authorizeCoursePaymentUpdate = async (req) => {
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
   }
 };
+
+exports.authorizeCoursePaymentListEdition = async (req) => {
+  try {
+    const coursePaymentsExist = await CoursePayment.countDocuments({ _id: { $in: req.payload._ids } });
+    if (coursePaymentsExist !== req.payload._ids.length) throw Boom.notFound();
+
+    return null;
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
