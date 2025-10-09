@@ -79,7 +79,7 @@ exports.downloadFileById = async (params) => {
         }
 
         res.data.on('end', () => {
-          resolve({ type: res.headers['content-type'] });
+          resolve({ type: res.headers.get('content-type') });
         }).on('error', () => {
           reject(new Error(`Error during Google drive doc download ${err}`));
         }).pipe(dest);
