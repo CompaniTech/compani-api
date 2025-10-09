@@ -29,6 +29,7 @@ const {
   removeTrainer,
   addTutor,
   removeTutor,
+  uploadCSV,
 } = require('../controllers/courseController');
 const { MESSAGE_TYPE } = require('../models/CourseSmsHistory');
 const { COURSE_TYPES, COURSE_FORMATS, CERTIFICATE_GENERATION_MODE } = require('../models/Course');
@@ -58,6 +59,7 @@ const {
   authorizeTrainerDeletion,
   authorizeTutorAddition,
   authorizeTutorDeletion,
+  authorizeUploadCSV,
 } = require('./preHandlers/courses');
 const {
   INTRA,
@@ -75,7 +77,7 @@ const {
   STRICTLY_E_LEARNING,
   INTER_B2B,
 } = require('../helpers/constants');
-const { dateToISOString } = require('./validations/utils');
+const { dateToISOString, formDataPayload } = require('./validations/utils');
 
 exports.plugin = {
   name: 'routes-courses',
@@ -323,6 +325,21 @@ exports.plugin = {
         auth: { scope: ['courses:edit'] },
       },
       handler: addTrainee,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/{_id}/trainees-csv',
+      options: {
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          payload: Joi.object({ file: Joi.any().required() }),
+        },
+        payload: formDataPayload(),
+        pre: [{ method: authorizeUploadCSV, assign: 'learnerList' }],
+        auth: { scope: ['courses:create'] },
+      },
+      handler: uploadCSV,
     });
 
     server.route({

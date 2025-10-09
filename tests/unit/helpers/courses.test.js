@@ -30,6 +30,7 @@ const DocxHelper = require('../../../src/helpers/docx');
 const StepsHelper = require('../../../src/helpers/steps');
 const TrainingContractsHelper = require('../../../src/helpers/trainingContracts');
 const NotificationHelper = require('../../../src/helpers/notifications');
+const UserHelper = require('../../../src/helpers/users');
 const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
 const {
   COURSE_SMS,
@@ -8284,5 +8285,104 @@ describe('removeTutor', () => {
     await CourseHelper.removeTutor(course._id, tutorId);
 
     sinon.assert.calledOnceWithExactly(updateOne, { _id: course._id }, { $pull: { tutors: tutorId } });
+  });
+});
+
+describe('uploadCSV', () => {
+  let findOne;
+  let createUser;
+  let addTrainee;
+
+  beforeEach(() => {
+    findOne = sinon.stub(Course, 'findOne');
+    createUser = sinon.stub(UserHelper, 'createUser');
+    addTrainee = sinon.stub(CourseHelper, 'addTrainee');
+  });
+
+  afterEach(() => {
+    findOne.restore();
+    createUser.restore();
+    addTrainee.restore();
+  });
+
+  it('should create trainee and add to course', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const course = { _id: courseId, trainees: [new ObjectId(), new ObjectId()] };
+    const learnerList = [
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+      },
+    ];
+
+    findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    createUser.returns({ _id: userId });
+    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(createUser, { ...learnerList[0], origin: WEBAPP }, credentials);
+    sinon.assert.calledOnceWithExactly(addTrainee, courseId, { trainee: userId, company: companyId }, credentials);
+  });
+
+  it('should add existing trainee to course', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const course = { _id: courseId, trainees: [new ObjectId(), new ObjectId()] };
+    const learnerList = [
+      {
+        _id: userId,
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+      },
+    ];
+
+    findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(createUser);
+    sinon.assert.calledOnceWithExactly(addTrainee, courseId, { trainee: userId, company: companyId }, credentials);
+  });
+
+  it('should not create or add trainee if already registered to course', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const courseId = new ObjectId();
+    const companyId = new ObjectId();
+    const course = { _id: courseId, trainees: [new ObjectId(), new ObjectId(), userId] };
+    const learnerList = [
+      {
+        _id: userId,
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+      },
+    ];
+
+    findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(createUser);
+    sinon.assert.notCalled(addTrainee);
   });
 });

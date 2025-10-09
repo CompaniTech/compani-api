@@ -1,4 +1,5 @@
 const Boom = require('@hapi/boom');
+const compact = require('lodash/compact');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const pick = require('lodash/pick');
@@ -44,6 +45,12 @@ const CourseHistoriesHelper = require('../../helpers/courseHistories');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
 const UserCompaniesHelper = require('../../helpers/userCompanies');
 const { checkVendorUserExistsAndHasRightRole } = require('./utils');
+const {
+  EMAIL_VALIDATION,
+  COUNTRY_CODE_VALIDATION,
+  PHONE_VALIDATION,
+  SUFFIX_EMAIL_VALIDATION,
+} = require('../../models/utils');
 
 const { language } = translate;
 
@@ -862,4 +869,60 @@ exports.authorizeTutorDeletion = async (req) => {
   if (!tutorIsCourseTutor) throw Boom.forbidden();
 
   return null;
+};
+
+exports.authorizeUploadCSV = async (req) => {
+  const { params, payload } = req;
+
+  const course = await Course.findOne({ _id: params._id }, { tutors: 1, archivedAt: 1, companies: 1 }).lean();
+  if (!course) throw Boom.notFound();
+
+  const learnerList = await UtilsHelper.parseCsv(payload.file);
+  const formattedLearnerList = [];
+  const emailsList = compact(learnerList.map(l => l.email));
+  if (emailsList.length !== [...new Set(emailsList)].length) throw Boom.badData();
+  for (const learner of learnerList) {
+    if (!learner.company) throw Boom.badData();
+    const company = await Company.findOne({ name: learner.company }, { _id: 1 }).lean();
+
+    if (!company) throw Boom.notFound();
+    if (!UtilsHelper.doesArrayIncludeId(course.companies, company._id)) throw Boom.badData();
+
+    if (!learner.firstname) throw Boom.badData();
+    if (!learner.lastname) throw Boom.badData();
+    const identityUser = await User
+      .findOne({ 'identity.firstname': learner.firstname, 'identity.lastname': learner.lastname }, { _id: 1, local: 1 })
+      .lean();
+    if (identityUser) {
+      const userCompany = await UserCompany
+        .findOne({ user: identityUser._id, endDate: { $exists: false } }, { company: 1 })
+        .lean();
+      if (userCompany) {
+        const sameEmail = identityUser.local.email === learner.email;
+        if (sameEmail && !UtilsHelper.areObjectIdsEquals(company._id, userCompany.company)) throw Boom.badData();
+        else if (!sameEmail && UtilsHelper.areObjectIdsEquals(company._id, userCompany.company)) throw Boom.badData();
+      }
+    }
+    if (learner.email) {
+      if (!learner.email.match(EMAIL_VALIDATION)) throw Boom.badData();
+      const emailUser = await User.findOne({ 'local.email': learner.email }, { _id: 1 }).lean();
+      if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, identityUser._id)) throw Boom.badData();
+    } else if (!learner.suffix || !learner.suffix.match(SUFFIX_EMAIL_VALIDATION)) throw Boom.badData();
+    if (learner.countryCode && !learner.countryCode.match(COUNTRY_CODE_VALIDATION)) throw Boom.badData();
+    if (learner.phone && !learner.phone.match(PHONE_VALIDATION)) throw Boom.badData();
+
+    formattedLearnerList.push({
+      ...identityUser && { _id: identityUser._id },
+      'identity.firstname': learner.firstname,
+      'identity.lastname': learner.lastname,
+      'local.email': learner.email ||
+      `${learner.firstname.toLowerCase().replace(/[^a-z]/g, '')}.`
+        + `${learner.lastname.toLowerCase().replace(/[^a-z]/g, '')}${learner.suffix}`,
+      ...learner.phone && { 'contact.phone': learner.phone },
+      ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
+      company: company._id,
+    });
+  }
+
+  return formattedLearnerList;
 };

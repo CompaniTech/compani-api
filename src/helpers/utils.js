@@ -269,3 +269,47 @@ exports.formatRumNumber = (companyPrefixNumber, prefix, seq) => {
 
   return `R-${companyPrefixNumber}${prefix}${seq.toString().padStart(5, '0')}${random}`;
 };
+
+exports.parseCsv = file => new Promise((resolve, reject) => {
+  let leftover = '';
+  let headers = [];
+  const csvData = [];
+
+  file.on('data', (chunk) => {
+    const str = chunk.toString('utf8');
+    const lines = (leftover + str).split('\n');
+    leftover = lines.pop();
+
+    lines.forEach((l) => {
+      const line = l.replace(/\r$/, '').trim();
+      if (!line) return;
+
+      const values = line.split(';').map(v => v.trim()).filter(v => v !== '');
+
+      if (!headers.length) {
+        headers = values;
+      } else {
+        const obj = {};
+        headers.forEach((header, i) => {
+          obj[header] = values[i] || '';
+        });
+        csvData.push(obj);
+      }
+    });
+  });
+
+  file.on('end', () => {
+    if (leftover) {
+      leftover = leftover.replace(/\r$/, '').trim();
+      const values = leftover.split(';').map(v => v.trim()).filter(v => v !== '');
+      const obj = {};
+      headers.forEach((header, i) => {
+        obj[header] = values[i] || '';
+      });
+      csvData.push(obj);
+    }
+    resolve(csvData);
+  });
+
+  file.on('error', err => reject(err));
+});
