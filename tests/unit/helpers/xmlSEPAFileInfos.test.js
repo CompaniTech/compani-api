@@ -123,7 +123,7 @@ describe('generateTransactionInfos', () => {
     expect(result).toEqual({
       PmtId: {
         InstrId: _id,
-        EndToEndId: 'FACT-02200,FACT-01239',
+        EndToEndId: 'FACT-02200-FACT-01239',
       },
       InstdAmt: {
         '@Ccy': 'EUR',
