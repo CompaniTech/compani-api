@@ -138,7 +138,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
 
     const formattedTransaction = {
       _id: new ObjectId().toHexString(),
-      number: [...new Set(payerPayments.map(p => p.courseBill.number))].join('-').slice(0, 35),
+      number: [...new Set(payerPayments.map(p => p.courseBill.number.replace('-', '')))].join('-').slice(0, 35),
       amount: transactionAmount,
       debitorName: payerInfos.name,
       debitorIBAN: payerInfos.iban,

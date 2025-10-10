@@ -108,7 +108,7 @@ describe('generateTransactionInfos', () => {
     const _id = new ObjectId();
     const data = {
       _id,
-      number: 'FACT-02200,FACT-01239',
+      number: 'FACT02200-FACT01239',
       amount: 1500,
       debitorName: 'Payeur',
       debitorIBAN: 'FR3514508000505917721779B12',
@@ -123,7 +123,7 @@ describe('generateTransactionInfos', () => {
     expect(result).toEqual({
       PmtId: {
         InstrId: _id,
-        EndToEndId: 'FACT-02200-FACT-01239',
+        EndToEndId: 'FACT02200-FACT01239',
       },
       InstdAmt: {
         '@Ccy': 'EUR',
@@ -311,7 +311,7 @@ describe('generateSEPAFile', () => {
                 {
                   PmtId: {
                     InstrId: sinon.match(/^[0-9a-fA-F]{24}$/),
-                    EndToEndId: 'FACT-0001',
+                    EndToEndId: 'FACT0001',
                   },
                   InstdAmt: {
                     '@Ccy': 'EUR',
@@ -332,7 +332,7 @@ describe('generateSEPAFile', () => {
                 {
                   PmtId: {
                     InstrId: sinon.match(/^[0-9a-fA-F]{24}$/),
-                    EndToEndId: 'FACT-0002',
+                    EndToEndId: 'FACT0002',
                   },
                   InstdAmt: {
                     '@Ccy': 'EUR',
