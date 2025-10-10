@@ -75,6 +75,24 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if name is too long', async () => {
+      const name = 'Compani - Septembre 2025 - Prélèvements comprenant egalement certains'
+        + 'paiements du mois d\'aout pour rattrapage - blablablablablablablablablablablablablablablabla';
+      const payload = {
+        payments: [coursePaymentList[0]._id, coursePaymentList[2]._id],
+        name,
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 404 if a payment does not exist', async () => {
       const payload = {
         payments: [coursePaymentList[0]._id, new ObjectId()],
