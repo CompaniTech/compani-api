@@ -883,7 +883,9 @@ exports.authorizeUploadCSV = async (req) => {
   const learnerList = await UtilsHelper.parseCsv(payload.file);
 
   const allowedKeys = ['firstname', 'lastname', 'email', 'phone', 'countryCode', 'company', 'suffix'].sort();
-  if (!isEqual(Object.keys(learnerList[0]).sort(), allowedKeys)) throw Boom.badRequest();
+  if (!isEqual(Object.keys(learnerList[0]).sort(), allowedKeys)) {
+    throw Boom.badRequest(translate[language].wrongColumnsInCsv);
+  }
 
   if (course.maxTrainees && course.trainees.length + learnerList.length > course.maxTrainees) {
     throw Boom.forbidden(translate[language].maxTraineesReached);
@@ -896,14 +898,13 @@ exports.authorizeUploadCSV = async (req) => {
   if (nameList.length !== [...new Set(nameList)].length) throw Boom.badData();
 
   for (const learner of learnerList) {
-    if (!learner.company) throw Boom.badRequest();
+    if (!learner.company) throw Boom.badData();
     const company = await Company.findOne({ name: learner.company }, { _id: 1 }).lean();
 
     if (!company) throw Boom.notFound();
     if (!UtilsHelper.doesArrayIncludeId(course.companies, company._id)) throw Boom.badData();
 
-    if (!learner.firstname) throw Boom.badRequest();
-    if (!learner.lastname) throw Boom.badRequest();
+    if (!(learner.firstname && learner.lastname)) throw Boom.badData();
     const identityUser = await User
       .findOne({ 'identity.firstname': learner.firstname, 'identity.lastname': learner.lastname }, { _id: 1, local: 1 })
       .lean();

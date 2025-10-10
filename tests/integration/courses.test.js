@@ -6247,22 +6247,23 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
     });
 
     ['firstname', 'lastname', 'company'].forEach((missingParam) => {
-      it(`should return 400 if ${missingParam} is missing`, async () => {
+      it(`should return 422 if ${missingParam} is empty`, async () => {
         const formData = { file: 'test' };
         const form = generateFormData(formData);
 
+        const learner = {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+        };
+
         parseCSV.returns([
-          omit(
-            {
-              firstname: 'Tom',
-              lastname: 'Sawyer',
-              email: '',
-              countryCode: '',
-              phone: '0687654321',
-              company: 'Test SAS',
-              suffix: '@test.fr',
-            },
-            missingParam),
+
+          { ...learner, [missingParam]: '' },
           {
             firstname: 'Auxiliary',
             lastname: 'Olait',
@@ -6290,7 +6291,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
           payload: getStream(form),
         });
 
-        expect(response.statusCode).toBe(400);
+        expect(response.statusCode).toBe(422);
       });
     });
 
