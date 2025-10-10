@@ -3,6 +3,7 @@ const compact = require('lodash/compact');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const pick = require('lodash/pick');
+const isEqual = require('lodash/isEqual');
 const Course = require('../../models/Course');
 const User = require('../../models/User');
 const Company = require('../../models/Company');
@@ -881,6 +882,9 @@ exports.authorizeUploadCSV = async (req) => {
 
   const learnerList = await UtilsHelper.parseCsv(payload.file);
 
+  const allowedKeys = ['firstname', 'lastname', 'email', 'phone', 'countryCode', 'company', 'suffix'].sort();
+  if (!isEqual(Object.keys(learnerList[0]).sort(), allowedKeys)) throw Boom.badRequest();
+
   if (course.maxTrainees && course.trainees.length + learnerList.length > course.maxTrainees) {
     throw Boom.forbidden(translate[language].maxTraineesReached);
   }
@@ -892,14 +896,14 @@ exports.authorizeUploadCSV = async (req) => {
   if (nameList.length !== [...new Set(nameList)].length) throw Boom.badData();
 
   for (const learner of learnerList) {
-    if (!learner.company) throw Boom.badData();
+    if (!learner.company) throw Boom.badRequest();
     const company = await Company.findOne({ name: learner.company }, { _id: 1 }).lean();
 
     if (!company) throw Boom.notFound();
     if (!UtilsHelper.doesArrayIncludeId(course.companies, company._id)) throw Boom.badData();
 
-    if (!learner.firstname) throw Boom.badData();
-    if (!learner.lastname) throw Boom.badData();
+    if (!learner.firstname) throw Boom.badRequest();
+    if (!learner.lastname) throw Boom.badRequest();
     const identityUser = await User
       .findOne({ 'identity.firstname': learner.firstname, 'identity.lastname': learner.lastname }, { _id: 1, local: 1 })
       .lean();

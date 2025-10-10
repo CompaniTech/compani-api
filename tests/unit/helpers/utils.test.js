@@ -4,6 +4,7 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const omit = require('lodash/omit');
 const pick = require('lodash/pick');
+const { Readable } = require('stream');
 const UtilsHelper = require('../../../src/helpers/utils');
 const UtilsMock = require('../../utilsMock');
 
@@ -746,5 +747,63 @@ describe('formatRumNumber', () => {
     const result = UtilsHelper.formatRumNumber(101, '2507', 1);
 
     expect(result).toBe('R-101250700001A7BC2488D00EE6832ACR');
+  });
+});
+
+describe('parseCsv', () => {
+  it('should parse CSV content into an array of objects', async () => {
+    const csvContent =
+      `firstname;lastname;email;phone;countryCode;company;suffix
+      Jean;Leclerc;jean@compani.fr;0609876543;;Alenvi Paris - Home SAS;
+      Pierre;Lalouche;;0609876544;;Alenvi Paris - Home SAS;@compani.fr
+      Tom;Leclerc;tom@compani.fr;0609876545;;Alenvi Paris - Home SAS;`;
+
+    const mockFile = new Readable();
+    mockFile.push(csvContent);
+    mockFile.push(null);
+
+    const result = await UtilsHelper.parseCsv(mockFile);
+
+    expect(result).toEqual([
+      {
+        firstname: 'Jean',
+        lastname: 'Leclerc',
+        email: 'jean@compani.fr',
+        phone: '0609876543',
+        countryCode: '',
+        company: 'Alenvi Paris - Home SAS',
+        suffix: '',
+      },
+      {
+        firstname: 'Pierre',
+        lastname: 'Lalouche',
+        email: '',
+        phone: '0609876544',
+        countryCode: '',
+        company: 'Alenvi Paris - Home SAS',
+        suffix: '@compani.fr',
+      },
+      {
+        firstname: 'Tom',
+        lastname: 'Leclerc',
+        email: 'tom@compani.fr',
+        phone: '0609876545',
+        countryCode: '',
+        company: 'Alenvi Paris - Home SAS',
+        suffix: '',
+      },
+    ]);
+  });
+
+  it('should throw an error if the stream fails', async () => {
+    const errorFile = new Readable();
+    const error = new Error('Stream failed');
+    errorFile._read = () => errorFile.emit('error', error);
+
+    try {
+      await UtilsHelper.parseCsv(errorFile);
+    } catch (e) {
+      expect(e).toEqual(error);
+    }
   });
 });

@@ -6158,8 +6158,96 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 400 if a field is missing', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+        },
+        {
+          firstname: 'Auxiliary',
+          lastname: 'Olait',
+          email: 'auxiliary@alenvi.io',
+          countryCode: '',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+        },
+        {
+          firstname: 'Coach',
+          lastname: 'Calif',
+          email: 'coach@alenvi.io',
+          countryCode: '',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}/trainees-csv`,
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if non-expected field', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+          other: 'test',
+        },
+        {
+          firstname: 'Auxiliary',
+          lastname: 'Olait',
+          email: 'auxiliary@alenvi.io',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+          other: 'test',
+        },
+        {
+          firstname: 'Coach',
+          lastname: 'Calif',
+          email: 'coach@alenvi.io',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+          other: 'test',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}/trainees-csv`,
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     ['firstname', 'lastname', 'company'].forEach((missingParam) => {
-      it(`should return 422 if ${missingParam} is missing`, async () => {
+      it(`should return 400 if ${missingParam} is missing`, async () => {
         const formData = { file: 'test' };
         const form = generateFormData(formData);
 
@@ -6197,12 +6285,12 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 
         const response = await app.inject({
           method: 'PUT',
-          url: `/courses/${new ObjectId()}/trainees-csv`,
+          url: `/courses/${coursesList[26]._id}/trainees-csv`,
           headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
           payload: getStream(form),
         });
 
-        expect(response.statusCode).toBe(404);
+        expect(response.statusCode).toBe(400);
       });
     });
 
@@ -6579,6 +6667,30 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+    });
+  });
+
+  describe('OTHER ROLE', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const formData = { file: 'test' };
+        const form = generateFormData(formData);
+
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/courses/${coursesList[26]._id}/trainees-csv`,
+          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          payload: getStream(form),
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
     });
   });
 });
