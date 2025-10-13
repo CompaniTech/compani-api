@@ -6096,6 +6096,32 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       expect(response.statusCode).toBe(404);
     });
 
+    it('should return 403 if course is single', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[25]._id}/trainees-csv`,
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 if list length exceeds maxTrainee', async () => {
       const formData = { file: 'test' };
       const form = generateFormData(formData);

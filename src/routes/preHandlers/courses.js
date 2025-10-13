@@ -876,9 +876,10 @@ exports.authorizeUploadCSV = async (req) => {
   const { params, payload } = req;
 
   const course = await Course
-    .findOne({ _id: params._id }, { tutors: 1, archivedAt: 1, companies: 1, trainees: 1, maxTrainees: 1 })
+    .findOne({ _id: params._id }, { type: 1, tutors: 1, archivedAt: 1, companies: 1, trainees: 1, maxTrainees: 1 })
     .lean();
   if (!course) throw Boom.notFound();
+  if (course.type === SINGLE) throw Boom.forbidden();
 
   const learnerList = await UtilsHelper.parseCsv(payload.file);
 
