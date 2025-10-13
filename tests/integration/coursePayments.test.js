@@ -43,10 +43,10 @@ describe('COURSE PAYMENTS ROUTES - POST /coursepayments', () => {
       expect(paymentResponse.statusCode).toBe(200);
 
       const newPayment = await CoursePayment
-        .countDocuments({ ...payload, number: 'REG-00004', companies: [authCompany._id], status: PENDING });
+        .countDocuments({ ...payload, number: 'REG-00005', companies: [authCompany._id], status: PENDING });
       const paymentNumber = await CoursePaymentNumber.findOne({ nature: PAYMENT }).lean();
       expect(newPayment).toBeTruthy();
-      expect(paymentNumber.seq).toBe(4);
+      expect(paymentNumber.seq).toBe(5);
 
       const refundResponse = await app.inject({
         method: 'POST',
@@ -203,6 +203,17 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
       });
     });
 
+    it('should return 400 if initial status is XML_GENERATED and PENDING is in payload', async () => {
+      const paymentResponse = await app.inject({
+        method: 'PUT',
+        url: `/coursepayments/${coursePaymentsList[3]._id}`,
+        payload: { status: PENDING },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(paymentResponse.statusCode).toBe(400);
+    });
+
     it('should return a 404 if payment doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -313,6 +324,19 @@ describe('COURSE PAYMENTs ROUTES - POST /coursepayments/list-edition', () => {
         payload: { ...payload, status: XML_GENERATED },
       });
 
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if one payment has XML_GENERATED initial status  and PENDING is in payload', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursepayments/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: {
+          _ids: [coursePaymentsList[0]._id, coursePaymentsList[2]._id, coursePaymentsList[3]._id],
+          status: PENDING,
+        },
+      });
       expect(response.statusCode).toBe(400);
     });
 

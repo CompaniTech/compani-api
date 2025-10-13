@@ -8,6 +8,7 @@ const {
   GLOBAL,
   PENDING,
   RECEIVED,
+  XML_GENERATED,
 } = require('../../../src/helpers/constants');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
@@ -16,6 +17,7 @@ const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
+const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainer, vendorAdmin, auxiliary } = require('../../seed/authUsersSeed');
@@ -64,7 +66,7 @@ const courseBillNumber = { _id: new ObjectId(), seq: 1 };
 
 const coursePaymentNumber = {
   _id: new ObjectId(),
-  seq: 3,
+  seq: 4,
   nature: PAYMENT,
 };
 
@@ -102,7 +104,21 @@ const coursePaymentsList = [
     type: DIRECT_DEBIT,
     status: PENDING,
   },
+  {
+    // 3
+    _id: new ObjectId(),
+    number: 'REG-00004',
+    date: '2022-03-07T00:00:00.000Z',
+    companies: [authCompany._id],
+    courseBill: courseBillsList[0]._id,
+    netInclTaxes: 200,
+    nature: PAYMENT,
+    type: DIRECT_DEBIT,
+    status: XML_GENERATED,
+  },
 ];
+
+const xmlSEPAFileInfos = { coursePayments: [coursePaymentsList[3]._id], name: 'test' };
 
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
@@ -115,6 +131,7 @@ const populateDB = async () => {
     CoursePaymentNumber.create(coursePaymentNumber),
     Step.create(steps),
     SubProgram.create(subProgramList),
+    XmlSEPAFileInfos.create(xmlSEPAFileInfos),
   ]);
 };
 

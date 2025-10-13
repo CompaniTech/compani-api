@@ -171,6 +171,7 @@ module.exports = {
     courseBillingItemDeleted: 'Course billing item deleted.',
     /* Course payments */
     coursePaymentsUpdated: 'Course payments updated.',
+    coursePaymentStatusError: 'Forbidden : status cannot be changed from XML_GENERATED to PENDING.',
     /* Course slots */
     courseSlotCreated: 'Course slot created.',
     courseSlotUpdated: 'Course slot updated.',
@@ -424,6 +425,7 @@ module.exports = {
     courseBillingItemDeleted: 'Article de facturation supprimé.',
     /* Course payments */
     coursePaymentsUpdated: 'Paiements mis à jour.',
+    coursePaymentStatusError: 'Impossible : le statut ne peut être passé de "Fichier XML associé" à "En attente".',
     /* Course slots */
     courseSlotCreated: 'Créneau de formation créé.',
     courseSlotUpdated: 'Créneau de formation mis à jour.',
