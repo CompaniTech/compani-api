@@ -273,3 +273,29 @@ describe('list', () => {
     );
   });
 });
+
+describe('updateList', () => {
+  let updateMany;
+
+  beforeEach(() => {
+    updateMany = sinon.stub(CoursePayment, 'updateMany');
+  });
+
+  afterEach(() => {
+    updateMany.restore();
+  });
+
+  it('should update payments', async () => {
+    const payload = {
+      _ids: [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()],
+      status: RECEIVED,
+    };
+
+    await CoursePaymentsHelper.updateList(payload);
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: payload._ids } },
+      { $set: { status: payload.status } }
+    );
+  });
+});
