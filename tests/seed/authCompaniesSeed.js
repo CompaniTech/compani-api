@@ -24,7 +24,7 @@ const authCompany = {
       rum: 'R-10125060000188CF46476EE0F6F9B702',
       createdAt: '2025-06-03T14:00:00.000Z',
       signedAt: '2025-07-20T14:00:00.000Z',
-      file: { driveId: 'fileId', link: 'unLienVersLeMandatSigné/fileId' },
+      file: { driveId: 'fileId', link: 'https://unLienVersLeMandatSigné/fileId' },
     },
     {
       _id: new ObjectId(),
