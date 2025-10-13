@@ -249,6 +249,8 @@ module.exports = {
     xmlSEPAFileGenerationFailedMissingSignedMandate: 'Forbidden : payer has no signed mandate.',
     xmlSEPAFileGenerationFailedMissingBankDetails: 'Forbidden : payer has no BIC or IBAN.',
     xmlSEPAFileGenerationFailedMissingVendorInfos: 'Forbidden : vendor company has no BIC, IBAN or ICS.',
+    /* CSV */
+    wrongColumnsInCsv: 'Wrong columns in CSV.',
   },
   'fr-FR': {
     /* Token errors */
@@ -507,5 +509,7 @@ module.exports = {
       BIC ou d'IBAN renseigné.`,
     xmlSEPAFileGenerationFailedMissingVendorInfos: `Impossible : le BIC, l'IBAN ou l'ICS de la structure vendeuse est
       manquant.`,
+    /* CSV */
+    wrongColumnsInCsv: 'Les colonnes du CSV ne correspondent pas au format attendu.',
   },
 };
