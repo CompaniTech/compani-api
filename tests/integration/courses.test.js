@@ -3684,6 +3684,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
         certifiedTrainees: [traineeFromAuthCompanyWithFormationExpoToken._id],
       });
       expect(course).toEqual(1);
+      sinon.assert.calledTwice(sendNotificationToUser);
     });
 
     it('should return 200 if user will be in company', async () => {
@@ -3703,6 +3704,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
       });
 
       expect(courseHistory).toBe(1);
+      sinon.assert.notCalled(sendNotificationToUser);
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
@@ -3852,6 +3854,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
       });
 
       expect(response.statusCode).toBe(200);
+      sinon.assert.notCalled(sendNotificationToUser);
     });
 
     it('should add user to inter b2b course with future company', async () => {
@@ -3863,6 +3866,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
       });
 
       expect(response.statusCode).toBe(200);
+      sinon.assert.notCalled(sendNotificationToUser);
     });
 
     it('should return a 403 if user company is not from course companies', async () => {
@@ -3924,6 +3928,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
       });
 
       expect(response.statusCode).toBe(200);
+      sinon.assert.notCalled(sendNotificationToUser);
     });
 
     it('should return a 403 if user company is not from course holding', async () => {
@@ -3971,6 +3976,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
       });
 
       expect(response.statusCode).toBe(200);
+      sinon.assert.notCalled(sendNotificationToUser);
     });
 
     it('should return a 403 if holding admin is not from course holding', async () => {
@@ -4003,6 +4009,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
+        if (response.statusCode === 200) sinon.assert.calledTwice(sendNotificationToUser);
       });
     });
 
@@ -4052,6 +4059,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
       });
 
       expect(response.statusCode).toBe(200);
+      sinon.assert.calledTwice(sendNotificationToUser);
     });
 
     it('should return 403 as user is client_admin requesting on an other company', async () => {
@@ -6041,6 +6049,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       expect(usersAfter).toEqual(usersBefore + 1);
       const courseAfter = await Course.findOne({ _id: coursesList[26]._id }).lean();
       expect(courseAfter.trainees.length).toEqual(coursesList[26].trainees.length + 2);
+      sinon.assert.calledOnce(sendNotificationToUser);
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
@@ -6488,7 +6497,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       expect(response.statusCode).toBe(422);
     });
 
-    it('should return 422 if trainee exist but not int course company', async () => {
+    it('should return 422 if trainee exist but not in course company', async () => {
       const formData = { file: 'test' };
       const form = generateFormData(formData);
 
