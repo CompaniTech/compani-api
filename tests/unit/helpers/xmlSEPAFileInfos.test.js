@@ -189,7 +189,7 @@ describe('generateSEPAFile', () => {
               {
                 rum: 'R-1234567865',
                 signedAt: '2024-07-23T22:00:00.000Z',
-                file: { publicId: '12355', link: 'unLien/12355' },
+                file: { driveId: '12355', link: 'unLien/12355' },
                 createdAt: '2024-06-23T22:00:00.000Z',
               },
             ],
@@ -211,7 +211,7 @@ describe('generateSEPAFile', () => {
               {
                 rum: 'R-1234567865',
                 signedAt: '2024-07-23T22:00:00.000Z',
-                file: { publicId: '12355', link: 'unLien/12355' },
+                file: { driveId: '12355', link: 'unLien/12355' },
                 createdAt: '2024-06-23T22:00:00.000Z',
               },
             ],
@@ -233,13 +233,13 @@ describe('generateSEPAFile', () => {
               {
                 rum: 'R-123456789',
                 signedAt: '2025-08-23T22:00:00.000Z',
-                file: { publicId: '12355', link: 'unLien/12355' },
+                file: { driveId: '12355', link: 'unLien/12355' },
                 createdAt: '2025-06-23T22:00:00.000Z',
               },
               {
                 rum: 'R-123456786',
                 signedAt: '2025-07-28T22:00:00.000Z',
-                file: { publicId: '12355', link: 'unLien/12355' },
+                file: { driveId: '12355', link: 'unLien/12355' },
                 createdAt: '2024-07-23T22:00:00.000Z',
               },
             ],
@@ -375,14 +375,14 @@ describe('generateSEPAFile', () => {
     getLastVersion.onCall(0).returns({
       rum: 'R-1234567865',
       signedAt: '2024-07-23T22:00:00.000Z',
-      file: { publicId: '12355', link: 'unLien/12355' },
+      file: { driveId: '12355', link: 'unLien/12355' },
       createdAt: '2024-06-23T22:00:00.000Z',
     });
     getFixedNumber.onCall(2).returns(1500.00);
     getLastVersion.onCall(1).returns({
       rum: 'R-123456789',
       signedAt: '2025-08-23T22:00:00.000Z',
-      file: { publicId: '12355', link: 'unLien/12355' },
+      file: { driveId: '12355', link: 'unLien/12355' },
       createdAt: '2025-06-23T22:00:00.000Z',
     });
     generateXML.returns('SEPA.xml');
@@ -418,7 +418,7 @@ describe('generateSEPAFile', () => {
       [{
         rum: 'R-1234567865',
         signedAt: '2024-07-23T22:00:00.000Z',
-        file: { publicId: '12355', link: 'unLien/12355' },
+        file: { driveId: '12355', link: 'unLien/12355' },
         createdAt: '2024-06-23T22:00:00.000Z',
       }],
       'createdAt'
@@ -430,13 +430,13 @@ describe('generateSEPAFile', () => {
         {
           rum: 'R-123456789',
           signedAt: '2025-08-23T22:00:00.000Z',
-          file: { publicId: '12355', link: 'unLien/12355' },
+          file: { driveId: '12355', link: 'unLien/12355' },
           createdAt: '2025-06-23T22:00:00.000Z',
         },
         {
           rum: 'R-123456786',
           signedAt: '2025-07-28T22:00:00.000Z',
-          file: { publicId: '12355', link: 'unLien/12355' },
+          file: { driveId: '12355', link: 'unLien/12355' },
           createdAt: '2024-07-23T22:00:00.000Z',
         },
       ],
