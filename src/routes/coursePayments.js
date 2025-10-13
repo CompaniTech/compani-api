@@ -11,6 +11,7 @@ const {
 } = require('./preHandlers/coursePayments');
 const { PAYMENT_NATURES } = require('../models/Payment');
 const { COURSE_PAYMENT_TYPES, COURSE_PAYMENT_STATUS } = require('../models/CoursePayment');
+const { XML_GENERATED } = require('../helpers/constants');
 const { requiredDateToISOString } = require('./validations/utils');
 
 exports.plugin = {
@@ -46,7 +47,7 @@ exports.plugin = {
             netInclTaxes: Joi.number().min(0).required(),
             type: Joi.string().valid(...COURSE_PAYMENT_TYPES).required(),
             date: requiredDateToISOString,
-            status: Joi.string().valid(...COURSE_PAYMENT_STATUS).required(),
+            status: Joi.string().valid(...COURSE_PAYMENT_STATUS.filter(s => s !== XML_GENERATED)).required(),
           }),
         },
         pre: [{ method: authorizeCoursePaymentUpdate }],
@@ -82,7 +83,7 @@ exports.plugin = {
         validate: {
           payload: Joi.object({
             _ids: Joi.array().items(Joi.objectId()).min(1).required(),
-            status: Joi.string().valid(...COURSE_PAYMENT_STATUS).required(),
+            status: Joi.string().valid(...COURSE_PAYMENT_STATUS.filter(s => s !== XML_GENERATED)).required(),
           }),
         },
         pre: [{ method: authorizeCoursePaymentListEdition }],

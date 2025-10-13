@@ -6,7 +6,7 @@ const { courseBillsList, coursePaymentsList, populateDB } = require('./seed/cour
 
 const { getToken } = require('./helpers/authentication');
 const { authCompany } = require('../seed/authCompaniesSeed');
-const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING, RECEIVED } = require('../../src/helpers/constants');
+const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING, RECEIVED, XML_GENERATED } = require('../../src/helpers/constants');
 const CoursePayment = require('../../src/models/CoursePayment');
 const CoursePaymentNumber = require('../../src/models/CoursePaymentNumber');
 
@@ -175,7 +175,7 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
       { key: 'netInclTaxes', value: -200 },
       { key: 'netInclTaxes', value: '200€' },
       { key: 'type', value: 'cesu' },
-      { key: 'status', value: 'wrongStatus' },
+      { key: 'status', value: XML_GENERATED },
     ];
     wrongValues.forEach((param) => {
       it(`should return a 400 if '${param.key}' has wrong value`, async () => {
@@ -303,6 +303,17 @@ describe('COURSE PAYMENTs ROUTES - POST /coursepayments/list-edition', () => {
       expect(response.statusCode).toBe(200);
       const receivedPaymentsAfterUpdate = await CoursePayment.countDocuments({ status: RECEIVED });
       expect(receivedPaymentsAfterUpdate).toBe(receivedPaymentsBeforeUpdate + 2);
+    });
+
+    it('should return 400 if status is XML_GENERATED', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursepayments/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payload, status: XML_GENERATED },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return 404 if one course payment doesn\'t exist', async () => {
