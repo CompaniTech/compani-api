@@ -1,7 +1,8 @@
 const Boom = require('@hapi/boom');
 const CourseBill = require('../../models/CourseBill');
 const CoursePayment = require('../../models/CoursePayment');
-const { XML_GENERATED, PENDING } = require('../../helpers/constants');
+const XmlSEPAFileInfos = require('../../models/XmlSEPAFileInfos');
+const { RECEIVED } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 
 const { language } = translate;
@@ -26,7 +27,8 @@ exports.authorizeCoursePaymentUpdate = async (req) => {
     const coursePaymentExists = await CoursePayment.findOne({ _id: req.params._id }, { status: 1 }).lean();
     if (!coursePaymentExists) throw Boom.notFound();
 
-    if (coursePaymentExists.status === XML_GENERATED && req.payload.status === PENDING) {
+    const coursePaymentIsLinkedToXMLFile = await XmlSEPAFileInfos.countDocuments({ coursePayments: req.params._id });
+    if (coursePaymentIsLinkedToXMLFile && req.payload.status !== RECEIVED) {
       throw Boom.badRequest(translate[language].coursePaymentStatusError);
     }
 
@@ -42,8 +44,9 @@ exports.authorizeCoursePaymentListEdition = async (req) => {
     const coursePayments = await CoursePayment.find({ _id: { $in: req.payload._ids } }, { status: 1 }).lean();
     if (coursePayments.length !== req.payload._ids.length) throw Boom.notFound();
 
-    const somePaymentsAreXmlGenerated = coursePayments.some(coursePayment => coursePayment.status === XML_GENERATED);
-    if (somePaymentsAreXmlGenerated && req.payload.status === PENDING) {
+    const somePaymentsAreLinkedToXMLFile = await XmlSEPAFileInfos
+      .countDocuments({ coursePayments: { $in: req.payload._ids } });
+    if (somePaymentsAreLinkedToXMLFile && req.payload.status !== RECEIVED) {
       throw Boom.badRequest(translate[language].coursePaymentStatusError);
     }
 

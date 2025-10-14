@@ -66,7 +66,7 @@ const courseBillNumber = { _id: new ObjectId(), seq: 1 };
 
 const coursePaymentNumber = {
   _id: new ObjectId(),
-  seq: 4,
+  seq: 5,
   nature: PAYMENT,
 };
 
@@ -116,9 +116,21 @@ const coursePaymentsList = [
     type: DIRECT_DEBIT,
     status: XML_GENERATED,
   },
+  {
+    // 4
+    _id: new ObjectId(),
+    number: 'REG-00005',
+    date: '2022-03-07T00:00:00.000Z',
+    companies: [authCompany._id],
+    courseBill: courseBillsList[0]._id,
+    netInclTaxes: 200,
+    nature: PAYMENT,
+    type: DIRECT_DEBIT,
+    status: RECEIVED,
+  },
 ];
 
-const xmlSEPAFileInfos = { coursePayments: [coursePaymentsList[3]._id], name: 'test' };
+const xmlSEPAFileInfos = { coursePayments: [coursePaymentsList[3]._id, coursePaymentsList[4]._id], name: 'test' };
 
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
