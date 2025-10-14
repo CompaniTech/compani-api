@@ -100,6 +100,7 @@ const {
   SINGLE,
   XML_GENERATED,
   DIRECT_DEBIT,
+  RECEIVED,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -2681,9 +2682,11 @@ describe('SEEDS VERIFICATION', () => {
             .toEqual(xmlSEPAFileInfosList.flatMap(fileInfos => fileInfos.coursePayments).length);
         });
 
-        it('should pass if every xmlSEPAFileInfos\'s payment\'s status is XML_GENERATED', () => {
+        it('should pass if every xmlSEPAFileInfos\'s payment\'s status is XML_GENERATED or RECEIVED', () => {
           const everyPaymentHasGoodStatus = xmlSEPAFileInfosList
-            .every(fileInfos => fileInfos.coursePayments.every(payment => payment.status === XML_GENERATED));
+            .every(fileInfos => fileInfos.coursePayments
+              .every(payment => [XML_GENERATED, RECEIVED].includes(payment.status))
+            );
 
           expect(everyPaymentHasGoodStatus).toBeTruthy();
         });
