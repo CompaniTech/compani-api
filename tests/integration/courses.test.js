@@ -6281,8 +6281,14 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    ['firstname', 'lastname', 'company'].forEach((missingParam) => {
-      it(`should return 422 if ${missingParam} is empty`, async () => {
+    const missingParams = [
+      { key: 'firstname', errorMessage: 'le nom de l\'apprenant est incorrect' },
+      { key: 'lastname', errorMessage: 'le nom de l\'apprenant est incorrect' },
+      { key: 'company', errorMessage: 'la structure est manquante' },
+    ];
+
+    missingParams.forEach((missingParam) => {
+      it(`should return 422 if ${missingParam.key} is empty`, async () => {
         const formData = { file: 'test' };
         const form = generateFormData(formData);
 
@@ -6298,7 +6304,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 
         parseCSV.returns([
 
-          { ...learner, [missingParam]: '' },
+          { ...learner, [missingParam.key]: '' },
           {
             firstname: 'Auxiliary',
             lastname: 'Olait',
@@ -6327,6 +6333,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
         });
 
         expect(response.statusCode).toBe(422);
+        expect(Object.values(response.result.errorsByTrainee)[0]).toEqual([missingParam.errorMessage]);
       });
     });
 
@@ -6372,6 +6379,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['chaque email doit être unique']);
     });
 
     it('should return 422 if duplicate names in csv', async () => {
@@ -6425,9 +6433,10 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['chaque nom doit être unique']);
     });
 
-    it('should return 404 if company doesn\'t  exist', async () => {
+    it('should return 422 if company doesn\'t  exist', async () => {
       const formData = { file: 'test' };
       const form = generateFormData(formData);
 
@@ -6468,7 +6477,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
         payload: getStream(form),
       });
 
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['la structure n\'existe pas']);
     });
 
     it('should return 422 if company not in course', async () => {
@@ -6495,6 +6505,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['la structure n\'est pas inscrite à la formation']);
     });
 
     it('should return 422 if trainee exist in company but with other email', async () => {
@@ -6521,6 +6533,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['l\'apprenant existe déjà avec un autre email']);
     });
 
     it('should return 422 if trainee exist but not in course company', async () => {
@@ -6547,6 +6561,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['l\'apprenant appartient à une autre structure que celle renseignée']);
     });
 
     it('should return 422 if email has wrong format', async () => {
@@ -6555,8 +6571,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 
       parseCSV.returns([
         {
-          firstname: 'Auxiliary',
-          lastname: 'Olait',
+          firstname: 'Tom',
+          lastname: 'Sawyer',
           email: 'auxiliaryalenvi.io',
           countryCode: '',
           phone: '0687654321',
@@ -6573,6 +6589,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['le format de l\'email est incorrect']);
     });
 
     it('should return 422 if email is from other learner', async () => {
@@ -6581,8 +6598,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 
       parseCSV.returns([
         {
-          firstname: 'Auxiliary',
-          lastname: 'Olait',
+          firstname: 'Tom',
+          lastname: 'Sawyer',
           email: 'coach@alenvi.io',
           countryCode: '',
           phone: '0687654321',
@@ -6599,6 +6616,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['l\'email correspond à un autre utilisateur']);
     });
 
     it('should return 422 if no suffix and no email', async () => {
@@ -6625,6 +6643,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['le suffixe email est manquant ou son format est incorrect']);
     });
 
     it('should return 422 if suffix has wrong format', async () => {
@@ -6651,6 +6671,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['le suffixe email est manquant ou son format est incorrect']);
     });
 
     it('should return 422 if country code has wrong format', async () => {
@@ -6677,6 +6699,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['le format de l\'indicatif téléphonique est incorrect']);
     });
 
     it('should return 422 if phone has wrong format', async () => {
@@ -6703,6 +6727,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['le format du téléphone est incorrect']);
     });
   });
 

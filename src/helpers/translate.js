@@ -251,6 +251,19 @@ module.exports = {
     xmlSEPAFileGenerationFailedMissingVendorInfos: 'Forbidden : vendor company has no BIC, IBAN or ICS.',
     /* CSV */
     wrongColumnsInCsv: 'Wrong columns in CSV.',
+    emailDuplicates: 'email has duplicate in CSV',
+    nameDuplicates: 'name has duplicate in CSV',
+    incorrectName: 'name is incorrect',
+    missingCompany: 'company is missing',
+    unknownCompany: 'company doesn\'t exist',
+    notRegisteredToCourseCompany: 'company is not registered to course',
+    wrongLearnerCompany: 'learner belongs to another company',
+    wrongLearnerEmail: 'learner has another email',
+    incorrectEmail: 'email is incorrect',
+    emailLinkedToOtherLearner: 'email belongs to another user',
+    missingOrIncorrectSuffix: 'email suffix is missing or incorrect',
+    incorrectCountryCode: 'country code is incorrect',
+    incorrectPhone: 'phone is incorrect',
   },
   'fr-FR': {
     /* Token errors */
@@ -511,5 +524,18 @@ module.exports = {
       manquant.`,
     /* CSV */
     wrongColumnsInCsv: 'Les colonnes du CSV ne correspondent pas au format attendu.',
+    emailDuplicates: 'chaque email doit être unique',
+    nameDuplicates: 'chaque nom doit être unique',
+    incorrectName: 'le nom de l\'apprenant est incorrect',
+    missingCompany: 'la structure est manquante',
+    unknownCompany: 'la structure n\'existe pas',
+    notRegisteredToCourseCompany: 'la structure n\'est pas inscrite à la formation',
+    wrongLearnerCompany: 'l\'apprenant appartient à une autre structure que celle renseignée',
+    wrongLearnerEmail: 'l\'apprenant existe déjà avec un autre email',
+    incorrectEmail: 'le format de l\'email est incorrect',
+    emailLinkedToOtherLearner: 'l\'email correspond à un autre utilisateur',
+    missingOrIncorrectSuffix: 'le suffixe email est manquant ou son format est incorrect',
+    incorrectCountryCode: 'le format de l\'indicatif téléphonique est incorrect',
+    incorrectPhone: 'le format du téléphone est incorrect',
   },
 };

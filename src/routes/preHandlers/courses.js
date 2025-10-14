@@ -893,19 +893,46 @@ exports.authorizeUploadCSV = async (req) => {
   }
   const formattedLearnerList = [];
   const emailsList = compact(learnerList.map(l => l.email));
-  if (emailsList.length !== [...new Set(emailsList)].length) throw Boom.badData();
+  if (emailsList.length !== [...new Set(emailsList)].length) {
+    const error = Boom.badData();
+    error.output.payload.errorsByTrainee = { Emails: [translate[language].emailDuplicates] };
+    throw error;
+  }
 
   const nameList = learnerList.map(l => `${l.firstname} ${l.lastname}`);
-  if (nameList.length !== [...new Set(nameList)].length) throw Boom.badData();
+  if (nameList.length !== [...new Set(nameList)].length) {
+    const error = Boom.badData();
+    error.output.payload.errorsByTrainee = { Apprenants: [translate[language].nameDuplicates] };
+    throw error;
+  }
 
+  const errorsByTrainee = {};
+  let i = 1;
   for (const learner of learnerList) {
-    if (!learner.company) throw Boom.badData();
-    const company = await Company.findOne({ name: learner.company }, { _id: 1 }).lean();
+    let learnerName = `Apprenant ${i}`;
+    if (!(learner.firstname && learner.lastname)) {
+      errorsByTrainee[`Apprenant ${i}`] = [translate[language].incorrectName];
+    } else {
+      const { firstname, lastname } = learner;
+      learnerName = UtilsHelper.formatIdentity({ firstname, lastname }, 'FL');
+    }
 
-    if (!company) throw Boom.notFound();
-    if (!UtilsHelper.doesArrayIncludeId(course.companies, company._id)) throw Boom.badData();
-
-    if (!(learner.firstname && learner.lastname)) throw Boom.badData();
+    let companyId = null;
+    if (!learner.company) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingCompany);
+      else errorsByTrainee[learnerName] = [translate[language].missingCompany];
+    } else {
+      const company = await Company.findOne({ name: learner.company }, { _id: 1 }).lean();
+      companyId = get(company, '_id');
+      if (!company) {
+        if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].unknownCompany);
+        else errorsByTrainee[learnerName] = [translate[language].unknownCompany];
+      } else if (!UtilsHelper.doesArrayIncludeId(course.companies, companyId)) {
+        if (errorsByTrainee[learnerName]) {
+          errorsByTrainee[learnerName].push(translate[language].notRegisteredToCourseCompany);
+        } else errorsByTrainee[learnerName] = [translate[language].notRegisteredToCourseCompany];
+      }
+    }
     const identityUser = await User
       .findOne({ 'identity.firstname': learner.firstname, 'identity.lastname': learner.lastname }, { _id: 1, local: 1 })
       .lean();
@@ -915,29 +942,59 @@ exports.authorizeUploadCSV = async (req) => {
         .lean();
       if (userCompany) {
         const sameEmail = identityUser.local.email === learner.email;
-        if (sameEmail && !UtilsHelper.areObjectIdsEquals(company._id, userCompany.company)) throw Boom.badData();
-        else if (!sameEmail && UtilsHelper.areObjectIdsEquals(company._id, userCompany.company)) throw Boom.badData();
+        if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
+          if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerCompany);
+          else errorsByTrainee[learnerName] = [translate[language].wrongLearnerCompany];
+        } else if (!sameEmail && UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
+          if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerEmail);
+          else errorsByTrainee[learnerName] = [translate[language].wrongLearnerEmail];
+        }
       }
     }
     if (learner.email) {
-      if (!learner.email.match(EMAIL_VALIDATION)) throw Boom.badData();
+      if (!learner.email.match(EMAIL_VALIDATION)) {
+        if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectEmail);
+        else errorsByTrainee[learnerName] = [translate[language].incorrectEmail];
+      }
       const emailUser = await User.findOne({ 'local.email': learner.email }, { _id: 1 }).lean();
-      if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, identityUser._id)) throw Boom.badData();
-    } else if (!learner.suffix || !learner.suffix.match(SUFFIX_EMAIL_VALIDATION)) throw Boom.badData();
-    if (learner.countryCode && !learner.countryCode.match(COUNTRY_CODE_VALIDATION)) throw Boom.badData();
-    if (learner.phone && !learner.phone.match(PHONE_VALIDATION)) throw Boom.badData();
+      if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, get(identityUser, '_id'))) {
+        if (errorsByTrainee[learnerName]) {
+          errorsByTrainee[learnerName].push(translate[language].emailLinkedToOtherLearner);
+        } else errorsByTrainee[learnerName] = [translate[language].emailLinkedToOtherLearner];
+      }
+    } else if (!learner.suffix || !learner.suffix.match(SUFFIX_EMAIL_VALIDATION)) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingOrIncorrectSuffix);
+      else errorsByTrainee[learnerName] = [translate[language].missingOrIncorrectSuffix];
+    }
+    if (learner.countryCode && !learner.countryCode.match(COUNTRY_CODE_VALIDATION)) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectCountryCode);
+      else errorsByTrainee[learnerName] = [translate[language].incorrectCountryCode];
+    }
 
-    formattedLearnerList.push({
-      ...identityUser && { _id: identityUser._id },
-      'identity.firstname': learner.firstname,
-      'identity.lastname': learner.lastname,
-      'local.email': learner.email ||
-      `${learner.firstname.toLowerCase().replace(/[^a-z]/g, '')}.`
-        + `${learner.lastname.toLowerCase().replace(/[^a-z]/g, '')}${learner.suffix}`,
-      ...learner.phone && { 'contact.phone': learner.phone },
-      ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
-      company: company._id,
-    });
+    if (learner.phone && !learner.phone.match(PHONE_VALIDATION)) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectPhone);
+      else errorsByTrainee[learnerName] = [translate[language].incorrectPhone];
+    }
+
+    if (!errorsByTrainee[learnerName]) {
+      formattedLearnerList.push({
+        ...identityUser && { _id: identityUser._id },
+        'identity.firstname': learner.firstname,
+        'identity.lastname': learner.lastname,
+        'local.email': learner.email ||
+        `${learner.firstname.toLowerCase().replace(/[^a-z]/g, '')}.`
+          + `${learner.lastname.toLowerCase().replace(/[^a-z]/g, '')}${learner.suffix}`,
+        ...learner.phone && { 'contact.phone': learner.phone },
+        ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
+        company: companyId,
+      });
+    }
+    i += 1;
+  }
+  if (Object.keys(errorsByTrainee).length) {
+    const error = Boom.badData();
+    error.output.payload.errorsByTrainee = errorsByTrainee;
+    throw error;
   }
 
   return formattedLearnerList;
