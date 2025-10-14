@@ -240,7 +240,7 @@ describe('list', () => {
         xmlSEPAFileInfos: { name: 'lot de prelevements 1' },
       },
     ];
-    find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await CoursePaymentsHelper.list({ status: RECEIVED });
 
@@ -268,6 +268,7 @@ describe('list', () => {
           args: [{ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } }],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'lean', args: [] },
       ]
     );

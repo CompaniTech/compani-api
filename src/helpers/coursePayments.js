@@ -37,6 +37,7 @@ exports.list = async query => CoursePayment
   })
   .populate({ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } })
   .setOptions({ isVendorUser: true })
+  .sort({ updatedAt: -1 })
   .lean();
 
 exports.updateList = async payload => CoursePayment
