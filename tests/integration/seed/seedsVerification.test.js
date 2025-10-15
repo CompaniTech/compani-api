@@ -1419,6 +1419,7 @@ describe('SEEDS VERIFICATION', () => {
             .find()
             .populate({ path: 'courseBill', select: 'companies billedAt', transform })
             .populate({ path: 'companies', transform })
+            .populate({ path: 'xmlSEPAFileInfos', options: { isVendorUser: true } })
             .setOptions({ allCompanies: true })
             .lean();
         });
@@ -1471,15 +1472,11 @@ describe('SEEDS VERIFICATION', () => {
           expect(everyNatureIsConsistent).toBeTruthy();
         });
 
-        it('should pass if every payment with status XML_GENERATED is linked to a xmlSEPAFileInfos', async () => {
-          const xmlGeneratedPaymentIds = coursePaymentList
-            .filter(payment => payment.status === XML_GENERATED)
-            .map(p => p._id);
+        it('should pass if every payment with status XML_GENERATED is linked to a xmlSEPAFileInfos #tag', async () => {
+          const xmlGeneratedPayments = coursePaymentList.filter(payment => payment.status === XML_GENERATED);
+          const everyPaymentIsLinkedToXML = xmlGeneratedPayments.every(p => get(p, 'xmlSEPAFileInfos.name', ''));
 
-          for (const paymentId of xmlGeneratedPaymentIds) {
-            const xmlSEPAFileInfosExist = await XmlSEPAFileInfos.countDocuments({ coursePayments: paymentId });
-            expect(xmlSEPAFileInfosExist).toEqual(1);
-          }
+          expect(everyPaymentIsLinkedToXML).toBeTruthy();
         });
       });
 
