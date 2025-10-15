@@ -6282,8 +6282,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
     });
 
     const missingParams = [
-      { key: 'firstname', errorMessage: 'le nom de l\'apprenant est incorrect' },
-      { key: 'lastname', errorMessage: 'le nom de l\'apprenant est incorrect' },
+      { key: 'firstname', errorMessage: 'le nom de la personne est incorrect' },
+      { key: 'lastname', errorMessage: 'le nom de la personne est incorrect' },
       { key: 'company', errorMessage: 'la structure est manquante' },
     ];
 
@@ -6534,7 +6534,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByTrainee)[0])
-        .toEqual(['l\'apprenant existe déjà avec un autre email']);
+        .toEqual(['la personne existe déjà avec un autre email']);
     });
 
     it('should return 422 if trainee exist but not in course company', async () => {
@@ -6562,7 +6562,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByTrainee)[0])
-        .toEqual(['l\'apprenant appartient à une autre structure que celle renseignée']);
+        .toEqual(['la personne appartient à une autre structure que celle renseignée']);
     });
 
     it('should return 422 if email has wrong format', async () => {

@@ -902,16 +902,16 @@ exports.authorizeUploadCSV = async (req) => {
   const nameList = learnerList.map(l => `${l.firstname} ${l.lastname}`);
   if (nameList.length !== [...new Set(nameList)].length) {
     const error = Boom.badData();
-    error.output.payload.errorsByTrainee = { Apprenants: [translate[language].nameDuplicates] };
+    error.output.payload.errorsByTrainee = { Stagiaires: [translate[language].nameDuplicates] };
     throw error;
   }
 
   const errorsByTrainee = {};
   let i = 1;
   for (const learner of learnerList) {
-    let learnerName = `Apprenant ${i}`;
+    let learnerName = `Stagiaire ${i}`;
     if (!(learner.firstname && learner.lastname)) {
-      errorsByTrainee[`Apprenant ${i}`] = [translate[language].incorrectName];
+      errorsByTrainee[`Stagiaire ${i}`] = [translate[language].incorrectName];
     } else {
       const { firstname, lastname } = learner;
       learnerName = UtilsHelper.formatIdentity({ firstname, lastname }, 'FL');
@@ -929,8 +929,8 @@ exports.authorizeUploadCSV = async (req) => {
         else errorsByTrainee[learnerName] = [translate[language].unknownCompany];
       } else if (!UtilsHelper.doesArrayIncludeId(course.companies, companyId)) {
         if (errorsByTrainee[learnerName]) {
-          errorsByTrainee[learnerName].push(translate[language].notRegisteredToCourseCompany);
-        } else errorsByTrainee[learnerName] = [translate[language].notRegisteredToCourseCompany];
+          errorsByTrainee[learnerName].push(translate[language].companyNotRegisteredToCourse);
+        } else errorsByTrainee[learnerName] = [translate[language].companyNotRegisteredToCourse];
       }
     }
     const identityUser = await User
