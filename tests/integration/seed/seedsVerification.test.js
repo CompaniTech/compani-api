@@ -1472,7 +1472,7 @@ describe('SEEDS VERIFICATION', () => {
           expect(everyNatureIsConsistent).toBeTruthy();
         });
 
-        it('should pass if every payment with status XML_GENERATED is linked to a xmlSEPAFileInfos #tag', async () => {
+        it('should pass if every payment with status XML_GENERATED is linked to a xmlSEPAFileInfos', async () => {
           const xmlGeneratedPayments = coursePaymentList.filter(payment => payment.status === XML_GENERATED);
           const everyPaymentIsLinkedToXML = xmlGeneratedPayments.every(p => get(p, 'xmlSEPAFileInfos.name', ''));
 
