@@ -3,10 +3,15 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 
-const { create, update, list } = require('../controllers/coursePaymentController');
-const { authorizeCoursePaymentCreation, authorizeCoursePaymentUpdate } = require('./preHandlers/coursePayments');
+const { create, update, list, updatePaymentList } = require('../controllers/coursePaymentController');
+const {
+  authorizeCoursePaymentCreation,
+  authorizeCoursePaymentUpdate,
+  authorizeCoursePaymentListEdition,
+} = require('./preHandlers/coursePayments');
 const { PAYMENT_NATURES } = require('../models/Payment');
 const { COURSE_PAYMENT_TYPES, COURSE_PAYMENT_STATUS } = require('../models/CoursePayment');
+const { XML_GENERATED } = require('../helpers/constants');
 const { requiredDateToISOString } = require('./validations/utils');
 
 exports.plugin = {
@@ -68,6 +73,22 @@ exports.plugin = {
         },
       },
       handler: list,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/list-edition',
+      options: {
+        auth: { scope: ['coursebills:edit'] },
+        validate: {
+          payload: Joi.object({
+            _ids: Joi.array().items(Joi.objectId()).min(1).required(),
+            status: Joi.string().valid(...COURSE_PAYMENT_STATUS.filter(s => s !== XML_GENERATED)).required(),
+          }),
+        },
+        pre: [{ method: authorizeCoursePaymentListEdition }],
+      },
+      handler: updatePaymentList,
     });
   },
 };

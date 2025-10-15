@@ -37,4 +37,15 @@ const list = async (req) => {
   }
 };
 
-module.exports = { create, update, list };
+const updatePaymentList = async (req) => {
+  try {
+    await CoursePaymentsHelper.updateList(req.payload);
+
+    return { message: translate[language].coursePaymentsUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { create, update, list, updatePaymentList };

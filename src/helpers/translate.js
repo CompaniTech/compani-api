@@ -169,6 +169,10 @@ module.exports = {
     courseBillingItemsNotFound: 'Course billing items not found.',
     courseBillingItemCreated: 'Course billing item created.',
     courseBillingItemDeleted: 'Course billing item deleted.',
+    /* Course payments */
+    coursePaymentsUpdated: 'Course payments updated.',
+    coursePaymentStatusError: 'Forbidden : payment is linked to a xml file and can\'t be changed to "Pending" status.',
+    coursePaymentNotLinkedToXml: 'Forbidden : can\'t edit to XML_GENERATED.',
     /* Course slots */
     courseSlotCreated: 'Course slot created.',
     courseSlotUpdated: 'Course slot updated.',
@@ -422,6 +426,12 @@ module.exports = {
     courseBillingItemsNotFound: 'Articles de facturation non trouvés.',
     courseBillingItemCreated: 'Article de facturation créé.',
     courseBillingItemDeleted: 'Article de facturation supprimé.',
+    /* Course payments */
+    coursePaymentsUpdated: 'Paiements mis à jour.',
+    coursePaymentStatusError: 'Impossible : un paiement est associé à un fichier XML et ne peut être passé en'
+      + ' statut "En attente".',
+    coursePaymentNotLinkedToXml: 'Impossible de passer le statut en "Fichier XML associé" car un paiement n\'est pas'
+      + ' associé à un fichier XML.',
     /* Course slots */
     courseSlotCreated: 'Créneau de formation créé.',
     courseSlotUpdated: 'Créneau de formation mis à jour.',

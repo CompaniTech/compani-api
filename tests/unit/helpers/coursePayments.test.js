@@ -240,7 +240,7 @@ describe('list', () => {
         xmlSEPAFileInfos: { name: 'lot de prelevements 1' },
       },
     ];
-    find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await CoursePaymentsHelper.list({ status: RECEIVED });
 
@@ -268,8 +268,35 @@ describe('list', () => {
           args: [{ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } }],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'lean', args: [] },
       ]
+    );
+  });
+});
+
+describe('updateList', () => {
+  let updateMany;
+
+  beforeEach(() => {
+    updateMany = sinon.stub(CoursePayment, 'updateMany');
+  });
+
+  afterEach(() => {
+    updateMany.restore();
+  });
+
+  it('should update payments', async () => {
+    const payload = {
+      _ids: [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()],
+      status: RECEIVED,
+    };
+
+    await CoursePaymentsHelper.updateList(payload);
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: payload._ids } },
+      { $set: { status: payload.status } }
     );
   });
 });

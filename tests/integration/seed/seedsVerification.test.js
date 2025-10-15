@@ -100,6 +100,7 @@ const {
   SINGLE,
   XML_GENERATED,
   DIRECT_DEBIT,
+  RECEIVED,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -1418,6 +1419,7 @@ describe('SEEDS VERIFICATION', () => {
             .find()
             .populate({ path: 'courseBill', select: 'companies billedAt', transform })
             .populate({ path: 'companies', transform })
+            .populate({ path: 'xmlSEPAFileInfos', options: { isVendorUser: true } })
             .setOptions({ allCompanies: true })
             .lean();
         });
@@ -1468,6 +1470,13 @@ describe('SEEDS VERIFICATION', () => {
             ));
 
           expect(everyNatureIsConsistent).toBeTruthy();
+        });
+
+        it('should pass if every payment with status XML_GENERATED is linked to a xmlSEPAFileInfos', async () => {
+          const xmlGeneratedPayments = coursePaymentList.filter(payment => payment.status === XML_GENERATED);
+          const everyPaymentIsLinkedToXML = xmlGeneratedPayments.every(p => get(p, 'xmlSEPAFileInfos.name', ''));
+
+          expect(everyPaymentIsLinkedToXML).toBeTruthy();
         });
       });
 
@@ -2681,9 +2690,11 @@ describe('SEEDS VERIFICATION', () => {
             .toEqual(xmlSEPAFileInfosList.flatMap(fileInfos => fileInfos.coursePayments).length);
         });
 
-        it('should pass if every xmlSEPAFileInfos\'s payment\'s status is XML_GENERATED', () => {
+        it('should pass if every xmlSEPAFileInfos\'s payment\'s status is XML_GENERATED or RECEIVED', () => {
           const everyPaymentHasGoodStatus = xmlSEPAFileInfosList
-            .every(fileInfos => fileInfos.coursePayments.every(payment => payment.status === XML_GENERATED));
+            .every(fileInfos => fileInfos.coursePayments
+              .every(payment => [XML_GENERATED, RECEIVED].includes(payment.status))
+            );
 
           expect(everyPaymentHasGoodStatus).toBeTruthy();
         });

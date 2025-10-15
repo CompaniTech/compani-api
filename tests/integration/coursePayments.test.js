@@ -6,7 +6,7 @@ const { courseBillsList, coursePaymentsList, populateDB } = require('./seed/cour
 
 const { getToken } = require('./helpers/authentication');
 const { authCompany } = require('../seed/authCompaniesSeed');
-const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING, RECEIVED } = require('../../src/helpers/constants');
+const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING, RECEIVED, XML_GENERATED } = require('../../src/helpers/constants');
 const CoursePayment = require('../../src/models/CoursePayment');
 const CoursePaymentNumber = require('../../src/models/CoursePaymentNumber');
 
@@ -43,10 +43,10 @@ describe('COURSE PAYMENTS ROUTES - POST /coursepayments', () => {
       expect(paymentResponse.statusCode).toBe(200);
 
       const newPayment = await CoursePayment
-        .countDocuments({ ...payload, number: 'REG-00003', companies: [authCompany._id], status: PENDING });
+        .countDocuments({ ...payload, number: 'REG-00006', companies: [authCompany._id], status: PENDING });
       const paymentNumber = await CoursePaymentNumber.findOne({ nature: PAYMENT }).lean();
       expect(newPayment).toBeTruthy();
-      expect(paymentNumber.seq).toBe(3);
+      expect(paymentNumber.seq).toBe(6);
 
       const refundResponse = await app.inject({
         method: 'POST',
@@ -175,7 +175,7 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
       { key: 'netInclTaxes', value: -200 },
       { key: 'netInclTaxes', value: '200€' },
       { key: 'type', value: 'cesu' },
-      { key: 'status', value: 'wrongStatus' },
+      { key: 'status', value: XML_GENERATED },
     ];
     wrongValues.forEach((param) => {
       it(`should return a 400 if '${param.key}' has wrong value`, async () => {
@@ -201,6 +201,28 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
 
         expect(res.statusCode).toBe(400);
       });
+    });
+
+    it('should return 400 if payment is linked to a XML file and PENDING is in payload', async () => {
+      const paymentResponse = await app.inject({
+        method: 'PUT',
+        url: `/coursepayments/${coursePaymentsList[3]._id}`,
+        payload: { status: PENDING },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(paymentResponse.statusCode).toBe(400);
+    });
+
+    it('should return 400 if payment is not linked to a XML file and XML_GENERATED is in payload', async () => {
+      const paymentResponse = await app.inject({
+        method: 'PUT',
+        url: `/coursepayments/${coursePaymentsList[0]._id}`,
+        payload: { status: XML_GENERATED },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(paymentResponse.statusCode).toBe(400);
     });
 
     it('should return a 404 if payment doesn\'t exist', async () => {
@@ -256,7 +278,7 @@ describe('COURSE PAYMENTS ROUTES - GET /coursepayments', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.coursePayments.length).toEqual(1);
+      expect(response.result.data.coursePayments.length).toEqual(2);
     });
   });
 
@@ -273,6 +295,90 @@ describe('COURSE PAYMENTS ROUTES - GET /coursepayments', () => {
           method: 'GET',
           url: `/coursepayments?status=${PENDING}`,
           headers: { Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('COURSE PAYMENTs ROUTES - POST /coursepayments/list-edition', () => {
+  let authToken;
+  beforeEach(populateDB);
+  const payload = { _ids: [coursePaymentsList[0]._id, coursePaymentsList[2]._id], status: RECEIVED };
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should edit payments', async () => {
+      const receivedPaymentsBeforeUpdate = await CoursePayment.countDocuments({ status: RECEIVED });
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursepayments/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const receivedPaymentsAfterUpdate = await CoursePayment.countDocuments({ status: RECEIVED });
+      expect(receivedPaymentsAfterUpdate).toBe(receivedPaymentsBeforeUpdate + 2);
+    });
+
+    it('should return 400 if status is XML_GENERATED', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursepayments/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payload, status: XML_GENERATED },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if one payment is linked to a XML file', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursepayments/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: {
+          _ids: [coursePaymentsList[0]._id, coursePaymentsList[2]._id, coursePaymentsList[4]._id],
+          status: PENDING,
+        },
+      });
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if one course payment doesn\'t exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursepayments/list-edition',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { _ids: [coursePaymentsList[0]._id, coursePaymentsList[2]._id, new ObjectId()], status: RECEIVED },
+
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursepayments/list-edition',
+          headers: { Cookie: `alenvi_token=${authToken}` },
+          payload,
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
