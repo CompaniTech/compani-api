@@ -6,6 +6,7 @@ const { ObjectId } = require('mongodb');
 const { isObjectIdOrHexString } = require('mongoose');
 const Intl = require('intl');
 const crypto = require('crypto');
+const { diacriticsMap } = require('../data/diacritics');
 const { CIVILITY_LIST, SHORT_DURATION_H_MM, HHhMM, SECOND } = require('./constants');
 const DatesHelper = require('./dates');
 const { CompaniDate } = require('./dates/companiDates');
@@ -269,6 +270,8 @@ exports.formatRumNumber = (companyPrefixNumber, prefix, seq) => {
 
   return `R-${companyPrefixNumber}${prefix}${seq.toString().padStart(5, '0')}${random}`;
 };
+
+exports.removeDiacritics = str => str.replace(/[^\u0020-\u007E]/g, a => diacriticsMap[a] || a);
 
 exports.parseCsv = file => new Promise((resolve, reject) => {
   let leftover = '';

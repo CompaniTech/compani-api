@@ -942,7 +942,7 @@ exports.authorizeUploadCSV = async (req) => {
         .findOne({ user: identityUser._id, endDate: { $exists: false } }, { company: 1 })
         .lean();
 
-      sameEmail = identityUser.local.email === learner.email;
+      sameEmail = identityUser.local.email === learner.email.toLowerCase();
       if (userCompany) {
         if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
           if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerCompany);
@@ -973,7 +973,7 @@ exports.authorizeUploadCSV = async (req) => {
       else errorsByTrainee[learnerName] = [translate[language].incorrectCountryCode];
     }
 
-    if (learner.phone && !learner.phone.match(PHONE_VALIDATION)) {
+    if (learner.phone && !learner.phone.replace(/[\s\-.]/g, '').match(PHONE_VALIDATION)) {
       if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectPhone);
       else errorsByTrainee[learnerName] = [translate[language].incorrectPhone];
     }
@@ -985,9 +985,10 @@ exports.authorizeUploadCSV = async (req) => {
         'identity.lastname': learner.lastname,
         'local.email': learner.email ||
         (
-          `${learner.firstname.replace(/[^a-z]/gi, '')}.${learner.lastname.replace(/[^a-z]/gi, '')}${learner.suffix}`
+          `${UtilsHelper.removeDiacritics(learner.firstname).replace(/[^a-z]/gi, '')}`
+          + `.${UtilsHelper.removeDiacritics(learner.lastname).replace(/[^a-z]/gi, '')}${learner.suffix}`
         ).toLowerCase(),
-        ...learner.phone && { 'contact.phone': learner.phone },
+        ...learner.phone && { 'contact.phone': learner.phone.replace(/[\s\-.]/g, '') },
         ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
         company: companyId,
       });

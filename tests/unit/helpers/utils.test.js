@@ -807,3 +807,11 @@ describe('parseCsv', () => {
     }
   });
 });
+
+describe('removeDiacritics', () => {
+  it('should remove diacritics from string', () => {
+    const result = UtilsHelper.removeDiacritics('Aurélie et François où êtes-vous ?');
+
+    expect(result).toBe('Aurelie et Francois ou etes-vous ?');
+  });
+});
