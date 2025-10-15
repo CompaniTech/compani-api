@@ -1470,6 +1470,17 @@ describe('SEEDS VERIFICATION', () => {
 
           expect(everyNatureIsConsistent).toBeTruthy();
         });
+
+        it('should pass if every payment with status XML_GENERATED is linked to a xmlSEPAFileInfos', async () => {
+          const xmlGeneratedPaymentIds = coursePaymentList
+            .filter(payment => payment.status === XML_GENERATED)
+            .map(p => p._id);
+
+          for (const paymentId of xmlGeneratedPaymentIds) {
+            const xmlSEPAFileInfosExist = await XmlSEPAFileInfos.countDocuments({ coursePayments: paymentId })
+            expect(xmlSEPAFileInfosExist).toEqual(1);
+          }
+        });
       });
 
       describe('Collection CoursePaymentNumber', () => {

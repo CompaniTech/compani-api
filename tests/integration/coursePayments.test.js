@@ -327,7 +327,7 @@ describe('COURSE PAYMENTs ROUTES - POST /coursepayments/list-edition', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return 400 if one payment one payment is linked to a XML file', async () => {
+    it('should return 400 if one payment is linked to a XML file', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursepayments/list-edition',

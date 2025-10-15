@@ -425,8 +425,8 @@ module.exports = {
     courseBillingItemDeleted: 'Article de facturation supprimé.',
     /* Course payments */
     coursePaymentsUpdated: 'Paiements mis à jour.',
-    coursePaymentStatusError: 'Impossible : le paiement est associé à un fichier xml et ne peut qu\'être passé en'
-      + ' statut Reçu.',
+    coursePaymentStatusError: 'Impossible : le paiement est associé à un fichier XML et ne peut qu\'être passé en'
+      + ' statut "Reçu".',
     /* Course slots */
     courseSlotCreated: 'Créneau de formation créé.',
     courseSlotUpdated: 'Créneau de formation mis à jour.',
