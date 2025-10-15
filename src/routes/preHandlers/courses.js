@@ -936,12 +936,14 @@ exports.authorizeUploadCSV = async (req) => {
     const identityUser = await User
       .findOne({ 'identity.firstname': learner.firstname, 'identity.lastname': learner.lastname }, { _id: 1, local: 1 })
       .lean();
+    let sameEmail = false;
     if (identityUser) {
       const userCompany = await UserCompany
         .findOne({ user: identityUser._id, endDate: { $exists: false } }, { company: 1 })
         .lean();
+
+      sameEmail = identityUser.local.email === learner.email;
       if (userCompany) {
-        const sameEmail = identityUser.local.email === learner.email;
         if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
           if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerCompany);
           else errorsByTrainee[learnerName] = [translate[language].wrongLearnerCompany];
@@ -978,12 +980,13 @@ exports.authorizeUploadCSV = async (req) => {
 
     if (!errorsByTrainee[learnerName]) {
       formattedLearnerList.push({
-        ...identityUser && { _id: identityUser._id },
+        ...identityUser && sameEmail && { _id: identityUser._id },
         'identity.firstname': learner.firstname,
         'identity.lastname': learner.lastname,
         'local.email': learner.email ||
-        `${learner.firstname.toLowerCase().replace(/[^a-z]/g, '')}.`
-          + `${learner.lastname.toLowerCase().replace(/[^a-z]/g, '')}${learner.suffix}`,
+        (
+          `${learner.firstname.replace(/[^a-z]/gi, '')}.${learner.lastname.replace(/[^a-z]/gi, '')}${learner.suffix}`
+        ).toLowerCase(),
         ...learner.phone && { 'contact.phone': learner.phone },
         ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
         company: companyId,

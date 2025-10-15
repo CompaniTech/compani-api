@@ -5,8 +5,8 @@ const SIRET_VALIDATION = /^\d{14}$/;
 const IBAN_VALIDATION = /^FR\d{12}[0-9A-Z]{11}\d{2}$/;
 const BIC_VALIDATION = /^[A-Z]{6}[0-9A-Z]{2}([0-9A-Z]{3})?$/;
 const ICS_VALIDATION = /^FR[0-9A-Z]{11}$/;
-const EMAIL_VALIDATION = /^[\w-.+]+@([\w-]+\.)+[\w-]{2,4}$/;
-const SUFFIX_EMAIL_VALIDATION = /^@([\w-]+\.)+[\w-]{2,4}$/;
+const EMAIL_VALIDATION = /^[\w-.+]+@([\w-]+\.)+[\w-]{2,3}$/;
+const SUFFIX_EMAIL_VALIDATION = /^@([\w-]+\.)+[\w-]{2,3}$/;
 
 module.exports = {
   MONTH_VALIDATION,
