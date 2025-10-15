@@ -1477,7 +1477,7 @@ describe('SEEDS VERIFICATION', () => {
             .map(p => p._id);
 
           for (const paymentId of xmlGeneratedPaymentIds) {
-            const xmlSEPAFileInfosExist = await XmlSEPAFileInfos.countDocuments({ coursePayments: paymentId })
+            const xmlSEPAFileInfosExist = await XmlSEPAFileInfos.countDocuments({ coursePayments: paymentId });
             expect(xmlSEPAFileInfosExist).toEqual(1);
           }
         });

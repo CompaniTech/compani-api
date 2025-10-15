@@ -2,7 +2,7 @@ const Boom = require('@hapi/boom');
 const CourseBill = require('../../models/CourseBill');
 const CoursePayment = require('../../models/CoursePayment');
 const XmlSEPAFileInfos = require('../../models/XmlSEPAFileInfos');
-const { RECEIVED } = require('../../helpers/constants');
+const { RECEIVED, XML_GENERATED } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 
 const { language } = translate;
@@ -28,8 +28,12 @@ exports.authorizeCoursePaymentUpdate = async (req) => {
     if (!coursePaymentExists) throw Boom.notFound();
 
     const coursePaymentIsLinkedToXMLFile = await XmlSEPAFileInfos.countDocuments({ coursePayments: req.params._id });
-    if (coursePaymentIsLinkedToXMLFile && req.payload.status !== RECEIVED) {
-      throw Boom.badRequest(translate[language].coursePaymentStatusError);
+    if (coursePaymentIsLinkedToXMLFile) {
+      if (![RECEIVED, XML_GENERATED].includes(req.payload.status)) {
+        throw Boom.badRequest(translate[language].coursePaymentStatusError);
+      }
+    } else if (req.payload.status === XML_GENERATED) {
+      throw Boom.badRequest(translate[language].coursePaymentNotLinkedToXml);
     }
 
     return null;

@@ -214,6 +214,17 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
       expect(paymentResponse.statusCode).toBe(400);
     });
 
+    it('should return 400 if payment is not linked to a XML file and XML_GENERATED is in payload', async () => {
+      const paymentResponse = await app.inject({
+        method: 'PUT',
+        url: `/coursepayments/${coursePaymentsList[0]._id}`,
+        payload: { status: XML_GENERATED },
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(paymentResponse.statusCode).toBe(400);
+    });
+
     it('should return a 404 if payment doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'PUT',

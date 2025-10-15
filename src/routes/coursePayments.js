@@ -47,7 +47,7 @@ exports.plugin = {
             netInclTaxes: Joi.number().min(0).required(),
             type: Joi.string().valid(...COURSE_PAYMENT_TYPES).required(),
             date: requiredDateToISOString,
-            status: Joi.string().valid(...COURSE_PAYMENT_STATUS.filter(s => s !== XML_GENERATED)).required(),
+            status: Joi.string().valid(...COURSE_PAYMENT_STATUS).required(),
           }),
         },
         pre: [{ method: authorizeCoursePaymentUpdate }],
