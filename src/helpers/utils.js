@@ -131,6 +131,11 @@ exports.capitalize = (s) => {
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
+exports.uncapitalize = (s) => {
+  if (typeof s !== 'string') return '';
+  return s.charAt(0).toLowerCase() + s.slice(1);
+};
+
 exports.formatIdentity = (identity, format) => {
   if (!identity) return '';
   const formatLower = format.toLowerCase();
@@ -290,7 +295,7 @@ exports.parseCsv = file => new Promise((resolve, reject) => {
       const values = line.split(';').map(v => v.trim());
 
       if (!headers.length) {
-        headers = values;
+        headers = values.map(v => exports.uncapitalize(v));
       } else {
         const obj = {};
         headers.forEach((header, i) => {

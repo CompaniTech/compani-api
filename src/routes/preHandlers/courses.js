@@ -973,7 +973,8 @@ exports.authorizeUploadCSV = async (req) => {
       else errorsByTrainee[learnerName] = [translate[language].incorrectCountryCode];
     }
 
-    if (learner.phone && !learner.phone.replace(/[\s\-.]/g, '').match(PHONE_VALIDATION)) {
+    const formattedPhone = learner.phone.replace(/[\s\-.]/g, '');
+    if (learner.phone && !formattedPhone.match(PHONE_VALIDATION)) {
       if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectPhone);
       else errorsByTrainee[learnerName] = [translate[language].incorrectPhone];
     }
@@ -988,7 +989,7 @@ exports.authorizeUploadCSV = async (req) => {
           `${UtilsHelper.removeDiacritics(learner.firstname).replace(/[^a-z]/gi, '')}`
           + `.${UtilsHelper.removeDiacritics(learner.lastname).replace(/[^a-z]/gi, '')}${learner.suffix}`
         ).toLowerCase(),
-        ...learner.phone && { 'contact.phone': learner.phone.replace(/[\s\-.]/g, '') },
+        ...learner.phone && { 'contact.phone': formattedPhone },
         ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
         company: companyId,
       });

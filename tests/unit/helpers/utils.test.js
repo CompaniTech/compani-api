@@ -753,7 +753,7 @@ describe('formatRumNumber', () => {
 describe('parseCsv', () => {
   it('should parse CSV content into an array of objects', async () => {
     const csvContent =
-      `firstname;lastname;email;phone;countryCode;company;suffix
+      `Firstname;Lastname;email;phone;countryCode;company;suffix
       Jean;Leclerc;jean@compani.fr;0609876543;;Alenvi Paris - Home SAS;
       Pierre;Lalouche;;0609876544;;Alenvi Paris - Home SAS;@compani.fr
       Tom;Leclerc;tom@compani.fr;0609876545;;Alenvi Paris - Home SAS;`;
@@ -813,5 +813,21 @@ describe('removeDiacritics', () => {
     const result = UtilsHelper.removeDiacritics('Aurélie et François où êtes-vous ?');
 
     expect(result).toBe('Aurelie et Francois ou etes-vous ?');
+  });
+});
+
+describe('capitalize', () => {
+  it('should turn first letter into upper case', () => {
+    const result = UtilsHelper.capitalize('title');
+
+    expect(result).toBe('Title');
+  });
+});
+
+describe('uncapitalize', () => {
+  it('should turn first letter into lower case', () => {
+    const result = UtilsHelper.uncapitalize('Title');
+
+    expect(result).toBe('title');
   });
 });
