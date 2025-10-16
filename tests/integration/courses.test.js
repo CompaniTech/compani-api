@@ -6543,8 +6543,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 
       parseCSV.returns([
         {
-          firstname: 'Chloe',
-          lastname: 'HOLDING',
+          firstname: 'CHLOE',
+          lastname: 'Holding',
           email: 'holding@other.io',
           countryCode: '',
           phone: '0687654321',
