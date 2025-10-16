@@ -332,6 +332,17 @@ const removeTutor = async (req) => {
   }
 };
 
+const uploadCSV = async (req) => {
+  try {
+    await CoursesHelper.uploadCSV(req.params._id, req.pre.learnerList, req.auth.credentials);
+
+    return { message: translate[language].courseTraineeAdded };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   list,
   create,
@@ -358,4 +369,5 @@ module.exports = {
   removeTrainer,
   addTutor,
   removeTutor,
+  uploadCSV,
 };

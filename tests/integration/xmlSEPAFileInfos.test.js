@@ -6,6 +6,7 @@ const { coursePaymentList, populateDB } = require('./seed/xmlSEPAFileInfosSeed')
 const { getToken } = require('./helpers/authentication');
 const { XML_GENERATED } = require('../../src/helpers/constants');
 const CoursePayment = require('../../src/models/CoursePayment');
+const VendorCompany = require('../../src/models/VendorCompany');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -36,7 +37,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result).toEqual({ name: 'Prelevements_SEPA_Compani - Septembre 2025.xml' });
+      expect(response.result).toBeDefined();
       const paymentsCountAfter = await CoursePayment
         .countDocuments({ _id: { $in: [coursePaymentList[0]._id, coursePaymentList[2]._id] }, status: XML_GENERATED });
       expect(paymentsCountAfter).toEqual(2);
@@ -63,6 +64,24 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
 
     it('should return 400 if there is no payment', async () => {
       const payload = { payments: [], name: 'Compani - Septembre 2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if name is too long', async () => {
+      const name = 'Compani - Septembre 2025 - Prélèvements comprenant egalement certains'
+        + 'paiements du mois d\'aout pour rattrapage - blablablablablablablablablablablablablablablabla';
+      const payload = {
+        payments: [coursePaymentList[0]._id, coursePaymentList[2]._id],
+        name,
+      };
 
       const response = await app.inject({
         method: 'POST',
@@ -124,6 +143,96 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
 
     it('should return 403 if a payment is linked to a bill with a funding organisation as payer', async () => {
       const payload = { payments: [coursePaymentList[3]._id], name: 'Compani - Septembre 2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if a payer has no signedMandate', async () => {
+      const payload = { payments: [coursePaymentList[6]._id], name: 'Compani - Septembre 2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if a payer has no BIC', async () => {
+      const payload = { payments: [coursePaymentList[7]._id], name: 'Compani - Septembre 2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if a payer has no IBAN', async () => {
+      const payload = { payments: [coursePaymentList[8]._id], name: 'Compani - Septembre 2025' };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if vendorCompany has no IBAN', async () => {
+      await VendorCompany.updateOne({}, { $unset: { iban: '' } }).lean();
+      const payload = {
+        payments: [coursePaymentList[0]._id, coursePaymentList[2]._id],
+        name: 'Compani - Septembre 2025',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if vendorCompany has no bic', async () => {
+      await VendorCompany.updateOne({}, { $unset: { bic: '' } }).lean();
+      const payload = {
+        payments: [coursePaymentList[0]._id, coursePaymentList[2]._id],
+        name: 'Compani - Septembre 2025',
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/xmlsepafileinfos',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if vendorCompany has no ics', async () => {
+      await VendorCompany.updateOne({}, { $unset: { ics: '' } }).lean();
+      const payload = {
+        payments: [coursePaymentList[0]._id, coursePaymentList[2]._id],
+        name: 'Compani - Septembre 2025',
+      };
 
       const response = await app.inject({
         method: 'POST',

@@ -2,13 +2,11 @@ const fs = require('fs');
 const google = require('@googleapis/drive');
 const get = require('lodash/get');
 
-const jwtClient = () => new google.auth.JWT(
-  process.env.GOOGLE_DRIVE_API_EMAIL,
-  null,
-  process.env.GOOGLE_DRIVE_API_PRIVATE_KEY.replace(/\\n/g, '\n'),
-  ['https://www.googleapis.com/auth/drive'],
-  null
-);
+const jwtClient = () => new google.auth.JWT({
+  email: process.env.GOOGLE_DRIVE_API_EMAIL,
+  key: process.env.GOOGLE_DRIVE_API_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  scopes: ['https://www.googleapis.com/auth/drive'],
+});
 
 const drive = google.drive('v3');
 
@@ -81,7 +79,7 @@ exports.downloadFileById = async (params) => {
         }
 
         res.data.on('end', () => {
-          resolve({ type: res.headers['content-type'] });
+          resolve({ type: res.headers.get('content-type') });
         }).on('error', () => {
           reject(new Error(`Error during Google drive doc download ${err}`));
         }).pipe(dest);

@@ -169,6 +169,10 @@ module.exports = {
     courseBillingItemsNotFound: 'Course billing items not found.',
     courseBillingItemCreated: 'Course billing item created.',
     courseBillingItemDeleted: 'Course billing item deleted.',
+    /* Course payments */
+    coursePaymentsUpdated: 'Course payments updated.',
+    coursePaymentStatusError: 'Forbidden : payment is linked to a xml file and can\'t be changed to "Pending" status.',
+    coursePaymentNotLinkedToXml: 'Forbidden : can\'t edit to XML_GENERATED.',
     /* Course slots */
     courseSlotCreated: 'Course slot created.',
     courseSlotUpdated: 'Course slot updated.',
@@ -246,6 +250,24 @@ module.exports = {
     xmlSEPAFileInfosAlreadyExist: 'Forbidden : xmlSEPAFileInfos already exist.',
     xmlSEPAFileWrongPayment: 'Forbidden : wrong payment type or status.',
     xmlSEPAFileWrongPayer: 'Forbidden : payer is not a company.',
+    xmlSEPAFileGenerationFailedMissingSignedMandate: 'Forbidden : payer has no signed mandate.',
+    xmlSEPAFileGenerationFailedMissingBankDetails: 'Forbidden : payer has no BIC or IBAN.',
+    xmlSEPAFileGenerationFailedMissingVendorInfos: 'Forbidden : vendor company has no BIC, IBAN or ICS.',
+    /* CSV */
+    wrongColumnsInCsv: 'Wrong columns in CSV.',
+    emailDuplicates: 'email has duplicate in CSV',
+    nameDuplicates: 'name has duplicate in CSV',
+    incorrectName: 'name is incorrect',
+    missingCompany: 'company is missing',
+    unknownCompany: 'company doesn\'t exist',
+    companyNotRegisteredToCourse: 'company is not registered to course',
+    wrongLearnerCompany: 'learner belongs to another company',
+    wrongLearnerEmail: 'learner has another email',
+    incorrectEmail: 'email is incorrect',
+    emailLinkedToOtherLearner: 'email belongs to another user',
+    missingOrIncorrectSuffix: 'email suffix is missing or incorrect',
+    incorrectCountryCode: 'country code is incorrect',
+    incorrectPhone: 'phone is incorrect',
   },
   'fr-FR': {
     /* Token errors */
@@ -417,6 +439,12 @@ module.exports = {
     courseBillingItemsNotFound: 'Articles de facturation non trouvés.',
     courseBillingItemCreated: 'Article de facturation créé.',
     courseBillingItemDeleted: 'Article de facturation supprimé.',
+    /* Course payments */
+    coursePaymentsUpdated: 'Paiements mis à jour.',
+    coursePaymentStatusError: 'Impossible : un paiement est associé à un fichier XML et ne peut être passé en'
+      + ' statut "En attente".',
+    coursePaymentNotLinkedToXml: 'Impossible de passer le statut en "Fichier XML associé" car un paiement n\'est pas'
+      + ' associé à un fichier XML.',
     /* Course slots */
     courseSlotCreated: 'Créneau de formation créé.',
     courseSlotUpdated: 'Créneau de formation mis à jour.',
@@ -498,5 +526,26 @@ module.exports = {
       des paiements sélectionnés.`,
     xmlSEPAFileWrongPayment: 'Impossible : un des paiements sélectionnés n\'est pas un prélèvement en attente.',
     xmlSEPAFileWrongPayer: 'Impossible : le payeur associé à un des paiements est un financeur.',
+    xmlSEPAFileGenerationFailedMissingSignedMandate: `Impossible : un payeur associé à un des paiements n'a pas de
+      mandat signé.`,
+    xmlSEPAFileGenerationFailedMissingBankDetails: `Impossible : un payeur associé à un des paiements n'a pas de
+      BIC ou d'IBAN renseigné.`,
+    xmlSEPAFileGenerationFailedMissingVendorInfos: `Impossible : le BIC, l'IBAN ou l'ICS de la structure vendeuse est
+      manquant.`,
+    /* CSV */
+    wrongColumnsInCsv: 'Les colonnes du CSV ne correspondent pas au format attendu.',
+    emailDuplicates: 'chaque email doit être unique',
+    nameDuplicates: 'chaque nom doit être unique',
+    incorrectName: 'le nom de la personne est incorrect',
+    missingCompany: 'la structure est manquante',
+    unknownCompany: 'la structure n\'existe pas',
+    companyNotRegisteredToCourse: 'la structure n\'est pas inscrite à la formation',
+    wrongLearnerCompany: 'la personne appartient à une autre structure que celle renseignée',
+    wrongLearnerEmail: 'la personne existe déjà avec un autre email',
+    incorrectEmail: 'le format de l\'email est incorrect',
+    emailLinkedToOtherLearner: 'l\'email correspond à un autre utilisateur',
+    missingOrIncorrectSuffix: 'le suffixe email est manquant ou son format est incorrect',
+    incorrectCountryCode: 'le format de l\'indicatif téléphonique est incorrect',
+    incorrectPhone: 'le format du téléphone est incorrect',
   },
 };

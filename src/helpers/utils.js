@@ -6,6 +6,7 @@ const { ObjectId } = require('mongodb');
 const { isObjectIdOrHexString } = require('mongoose');
 const Intl = require('intl');
 const crypto = require('crypto');
+const { diacriticsMap } = require('../data/diacritics');
 const { CIVILITY_LIST, SHORT_DURATION_H_MM, HHhMM, SECOND } = require('./constants');
 const DatesHelper = require('./dates');
 const { CompaniDate } = require('./dates/companiDates');
@@ -128,6 +129,11 @@ exports.formatArrayOrStringQueryParam = (param, keyName) =>
 exports.capitalize = (s) => {
   if (typeof s !== 'string') return '';
   return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+exports.uncapitalize = (s) => {
+  if (typeof s !== 'string') return '';
+  return s.charAt(0).toLowerCase() + s.slice(1);
 };
 
 exports.formatIdentity = (identity, format) => {
@@ -269,3 +275,49 @@ exports.formatRumNumber = (companyPrefixNumber, prefix, seq) => {
 
   return `R-${companyPrefixNumber}${prefix}${seq.toString().padStart(5, '0')}${random}`;
 };
+
+exports.removeDiacritics = str => str.replace(/[^\u0020-\u007E]/g, a => diacriticsMap[a] || a);
+
+exports.parseCsv = file => new Promise((resolve, reject) => {
+  let leftover = '';
+  let headers = [];
+  const csvData = [];
+
+  file.on('data', (chunk) => {
+    const str = chunk.toString('utf8');
+    const lines = (leftover + str).split('\n');
+    leftover = lines.pop();
+
+    lines.forEach((l) => {
+      const line = l.replace(/\r$/, '').trim();
+      if (!line) return;
+
+      const values = line.split(';').map(v => v.trim());
+
+      if (!headers.length) {
+        headers = values.map(v => exports.uncapitalize(v));
+      } else {
+        const obj = {};
+        headers.forEach((header, i) => {
+          obj[header] = values[i] || '';
+        });
+        csvData.push(obj);
+      }
+    });
+  });
+
+  file.on('end', () => {
+    if (leftover) {
+      leftover = leftover.replace(/\r$/, '').trim();
+      const values = leftover.split(';').map(v => v.trim());
+      const obj = {};
+      headers.forEach((header, i) => {
+        obj[header] = values[i] || '';
+      });
+      csvData.push(obj);
+    }
+    resolve(csvData);
+  });
+
+  file.on('error', err => reject(err));
+});

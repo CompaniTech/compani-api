@@ -917,11 +917,18 @@ describe('COMPANIES ROUTES - POST /companies/{_id}/mandates/{mandateId}/upload-s
       expect(response.statusCode).toBe(200);
       sinon.assert.calledOnce(add);
       sinon.assert.calledOnce(getFileById);
+      const cryptedDataRegex = /^([0-9a-z]{32}):([0-9a-z]{32})$/;
       const count = await Company
         .countDocuments(
           {
             _id: companies[0]._id,
-            'debitMandates.0.file': { link: 'fakeWebViewLink', driveId: 'fakeDriveId' },
+            debitMandates: {
+              $elemMatch: {
+                rum: 'R-10425060000188CF46476EE0F6F9B702',
+                'file.link': { $regex: cryptedDataRegex },
+                'file.driveId': { $regex: cryptedDataRegex },
+              },
+            },
           }
         );
       expect(count).toBe(1);

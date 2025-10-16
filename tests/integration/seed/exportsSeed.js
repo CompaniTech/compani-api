@@ -72,7 +72,6 @@ const {
   END_OF_COURSE,
   LESSON,
   DIRECT_DEBIT,
-  BANK_TRANSFER,
   CASH,
   CHECK,
   ESTIMATED_START_DATE_EDITION,
@@ -96,6 +95,8 @@ const {
   SINGLE,
   PENDING,
   RECEIVED,
+  XML_GENERATED,
+  BANK_TRANSFER,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -108,6 +109,7 @@ const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
 const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const CourseCreditNoteNumber = require('../../../src/models/CourseCreditNoteNumber');
 const Holding = require('../../../src/models/Holding');
+const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 
 const sector = { _id: new ObjectId(), name: 'Etoile', company: authCompany._id };
 
@@ -1405,7 +1407,7 @@ const courseBillList = [
     course: coursesList[0]._id,
     mainFee: { price: 1200, count: 1, countUnit: GROUP },
     companies: [authCompany._id],
-    payer: { fundingOrganisation: courseFundingOrganisation._id },
+    payer: { company: authCompany._id },
     billedAt: '2022-03-08T00:00:00.000Z',
     number: 'FACT-00001',
   },
@@ -1475,7 +1477,8 @@ const courseBillList = [
 ];
 
 const coursePaymentList = [
-  {
+  { // 0
+    _id: new ObjectId(),
     number: 'REG-00001',
     date: '2022-03-09T00:00:00.000Z',
     companies: [authCompany._id],
@@ -1483,9 +1486,9 @@ const coursePaymentList = [
     netInclTaxes: 1100,
     nature: PAYMENT,
     type: DIRECT_DEBIT,
-    status: PENDING,
+    status: XML_GENERATED,
   },
-  {
+  { // 1
     number: 'REG-00002',
     date: '2022-06-09T00:00:00.000Z',
     companies: [authCompany._id],
@@ -1495,7 +1498,7 @@ const coursePaymentList = [
     type: BANK_TRANSFER,
     status: RECEIVED,
   },
-  {
+  { // 2
     number: 'REG-00003',
     date: '2022-03-09T00:00:00.000Z',
     companies: [otherCompany._id],
@@ -1505,7 +1508,7 @@ const coursePaymentList = [
     type: CASH,
     status: RECEIVED,
   },
-  {
+  { // 3
     number: 'REMB-00001',
     date: '2022-03-11T00:00:00.000Z',
     companies: [otherCompany._id],
@@ -1513,9 +1516,9 @@ const coursePaymentList = [
     netInclTaxes: 200,
     nature: REFUND,
     type: CHECK,
-    status: PENDING,
+    status: RECEIVED,
   },
-  {
+  { // 4
     number: 'REMB-00002',
     date: '2023-03-11T00:00:00.000Z',
     companies: [otherCompany._id],
@@ -1525,7 +1528,7 @@ const coursePaymentList = [
     type: CHECK,
     status: PENDING,
   },
-  {
+  { // 5
     number: 'REG-00004',
     date: '2023-03-11T00:00:00.000Z',
     companies: [authCompany._id],
@@ -1535,7 +1538,7 @@ const coursePaymentList = [
     type: CHECK,
     status: PENDING,
   },
-  {
+  { // 6
     number: 'REMB-00003',
     date: '2023-03-11T00:00:00.000Z',
     companies: [authCompany._id],
@@ -1545,7 +1548,7 @@ const coursePaymentList = [
     type: CHECK,
     status: PENDING,
   },
-  {
+  { // 7
     number: 'REG-00005',
     date: '2023-03-11T00:00:00.000Z',
     companies: [authCompany._id],
@@ -1555,7 +1558,7 @@ const coursePaymentList = [
     type: CHECK,
     status: PENDING,
   },
-  {
+  { // 8
     number: 'REMB-00004',
     date: '2023-03-11T00:00:00.000Z',
     companies: [authCompany._id],
@@ -1565,7 +1568,7 @@ const coursePaymentList = [
     type: CHECK,
     status: PENDING,
   },
-  {
+  { // 9
     number: 'REG-00006',
     date: '2022-04-01T00:00:00.000Z',
     companies: [authCompany._id],
@@ -1576,6 +1579,12 @@ const coursePaymentList = [
     status: PENDING,
   },
 ];
+
+const xmlSEPAFileInfos = {
+  _id: new ObjectId(),
+  coursePayments: [coursePaymentList[0]._id],
+  name: 'Prélèvements Septembre 2025',
+};
 
 const courseCreditNotesList = [
   {
@@ -2312,6 +2321,7 @@ const populateDB = async () => {
     ThirdPartyPayer.create(thirdPartyPayer),
     User.create([...auxiliaryList, ...traineeList, user, trainer, operationsRepresentative]),
     UserCompany.create(userCompanies),
+    XmlSEPAFileInfos.create(xmlSEPAFileInfos),
   ]);
 };
 

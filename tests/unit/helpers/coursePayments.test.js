@@ -10,6 +10,7 @@ const {
   RECEIVED,
   CHECK,
   CASH,
+  XML_GENERATED,
 } = require('../../../src/helpers/constants');
 const CourseBill = require('../../../src/models/CourseBill');
 const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
@@ -231,8 +232,15 @@ describe('list', () => {
           isPayerCompany: false,
         },
       },
+      {
+        _id: new ObjectId(),
+        status: XML_GENERATED,
+        nature: PAYMENT,
+        courseBill: { number: 'FACT_00001', payer: { company: { name: 'Structure' } }, isPayerCompany: true },
+        xmlSEPAFileInfos: { name: 'lot de prelevements 1' },
+      },
     ];
-    find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'sort', 'lean']));
 
     const result = await CoursePaymentsHelper.list({ status: RECEIVED });
 
@@ -255,9 +263,40 @@ describe('list', () => {
             },
           ],
         },
+        {
+          query: 'populate',
+          args: [{ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
         { query: 'lean', args: [] },
       ]
+    );
+  });
+});
+
+describe('updateList', () => {
+  let updateMany;
+
+  beforeEach(() => {
+    updateMany = sinon.stub(CoursePayment, 'updateMany');
+  });
+
+  afterEach(() => {
+    updateMany.restore();
+  });
+
+  it('should update payments', async () => {
+    const payload = {
+      _ids: [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()],
+      status: RECEIVED,
+    };
+
+    await CoursePaymentsHelper.updateList(payload);
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: payload._ids } },
+      { $set: { status: payload.status } }
     );
   });
 });

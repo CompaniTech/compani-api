@@ -78,6 +78,7 @@ const {
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
 const NotificationHelper = require('./notifications');
+const UsersHelper = require('./users');
 const VendorCompaniesHelper = require('./vendorCompanies');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
 const IntraAttendanceSheet = require('../data/pdf/attendanceSheet/intraAttendanceSheet');
@@ -1603,4 +1604,16 @@ exports.addTutor = async (courseId, payload) => {
 
 exports.removeTutor = async (courseId, tutorId) => {
   await Course.updateOne({ _id: courseId }, { $pull: { tutors: tutorId } });
+};
+
+exports.uploadCSV = async (courseId, learnerList, credentials) => {
+  const course = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
+  for (const learner of learnerList) {
+    let userId = learner._id;
+    if (!userId) {
+      const newUser = await UsersHelper.createUser({ ...learner, origin: WEBAPP }, credentials);
+      userId = newUser._id;
+    } else if (UtilsHelper.doesArrayIncludeId(course.trainees, userId)) continue;
+    await exports.addTrainee(courseId, { trainee: userId, company: learner.company }, credentials);
+  }
 };

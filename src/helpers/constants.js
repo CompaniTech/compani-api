@@ -24,6 +24,7 @@ module.exports = {
   // COMPANIDATE FORMATS
   HHhMM: 'HH\'h\'mm',
   DD_MM_YYYY: 'dd/LL/yyyy',
+  YYYY_MM_DD: 'yyyy-LL-dd',
   DAY_MONTH_YEAR: 'DDD',
   HH_MM: 'T',
   HH_MM_SS: 'HH:mm:ss',
@@ -214,6 +215,13 @@ module.exports = {
   PENDING: 'pending',
   RECEIVED: 'received',
   XML_GENERATED: 'xml_generated',
+  get PAYMENT_STATUS_LIST() {
+    return {
+      [this.PENDING]: 'En attente',
+      [this.RECEIVED]: 'Reçu',
+      [this.XML_GENERATED]: 'Fichier XML associé',
+    };
+  },
   // SURCHARGES
   PUBLIC_HOLIDAY: 'publicHoliday',
   TWENTY_FIFTH_OF_DECEMBER: 'twentyFifthOfDecember',

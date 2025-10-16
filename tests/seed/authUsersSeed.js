@@ -48,6 +48,7 @@ const userList = [
     origin: WEBAPP,
     contracts: [new ObjectId()],
     administrative: { driveFolder: { driveId: '0987654321' }, transportInvoice: { transportType: 'private' } },
+    formationExpoTokenList: ['ExponentPushToken[AuxiliaryToken]'],
   },
   { // 3
     _id: new ObjectId(),
