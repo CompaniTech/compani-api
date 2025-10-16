@@ -934,7 +934,13 @@ exports.authorizeUploadCSV = async (req) => {
       }
     }
     const identityUser = await User
-      .findOne({ 'identity.firstname': learner.firstname, 'identity.lastname': learner.lastname }, { _id: 1, local: 1 })
+      .findOne(
+        {
+          'identity.firstname': { $regex: new RegExp(`^${learner.firstname}$`, 'i') },
+          'identity.lastname': { $regex: new RegExp(`^${learner.lastname}$`, 'i') },
+        },
+        { _id: 1, local: 1 }
+      )
       .lean();
     let sameEmail = false;
     if (identityUser) {
