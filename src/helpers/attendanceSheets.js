@@ -241,22 +241,30 @@ exports.sign = async (attendanceSheetId, payload, credentials) => {
   });
 
   if ([SINGLE, INTER_B2B].includes(attendanceSheet.course.type)) {
-    return AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots } });
+    await AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots } });
+  } else {
+    await AttendanceSheet.updateOne(
+      {
+        _id: attendanceSheetId,
+        'slots.traineesSignature': { $elemMatch: { traineeId: credentials._id, signature: { $exists: false } } },
+      },
+      { $set: { 'slots.$[slot].traineesSignature.$[trainee].signature': traineeSignature } },
+      {
+        arrayFilters: [
+          { 'slot.trainerSignature': { $exists: true } },
+          { 'trainee.traineeId': credentials._id, 'trainee.signature': { $exists: false } },
+        ],
+      }
+    );
   }
 
-  return AttendanceSheet.updateOne(
-    {
-      _id: attendanceSheetId,
-      'slots.traineesSignature': { $elemMatch: { traineeId: credentials._id, signature: { $exists: false } } },
-    },
-    { $set: { 'slots.$[slot].traineesSignature.$[trainee].signature': traineeSignature } },
-    {
-      arrayFilters: [
-        { 'slot.trainerSignature': { $exists: true } },
-        { 'trainee.traineeId': credentials._id, 'trainee.signature': { $exists: false } },
-      ],
-    }
-  );
+  if (attendanceSheet.course.type !== INTER_B2B) {
+    const updatedAttendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
+
+    const canGenerate = updatedAttendanceSheet.slots
+      .every(s => s.trainerSignature && s.traineesSignature.every(signature => signature.signature));
+    if (canGenerate) await exports.generate(attendanceSheetId);
+  }
 };
 
 exports.generate = async (attendanceSheetId) => {
