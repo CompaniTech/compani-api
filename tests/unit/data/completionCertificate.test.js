@@ -70,7 +70,7 @@ describe('getCustomPdfContent', () => {
       },
       {
         canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 24, r: 0, color: COPPER_50 }],
-        absolutePosition: { x: 40, y: 248 },
+        absolutePosition: { x: 40, y: 240 },
         marginBottom: 8,
       },
       { text: 'Programme', style: 'programName' },
@@ -133,7 +133,7 @@ describe('getCustomPdfContent', () => {
     const pdf = {
       content: [header, body].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 11 },
-      pageMargins: [40, 40, 40, 280],
+      pageMargins: [40, 40, 40, 220],
       styles: {
         title: { fontSize: 18, bold: true, color: COPPER_500, marginLeft: 48, marginTop: 16 },
         congratulations: { fontSize: 11, bold: true, color: ORANGE_500, marginBottom: 24 },
@@ -148,7 +148,7 @@ describe('getCustomPdfContent', () => {
             { text: 'Thibault de Saint Blancard, Directeur Compani' },
             { image: paths[4], width: 120, marginBottom: 24 },
             { text: 'Compani', style },
-            { text: '24 avenue daumesnil, 75012 Paris', style },
+            { text: '24 avenue Daumesnil, 75012 Paris', style },
             { text: 'Numéro SIRET : 90512399800015 | Numéro de déclaration d’activité : 11756363475', style },
             { text: `PAGE ${currentPage.toString()} / ${pageCount}`, style, alignment: 'right' },
           ],
@@ -225,7 +225,7 @@ describe('getCustomPdfContent', () => {
       },
       {
         canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 24, r: 0, color: COPPER_50 }],
-        absolutePosition: { x: 40, y: 248 },
+        absolutePosition: { x: 40, y: 240 },
         marginBottom: 8,
       },
       { text: 'Programme', style: 'programName' },
@@ -284,7 +284,7 @@ describe('getCustomPdfContent', () => {
     const pdf = {
       content: [header, body].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 11 },
-      pageMargins: [40, 40, 40, 280],
+      pageMargins: [40, 40, 40, 220],
       styles: {
         title: { fontSize: 18, bold: true, color: COPPER_500, marginLeft: 48, marginTop: 16 },
         congratulations: { fontSize: 11, bold: true, color: ORANGE_500, marginBottom: 24 },
@@ -299,7 +299,7 @@ describe('getCustomPdfContent', () => {
             { text: 'Thibault de Saint Blancard, Directeur Compani' },
             { image: paths[4], width: 120, marginBottom: 24 },
             { text: 'Compani', style },
-            { text: '24 avenue daumesnil, 75012 Paris', style },
+            { text: '24 avenue Daumesnil, 75012 Paris', style },
             { text: 'Numéro SIRET : 90512399800015 | Numéro de déclaration d’activité : 11756363475', style },
             { text: `PAGE ${currentPage.toString()} / ${pageCount}`, style, alignment: 'right' },
           ],

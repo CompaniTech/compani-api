@@ -6516,7 +6516,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       parseCSV.returns([
         {
           firstname: 'Auxiliary',
-          lastname: 'Olait',
+          lastname: 'OLAIT',
           email: 'auxiliary2@alenvi.io',
           countryCode: '',
           phone: '0687654321',
@@ -6543,7 +6543,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 
       parseCSV.returns([
         {
-          firstname: 'Chloe',
+          firstname: 'CHLOE',
           lastname: 'Holding',
           email: 'holding@other.io',
           countryCode: '',
