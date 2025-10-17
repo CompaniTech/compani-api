@@ -1236,19 +1236,22 @@ describe('sign', () => {
   let uploadCourseFile;
   let updateOne;
   let findOne;
+  let generate;
 
   beforeEach(() => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     updateOne = sinon.stub(AttendanceSheet, 'updateOne');
     findOne = sinon.stub(AttendanceSheet, 'findOne');
+    generate = sinon.stub(attendanceSheetHelper, 'generate');
   });
   afterEach(() => {
     uploadCourseFile.restore();
     updateOne.restore();
     findOne.restore();
+    generate.restore();
   });
 
-  it('should add trainee signature in attendance sheet (no slot signed)', async () => {
+  it('should add trainee signature in attendance sheet and generate (no slot signed)', async () => {
     const credentials = { _id: new ObjectId() };
     const attendanceSheetId = new ObjectId();
     const slotId = new ObjectId();
@@ -1261,7 +1264,18 @@ describe('sign', () => {
     const payload = { signature: 'test.png' };
 
     uploadCourseFile.returns({ publicId: 'id', link: 'link' });
-    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    findOne.onCall(0).returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    findOne.onCall(1).returns(SinonMongoose.stubChainedQueries(
+      {
+        ...attendanceSheet,
+        slots: [{
+          slotId,
+          trainerSignature: { trainerId, signature: 'trainer.png' },
+          traineesSignature: [{ traineeId: credentials._id, signature: 'test.png' }],
+        }],
+      },
+      ['lean']
+    ));
 
     await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
 
@@ -1270,13 +1284,23 @@ describe('sign', () => {
       { fileName: `trainee_signature_${credentials._id}`, file: 'test.png' }
     );
 
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
       findOne,
       [
         { query: 'findOne', args: [{ _id: attendanceSheetId }] },
         { query: 'populate', args: [{ path: 'course', select: 'type' }] },
         { query: 'lean' },
-      ]
+      ],
+      0
+    );
+
+    SinonMongoose.calledWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'lean' },
+      ],
+      1
     );
 
     sinon.assert.calledOnceWithExactly(
@@ -1294,6 +1318,8 @@ describe('sign', () => {
         },
       }
     );
+
+    sinon.assert.calledOnceWithExactly(generate, attendanceSheetId);
   });
 
   it('should add trainee signature in attendance sheet (already signed slots)', async () => {
@@ -1353,6 +1379,8 @@ describe('sign', () => {
         },
       }
     );
+
+    sinon.assert.notCalled(generate);
   });
 
   it('should add trainee signature in attendance sheet (intra course)', async () => {
@@ -1360,15 +1388,31 @@ describe('sign', () => {
     const attendanceSheetId = new ObjectId();
     const slotId = new ObjectId();
     const trainerId = new ObjectId();
+    const otherTraineeId = new ObjectId();
     const attendanceSheet = {
       _id: attendanceSheetId,
-      slots: [{ slotId, trainerSignature: { trainerId, signature: 'trainer.png' } }],
+      slots: [{
+        slotId,
+        trainerSignature: { trainerId, signature: 'trainer.png' },
+        traineesSignature: [{ traineeId: credentials._id }, { traineeId: otherTraineeId }],
+      }],
       course: { type: INTRA },
     };
     const payload = { signature: 'test.png' };
 
     uploadCourseFile.returns({ publicId: 'id', link: 'link' });
-    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    findOne.onCall(0).returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    findOne.onCall(1).returns(SinonMongoose.stubChainedQueries(
+      {
+        ...attendanceSheet,
+        slots: [{
+          slotId,
+          trainerSignature: { trainerId, signature: 'trainer.png' },
+          traineesSignature: [{ traineeId: credentials._id, signature: 'test.png' }, { traineeId: otherTraineeId }],
+        }],
+      },
+      ['lean']
+    ));
 
     await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
 
@@ -1377,13 +1421,23 @@ describe('sign', () => {
       { fileName: `trainee_signature_${credentials._id}`, file: 'test.png' }
     );
 
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
       findOne,
       [
         { query: 'findOne', args: [{ _id: attendanceSheetId }] },
         { query: 'populate', args: [{ path: 'course', select: 'type' }] },
         { query: 'lean' },
-      ]
+      ],
+      0
+    );
+
+    SinonMongoose.calledWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'lean' },
+      ],
+      1
     );
 
     sinon.assert.calledOnceWithExactly(
@@ -1400,6 +1454,8 @@ describe('sign', () => {
         ],
       }
     );
+
+    sinon.assert.notCalled(generate);
   });
 });
 

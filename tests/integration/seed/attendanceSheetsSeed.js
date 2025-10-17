@@ -525,7 +525,13 @@ const attendanceSheetList = [
     course: coursesList[8]._id,
     trainee: userList[1]._id,
     companies: [authCompany._id],
-    slots: [{ slotId: slotsList[9]._id, trainerSignature: { trainerId: userList[3]._id, signature: 'www.test.com' } }],
+    slots: [{
+      slotId: slotsList[9]._id,
+      trainerSignature: {
+        trainerId: userList[3]._id,
+        signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+      },
+    }],
     origin: MOBILE,
     trainer: userList[3]._id,
   },

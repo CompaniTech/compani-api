@@ -1632,11 +1632,14 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       uploadCourseFile.restore();
     });
 
-    it('should upload trainee signature for single course (mobile)', async () => {
+    it('should upload trainee signature and generate for single course (mobile)', async () => {
       const formData = { signature: 'test' };
 
       const form = generateFormData(formData);
-      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+      uploadCourseFile.returns({
+        publicId: '1234567890',
+        link: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+      });
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[8]._id}/signature`,
@@ -1645,12 +1648,13 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       });
 
       expect(response.statusCode).toBe(200);
-      const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[8]._id });
+      const attendanceSheet = await AttendanceSheet
+        .findOne({ _id: attendanceSheetList[8]._id, file: { $exists: true } });
       const attendanceSheetHasBothSignatures = attendanceSheet.slots
         .every(s => s.trainerSignature &&
             UtilsHelper.areObjectIdsEquals(s.traineesSignature[0].traineeId, userList[1]._id));
       expect(attendanceSheetHasBothSignatures).toBeTruthy();
-      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledTwice(uploadCourseFile);
     });
 
     it('should upload trainee signature for inter course with signed slots (mobile)', async () => {
@@ -1673,11 +1677,14 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       sinon.assert.notCalled(uploadCourseFile);
     });
 
-    it('should upload trainee signature for intra course (mobile)', async () => {
+    it('should upload trainee signature and generate for intra course (mobile)', async () => {
       const formData = { signature: 'test' };
 
       const form = generateFormData(formData);
-      uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+      uploadCourseFile.returns({
+        publicId: '1234567890',
+        link: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+      });
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[3]._id}/signature`,
@@ -1686,12 +1693,13 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
       });
 
       expect(response.statusCode).toBe(200);
-      const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetList[3]._id });
+      const attendanceSheet = await AttendanceSheet
+        .findOne({ _id: attendanceSheetList[3]._id, file: { $exists: true } });
       const attendanceSheetHasBothSignatures = attendanceSheet.slots
         .every(s => s.trainerSignature &&
             UtilsHelper.areObjectIdsEquals(s.traineesSignature[0].traineeId, userList[1]._id));
       expect(attendanceSheetHasBothSignatures).toBeTruthy();
-      sinon.assert.calledOnce(uploadCourseFile);
+      sinon.assert.calledTwice(uploadCourseFile);
     });
 
     it('should return 400 if no signature', async () => {
