@@ -1,3 +1,4 @@
+const compact = require('lodash/compact');
 const get = require('lodash/get');
 const uniqBy = require('lodash/uniqBy');
 const groupBy = require('lodash/groupBy');
@@ -212,12 +213,14 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     }
   }
 
+  const companiesHolding = [...new Set(compact(course.companies.map(c => get(c, 'holding.name'))))];
+
   return {
     Identifiant: course._id,
     Type: COURSE_TYPES[course.type],
     Payeur: payerList || '',
     Structure: companiesName || '',
-    'Société mère': get(course, 'holding.name') || '',
+    'Société mère': companiesHolding.length ? companiesHolding.join(', ') : get(course, 'holding.name', ''),
     Programme: get(course, 'subProgram.program.name') || '',
     'Id programme': get(course, 'subProgram.program._id') || '',
     'Sous-Programme': get(course, 'subProgram.name') || '',
