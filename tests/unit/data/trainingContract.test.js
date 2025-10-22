@@ -36,6 +36,7 @@ describe('getPdfContent', () => {
       eLearningDuration: '2h',
       misc: 'Groupe 1',
       learnersCount: 8,
+      learnersName: 'Charles LECLERC, Lewis HAMILTON',
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['14 rue de ponthieu 75008 Paris', '22 avenue Daumesnil 75012 Paris'],
       trainers: ['Jean BONBEUR', 'James PENCIL'],
@@ -79,7 +80,7 @@ describe('getPdfContent', () => {
                   { text: data.programName, bold: true },
                   { stack: [{ text: 'Objectifs :' }, { text: 'bien apprendre', marginLeft: 16 }] },
                   { text: 'Durée : 3 créneaux - 6h (+ 2h de e-learning)' },
-                  { text: 'Effectif formé : Groupe 1, jusqu\'à 8 stagiaires' },
+                  { text: 'Effectif formé : Charles LECLERC, Lewis HAMILTON' },
                   { text: 'Dates : 03/11/2020 - 04/11/2020 - 05/11/2020' },
                   {
                     stack: [
@@ -169,6 +170,7 @@ describe('getPdfContent', () => {
       eLearningDuration: '',
       misc: 'Groupe 1',
       learnersCount: 8,
+      learnersName: 'Charles LECLERC, Lewis HAMILTON',
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['Paris'],
       trainers: ['Jean BONBEUR'],
@@ -210,7 +212,7 @@ describe('getPdfContent', () => {
                   { text: data.programName, bold: true },
                   { stack: [{ text: 'Objectifs :' }, { text: 'bien apprendre', marginLeft: 16 }] },
                   { text: 'Durée : 3 créneaux - 6h' },
-                  { text: 'Effectif formé : Groupe 1, 8 stagiaires' },
+                  { text: 'Effectif formé : Charles LECLERC, Lewis HAMILTON' },
                   { text: 'Dates : 03/11/2020 - 04/11/2020 - 05/11/2020' },
                   { text: 'Lieu : Paris' },
                   { text: 'Intervenant·e : Jean BONBEUR', marginBottom: 16 },
