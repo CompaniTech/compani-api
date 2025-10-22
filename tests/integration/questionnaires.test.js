@@ -310,7 +310,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaires.length).toEqual(2);
+      expect(response.result.data.questionnaires.length).toEqual(3);
     });
 
     it('should return 403 if no course query', async () => {

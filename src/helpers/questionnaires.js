@@ -81,24 +81,35 @@ exports.list = async (credentials, query = {}) => {
       .lean();
   }
 
-  switch (courseTimeline) {
-    case BETWEEN_MID_AND_END_COURSE:
-      return [];
-    case BEFORE_MIDDLE_COURSE_END_DATE:
-    case ENDED: {
-      const qType = courseTimeline === BEFORE_MIDDLE_COURSE_END_DATE ? [EXPECTATIONS] : [END_OF_COURSE];
+  if (get(credentials, '_id')) {
+    switch (courseTimeline) {
+      case BETWEEN_MID_AND_END_COURSE:
+        return [];
+      case BEFORE_MIDDLE_COURSE_END_DATE:
+      case ENDED: {
+        const qType = courseTimeline === BEFORE_MIDDLE_COURSE_END_DATE ? [EXPECTATIONS] : [END_OF_COURSE];
 
-      return Questionnaire
-        .find({
-          type: { $in: [...qType, SELF_POSITIONNING] },
-          $or: [{ program: { $exists: false } }, { program: programId }],
-          status: PUBLISHED,
-        })
-        .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
-        .lean();
+        return Questionnaire
+          .find({
+            type: { $in: [...qType, SELF_POSITIONNING] },
+            $or: [{ program: { $exists: false } }, { program: programId }],
+            status: PUBLISHED,
+          })
+          .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
+          .lean();
+      }
+      default:
+        return [];
     }
-    default:
-      return [];
+  } else {
+    return Questionnaire
+      .find({
+        type: { $in: [EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING] },
+        $or: [{ program: { $exists: false } }, { program: programId }],
+        status: PUBLISHED,
+      })
+      .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
+      .lean();
   }
 };
 
