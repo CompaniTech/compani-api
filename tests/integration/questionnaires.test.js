@@ -27,6 +27,7 @@ const {
   END_COURSE,
 } = require('../../src/helpers/constants');
 const { companyWithoutSubscription, authCompany } = require('../seed/authCompaniesSeed');
+const UtilsMock = require('../utilsMock');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -151,17 +152,16 @@ describe('QUESTIONNAIRES ROUTES - POST /questionnaires', () => {
 
 describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
   let authToken;
-  let nowStub;
   beforeEach(populateDB);
 
   describe('TRAINER', () => {
     beforeEach(async () => {
       authToken = await getToken('trainer');
-      nowStub = sinon.stub(Date, 'now');
+      UtilsMock.mockCurrentDate('2021-04-20T10:00:00.000Z');
     });
 
     afterEach(() => {
-      nowStub.restore();
+      UtilsMock.unmockCurrentDate();
     });
 
     it('should get all questionnaires', async () => {
@@ -176,8 +176,6 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     });
 
     it('should get questionnaires linked to course', async () => {
-      nowStub.returns(new Date('2021-04-20T10:00:00.000Z'));
-
       const response = await app.inject({
         method: 'GET',
         url: `/questionnaires?course=${coursesList[0]._id}`,
@@ -227,16 +225,14 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
   describe('TRAINEE', () => {
     beforeEach(async () => {
       authToken = await getTokenByCredentials(traineeList[0].local);
-      nowStub = sinon.stub(Date, 'now');
+      UtilsMock.mockCurrentDate('2021-04-20T10:00:00.000Z');
     });
 
     afterEach(() => {
-      nowStub.restore();
+      UtilsMock.unmockCurrentDate();
     });
 
     it('should get published questionnaires linked to a course (EXPECTATIONS and SELF_POSITIONNING) ', async () => {
-      nowStub.returns(new Date('2021-04-20T10:00:00.000Z'));
-
       const response = await app.inject({
         method: 'GET',
         url: `/questionnaires?course=${coursesList[0]._id}`,
@@ -251,8 +247,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     });
 
     it('should get questionnaire EXPECTATION and SELF_POSITIONNING when mid-course has to be planned', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
-
+      UtilsMock.mockCurrentDate('2021-04-22T10:00:00.000Z');
       const response = await app.inject({
         method: 'GET',
         url: `/questionnaires?course=${coursesList[2]._id}`,
@@ -264,7 +259,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     });
 
     it('should get published questionnaires linked to a course (END_OF_COURSE and SELF_POSITIONNING)', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
+      UtilsMock.mockCurrentDate('2021-04-22T10:00:00.000Z');
 
       const response = await app.inject({
         method: 'GET',
@@ -280,7 +275,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     });
 
     it('should return an empty array if current date is between mid-course and end of course', async () => {
-      nowStub.returns(new Date('2021-04-21T10:00:00.000Z'));
+      UtilsMock.mockCurrentDate('2021-04-21T10:00:00.000Z');
 
       const response = await app.inject({
         method: 'GET',
@@ -295,15 +290,14 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
 
   describe('NOT LOGGED', () => {
     beforeEach(async () => {
-      nowStub = sinon.stub(Date, 'now');
+      UtilsMock.mockCurrentDate('2021-04-22T10:00:00.000Z');
     });
 
     afterEach(() => {
-      nowStub.restore();
+      UtilsMock.unmockCurrentDate();
     });
 
     it('should get questionnaires', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
       const response = await app.inject({
         method: 'GET',
         url: `/questionnaires?course=${coursesList[0]._id}`,
@@ -314,7 +308,6 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     });
 
     it('should return 403 if no course query', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
       const response = await app.inject({
         method: 'GET',
         url: '/questionnaires',
