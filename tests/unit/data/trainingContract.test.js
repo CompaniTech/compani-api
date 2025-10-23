@@ -16,7 +16,7 @@ describe('getPdfContent', () => {
     downloadImages.restore();
   });
 
-  it('it should format and return pdf content (intra + several address + elearningDuration)', async () => {
+  it('should format and return pdf content (intra + several address + elearningDuration)', async () => {
     const paths = ['src/data/pdf/tmp/compani.png', 'src/data/pdf/tmp/signature.png'];
     downloadImages.returns(paths);
 
@@ -150,7 +150,7 @@ describe('getPdfContent', () => {
     sinon.assert.calledOnceWithExactly(downloadImages, imageList);
   });
 
-  it('it should format and return pdf content (inter + single address + no elearningDuration)', async () => {
+  it('should format and return pdf content (inter + single address + no elearningDuration)', async () => {
     const paths = ['src/data/pdf/tmp/compani.png', 'src/data/pdf/tmp/signature.png'];
     downloadImages.returns(paths);
 
@@ -169,7 +169,7 @@ describe('getPdfContent', () => {
       liveDuration: '6h',
       eLearningDuration: '',
       misc: 'Groupe 1',
-      learnersCount: 8,
+      learnersCount: 2,
       learnersName: 'Charles LECLERC, Lewis HAMILTON',
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['Paris'],
@@ -217,7 +217,7 @@ describe('getPdfContent', () => {
                   { text: 'Lieu : Paris' },
                   { text: 'Intervenant·e : Jean BONBEUR', marginBottom: 16 },
                   { text: 'Prix TTC par stagiaire : 12 €' },
-                  { text: 'Prix total TTC : 96 €' },
+                  { text: 'Prix total TTC : 24 €' },
                   { text: '(Ce prix comprend les frais de formateurs)', italics: true },
                   {
                     text:
@@ -308,6 +308,7 @@ describe('getPdf', () => {
       eLearningDuration: '2h',
       misc: 'Test',
       learnersCount: 8,
+      learnersName: 'Charles LECLERC, Lewis HAMILTON',
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['14 rue de ponthieu 75008 Paris', '22 avenue Daumesnil 75012 Paris'],
       trainers: ['Jean BONBEUR', 'james PENCIL'],
