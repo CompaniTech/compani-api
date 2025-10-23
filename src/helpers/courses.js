@@ -1018,8 +1018,6 @@ exports.groupSlotsByDate = (slots) => {
 const getLiveDuration = (steps) => {
   const theoreticalDurationList = steps.filter(step => step.type !== E_LEARNING).map(step => step.theoreticalDuration);
 
-  if (theoreticalDurationList.some(duration => !duration)) return '';
-
   return theoreticalDurationList
     .reduce((acc, duration) => acc.add(duration), CompaniDuration())
     .format(SHORT_DURATION_H_MM);
