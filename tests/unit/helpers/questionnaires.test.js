@@ -160,91 +160,7 @@ describe('list', () => {
     );
   });
 
-  it('should return [] if half of course has been completed and there are still slots to plan', async () => {
-    const courseId = new ObjectId();
-    const programId = new ObjectId();
-    const credentials = { _id: new ObjectId(), company: { _id: new ObjectId() } };
-    const course = {
-      _id: courseId,
-      slots: [{ startDate: '2021-04-11T09:00:00.000Z', endDate: '2021-04-11T11:00:00.000Z' }],
-      slotsToPlan: [{ _id: new ObjectId() }],
-      subProgram: { program: { _id: programId } },
-    };
-
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
-    const result = await QuestionnaireHelper.list(credentials, { course: courseId });
-
-    expect(result).toMatchObject([]);
-    SinonMongoose.calledOnceWithExactly(
-      findOneCourse,
-      [
-        { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: '-__v -createdAt -updatedAt' }] },
-        { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
-        {
-          query: 'populate',
-          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
-        },
-        { query: 'lean', args: [{ virtuals: true }] },
-      ]
-    );
-    sinon.assert.notCalled(findQuestionnaires);
-  });
-
-  it('should return questionnaires if course has slots and mid course has to be planned', async () => {
-    const credentials = { _id: new ObjectId(), company: { _id: new ObjectId() } };
-    const courseId = new ObjectId();
-    const programId = new ObjectId();
-    const course = {
-      _id: courseId,
-      slots: [{ startDate: '2021-04-01T09:00:00.000Z', endDate: '2021-04-01T11:00:00.000Z' }],
-      slotsToPlan: [{ _id: new ObjectId() }, { _id: new ObjectId() }, { _id: new ObjectId() }],
-      subProgram: { program: { _id: programId } },
-    };
-
-    const questionnairesList = [
-      { name: 'test', type: EXPECTATIONS, status: PUBLISHED },
-      { name: 'test2', type: SELF_POSITIONNING, status: PUBLISHED },
-    ];
-
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
-    findQuestionnaires.returns(SinonMongoose.stubChainedQueries(questionnairesList));
-
-    const result = await QuestionnaireHelper.list(credentials, { course: courseId });
-
-    expect(result).toMatchObject(questionnairesList);
-    SinonMongoose.calledOnceWithExactly(
-      findOneCourse,
-      [
-        { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: '-__v -createdAt -updatedAt' }] },
-        { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
-        {
-          query: 'populate',
-          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
-        },
-        { query: 'lean', args: [{ virtuals: true }] },
-      ]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      findQuestionnaires,
-      [
-        {
-          query: 'find',
-          args: [{
-            type: { $in: [EXPECTATIONS, SELF_POSITIONNING] },
-            $or: [{ program: { $exists: false } }, { program: programId }],
-            status: PUBLISHED,
-          }],
-        },
-        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
-        { query: 'lean' },
-      ]
-    );
-  });
-
-  it('should return published questionnaires if course has not started'
-    + '(EXPECTATION and SELF_POSITIONNING)', async () => {
+  it('should return all published questionnaires', async () => {
     const courseId = new ObjectId();
     const programId = new ObjectId();
     const credentials = { _id: new ObjectId(), company: { _id: new ObjectId() } };
@@ -263,6 +179,7 @@ describe('list', () => {
         type: SELF_POSITIONNING,
         program: programId,
       },
+      { _id: new ObjectId(), name: 'fin de formation', status: PUBLISHED, type: END_OF_COURSE },
     ];
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
@@ -291,70 +208,7 @@ describe('list', () => {
           query: 'find',
           args: [
             {
-              type: { $in: [EXPECTATIONS, SELF_POSITIONNING] },
-              $or: [{ program: { $exists: false } }, { program: programId }],
-              status: PUBLISHED,
-            },
-          ],
-        },
-        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
-        { query: 'lean' },
-      ]
-    );
-  });
-
-  it('should return published questionnaires if course ends today (END_OF_COURSE and SELF_POSITIONNING)', async () => {
-    const courseId = new ObjectId();
-    const programId = new ObjectId();
-    const credentials = { _id: new ObjectId(), company: { _id: new ObjectId() } };
-    const course = {
-      _id: courseId,
-      slots: [
-        { startDate: '2021-04-11T09:00:00.000Z', endDate: '2021-04-11T11:00:00.000Z' },
-        { startDate: '2021-04-13T09:00:00.000Z', endDate: '2021-04-13T11:00:00.000Z' },
-        { startDate: '2021-04-13T16:00:00.000Z', endDate: '2021-04-13T17:00:00.000Z' },
-      ],
-      slotsToPlan: [],
-      subProgram: { program: { _id: programId } },
-    };
-    const questionnaires = [
-      { _id: new ObjectId(), name: 'test', status: PUBLISHED, type: END_OF_COURSE },
-      {
-        _id: new ObjectId(),
-        name: 'auto-positionnement',
-        status: PUBLISHED,
-        type: SELF_POSITIONNING,
-        program: programId,
-      },
-    ];
-
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
-    findQuestionnaires.returns(SinonMongoose.stubChainedQueries(questionnaires));
-
-    const result = await QuestionnaireHelper.list(credentials, { course: courseId });
-
-    expect(result).toMatchObject(questionnaires);
-    SinonMongoose.calledOnceWithExactly(
-      findOneCourse,
-      [
-        { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: '-__v -createdAt -updatedAt' }] },
-        { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
-        {
-          query: 'populate',
-          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
-        },
-        { query: 'lean', args: [{ virtuals: true }] },
-      ]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      findQuestionnaires,
-      [
-        {
-          query: 'find',
-          args: [
-            {
-              type: { $in: [END_OF_COURSE, SELF_POSITIONNING] },
+              type: { $in: [EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING] },
               $or: [{ program: { $exists: false } }, { program: programId }],
               status: PUBLISHED,
             },
@@ -601,6 +455,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );
@@ -690,6 +545,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );
@@ -764,6 +620,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );
@@ -833,6 +690,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );
@@ -901,6 +759,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );
@@ -995,6 +854,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );
@@ -1085,6 +945,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );
@@ -1172,6 +1033,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );
@@ -1248,6 +1110,7 @@ describe('getUserQuestionnaires', () => {
             select: { _id: 1, timeline: 1 },
           }],
         },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
     );

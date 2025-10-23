@@ -70,7 +70,7 @@ exports.list = async (credentials, query = {}) => {
       .lean();
   }
 
-  const { isStrictlyELearning, courseTimeline, programId } = await exports.getCourseInfos(courseId);
+  const { isStrictlyELearning, programId } = await exports.getCourseInfos(courseId);
 
   if (isStrictlyELearning) return [];
 
@@ -81,36 +81,14 @@ exports.list = async (credentials, query = {}) => {
       .lean();
   }
 
-  if (get(credentials, '_id')) {
-    switch (courseTimeline) {
-      case BETWEEN_MID_AND_END_COURSE:
-        return [];
-      case BEFORE_MIDDLE_COURSE_END_DATE:
-      case ENDED: {
-        const qType = courseTimeline === BEFORE_MIDDLE_COURSE_END_DATE ? [EXPECTATIONS] : [END_OF_COURSE];
-
-        return Questionnaire
-          .find({
-            type: { $in: [...qType, SELF_POSITIONNING] },
-            $or: [{ program: { $exists: false } }, { program: programId }],
-            status: PUBLISHED,
-          })
-          .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
-          .lean();
-      }
-      default:
-        return [];
-    }
-  } else {
-    return Questionnaire
-      .find({
-        type: { $in: [EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING] },
-        $or: [{ program: { $exists: false } }, { program: programId }],
-        status: PUBLISHED,
-      })
-      .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
-      .lean();
-  }
+  return Questionnaire
+    .find({
+      type: { $in: [EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING] },
+      $or: [{ program: { $exists: false } }, { program: programId }],
+      status: PUBLISHED,
+    })
+    .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
+    .lean();
 };
 
 exports.getQuestionnaire = async id => Questionnaire.findOne({ _id: id })
@@ -150,6 +128,7 @@ const findQuestionnaires = (questionnaireConditions, historiesConditions) => {
       options: { requestingOwnInfos: true },
       select: { _id: 1, timeline: 1 },
     })
+    .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
     .lean({ virtuals: true });
 };
 
