@@ -5022,18 +5022,15 @@ describe('groupSlotsByDate', () => {
 
 describe('formatIntraCourseForPdf', () => {
   let formatIdentity;
-  let getTotalDuration;
   let groupSlotsByDate;
   let formatIntraCourseSlotsForPdf;
   beforeEach(() => {
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
-    getTotalDuration = sinon.stub(UtilsHelper, 'getTotalDuration');
     groupSlotsByDate = sinon.stub(CourseHelper, 'groupSlotsByDate');
     formatIntraCourseSlotsForPdf = sinon.stub(CourseHelper, 'formatIntraCourseSlotsForPdf');
   });
   afterEach(() => {
     formatIdentity.restore();
-    getTotalDuration.restore();
     groupSlotsByDate.restore();
     formatIntraCourseSlotsForPdf.restore();
   });
@@ -5045,34 +5042,40 @@ describe('formatIntraCourseForPdf', () => {
         { identity: { lastname: 'MasterClass' } },
         { identity: { lastname: 'MasterCompani' } },
       ],
-      subProgram: { program: { name: 'programme' } },
+      subProgram: {
+        program: { name: 'programme' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'on_site', theoreticalDuration: 'PT12600S' },
+          { type: 'remote', theoreticalDuration: 'PT5400S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
       slots: [
         {
           startDate: '2020-03-20T09:00:00',
           endDate: '2020-03-20T11:00:00',
           address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-          step: { type: 'on_site' },
         },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
+        { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00' },
       ],
       companies: [{ name: 'alenvi' }],
       type: INTRA,
     };
 
-    getTotalDuration.returns('9h30');
     groupSlotsByDate.returns([
       [{
         startDate: '2020-03-20T09:00:00',
         endDate: '2020-03-20T11:00:00',
         address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-        step: { type: 'on_site' },
       }], [
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
       ],
-      [{ startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } }],
+      [{ startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00' }],
     ]);
     formatIntraCourseSlotsForPdf.onCall(0).returns({ startHour: 'slot1' });
     formatIntraCourseSlotsForPdf.onCall(1).returns({ startHour: 'slot2' });
@@ -5121,18 +5124,16 @@ describe('formatIntraCourseForPdf', () => {
         },
       ],
     });
-    sinon.assert.calledOnceWithExactly(getTotalDuration, course.slots);
     sinon.assert.notCalled(formatIdentity);
     sinon.assert.calledOnceWithExactly(groupSlotsByDate, [
       {
         startDate: '2020-03-20T09:00:00',
         endDate: '2020-03-20T11:00:00',
         address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-        step: { type: 'on_site' },
       },
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } },
+      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
+      { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00' },
     ]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(0), course.slots[0]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(1), course.slots[1]);
@@ -5145,31 +5146,36 @@ describe('formatIntraCourseForPdf', () => {
     const course = {
       misc: 'des infos en plus',
       trainers: [{ identity: { lastname: 'MasterClass' } }],
-      subProgram: { program: { name: 'programme' } },
+      subProgram: {
+        program: { name: 'programme' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'on_site', theoreticalDuration: 'PT12600S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
       slots: [
         {
           startDate: '2020-03-20T09:00:00',
           endDate: '2020-03-20T11:00:00',
           address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-          step: { type: 'on_site' },
         },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
       ],
       companies: [{ name: 'alenvi' }, { name: 'biens communs' }],
       type: INTRA_HOLDING,
     };
 
-    getTotalDuration.returns('8h');
     formatIdentity.returns('MasterClass');
     groupSlotsByDate.returns([[{
       startDate: '2020-03-20T09:00:00',
       endDate: '2020-03-20T11:00:00',
       address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-      step: { type: 'on_site' },
     }], [
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
     ]]);
     formatIntraCourseSlotsForPdf.onCall(0).returns({ startHour: 'slot1' });
     formatIntraCourseSlotsForPdf.onCall(1).returns({ startHour: 'slot2' });
@@ -5202,17 +5208,15 @@ describe('formatIntraCourseForPdf', () => {
         date: '12/04/2020',
       }],
     });
-    sinon.assert.calledOnceWithExactly(getTotalDuration, course.slots);
     sinon.assert.calledOnceWithExactly(formatIdentity, { lastname: 'MasterClass' }, 'FL');
     sinon.assert.calledOnceWithExactly(groupSlotsByDate, [
       {
         startDate: '2020-03-20T09:00:00',
         endDate: '2020-03-20T11:00:00',
         address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-        step: { type: 'on_site' },
       },
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
     ]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(0), course.slots[0]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(1), course.slots[1]);
@@ -5223,13 +5227,11 @@ describe('formatIntraCourseForPdf', () => {
 
 describe('formatInterCourseForPdf', () => {
   let formatIdentity;
-  let getTotalDuration;
   let formatInterCourseSlotsForPdf;
   let getCompanyAtCourseRegistrationList;
   let findCompanies;
   beforeEach(() => {
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
-    getTotalDuration = sinon.stub(UtilsHelper, 'getTotalDuration');
     formatInterCourseSlotsForPdf = sinon.stub(CourseHelper, 'formatInterCourseSlotsForPdf');
     getCompanyAtCourseRegistrationList = sinon
       .stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
@@ -5237,7 +5239,6 @@ describe('formatInterCourseForPdf', () => {
   });
   afterEach(() => {
     formatIdentity.restore();
-    getTotalDuration.restore();
     formatInterCourseSlotsForPdf.restore();
     getCompanyAtCourseRegistrationList.restore();
     findCompanies.restore();
@@ -5249,10 +5250,10 @@ describe('formatInterCourseForPdf', () => {
     const course = {
       _id: new ObjectId(),
       slots: [
-        { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00', step: { type: 'remote' } },
+        { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00' },
+        { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00' },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+        { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00' },
       ],
       misc: 'des infos en plus',
       trainers: [
@@ -5263,18 +5264,21 @@ describe('formatInterCourseForPdf', () => {
         { _id: traineeIds[0], identity: { lastname: 'trainee 1' } },
         { _id: traineeIds[1], identity: { lastname: 'trainee 2' } },
       ],
-      subProgram: { program: { name: 'programme de formation' } },
+      subProgram: {
+        program: { name: 'programme de formation' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'remote', theoreticalDuration: 'PT9000S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
     };
-    const sortedSlots = [
-      { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00', step: { type: 'remote' } },
-      { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
-    ];
+
     formatInterCourseSlotsForPdf.returns('slot');
     formatIdentity.onCall(0).returns('trainee 1');
     formatIdentity.onCall(1).returns('trainee 2');
-    getTotalDuration.returns('9h30');
     getCompanyAtCourseRegistrationList
       .returns([{ trainee: traineeIds[0], company: companyId }, { trainee: traineeIds[1], company: companyId }]);
     findCompanies.returns(SinonMongoose.stubChainedQueries([{ _id: companyId, name: 'alenvi' }], ['lean']));
@@ -5311,7 +5315,6 @@ describe('formatInterCourseForPdf', () => {
     });
     sinon.assert.calledWithExactly(formatIdentity.getCall(0), { lastname: 'trainee 1' }, 'FL');
     sinon.assert.calledWithExactly(formatIdentity.getCall(1), { lastname: 'trainee 2' }, 'FL');
-    sinon.assert.calledOnceWithExactly(getTotalDuration, sortedSlots);
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
       { key: COURSE, value: course._id },
@@ -5331,23 +5334,26 @@ describe('formatInterCourseForPdf', () => {
     const course = {
       _id: new ObjectId(),
       slots: [
-        { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
+        { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00' },
+        { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00' },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
       ],
       misc: 'des infos en plus',
       trainers: [{ identity: { lastname: 'MasterClass' } }],
       trainees: [],
-      subProgram: { program: { name: 'programme de formation' } },
+      subProgram: {
+        program: { name: 'programme de formation' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
     };
-    const sortedSlots = [
-      { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
-    ];
+
     formatInterCourseSlotsForPdf.returns('slot');
     formatIdentity.returns('MasterClass');
-    getTotalDuration.returns('7h');
     getCompanyAtCourseRegistrationList.returns([]);
     findCompanies.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
@@ -5370,7 +5376,6 @@ describe('formatInterCourseForPdf', () => {
       ],
     });
     sinon.assert.calledOnceWithExactly(formatIdentity, { lastname: 'MasterClass' }, 'FL');
-    sinon.assert.calledOnceWithExactly(getTotalDuration, sortedSlots);
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
       { key: COURSE, value: course._id },
@@ -5427,7 +5432,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'step startDate endDate address', populate: { path: 'step', select: 'type' } }],
+        args: [{ path: 'slots', select: 'startDate endDate address' }],
       },
       {
         query: 'populate',
@@ -5436,7 +5441,11 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
         query: 'populate',
-        args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        args: [{
+          path: 'subProgram',
+          select: 'steps program',
+          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+        }],
       },
       { query: 'lean' },
     ]);
@@ -5462,7 +5471,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'step startDate endDate address', populate: { path: 'step', select: 'type' } }],
+        args: [{ path: 'slots', select: 'startDate endDate address' }],
       },
       {
         query: 'populate',
@@ -5471,7 +5480,11 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
         query: 'populate',
-        args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        args: [{
+          path: 'subProgram',
+          select: 'steps program',
+          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+        }],
       },
       { query: 'lean' },
     ]);
@@ -5496,7 +5509,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'step startDate endDate address', populate: { path: 'step', select: 'type' } }],
+        args: [{ path: 'slots', select: 'startDate endDate address' }],
       },
       {
         query: 'populate',
@@ -5505,7 +5518,11 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
         query: 'populate',
-        args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        args: [{
+          path: 'subProgram',
+          select: 'steps program',
+          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+        }],
       },
       { query: 'lean' },
     ]);

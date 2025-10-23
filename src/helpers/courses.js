@@ -1015,12 +1015,22 @@ exports.groupSlotsByDate = (slots) => {
   return Object.values(group).sort((a, b) => DatesUtilsHelper.ascendingSortBy('startDate')(a[0], b[0]));
 };
 
+const getLiveDuration = (steps) => {
+  const theoreticalDurationList = steps.filter(step => step.type !== E_LEARNING).map(step => step.theoreticalDuration);
+
+  if (theoreticalDurationList.some(duration => !duration)) return '';
+
+  return theoreticalDurationList
+    .reduce((acc, duration) => acc.add(duration), CompaniDuration())
+    .format(SHORT_DURATION_H_MM);
+};
+
 exports.formatIntraCourseForPdf = (course) => {
   const possibleMisc = course.misc ? ` - ${course.misc}` : '';
   const name = course.subProgram.program.name + possibleMisc;
   const courseData = {
     name,
-    duration: UtilsHelper.getTotalDuration(course.slots),
+    duration: getLiveDuration(course.subProgram.steps),
     company: UtilsHelper.formatName(course.companies),
     trainer: course.trainers.length === 1 ? UtilsHelper.formatIdentity(course.trainers[0].identity, 'FL') : '',
     type: course.type,
@@ -1051,7 +1061,7 @@ exports.formatInterCourseForPdf = async (course) => {
     lastDate: sortedSlots.length
       ? CompaniDate(sortedSlots[sortedSlots.length - 1].startDate).format(DD_MM_YYYY)
       : '',
-    duration: UtilsHelper.getTotalDuration(sortedSlots),
+    duration: getLiveDuration(course.subProgram.steps),
   };
 
   const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
@@ -1077,10 +1087,14 @@ exports.generateAttendanceSheets = async (courseId) => {
   const course = await Course
     .findOne({ _id: courseId }, { misc: 1, type: 1 })
     .populate({ path: 'companies', select: 'name' })
-    .populate({ path: 'slots', select: 'step startDate endDate address', populate: { path: 'step', select: 'type' } })
+    .populate({ path: 'slots', select: 'startDate endDate address' })
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
-    .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
+    .populate({
+      path: 'subProgram',
+      select: 'steps program',
+      populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+    })
     .lean();
 
   const pdf = [INTRA, INTRA_HOLDING].includes(course.type)
