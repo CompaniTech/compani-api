@@ -72,7 +72,6 @@ exports.getPdfContent = async (data) => {
   const [compani, signature] = await getImages();
   const header = getHeader(data, compani);
 
-  const learnersCount = UtilsHelper.formatQuantity('stagiaire', data.learnersCount);
   const totalPrice = data.type === INTER_B2B ? data.learnersCount * data.price : data.price;
   const formattedTrainersTitle = UtilsHelper.formatQuantity('Intervenant·e', data.trainers.length, 's', false);
 
@@ -91,10 +90,7 @@ exports.getPdfContent = async (data) => {
             text: `Durée : ${UtilsHelper.formatQuantity('créneau', data.slotsCount, 'x')} - ${data.liveDuration}`
               + `${data.eLearningDuration ? ` (+ ${data.eLearningDuration} de e-learning)` : ''}`,
           },
-          {
-            text: `Effectif formé : ${data.misc ? `${data.misc}, ` : ''}${data.type !== INTER_B2B ? 'jusqu\'à ' : ''}`
-            + `${learnersCount}`,
-          },
+          { text: `Effectif formé : ${data.learnersName}` },
           { text: `Dates : ${data.dates.join(' - ')}` },
           formatAddressList(data.addressList),
           { text: `${formattedTrainersTitle} : ${data.trainers.join(', ')}`, marginBottom: 16 },
