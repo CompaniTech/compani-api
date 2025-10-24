@@ -1,5 +1,4 @@
 const { expect } = require('expect');
-const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const app = require('../../server');
 const Questionnaire = require('../../src/models/Questionnaire');
@@ -11,7 +10,6 @@ const {
   cardsList,
   coursesList,
   programsList,
-  traineeList,
 } = require('./seed/questionnairesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { noRoleNoCompany } = require('../seed/authUsersSeed');
@@ -27,6 +25,7 @@ const {
   END_COURSE,
 } = require('../../src/helpers/constants');
 const { companyWithoutSubscription, authCompany } = require('../seed/authCompaniesSeed');
+const UtilsMock = require('../utilsMock');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -151,17 +150,16 @@ describe('QUESTIONNAIRES ROUTES - POST /questionnaires', () => {
 
 describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
   let authToken;
-  let nowStub;
   beforeEach(populateDB);
 
   describe('TRAINER', () => {
     beforeEach(async () => {
       authToken = await getToken('trainer');
-      nowStub = sinon.stub(Date, 'now');
+      UtilsMock.mockCurrentDate('2021-04-20T10:00:00.000Z');
     });
 
     afterEach(() => {
-      nowStub.restore();
+      UtilsMock.unmockCurrentDate();
     });
 
     it('should get all questionnaires', async () => {
@@ -176,8 +174,6 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     });
 
     it('should get questionnaires linked to course', async () => {
-      nowStub.returns(new Date('2021-04-20T10:00:00.000Z'));
-
       const response = await app.inject({
         method: 'GET',
         url: `/questionnaires?course=${coursesList[0]._id}`,
@@ -224,97 +220,26 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     });
   });
 
-  describe('TRAINEE', () => {
-    beforeEach(async () => {
-      authToken = await getTokenByCredentials(traineeList[0].local);
-      nowStub = sinon.stub(Date, 'now');
-    });
-
-    afterEach(() => {
-      nowStub.restore();
-    });
-
-    it('should get published questionnaires linked to a course (EXPECTATIONS and SELF_POSITIONNING) ', async () => {
-      nowStub.returns(new Date('2021-04-20T10:00:00.000Z'));
-
-      const response = await app.inject({
-        method: 'GET',
-        url: `/questionnaires?course=${coursesList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
-      });
-
-      expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaires.length).toEqual(2);
-      expect(
-        response.result.data.questionnaires.every(q => [EXPECTATIONS, SELF_POSITIONNING].includes(q.type))
-      ).toBeTruthy();
-    });
-
-    it('should get questionnaire EXPECTATION and SELF_POSITIONNING when mid-course has to be planned', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
-
-      const response = await app.inject({
-        method: 'GET',
-        url: `/questionnaires?course=${coursesList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
-      });
-
-      expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaires.length).toBe(2);
-    });
-
-    it('should get published questionnaires linked to a course (END_OF_COURSE and SELF_POSITIONNING)', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
-
-      const response = await app.inject({
-        method: 'GET',
-        url: `/questionnaires?course=${coursesList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
-      });
-
-      expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaires.length).toEqual(2);
-      expect(
-        response.result.data.questionnaires.every(q => [END_OF_COURSE, SELF_POSITIONNING].includes(q.type))
-      ).toBeTruthy();
-    });
-
-    it('should return an empty array if current date is between mid-course and end of course', async () => {
-      nowStub.returns(new Date('2021-04-21T10:00:00.000Z'));
-
-      const response = await app.inject({
-        method: 'GET',
-        url: `/questionnaires?course=${coursesList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
-      });
-
-      expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaires).toEqual([]);
-    });
-  });
-
   describe('NOT LOGGED', () => {
     beforeEach(async () => {
-      nowStub = sinon.stub(Date, 'now');
+      UtilsMock.mockCurrentDate('2021-04-22T10:00:00.000Z');
     });
 
     afterEach(() => {
-      nowStub.restore();
+      UtilsMock.unmockCurrentDate();
     });
 
-    it('should get questionnaires', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
+    it('should get all questionnaires', async () => {
       const response = await app.inject({
         method: 'GET',
         url: `/questionnaires?course=${coursesList[0]._id}`,
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaires.length).toEqual(2);
+      expect(response.result.data.questionnaires.length).toEqual(3);
     });
 
     it('should return 403 if no course query', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
       const response = await app.inject({
         method: 'GET',
         url: '/questionnaires',
@@ -424,22 +349,19 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires/{_id}', () => {
 
 describe('QUESTIONNAIRES ROUTES - GET /questionnaires/user', () => {
   let authToken;
-  let nowStub;
   beforeEach(populateDB);
 
   describe('LOGGED USER', () => {
     beforeEach(async () => {
       authToken = await getTokenByCredentials(noRoleNoCompany.local);
-      nowStub = sinon.stub(Date, 'now');
+      UtilsMock.mockCurrentDate('2021-04-20T10:00:00.000Z');
     });
 
     afterEach(() => {
-      nowStub.restore();
+      UtilsMock.unmockCurrentDate();
     });
 
     it('should get questionnaire EXPECTATION and SELF_POSITIONNING when before mid-course', async () => {
-      nowStub.returns(new Date('2021-04-20T10:00:00.000Z'));
-
       const response = await app.inject({
         method: 'GET',
         url: `/questionnaires/user?course=${coursesList[0]._id}`,
@@ -451,7 +373,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires/user', () => {
     });
 
     it('should get questionnaire EXPECTATION and SELF_POSITIONNING when mid-course has to be planned', async () => {
-      nowStub.returns(new Date('2021-04-22T10:00:00.000Z'));
+      UtilsMock.mockCurrentDate('2021-04-22T10:00:00.000Z');
 
       const response = await app.inject({
         method: 'GET',
@@ -464,7 +386,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires/user', () => {
     });
 
     it('should get questionnaire END_OF_COURSE and SELF_POSITIONNING when after last slot', async () => {
-      nowStub.returns(new Date('2021-04-22T16:05:00.000Z'));
+      UtilsMock.mockCurrentDate('2021-04-22T16:05:00.000Z');
 
       const response = await app.inject({
         method: 'GET',
