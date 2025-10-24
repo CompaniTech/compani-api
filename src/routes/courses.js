@@ -29,7 +29,8 @@ const {
   removeTrainer,
   addTutor,
   removeTutor,
-  uploadCSV,
+  uploadTraineeCSV,
+  uploadSingleCourseCSV,
 } = require('../controllers/courseController');
 const { MESSAGE_TYPE } = require('../models/CourseSmsHistory');
 const { COURSE_TYPES, COURSE_FORMATS, CERTIFICATE_GENERATION_MODE } = require('../models/Course');
@@ -59,7 +60,8 @@ const {
   authorizeTrainerDeletion,
   authorizeTutorAddition,
   authorizeTutorDeletion,
-  authorizeUploadCSV,
+  authorizeUploadTraineeCSV,
+  authorizeUploadSingleCourseCSV,
 } = require('./preHandlers/courses');
 const {
   INTRA,
@@ -163,6 +165,20 @@ exports.plugin = {
         pre: [{ method: authorizeCourseCreation }],
       },
       handler: create,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/single-courses-csv',
+      options: {
+        validate: {
+          payload: Joi.object({ file: Joi.any().required() }),
+        },
+        payload: formDataPayload(),
+        pre: [{ method: authorizeUploadSingleCourseCSV, assign: 'learnerList' }],
+        auth: { scope: ['courses:create'] },
+      },
+      handler: uploadSingleCourseCSV,
     });
 
     server.route({
@@ -336,10 +352,10 @@ exports.plugin = {
           payload: Joi.object({ file: Joi.any().required() }),
         },
         payload: formDataPayload(),
-        pre: [{ method: authorizeUploadCSV, assign: 'learnerList' }],
+        pre: [{ method: authorizeUploadTraineeCSV, assign: 'learnerList' }],
         auth: { scope: ['courses:create'] },
       },
-      handler: uploadCSV,
+      handler: uploadTraineeCSV,
     });
 
     server.route({
