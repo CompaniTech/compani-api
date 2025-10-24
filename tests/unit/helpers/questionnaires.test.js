@@ -111,55 +111,6 @@ describe('list', () => {
     );
   });
 
-  it('should return all published or linked to a program published questionnaire if user has vendor role', async () => {
-    const credentials = { role: { vendor: { name: TRAINING_ORGANISATION_MANAGER } } };
-    const courseId = new ObjectId();
-    const programId = new ObjectId();
-    const course = {
-      _id: courseId,
-      slots: [],
-      slotsToPlan: [],
-      subProgram: { program: { _id: programId } },
-    };
-
-    const questionnairesList = [
-      { name: 'test', type: EXPECTATIONS, status: PUBLISHED },
-      { name: 'test2', type: SELF_POSITIONNING, status: PUBLISHED, program: new ObjectId() },
-      { name: 'test 3', type: END_OF_COURSE, status: PUBLISHED },
-    ];
-
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
-    findQuestionnaires.returns(SinonMongoose.stubChainedQueries(questionnairesList));
-
-    const result = await QuestionnaireHelper.list(credentials, { course: courseId });
-
-    expect(result).toMatchObject(questionnairesList);
-    SinonMongoose.calledOnceWithExactly(
-      findOneCourse,
-      [
-        { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: '-__v -createdAt -updatedAt' }] },
-        { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
-        {
-          query: 'populate',
-          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
-        },
-        { query: 'lean', args: [{ virtuals: true }] },
-      ]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      findQuestionnaires,
-      [
-        {
-          query: 'find',
-          args: [{ $or: [{ program: { $exists: false } }, { program: programId }], status: PUBLISHED }],
-        },
-        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
-        { query: 'lean' },
-      ]
-    );
-  });
-
   it('should return all published questionnaires', async () => {
     const courseId = new ObjectId();
     const programId = new ObjectId();
@@ -206,13 +157,7 @@ describe('list', () => {
       [
         {
           query: 'find',
-          args: [
-            {
-              type: { $in: [EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING] },
-              $or: [{ program: { $exists: false } }, { program: programId }],
-              status: PUBLISHED,
-            },
-          ],
+          args: [{ $or: [{ program: { $exists: false } }, { program: programId }], status: PUBLISHED }],
         },
         { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
         { query: 'lean' },

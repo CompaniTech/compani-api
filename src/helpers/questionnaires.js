@@ -74,19 +74,8 @@ exports.list = async (credentials, query = {}) => {
 
   if (isStrictlyELearning) return [];
 
-  if (isVendorUser) {
-    return Questionnaire
-      .find({ $or: [{ program: { $exists: false } }, { program: programId }], status: PUBLISHED })
-      .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
-      .lean();
-  }
-
   return Questionnaire
-    .find({
-      type: { $in: [EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING] },
-      $or: [{ program: { $exists: false } }, { program: programId }],
-      status: PUBLISHED,
-    })
+    .find({ $or: [{ program: { $exists: false } }, { program: programId }], status: PUBLISHED })
     .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
     .lean();
 };
