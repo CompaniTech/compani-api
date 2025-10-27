@@ -8539,7 +8539,7 @@ describe('uploadSingleCourseCSV', () => {
       estimatedStartDate: '2025-03-03T15:00:00.000Z',
     };
 
-    courseCountDocuments.returns(false);
+    courseCountDocuments.returns(0);
     companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
     createCompany.returns({ _id: companyId });
     createCourse.returns({ _id: courseId });
@@ -8638,7 +8638,7 @@ describe('uploadSingleCourseCSV', () => {
       },
     ];
 
-    courseCountDocuments.returns(true);
+    courseCountDocuments.returns(1);
     companyFindOne.returns(SinonMongoose.stubChainedQueries({ _id: companyId }, ['lean']));
     await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
 
