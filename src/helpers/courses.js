@@ -1628,6 +1628,7 @@ exports.uploadTraineeCSV = async (courseId, learnerList, credentials) => {
     if (!userId) {
       const newUser = await UsersHelper.createUser({ ...learner, origin: WEBAPP }, credentials);
       userId = newUser._id;
+      await EmailHelper.sendWelcome(TRAINEE, learner['local.email']);
     } else if (UtilsHelper.doesArrayIncludeId(course.trainees, userId)) continue;
     await exports.addTrainee(courseId, { trainee: userId, company: learner.company }, credentials);
   }
@@ -1651,6 +1652,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
         credentials
       );
       userId = newUser._id;
+      await EmailHelper.sendWelcome(TRAINEE, learner['local.email']);
     } else {
       const courseAlreadyExists = await Course
         .countDocuments({ trainees: userId, type: SINGLE, subProgram: learner.subProgram });

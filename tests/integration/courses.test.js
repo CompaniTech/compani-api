@@ -5986,14 +5986,18 @@ describe('COURSE ROUTES - DELETE /course/{_id}/tutors/{tutorId}', () => {
 describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
   let authToken;
   let sendNotificationToUser;
+  let sendinBlueTransporter;
   let parseCSV;
 
   beforeEach(populateDB);
   beforeEach(() => {
     sendNotificationToUser = sinon.stub(NotificationHelper, 'sendNotificationToUser');
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
+      .returns({ sendMail: sinon.stub().returns('emailSent') });
     parseCSV = sinon.stub(UtilsHelper, 'parseCsv');
   });
   afterEach(() => {
+    sendinBlueTransporter.restore();
     sendNotificationToUser.restore();
     parseCSV.restore();
   });
@@ -6052,6 +6056,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       const courseAfter = await Course.findOne({ _id: coursesList[26]._id }).lean();
       expect(courseAfter.trainees.length).toEqual(coursesList[26].trainees.length + 2);
       sinon.assert.calledOnce(sendNotificationToUser);
+      sinon.assert.calledOnce(sendinBlueTransporter);
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
@@ -6762,6 +6767,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
 describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
   let authToken;
   let sendNotificationToUser;
+  let sendinBlueTransporter;
   let parseCSV;
   let createFolderForCompany;
   let createFolder;
@@ -6769,12 +6775,15 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
   beforeEach(populateDB);
   beforeEach(() => {
     sendNotificationToUser = sinon.stub(NotificationHelper, 'sendNotificationToUser');
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
+      .returns({ sendMail: sinon.stub().returns('emailSent') });
     parseCSV = sinon.stub(UtilsHelper, 'parseCsv');
     createFolderForCompany = sinon.stub(GDriveStorageHelper, 'createFolderForCompany');
     createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
   });
   afterEach(() => {
     sendNotificationToUser.restore();
+    sendinBlueTransporter.restore();
     parseCSV.restore();
     createFolderForCompany.restore();
     createFolder.restore();
@@ -6855,6 +6864,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       const courseAfter = await Course.countDocuments();
       expect(courseAfter).toEqual(courseBefore + 2);
       sinon.assert.calledOnce(sendNotificationToUser);
+      sinon.assert.calledOnce(sendinBlueTransporter);
       sinon.assert.calledOnce(createFolderForCompany);
       sinon.assert.calledThrice(createFolder);
     });
