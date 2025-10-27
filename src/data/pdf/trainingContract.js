@@ -1,5 +1,6 @@
 const get = require('lodash/get');
 const PdfHelper = require('../../helpers/pdf');
+const NumbersHelper = require('../../helpers/numbers');
 const FileHelper = require('../../helpers/file');
 const UtilsHelper = require('../../helpers/utils');
 const { COPPER_600, COPPER_100, INTER_B2B } = require('../../helpers/constants');
@@ -72,7 +73,9 @@ exports.getPdfContent = async (data) => {
   const [compani, signature] = await getImages();
   const header = getHeader(data, compani);
 
-  const totalPrice = data.type === INTER_B2B ? data.learnersCount * data.price : data.price;
+  const totalPrice = data.type === INTER_B2B
+    ? NumbersHelper.toFixedToFloat(data.learnersCount * data.price, 1)
+    : data.price;
   const formattedTrainersTitle = UtilsHelper.formatQuantity('Intervenant·e', data.trainers.length, 's', false);
 
   const body = [
