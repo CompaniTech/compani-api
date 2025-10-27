@@ -1,4 +1,5 @@
 const sinon = require('sinon');
+const get = require('lodash/get');
 const omit = require('lodash/omit');
 const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
@@ -6,7 +7,6 @@ const fs = require('fs');
 const os = require('os');
 const { PassThrough } = require('stream');
 const Boom = require('@hapi/boom');
-const { get } = require('lodash');
 const UtilsMock = require('../../utilsMock');
 const Company = require('../../../src/models/Company');
 const Course = require('../../../src/models/Course');
@@ -7933,7 +7933,10 @@ describe('generateTrainingContract', () => {
       misc: 'Test',
       maxTrainees: 5,
       type: INTRA,
-      trainees: [new ObjectId(), new ObjectId()],
+      trainees: [
+        { _id: new ObjectId(), identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+        { _id: new ObjectId(), identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
+      ],
       companies: [{
         _id: companyId,
         name: 'Alenvi',
@@ -7979,6 +7982,7 @@ describe('generateTrainingContract', () => {
       eLearningDuration: '0h20',
       misc: 'Test',
       learnersCount: 5,
+      learnersName: 'Charles LECLERC, Lewis HAMILTON',
       dates: ['03/11/2020'],
       addressList: ['14 rue de ponthieu 75008 Paris', 'Cette formation contient des créneaux en distanciel'],
       trainers: ['Jean BONBEUR', 'James PENCIL'],
@@ -7988,6 +7992,11 @@ describe('generateTrainingContract', () => {
     vendorCompanyGet.returns(vendorCompany);
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
+
+    getCompanyAtCourseRegistrationList.returns([
+      { trainee: course.trainees[0]._id, company: companyId },
+      { trainee: course.trainees[1]._id, company: companyId },
+    ]);
 
     await CourseHelper.generateTrainingContract(course._id, payload);
 
@@ -8012,12 +8021,17 @@ describe('generateTrainingContract', () => {
             { path: 'slots', select: 'startDate endDate address meetingLink' },
             { path: 'slotsToPlan', select: '_id' },
             { path: 'trainers', select: 'identity.firstname identity.lastname' },
+            { path: 'trainees', select: 'identity.firstname identity.lastname' },
           ]],
         },
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    sinon.assert.calledOnceWithExactly(
+      getCompanyAtCourseRegistrationList,
+      { key: COURSE, value: course._id },
+      { key: TRAINEE, value: course.trainees.map(t => t._id) }
+    );
   });
 
   it('should download training contract for inter course without slots to plan & only on_site steps', async () => {
@@ -8027,7 +8041,10 @@ describe('generateTrainingContract', () => {
       _id: new ObjectId(),
       misc: 'Test',
       type: INTER_B2B,
-      trainees: [new ObjectId(), new ObjectId()],
+      trainees: [
+        { _id: new ObjectId(), identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+        { _id: new ObjectId(), identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
+      ],
       companies: [{
         _id: companyId,
         name: 'Alenvi',
@@ -8080,6 +8097,7 @@ describe('generateTrainingContract', () => {
       eLearningDuration: '',
       misc: 'Test',
       learnersCount: 1,
+      learnersName: 'Charles LECLERC',
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['Paris'],
       trainers: ['Jean BONBEUR'],
@@ -8091,8 +8109,8 @@ describe('generateTrainingContract', () => {
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
 
     getCompanyAtCourseRegistrationList.returns([
-      { trainee: course.trainees[0], company: companyId },
-      { trainee: course.trainees[1], company: new ObjectId() },
+      { trainee: course.trainees[0]._id, company: companyId },
+      { trainee: course.trainees[1]._id, company: new ObjectId() },
     ]);
 
     await CourseHelper.generateTrainingContract(course._id, payload);
@@ -8118,6 +8136,7 @@ describe('generateTrainingContract', () => {
             { path: 'slots', select: 'startDate endDate address meetingLink' },
             { path: 'slotsToPlan', select: '_id' },
             { path: 'trainers', select: 'identity.firstname identity.lastname' },
+            { path: 'trainees', select: 'identity.firstname identity.lastname' },
           ]],
         },
         { query: 'lean' },
@@ -8126,7 +8145,7 @@ describe('generateTrainingContract', () => {
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
       { key: COURSE, value: course._id },
-      { key: TRAINEE, value: course.trainees }
+      { key: TRAINEE, value: course.trainees.map(t => t._id) }
     );
   });
 });

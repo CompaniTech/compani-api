@@ -65,22 +65,18 @@ const computeElearnigDuration = (steps) => {
     .format(SHORT_DURATION_H_MM);
 };
 
-const getLearnersCount = async (course) => {
-  if (course.type !== INTER_B2B) return course.maxTrainees;
-
-  const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
-    .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
-
-  const traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
-
-  return course.trainees
-    .filter(traineeId => UtilsHelper.areObjectIdsEquals(course.companies[0]._id, traineesCompany[traineeId])).length;
-};
-
 // make sure code is similar to front part in TrainingContractInfoModal
 exports.formatCourseForTrainingContract = async (course, vendorCompany, price) => {
   const { companies, subProgram, slots, slotsToPlan, trainers } = course;
   const trainersName = trainers.map(trainer => UtilsHelper.formatIdentity(trainer.identity, 'FL'));
+
+  const traineesIds = course.trainees.map(t => t._id);
+  const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
+    .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: traineesIds });
+
+  const traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
+  const trainees = course.trainees
+    .filter(t => UtilsHelper.areObjectIdsEquals(course.companies[0]._id, traineesCompany[t._id]));
 
   return {
     type: course.type,
@@ -92,7 +88,8 @@ exports.formatCourseForTrainingContract = async (course, vendorCompany, price) =
     liveDuration: StepsHelper.computeLiveDuration(slots, slotsToPlan, subProgram.steps),
     eLearningDuration: computeElearnigDuration(subProgram.steps),
     misc: course.misc,
-    learnersCount: await getLearnersCount(course),
+    learnersCount: course.type !== INTER_B2B ? course.maxTrainees : trainees.length,
+    learnersName: trainees.map(t => UtilsHelper.formatIdentity(t.identity, 'FL')).join(', '),
     dates: CourseSlotsHelper.formatSlotDates(slots),
     addressList: CourseSlotsHelper.getAddressList(slots, subProgram.steps),
     trainers: trainersName,
