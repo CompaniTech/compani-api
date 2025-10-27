@@ -6602,7 +6602,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
         {
           firstname: 'Tom',
           lastname: 'Sawyer',
-          email: 'coach@alenvi.io',
+          email: 'coach@Alenvi.io',
           countryCode: '',
           phone: '0687654321',
           company: 'Test SAS',
@@ -6809,6 +6809,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -6821,6 +6822,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -6833,6 +6835,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: '',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -6870,6 +6873,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -6881,6 +6885,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -6892,6 +6897,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -6921,6 +6927,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
           other: '',
         },
@@ -6934,6 +6941,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
           other: '',
         },
@@ -6947,6 +6955,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
           other: '',
         },
@@ -6985,6 +6994,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         };
 
@@ -7001,6 +7011,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
             suffix: '@test.fr',
             subProgram: subProgramsList[4]._id,
             operationsRepresentative: 'training-organisation-manager@alenvi.io',
+            trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
             estimatedStartDate: '2025-11-01',
           },
           {
@@ -7013,6 +7024,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
             suffix: '@test.fr',
             subProgram: subProgramsList[4]._id,
             operationsRepresentative: 'training-organisation-manager@alenvi.io',
+            trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
             estimatedStartDate: '2025-11-01',
           },
         ]);
@@ -7044,6 +7056,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -7056,6 +7069,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -7068,6 +7082,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7098,6 +7113,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -7110,6 +7126,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -7122,6 +7139,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
         {
@@ -7134,6 +7152,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7164,6 +7183,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7195,6 +7215,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7226,6 +7247,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7249,13 +7271,14 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
         {
           firstname: 'Tom',
           lastname: 'Sawyer',
-          email: 'coach@alenvi.io',
+          email: 'Coach@alenvi.io',
           countryCode: '',
           phone: '0687654321',
           company: 'Test SAS',
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7286,6 +7309,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7317,6 +7341,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: 'test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7348,6 +7373,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7379,6 +7405,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7410,6 +7437,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: new ObjectId(),
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7440,6 +7468,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'vendor-admin@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7470,6 +7499,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manageralenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
         },
       ]);
@@ -7484,6 +7514,101 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByTrainee)[0])
         .toEqual(['le format de l\'email est incorrect pour le chargé des opérations']);
+    });
+
+    it('should return 422 if trainer has wrong role', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Nouvelle Structure',
+          suffix: '@test.fr',
+          subProgram: subProgramsList[4]._id,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'vendor-admin@alenvi.io',
+          estimatedStartDate: '2025-11-01',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/single-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['l\'intervenant n\'existe pas']);
+    });
+
+    it('should return 422 if trainer email is incorrect', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Nouvelle Structure',
+          suffix: '@test.fr',
+          subProgram: subProgramsList[4]._id,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'training-organisation-manageralenvi.io',
+          estimatedStartDate: '2025-11-01',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/single-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['le format de l\'email est incorrect pour l\'intervenant']);
+    });
+
+    it('should return 422 if trainer list is wrongly formatted', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Nouvelle Structure',
+          suffix: '@test.fr',
+          subProgram: subProgramsList[4]._id,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io;trainercoach@alenvi.io',
+          estimatedStartDate: '2025-11-01',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/single-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['le format de l\'email est incorrect pour l\'intervenant']);
     });
 
     it('should return 422 if estimated start date is incorrect', async () => {
@@ -7501,6 +7626,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-15-01',
         },
       ]);
@@ -7532,6 +7658,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           suffix: '@test.fr',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
           estimatedStartDate: '2025-12-01',
         });
       }

@@ -1647,7 +1647,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
     }
     if (!userId) {
       const newUser = await UsersHelper.createUser(
-        { ...omit(learner, ['operationsRepresentative', 'subProgram']), company, origin: WEBAPP },
+        { ...omit(learner, ['operationsRepresentative', 'subProgram', 'trainers']), company, origin: WEBAPP },
         credentials
       );
       userId = newUser._id;
@@ -1658,7 +1658,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       if (courseAlreadyExists) continue;
     }
 
-    const { subProgram, operationsRepresentative, estimatedStartDate } = learner;
+    const { subProgram, operationsRepresentative, estimatedStartDate, trainers } = learner;
     const identity = { firstname: learner['identity.firstname'], lastname: learner['identity.lastname'] };
     const payload = {
       subProgram,
@@ -1672,6 +1672,9 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       hasCertifyingTest: false,
       estimatedStartDate,
     };
-    await exports.createCourse(payload, credentials);
+    const course = await exports.createCourse(payload, credentials);
+    if (trainers.length) {
+      for (const trainer of trainers) await exports.addTrainer(course._id, { trainer }, credentials);
+    }
   }
 };

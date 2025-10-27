@@ -965,7 +965,7 @@ exports.authorizeUploadTraineeCSV = async (req) => {
         if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectEmail);
         else errorsByTrainee[learnerName] = [translate[language].incorrectEmail];
       }
-      const emailUser = await User.findOne({ 'local.email': learner.email }, { _id: 1 }).lean();
+      const emailUser = await User.findOne({ 'local.email': learner.email.toLowerCase() }, { _id: 1 }).lean();
       if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, get(identityUser, '_id'))) {
         if (errorsByTrainee[learnerName]) {
           errorsByTrainee[learnerName].push(translate[language].emailLinkedToOtherLearner);
@@ -1028,6 +1028,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
     'suffix',
     'subProgram',
     'operationsRepresentative',
+    'trainers',
     'estimatedStartDate',
   ].sort();
   if (!isEqual(Object.keys(learnerList[0]).sort(), allowedKeys)) {
@@ -1049,7 +1050,8 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
     throw error;
   }
 
-  const trainingOrganisationManager = await Role.findOne({ name: TRAINING_ORGANISATION_MANAGER }).lean();
+  const trainingOrganisationManagerRole = await Role.findOne({ name: TRAINING_ORGANISATION_MANAGER }).lean();
+  const trainerRole = await Role.findOne({ name: TRAINER }).lean();
   const errorsByTrainee = {};
   let i = 1;
   for (const learner of learnerList) {
@@ -1102,7 +1104,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectEmail);
         else errorsByTrainee[learnerName] = [translate[language].incorrectEmail];
       }
-      const emailUser = await User.findOne({ 'local.email': learner.email }, { _id: 1 }).lean();
+      const emailUser = await User.findOne({ 'local.email': learner.email.toLowerCase() }, { _id: 1 }).lean();
       if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, get(identityUser, '_id'))) {
         if (errorsByTrainee[learnerName]) {
           errorsByTrainee[learnerName].push(translate[language].emailLinkedToOtherLearner);
@@ -1145,7 +1147,10 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
     } else {
       const operationsRepresentative = await User
         .findOne(
-          { 'local.email': learner.operationsRepresentative, 'role.vendor': trainingOrganisationManager._id },
+          {
+            'local.email': learner.operationsRepresentative.toLowerCase(),
+            'role.vendor': trainingOrganisationManagerRole._id,
+          },
           { _id: 1 })
         .lean();
       operationsRepresentativeId = get(operationsRepresentative, '_id');
@@ -1153,6 +1158,32 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         if (errorsByTrainee[learnerName]) {
           errorsByTrainee[learnerName].push(translate[language].unknownOperationsRepresentative);
         } else errorsByTrainee[learnerName] = [translate[language].unknownOperationsRepresentative];
+      }
+    }
+    const trainersIds = [];
+    if (learner.trainers) {
+      const trainersEmail = learner.trainers.split(',').map(email => email.trim()).filter(Boolean);
+      if (!trainersEmail.every(email => email.match(EMAIL_VALIDATION))) {
+        if (errorsByTrainee[learnerName]) {
+          errorsByTrainee[learnerName].push(translate[language].incorrectEmailForTrainer);
+        } else errorsByTrainee[learnerName] = [translate[language].incorrectEmailForTrainer];
+      } else {
+        for (const trainerEmail of trainersEmail) {
+          const trainer = await User
+            .findOne(
+              {
+                'local.email': trainerEmail.toLowerCase(),
+                'role.vendor': { $in: [trainingOrganisationManagerRole._id, trainerRole._id] },
+              },
+              { _id: 1 })
+            .lean();
+          trainersIds.push(get(trainer, '_id'));
+          if (!trainer) {
+            if (errorsByTrainee[learnerName]) {
+              errorsByTrainee[learnerName].push(translate[language].unknownTrainer);
+            } else errorsByTrainee[learnerName] = [translate[language].unknownTrainer];
+          }
+        }
       }
     }
 
@@ -1180,6 +1211,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
         company: companyId || learner.company,
         operationsRepresentative: operationsRepresentativeId,
+        trainers: trainersIds,
         subProgram: learner.subProgram,
         ...formattedDate && { estimatedStartDate: formattedDate },
       });

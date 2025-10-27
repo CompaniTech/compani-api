@@ -8406,12 +8406,13 @@ describe('uploadTraineeCSV', () => {
   });
 });
 
-describe('uploadTraineeCSV', () => {
+describe('uploadSingleCourseCSV', () => {
   let companyFindOne;
   let courseCountDocuments;
   let createCompany;
   let createUser;
   let createCourse;
+  let addTrainer;
 
   beforeEach(() => {
     companyFindOne = sinon.stub(Company, 'findOne');
@@ -8419,6 +8420,7 @@ describe('uploadTraineeCSV', () => {
     createCompany = sinon.stub(CompanyHelper, 'createCompany');
     createUser = sinon.stub(UserHelper, 'createUser');
     createCourse = sinon.stub(CourseHelper, 'createCourse');
+    addTrainer = sinon.stub(CourseHelper, 'addTrainer');
   });
 
   afterEach(() => {
@@ -8427,6 +8429,7 @@ describe('uploadTraineeCSV', () => {
     createUser.restore();
     createCompany.restore();
     createCourse.restore();
+    addTrainer.restore();
   });
 
   it('should create course with new trainee and new company', async () => {
@@ -8435,6 +8438,8 @@ describe('uploadTraineeCSV', () => {
     const companyId = new ObjectId();
     const subProgramId = new ObjectId();
     const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+    const trainerIds = [new ObjectId(), new ObjectId()];
     const learnerList = [
       {
         'identity.firstname': 'Jean',
@@ -8443,6 +8448,7 @@ describe('uploadTraineeCSV', () => {
         company: 'Company',
         subProgram: subProgramId,
         operationsRepresentative: operationsRepresentativeId,
+        trainers: trainerIds,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
       },
     ];
@@ -8462,6 +8468,7 @@ describe('uploadTraineeCSV', () => {
     companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
     createUser.returns({ _id: userId });
     createCompany.returns({ _id: companyId });
+    createCourse.returns({ _id: courseId });
     await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
 
     SinonMongoose.calledOnceWithExactly(
@@ -8484,6 +8491,8 @@ describe('uploadTraineeCSV', () => {
 
     sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
     sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
+    sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: trainerIds[0] }, credentials);
+    sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: trainerIds[1] }, credentials);
     sinon.assert.notCalled(courseCountDocuments);
   });
 
@@ -8493,6 +8502,7 @@ describe('uploadTraineeCSV', () => {
     const companyId = new ObjectId();
     const subProgramId = new ObjectId();
     const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
     const learnerList = [
       {
         _id: userId,
@@ -8502,6 +8512,7 @@ describe('uploadTraineeCSV', () => {
         company: 'Company',
         subProgram: subProgramId,
         operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
       },
     ];
@@ -8521,6 +8532,7 @@ describe('uploadTraineeCSV', () => {
     courseCountDocuments.returns(false);
     companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
     createCompany.returns({ _id: companyId });
+    createCourse.returns({ _id: courseId });
     await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
 
     SinonMongoose.calledOnceWithExactly(
@@ -8535,6 +8547,7 @@ describe('uploadTraineeCSV', () => {
       { trainees: userId, type: SINGLE, subProgram: subProgramId }
     );
     sinon.assert.notCalled(createUser);
+    sinon.assert.notCalled(addTrainer);
   });
 
   it('should create course with existing company', async () => {
@@ -8543,6 +8556,7 @@ describe('uploadTraineeCSV', () => {
     const companyId = new ObjectId();
     const subProgramId = new ObjectId();
     const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
     const learnerList = [
       {
         'identity.firstname': 'Jean',
@@ -8551,6 +8565,7 @@ describe('uploadTraineeCSV', () => {
         company: companyId,
         subProgram: subProgramId,
         operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
       },
     ];
@@ -8569,6 +8584,7 @@ describe('uploadTraineeCSV', () => {
 
     companyFindOne.returns(SinonMongoose.stubChainedQueries({ _id: companyId }, ['lean']));
     createUser.returns({ _id: userId });
+    createCourse.returns({ _id: courseId });
     await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
 
     sinon.assert.calledOnceWithExactly(
@@ -8587,6 +8603,7 @@ describe('uploadTraineeCSV', () => {
     sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
     sinon.assert.notCalled(createCompany);
     sinon.assert.notCalled(courseCountDocuments);
+    sinon.assert.notCalled(addTrainer);
   });
 
   it('should not create course', async () => {
@@ -8604,6 +8621,7 @@ describe('uploadTraineeCSV', () => {
         company: 'Company',
         subProgram: subProgramId,
         operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
       },
     ];
@@ -8620,6 +8638,7 @@ describe('uploadTraineeCSV', () => {
     sinon.assert.notCalled(createCompany);
     sinon.assert.notCalled(createUser);
     sinon.assert.notCalled(createCourse);
+    sinon.assert.notCalled(addTrainer);
     sinon.assert.calledOnceWithExactly(
       courseCountDocuments,
       { trainees: userId, type: SINGLE, subProgram: subProgramId }
