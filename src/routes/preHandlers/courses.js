@@ -1016,7 +1016,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
   const { payload } = req;
 
   const learnerList = await UtilsHelper.parseCsv(payload.file);
-  if (learnerList.length > 15) throw Boom.forbidden(translate[language].fileIsToBig);
+  if (learnerList.length > 60) throw Boom.forbidden(translate[language].fileIsToBig);
 
   const allowedKeys = [
     'firstname',
@@ -1066,7 +1066,9 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
       if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingCompany);
       else errorsByTrainee[learnerName] = [translate[language].missingCompany];
     } else {
-      const company = await Company.findOne({ name: learner.company }, { _id: 1 }).lean();
+      const company = await Company
+        .findOne({ name: { $regex: new RegExp(`^${learner.company}$`, 'i') } }, { _id: 1 })
+        .lean();
       companyId = get(company, '_id');
     }
     const identityUser = await User
