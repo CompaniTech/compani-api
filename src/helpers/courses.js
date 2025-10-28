@@ -13,6 +13,7 @@ const set = require('lodash/set');
 const fs = require('fs');
 const os = require('os');
 const Boom = require('@hapi/boom');
+const { isObjectIdOrHexString } = require('mongoose');
 const { CompaniDate } = require('./dates/companiDates');
 const Company = require('../models/Company');
 const Course = require('../models/Course');
@@ -74,7 +75,9 @@ const {
   TRAINER_DELETION,
   COURSE_RESTART,
   COURSE_INTERRUPTION,
+  MONTHLY,
 } = require('./constants');
+const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
 const NotificationHelper = require('./notifications');
@@ -1619,14 +1622,62 @@ exports.removeTutor = async (courseId, tutorId) => {
   await Course.updateOne({ _id: courseId }, { $pull: { tutors: tutorId } });
 };
 
-exports.uploadCSV = async (courseId, learnerList, credentials) => {
+exports.uploadTraineeCSV = async (courseId, learnerList, credentials) => {
   const course = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
   for (const learner of learnerList) {
     let userId = learner._id;
     if (!userId) {
       const newUser = await UsersHelper.createUser({ ...learner, origin: WEBAPP }, credentials);
       userId = newUser._id;
+      await EmailHelper.sendWelcome(TRAINEE, learner['local.email']);
     } else if (UtilsHelper.doesArrayIncludeId(course.trainees, userId)) continue;
     await exports.addTrainee(courseId, { trainee: userId, company: learner.company }, credentials);
+  }
+};
+
+exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
+  for (const learner of learnerList) {
+    let userId = learner._id;
+    let { company } = learner;
+    if (!isObjectIdOrHexString(company)) {
+      const createdCompany = await Company.findOne({ name: company }).lean();
+      if (createdCompany) company = createdCompany._id;
+      else {
+        const newCompany = await CompaniesHelper.createCompany({ name: company });
+        company = newCompany._id;
+      }
+    }
+    if (!userId) {
+      const newUser = await UsersHelper.createUser(
+        { ...omit(learner, ['operationsRepresentative', 'subProgram', 'trainers']), company, origin: WEBAPP },
+        credentials
+      );
+      userId = newUser._id;
+      await EmailHelper.sendWelcome(TRAINEE, learner['local.email']);
+    } else {
+      const courseAlreadyExists = await Course
+        .countDocuments({ trainees: userId, type: SINGLE, subProgram: learner.subProgram });
+
+      if (courseAlreadyExists) continue;
+    }
+
+    const { subProgram, operationsRepresentative, estimatedStartDate, trainers } = learner;
+    const identity = { firstname: learner['identity.firstname'], lastname: learner['identity.lastname'] };
+    const payload = {
+      subProgram,
+      misc: UtilsHelper.formatIdentity(identity, 'FL'),
+      type: SINGLE,
+      salesRepresentative: operationsRepresentative,
+      operationsRepresentative,
+      expectedBillsCount: 21,
+      certificateGenerationMode: MONTHLY,
+      trainee: userId,
+      hasCertifyingTest: false,
+      estimatedStartDate,
+    };
+    const course = await exports.createCourse(payload, credentials);
+    if (trainers.length) {
+      for (const trainer of trainers) await exports.addTrainer(course._id, { trainer }, credentials);
+    }
   }
 };

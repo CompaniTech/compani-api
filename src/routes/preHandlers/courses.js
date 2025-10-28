@@ -11,6 +11,7 @@ const CompletionCertificate = require('../../models/CompletionCertificate');
 const CompanyHolding = require('../../models/CompanyHolding');
 const CourseBill = require('../../models/CourseBill');
 const AttendanceSheet = require('../../models/AttendanceSheet');
+const Role = require('../../models/Role');
 const SubProgram = require('../../models/SubProgram');
 const Holding = require('../../models/Holding');
 const UserCompany = require('../../models/UserCompany');
@@ -872,7 +873,7 @@ exports.authorizeTutorDeletion = async (req) => {
   return null;
 };
 
-exports.authorizeUploadCSV = async (req) => {
+exports.authorizeUploadTraineeCSV = async (req) => {
   const { params, payload } = req;
 
   const course = await Course
@@ -964,7 +965,7 @@ exports.authorizeUploadCSV = async (req) => {
         if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectEmail);
         else errorsByTrainee[learnerName] = [translate[language].incorrectEmail];
       }
-      const emailUser = await User.findOne({ 'local.email': learner.email }, { _id: 1 }).lean();
+      const emailUser = await User.findOne({ 'local.email': learner.email.toLowerCase() }, { _id: 1 }).lean();
       if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, get(identityUser, '_id'))) {
         if (errorsByTrainee[learnerName]) {
           errorsByTrainee[learnerName].push(translate[language].emailLinkedToOtherLearner);
@@ -998,6 +999,221 @@ exports.authorizeUploadCSV = async (req) => {
         ...learner.phone && { 'contact.phone': formattedPhone },
         ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
         company: companyId,
+      });
+    }
+    i += 1;
+  }
+  if (Object.keys(errorsByTrainee).length) {
+    const error = Boom.badData();
+    error.output.payload.errorsByTrainee = errorsByTrainee;
+    throw error;
+  }
+
+  return formattedLearnerList;
+};
+
+exports.authorizeUploadSingleCourseCSV = async (req) => {
+  const { payload } = req;
+
+  const learnerList = await UtilsHelper.parseCsv(payload.file);
+  if (learnerList.length > 60) throw Boom.forbidden(translate[language].fileIsToBig);
+
+  const allowedKeys = [
+    'firstname',
+    'lastname',
+    'email',
+    'phone',
+    'countryCode',
+    'company',
+    'suffix',
+    'subProgram',
+    'operationsRepresentative',
+    'trainers',
+    'estimatedStartDate',
+  ].sort();
+  if (!isEqual(Object.keys(learnerList[0]).sort(), allowedKeys)) {
+    throw Boom.badRequest(translate[language].wrongColumnsInCsv);
+  }
+
+  const formattedLearnerList = [];
+  const emailsList = compact(learnerList.map(l => l.email));
+  if (emailsList.length !== [...new Set(emailsList)].length) {
+    const error = Boom.badData();
+    error.output.payload.errorsByTrainee = { Emails: [translate[language].emailDuplicates] };
+    throw error;
+  }
+
+  const nameList = learnerList.map(l => `${l.firstname} ${l.lastname}`);
+  if (nameList.length !== [...new Set(nameList)].length) {
+    const error = Boom.badData();
+    error.output.payload.errorsByTrainee = { Stagiaires: [translate[language].nameDuplicates] };
+    throw error;
+  }
+
+  const trainingOrganisationManagerRole = await Role.findOne({ name: TRAINING_ORGANISATION_MANAGER }).lean();
+  const trainerRole = await Role.findOne({ name: TRAINER }).lean();
+  const errorsByTrainee = {};
+  let i = 1;
+  for (const learner of learnerList) {
+    let learnerName = `Stagiaire ${i}`;
+    if (!(learner.firstname && learner.lastname)) {
+      errorsByTrainee[`Stagiaire ${i}`] = [translate[language].incorrectName];
+    } else {
+      const { firstname, lastname } = learner;
+      learnerName = UtilsHelper.formatIdentity({ firstname, lastname }, 'FL');
+    }
+
+    let companyId = null;
+    if (!learner.company) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingCompany);
+      else errorsByTrainee[learnerName] = [translate[language].missingCompany];
+    } else {
+      const company = await Company
+        .findOne({ name: { $regex: new RegExp(`^${learner.company}$`, 'i') } }, { _id: 1 })
+        .lean();
+      companyId = get(company, '_id');
+    }
+    const identityUser = await User
+      .findOne(
+        {
+          'identity.firstname': { $regex: new RegExp(`^${learner.firstname}$`, 'i') },
+          'identity.lastname': { $regex: new RegExp(`^${learner.lastname}$`, 'i') },
+        },
+        { _id: 1, local: 1 }
+      )
+      .lean();
+    let sameEmail = false;
+    if (identityUser) {
+      const userCompany = await UserCompany
+        .findOne({ user: identityUser._id, endDate: { $exists: false } }, { company: 1 })
+        .lean();
+
+      sameEmail = identityUser.local.email === learner.email.toLowerCase();
+      if (userCompany) {
+        if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
+          if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerCompany);
+          else errorsByTrainee[learnerName] = [translate[language].wrongLearnerCompany];
+        } else if (!sameEmail && UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
+          if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerEmail);
+          else errorsByTrainee[learnerName] = [translate[language].wrongLearnerEmail];
+        }
+      }
+    }
+    if (learner.email) {
+      if (!learner.email.match(EMAIL_VALIDATION)) {
+        if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectEmail);
+        else errorsByTrainee[learnerName] = [translate[language].incorrectEmail];
+      }
+      const emailUser = await User.findOne({ 'local.email': learner.email.toLowerCase() }, { _id: 1 }).lean();
+      if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, get(identityUser, '_id'))) {
+        if (errorsByTrainee[learnerName]) {
+          errorsByTrainee[learnerName].push(translate[language].emailLinkedToOtherLearner);
+        } else errorsByTrainee[learnerName] = [translate[language].emailLinkedToOtherLearner];
+      }
+    } else if (!learner.suffix || !learner.suffix.match(SUFFIX_EMAIL_VALIDATION)) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingOrIncorrectSuffix);
+      else errorsByTrainee[learnerName] = [translate[language].missingOrIncorrectSuffix];
+    }
+    if (learner.countryCode && !learner.countryCode.match(COUNTRY_CODE_VALIDATION)) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectCountryCode);
+      else errorsByTrainee[learnerName] = [translate[language].incorrectCountryCode];
+    }
+
+    const formattedPhone = learner.phone.replace(/[\s\-.]/g, '');
+    if (learner.phone && !formattedPhone.match(PHONE_VALIDATION)) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectPhone);
+      else errorsByTrainee[learnerName] = [translate[language].incorrectPhone];
+    }
+
+    if (!learner.subProgram) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingSubProgram);
+      else errorsByTrainee[learnerName] = [translate[language].missingSubProgram];
+    } else {
+      const subProgram = await SubProgram.findOne({ _id: learner.subProgram }, { _id: 1 }).lean();
+      if (!subProgram) {
+        if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].unknownSubProgram);
+        else errorsByTrainee[learnerName] = [translate[language].unknownSubProgram];
+      }
+    }
+    let operationsRepresentativeId = null;
+    if (!learner.operationsRepresentative) {
+      if (errorsByTrainee[learnerName]) {
+        errorsByTrainee[learnerName].push(translate[language].missingOperationsRepresentative);
+      } else errorsByTrainee[learnerName] = [translate[language].missingOperationsRepresentative];
+    } else if (!learner.operationsRepresentative.match(EMAIL_VALIDATION)) {
+      if (errorsByTrainee[learnerName]) {
+        errorsByTrainee[learnerName].push(translate[language].incorrectEmailForOperationsRepresentative);
+      } else errorsByTrainee[learnerName] = [translate[language].incorrectEmailForOperationsRepresentative];
+    } else {
+      const operationsRepresentative = await User
+        .findOne(
+          {
+            'local.email': learner.operationsRepresentative.toLowerCase(),
+            'role.vendor': trainingOrganisationManagerRole._id,
+          },
+          { _id: 1 })
+        .lean();
+      operationsRepresentativeId = get(operationsRepresentative, '_id');
+      if (!operationsRepresentative) {
+        if (errorsByTrainee[learnerName]) {
+          errorsByTrainee[learnerName].push(translate[language].unknownOperationsRepresentative);
+        } else errorsByTrainee[learnerName] = [translate[language].unknownOperationsRepresentative];
+      }
+    }
+    const trainersIds = [];
+    if (learner.trainers) {
+      const trainersEmail = learner.trainers.split(',').map(email => email.trim()).filter(Boolean);
+      if (!trainersEmail.every(email => email.match(EMAIL_VALIDATION))) {
+        if (errorsByTrainee[learnerName]) {
+          errorsByTrainee[learnerName].push(translate[language].incorrectEmailForTrainer);
+        } else errorsByTrainee[learnerName] = [translate[language].incorrectEmailForTrainer];
+      } else {
+        for (const trainerEmail of trainersEmail) {
+          const trainer = await User
+            .findOne(
+              {
+                'local.email': trainerEmail.toLowerCase(),
+                'role.vendor': { $in: [trainingOrganisationManagerRole._id, trainerRole._id] },
+              },
+              { _id: 1 })
+            .lean();
+          trainersIds.push(get(trainer, '_id'));
+          if (!trainer) {
+            if (errorsByTrainee[learnerName]) {
+              errorsByTrainee[learnerName].push(translate[language].unknownTrainer);
+            } else errorsByTrainee[learnerName] = [translate[language].unknownTrainer];
+          }
+        }
+      }
+    }
+
+    let formattedDate = '';
+    if (learner.estimatedStartDate) {
+      const date = new Date(learner.estimatedStartDate);
+      const isValid = !Number.isNaN(date.getTime());
+      if (isValid) {
+        formattedDate = CompaniDate(date).toISO();
+      } else if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectDate);
+      else errorsByTrainee[learnerName] = [translate[language].incorrectDate];
+    }
+
+    if (!errorsByTrainee[learnerName]) {
+      formattedLearnerList.push({
+        ...identityUser && sameEmail && { _id: identityUser._id },
+        'identity.firstname': learner.firstname,
+        'identity.lastname': learner.lastname,
+        'local.email': learner.email ||
+        (
+          `${UtilsHelper.removeDiacritics(learner.firstname).replace(/[^a-z]/gi, '')}`
+          + `.${UtilsHelper.removeDiacritics(learner.lastname).replace(/[^a-z]/gi, '')}${learner.suffix}`
+        ).toLowerCase(),
+        ...learner.phone && { 'contact.phone': formattedPhone },
+        ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
+        company: companyId || learner.company,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: trainersIds,
+        subProgram: learner.subProgram,
+        ...formattedDate && { estimatedStartDate: formattedDate },
       });
     }
     i += 1;

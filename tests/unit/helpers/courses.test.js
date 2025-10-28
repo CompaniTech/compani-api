@@ -20,6 +20,7 @@ const CourseSmsHistory = require('../../../src/models/CourseSmsHistory');
 const Drive = require('../../../src/models/Google/Drive');
 const Questionnaire = require('../../../src/models/Questionnaire');
 const TrainingContract = require('../../../src/models/TrainingContract');
+const CompanyHelper = require('../../../src/helpers/companies');
 const CourseHelper = require('../../../src/helpers/courses');
 const EmailHelper = require('../../../src/helpers/email');
 const SmsHelper = require('../../../src/helpers/sms');
@@ -70,6 +71,7 @@ const {
   TRAINER_DELETION,
   COURSE_RESTART,
   COURSE_INTERRUPTION,
+  MONTHLY,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -8324,21 +8326,24 @@ describe('removeTutor', () => {
   });
 });
 
-describe('uploadCSV', () => {
+describe('uploadTraineeCSV', () => {
   let findOne;
   let createUser;
   let addTrainee;
+  let sendWelcome;
 
   beforeEach(() => {
     findOne = sinon.stub(Course, 'findOne');
     createUser = sinon.stub(UserHelper, 'createUser');
     addTrainee = sinon.stub(CourseHelper, 'addTrainee');
+    sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
   });
 
   afterEach(() => {
     findOne.restore();
     createUser.restore();
     addTrainee.restore();
+    sendWelcome.restore();
   });
 
   it('should create trainee and add to course', async () => {
@@ -8358,7 +8363,7 @@ describe('uploadCSV', () => {
 
     findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
     createUser.returns({ _id: userId });
-    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+    await CourseHelper.uploadTraineeCSV(course._id, learnerList, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -8366,6 +8371,7 @@ describe('uploadCSV', () => {
     );
     sinon.assert.calledOnceWithExactly(createUser, { ...learnerList[0], origin: WEBAPP }, credentials);
     sinon.assert.calledOnceWithExactly(addTrainee, courseId, { trainee: userId, company: companyId }, credentials);
+    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
   });
 
   it('should add existing trainee to course', async () => {
@@ -8385,7 +8391,7 @@ describe('uploadCSV', () => {
     ];
 
     findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
-    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+    await CourseHelper.uploadTraineeCSV(course._id, learnerList, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -8393,6 +8399,7 @@ describe('uploadCSV', () => {
     );
     sinon.assert.notCalled(createUser);
     sinon.assert.calledOnceWithExactly(addTrainee, courseId, { trainee: userId, company: companyId }, credentials);
+    sinon.assert.notCalled(sendWelcome);
   });
 
   it('should not create or add trainee if already registered to course', async () => {
@@ -8412,7 +8419,7 @@ describe('uploadCSV', () => {
     ];
 
     findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
-    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+    await CourseHelper.uploadTraineeCSV(course._id, learnerList, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -8420,5 +8427,253 @@ describe('uploadCSV', () => {
     );
     sinon.assert.notCalled(createUser);
     sinon.assert.notCalled(addTrainee);
+    sinon.assert.notCalled(sendWelcome);
+  });
+});
+
+describe('uploadSingleCourseCSV', () => {
+  let companyFindOne;
+  let courseCountDocuments;
+  let createCompany;
+  let createUser;
+  let createCourse;
+  let addTrainer;
+  let sendWelcome;
+
+  beforeEach(() => {
+    companyFindOne = sinon.stub(Company, 'findOne');
+    courseCountDocuments = sinon.stub(Course, 'countDocuments');
+    createCompany = sinon.stub(CompanyHelper, 'createCompany');
+    createUser = sinon.stub(UserHelper, 'createUser');
+    createCourse = sinon.stub(CourseHelper, 'createCourse');
+    addTrainer = sinon.stub(CourseHelper, 'addTrainer');
+    sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
+  });
+
+  afterEach(() => {
+    companyFindOne.restore();
+    courseCountDocuments.restore();
+    createUser.restore();
+    createCompany.restore();
+    createCourse.restore();
+    addTrainer.restore();
+    sendWelcome.restore();
+  });
+
+  it('should create course with new trainee and new company', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+    const trainerIds = [new ObjectId(), new ObjectId()];
+    const learnerList = [
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: 'Company',
+        subProgram: subProgramId,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: trainerIds,
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      },
+    ];
+    const payload = {
+      subProgram: subProgramId,
+      misc: 'Jean TODT',
+      type: SINGLE,
+      salesRepresentative: operationsRepresentativeId,
+      operationsRepresentative: operationsRepresentativeId,
+      expectedBillsCount: 21,
+      certificateGenerationMode: MONTHLY,
+      trainee: userId,
+      hasCertifyingTest: false,
+      estimatedStartDate: '2025-03-03T15:00:00.000Z',
+    };
+
+    companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    createUser.returns({ _id: userId });
+    createCompany.returns({ _id: companyId });
+    createCourse.returns({ _id: courseId });
+    await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      companyFindOne,
+      [{ query: 'findOne', args: [{ name: 'Company' }] }, { query: 'lean' }]
+    );
+
+    sinon.assert.calledOnceWithExactly(
+      createUser,
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+        origin: WEBAPP,
+      },
+      credentials
+    );
+
+    sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
+    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
+    sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
+    sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: trainerIds[0] }, credentials);
+    sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: trainerIds[1] }, credentials);
+    sinon.assert.notCalled(courseCountDocuments);
+  });
+
+  it('should create course with existing trainee', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+    const learnerList = [
+      {
+        _id: userId,
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: 'Company',
+        subProgram: subProgramId,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      },
+    ];
+    const payload = {
+      subProgram: subProgramId,
+      misc: 'Jean TODT',
+      type: SINGLE,
+      salesRepresentative: operationsRepresentativeId,
+      operationsRepresentative: operationsRepresentativeId,
+      expectedBillsCount: 21,
+      certificateGenerationMode: MONTHLY,
+      trainee: userId,
+      hasCertifyingTest: false,
+      estimatedStartDate: '2025-03-03T15:00:00.000Z',
+    };
+
+    courseCountDocuments.returns(0);
+    companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    createCompany.returns({ _id: companyId });
+    createCourse.returns({ _id: courseId });
+    await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      companyFindOne,
+      [{ query: 'findOne', args: [{ name: 'Company' }] }, { query: 'lean' }]
+    );
+
+    sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
+    sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
+    sinon.assert.calledOnceWithExactly(
+      courseCountDocuments,
+      { trainees: userId, type: SINGLE, subProgram: subProgramId }
+    );
+    sinon.assert.notCalled(createUser);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(addTrainer);
+  });
+
+  it('should create course with existing company', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+    const learnerList = [
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+        subProgram: subProgramId,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      },
+    ];
+    const payload = {
+      subProgram: subProgramId,
+      misc: 'Jean TODT',
+      type: SINGLE,
+      salesRepresentative: operationsRepresentativeId,
+      operationsRepresentative: operationsRepresentativeId,
+      expectedBillsCount: 21,
+      certificateGenerationMode: MONTHLY,
+      trainee: userId,
+      hasCertifyingTest: false,
+      estimatedStartDate: '2025-03-03T15:00:00.000Z',
+    };
+
+    companyFindOne.returns(SinonMongoose.stubChainedQueries({ _id: companyId }, ['lean']));
+    createUser.returns({ _id: userId });
+    createCourse.returns({ _id: courseId });
+    await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
+
+    sinon.assert.calledOnceWithExactly(
+      createUser,
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+        origin: WEBAPP,
+      },
+      credentials
+    );
+
+    sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
+    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
+    sinon.assert.notCalled(createCompany);
+    sinon.assert.notCalled(courseCountDocuments);
+    sinon.assert.notCalled(addTrainer);
+  });
+
+  it('should not create course', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const learnerList = [
+      {
+        _id: userId,
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: 'Company',
+        subProgram: subProgramId,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      },
+    ];
+
+    courseCountDocuments.returns(1);
+    companyFindOne.returns(SinonMongoose.stubChainedQueries({ _id: companyId }, ['lean']));
+    await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      companyFindOne,
+      [{ query: 'findOne', args: [{ name: 'Company' }] }, { query: 'lean' }]
+    );
+
+    sinon.assert.notCalled(createCompany);
+    sinon.assert.notCalled(createUser);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(createCourse);
+    sinon.assert.notCalled(addTrainer);
+    sinon.assert.calledOnceWithExactly(
+      courseCountDocuments,
+      { trainees: userId, type: SINGLE, subProgram: subProgramId }
+    );
   });
 });
