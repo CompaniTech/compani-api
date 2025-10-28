@@ -40,7 +40,8 @@ describe('getPdfContent', () => {
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['14 rue de ponthieu 75008 Paris', '22 avenue Daumesnil 75012 Paris'],
       trainers: ['Jean BONBEUR', 'James PENCIL'],
-      price: 12,
+      payloadPrice: 12,
+      totalPrice: 14,
     };
 
     const result = await TrainingContract.getPdfContent(data);
@@ -90,7 +91,7 @@ describe('getPdfContent', () => {
                     ],
                   },
                   { text: 'Intervenant·es : Jean BONBEUR, James PENCIL', marginBottom: 16 },
-                  { text: 'Prix total TTC : 12 €' },
+                  { text: 'Prix total TTC : 14 €' },
                   { text: '(Ce prix comprend les frais de formateurs)', italics: true },
                   {
                     text:
@@ -174,7 +175,8 @@ describe('getPdfContent', () => {
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['Paris'],
       trainers: ['Jean BONBEUR'],
-      price: 12,
+      payloadPrice: 12,
+      totalPrice: 0,
     };
 
     const result = await TrainingContract.getPdfContent(data);
@@ -312,7 +314,8 @@ describe('getPdf', () => {
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['14 rue de ponthieu 75008 Paris', '22 avenue Daumesnil 75012 Paris'],
       trainers: ['Jean BONBEUR', 'james PENCIL'],
-      price: 12,
+      payloadPrice: 12,
+      totalPrice: 12,
     };
     const template = {
       content: [{

@@ -1535,7 +1535,7 @@ exports.removeCourseCompany = async (courseId, companyId, credentials) => {
 
 exports.generateTrainingContract = async (courseId, payload) => {
   const course = await Course
-    .findOne({ _id: courseId }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1 })
+    .findOne({ _id: courseId }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 })
     .populate([
       { path: 'companies', select: 'name address', match: { _id: payload.company } },
       {

@@ -7967,6 +7967,7 @@ describe('generateTrainingContract', () => {
         { identity: { lastname: 'Bonbeur', firstname: 'Jean' } },
         { identity: { lastname: 'Pencil', firstname: 'James' } },
       ],
+      prices: [{ company: companyId, global: 1000, trainerFees: 300 }],
     };
 
     const vendorCompany = { name: 'Compani', address: { fullAddress: '140 rue de ponthieu 75008 Paris' } };
@@ -7986,7 +7987,8 @@ describe('generateTrainingContract', () => {
       dates: ['03/11/2020'],
       addressList: ['14 rue de ponthieu 75008 Paris', 'Cette formation contient des créneaux en distanciel'],
       trainers: ['Jean BONBEUR', 'James PENCIL'],
-      price: 12,
+      payloadPrice: 12,
+      totalPrice: 1300,
     };
 
     vendorCompanyGet.returns(vendorCompany);
@@ -8005,7 +8007,7 @@ describe('generateTrainingContract', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1 }] },
+        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 }] },
         {
           query: 'populate',
           args: [[
@@ -8101,7 +8103,8 @@ describe('generateTrainingContract', () => {
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['Paris'],
       trainers: ['Jean BONBEUR'],
-      price: 12,
+      payloadPrice: 12,
+      totalPrice: 0,
     };
 
     vendorCompanyGet.returns(vendorCompany);
@@ -8120,7 +8123,7 @@ describe('generateTrainingContract', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1 }] },
+        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 }] },
         {
           query: 'populate',
           args: [[
