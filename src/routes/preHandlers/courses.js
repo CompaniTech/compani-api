@@ -1015,7 +1015,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
   const { payload } = req;
 
   const learnerList = await UtilsHelper.parseCsv(payload.file);
-  if (learnerList.length > 60) throw Boom.forbidden(translate[language].fileIsToBig);
+  if (learnerList.length > process.env.MAX_CSV_COURSE_SIZE) throw Boom.forbidden(translate[language].fileIsToBig);
 
   const allowedKeys = [
     'firstname',
