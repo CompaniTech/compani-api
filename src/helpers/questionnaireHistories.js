@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const keyBy = require('lodash/keyBy');
+const omit = require('lodash/omit');
 const QuestionnaireHistory = require('../models/QuestionnaireHistory');
 const Questionnaire = require('../models/Questionnaire');
 const {
@@ -11,6 +12,7 @@ const {
   BEFORE_MIDDLE_COURSE_END_DATE,
   ENDED,
   UNKNOWN,
+  WEBAPP,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const QuestionnaireHelper = require('./questionnaires');
@@ -25,19 +27,23 @@ exports.addQuestionnaireHistory = async (payload) => {
 
   const questionnaire = await Questionnaire.findOne({ _id: questionnaireId }, { type: 1 }).lean();
 
-  let timeline;
+  let timeline = '';
   if (questionnaire.type === SELF_POSITIONNING) {
-    const { courseTimeline } = await QuestionnaireHelper.getCourseInfos(courseId);
+    if (payload.origin === WEBAPP) {
+      timeline = payload.timeline;
+    } else {
+      const { courseTimeline } = await QuestionnaireHelper.getCourseInfos(courseId);
 
-    switch (courseTimeline) {
-      case BEFORE_MIDDLE_COURSE_END_DATE:
-        timeline = START_COURSE;
-        break;
-      case ENDED:
-        timeline = END_COURSE;
-        break;
-      default:
-        timeline = UNKNOWN;
+      switch (courseTimeline) {
+        case BEFORE_MIDDLE_COURSE_END_DATE:
+          timeline = START_COURSE;
+          break;
+        case ENDED:
+          timeline = END_COURSE;
+          break;
+        default:
+          timeline = UNKNOWN;
+      }
     }
   }
 
@@ -46,7 +52,11 @@ exports.addQuestionnaireHistory = async (payload) => {
   if (questionnaireHistoryExists) throw Boom.conflict(translate[language].questionnaireHistoryConflict);
 
   return QuestionnaireHistory.create(
-    { ...payload, company: traineesCompanyAtCourseRegistrationList[0].company, ...(timeline && { timeline }) }
+    {
+      ...omit(payload, ['timeline']),
+      company: traineesCompanyAtCourseRegistrationList[0].company,
+      ...(timeline && { timeline }),
+    }
   );
 };
 

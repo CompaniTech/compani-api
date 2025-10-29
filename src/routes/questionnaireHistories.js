@@ -3,7 +3,7 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 const { addQuestionnaireHistory, update } = require('../controllers/questionnaireHistoryController');
-const { WEBAPP } = require('../helpers/constants');
+const { WEBAPP, START_COURSE, END_COURSE } = require('../helpers/constants');
 const {
   authorizeAddQuestionnaireHistory,
   authorizeQuestionnaireHistoryUpdate,
@@ -26,6 +26,10 @@ exports.plugin = {
               answerList: Joi.array().items(Joi.string()).min(1).required(),
             })),
             origin: Joi.string().valid(WEBAPP),
+            timeline: Joi
+              .string()
+              .valid(START_COURSE, END_COURSE)
+              .when('origin', { is: Joi.exist(), then: Joi.required(), otherwise: Joi.forbidden() }),
           }),
         },
         auth: { mode: 'optional' },

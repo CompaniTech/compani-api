@@ -427,6 +427,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
           { card: cardsList[3]._id, answerList: ['test'] },
         ],
         origin: WEBAPP,
+        timeline: START_COURSE,
       };
 
       const response = await app.inject({
@@ -438,6 +439,27 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
       expect(response.statusCode).toBe(200);
       const questionnaireHistoriesCountAfter = await QuestionnaireHistory.countDocuments();
       expect(questionnaireHistoriesCountAfter).toBe(questionnaireHistoriesCountBefore + 1);
+    });
+
+    it('should return 400 if timeline is not in payload', async () => {
+      const payload = {
+        course: coursesList[0]._id,
+        user: questionnaireHistoriesUsersList[0],
+        questionnaire: questionnairesList[0]._id,
+        questionnaireAnswersList: [
+          { card: cardsList[0]._id, answerList: ['5'] },
+          { card: cardsList[3]._id, answerList: ['test'] },
+        ],
+        origin: WEBAPP,
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/questionnairehistories',
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 });
