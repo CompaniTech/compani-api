@@ -97,7 +97,7 @@ const traineeFromOtherCompany = {
 
 const traineeFromAuthCompanyWithFormationExpoToken = {
   _id: new ObjectId(),
-  identity: { firstname: 'Trainee', lastname: 'WithExpoToken' },
+  identity: { firstname: 'Trainee', lastname: 'WithExpoToken (Tutor)' },
   local: { email: 'traineeWithExpoToken@alenvi.io' },
   role: { client: auxiliaryRoleId },
   contact: { phone: '0734856751', countryCode: '+33' },

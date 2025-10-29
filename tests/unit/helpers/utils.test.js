@@ -831,3 +831,11 @@ describe('uncapitalize', () => {
     expect(result).toBe('title');
   });
 });
+
+describe('escapeRegex', () => {
+  it('should escape special characters', () => {
+    const result = UtilsHelper.escapeRegex('EHPAD Saint Jean Portieux (HH) *+?^');
+
+    expect('ehpad saint jean portieux (HH) *+?^').toMatch(new RegExp(`^${result}$`, 'i'));
+  });
+});
