@@ -6,6 +6,7 @@ const GCloudStorageHelper = require('./gCloudStorage');
 const UtilsHelper = require('./utils');
 const StepsHelper = require('./steps');
 const CourseSlotsHelper = require('./courseSlots');
+const NumbersHelper = require('./numbers');
 const { E_LEARNING, SHORT_DURATION_H_MM, COURSE, TRAINEE, INTER_B2B } = require('./constants');
 const { CompaniDuration } = require('./dates/companiDurations');
 const Course = require('../models/Course');
@@ -66,7 +67,7 @@ const computeElearnigDuration = (steps) => {
 };
 
 // make sure code is similar to front part in TrainingContractInfoModal
-exports.formatCourseForTrainingContract = async (course, vendorCompany, price) => {
+exports.formatCourseForTrainingContract = async (course, vendorCompany, payloadPrice) => {
   const { companies, subProgram, slots, slotsToPlan, trainers } = course;
   const trainersName = trainers.map(trainer => UtilsHelper.formatIdentity(trainer.identity, 'FL'));
 
@@ -77,6 +78,8 @@ exports.formatCourseForTrainingContract = async (course, vendorCompany, price) =
   const traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
   const trainees = course.trainees
     .filter(t => UtilsHelper.areObjectIdsEquals(course.companies[0]._id, traineesCompany[t._id]));
+  const price = (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, course.companies[0]._id));
+  const totalPrice = price ? Number(NumbersHelper.add(get(price, 'global', 0), get(price, 'trainerFees', 0))) : 0;
 
   return {
     type: course.type,
@@ -93,6 +96,7 @@ exports.formatCourseForTrainingContract = async (course, vendorCompany, price) =
     dates: CourseSlotsHelper.formatSlotDates(slots),
     addressList: CourseSlotsHelper.getAddressList(slots, subProgram.steps),
     trainers: trainersName,
-    price,
+    payloadPrice,
+    totalPrice,
   };
 };

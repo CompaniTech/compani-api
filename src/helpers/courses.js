@@ -528,7 +528,10 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           },
           { path: 'contact', select: 'identity.firstname identity.lastname contact' },
           ...(isRofOrAdmin
-            ? [{ path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } }]
+            ? [
+              { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
+              { path: 'bills', select: '_id companies', options: { isVendorUser: true } },
+            ]
             : []),
         ]
         : [{ path: 'slots', select: 'step startDate endDate', options: { sort: { startDate: 1 } } }]
@@ -1538,7 +1541,7 @@ exports.removeCourseCompany = async (courseId, companyId, credentials) => {
 
 exports.generateTrainingContract = async (courseId, payload) => {
   const course = await Course
-    .findOne({ _id: courseId }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1 })
+    .findOne({ _id: courseId }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 })
     .populate([
       { path: 'companies', select: 'name address', match: { _id: payload.company } },
       {
