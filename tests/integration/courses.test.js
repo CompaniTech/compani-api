@@ -5841,7 +5841,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
       const course = await Course.countDocuments({ _id: coursesList[24]._id, tutors: auxiliary._id });
       expect(course).toEqual(1);
       sinon.assert.calledOnceWithExactly(sendinBlueTransporter);
-      sinon.assert.calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Trainee WITHEXPOTOKEN', 'program');
+      sinon.assert
+        .calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Trainee WITHEXPOTOKEN (TUTOR)', 'program');
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
@@ -6024,12 +6025,12 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
           suffix: '@test.fr',
         },
         {
-          firstname: 'Auxiliary',
-          lastname: 'Olait',
-          email: 'auxiliary@alenvi.io',
+          firstname: 'trainee',
+          lastname: 'WithExpoToken (tutor)',
+          email: 'traineewithexpoToken@alenvi.io',
           countryCode: '',
           phone: '0687654321',
-          company: 'Test SAS',
+          company: 'test sas',
           suffix: '@test.fr',
         },
         {
@@ -6055,7 +6056,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       expect(usersAfter).toEqual(usersBefore + 1);
       const courseAfter = await Course.findOne({ _id: coursesList[26]._id }).lean();
       expect(courseAfter.trainees.length).toEqual(coursesList[26].trainees.length + 2);
-      sinon.assert.calledOnce(sendNotificationToUser);
+      sinon.assert.calledTwice(sendNotificationToUser);
       sinon.assert.calledOnce(sendinBlueTransporter);
     });
 
@@ -6835,9 +6836,9 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           estimatedStartDate: '2025-11-01',
         },
         {
-          firstname: 'Trainee',
-          lastname: 'WithExpoToken',
-          email: 'traineeWithExpoToken@alenvi.io',
+          firstname: 'trainee',
+          lastname: 'WithExpoToken (tutor)',
+          email: 'traineewithexpoToken@alenvi.io',
           countryCode: '',
           phone: '',
           company: 'test sas',

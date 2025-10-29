@@ -321,3 +321,5 @@ exports.parseCsv = file => new Promise((resolve, reject) => {
 
   file.on('error', err => reject(err));
 });
+
+exports.escapeRegex = string => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

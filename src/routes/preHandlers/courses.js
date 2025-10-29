@@ -923,7 +923,9 @@ exports.authorizeUploadTraineeCSV = async (req) => {
       if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingCompany);
       else errorsByTrainee[learnerName] = [translate[language].missingCompany];
     } else {
-      const company = await Company.findOne({ name: learner.company }, { _id: 1 }).lean();
+      const company = await Company
+        .findOne({ name: { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.company)}$`, 'i') } }, { _id: 1 })
+        .lean();
       companyId = get(company, '_id');
       if (!company) {
         if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].unknownCompany);
@@ -937,24 +939,21 @@ exports.authorizeUploadTraineeCSV = async (req) => {
     const identityUser = await User
       .findOne(
         {
-          'identity.firstname': { $regex: new RegExp(`^${learner.firstname}$`, 'i') },
-          'identity.lastname': { $regex: new RegExp(`^${learner.lastname}$`, 'i') },
+          'identity.firstname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.firstname)}$`, 'i') },
+          'identity.lastname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.lastname)}$`, 'i') },
         },
         { _id: 1, local: 1 }
       )
+      .populate({ path: 'company' })
       .lean();
     let sameEmail = false;
     if (identityUser) {
-      const userCompany = await UserCompany
-        .findOne({ user: identityUser._id, endDate: { $exists: false } }, { company: 1 })
-        .lean();
-
       sameEmail = identityUser.local.email === learner.email.toLowerCase();
-      if (userCompany) {
-        if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
+      if (identityUser.company) {
+        if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, identityUser.company)) {
           if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerCompany);
           else errorsByTrainee[learnerName] = [translate[language].wrongLearnerCompany];
-        } else if (!sameEmail && UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
+        } else if (!sameEmail && UtilsHelper.areObjectIdsEquals(companyId, identityUser.company)) {
           if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerEmail);
           else errorsByTrainee[learnerName] = [translate[language].wrongLearnerEmail];
         }
@@ -1069,31 +1068,28 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
       else errorsByTrainee[learnerName] = [translate[language].missingCompany];
     } else {
       const company = await Company
-        .findOne({ name: { $regex: new RegExp(`^${learner.company}$`, 'i') } }, { _id: 1 })
+        .findOne({ name: { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.company)}$`, 'i') } }, { _id: 1 })
         .lean();
       companyId = get(company, '_id');
     }
     const identityUser = await User
       .findOne(
         {
-          'identity.firstname': { $regex: new RegExp(`^${learner.firstname}$`, 'i') },
-          'identity.lastname': { $regex: new RegExp(`^${learner.lastname}$`, 'i') },
+          'identity.firstname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.firstname)}$`, 'i') },
+          'identity.lastname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.lastname)}$`, 'i') },
         },
         { _id: 1, local: 1 }
       )
+      .populate({ path: 'company' })
       .lean();
     let sameEmail = false;
     if (identityUser) {
-      const userCompany = await UserCompany
-        .findOne({ user: identityUser._id, endDate: { $exists: false } }, { company: 1 })
-        .lean();
-
       sameEmail = identityUser.local.email === learner.email.toLowerCase();
-      if (userCompany) {
-        if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
+      if (identityUser.company) {
+        if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, identityUser.company)) {
           if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerCompany);
           else errorsByTrainee[learnerName] = [translate[language].wrongLearnerCompany];
-        } else if (!sameEmail && UtilsHelper.areObjectIdsEquals(companyId, userCompany.company)) {
+        } else if (!sameEmail && UtilsHelper.areObjectIdsEquals(companyId, identityUser.company)) {
           if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerEmail);
           else errorsByTrainee[learnerName] = [translate[language].wrongLearnerEmail];
         }
