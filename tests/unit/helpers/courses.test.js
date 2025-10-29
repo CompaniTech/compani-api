@@ -2300,6 +2300,7 @@ describe('getCourse', () => {
         trainees: [{ _id: traineeIds[0] }, { _id: traineeIds[1] }],
         subProgram: { steps: [{ theoreticalDuration: 'PT3600S' }, { theoreticalDuration: 'PT1800S' }] },
         slots: [{ step: new ObjectId() }],
+        bills: [],
       };
       findOne.returns(SinonMongoose.stubChainedQueries(course));
       getCompanyAtCourseRegistrationList.returns([
@@ -2377,6 +2378,7 @@ describe('getCourse', () => {
               },
               { path: 'contact', select: 'identity.firstname identity.lastname contact' },
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
+              { path: 'bills', select: '_id companies', options: { isVendorUser: true } },
             ]],
           },
           { query: 'lean' },
@@ -7967,7 +7969,7 @@ describe('generateTrainingContract', () => {
         { identity: { lastname: 'Bonbeur', firstname: 'Jean' } },
         { identity: { lastname: 'Pencil', firstname: 'James' } },
       ],
-      prices: [{ company: companyId, global: 1000, trainerFees: 300 }],
+      prices: [{ company: companyId, global: 1000, trainerFees: 300.14 }],
     };
 
     const vendorCompany = { name: 'Compani', address: { fullAddress: '140 rue de ponthieu 75008 Paris' } };
@@ -7988,7 +7990,7 @@ describe('generateTrainingContract', () => {
       addressList: ['14 rue de ponthieu 75008 Paris', 'Cette formation contient des créneaux en distanciel'],
       trainers: ['Jean BONBEUR', 'James PENCIL'],
       payloadPrice: 12,
-      totalPrice: 1300,
+      totalPrice: 1300.14,
     };
 
     vendorCompanyGet.returns(vendorCompany);

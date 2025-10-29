@@ -6,6 +6,7 @@ const GCloudStorageHelper = require('./gCloudStorage');
 const UtilsHelper = require('./utils');
 const StepsHelper = require('./steps');
 const CourseSlotsHelper = require('./courseSlots');
+const NumbersHelper = require('./numbers');
 const { E_LEARNING, SHORT_DURATION_H_MM, COURSE, TRAINEE, INTER_B2B } = require('./constants');
 const { CompaniDuration } = require('./dates/companiDurations');
 const Course = require('../models/Course');
@@ -78,7 +79,7 @@ exports.formatCourseForTrainingContract = async (course, vendorCompany, payloadP
   const trainees = course.trainees
     .filter(t => UtilsHelper.areObjectIdsEquals(course.companies[0]._id, traineesCompany[t._id]));
   const price = (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, course.companies[0]._id));
-  const totalPrice = price ? Number(get(price, 'global', 0) + get(price, 'trainerFees', 0)) : 0;
+  const totalPrice = price ? Number(NumbersHelper.add(get(price, 'global', 0), get(price, 'trainerFees', 0))) : 0;
 
   return {
     type: course.type,
