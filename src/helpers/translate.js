@@ -564,6 +564,6 @@ module.exports = {
     unknownOperationsRepresentative: 'le chargé des opérations n\'existe pas',
     unknownTrainer: 'l\'intervenant n\'existe pas',
     incorrectDate: 'le format de la date est incorrect',
-    fileIsToBig: 'Le fichier contient trop de stagiaires (60 maximum).',
+    fileIsToBig: `Le fichier contient trop de stagiaires (${process.env.MAX_CSV_COURSE_SIZE} maximum).`,
   },
 };

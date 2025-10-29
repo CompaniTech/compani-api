@@ -6781,6 +6781,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     parseCSV = sinon.stub(UtilsHelper, 'parseCsv');
     createFolderForCompany = sinon.stub(GDriveStorageHelper, 'createFolderForCompany');
     createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
+    process.env.MAX_CSV_COURSE_SIZE = 30;
   });
   afterEach(() => {
     sendNotificationToUser.restore();
@@ -6788,6 +6789,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     parseCSV.restore();
     createFolderForCompany.restore();
     createFolder.restore();
+    process.env.MAX_CSV_COURSE_SIZE = 0;
   });
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -7658,7 +7660,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       const form = generateFormData(formData);
 
       const learnerList = [];
-      for (let i = 0; i <= 60; i++) {
+      for (let i = 0; i <= process.env.MAX_CSV_COURSE_SIZE; i++) {
         learnerList.push({
           firstname: 'Tom',
           lastname: `Sawyer${i}`,
