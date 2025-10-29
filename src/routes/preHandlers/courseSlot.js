@@ -9,7 +9,7 @@ const Attendance = require('../../models/Attendance');
 const AttendanceSheet = require('../../models/AttendanceSheet');
 const translate = require('../../helpers/translate');
 const { checkAuthorization } = require('./courses');
-const { E_LEARNING, ON_SITE, REMOTE, INTRA, INTRA_HOLDING, MM_YYYY } = require('../../helpers/constants');
+const { E_LEARNING, ON_SITE, REMOTE, INTRA, INTRA_HOLDING, MM_YYYY, TRAINER } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
 
@@ -19,11 +19,15 @@ exports.authorizeCreate = async (req) => {
   try {
     const { course: courseId, step: stepId } = req.payload;
 
-    const course = await Course.findById(courseId, { subProgram: 1, archivedAt: 1 })
+    const course = await Course.findById(courseId, { subProgram: 1, archivedAt: 1, trainers: 1 })
       .populate({ path: 'subProgram', select: 'steps' })
       .lean();
     if (!course) throw Boom.notFound();
     if (course.archivedAt) throw Boom.forbidden();
+
+    const { credentials } = req.auth;
+    const isTrainer = get(credentials, 'role.vendor.name') === TRAINER;
+    if (isTrainer && !UtilsHelper.doesArrayIncludeId(course.trainers, credentials._id)) throw Boom.forbidden();
 
     const isStepElearning = await Step.countDocuments({ _id: stepId, type: E_LEARNING }).lean();
 
@@ -113,8 +117,12 @@ exports.authorizeDeletion = async (req) => {
       .lean();
     if (!courseSlot) throw Boom.notFound(translate[language].courseSlotNotFound);
 
-    const course = await Course.findOne({ _id: courseSlot.course }, { archivedAt: 1 }).lean();
+    const course = await Course.findOne({ _id: courseSlot.course }, { archivedAt: 1, trainers: 1 }).lean();
     if (course.archivedAt) throw Boom.forbidden();
+
+    const { credentials } = req.auth;
+    const isTrainer = get(credentials, 'role.vendor.name') === TRAINER;
+    if (isTrainer && !UtilsHelper.doesArrayIncludeId(course.trainers, credentials._id)) throw Boom.forbidden();
 
     const courseStepHasOtherSlots = await CourseSlot.countDocuments(
       { _id: { $nin: [courseSlot._id] }, course: courseSlot.course, step: courseSlot.step._id },
