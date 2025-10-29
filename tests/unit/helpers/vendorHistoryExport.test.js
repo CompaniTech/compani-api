@@ -139,7 +139,7 @@ describe('exportCourseHistory', () => {
       attendances: [{ trainee: traineeList[0]._id }],
     },
   ];
-  const company = { _id: new ObjectId(), name: 'Test SAS' };
+  const company = { _id: new ObjectId(), name: 'Test SAS', holding: { name: 'Société mère' } };
   const otherCompany = { _id: new ObjectId(), name: 'Autre structure' };
   const holding = { _id: new ObjectId(), name: 'Société mère' };
   const courseList = [
@@ -499,7 +499,14 @@ describe('exportCourseHistory', () => {
           }],
         },
         { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
-        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'companies',
+            select: 'name',
+            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+          }],
+        },
         { query: 'populate', args: [{ path: 'holding', select: 'name' }] },
         {
           query: 'populate',
@@ -649,7 +656,7 @@ describe('exportCourseHistory', () => {
         'Intra',
         'APA Paris',
         'Test SAS',
-        '',
+        'Société mère',
         'Program 1',
         programIdList[0],
         'subProgram 1',
@@ -692,7 +699,7 @@ describe('exportCourseHistory', () => {
         'Inter B2B',
         'APA Paris',
         'Autre structure,Test SAS',
-        '',
+        'Société mère',
         'Program 2',
         programIdList[1],
         'subProgram 2',
@@ -778,7 +785,7 @@ describe('exportCourseHistory', () => {
         'Intra',
         'Alenvi,APA Paris,Compani Test',
         'Test SAS',
-        '',
+        'Société mère',
         'Program 1',
         programIdList[0],
         'subProgram 1',
@@ -864,7 +871,7 @@ describe('exportCourseHistory', () => {
         'Individuelle',
         'APA Paris,Compani Test',
         'Test SAS',
-        '',
+        'Société mère',
         'Program 1',
         programIdList[0],
         'subProgram 1',
@@ -929,7 +936,14 @@ describe('exportCourseHistory', () => {
           }],
         },
         { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
-        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'companies',
+            select: 'name',
+            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+          }],
+        },
         { query: 'populate', args: [{ path: 'holding', select: 'name' }] },
         {
           query: 'populate',

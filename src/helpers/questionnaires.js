@@ -70,36 +70,14 @@ exports.list = async (credentials, query = {}) => {
       .lean();
   }
 
-  const { isStrictlyELearning, courseTimeline, programId } = await exports.getCourseInfos(courseId);
+  const { isStrictlyELearning, programId } = await exports.getCourseInfos(courseId);
 
   if (isStrictlyELearning) return [];
 
-  if (isVendorUser) {
-    return Questionnaire
-      .find({ $or: [{ program: { $exists: false } }, { program: programId }], status: PUBLISHED })
-      .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
-      .lean();
-  }
-
-  switch (courseTimeline) {
-    case BETWEEN_MID_AND_END_COURSE:
-      return [];
-    case BEFORE_MIDDLE_COURSE_END_DATE:
-    case ENDED: {
-      const qType = courseTimeline === BEFORE_MIDDLE_COURSE_END_DATE ? [EXPECTATIONS] : [END_OF_COURSE];
-
-      return Questionnaire
-        .find({
-          type: { $in: [...qType, SELF_POSITIONNING] },
-          $or: [{ program: { $exists: false } }, { program: programId }],
-          status: PUBLISHED,
-        })
-        .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
-        .lean();
-    }
-    default:
-      return [];
-  }
+  return Questionnaire
+    .find({ $or: [{ program: { $exists: false } }, { program: programId }], status: PUBLISHED })
+    .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
+    .lean();
 };
 
 exports.getQuestionnaire = async id => Questionnaire.findOne({ _id: id })
@@ -139,6 +117,7 @@ const findQuestionnaires = (questionnaireConditions, historiesConditions) => {
       options: { requestingOwnInfos: true },
       select: { _id: 1, timeline: 1 },
     })
+    .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
     .lean({ virtuals: true });
 };
 

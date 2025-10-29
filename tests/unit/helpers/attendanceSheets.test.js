@@ -1236,19 +1236,22 @@ describe('sign', () => {
   let uploadCourseFile;
   let updateOne;
   let findOne;
+  let generate;
 
   beforeEach(() => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     updateOne = sinon.stub(AttendanceSheet, 'updateOne');
     findOne = sinon.stub(AttendanceSheet, 'findOne');
+    generate = sinon.stub(attendanceSheetHelper, 'generate');
   });
   afterEach(() => {
     uploadCourseFile.restore();
     updateOne.restore();
     findOne.restore();
+    generate.restore();
   });
 
-  it('should add trainee signature in attendance sheet (no slot signed)', async () => {
+  it('should add trainee signature in attendance sheet and generate (no slot signed)', async () => {
     const credentials = { _id: new ObjectId() };
     const attendanceSheetId = new ObjectId();
     const slotId = new ObjectId();
@@ -1261,7 +1264,18 @@ describe('sign', () => {
     const payload = { signature: 'test.png' };
 
     uploadCourseFile.returns({ publicId: 'id', link: 'link' });
-    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    findOne.onCall(0).returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    findOne.onCall(1).returns(SinonMongoose.stubChainedQueries(
+      {
+        ...attendanceSheet,
+        slots: [{
+          slotId,
+          trainerSignature: { trainerId, signature: 'trainer.png' },
+          traineesSignature: [{ traineeId: credentials._id, signature: 'test.png' }],
+        }],
+      },
+      ['lean']
+    ));
 
     await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
 
@@ -1270,13 +1284,23 @@ describe('sign', () => {
       { fileName: `trainee_signature_${credentials._id}`, file: 'test.png' }
     );
 
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
       findOne,
       [
         { query: 'findOne', args: [{ _id: attendanceSheetId }] },
         { query: 'populate', args: [{ path: 'course', select: 'type' }] },
         { query: 'lean' },
-      ]
+      ],
+      0
+    );
+
+    SinonMongoose.calledWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'lean' },
+      ],
+      1
     );
 
     sinon.assert.calledOnceWithExactly(
@@ -1294,6 +1318,8 @@ describe('sign', () => {
         },
       }
     );
+
+    sinon.assert.calledOnceWithExactly(generate, attendanceSheetId);
   });
 
   it('should add trainee signature in attendance sheet (already signed slots)', async () => {
@@ -1353,6 +1379,8 @@ describe('sign', () => {
         },
       }
     );
+
+    sinon.assert.notCalled(generate);
   });
 
   it('should add trainee signature in attendance sheet (intra course)', async () => {
@@ -1360,15 +1388,31 @@ describe('sign', () => {
     const attendanceSheetId = new ObjectId();
     const slotId = new ObjectId();
     const trainerId = new ObjectId();
+    const otherTraineeId = new ObjectId();
     const attendanceSheet = {
       _id: attendanceSheetId,
-      slots: [{ slotId, trainerSignature: { trainerId, signature: 'trainer.png' } }],
+      slots: [{
+        slotId,
+        trainerSignature: { trainerId, signature: 'trainer.png' },
+        traineesSignature: [{ traineeId: credentials._id }, { traineeId: otherTraineeId }],
+      }],
       course: { type: INTRA },
     };
     const payload = { signature: 'test.png' };
 
     uploadCourseFile.returns({ publicId: 'id', link: 'link' });
-    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    findOne.onCall(0).returns(SinonMongoose.stubChainedQueries(attendanceSheet));
+    findOne.onCall(1).returns(SinonMongoose.stubChainedQueries(
+      {
+        ...attendanceSheet,
+        slots: [{
+          slotId,
+          trainerSignature: { trainerId, signature: 'trainer.png' },
+          traineesSignature: [{ traineeId: credentials._id, signature: 'test.png' }, { traineeId: otherTraineeId }],
+        }],
+      },
+      ['lean']
+    ));
 
     await attendanceSheetHelper.sign(attendanceSheetId, payload, credentials);
 
@@ -1377,13 +1421,23 @@ describe('sign', () => {
       { fileName: `trainee_signature_${credentials._id}`, file: 'test.png' }
     );
 
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
       findOne,
       [
         { query: 'findOne', args: [{ _id: attendanceSheetId }] },
         { query: 'populate', args: [{ path: 'course', select: 'type' }] },
         { query: 'lean' },
-      ]
+      ],
+      0
+    );
+
+    SinonMongoose.calledWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: attendanceSheetId }] },
+        { query: 'lean' },
+      ],
+      1
     );
 
     sinon.assert.calledOnceWithExactly(
@@ -1400,6 +1454,8 @@ describe('sign', () => {
         ],
       }
     );
+
+    sinon.assert.notCalled(generate);
   });
 });
 
@@ -1446,7 +1502,6 @@ describe('generate', () => {
             _id: slotId,
             startDate: '2020-03-04T09:00:00',
             endDate: '2020-03-04T11:00:00',
-            step: { type: 'on_site' },
           },
           trainerSignature: { trainerId, signature: 'https://trainer.com' },
           traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
@@ -1457,19 +1512,24 @@ describe('generate', () => {
         misc: 'misc',
         companies: [{ name: 'Alenvi' }],
         trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
-        subProgram: { program: { name: 'Program 1' } },
+        subProgram: {
+          program: { name: 'Program 1' },
+          steps: [
+            { type: 'on_site', theoreticalDuration: 'PT7200S' },
+            { type: 'on_site', theoreticalDuration: 'PT7200S' },
+            { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+          ],
+        },
         slots: [
           {
             _id: slotId,
             startDate: '2020-03-04T09:00:00',
             endDate: '2020-03-04T11:00:00',
-            step: { type: 'on_site' },
           },
           {
             _id: new ObjectId(),
             startDate: '2020-04-04T09:00:00',
             endDate: '2020-04-04T11:00:00',
-            step: { type: 'on_site' },
           },
         ],
       },
@@ -1483,11 +1543,17 @@ describe('generate', () => {
         _id: slotId,
         startDate: '2020-03-04T09:00:00',
         endDate: '2020-03-04T11:00:00',
-        step: { type: 'on_site' },
       }],
       trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
-      subProgram: { program: { name: 'Program 1' } },
+      subProgram: {
+        program: { name: 'Program 1' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
     };
 
     findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
@@ -1504,11 +1570,7 @@ describe('generate', () => {
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] },
         {
           query: 'populate',
-          args: [{
-            path: 'slots.slotId',
-            select: 'step startDate endDate address',
-            populate: { path: 'step', select: 'type' },
-          }],
+          args: [{ path: 'slots.slotId', select: 'startDate endDate address' }],
         },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
@@ -1524,8 +1586,12 @@ describe('generate', () => {
                 select: 'identity',
                 populate: { path: 'company', populate: { path: 'company', select: ' name' } },
               },
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-              { path: 'slots', select: 'step startDate endDate address' },
+              {
+                path: 'subProgram',
+                select: 'steps program',
+                populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+              },
+              { path: 'slots', select: 'startDate endDate address' },
             ],
           }],
         },
@@ -1573,7 +1639,6 @@ describe('generate', () => {
             _id: slotIds[0],
             startDate: '2020-03-04T09:00:00',
             endDate: '2020-03-04T11:00:00',
-            step: { type: 'on_site' },
           },
           trainerSignature: { trainerId, signature: 'https://trainer.com' },
           traineesSignature: [{ traineeId, signature: 'https://trainee.com' }],
@@ -1587,19 +1652,24 @@ describe('generate', () => {
           { _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } },
           { _id: new ObjectId(), identity: { lastname: 'Leclerc', firstname: 'Charles' } },
         ],
-        subProgram: { program: { name: 'Program 1' } },
+        subProgram: {
+          program: { name: 'Program 1' },
+          steps: [
+            { type: 'on_site', theoreticalDuration: 'PT7200S' },
+            { type: 'on_site', theoreticalDuration: 'PT7200S' },
+            { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+          ],
+        },
         slots: [
           {
             _id: slotIds[0],
             startDate: '2020-03-04T09:00:00',
             endDate: '2020-03-04T11:00:00',
-            step: { type: 'on_site' },
           },
           {
             _id: slotIds[1],
             startDate: '2020-04-04T09:00:00',
             endDate: '2020-04-04T11:00:00',
-            step: { type: 'on_site' },
           },
         ],
       },
@@ -1614,18 +1684,23 @@ describe('generate', () => {
           _id: slotIds[0],
           startDate: '2020-03-04T09:00:00',
           endDate: '2020-03-04T11:00:00',
-          step: { type: 'on_site' },
         },
         {
           _id: slotIds[1],
           startDate: '2020-04-04T09:00:00',
           endDate: '2020-04-04T11:00:00',
-          step: { type: 'on_site' },
         },
       ],
       trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
-      subProgram: { program: { name: 'Program 1' } },
+      subProgram: {
+        program: { name: 'Program 1' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
     };
 
     findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
@@ -1642,11 +1717,7 @@ describe('generate', () => {
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] },
         {
           query: 'populate',
-          args: [{
-            path: 'slots.slotId',
-            select: 'step startDate endDate address',
-            populate: { path: 'step', select: 'type' },
-          }],
+          args: [{ path: 'slots.slotId', select: 'startDate endDate address' }],
         },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
@@ -1662,8 +1733,12 @@ describe('generate', () => {
                 select: 'identity',
                 populate: { path: 'company', populate: { path: 'company', select: ' name' } },
               },
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-              { path: 'slots', select: 'step startDate endDate address' },
+              {
+                path: 'subProgram',
+                select: 'steps program',
+                populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+              },
+              { path: 'slots', select: 'startDate endDate address' },
             ],
           }],
         },
@@ -1711,7 +1786,6 @@ describe('generate', () => {
             _id: slotIds[0],
             startDate: '2020-01-04T09:00:00',
             endDate: '2020-01-04T11:00:00',
-            step: { type: 'on_site' },
           },
           trainerSignature: { trainerId, signature: 'https://trainer.com' },
           traineesSignature: [
@@ -1724,7 +1798,6 @@ describe('generate', () => {
             _id: slotIds[1],
             startDate: '2020-01-04T14:00:00',
             endDate: '2020-01-04T16:00:00',
-            step: { type: 'on_site' },
           },
           trainerSignature: { trainerId, signature: 'https://trainer.com' },
           traineesSignature: [
@@ -1741,19 +1814,24 @@ describe('generate', () => {
           { _id: traineeIds[0], identity: { lastname: 'Sainz', firstname: 'Carlos' } },
           { _id: traineeIds[1], identity: { lastname: 'Leclerc', firstname: 'Charles' } },
         ],
-        subProgram: { program: { name: 'Program 1' } },
+        subProgram: {
+          program: { name: 'Program 1' },
+          steps: [
+            { type: 'on_site', theoreticalDuration: 'PT7200S' },
+            { type: 'on_site', theoreticalDuration: 'PT7200S' },
+            { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+          ],
+        },
         slots: [
           {
             _id: slotIds[0],
             startDate: '2020-01-04T09:00:00',
             endDate: '2020-01-04T11:00:00',
-            step: { type: 'on_site' },
           },
           {
             _id: slotIds[1],
             startDate: '2020-01-04T14:00:00',
             endDate: '2020-01-04T16:00:00',
-            step: { type: 'on_site' },
           },
         ],
       },
@@ -1772,17 +1850,22 @@ describe('generate', () => {
           _id: slotIds[0],
           startDate: '2020-01-04T09:00:00',
           endDate: '2020-01-04T11:00:00',
-          step: { type: 'on_site' },
         },
         {
           _id: slotIds[1],
           startDate: '2020-01-04T14:00:00',
           endDate: '2020-01-04T16:00:00',
-          step: { type: 'on_site' },
         },
       ],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
-      subProgram: { program: { name: 'Program 1' } },
+      subProgram: {
+        program: { name: 'Program 1' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
     };
 
     findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
@@ -1802,11 +1885,7 @@ describe('generate', () => {
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] },
         {
           query: 'populate',
-          args: [{
-            path: 'slots.slotId',
-            select: 'step startDate endDate address',
-            populate: { path: 'step', select: 'type' },
-          }],
+          args: [{ path: 'slots.slotId', select: 'startDate endDate address' }],
         },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
@@ -1822,8 +1901,12 @@ describe('generate', () => {
                 select: 'identity',
                 populate: { path: 'company', populate: { path: 'company', select: ' name' } },
               },
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-              { path: 'slots', select: 'step startDate endDate address' },
+              {
+                path: 'subProgram',
+                select: 'steps program',
+                populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+              },
+              { path: 'slots', select: 'startDate endDate address' },
             ],
           }],
         },
@@ -1891,7 +1974,6 @@ describe('generate', () => {
             _id: slotIds[0],
             startDate: '2020-01-04T09:00:00',
             endDate: '2020-01-04T11:00:00',
-            step: { type: 'on_site' },
           },
           trainerSignature: { trainerId, signature: 'https://trainer.com' },
           traineesSignature: [
@@ -1904,7 +1986,6 @@ describe('generate', () => {
             _id: slotIds[1],
             startDate: '2020-01-04T14:00:00',
             endDate: '2020-01-04T16:00:00',
-            step: { type: 'on_site' },
           },
           trainerSignature: { trainerId, signature: 'https://trainer.com' },
           traineesSignature: [
@@ -1933,19 +2014,24 @@ describe('generate', () => {
             company: { _id: companyIds[1], name: 'Biens Communs' },
           },
         ],
-        subProgram: { program: { name: 'Program 1' } },
+        subProgram: {
+          program: { name: 'Program 1' },
+          steps: [
+            { type: 'on_site', theoreticalDuration: 'PT7200S' },
+            { type: 'on_site', theoreticalDuration: 'PT7200S' },
+            { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+          ],
+        },
         slots: [
           {
             _id: slotIds[0],
             startDate: '2020-01-04T09:00:00',
             endDate: '2020-01-04T11:00:00',
-            step: { type: 'on_site' },
           },
           {
             _id: slotIds[1],
             startDate: '2020-01-04T14:00:00',
             endDate: '2020-01-04T16:00:00',
-            step: { type: 'on_site' },
           },
         ],
       },
@@ -1972,17 +2058,22 @@ describe('generate', () => {
           _id: slotIds[0],
           startDate: '2020-01-04T09:00:00',
           endDate: '2020-01-04T11:00:00',
-          step: { type: 'on_site' },
         },
         {
           _id: slotIds[1],
           startDate: '2020-01-04T14:00:00',
           endDate: '2020-01-04T16:00:00',
-          step: { type: 'on_site' },
         },
       ],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
-      subProgram: { program: { name: 'Program 1' } },
+      subProgram: {
+        program: { name: 'Program 1' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
     };
 
     findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet));
@@ -2002,11 +2093,7 @@ describe('generate', () => {
       [{ query: 'findOne', args: [{ _id: attendanceSheetId }] },
         {
           query: 'populate',
-          args: [{
-            path: 'slots.slotId',
-            select: 'step startDate endDate address',
-            populate: { path: 'step', select: 'type' },
-          }],
+          args: [{ path: 'slots.slotId', select: 'startDate endDate address' }],
         },
         { query: 'populate', args: [{ path: 'trainee', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainer', select: 'identity' }] },
@@ -2022,8 +2109,12 @@ describe('generate', () => {
                 select: 'identity',
                 populate: { path: 'company', populate: { path: 'company', select: ' name' } },
               },
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-              { path: 'slots', select: 'step startDate endDate address' },
+              {
+                path: 'subProgram',
+                select: 'steps program',
+                populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+              },
+              { path: 'slots', select: 'startDate endDate address' },
             ],
           }],
         },

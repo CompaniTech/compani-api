@@ -1,4 +1,5 @@
 const sinon = require('sinon');
+const get = require('lodash/get');
 const omit = require('lodash/omit');
 const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
@@ -6,7 +7,6 @@ const fs = require('fs');
 const os = require('os');
 const { PassThrough } = require('stream');
 const Boom = require('@hapi/boom');
-const { get } = require('lodash');
 const UtilsMock = require('../../utilsMock');
 const Company = require('../../../src/models/Company');
 const Course = require('../../../src/models/Course');
@@ -20,6 +20,7 @@ const CourseSmsHistory = require('../../../src/models/CourseSmsHistory');
 const Drive = require('../../../src/models/Google/Drive');
 const Questionnaire = require('../../../src/models/Questionnaire');
 const TrainingContract = require('../../../src/models/TrainingContract');
+const CompanyHelper = require('../../../src/helpers/companies');
 const CourseHelper = require('../../../src/helpers/courses');
 const EmailHelper = require('../../../src/helpers/email');
 const SmsHelper = require('../../../src/helpers/sms');
@@ -70,6 +71,7 @@ const {
   TRAINER_DELETION,
   COURSE_RESTART,
   COURSE_INTERRUPTION,
+  MONTHLY,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -2300,6 +2302,7 @@ describe('getCourse', () => {
         trainees: [{ _id: traineeIds[0] }, { _id: traineeIds[1] }],
         subProgram: { steps: [{ theoreticalDuration: 'PT3600S' }, { theoreticalDuration: 'PT1800S' }] },
         slots: [{ step: new ObjectId() }],
+        bills: [],
       };
       findOne.returns(SinonMongoose.stubChainedQueries(course));
       getCompanyAtCourseRegistrationList.returns([
@@ -2377,6 +2380,7 @@ describe('getCourse', () => {
               },
               { path: 'contact', select: 'identity.firstname identity.lastname contact' },
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
+              { path: 'bills', select: '_id companies', options: { isVendorUser: true } },
             ]],
           },
           { query: 'lean' },
@@ -5022,18 +5026,15 @@ describe('groupSlotsByDate', () => {
 
 describe('formatIntraCourseForPdf', () => {
   let formatIdentity;
-  let getTotalDuration;
   let groupSlotsByDate;
   let formatIntraCourseSlotsForPdf;
   beforeEach(() => {
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
-    getTotalDuration = sinon.stub(UtilsHelper, 'getTotalDuration');
     groupSlotsByDate = sinon.stub(CourseHelper, 'groupSlotsByDate');
     formatIntraCourseSlotsForPdf = sinon.stub(CourseHelper, 'formatIntraCourseSlotsForPdf');
   });
   afterEach(() => {
     formatIdentity.restore();
-    getTotalDuration.restore();
     groupSlotsByDate.restore();
     formatIntraCourseSlotsForPdf.restore();
   });
@@ -5045,34 +5046,40 @@ describe('formatIntraCourseForPdf', () => {
         { identity: { lastname: 'MasterClass' } },
         { identity: { lastname: 'MasterCompani' } },
       ],
-      subProgram: { program: { name: 'programme' } },
+      subProgram: {
+        program: { name: 'programme' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'on_site', theoreticalDuration: 'PT12600S' },
+          { type: 'remote', theoreticalDuration: 'PT5400S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
       slots: [
         {
           startDate: '2020-03-20T09:00:00',
           endDate: '2020-03-20T11:00:00',
           address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-          step: { type: 'on_site' },
         },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
+        { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00' },
       ],
       companies: [{ name: 'alenvi' }],
       type: INTRA,
     };
 
-    getTotalDuration.returns('9h30');
     groupSlotsByDate.returns([
       [{
         startDate: '2020-03-20T09:00:00',
         endDate: '2020-03-20T11:00:00',
         address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-        step: { type: 'on_site' },
       }], [
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
       ],
-      [{ startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } }],
+      [{ startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00' }],
     ]);
     formatIntraCourseSlotsForPdf.onCall(0).returns({ startHour: 'slot1' });
     formatIntraCourseSlotsForPdf.onCall(1).returns({ startHour: 'slot2' });
@@ -5121,18 +5128,16 @@ describe('formatIntraCourseForPdf', () => {
         },
       ],
     });
-    sinon.assert.calledOnceWithExactly(getTotalDuration, course.slots);
     sinon.assert.notCalled(formatIdentity);
     sinon.assert.calledOnceWithExactly(groupSlotsByDate, [
       {
         startDate: '2020-03-20T09:00:00',
         endDate: '2020-03-20T11:00:00',
         address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-        step: { type: 'on_site' },
       },
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00', step: { type: 'remote' } },
+      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
+      { startDate: '2020-04-14T18:00:00', endDate: '2020-04-14T19:30:00' },
     ]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(0), course.slots[0]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(1), course.slots[1]);
@@ -5145,31 +5150,36 @@ describe('formatIntraCourseForPdf', () => {
     const course = {
       misc: 'des infos en plus',
       trainers: [{ identity: { lastname: 'MasterClass' } }],
-      subProgram: { program: { name: 'programme' } },
+      subProgram: {
+        program: { name: 'programme' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'on_site', theoreticalDuration: 'PT12600S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
       slots: [
         {
           startDate: '2020-03-20T09:00:00',
           endDate: '2020-03-20T11:00:00',
           address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-          step: { type: 'on_site' },
         },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+        { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
       ],
       companies: [{ name: 'alenvi' }, { name: 'biens communs' }],
       type: INTRA_HOLDING,
     };
 
-    getTotalDuration.returns('8h');
     formatIdentity.returns('MasterClass');
     groupSlotsByDate.returns([[{
       startDate: '2020-03-20T09:00:00',
       endDate: '2020-03-20T11:00:00',
       address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-      step: { type: 'on_site' },
     }], [
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
     ]]);
     formatIntraCourseSlotsForPdf.onCall(0).returns({ startHour: 'slot1' });
     formatIntraCourseSlotsForPdf.onCall(1).returns({ startHour: 'slot2' });
@@ -5202,17 +5212,15 @@ describe('formatIntraCourseForPdf', () => {
         date: '12/04/2020',
       }],
     });
-    sinon.assert.calledOnceWithExactly(getTotalDuration, course.slots);
     sinon.assert.calledOnceWithExactly(formatIdentity, { lastname: 'MasterClass' }, 'FL');
     sinon.assert.calledOnceWithExactly(groupSlotsByDate, [
       {
         startDate: '2020-03-20T09:00:00',
         endDate: '2020-03-20T11:00:00',
         address: { fullAddress: '37 rue de Ponthieu 75008 Paris' },
-        step: { type: 'on_site' },
       },
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00', step: { type: 'on_site' } },
+      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+      { startDate: '2020-04-12T14:00:00', endDate: '2020-04-12T17:30:00' },
     ]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(0), course.slots[0]);
     sinon.assert.calledWithExactly(formatIntraCourseSlotsForPdf.getCall(1), course.slots[1]);
@@ -5223,13 +5231,11 @@ describe('formatIntraCourseForPdf', () => {
 
 describe('formatInterCourseForPdf', () => {
   let formatIdentity;
-  let getTotalDuration;
   let formatInterCourseSlotsForPdf;
   let getCompanyAtCourseRegistrationList;
   let findCompanies;
   beforeEach(() => {
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
-    getTotalDuration = sinon.stub(UtilsHelper, 'getTotalDuration');
     formatInterCourseSlotsForPdf = sinon.stub(CourseHelper, 'formatInterCourseSlotsForPdf');
     getCompanyAtCourseRegistrationList = sinon
       .stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
@@ -5237,7 +5243,6 @@ describe('formatInterCourseForPdf', () => {
   });
   afterEach(() => {
     formatIdentity.restore();
-    getTotalDuration.restore();
     formatInterCourseSlotsForPdf.restore();
     getCompanyAtCourseRegistrationList.restore();
     findCompanies.restore();
@@ -5249,10 +5254,10 @@ describe('formatInterCourseForPdf', () => {
     const course = {
       _id: new ObjectId(),
       slots: [
-        { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00', step: { type: 'remote' } },
+        { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00' },
+        { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00' },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
+        { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00' },
       ],
       misc: 'des infos en plus',
       trainers: [
@@ -5263,18 +5268,21 @@ describe('formatInterCourseForPdf', () => {
         { _id: traineeIds[0], identity: { lastname: 'trainee 1' } },
         { _id: traineeIds[1], identity: { lastname: 'trainee 2' } },
       ],
-      subProgram: { program: { name: 'programme de formation' } },
+      subProgram: {
+        program: { name: 'programme de formation' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'remote', theoreticalDuration: 'PT9000S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
     };
-    const sortedSlots = [
-      { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00', step: { type: 'remote' } },
-      { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
-    ];
+
     formatInterCourseSlotsForPdf.returns('slot');
     formatIdentity.onCall(0).returns('trainee 1');
     formatIdentity.onCall(1).returns('trainee 2');
-    getTotalDuration.returns('9h30');
     getCompanyAtCourseRegistrationList
       .returns([{ trainee: traineeIds[0], company: companyId }, { trainee: traineeIds[1], company: companyId }]);
     findCompanies.returns(SinonMongoose.stubChainedQueries([{ _id: companyId, name: 'alenvi' }], ['lean']));
@@ -5311,7 +5319,6 @@ describe('formatInterCourseForPdf', () => {
     });
     sinon.assert.calledWithExactly(formatIdentity.getCall(0), { lastname: 'trainee 1' }, 'FL');
     sinon.assert.calledWithExactly(formatIdentity.getCall(1), { lastname: 'trainee 2' }, 'FL');
-    sinon.assert.calledOnceWithExactly(getTotalDuration, sortedSlots);
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
       { key: COURSE, value: course._id },
@@ -5331,23 +5338,26 @@ describe('formatInterCourseForPdf', () => {
     const course = {
       _id: new ObjectId(),
       slots: [
-        { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
+        { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00' },
+        { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00' },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
       ],
       misc: 'des infos en plus',
       trainers: [{ identity: { lastname: 'MasterClass' } }],
       trainees: [],
-      subProgram: { program: { name: 'programme de formation' } },
+      subProgram: {
+        program: { name: 'programme de formation' },
+        steps: [
+          { type: 'on_site', theoreticalDuration: 'PT7200S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'on_site', theoreticalDuration: 'PT9000S' },
+          { type: 'e_learning', theoreticalDuration: 'PT3600S' },
+        ],
+      },
     };
-    const sortedSlots = [
-      { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', step: { type: 'on_site' } },
-      { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00', step: { type: 'on_site' } },
-    ];
+
     formatInterCourseSlotsForPdf.returns('slot');
     formatIdentity.returns('MasterClass');
-    getTotalDuration.returns('7h');
     getCompanyAtCourseRegistrationList.returns([]);
     findCompanies.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
@@ -5370,7 +5380,6 @@ describe('formatInterCourseForPdf', () => {
       ],
     });
     sinon.assert.calledOnceWithExactly(formatIdentity, { lastname: 'MasterClass' }, 'FL');
-    sinon.assert.calledOnceWithExactly(getTotalDuration, sortedSlots);
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
       { key: COURSE, value: course._id },
@@ -5427,7 +5436,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'step startDate endDate address', populate: { path: 'step', select: 'type' } }],
+        args: [{ path: 'slots', select: 'startDate endDate address' }],
       },
       {
         query: 'populate',
@@ -5436,7 +5445,11 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
         query: 'populate',
-        args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        args: [{
+          path: 'subProgram',
+          select: 'steps program',
+          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+        }],
       },
       { query: 'lean' },
     ]);
@@ -5462,7 +5475,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'step startDate endDate address', populate: { path: 'step', select: 'type' } }],
+        args: [{ path: 'slots', select: 'startDate endDate address' }],
       },
       {
         query: 'populate',
@@ -5471,7 +5484,11 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
         query: 'populate',
-        args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        args: [{
+          path: 'subProgram',
+          select: 'steps program',
+          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+        }],
       },
       { query: 'lean' },
     ]);
@@ -5496,7 +5513,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'step startDate endDate address', populate: { path: 'step', select: 'type' } }],
+        args: [{ path: 'slots', select: 'startDate endDate address' }],
       },
       {
         query: 'populate',
@@ -5505,7 +5522,11 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
         query: 'populate',
-        args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        args: [{
+          path: 'subProgram',
+          select: 'steps program',
+          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+        }],
       },
       { query: 'lean' },
     ]);
@@ -7916,7 +7937,10 @@ describe('generateTrainingContract', () => {
       misc: 'Test',
       maxTrainees: 5,
       type: INTRA,
-      trainees: [new ObjectId(), new ObjectId()],
+      trainees: [
+        { _id: new ObjectId(), identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+        { _id: new ObjectId(), identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
+      ],
       companies: [{
         _id: companyId,
         name: 'Alenvi',
@@ -7947,6 +7971,7 @@ describe('generateTrainingContract', () => {
         { identity: { lastname: 'Bonbeur', firstname: 'Jean' } },
         { identity: { lastname: 'Pencil', firstname: 'James' } },
       ],
+      prices: [{ company: companyId, global: 1000, trainerFees: 300.14 }],
     };
 
     const vendorCompany = { name: 'Compani', address: { fullAddress: '140 rue de ponthieu 75008 Paris' } };
@@ -7962,15 +7987,22 @@ describe('generateTrainingContract', () => {
       eLearningDuration: '0h20',
       misc: 'Test',
       learnersCount: 5,
+      learnersName: 'Charles LECLERC, Lewis HAMILTON',
       dates: ['03/11/2020'],
       addressList: ['14 rue de ponthieu 75008 Paris', 'Cette formation contient des créneaux en distanciel'],
       trainers: ['Jean BONBEUR', 'James PENCIL'],
-      price: 12,
+      payloadPrice: 12,
+      totalPrice: 1300.14,
     };
 
     vendorCompanyGet.returns(vendorCompany);
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
+
+    getCompanyAtCourseRegistrationList.returns([
+      { trainee: course.trainees[0]._id, company: companyId },
+      { trainee: course.trainees[1]._id, company: companyId },
+    ]);
 
     await CourseHelper.generateTrainingContract(course._id, payload);
 
@@ -7979,7 +8011,7 @@ describe('generateTrainingContract', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1 }] },
+        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 }] },
         {
           query: 'populate',
           args: [[
@@ -7995,12 +8027,17 @@ describe('generateTrainingContract', () => {
             { path: 'slots', select: 'startDate endDate address meetingLink' },
             { path: 'slotsToPlan', select: '_id' },
             { path: 'trainers', select: 'identity.firstname identity.lastname' },
+            { path: 'trainees', select: 'identity.firstname identity.lastname' },
           ]],
         },
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    sinon.assert.calledOnceWithExactly(
+      getCompanyAtCourseRegistrationList,
+      { key: COURSE, value: course._id },
+      { key: TRAINEE, value: course.trainees.map(t => t._id) }
+    );
   });
 
   it('should download training contract for inter course without slots to plan & only on_site steps', async () => {
@@ -8010,7 +8047,10 @@ describe('generateTrainingContract', () => {
       _id: new ObjectId(),
       misc: 'Test',
       type: INTER_B2B,
-      trainees: [new ObjectId(), new ObjectId()],
+      trainees: [
+        { _id: new ObjectId(), identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+        { _id: new ObjectId(), identity: { lastname: 'Hamilton', firstname: 'Lewis' } },
+      ],
       companies: [{
         _id: companyId,
         name: 'Alenvi',
@@ -8063,10 +8103,12 @@ describe('generateTrainingContract', () => {
       eLearningDuration: '',
       misc: 'Test',
       learnersCount: 1,
+      learnersName: 'Charles LECLERC',
       dates: ['03/11/2020', '04/11/2020', '05/11/2020'],
       addressList: ['Paris'],
       trainers: ['Jean BONBEUR'],
-      price: 12,
+      payloadPrice: 12,
+      totalPrice: 0,
     };
 
     vendorCompanyGet.returns(vendorCompany);
@@ -8074,8 +8116,8 @@ describe('generateTrainingContract', () => {
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
 
     getCompanyAtCourseRegistrationList.returns([
-      { trainee: course.trainees[0], company: companyId },
-      { trainee: course.trainees[1], company: new ObjectId() },
+      { trainee: course.trainees[0]._id, company: companyId },
+      { trainee: course.trainees[1]._id, company: new ObjectId() },
     ]);
 
     await CourseHelper.generateTrainingContract(course._id, payload);
@@ -8085,7 +8127,7 @@ describe('generateTrainingContract', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1 }] },
+        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 }] },
         {
           query: 'populate',
           args: [[
@@ -8101,6 +8143,7 @@ describe('generateTrainingContract', () => {
             { path: 'slots', select: 'startDate endDate address meetingLink' },
             { path: 'slotsToPlan', select: '_id' },
             { path: 'trainers', select: 'identity.firstname identity.lastname' },
+            { path: 'trainees', select: 'identity.firstname identity.lastname' },
           ]],
         },
         { query: 'lean' },
@@ -8109,7 +8152,7 @@ describe('generateTrainingContract', () => {
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
       { key: COURSE, value: course._id },
-      { key: TRAINEE, value: course.trainees }
+      { key: TRAINEE, value: course.trainees.map(t => t._id) }
     );
   });
 });
@@ -8288,21 +8331,24 @@ describe('removeTutor', () => {
   });
 });
 
-describe('uploadCSV', () => {
+describe('uploadTraineeCSV', () => {
   let findOne;
   let createUser;
   let addTrainee;
+  let sendWelcome;
 
   beforeEach(() => {
     findOne = sinon.stub(Course, 'findOne');
     createUser = sinon.stub(UserHelper, 'createUser');
     addTrainee = sinon.stub(CourseHelper, 'addTrainee');
+    sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
   });
 
   afterEach(() => {
     findOne.restore();
     createUser.restore();
     addTrainee.restore();
+    sendWelcome.restore();
   });
 
   it('should create trainee and add to course', async () => {
@@ -8322,7 +8368,7 @@ describe('uploadCSV', () => {
 
     findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
     createUser.returns({ _id: userId });
-    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+    await CourseHelper.uploadTraineeCSV(course._id, learnerList, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -8330,6 +8376,7 @@ describe('uploadCSV', () => {
     );
     sinon.assert.calledOnceWithExactly(createUser, { ...learnerList[0], origin: WEBAPP }, credentials);
     sinon.assert.calledOnceWithExactly(addTrainee, courseId, { trainee: userId, company: companyId }, credentials);
+    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
   });
 
   it('should add existing trainee to course', async () => {
@@ -8349,7 +8396,7 @@ describe('uploadCSV', () => {
     ];
 
     findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
-    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+    await CourseHelper.uploadTraineeCSV(course._id, learnerList, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -8357,6 +8404,7 @@ describe('uploadCSV', () => {
     );
     sinon.assert.notCalled(createUser);
     sinon.assert.calledOnceWithExactly(addTrainee, courseId, { trainee: userId, company: companyId }, credentials);
+    sinon.assert.notCalled(sendWelcome);
   });
 
   it('should not create or add trainee if already registered to course', async () => {
@@ -8376,7 +8424,7 @@ describe('uploadCSV', () => {
     ];
 
     findOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
-    await CourseHelper.uploadCSV(course._id, learnerList, credentials);
+    await CourseHelper.uploadTraineeCSV(course._id, learnerList, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -8384,5 +8432,253 @@ describe('uploadCSV', () => {
     );
     sinon.assert.notCalled(createUser);
     sinon.assert.notCalled(addTrainee);
+    sinon.assert.notCalled(sendWelcome);
+  });
+});
+
+describe('uploadSingleCourseCSV', () => {
+  let companyFindOne;
+  let courseCountDocuments;
+  let createCompany;
+  let createUser;
+  let createCourse;
+  let addTrainer;
+  let sendWelcome;
+
+  beforeEach(() => {
+    companyFindOne = sinon.stub(Company, 'findOne');
+    courseCountDocuments = sinon.stub(Course, 'countDocuments');
+    createCompany = sinon.stub(CompanyHelper, 'createCompany');
+    createUser = sinon.stub(UserHelper, 'createUser');
+    createCourse = sinon.stub(CourseHelper, 'createCourse');
+    addTrainer = sinon.stub(CourseHelper, 'addTrainer');
+    sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
+  });
+
+  afterEach(() => {
+    companyFindOne.restore();
+    courseCountDocuments.restore();
+    createUser.restore();
+    createCompany.restore();
+    createCourse.restore();
+    addTrainer.restore();
+    sendWelcome.restore();
+  });
+
+  it('should create course with new trainee and new company', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+    const trainerIds = [new ObjectId(), new ObjectId()];
+    const learnerList = [
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: 'Company',
+        subProgram: subProgramId,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: trainerIds,
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      },
+    ];
+    const payload = {
+      subProgram: subProgramId,
+      misc: 'Jean TODT',
+      type: SINGLE,
+      salesRepresentative: operationsRepresentativeId,
+      operationsRepresentative: operationsRepresentativeId,
+      expectedBillsCount: 21,
+      certificateGenerationMode: MONTHLY,
+      trainee: userId,
+      hasCertifyingTest: false,
+      estimatedStartDate: '2025-03-03T15:00:00.000Z',
+    };
+
+    companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    createUser.returns({ _id: userId });
+    createCompany.returns({ _id: companyId });
+    createCourse.returns({ _id: courseId });
+    await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      companyFindOne,
+      [{ query: 'findOne', args: [{ name: 'Company' }] }, { query: 'lean' }]
+    );
+
+    sinon.assert.calledOnceWithExactly(
+      createUser,
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+        origin: WEBAPP,
+      },
+      credentials
+    );
+
+    sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
+    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
+    sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
+    sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: trainerIds[0] }, credentials);
+    sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: trainerIds[1] }, credentials);
+    sinon.assert.notCalled(courseCountDocuments);
+  });
+
+  it('should create course with existing trainee', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+    const learnerList = [
+      {
+        _id: userId,
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: 'Company',
+        subProgram: subProgramId,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      },
+    ];
+    const payload = {
+      subProgram: subProgramId,
+      misc: 'Jean TODT',
+      type: SINGLE,
+      salesRepresentative: operationsRepresentativeId,
+      operationsRepresentative: operationsRepresentativeId,
+      expectedBillsCount: 21,
+      certificateGenerationMode: MONTHLY,
+      trainee: userId,
+      hasCertifyingTest: false,
+      estimatedStartDate: '2025-03-03T15:00:00.000Z',
+    };
+
+    courseCountDocuments.returns(0);
+    companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    createCompany.returns({ _id: companyId });
+    createCourse.returns({ _id: courseId });
+    await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      companyFindOne,
+      [{ query: 'findOne', args: [{ name: 'Company' }] }, { query: 'lean' }]
+    );
+
+    sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
+    sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
+    sinon.assert.calledOnceWithExactly(
+      courseCountDocuments,
+      { trainees: userId, type: SINGLE, subProgram: subProgramId }
+    );
+    sinon.assert.notCalled(createUser);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(addTrainer);
+  });
+
+  it('should create course with existing company', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+    const learnerList = [
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+        subProgram: subProgramId,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      },
+    ];
+    const payload = {
+      subProgram: subProgramId,
+      misc: 'Jean TODT',
+      type: SINGLE,
+      salesRepresentative: operationsRepresentativeId,
+      operationsRepresentative: operationsRepresentativeId,
+      expectedBillsCount: 21,
+      certificateGenerationMode: MONTHLY,
+      trainee: userId,
+      hasCertifyingTest: false,
+      estimatedStartDate: '2025-03-03T15:00:00.000Z',
+    };
+
+    companyFindOne.returns(SinonMongoose.stubChainedQueries({ _id: companyId }, ['lean']));
+    createUser.returns({ _id: userId });
+    createCourse.returns({ _id: courseId });
+    await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
+
+    sinon.assert.calledOnceWithExactly(
+      createUser,
+      {
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: companyId,
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+        origin: WEBAPP,
+      },
+      credentials
+    );
+
+    sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
+    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
+    sinon.assert.notCalled(createCompany);
+    sinon.assert.notCalled(courseCountDocuments);
+    sinon.assert.notCalled(addTrainer);
+  });
+
+  it('should not create course', async () => {
+    const credentials = { _id: new ObjectId() };
+    const userId = new ObjectId();
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const learnerList = [
+      {
+        _id: userId,
+        'identity.firstname': 'Jean',
+        'identity.lastname': 'Todt',
+        'local.email': 'jean.todt@suffix.fr',
+        company: 'Company',
+        subProgram: subProgramId,
+        operationsRepresentative: operationsRepresentativeId,
+        trainers: [],
+        estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      },
+    ];
+
+    courseCountDocuments.returns(1);
+    companyFindOne.returns(SinonMongoose.stubChainedQueries({ _id: companyId }, ['lean']));
+    await CourseHelper.uploadSingleCourseCSV(learnerList, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      companyFindOne,
+      [{ query: 'findOne', args: [{ name: 'Company' }] }, { query: 'lean' }]
+    );
+
+    sinon.assert.notCalled(createCompany);
+    sinon.assert.notCalled(createUser);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(createCourse);
+    sinon.assert.notCalled(addTrainer);
+    sinon.assert.calledOnceWithExactly(
+      courseCountDocuments,
+      { trainees: userId, type: SINGLE, subProgram: subProgramId }
+    );
   });
 });
