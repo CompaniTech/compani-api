@@ -13,7 +13,7 @@ const Attendance = require('../../../src/models/Attendance');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
-const { vendorAdmin, trainerAndCoach } = require('../../seed/authUsersSeed');
+const { vendorAdmin, trainerAndCoach, trainer } = require('../../seed/authUsersSeed');
 const {
   WEBAPP,
   INTRA,
@@ -25,16 +25,7 @@ const {
   MONTHLY,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { trainerRoleId, auxiliaryRoleId } = require('../../seed/authRolesSeed');
-
-const trainer = {
-  _id: new ObjectId(),
-  identity: { firstname: 'trainer', lastname: 'trainer' },
-  refreshToken: uuidv4(),
-  local: { email: 'course_slot_trainer@alenvi.io', password: '123456!eR' },
-  role: { vendor: trainerRoleId },
-  origin: WEBAPP,
-};
+const { auxiliaryRoleId } = require('../../seed/authRolesSeed');
 
 const traineeFromOtherCompany = {
   _id: new ObjectId(),
@@ -47,15 +38,6 @@ const traineeFromOtherCompany = {
 };
 
 const userCompanies = [
-  // old inactive user company
-  {
-    _id: new ObjectId(),
-    user: trainer._id,
-    company: companyWithoutSubscription._id,
-    startDate: '2022-01-01T23:00:00.000Z',
-    endDate: '2022-11-30T23:00:00.000Z',
-  },
-  { _id: new ObjectId(), user: trainer._id, company: authCompany._id },
   {
     _id: new ObjectId(),
     user: traineeFromOtherCompany._id,
@@ -122,7 +104,7 @@ const coursesList = [
     companies: [otherCompany._id],
     misc: 'team formation',
     type: SINGLE,
-    trainers: [trainer._id],
+    trainers: [trainerAndCoach._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
     maxTrainees: 1,
@@ -205,9 +187,9 @@ const courseSlotsList = [
   },
   { // 2
     _id: new ObjectId(),
-    startDate: '2020-03-10T09:00:00',
-    endDate: '2020-03-10T12:00:00',
-    course: coursesList[1]._id,
+    startDate: '2020-03-10T14:00:00',
+    endDate: '2020-03-10T16:00:00',
+    course: coursesList[0]._id,
     step: stepsList[0]._id,
   },
   { // 3
@@ -303,7 +285,7 @@ const attendanceSheet = {
   companies: [otherCompany._id],
   slots: [{ slotId: courseSlotsList[12]._id }],
   origin: WEBAPP,
-  trainer: trainer._id,
+  trainer: trainerAndCoach._id,
 };
 
 const completionCertificate = {
@@ -326,7 +308,7 @@ const populateDB = async () => {
     Course.create(coursesList),
     CourseSlot.create(courseSlotsList),
     Step.create(stepsList),
-    User.create([trainer, traineeFromOtherCompany]),
+    User.create([traineeFromOtherCompany]),
     Attendance.create(attendance),
     AttendanceSheet.create(attendanceSheet),
     UserCompany.create(userCompanies),
@@ -338,6 +320,5 @@ module.exports = {
   coursesList,
   programsList,
   courseSlotsList,
-  trainer,
   stepsList,
 };
