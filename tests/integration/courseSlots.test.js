@@ -802,8 +802,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       expect(response.statusCode).toBe(200);
     });
 
-    it('should return a 403 as user is course trainer', async () => {
-      authToken = await getToken('trainer');
+    it('should return a 403 as user is not course trainer', async () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${courseSlotsList[3]._id}`,
