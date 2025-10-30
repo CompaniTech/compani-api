@@ -70,8 +70,8 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
         user: questionnaireHistoriesUsersList[0],
         questionnaire: questionnairesList[1]._id,
         questionnaireAnswersList: [
-          { card: cardsList[1]._id, answerList: ['Premier niveau'] },
-          { card: cardsList[3]._id, answerList: ['coucou'] },
+          { card: cardsList[0]._id, answerList: ['4'] },
+          { card: cardsList[1]._id, answerList: ['4'] },
         ],
       };
 
@@ -101,8 +101,8 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
         user: questionnaireHistoriesUsersList[0],
         questionnaire: questionnairesList[1]._id,
         questionnaireAnswersList: [
-          { card: cardsList[1]._id, answerList: ['Premier niveau'] },
-          { card: cardsList[3]._id, answerList: ['coucou'] },
+          { card: cardsList[0]._id, answerList: ['3'] },
+          { card: cardsList[1]._id, answerList: ['5'] },
         ],
       };
 
@@ -157,8 +157,8 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
         user: questionnaireHistoriesUsersList[0],
         questionnaire: questionnairesList[1]._id,
         questionnaireAnswersList: [
-          { card: cardsList[1]._id, answerList: ['Premier niveau'] },
-          { card: cardsList[3]._id, answerList: ['coucou'] },
+          { card: cardsList[0]._id, answerList: ['2'] },
+          { card: cardsList[1]._id, answerList: ['3'] },
         ],
       };
 
@@ -416,7 +416,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
   });
 
   describe('NOT LOGGED', () => {
-    it('should create questionnaireHistory', async () => {
+    it('should create questionnaireHistory (EXPECTATIONS)', async () => {
       const questionnaireHistoriesCountBefore = await QuestionnaireHistory.countDocuments();
       const payload = {
         course: coursesList[0]._id,
@@ -438,6 +438,31 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
 
       expect(response.statusCode).toBe(200);
       const questionnaireHistoriesCountAfter = await QuestionnaireHistory.countDocuments();
+      expect(questionnaireHistoriesCountAfter).toBe(questionnaireHistoriesCountBefore + 1);
+    });
+
+    it('should create questionnaireHistory with timeline (SELF_POSITIONNING)', async () => {
+      const questionnaireHistoriesCountBefore = await QuestionnaireHistory.countDocuments({ timeline: START_COURSE });
+      const payload = {
+        course: coursesList[0]._id,
+        user: questionnaireHistoriesUsersList[0],
+        questionnaire: questionnairesList[1]._id,
+        questionnaireAnswersList: [
+          { card: cardsList[0]._id, answerList: ['5'] },
+          { card: cardsList[1]._id, answerList: ['3'] },
+        ],
+        origin: WEBAPP,
+        timeline: START_COURSE,
+      };
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/questionnairehistories',
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const questionnaireHistoriesCountAfter = await QuestionnaireHistory.countDocuments({ timeline: START_COURSE });
       expect(questionnaireHistoriesCountAfter).toBe(questionnaireHistoriesCountBefore + 1);
     });
 

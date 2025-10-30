@@ -27,7 +27,7 @@ exports.addQuestionnaireHistory = async (payload) => {
 
   const questionnaire = await Questionnaire.findOne({ _id: questionnaireId }, { type: 1 }).lean();
 
-  let timeline = '';
+  let timeline;
   if (questionnaire.type === SELF_POSITIONNING) {
     if (payload.origin === WEBAPP) {
       timeline = payload.timeline;
