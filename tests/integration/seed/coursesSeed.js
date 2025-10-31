@@ -9,6 +9,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const CourseSmsHistory = require('../../../src/models/CourseSmsHistory');
 const CourseHistory = require('../../../src/models/CourseHistory');
+const TrainerMission = require('../../../src/models/TrainerMission');
 const User = require('../../../src/models/User');
 const Step = require('../../../src/models/Step');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -67,6 +68,7 @@ const {
   E_LEARNING,
   ON_SITE,
   REMOTE,
+  GENERATION,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -735,6 +737,18 @@ const coursesList = [
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     certificateGenerationMode: GLOBAL,
   },
+  { // 27 course without trainee, without slot but with trainer mission
+    _id: new ObjectId(),
+    subProgram: subProgramsList[0]._id,
+    misc: '',
+    type: INTER_B2B,
+    format: BLENDED,
+    trainers: [trainer._id],
+    trainees: [],
+    companies: [],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
+  },
 ];
 
 const courseBillsList = [
@@ -1349,6 +1363,19 @@ const completionCertificateList = [
   { _id: new ObjectId(), month: '03-2020', trainee: auxiliary._id, course: coursesList[2]._id },
 ];
 
+const trainerMissionList = [
+  {
+    _id: new ObjectId(),
+    courses: [coursesList[27]._id],
+    trainer: trainer._id,
+    date: '2023-01-02T23:00:00.000Z',
+    fee: 1200,
+    createdBy: vendorAdmin._id,
+    file: { publicId: '123test', link: 'ceciestunlien' },
+    creationMethod: GENERATION,
+  },
+];
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
@@ -1374,6 +1401,7 @@ const populateDB = async () => {
     QuestionnaireHistory.create(questionnaireHistory),
     Step.create(stepList),
     SubProgram.create(subProgramsList),
+    TrainerMission.create(trainerMissionList),
     User.create(userList),
     UserCompany.create(userCompanies),
   ]);
