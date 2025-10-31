@@ -21,7 +21,7 @@ exports.plugin = {
           }),
         },
         pre: [{ method: authorizeCreate }],
-        auth: { scope: ['courses:create'] },
+        auth: { scope: ['courseslots:create'] },
       },
       handler: create,
     });
@@ -53,7 +53,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required() }),
         },
         pre: [{ method: authorizeDeletion }],
-        auth: { scope: ['courses:create'] },
+        auth: { scope: ['courseslots:create'] },
       },
       handler: remove,
     });

@@ -14,6 +14,7 @@ const {
   START_COURSE,
   END_COURSE,
   UNKNOWN,
+  WEBAPP,
 } = require('../../../src/helpers/constants');
 const UtilsMock = require('../../utilsMock');
 
@@ -300,6 +301,60 @@ describe('addQuestionnaireHistory', () => {
         timeline: UNKNOWN,
       }
     );
+  });
+
+  it('should create a questionnaireHistory with timeline in payload (SELF_POSITIONNING)', async () => {
+    const questionnaireId = new ObjectId();
+    const questionnaire = { _id: questionnaireId, type: SELF_POSITIONNING };
+    const company = new ObjectId();
+    const userId = new ObjectId();
+    const courseId = new ObjectId();
+    const questionnaireAnswersList = [{ card: new ObjectId(), answerList: ['blabla'] }];
+
+    getCompanyAtCourseRegistrationList.returns([{ company }, { company: new ObjectId() }]);
+    findOneQuestionnaire.returns(SinonMongoose.stubChainedQueries(questionnaire, ['lean']));
+    countDocumentsQH.returns(0);
+
+    await QuestionnaireHistoriesHelper.addQuestionnaireHistory({
+      course: courseId,
+      user: userId,
+      questionnaire: questionnaireId,
+      questionnaireAnswersList,
+      timeline: START_COURSE,
+      origin: WEBAPP,
+    });
+
+    sinon.assert.calledOnceWithExactly(
+      getCompanyAtCourseRegistrationList,
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: [userId] }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneQuestionnaire,
+      [{ query: 'findOne', args: [{ _id: questionnaireId }, { type: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      countDocumentsQH,
+      [
+        {
+          query: 'countDocuments',
+          args: [{ course: courseId, user: userId, questionnaire: questionnaireId, timeline: START_COURSE }],
+        },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      create,
+      {
+        course: courseId,
+        user: userId,
+        questionnaire: questionnaireId,
+        questionnaireAnswersList,
+        company,
+        timeline: START_COURSE,
+        origin: WEBAPP,
+      }
+    );
+    sinon.assert.notCalled(findOneCourse);
   });
 });
 

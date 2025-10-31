@@ -84,7 +84,7 @@ const questionnairesList = [
     status: PUBLISHED,
     type: SELF_POSITIONNING,
     program: programsList[0]._id,
-    cards: [cardsList[1]._id, cardsList[3]._id],
+    cards: [cardsList[0]._id, cardsList[1]._id],
   },
   {
     _id: new ObjectId(),
