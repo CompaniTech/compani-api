@@ -24,6 +24,7 @@ const CompanyHelper = require('../../../src/helpers/companies');
 const CourseHelper = require('../../../src/helpers/courses');
 const EmailHelper = require('../../../src/helpers/email');
 const SmsHelper = require('../../../src/helpers/sms');
+const UserCompanyHelper = require('../../../src/helpers/userCompanies');
 const UtilsHelper = require('../../../src/helpers/utils');
 const PdfHelper = require('../../../src/helpers/pdf');
 const ZipHelper = require('../../../src/helpers/zip');
@@ -8439,7 +8440,9 @@ describe('uploadTraineeCSV', () => {
 describe('uploadSingleCourseCSV', () => {
   let companyFindOne;
   let courseCountDocuments;
+  let userCompanyCountDocuments;
   let createCompany;
+  let createUserCompany;
   let createUser;
   let createCourse;
   let addTrainer;
@@ -8448,7 +8451,9 @@ describe('uploadSingleCourseCSV', () => {
   beforeEach(() => {
     companyFindOne = sinon.stub(Company, 'findOne');
     courseCountDocuments = sinon.stub(Course, 'countDocuments');
+    userCompanyCountDocuments = sinon.stub(UserCompany, 'countDocuments');
     createCompany = sinon.stub(CompanyHelper, 'createCompany');
+    createUserCompany = sinon.stub(UserCompanyHelper, 'create');
     createUser = sinon.stub(UserHelper, 'createUser');
     createCourse = sinon.stub(CourseHelper, 'createCourse');
     addTrainer = sinon.stub(CourseHelper, 'addTrainer');
@@ -8458,8 +8463,10 @@ describe('uploadSingleCourseCSV', () => {
   afterEach(() => {
     companyFindOne.restore();
     courseCountDocuments.restore();
+    userCompanyCountDocuments.restore();
     createUser.restore();
     createCompany.restore();
+    createUserCompany.restore();
     createCourse.restore();
     addTrainer.restore();
     sendWelcome.restore();
@@ -8528,6 +8535,8 @@ describe('uploadSingleCourseCSV', () => {
     sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: trainerIds[0] }, credentials);
     sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: trainerIds[1] }, credentials);
     sinon.assert.notCalled(courseCountDocuments);
+    sinon.assert.notCalled(userCompanyCountDocuments);
+    sinon.assert.notCalled(createUserCompany);
   });
 
   it('should create course with existing trainee', async () => {
@@ -8564,6 +8573,7 @@ describe('uploadSingleCourseCSV', () => {
     };
 
     courseCountDocuments.returns(0);
+    userCompanyCountDocuments.returns(0);
     companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
     createCompany.returns({ _id: companyId });
     createCourse.returns({ _id: courseId });
@@ -8580,6 +8590,8 @@ describe('uploadSingleCourseCSV', () => {
       courseCountDocuments,
       { trainees: userId, type: SINGLE, subProgram: subProgramId }
     );
+    sinon.assert.calledOnceWithExactly(userCompanyCountDocuments, { user: userId, company: companyId });
+    sinon.assert.calledOnceWithExactly(createUserCompany, { user: userId, company: companyId });
     sinon.assert.notCalled(createUser);
     sinon.assert.notCalled(sendWelcome);
     sinon.assert.notCalled(addTrainer);
@@ -8640,6 +8652,8 @@ describe('uploadSingleCourseCSV', () => {
     sinon.assert.notCalled(createCompany);
     sinon.assert.notCalled(courseCountDocuments);
     sinon.assert.notCalled(addTrainer);
+    sinon.assert.notCalled(userCompanyCountDocuments);
+    sinon.assert.notCalled(createUserCompany);
   });
 
   it('should not create course', async () => {
@@ -8676,6 +8690,8 @@ describe('uploadSingleCourseCSV', () => {
     sinon.assert.notCalled(sendWelcome);
     sinon.assert.notCalled(createCourse);
     sinon.assert.notCalled(addTrainer);
+    sinon.assert.notCalled(userCompanyCountDocuments);
+    sinon.assert.notCalled(createUserCompany);
     sinon.assert.calledOnceWithExactly(
       courseCountDocuments,
       { trainees: userId, type: SINGLE, subProgram: subProgramId }

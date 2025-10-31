@@ -34,6 +34,7 @@ const SmsHelper = require('./sms');
 const DocxHelper = require('./docx');
 const StepsHelper = require('./steps');
 const TrainingContractsHelper = require('./trainingContracts');
+const UserCompaniesHelper = require('./userCompanies');
 const drive = require('../models/Google/Drive');
 const {
   INTRA,
@@ -1662,6 +1663,9 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
         .countDocuments({ trainees: userId, type: SINGLE, subProgram: learner.subProgram });
 
       if (courseAlreadyExists) continue;
+
+      const userCompany = await UserCompany.countDocuments({ user: userId, company });
+      if (!userCompany) await UserCompaniesHelper.create({ user: userId, company });
     }
 
     const { subProgram, operationsRepresentative, estimatedStartDate, trainers } = learner;

@@ -4,6 +4,7 @@ const get = require('lodash/get');
 const has = require('lodash/has');
 const pick = require('lodash/pick');
 const isEqual = require('lodash/isEqual');
+const { isObjectIdOrHexString } = require('mongoose');
 const Course = require('../../models/Course');
 const User = require('../../models/User');
 const Company = require('../../models/Company');
@@ -1124,6 +1125,9 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
     if (!learner.subProgram) {
       if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingSubProgram);
       else errorsByTrainee[learnerName] = [translate[language].missingSubProgram];
+    } else if (!isObjectIdOrHexString(learner.subProgram)) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].unknownSubProgram);
+      else errorsByTrainee[learnerName] = [translate[language].unknownSubProgram];
     } else {
       const subProgram = await SubProgram.findOne({ _id: learner.subProgram }, { _id: 1 }).lean();
       if (!subProgram) {

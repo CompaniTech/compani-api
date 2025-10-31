@@ -10,6 +10,7 @@ const Company = require('../../src/models/Company');
 const Course = require('../../src/models/Course');
 const CourseSlot = require('../../src/models/CourseSlot');
 const User = require('../../src/models/User');
+const UserCompany = require('../../src/models/UserCompany');
 const drive = require('../../src/models/Google/Drive');
 const CourseSmsHistory = require('../../src/models/CourseSmsHistory');
 const CourseHistory = require('../../src/models/CourseHistory');
@@ -6799,6 +6800,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
 
     it('should create courses', async () => {
       const usersBefore = await User.countDocuments();
+      const userCompaniesBefore = await UserCompany.countDocuments();
       const companiesBefore = await Company.countDocuments();
       const courseBefore = await Course.countDocuments();
 
@@ -6815,6 +6817,19 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           firstname: 'Tom',
           lastname: 'Sawyer',
           email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Nouvelle Structure',
+          suffix: '@test.fr',
+          subProgram: subProgramsList[4]._id,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
+          estimatedStartDate: '2025-11-01',
+        },
+        {
+          firstname: 'Salut',
+          lastname: 'Toi',
+          email: 'traineeWithoutCompany@alenvi.io',
           countryCode: '',
           phone: '0687654321',
           company: 'Nouvelle Structure',
@@ -6862,10 +6877,12 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       expect(response.statusCode).toBe(200);
       const usersAfter = await User.countDocuments();
       expect(usersAfter).toEqual(usersBefore + 1);
+      const userCompaniesAfter = await UserCompany.countDocuments();
+      expect(userCompaniesAfter).toEqual(userCompaniesBefore + 2);
       const companiesAfter = await Company.countDocuments();
       expect(companiesAfter).toEqual(companiesBefore + 1);
       const courseAfter = await Course.countDocuments();
-      expect(courseAfter).toEqual(courseBefore + 2);
+      expect(courseAfter).toEqual(courseBefore + 3);
       sinon.assert.calledOnce(sendNotificationToUser);
       sinon.assert.calledOnce(sendinBlueTransporter);
       sinon.assert.calledOnce(createFolderForCompany);
@@ -7433,6 +7450,37 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByTrainee)[0])
         .toEqual(['le format du téléphone est incorrect']);
+    });
+
+    it('should return 422 if subProgram is not ObjectId', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Nouvelle Structure',
+          suffix: '@test.fr',
+          subProgram: `${new ObjectId()}${new ObjectId()}`,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
+          estimatedStartDate: '2025-11-01',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/single-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['le sous-programme n\'existe pas']);
     });
 
     it('should return 422 if subProgram doesn\'t exist', async () => {
