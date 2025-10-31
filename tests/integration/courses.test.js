@@ -7452,6 +7452,37 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
         .toEqual(['le format du téléphone est incorrect']);
     });
 
+    it('should return 422 if subProgram is not ObjectId', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Nouvelle Structure',
+          suffix: '@test.fr',
+          subProgram: `${new ObjectId()}${new ObjectId()}`,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
+          estimatedStartDate: '2025-11-01',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/single-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['le sous-programme n\'existe pas']);
+    });
+
     it('should return 422 if subProgram doesn\'t exist', async () => {
       const formData = { file: 'test' };
       const form = generateFormData(formData);
