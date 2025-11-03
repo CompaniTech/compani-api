@@ -1374,6 +1374,17 @@ const trainerMissionList = [
     file: { publicId: '123test', link: 'ceciestunlien' },
     creationMethod: GENERATION,
   },
+  {
+    _id: new ObjectId(),
+    courses: [coursesList[6]._id],
+    trainer: trainer._id,
+    date: '2023-01-02T23:00:00.000Z',
+    cancelledAt: '2023-01-03T23:00:00.000Z',
+    fee: 1200,
+    createdBy: vendorAdmin._id,
+    file: { publicId: '123test', link: 'ceciestunlien' },
+    creationMethod: GENERATION,
+  },
 ];
 
 const populateDB = async () => {

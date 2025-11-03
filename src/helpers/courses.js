@@ -32,6 +32,7 @@ const DatesUtilsHelper = require('./dates/utils');
 const ZipHelper = require('./zip');
 const SmsHelper = require('./sms');
 const DocxHelper = require('./docx');
+const GCloudStorageHelper = require('./gCloudStorage');
 const StepsHelper = require('./steps');
 const TrainingContractsHelper = require('./trainingContracts');
 const UserCompaniesHelper = require('./userCompanies');
@@ -905,7 +906,7 @@ exports.deleteCourse = async (courseId) => {
     .lean();
 
   const trainerMission = await TrainerMission
-    .findOne({ course: courseId, cancelledAt: { $exists: true } }, { _id: 1 })
+    .findOne({ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
     .lean();
 
   return Promise.all([
@@ -922,7 +923,12 @@ exports.deleteCourse = async (courseId) => {
       ? [TrainingContractsHelper.deleteMany(trainingContractList.map(tc => tc._id))]
       : []
     ),
-    ...(trainerMission ? [TrainerMission.deleteOne({ _id: trainerMission._id })] : []),
+    ...(trainerMission
+      ? [
+        TrainerMission.deleteOne({ _id: trainerMission._id }),
+        GCloudStorageHelper.deleteCourseFile(trainerMission.file.publicId),
+      ]
+      : []),
   ]);
 };
 
