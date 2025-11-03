@@ -904,6 +904,10 @@ exports.deleteCourse = async (courseId) => {
     .setOptions({ isVendorUser: true })
     .lean();
 
+  const trainerMission = await TrainerMission
+    .findOne({ course: courseId, cancelledAt: { $exists: true } }, { _id: 1 })
+    .lean();
+
   return Promise.all([
     Course.deleteOne({ _id: courseId }),
     CourseBill.deleteMany({
@@ -918,6 +922,7 @@ exports.deleteCourse = async (courseId) => {
       ? [TrainingContractsHelper.deleteMany(trainingContractList.map(tc => tc._id))]
       : []
     ),
+    ...(trainerMission ? [TrainerMission.deleteOne({ _id: trainerMission._id })] : []),
   ]);
 };
 

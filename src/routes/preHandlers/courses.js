@@ -490,7 +490,8 @@ exports.authorizeCourseDeletion = async (req) => {
   const attendanceSheets = await AttendanceSheet.countDocuments({ course: req.params._id }, { limit: 1 });
   if (attendanceSheets) return Boom.forbidden(translate[language].courseDeletionForbidden.attendanceSheets);
 
-  const trainerMissions = await TrainerMission.countDocuments({ courses: req.params._id }, { limit: 1 });
+  const trainerMissions = await TrainerMission
+    .countDocuments({ courses: req.params._id, cancelledAt: { $exists: false } }, { limit: 1 });
   if (trainerMissions) return Boom.forbidden(translate[language].courseDeletionForbidden.trainerMissions);
 
   const courseBills = await CourseBill.countDocuments(
