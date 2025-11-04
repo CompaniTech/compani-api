@@ -76,6 +76,7 @@ const {
   userList,
 } = require('../seed/authUsersSeed');
 const EmailOptionsHelper = require('../../src/helpers/emailOptions');
+const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const GDriveStorageHelper = require('../../src/helpers/gDriveStorage');
 const NodemailerHelper = require('../../src/helpers/nodemailer');
 const SmsHelper = require('../../src/helpers/sms');
@@ -906,7 +907,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(21);
+      expect(response.result.data.courses.length).toEqual(22);
     });
 
     it('should get blended archived courses (ops webapp)', async () => {
@@ -928,7 +929,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(17);
+      expect(response.result.data.courses.length).toEqual(18);
     });
 
     it('should get single courses only (type is string)', async () => {
@@ -1065,7 +1066,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(17);
+      expect(response.result.data.courses.length).toEqual(18);
     });
 
     it('should get trainer\'s course (ops mobile)', async () => {
@@ -1077,7 +1078,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.courses.length).toEqual(17);
+      expect(response.result.data.courses.courses.length).toEqual(18);
 
       const course =
          response.result.data.courses.courses.find(c => UtilsHelper.areObjectIdsEquals(coursesList[2]._id, c._id));
@@ -3083,11 +3084,16 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
 describe('COURSES ROUTES - DELETE /courses/{_id}', () => {
   let authToken;
+  let deleteCourseFile;
   beforeEach(populateDB);
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
+      deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+    });
+    afterEach(() => {
+      deleteCourseFile.restore();
     });
 
     it('should delete course', async () => {
@@ -3100,6 +3106,7 @@ describe('COURSES ROUTES - DELETE /courses/{_id}', () => {
       expect(response.statusCode).toBe(200);
       const courseCount = await Course.countDocuments({ _id: coursesList[6]._id });
       expect(courseCount).toBe(0);
+      sinon.assert.calledOnce(deleteCourseFile);
     });
 
     it('should delete course with slots to plan', async () => {
@@ -3116,6 +3123,7 @@ describe('COURSES ROUTES - DELETE /courses/{_id}', () => {
       expect(slotsCount).toBe(0);
       const historiesCount = await CourseHistory.countDocuments({ course: coursesList[16]._id });
       expect(historiesCount).toBe(0);
+      sinon.assert.notCalled(deleteCourseFile);
     });
 
     it('should return 404 if course does not exist', async () => {
@@ -3164,6 +3172,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courses/${coursesList[12]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if course has trainer missions', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[27]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

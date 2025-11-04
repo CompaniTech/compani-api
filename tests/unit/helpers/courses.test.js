@@ -29,6 +29,7 @@ const UtilsHelper = require('../../../src/helpers/utils');
 const PdfHelper = require('../../../src/helpers/pdf');
 const ZipHelper = require('../../../src/helpers/zip');
 const DocxHelper = require('../../../src/helpers/docx');
+const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
 const StepsHelper = require('../../../src/helpers/steps');
 const TrainingContractsHelper = require('../../../src/helpers/trainingContracts');
 const NotificationHelper = require('../../../src/helpers/notifications');
@@ -4602,7 +4603,11 @@ describe('deleteCourse', () => {
   let deleteCourseSlot;
   let deleteQuestionnaireHistory;
   let findTrainingContract;
+  let findOneTrainerMission;
   let deleteManyTrainingContract;
+  let deleteTrainerMission;
+  let deleteCourseFile;
+
   beforeEach(() => {
     deleteCourse = sinon.stub(Course, 'deleteOne');
     deleteCourseBill = sinon.stub(CourseBill, 'deleteMany');
@@ -4612,6 +4617,9 @@ describe('deleteCourse', () => {
     deleteQuestionnaireHistory = sinon.stub(QuestionnaireHistory, 'deleteMany');
     findTrainingContract = sinon.stub(TrainingContract, 'find');
     deleteManyTrainingContract = sinon.stub(TrainingContractsHelper, 'deleteMany');
+    findOneTrainerMission = sinon.stub(TrainerMission, 'findOne');
+    deleteTrainerMission = sinon.stub(TrainerMission, 'deleteOne');
+    deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
   });
   afterEach(() => {
     deleteCourse.restore();
@@ -4622,13 +4630,18 @@ describe('deleteCourse', () => {
     deleteQuestionnaireHistory.restore();
     findTrainingContract.restore();
     deleteManyTrainingContract.restore();
+    findOneTrainerMission.restore();
+    deleteTrainerMission.restore();
+    deleteCourseFile.restore();
   });
 
   it('should delete course and sms history', async () => {
     const courseId = new ObjectId();
     const trainingContractList = [{ _id: new ObjectId() }, { _id: new ObjectId() }];
+    const trainerMission = { _id: new ObjectId(), file: { publicId: '1234' } };
 
     findTrainingContract.returns(SinonMongoose.stubChainedQueries(trainingContractList, ['setOptions', 'lean']));
+    findOneTrainerMission.returns(SinonMongoose.stubChainedQueries(trainerMission, ['lean']));
 
     await CourseHelper.deleteCourse(courseId);
 
@@ -4642,6 +4655,7 @@ describe('deleteCourse', () => {
     sinon.assert.calledOnceWithExactly(deleteCourseSlot, { course: courseId });
     sinon.assert.calledOnceWithExactly(deleteQuestionnaireHistory, { course: courseId });
     sinon.assert.calledOnceWithExactly(deleteManyTrainingContract, trainingContractList.map(tc => tc._id));
+    sinon.assert.calledOnceWithExactly(deleteTrainerMission, { _id: trainerMission._id });
     SinonMongoose.calledOnceWithExactly(
       findTrainingContract,
       [
@@ -4650,6 +4664,14 @@ describe('deleteCourse', () => {
         { query: 'lean' },
       ]
     );
+    SinonMongoose.calledOnceWithExactly(
+      findOneTrainerMission,
+      [
+        { query: 'findOne', args: [{ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(deleteCourseFile, '1234');
   });
 });
 
