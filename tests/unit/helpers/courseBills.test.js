@@ -391,11 +391,6 @@ describe('list', () => {
               isVendorUser: false,
               requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
             },
-            populate: {
-              path: 'xmlSEPAFileInfos',
-              select: 'name',
-              options: { isVendorUser: false },
-            },
           }],
         },
         {
