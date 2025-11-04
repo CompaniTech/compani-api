@@ -69,6 +69,8 @@ exports.formatCourseBill = (courseBill) => {
 };
 
 const balance = async (company, credentials) => {
+  const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
+
   const courseBills = await CourseBill
     .find({ $or: [{ companies: company }, { 'payer.company': company }], billedAt: { $exists: true, $type: 'date' } })
     .populate({
@@ -85,29 +87,14 @@ const balance = async (company, credentials) => {
     .populate({ path: 'payer.fundingOrganisation', select: 'name' })
     .populate({
       path: 'courseCreditNote',
-      options: {
-        isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
-        requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company),
-      },
+      options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
     })
     .populate({
       path: 'coursePayments',
-      options: {
-        isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
-        requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company),
-      },
-      populate: {
-        path: 'xmlSEPAFileInfos',
-        select: 'name',
-        options: {
-          isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
-        },
-      },
+      options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
+      ...isVendorUser && { populate: { path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser } } },
     })
-    .setOptions({
-      isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
-      requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company),
-    })
+    .setOptions({ isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) })
     .lean();
 
   return courseBills.map(bill => exports.formatCourseBill(bill));
