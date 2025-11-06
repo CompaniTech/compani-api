@@ -18,6 +18,8 @@ const {
   BLENDED,
   SINGLE,
   MM_YYYY,
+  PRESENT,
+  MISSING,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const translate = require('../../helpers/translate');
@@ -167,12 +169,15 @@ exports.authorizeAttendanceCreation = async (req) => {
   return null;
 };
 
-exports.authorizeAttendanceDeletion = async (req) => {
+const authorizeAttendanceUpdate = async (req, status) => {
   const { courseSlot: courseSlotId, trainee: traineeId } = req.query;
 
   if (traineeId) {
-    const attendance = await Attendance.countDocuments(req.query);
+    const attendance = await Attendance.countDocuments({ ...req.query, status });
     if (!attendance) throw Boom.notFound();
+  } else {
+    const attendancesWithWrongStatus = await Attendance.countDocuments({ ...req.query, status: { $ne: status } });
+    if (attendancesWithWrongStatus) throw Boom.conflict();
   }
 
   const courseSlot = await CourseSlot.findById(courseSlotId)
@@ -210,3 +215,7 @@ exports.authorizeAttendanceDeletion = async (req) => {
 
   return null;
 };
+
+exports.authorizeAttendanceEdition = async req => authorizeAttendanceUpdate(req, PRESENT);
+
+exports.authorizeAttendanceDeletion = async req => authorizeAttendanceUpdate(req, MISSING);

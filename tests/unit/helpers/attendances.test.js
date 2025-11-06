@@ -18,6 +18,7 @@ const {
   HOLDING_ADMIN,
   CLIENT_ADMIN,
   PRESENT,
+  MISSING,
 } = require('../../../src/helpers/constants');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const User = require('../../../src/models/User');
@@ -909,6 +910,55 @@ describe('getTraineeUnsubscribedAttendances', () => {
         { query: 'setOptions', args: [{ isVendorUser }] },
         { query: 'lean' },
       ]
+    );
+  });
+});
+
+describe('update', () => {
+  let updateOne;
+  let courseSlotFindById;
+  let updateMany;
+  beforeEach(() => {
+    updateOne = sinon.stub(Attendance, 'updateOne');
+    courseSlotFindById = sinon.stub(CourseSlot, 'findById');
+    updateMany = sinon.stub(Attendance, 'updateMany');
+  });
+  afterEach(() => {
+    updateOne.restore();
+    courseSlotFindById.restore();
+    updateMany.restore();
+  });
+
+  it('should update an attendance', async () => {
+    const query = { courseSlot: new ObjectId(), trainee: new ObjectId() };
+
+    await AttendanceHelper.update(query);
+
+    sinon.assert.calledOnceWithExactly(updateOne, query, { $set: { status: MISSING } });
+    sinon.assert.notCalled(courseSlotFindById);
+    sinon.assert.notCalled(updateMany);
+  });
+
+  it('should update all attendances for a courseSlot', async () => {
+    const courseSlot = new ObjectId();
+    const trainees = [new ObjectId(), new ObjectId(), new ObjectId()];
+    courseSlotFindById.returns(SinonMongoose.stubChainedQueries({ course: { trainees } }));
+
+    await AttendanceHelper.update({ courseSlot });
+
+    sinon.assert.notCalled(updateOne);
+    SinonMongoose.calledOnceWithExactly(
+      courseSlotFindById,
+      [
+        { query: 'findById', args: [courseSlot, { course: 1 }] },
+        { query: 'populate', args: [{ path: 'course', select: 'trainees' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { courseSlot, trainee: { $in: trainees } },
+      { $set: { status: MISSING } }
     );
   });
 });

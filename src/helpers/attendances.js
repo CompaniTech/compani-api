@@ -8,7 +8,7 @@ const Course = require('../models/Course');
 const UtilsHelper = require('./utils');
 const CourseSlot = require('../models/CourseSlot');
 const User = require('../models/User');
-const { BLENDED, VENDOR_ROLES, COURSE, TRAINEE, PRESENT } = require('./constants');
+const { BLENDED, VENDOR_ROLES, COURSE, TRAINEE, PRESENT, MISSING } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 
 const createSingleAttendance = async (payload, courseTrainees, traineeId, traineesCompanyForAttendance) => {
@@ -156,6 +156,21 @@ exports.getTraineeUnsubscribedAttendances = async (traineeId, credentials) => {
     }));
 
   return groupBy(unsubscribedAttendances, 'program._id');
+};
+
+exports.update = async (query) => {
+  const { courseSlot: courseSlotId, trainee: traineeId } = query;
+  if (traineeId) return Attendance.updateOne(query, { $set: { status: MISSING } });
+
+  const courseSlot = await CourseSlot.findById(courseSlotId, { course: 1 })
+    .populate({ path: 'course', select: 'trainees' })
+    .lean();
+  const { course } = courseSlot;
+
+  return Attendance.updateMany(
+    { courseSlot: courseSlotId, trainee: { $in: course.trainees } },
+    { $set: { status: MISSING } }
+  );
 };
 
 exports.delete = async (query) => {
