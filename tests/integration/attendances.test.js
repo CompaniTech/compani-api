@@ -23,6 +23,7 @@ const {
   authHolding,
   companyWithoutSubscription,
 } = require('../seed/authCompaniesSeed');
+const { PRESENT } = require('../../src/helpers/constants');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -88,6 +89,7 @@ describe('ATTENDANCES ROUTES - POST /attendances', () => {
       const courseSlotAttendancesBefore = await Attendance.countDocuments({
         courseSlot: slotsList[0]._id,
         company: authCompany._id,
+        status: PRESENT,
       });
 
       const response = await app.inject({
@@ -101,8 +103,9 @@ describe('ATTENDANCES ROUTES - POST /attendances', () => {
       const courseSlotAttendancesAfter = await Attendance.countDocuments({
         courseSlot: slotsList[0]._id,
         company: authCompany._id,
+        status: PRESENT,
       });
-      expect(courseSlotAttendancesAfter).toBe(courseSlotAttendancesBefore + 2);
+      expect(courseSlotAttendancesAfter).toBe(courseSlotAttendancesBefore + 3);
     });
 
     it('should add attendances for registered trainee even if not in the company anymore', async () => {

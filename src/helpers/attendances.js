@@ -8,7 +8,7 @@ const Course = require('../models/Course');
 const UtilsHelper = require('./utils');
 const CourseSlot = require('../models/CourseSlot');
 const User = require('../models/User');
-const { BLENDED, VENDOR_ROLES, COURSE, TRAINEE } = require('./constants');
+const { BLENDED, VENDOR_ROLES, COURSE, TRAINEE, PRESENT } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 
 const createSingleAttendance = async (payload, courseTrainees, traineeId, traineesCompanyForAttendance) => {
@@ -36,6 +36,8 @@ const createManyAttendances = async (courseTrainees, courseSlotId, credentials, 
 
   const newAttendances = traineesWithoutAttendances
     .map(tId => ({ courseSlot: courseSlotId, trainee: tId, company: traineesCompanyForAttendance[tId] }));
+
+  await Attendance.updateMany({ _id: { $in: existingAttendances.map(a => a._id) } }, { $set: { status: PRESENT } });
 
   return Attendance.insertMany(newAttendances);
 };

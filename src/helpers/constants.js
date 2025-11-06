@@ -678,4 +678,7 @@ module.exports = {
   // COMPLETION CERTIFICATE GENERATION MODE
   GLOBAL: 'global',
   MONTHLY: 'monthly',
+  // COURSE SLOT STATUS
+  PRESENT: 'present',
+  MISSING: 'missing',
 };

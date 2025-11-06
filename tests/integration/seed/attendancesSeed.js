@@ -23,6 +23,8 @@ const {
   SINGLE,
   MONTHLY,
   MOBILE,
+  PRESENT,
+  MISSING,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, vendorAdminRoleId } = require('../../seed/authRolesSeed');
@@ -363,22 +365,83 @@ const slotsList = [
 ];
 
 const attendancesList = [
-  { _id: new ObjectId(), courseSlot: slotsList[3]._id, trainee: traineeList[2]._id, company: otherCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[3]._id, trainee: traineeList[3]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[5]._id, trainee: traineeList[0]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[0]._id, trainee: traineeList[5]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[0]._id, trainee: traineeList[0]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[1]._id, trainee: traineeList[0]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[2]._id, trainee: traineeList[9]._id, company: otherCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[3]._id, trainee: traineeList[9]._id, company: otherCompany._id },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[3]._id,
+    trainee: traineeList[2]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[3]._id,
+    trainee: traineeList[3]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[5]._id,
+    trainee: traineeList[0]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[0]._id,
+    trainee: traineeList[5]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[0]._id,
+    trainee: traineeList[0]._id,
+    company: authCompany._id,
+    status: MISSING,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[1]._id,
+    trainee: traineeList[0]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[2]._id,
+    trainee: traineeList[9]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[3]._id,
+    trainee: traineeList[9]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
   {
     _id: new ObjectId(),
     courseSlot: slotsList[6]._id,
     trainee: traineeList[7]._id,
     company: companyWithoutSubscription._id,
+    status: PRESENT,
   },
-  { _id: new ObjectId(), courseSlot: slotsList[11]._id, trainee: traineeList[0]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[12]._id, trainee: traineeList[0]._id, company: authCompany._id },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[11]._id,
+    trainee: traineeList[0]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[12]._id,
+    trainee: traineeList[0]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
 ];
 
 const userCompanyList = [
