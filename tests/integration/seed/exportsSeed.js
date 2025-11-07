@@ -97,6 +97,7 @@ const {
   RECEIVED,
   XML_GENERATED,
   BANK_TRANSFER,
+  PRESENT,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1737,13 +1738,13 @@ const courseSlotList = [
 ];
 
 const attendanceList = [
-  { trainee: traineeList[0]._id, courseSlot: courseSlotList[0]._id, company: authCompany._id },
-  { trainee: traineeList[0]._id, courseSlot: courseSlotList[1]._id, company: authCompany._id },
-  { trainee: traineeList[1]._id, courseSlot: courseSlotList[11]._id, company: otherCompany._id },
-  { trainee: traineeList[1]._id, courseSlot: courseSlotList[2]._id, company: otherCompany._id },
-  { trainee: traineeList[1]._id, courseSlot: courseSlotList[3]._id, company: otherCompany._id },
-  { trainee: traineeList[3]._id, courseSlot: courseSlotList[2]._id, company: authCompany._id },
-  { trainee: traineeList[3]._id, courseSlot: courseSlotList[3]._id, company: authCompany._id },
+  { trainee: traineeList[0]._id, courseSlot: courseSlotList[0]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[0]._id, courseSlot: courseSlotList[1]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[1]._id, courseSlot: courseSlotList[11]._id, company: otherCompany._id, status: PRESENT },
+  { trainee: traineeList[1]._id, courseSlot: courseSlotList[2]._id, company: otherCompany._id, status: PRESENT },
+  { trainee: traineeList[1]._id, courseSlot: courseSlotList[3]._id, company: otherCompany._id, status: PRESENT },
+  { trainee: traineeList[3]._id, courseSlot: courseSlotList[2]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[3]._id, courseSlot: courseSlotList[3]._id, company: authCompany._id, status: PRESENT },
 ];
 
 const attendanceSheetList = [

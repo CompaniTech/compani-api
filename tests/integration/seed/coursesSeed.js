@@ -69,6 +69,7 @@ const {
   ON_SITE,
   REMOTE,
   GENERATION,
+  PRESENT,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1312,18 +1313,21 @@ const attendanceList = [
     trainee: traineeFromThirdCompany._id,
     courseSlot: slots[14]._id,
     company: thirdCompany._id,
+    status: PRESENT,
   },
   {
     _id: new ObjectId(),
     trainee: traineeFromAuthCompanyWithFormationExpoToken._id,
     courseSlot: slots[16]._id,
     company: authCompany._id,
+    status: PRESENT,
   },
   {
     _id: new ObjectId(),
     trainee: auxiliary._id,
     courseSlot: slots[0]._id,
     company: authCompany._id,
+    status: PRESENT,
   },
 ];
 

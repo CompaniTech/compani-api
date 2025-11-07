@@ -2,12 +2,13 @@
 
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
-const { list, listUnsubscribed, create, remove } = require('../controllers/attendanceController');
+const { list, listUnsubscribed, create, remove, update } = require('../controllers/attendanceController');
 const {
   authorizeAttendancesGet,
   authorizeAttendanceCreation,
   authorizeAttendanceDeletion,
   authorizeUnsubscribedAttendancesGet,
+  authorizeAttendanceEdition,
 } = require('./preHandlers/attendances');
 
 exports.plugin = {
@@ -60,6 +61,17 @@ exports.plugin = {
         pre: [{ method: authorizeAttendanceCreation }],
       },
       handler: create,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/',
+      options: {
+        validate: { query: Joi.object({ trainee: Joi.objectId(), courseSlot: Joi.objectId().required() }) },
+        auth: { scope: ['attendances:edit'] },
+        pre: [{ method: authorizeAttendanceEdition }],
+      },
+      handler: update,
     });
 
     server.route({

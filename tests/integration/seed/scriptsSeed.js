@@ -1,5 +1,5 @@
 const { ObjectId } = require('mongodb');
-const { WEBAPP, PUBLISHED, MONTHLY, GLOBAL, INTRA, VIDEO, SINGLE } = require('../../../src/helpers/constants');
+const { WEBAPP, PUBLISHED, MONTHLY, GLOBAL, INTRA, VIDEO, SINGLE, PRESENT } = require('../../../src/helpers/constants');
 const User = require('../../../src/models/User');
 const Course = require('../../../src/models/Course');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -129,8 +129,20 @@ const slotList = [
 ];
 
 const attendanceList = [
-  { _id: new ObjectId(), trainee: userList[0]._id, courseSlot: slotList[0]._id, company: authCompany._id },
-  { _id: new ObjectId(), trainee: userList[0]._id, courseSlot: slotList[1]._id, company: authCompany._id },
+  {
+    _id: new ObjectId(),
+    trainee: userList[0]._id,
+    courseSlot: slotList[0]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: userList[0]._id,
+    courseSlot: slotList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
 ];
 
 const activityHistoryList = [

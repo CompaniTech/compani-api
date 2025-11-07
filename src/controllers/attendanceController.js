@@ -63,4 +63,15 @@ const remove = async (req) => {
   }
 };
 
-module.exports = { list, listUnsubscribed, create, remove };
+const update = async (req) => {
+  try {
+    await AttendanceHelper.update(req.query);
+
+    return { message: translate[language].attendanceUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { list, listUnsubscribed, create, remove, update };
