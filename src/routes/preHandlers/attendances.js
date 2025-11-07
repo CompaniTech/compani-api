@@ -218,4 +218,15 @@ const authorizeAttendanceUpdate = async (req, status) => {
 
 exports.authorizeAttendanceEdition = async req => authorizeAttendanceUpdate(req, PRESENT);
 
-exports.authorizeAttendanceDeletion = async req => authorizeAttendanceUpdate(req, MISSING);
+exports.authorizeAttendanceDeletion = async (req) => {
+  const { courseSlot: courseSlotId, trainee: traineeId } = req.query;
+  let status = MISSING;
+  if (traineeId) {
+    const courseSlot = await CourseSlot.findById(courseSlotId)
+      .populate({ path: 'course', select: 'trainees' })
+      .lean();
+    const { course } = courseSlot;
+    if (!UtilsHelper.doesArrayIncludeId(course.trainees, traineeId)) status = PRESENT;
+  }
+  return authorizeAttendanceUpdate(req, status);
+};

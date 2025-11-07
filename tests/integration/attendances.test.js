@@ -1040,6 +1040,19 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
       expect(await Attendance.countDocuments()).toEqual(attendanceCount - 1);
     });
 
+    it('should delete an unsubscribed attendance', async () => {
+      const attendanceCount = await Attendance.countDocuments();
+
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[3]._id}&trainee=${traineeList[9]._id}`,
+        headers: { Cookie: `alenvi_token=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(await Attendance.countDocuments()).toEqual(attendanceCount - 1);
+    });
+
     it('should delete all attendances for a courseSlot', async () => {
       await Attendance.updateMany({ courseSlot: slotsList[3]._id }, { $set: { status: MISSING } });
 
