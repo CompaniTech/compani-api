@@ -2,7 +2,7 @@ const Boom = require('@hapi/boom');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
-const { SENDER_MAIL, TRAINER, COACH, CLIENT_ADMIN, TRAINEE, VAEI } = require('./constants');
+const { SENDER_MAIL, TRAINER, COACH, CLIENT_ADMIN, TRAINEE, VAEI, COPPER_600, COPPER_500 } = require('./constants');
 const translate = require('./translate');
 const Course = require('../models/Course');
 const User = require('../models/User');
@@ -118,6 +118,20 @@ exports.completionCertificateCreationEmail = (certificateCreated, errors, month)
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
 
+const getSignature = billingUser => `<br>
+  <p style="color: ${COPPER_600}; font-size: 14px;">
+    ${UtilsHelper.formatIdentity(billingUser.identity, 'FL')}<br>
+    <span style="color: ${COPPER_500};">Responsable administrative et financière</span><br>
+    ${UtilsHelper.formatPhone(billingUser.contact)}
+  </p>
+  <a href="https://www.compani.fr" target="_blank">
+    <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
+      style="width: 200px; height: auto; border: 0;">
+  </a>
+  <a href="https://app.compani.fr/login">
+    <p style="color: ${COPPER_500};">Cliquer ici pour accéder à l'espace Compani</p>
+  </a>`;
+
 exports.sendBillEmail = async (courseBills, type, content, recipientEmails, credentials) => {
   const billsPdf = [];
   for (const bill of courseBills) {
@@ -132,7 +146,10 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, cred
   }
 
   const billNumbers = courseBills.map(cb => cb.number).join(', ');
-  const senderEmail = process.env.COMPANI_EMAIL;
+  const senderEmail = process.env.BILLING_COMPANI_EMAIL;
+  const signatureBillingUserId = process.env.BILLING_USER_ID;
+  const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 });
+
   const mailOptions = {
     from: `Compani <${senderEmail}>`,
     to: recipientEmails,
@@ -140,7 +157,8 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, cred
       ? `Compani : avis de facture en VAE Inversée [${billNumbers}]`
       : `Compani : avis de facture [${billNumbers}]`,
     bcc: senderEmail,
-    html: content.replaceAll('\r\n', '<br>'),
+    html: `<p>${content.replaceAll('\r\n', '<br>')}</p>
+    <p>${getSignature(billingUser)}</p>`,
     attachments: billsPdf,
   };
 
