@@ -2,11 +2,12 @@ const Boom = require('@hapi/boom');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
-const { SENDER_MAIL, TRAINER, COACH, CLIENT_ADMIN, TRAINEE } = require('./constants');
+const { SENDER_MAIL, TRAINER, COACH, CLIENT_ADMIN, TRAINEE, VAEI } = require('./constants');
 const translate = require('./translate');
 const Course = require('../models/Course');
 const User = require('../models/User');
 const UtilsHelper = require('./utils');
+const CourseBillsHelper = require('./courseBills');
 
 const { language } = translate;
 
@@ -112,6 +113,35 @@ exports.completionCertificateCreationEmail = (certificateCreated, errors, month)
     to: process.env.TECH_EMAILS,
     subject: `Script création des certificats de réalisation pour le mois de ${month}`,
     html: EmailOptionsHelper.completionCertificateCreationContent(certificateCreated, errors),
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+};
+
+exports.sendBillEmail = async (courseBills, type, content, recipientEmails, credentials) => {
+  const billsPdf = [];
+  for (const bill of courseBills) {
+    const companies = [...new Set([...bill.companies.map(c => c._id.toHexString()), bill.payer._id.toHexString()])];
+    const { pdf } = await CourseBillsHelper.generateBillPdf(bill._id, companies, credentials);
+
+    billsPdf.push({
+      filename: `${UtilsHelper.formatDownloadName(`${bill.payer.name} ${bill.number}`)}.pdf`,
+      content: pdf,
+      contentType: 'application/pdf',
+    });
+  }
+
+  const billNumbers = courseBills.map(cb => cb.number).join(', ');
+  const senderEmail = process.env.COMPANI_EMAIL;
+  const mailOptions = {
+    from: `Compani <${senderEmail}>`,
+    to: recipientEmails,
+    subject: type === VAEI
+      ? `Compani : avis de facture en VAE Inversée [${billNumbers}]`
+      : `Compani : avis de facture [${billNumbers}]`,
+    bcc: senderEmail,
+    html: content.replaceAll('\r\n', '<br>'),
+    attachments: billsPdf,
   };
 
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
