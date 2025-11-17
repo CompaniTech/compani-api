@@ -1029,7 +1029,7 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
       await Attendance
         .updateOne({ courseSlot: slotsList[3]._id, trainee: traineeList[2]._id }, { $set: { status: MISSING } });
 
-      const attendanceCount = await Attendance.countDocuments();
+      const attendanceCountBefore = await Attendance.countDocuments();
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendances?courseSlot=${slotsList[3]._id}&trainee=${traineeList[2]._id}`,
@@ -1037,11 +1037,12 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(await Attendance.countDocuments()).toEqual(attendanceCount - 1);
+      const attendancesCountAfter = await Attendance.countDocuments();
+      expect(attendancesCountAfter).toEqual(attendanceCountBefore - 1);
     });
 
     it('should delete an unsubscribed attendance', async () => {
-      const attendanceCount = await Attendance.countDocuments();
+      const attendanceCountBefore = await Attendance.countDocuments();
 
       const response = await app.inject({
         method: 'DELETE',
@@ -1050,7 +1051,8 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(await Attendance.countDocuments()).toEqual(attendanceCount - 1);
+      const attendancesCountAfter = await Attendance.countDocuments();
+      expect(attendancesCountAfter).toEqual(attendanceCountBefore - 1);
     });
 
     it('should delete all attendances for a courseSlot', async () => {
@@ -1092,12 +1094,9 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
     });
 
     it('should return 403 if course is archived', async () => {
-      await Attendance
-        .updateOne({ courseSlot: slotsList[5]._id, trainee: traineeList[0]._id }, { $set: { status: MISSING } });
-
       const response = await app.inject({
         method: 'DELETE',
-        url: `/attendances?courseSlot=${slotsList[5]._id}&trainee=${traineeList[0]._id}`,
+        url: `/attendances?courseSlot=${slotsList[5]._id}&trainee=${traineeList[3]._id}`,
         headers: { Cookie: `alenvi_token=${authToken}` },
       });
 

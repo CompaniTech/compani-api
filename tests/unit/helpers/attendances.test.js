@@ -215,16 +215,9 @@ describe('create', () => {
     );
     sinon.assert.calledOnceWithExactly(
       insertMany,
-      [
-        { courseSlot, trainee: course.trainees[1], company },
-        { courseSlot, trainee: course.trainees[2], company },
-      ]
+      [{ courseSlot, trainee: course.trainees[1], company }, { courseSlot, trainee: course.trainees[2], company }]
     );
-    sinon.assert.calledOnceWithExactly(
-      updateMany,
-      { _id: { $in: [attendanceId] } },
-      { $set: { status: PRESENT } }
-    );
+    sinon.assert.calledOnceWithExactly(updateMany, { _id: { $in: [attendanceId] } }, { $set: { status: PRESENT } });
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
       { key: COURSE, value: course._id },

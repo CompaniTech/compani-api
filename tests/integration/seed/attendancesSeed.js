@@ -199,7 +199,7 @@ const coursesList = [
     subProgram: subProgramList[0]._id,
     type: INTRA,
     maxTrainees: 8,
-    trainees: [traineeList[0]._id, traineeList[8]._id],
+    trainees: [traineeList[0]._id, traineeList[8]._id, traineeList[3]._id],
     companies: [authCompany._id],
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
@@ -441,6 +441,13 @@ const attendancesList = [
     trainee: traineeList[0]._id,
     company: authCompany._id,
     status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[5]._id,
+    trainee: traineeList[3]._id,
+    company: authCompany._id,
+    status: MISSING,
   },
 ];
 
