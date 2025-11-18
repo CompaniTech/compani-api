@@ -169,14 +169,17 @@ exports.authorizeAttendanceCreation = async (req) => {
   return null;
 };
 
-const authorizeAttendanceUpdate = async (req, status) => {
+const authorizeAttendanceUpdate = async (req, status, courseTrainees = []) => {
   const { courseSlot: courseSlotId, trainee: traineeId } = req.query;
-
   if (traineeId) {
     const attendance = await Attendance.countDocuments({ ...req.query, status });
     if (!attendance) throw Boom.notFound();
   } else {
-    const attendancesWithWrongStatus = await Attendance.countDocuments({ ...req.query, status: { $ne: status } });
+    const attendancesWithWrongStatus = await Attendance.countDocuments({
+      ...req.query,
+      ...courseTrainees.length && { trainee: { $in: courseTrainees } },
+      status: { $ne: status },
+    });
     if (attendancesWithWrongStatus) throw Boom.conflict();
   }
 
@@ -221,12 +224,12 @@ exports.authorizeAttendanceEdition = async req => authorizeAttendanceUpdate(req,
 exports.authorizeAttendanceDeletion = async (req) => {
   const { courseSlot: courseSlotId, trainee: traineeId } = req.query;
   let status = MISSING;
+  const courseSlot = await CourseSlot.findById(courseSlotId)
+    .populate({ path: 'course', select: 'trainees' })
+    .lean();
+  const { course } = courseSlot;
   if (traineeId) {
-    const courseSlot = await CourseSlot.findById(courseSlotId)
-      .populate({ path: 'course', select: 'trainees' })
-      .lean();
-    const { course } = courseSlot;
     if (!UtilsHelper.doesArrayIncludeId(course.trainees, traineeId)) status = PRESENT;
   }
-  return authorizeAttendanceUpdate(req, status);
+  return authorizeAttendanceUpdate(req, status, !traineeId ? course.trainees : []);
 };
