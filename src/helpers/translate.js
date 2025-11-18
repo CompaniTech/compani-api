@@ -170,6 +170,7 @@ module.exports = {
       someCoursesAreNotVAEI: 'Forbidden: at least a courseBill is not linked to VAEI course.',
       someCoursesAreVAEI: 'Forbidden: at least a courseBill is linked to VAEI course.',
       someBillsAreAlreadyBeenSent: 'Forbidden: at least one courseBill has already been sent.',
+      wrongType: 'Forbidden: type must corresponds with course timeline.',
     },
     /* Course billing items */
     courseBillingItemExists: 'Course billing item exists.',
@@ -458,6 +459,7 @@ module.exports = {
       someCoursesAreNotVAEI: 'Impossible: au moins une facture n\'est pas associée à une formation VAEI.',
       someCoursesAreVAEI: 'Impossible: au moins une facture est associée à une formation VAEI.',
       someBillsAreAlreadyBeenSent: 'Impossible: au moins une facture a déjà été envoyée.',
+      wrongType: 'Impossible: le type sélectionné doit correspondre à l\'avancement des formations.',
     },
     /* Course billing items */
     courseBillingItemExists: 'Article de facturation existant.',
