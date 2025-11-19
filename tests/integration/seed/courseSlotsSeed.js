@@ -23,6 +23,7 @@ const {
   GLOBAL,
   SINGLE,
   MONTHLY,
+  PRESENT,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { auxiliaryRoleId } = require('../../seed/authRolesSeed');
@@ -275,6 +276,7 @@ const attendance = {
   trainee: traineeFromOtherCompany._id,
   courseSlot: courseSlotsList[4]._id,
   company: otherCompany._id,
+  status: PRESENT,
 };
 
 const attendanceSheet = {
