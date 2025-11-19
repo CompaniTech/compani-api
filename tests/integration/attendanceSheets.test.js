@@ -8,7 +8,7 @@ const app = require('../../server');
 const { populateDB, coursesList, attendanceSheetList, slotsList, userList } = require('./seed/attendanceSheetsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
-const { WEBAPP, MOBILE, GENERATION } = require('../../src/helpers/constants');
+const { WEBAPP, MOBILE, GENERATION, MISSING } = require('../../src/helpers/constants');
 const { CompaniDate } = require('../../src/helpers/dates/companiDates');
 const Attendance = require('../../src/models/Attendance');
 const AttendanceSheet = require('../../src/models/AttendanceSheet');
@@ -356,6 +356,9 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(200);
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
       expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      const missingAttendance = await Attendance
+        .countDocuments({ courseSlot: slotsList[15]._id, trainee: userList[0]._id, status: MISSING });
+      expect(missingAttendance).toEqual(1);
       sinon.assert.calledOnce(uploadCourseFile);
       sinon.assert.calledTwice(sendNotificationToUser);
     });
