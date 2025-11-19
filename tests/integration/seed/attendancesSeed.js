@@ -449,6 +449,13 @@ const attendancesList = [
     company: authCompany._id,
     status: MISSING,
   },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[2]._id,
+    trainee: traineeList[2]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
 ];
 
 const userCompanyList = [
