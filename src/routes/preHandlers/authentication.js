@@ -44,7 +44,7 @@ exports.checkPasswordToken = async (req) => {
 };
 
 exports.authorizeRefreshToken = async (req) => {
-  const refreshToken = get(req, 'payload.refreshToken') || get(req, 'state.refresh_token');
+  const refreshToken = get(req, 'payload.refreshToken') || get(req, `state.${process.env.REFRESH_TOKEN}`);
   if (!refreshToken) return Boom.unauthorized();
 
   const user = await User.countDocuments({ refreshToken });
