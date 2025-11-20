@@ -127,13 +127,15 @@ const stepList = [
   { _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 120 },
 ];
 
-const subProgramList = [{ _id: new ObjectId(), name: 'subProgram 1', steps: [stepList[0]._id], status: PUBLISHED }];
+const VAEI_SUBPROGRAM_ID = new ObjectId();
+const subProgramList = [
+  { _id: new ObjectId(), name: 'subProgram 1', steps: [stepList[0]._id], status: PUBLISHED },
+  { _id: VAEI_SUBPROGRAM_ID, name: 'VAEI', steps: [stepList[1]._id], status: PUBLISHED },
+];
 
 const programsList = [
   { _id: new ObjectId(), name: 'Program 1', subPrograms: [subProgramList[0]._id] },
 ];
-
-const VAEI_SUBPROGRAM_ID = new ObjectId();
 
 const coursesList = [
   {
@@ -221,23 +223,16 @@ const courseSlotList = [
   },
   { // 1
     _id: new ObjectId(),
-    course: coursesList[0]._id,
+    course: coursesList[1]._id,
     step: stepList[1]._id,
     startDate: '2021-05-01T14:00:00.000Z',
     endDate: '2021-05-01T16:00:00.000Z',
-    meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
   },
 ];
 
 const vendorCompany = {
   name: 'VendorCompany',
-  billingRepresentative: {
-    _id: new ObjectId(),
-    identity: { firstname: 'toto', lastname: 'zero' },
-    contact: {},
-    local: { email: 'toto@zero.io' },
-  },
   iban: 'FR2817569000407686668287H77',
   bic: 'ERTYFRPP',
   address: {
