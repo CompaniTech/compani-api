@@ -125,7 +125,7 @@ exports.completionCertificateCreationEmail = (certificateCreated, errors, month)
 const getSignature = billingUser => `<br>
     <p style="color: ${COPPER_600}; font-size: 14px;">
       ${UtilsHelper.formatIdentity(billingUser.identity, 'FL')}<br>
-      <span style="color: ${COPPER_500};">Responsable administrative et financière</span><br>
+      <span>Responsable administrative et financière</span><br>
       ${get(billingUser, 'contact.phone') ? UtilsHelper.formatPhone(billingUser.contact) : ''}
     </p>
     <a href="https://www.compani.fr" target="_blank">

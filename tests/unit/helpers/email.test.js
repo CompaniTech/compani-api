@@ -430,7 +430,7 @@ describe('sendBillEmail', async () => {
     <p><br>
     <p style="color: #005774; font-size: 14px;">
       Malo POIRIER<br>
-      <span style="color: #1D7C8F;">Responsable administrative et financière</span><br>
+      <span>Responsable administrative et financière</span><br>
       +33 9 87 65 43 21
     </p>
     <a href="https://www.compani.fr" target="_blank">
@@ -519,7 +519,7 @@ describe('sendBillEmail', async () => {
     <p><br>
     <p style="color: #005774; font-size: 14px;">
       Malo POIRIER<br>
-      <span style="color: #1D7C8F;">Responsable administrative et financière</span><br>
+      <span>Responsable administrative et financière</span><br>
       
     </p>
     <a href="https://www.compani.fr" target="_blank">
