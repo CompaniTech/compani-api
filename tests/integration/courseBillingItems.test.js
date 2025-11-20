@@ -24,7 +24,7 @@ describe('COURSE BILLING ITEM ROUTES - GET /coursebillingitems', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/coursebillingitems',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -46,7 +46,7 @@ describe('COURSE BILLING ITEM ROUTES - GET /coursebillingitems', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/coursebillingitems',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -69,7 +69,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebillingitems',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -83,7 +83,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebillingitems',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'frais formateur' },
       });
 
@@ -94,7 +94,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebillingitems',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'Frais Formateur' },
       });
 
@@ -127,7 +127,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebillingitems',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -150,7 +150,7 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursebillingitems/${courseBillingItemsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const count = await CourseBillingItem.countDocuments();
@@ -163,7 +163,7 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursebillingitems/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -173,7 +173,7 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursebillingitems/${courseBillingItemsList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -192,7 +192,7 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/coursebillingitems/${courseBillingItemsList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

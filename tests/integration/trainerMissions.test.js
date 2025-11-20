@@ -53,7 +53,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -84,7 +84,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/trainermissions',
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: getStream(form),
         });
 
@@ -115,7 +115,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -144,7 +144,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -174,7 +174,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -204,7 +204,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -225,7 +225,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -247,7 +247,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -269,7 +269,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -291,7 +291,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -313,7 +313,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainermissions',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -347,7 +347,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/trainermissions',
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: getStream(form),
         });
 
@@ -373,7 +373,7 @@ describe('TRAINER MISSIONS ROUTES - GET /trainermissions', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainermissions?trainer=${trainer._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -384,7 +384,7 @@ describe('TRAINER MISSIONS ROUTES - GET /trainermissions', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainermissions?trainer=${coach._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -400,7 +400,7 @@ describe('TRAINER MISSIONS ROUTES - GET /trainermissions', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainermissions?trainer=${trainer._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -411,7 +411,7 @@ describe('TRAINER MISSIONS ROUTES - GET /trainermissions', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainermissions?trainer=${trainerAndCoach._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -431,7 +431,7 @@ describe('TRAINER MISSIONS ROUTES - GET /trainermissions', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/trainermissions?trainer=${trainer._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -456,7 +456,7 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/trainermissions/${trainerMissionList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { cancelledAt: '2023-01-03T23:00:00.000Z' },
       });
 
@@ -471,7 +471,7 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/trainermissions/${trainerMissionList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { cancelledAt: '2023-01-01T23:00:00.000Z' },
       });
 
@@ -482,7 +482,7 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/trainermissions/${trainerMissionList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { cancelledAt: '2023-01-10T23:00:00.000Z' },
       });
 
@@ -504,7 +504,7 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/trainermissions/${trainerMissionList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { cancelledAt: '2023-01-03T23:00:00.000Z' },
         });
 

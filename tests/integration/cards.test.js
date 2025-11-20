@@ -104,7 +104,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
           method: 'PUT',
           url: `/cards/${card.id}`,
           payload: card.payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -119,7 +119,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
         method: 'PUT',
         url: `/cards/${transitionId}`,
         payload: { name: '' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -130,7 +130,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
         method: 'PUT',
         url: `/cards/${transitionId}`,
         payload: { canSwitchAnswers: false },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -141,7 +141,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
         method: 'PUT',
         url: `/cards/${transitionId}`,
         payload: { isMandatory: false },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -152,7 +152,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
         method: 'PUT',
         url: `/cards/${transitionId}`,
         payload: { isChronological: false },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -172,7 +172,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
             method: 'PUT',
             url: `/cards/${fillTheGapId}`,
             payload: request.payload,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(request.code);
@@ -198,7 +198,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
             method: 'PUT',
             url: `/cards/${orderTheSequenceId}`,
             payload: request.payload,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(request.code);
@@ -226,7 +226,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
             method: 'PUT',
             url: `/cards/${surveyId}`,
             payload: request.payload,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(request.code);
@@ -238,7 +238,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
           method: 'PUT',
           url: `/cards/${cardsList[18]._id}`,
           payload: { labels: { 4: 'test' } },
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -251,7 +251,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
           method: 'PUT',
           url: `/cards/${fillTheGapId}`,
           payload: { labels: { 1: 'action interdite' } },
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(403);
@@ -276,7 +276,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
             method: 'PUT',
             url: `/cards/${flashCardId}`,
             payload: request.payload,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(request.code);
@@ -300,7 +300,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
           method: 'PUT',
           payload,
           url: `/cards/${transitionId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -322,7 +322,7 @@ describe('CARDS ROUTES - POST /cards/{_id}/answer', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/cards/${cardsList[11]._id}/answers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -353,7 +353,7 @@ describe('CARDS ROUTES - POST /cards/{_id}/answer', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/cards/${(new ObjectId())}/answers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -371,7 +371,7 @@ describe('CARDS ROUTES - POST /cards/{_id}/answer', () => {
         const response = await app.inject({
           method: 'POST',
           url: `/cards/${template.card._id}/answers`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(403);
@@ -382,7 +382,7 @@ describe('CARDS ROUTES - POST /cards/{_id}/answer', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/cards/${cardsList[13]._id}/answers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -392,7 +392,7 @@ describe('CARDS ROUTES - POST /cards/{_id}/answer', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/cards/${cardsList[6]._id}/answers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -422,7 +422,7 @@ describe('CARDS ROUTES - POST /cards/{_id}/answer', () => {
         const response = await app.inject({
           method: 'POST',
           url: `/cards/${cardsList[11]._id}/answers`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -448,7 +448,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}/answers/{answerId}', () => {
         method: 'PUT',
         url: `/cards/${card._id}/answers/${answer._id}`,
         payload: { text: 'je suis un texte' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -502,7 +502,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}/answers/{answerId}', () => {
         method: 'PUT',
         url: `/cards/${card._id}/answers/${answer._id}`,
         payload: { text: 'Je suis un text vraiment vraiment vraiment tres tres tres tres tres long', isCorrect: true },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -530,7 +530,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}/answers/{answerId}', () => {
         method: 'PUT',
         url: `/cards/${card._id}/answers/${answer._id}`,
         payload: {},
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -544,7 +544,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}/answers/{answerId}', () => {
         method: 'PUT',
         url: `/cards/${(new ObjectId())}/answers/${answer._id}`,
         payload: { text: 'je suis un texte' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -558,7 +558,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}/answers/{answerId}', () => {
         method: 'PUT',
         url: `/cards/${card._id}/answers/${otherQACard.qcAnswers[0]._id}`,
         payload: { text: 'je suis un texte' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -572,7 +572,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}/answers/{answerId}', () => {
         method: 'PUT',
         url: `/cards/${card._id}/answers/${answer._id}`,
         payload: { isCorrect: false },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -624,7 +624,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}/answers/{answerId}', () => {
           method: 'PUT',
           payload: { text: 'je suis un texte' },
           url: `/cards/${card._id}/answers/${answer._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -649,7 +649,7 @@ describe('CARDS ROUTES - DELETE /cards/{_id}/answers/{answerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/cards/${card._id}/answers/${answer._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -683,7 +683,7 @@ describe('CARDS ROUTES - DELETE /cards/{_id}/answers/{answerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/cards/${null}/answers/${answer._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -695,7 +695,7 @@ describe('CARDS ROUTES - DELETE /cards/{_id}/answers/{answerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/cards/${card._id}/answers/${null}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -706,7 +706,7 @@ describe('CARDS ROUTES - DELETE /cards/{_id}/answers/{answerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/cards/${publishedCard._id}/answers/${publishedCard.qcAnswers[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -717,7 +717,7 @@ describe('CARDS ROUTES - DELETE /cards/{_id}/answers/{answerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/cards/${publishedCard._id}/answers/${publishedCard.qcAnswers[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -761,7 +761,7 @@ describe('CARDS ROUTES - DELETE /cards/{_id}/answers/{answerId}', () => {
         method: 'DELETE',
         url: `/cards/${oneQuestionCard._id}
           /answers/${oneQuestionCard.qcAnswers[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -771,7 +771,7 @@ describe('CARDS ROUTES - DELETE /cards/{_id}/answers/{answerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/cards/${cardsList[7]._id}/answers/${cardsList[7].qcAnswers[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -794,7 +794,7 @@ describe('CARDS ROUTES - DELETE /cards/{_id}/answers/{answerId}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/cards/${card._id}/answers/${answer._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -828,7 +828,7 @@ describe('CARDS ROUTES - POST /cards/:id/upload', () => {
         method: 'POST',
         url: `/cards/${cardsList[0]._id}/upload`,
         payload,
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -847,7 +847,7 @@ describe('CARDS ROUTES - POST /cards/:id/upload', () => {
           method: 'POST',
           url: `/cards/${cardsList[0]._id}/upload`,
           payload: getStream(invalidForm),
-          headers: { ...invalidForm.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...invalidForm.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(400);
@@ -872,7 +872,7 @@ describe('CARDS ROUTES - POST /cards/:id/upload', () => {
           method: 'POST',
           url: `/cards/${cardsList[0]._id}/upload`,
           payload: getStream(form),
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -904,7 +904,7 @@ describe('CARDS ROUTES - DELETE /cards/:id/upload', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/cards/${cardsList[1]._id}/upload`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -930,7 +930,7 @@ describe('CARDS ROUTES - DELETE /cards/:id/upload', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/cards/${cardsList[1]._id}/upload`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

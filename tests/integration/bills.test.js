@@ -28,7 +28,7 @@ describe('BILL ROUTES - GET /bills/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/bills/${authBillList[0]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -38,7 +38,7 @@ describe('BILL ROUTES - GET /bills/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/bills/${billList[0]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -66,7 +66,7 @@ describe('BILL ROUTES - GET /bills/pdfs', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/bills/${authBillList[0]._id}/pdfs`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

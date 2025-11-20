@@ -28,7 +28,7 @@ describe('ACTIVITIES ROUTES - GET /activity/{_id}', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/activities/${activityId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -53,7 +53,7 @@ describe('ACTIVITIES ROUTES - PUT /activity/{_id}', () => {
         method: 'PUT',
         url: `/activities/${activitiesList[3]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const activityUpdated = await Activity.countDocuments({ _id: activitiesList[3]._id, name: 'rigoler' });
@@ -75,7 +75,7 @@ describe('ACTIVITIES ROUTES - PUT /activity/{_id}', () => {
         method: 'PUT',
         url: `/activities/${activitiesList[0]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const activityUpdated = await Activity.countDocuments({ _id: activitiesList[0]._id, cards: payload.cards });
@@ -89,7 +89,7 @@ describe('ACTIVITIES ROUTES - PUT /activity/{_id}', () => {
         method: 'PUT',
         url: `/activities/${activitiesList[0]._id}`,
         payload: { name: '' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -101,7 +101,7 @@ describe('ACTIVITIES ROUTES - PUT /activity/{_id}', () => {
         method: 'PUT',
         url: `/activities/${activitiesList[0]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -113,7 +113,7 @@ describe('ACTIVITIES ROUTES - PUT /activity/{_id}', () => {
         method: 'PUT',
         url: `/activities/${activitiesList[0]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -125,7 +125,7 @@ describe('ACTIVITIES ROUTES - PUT /activity/{_id}', () => {
         method: 'PUT',
         url: `/activities/${activitiesList[3]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -148,7 +148,7 @@ describe('ACTIVITIES ROUTES - PUT /activity/{_id}', () => {
           method: 'PUT',
           payload,
           url: `/activities/${activitiesList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -172,7 +172,7 @@ describe('ACTIVITIES ROUTES - POST /activities/{_id}/card', () => {
         method: 'POST',
         url: `/activities/${activitiesList[0]._id}/cards`,
         payload: { template: SURVEY },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const activityUpdated = await Activity.findById(activitiesList[0]._id).lean();
@@ -193,7 +193,7 @@ describe('ACTIVITIES ROUTES - POST /activities/{_id}/card', () => {
         method: 'POST',
         url: `/activities/${activitiesList[0]._id}/cards`,
         payload: { template: 'invalid template' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -204,7 +204,7 @@ describe('ACTIVITIES ROUTES - POST /activities/{_id}/card', () => {
         method: 'POST',
         url: `/activities/${activitiesList[0]._id}/cards`,
         payload: {},
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -215,7 +215,7 @@ describe('ACTIVITIES ROUTES - POST /activities/{_id}/card', () => {
         method: 'POST',
         url: `/activities/${new ObjectId()}/cards`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -226,7 +226,7 @@ describe('ACTIVITIES ROUTES - POST /activities/{_id}/card', () => {
         method: 'POST',
         url: `/activities/${activitiesList[3]._id}/cards`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -248,7 +248,7 @@ describe('ACTIVITIES ROUTES - POST /activities/{_id}/card', () => {
           method: 'POST',
           payload: { template: 'transition' },
           url: `/activities/${activitiesList[0]._id}/cards`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -272,7 +272,7 @@ describe('ACTIVITIES ROUTES - DELETE /activities/cards/{cardId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/activities/cards/${draftActivity.cards[0]}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -289,7 +289,7 @@ describe('ACTIVITIES ROUTES - DELETE /activities/cards/{cardId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/activities/cards/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -299,7 +299,7 @@ describe('ACTIVITIES ROUTES - DELETE /activities/cards/{cardId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/activities/cards/${publishedActivity.cards[0]}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -320,7 +320,7 @@ describe('ACTIVITIES ROUTES - DELETE /activities/cards/{cardId}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/activities/cards/${draftActivity.cards[0]}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

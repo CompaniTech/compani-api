@@ -205,7 +205,7 @@ clientHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
         const response = await app.inject({
           method: 'GET',
           url: `/exports/${exportType}/history?${query}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -230,7 +230,7 @@ clientHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
           const response = await app.inject({
             method: 'GET',
             url: `/exports/${exportType}/history?${query}`,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(role.expectedCode);
@@ -254,7 +254,7 @@ vendorHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
         const response = await app.inject({
           method: 'GET',
           url: `/exports/${exportType}/history?${query}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -279,7 +279,7 @@ vendorHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
           const response = await app.inject({
             method: 'GET',
             url: `/exports/${exportType}/history?${query}`,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(role.expectedCode);
@@ -391,7 +391,7 @@ dataExportTypes.forEach(({ exportType, expectedRows }) => {
         const response = await app.inject({
           method: 'GET',
           url: `/exports/${exportType}/data`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -416,7 +416,7 @@ dataExportTypes.forEach(({ exportType, expectedRows }) => {
           const response = await app.inject({
             method: 'GET',
             url: `/exports/${exportType}/data`,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(role.expectedCode);

@@ -30,7 +30,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -43,7 +43,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -62,7 +62,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -75,7 +75,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -94,7 +94,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -107,7 +107,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -120,7 +120,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(409);
@@ -134,7 +134,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(409);
@@ -148,7 +148,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
         method: 'POST',
         url: '/usercompanies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -172,7 +172,7 @@ describe('USER COMPANIES ROUTES - POST /usercompanies', () => {
           method: 'POST',
           url: '/usercompanies',
           payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
         expect(res.statusCode).toBe(role.expectedCode);
         expect(res.result.message).toBe(role.message);
@@ -198,7 +198,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -215,7 +215,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(400);
@@ -229,7 +229,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -247,7 +247,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -264,7 +264,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -280,7 +280,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -296,7 +296,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -310,7 +310,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -326,7 +326,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -347,7 +347,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -368,7 +368,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
         method: 'PUT',
         url: `/usercompanies/${userCompanyId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -396,7 +396,7 @@ describe('USER COMPANIES ROUTES - PUT /usercompanies/{id}', () => {
           method: 'PUT',
           url: `/usercompanies/${userCompanyId}`,
           payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
         expect(res.statusCode).toBe(role.expectedCode);
         expect(res.result.message).toBe(role.message);

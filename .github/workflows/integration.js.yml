@@ -36,3 +36,5 @@ jobs:
           TRAINER_FEES_BILLING_ITEM: ${{ secrets.TRAINER_FEES_BILLING_ITEM }}
           ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
           MAX_CSV_COURSE_SIZE: ${{ secrets.MAX_CSV_COURSE_SIZE }}
+          ALENVI_TOKEN: ${{ secrets.ALENVI_TOKEN }}
+          REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}

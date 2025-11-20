@@ -32,7 +32,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -54,7 +54,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/xmlsepafileinfos',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: omit(payload, param),
         });
 
@@ -68,7 +68,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -86,7 +86,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -102,7 +102,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -118,7 +118,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -134,7 +134,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -147,7 +147,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -160,7 +160,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -173,7 +173,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -186,7 +186,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -203,7 +203,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -220,7 +220,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -237,7 +237,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -250,7 +250,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -263,7 +263,7 @@ describe('XMLSEPAFILEINFOS ROUTE - POST /xmlsepafileinfos', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/xmlsepafileinfos',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 

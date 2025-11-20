@@ -11,8 +11,8 @@ const authenticate = async (req, h) => {
     req.log('info', `${req.payload.email} connected`);
 
     return h.response({ message: translate[language].userAuthentified, data: { ...authentication } })
-      .state('alenvi_token', authentication.token)
-      .state('refresh_token', authentication.refreshToken);
+      .state(process.env.ALENVI_TOKEN, authentication.token)
+      .state(process.env.REFRESH_TOKEN, authentication.refreshToken);
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
@@ -25,12 +25,12 @@ const authenticate = async (req, h) => {
  */
 const refreshToken = async (req, h) => {
   try {
-    const userRefreshToken = get(req, 'payload.refreshToken') || get(req, 'state.refresh_token');
+    const userRefreshToken = get(req, 'payload.refreshToken') || get(req, `state.${process.env.REFRESH_TOKEN}`);
     const token = await AuthenticationHelper.refreshToken(userRefreshToken);
 
     return h.response({ message: translate[language].userAuthentified, data: { ...token } })
-      .state('alenvi_token', token.token)
-      .state('refresh_token', token.refreshToken);
+      .state(process.env.ALENVI_TOKEN, token.token)
+      .state(process.env.REFRESH_TOKEN, token.refreshToken);
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
@@ -40,8 +40,8 @@ const refreshToken = async (req, h) => {
 const logout = async (req, h) => {
   try {
     return h.response({ message: translate[language].userLogout })
-      .unstate('alenvi_token')
-      .unstate('refresh_token');
+      .unstate(process.env.ALENVI_TOKEN)
+      .unstate(process.env.REFRESH_TOKEN);
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
@@ -64,7 +64,7 @@ const sendToken = async (req, h) => {
     const token = await AuthenticationHelper.sendToken(req.pre.user);
 
     return h.response({ message: translate[language].resetPasswordTokenFound, data: { ...token } })
-      .state('alenvi_token', token.token);
+      .state(process.env.ALENVI_TOKEN, token.token);
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);

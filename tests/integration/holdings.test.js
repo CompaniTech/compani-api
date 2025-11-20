@@ -30,7 +30,7 @@ describe('HOLDINGS ROUTES - POST /holdings', () => {
         method: 'POST',
         url: '/holdings',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -43,7 +43,7 @@ describe('HOLDINGS ROUTES - POST /holdings', () => {
         method: 'POST',
         url: '/holdings',
         payload: { name: 'Auth Holding' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -54,7 +54,7 @@ describe('HOLDINGS ROUTES - POST /holdings', () => {
         method: 'POST',
         url: '/holdings',
         payload: { name: 'Aûth Holding' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -65,7 +65,7 @@ describe('HOLDINGS ROUTES - POST /holdings', () => {
         method: 'POST',
         url: '/holdings',
         payload: { address: '24 avenue Daumesnil 75012 Paris' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -89,7 +89,7 @@ describe('HOLDINGS ROUTES - POST /holdings', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/holdings',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -109,7 +109,7 @@ describe('HOLDINGS ROUTES - GET /holdings', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/holdings',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -132,7 +132,7 @@ describe('HOLDINGS ROUTES - GET /holdings', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/holdings',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -158,7 +158,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -173,7 +173,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
         payload: { companies: [companies[0]._id, companies[1]._id] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -186,7 +186,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
         payload: { companies: [companies[0]._id, otherCompany._id] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -197,7 +197,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
         method: 'PUT',
         url: `/holdings/${new ObjectId()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -208,7 +208,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
         payload: { companies: [companies[0]._id, new ObjectId()] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -218,7 +218,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { companies: [] },
       });
 
@@ -229,7 +229,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/holdings/${holdings[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {},
       });
 
@@ -253,7 +253,7 @@ describe('HOLDINGS ROUTES - PUT /holdings/{_id}', () => {
           method: 'PUT',
           url: `/holdings/${holdings[0]._id}`,
           payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -275,7 +275,7 @@ describe('HOLDINGS ROUTES - GET /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/holdings/${authHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -290,7 +290,7 @@ describe('HOLDINGS ROUTES - GET /holdings/{_id}', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/holdings/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -312,7 +312,7 @@ describe('HOLDINGS ROUTES - GET /holdings/{_id}', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/holdings/${authHolding._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

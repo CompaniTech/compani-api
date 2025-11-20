@@ -30,7 +30,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -45,7 +45,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepsList[3]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -62,7 +62,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepsList[1]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const stepUpdated = await Step.findById(stepsList[1]._id).lean();
@@ -76,7 +76,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepId}`,
         payload: { theoreticalDuration: 'PT5040S' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -91,7 +91,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepsList[3]._id}`,
         payload: { theoreticalDuration: 'PT5400S' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -109,7 +109,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepId}`,
         payload: { theoreticalDuration: 'PT0S' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -120,7 +120,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepId}`,
         payload: { theoreticalDuration: 'PT-432S' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -131,7 +131,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${new ObjectId()}`,
         payload: { name: 'une nouvelle étape super innovante' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -143,7 +143,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepsList[3]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -154,7 +154,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepId}`,
         payload: {},
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -165,7 +165,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepId}`,
         payload: { name: '' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -177,7 +177,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -189,7 +189,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
         method: 'PUT',
         url: `/steps/${stepId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -212,7 +212,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
           method: 'PUT',
           payload,
           url: `/steps/${stepId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -237,7 +237,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${step._id}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const stepUpdated = await Step.findById(step._id).lean();
@@ -254,7 +254,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
           method: 'POST',
           url: `/steps/${step._id}/activities`,
           payload: omit(payload, missingParam),
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(400);
@@ -268,7 +268,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${step._id}/activities`,
         payload: wrongPayload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -281,7 +281,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${step._id}/activities`,
         payload: { activityId: duplicatedActivityId },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const stepUpdated = await Step.findById(step._id)
@@ -319,7 +319,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${step._id}/activities`,
         payload: { activityId: duplicatedActivityId },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const stepUpdated = await Step.findById(step._id)
@@ -344,7 +344,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${step._id}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -357,7 +357,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${step._id}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -369,7 +369,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${new ObjectId()}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -381,7 +381,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${stepsList[0]._id}/activities`,
         payload: { activityId: duplicatedActivityId },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -393,7 +393,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
         method: 'POST',
         url: `/steps/${stepsList[3]._id}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -416,7 +416,7 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
           method: 'POST',
           payload,
           url: `/steps/${step._id}/activities`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -442,7 +442,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
         method: 'PUT',
         url: `/steps/${stepId}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const stepUpdated = await Step.findById(stepId)
@@ -463,7 +463,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
         method: 'PUT',
         url: `/steps/${stepId}/activities`,
         payload: {},
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -475,7 +475,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
         method: 'PUT',
         url: `/steps/${new ObjectId()}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -487,7 +487,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
         method: 'PUT',
         url: `/steps/${stepsList[0]._id}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -499,7 +499,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
         method: 'PUT',
         url: `/steps/${stepsList[3]._id}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -511,7 +511,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
         method: 'PUT',
         url: `/steps/${stepId}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -523,7 +523,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
         method: 'PUT',
         url: `/steps/${stepId}/activities`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -546,7 +546,7 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
           method: 'PUT',
           payload,
           url: `/steps/${stepId}/activities`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -570,7 +570,7 @@ describe('STEPS ROUTES - DELETE /steps/{_id}/activities/{activityId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/steps/${step._id}/activities/${activityId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const stepUpdated = await Step.findById(step._id).lean();
@@ -586,7 +586,7 @@ describe('STEPS ROUTES - DELETE /steps/{_id}/activities/{activityId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/steps/${new ObjectId()}/activities/${activityId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -597,7 +597,7 @@ describe('STEPS ROUTES - DELETE /steps/{_id}/activities/{activityId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/steps/${step._id}/activities/${invalidActivityId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -609,7 +609,7 @@ describe('STEPS ROUTES - DELETE /steps/{_id}/activities/{activityId}', () => {
         method: 'DELETE',
         url: `/steps/${stepsList[3]._id}/activities/${activitiesList[3]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -630,7 +630,7 @@ describe('STEPS ROUTES - DELETE /steps/{_id}/activities/{activityId}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/steps/${step._id}/activities/${activityId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -653,7 +653,7 @@ describe('STEPS ROUTES - GET /steps', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/steps?program=${programId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -669,7 +669,7 @@ describe('STEPS ROUTES - GET /steps', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/steps?program=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -690,7 +690,7 @@ describe('STEPS ROUTES - GET /steps', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/steps?program=${programId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

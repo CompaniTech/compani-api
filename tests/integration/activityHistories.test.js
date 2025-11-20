@@ -383,7 +383,7 @@ describe('ACTIVITY HISTORIES ROUTES - GET /activityhistories', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/activityhistories?startDate=2020-12-10T23:00:00&endDate=2021-01-10T23:00:00',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -394,7 +394,7 @@ describe('ACTIVITY HISTORIES ROUTES - GET /activityhistories', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/activityhistories?endDate=2020-12-10T23:00:00',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -404,7 +404,7 @@ describe('ACTIVITY HISTORIES ROUTES - GET /activityhistories', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/activityhistories?startDate=2021-01-10T23:00:00',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -414,7 +414,7 @@ describe('ACTIVITY HISTORIES ROUTES - GET /activityhistories', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/activityhistories?startDate=2021-01-10T23:00:00&endDate=2020-12-10T23:00:00',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -435,7 +435,7 @@ describe('ACTIVITY HISTORIES ROUTES - GET /activityhistories', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/activityhistories?endDate=2021-01-10T23:00:00&startDate=2020-12-10T23:00:00',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -449,7 +449,7 @@ describe('ACTIVITY HISTORIES ROUTES - GET /activityhistories', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/activityhistories?endDate=2021-01-10T23:00:00&startDate=2020-12-10T23:00:00',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -460,7 +460,7 @@ describe('ACTIVITY HISTORIES ROUTES - GET /activityhistories', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/activityhistories?endDate=2021-01-10T23:00:00&startDate=2020-12-10T23:00:00',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);

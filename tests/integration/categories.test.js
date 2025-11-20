@@ -24,7 +24,7 @@ describe('CATEGORIES ROUTES - POST /categories', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/categories',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'ma nouvelle catégorie' },
       });
 
@@ -35,7 +35,7 @@ describe('CATEGORIES ROUTES - POST /categories', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/categories',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'ce nom de catégorie est déja pris!' },
       });
 
@@ -46,7 +46,7 @@ describe('CATEGORIES ROUTES - POST /categories', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/categories',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {},
       });
 
@@ -68,7 +68,7 @@ describe('CATEGORIES ROUTES - POST /categories', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/categories',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { name: `ma nouvelle catégorie en tant que ${role.name}` },
         });
 
@@ -92,7 +92,7 @@ describe('CATEGORIES ROUTES - GET /categories', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/categories',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -114,7 +114,7 @@ describe('CATEGORIES ROUTES - GET /categories', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/categories',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -136,7 +136,7 @@ describe('CATEGORIES ROUTES - PUT /categories/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/categories/${categoriesList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'nouveau nom' },
       });
 
@@ -150,7 +150,7 @@ describe('CATEGORIES ROUTES - PUT /categories/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/categories/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'nouveau nom' },
       });
 
@@ -161,7 +161,7 @@ describe('CATEGORIES ROUTES - PUT /categories/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/categories/${categoriesList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'ce nom de catégorie est déja pris!' },
       });
 
@@ -184,7 +184,7 @@ describe('CATEGORIES ROUTES - PUT /categories/{_id}', () => {
           method: 'PUT',
           payload: { name: `mon nouveau nom de catégorie en tant que ${role.name}` },
           url: `/categories/${categoriesList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -207,7 +207,7 @@ describe('CATEGORIES ROUTES - DELETE /categories/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/categories/${categoriesList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -218,7 +218,7 @@ describe('CATEGORIES ROUTES - DELETE /categories/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/categories/${categoriesList[4]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -228,7 +228,7 @@ describe('CATEGORIES ROUTES - DELETE /categories/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/categories/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -249,7 +249,7 @@ describe('CATEGORIES ROUTES - DELETE /categories/{_id}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/categories/${categoriesList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

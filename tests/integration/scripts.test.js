@@ -31,7 +31,7 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
       const response = await app.inject({
         method: 'GET',
         url: `/scripts/completioncertificates-generation?month=${month}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -46,7 +46,7 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
       const response = await app.inject({
         method: 'GET',
         url: '/scripts/completioncertificates-generation?month=022025',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toEqual(400);
@@ -66,7 +66,7 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
         const response = await app.inject({
           method: 'GET',
           url: '/scripts/completioncertificates-generation?month=02-2025',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
