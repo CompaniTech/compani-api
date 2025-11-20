@@ -1,4 +1,5 @@
 const Boom = require('@hapi/boom');
+const { ObjectId } = require('mongodb');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
@@ -119,23 +120,24 @@ exports.completionCertificateCreationEmail = (certificateCreated, errors, month)
 };
 
 const getSignature = billingUser => `<br>
-  <p style="color: ${COPPER_600}; font-size: 14px;">
-    ${UtilsHelper.formatIdentity(billingUser.identity, 'FL')}<br>
-    <span style="color: ${COPPER_500};">Responsable administrative et financière</span><br>
-    ${UtilsHelper.formatPhone(billingUser.contact)}
-  </p>
-  <a href="https://www.compani.fr" target="_blank">
-    <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
-      style="width: 200px; height: auto; border: 0;">
-  </a>
-  <a href="https://app.compani.fr/login">
-    <p style="color: ${COPPER_500};">Cliquer ici pour accéder à l'espace Compani</p>
-  </a>`;
+    <p style="color: ${COPPER_600}; font-size: 14px;">
+      ${UtilsHelper.formatIdentity(billingUser.identity, 'FL')}<br>
+      <span style="color: ${COPPER_500};">Responsable administrative et financière</span><br>
+      ${UtilsHelper.formatPhone(billingUser.contact)}
+    </p>
+    <a href="https://www.compani.fr" target="_blank">
+      <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
+        style="width: 200px; height: auto; border: 0;">
+    </a>
+    <a href="https://app.compani.fr/login">
+      <p style="color: ${COPPER_500};">Cliquer ici pour accéder à l'espace Compani</p>
+    </a>`;
 
 exports.sendBillEmail = async (courseBills, type, content, recipientEmails, credentials) => {
   const billsPdf = [];
+
   for (const bill of courseBills) {
-    const companies = [...new Set([...bill.companies.map(c => c._id.toHexString()), bill.payer._id.toHexString()])];
+    const companies = [...new Set([...bill.companies.map(c => c._id), bill.payer._id])];
     const { pdf } = await CourseBillsHelper.generateBillPdf(bill._id, companies, credentials);
 
     billsPdf.push({
@@ -147,8 +149,8 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, cred
 
   const billNumbers = courseBills.map(cb => cb.number).join(', ');
   const senderEmail = process.env.BILLING_COMPANI_EMAIL;
-  const signatureBillingUserId = process.env.BILLING_USER_ID;
-  const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 });
+  const signatureBillingUserId = new ObjectId(process.env.BILLING_USER_ID);
+  const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 }).lean();
 
   const mailOptions = {
     from: `Compani <${senderEmail}>`,
