@@ -10,9 +10,11 @@ const NodemailerHelper = require('../../../src/helpers/nodemailer');
 const UtilsHelper = require('../../../src/helpers/utils');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
 const translate = require('../../../src/helpers/translate');
+const { VAEI, VENDOR_ADMIN } = require('../../../src/helpers/constants');
 const User = require('../../../src/models/User');
 const Course = require('../../../src/models/Course');
-const { VAEI, VENDOR_ADMIN } = require('../../../src/helpers/constants');
+const CourseBill = require('../../../src/models/CourseBill');
+const UtilsMock = require('../../utilsMock');
 
 const { language } = translate;
 
@@ -376,6 +378,7 @@ describe('sendBillEmail', async () => {
   let sendMail;
   let sendinBlueTransporter;
   let userFindOne;
+  let updateManyCourseBill;
   const userId = new ObjectId();
 
   beforeEach(() => {
@@ -385,16 +388,21 @@ describe('sendBillEmail', async () => {
     process.env.BILLING_COMPANI_EMAIL = 'tech@compani.fr';
     process.env.BILLING_USER_ID = userId.toHexString();
     userFindOne = sinon.stub(User, 'findOne');
+    updateManyCourseBill = sinon.stub(CourseBill, 'updateMany');
+    UtilsMock.mockCurrentDate('2025-11-20T11:00:00.000Z');
   });
 
   afterEach(() => {
+    generateBillPdf.restore();
     sendinBlueTransporter.restore();
     process.env.BILLING_COMPANI_EMAIL = '';
     process.env.BILLING_USER_ID = '';
     userFindOne.restore();
+    updateManyCourseBill.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
-  it('should send bills by email', async () => {
+  it('should send bills by email (financial manager with phone)', async () => {
     const credentials = { _id: new ObjectId(), role: { vendor: { name: VENDOR_ADMIN } } };
     const courseBillIds = [new ObjectId(), new ObjectId()];
     const payer = { _id: new ObjectId(), name: 'Structure' };
@@ -479,6 +487,100 @@ describe('sendBillEmail', async () => {
           { filename: 'Structure_FACT-00002.pdf', content: 'pdf2', contentType: 'application/pdf' },
         ],
       }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateManyCourseBill,
+      { _id: { $in: courseBillIds } },
+      { $push: { sendingDates: '2025-11-20T11:00:00.000Z' } }
+    );
+  });
+
+  it('should send bills by email (financial manager without phone)', async () => {
+    const credentials = { _id: new ObjectId(), role: { vendor: { name: VENDOR_ADMIN } } };
+    const courseBillIds = [new ObjectId(), new ObjectId()];
+    const payer = { _id: new ObjectId(), name: 'Structure' };
+    const companies = [new ObjectId(), new ObjectId()];
+    const courseBills = [
+      {
+        _id: courseBillIds[0]._id,
+        companies: [{ _id: companies[0] }],
+        number: 'FACT-00001',
+        payer,
+      },
+      {
+        _id: courseBillIds[1]._id,
+        companies: [{ _id: companies[1] }],
+        number: 'FACT-00002',
+        payer,
+      },
+    ];
+    const financialUser = { _id: userId, identity: { firstname: 'Malo', lastname: 'Poirier' } };
+    const htmlContent = `<p>Bonjour<br> Ceci est un test</p>
+    <p><br>
+    <p style="color: #005774; font-size: 14px;">
+      Malo POIRIER<br>
+      <span style="color: #1D7C8F;">Responsable administrative et financière</span><br>
+      
+    </p>
+    <a href="https://www.compani.fr" target="_blank">
+      <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
+        style="width: 200px; height: auto; border: 0;">
+    </a>
+    <a href="https://app.compani.fr/login">
+      <p style="color: #1D7C8F;">Cliquer ici pour accéder à l'espace Compani</p>
+    </a></p>`;
+
+    const sentObj = { msg: htmlContent };
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+
+    userFindOne.returns(SinonMongoose.stubChainedQueries(financialUser, ['lean']));
+    generateBillPdf.onCall(0).returns({ pdf: 'pdf1' });
+    generateBillPdf.onCall(1).returns({ pdf: 'pdf2' });
+
+    const recipientEmails = ['test@compani.fr', 'testbis@compani.fr'];
+    const result = await EmailHelper
+      .sendBillEmail(courseBills, VAEI, 'Bonjour\r\n Ceci est un test', recipientEmails, credentials);
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledWithExactly(
+      generateBillPdf.getCall(0),
+      courseBillIds[0],
+      [companies[0], payer._id],
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      generateBillPdf.getCall(1),
+      courseBillIds[1],
+      [companies[1], payer._id],
+      credentials
+    );
+    SinonMongoose.calledOnceWithExactly(
+      userFindOne,
+      [
+        { query: 'findOne', args: [{ _id: userId }, { identity: 1, contact: 1 }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <tech@compani.fr>',
+        to: ['test@compani.fr', 'testbis@compani.fr'],
+        subject: 'Compani : avis de facture en VAE Inversée [FACT-00001, FACT-00002]',
+        bcc: 'tech@compani.fr',
+        html: htmlContent,
+        attachments: [
+          { filename: 'Structure_FACT-00001.pdf', content: 'pdf1', contentType: 'application/pdf' },
+          { filename: 'Structure_FACT-00002.pdf', content: 'pdf2', contentType: 'application/pdf' },
+        ],
+      }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateManyCourseBill,
+      { _id: { $in: courseBillIds } },
+      { $push: { sendingDates: '2025-11-20T11:00:00.000Z' } }
     );
   });
 });

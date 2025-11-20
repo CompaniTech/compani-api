@@ -1,6 +1,16 @@
 const { ObjectId } = require('mongodb');
 const { v4: uuidv4 } = require('uuid');
-const { WEBAPP, INTRA, GLOBAL, GROUP, PUBLISHED, SINGLE, MONTHLY, TRAINEE, BLENDED } = require('../../../src/helpers/constants');
+const {
+  WEBAPP,
+  INTRA,
+  GLOBAL,
+  GROUP,
+  PUBLISHED,
+  SINGLE,
+  MONTHLY,
+  TRAINEE,
+  BLENDED,
+} = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
@@ -183,10 +193,13 @@ const courseBillsList = [
     companies: [authCompany._id],
     mainFee: { price: 1200, count: 1, description: 'Lorem ipsum', countUnit: GROUP },
     payer: { company: authCompany._id },
+    billedAt: '2022-04-06T00:00:00.000Z',
+    number: 'FACT-00003',
+    sendingDates: ['2022-04-09T00:00:00.000Z'],
   },
 ];
 
-const courseBillNumber = { _id: new ObjectId(), seq: 2 };
+const courseBillNumber = { _id: new ObjectId(), seq: 3 };
 
 const slotAddress = {
   street: '24 Avenue Daumesnil',

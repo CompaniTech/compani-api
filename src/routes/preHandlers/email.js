@@ -58,7 +58,7 @@ exports.authorizeSendEmailBillList = async (req) => {
   const { bills, type } = req.payload;
 
   const courseBills = await CourseBill
-    .find({ _id: { $in: bills } }, { companies: 1, payer: 1, course: 1, number: 1 })
+    .find({ _id: { $in: bills } }, { companies: 1, payer: 1, course: 1, number: 1, sendingDates: 1 })
     .populate({
       path: 'payer',
       populate: [{ path: 'company', select: 'name' }, { path: 'fundingOrganisation', select: 'name' }],
@@ -110,9 +110,11 @@ exports.authorizeSendEmailBillList = async (req) => {
   const typeIsWrong = type !== mappingBetweenTypeAndCourseTimeline[firstCourseBillCourseTimeline];
   if (everyCourseIsGroupCourse && typeIsWrong) throw Boom.forbidden(translate[language].wrongCourseBills.wrongType);
 
-  const someBillsAreAlreadyBeenSentButNotEvery = courseBills.some(cb => cb.sendingDates) &&
+  const someBillsAreAlreadyBeenSentButNotEvery = courseBills.some(cb => cb.sendingDates && cb.sendingDates.length) &&
     courseBills.some(cb => !cb.sendingDates);
-  if (someBillsAreAlreadyBeenSentButNotEvery) throw Boom.forbidden(translate[language].someBillsAreAlreadyBeenSent);
+  if (someBillsAreAlreadyBeenSentButNotEvery) {
+    throw Boom.forbidden(translate[language].wrongCourseBills.someBillsAreAlreadyBeenSent);
+  }
 
   return courseBills;
 };

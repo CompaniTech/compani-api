@@ -303,6 +303,20 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       sinon.assert.notCalled(sendinBlueTransporter);
     });
 
+    it('should return 403 if some bills have been sent but not all of them', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payload, bills: [courseBillsList[0]._id, courseBillsList[2]._id] },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message)
+        .toEqual('Impossible: certaines factures ont été envoyées au moins une fois mais pas toutes.');
+      sinon.assert.notCalled(sendinBlueTransporter);
+    });
+
     ['bills', 'content', 'type', 'recipientEmails'].forEach((missingParam) => {
       it(`should return a 400 error if ${missingParam} param is missing`, async () => {
         const response = await app.inject({

@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const { ObjectId } = require('mongodb');
+const get = require('lodash/get');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
@@ -7,8 +8,10 @@ const { SENDER_MAIL, TRAINER, COACH, CLIENT_ADMIN, TRAINEE, VAEI, COPPER_600, CO
 const translate = require('./translate');
 const Course = require('../models/Course');
 const User = require('../models/User');
+const CourseBill = require('../models/CourseBill');
 const UtilsHelper = require('./utils');
 const CourseBillsHelper = require('./courseBills');
+const { CompaniDate } = require('./dates/companiDates');
 
 const { language } = translate;
 
@@ -123,7 +126,7 @@ const getSignature = billingUser => `<br>
     <p style="color: ${COPPER_600}; font-size: 14px;">
       ${UtilsHelper.formatIdentity(billingUser.identity, 'FL')}<br>
       <span style="color: ${COPPER_500};">Responsable administrative et financière</span><br>
-      ${UtilsHelper.formatPhone(billingUser.contact)}
+      ${get(billingUser, 'contact.phone') ? UtilsHelper.formatPhone(billingUser.contact) : ''}
     </p>
     <a href="https://www.compani.fr" target="_blank">
       <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
@@ -163,6 +166,9 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, cred
     <p>${getSignature(billingUser)}</p>`,
     attachments: billsPdf,
   };
+
+  const courseBillIds = courseBills.map(cb => cb._id);
+  await CourseBill.updateMany({ _id: { $in: courseBillIds } }, { $push: { sendingDates: CompaniDate().toISO() } });
 
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
