@@ -38,7 +38,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?course=${coursesList[0]._id}&action=list`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -72,7 +72,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?course=${coursesList[1]._id}&action=list`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -100,7 +100,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?company=${authCompany._id}&action=balance`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -111,7 +111,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/coursebills?startDate=2025-01-10T22:00:00.000Z&endDate=2025-04-30T23:00:00.000Z&action=dashboard',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -127,7 +127,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
         method: 'GET',
         url: '/coursebills?startDate=2022-04-06T22:00:00.000Z&endDate=2022-04-08T22:00:00.000Z&action=dashboard'
           + '&isValidated=true',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -142,7 +142,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/coursebills?action=dashboard&isValidated=true',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -153,7 +153,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?course=${new ObjectId()}&action=list`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -163,7 +163,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?company=${new ObjectId()}&action=balance`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -173,7 +173,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?company=${authCompany._id}&action=list`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -183,7 +183,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?course=${coursesList[1]._id}&action=balance`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -193,7 +193,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/coursebills?endDate=2022-04-08T22:00:00.000Z&action=dashboard&isValidated=true',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -203,7 +203,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/coursebills?startDate=2022-04-06T22:00:00.000Z&action=dashboard&isValidated=true',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -214,7 +214,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
         method: 'GET',
         url: '/coursebills?startDate=2023-04-06T22:00:00.000Z&endDate=2022-04-08T22:00:00.000Z&action=dashboard'
           + '&isValidated=true',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -230,7 +230,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?company=${authCompany._id}&action=balance`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -241,7 +241,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?company=${otherCompany._id}&action=balance`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -251,7 +251,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?course=${coursesList[0]._id}&action=list`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -267,7 +267,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?company=${companyWithoutSubscription._id}&action=balance`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -278,7 +278,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills?company=${authCompany._id}&action=balance`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -299,7 +299,7 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/coursebills?course=${coursesList[0]._id}&action=list`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -321,7 +321,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${courseBillsList[2]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -331,7 +331,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${new ObjectId()}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -341,7 +341,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${courseBillsList[0]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -357,7 +357,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${courseBillsList[2]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -367,7 +367,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${courseBillsList[6]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -377,7 +377,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${courseBillsList[7]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -393,7 +393,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${courseBillsList[10]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -403,7 +403,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${courseBillsList[11]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -413,7 +413,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/coursebills/${courseBillsList[8]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -434,7 +434,7 @@ describe('COURSE BILL ROUTES - GET /coursebills/{_id}/pdfs', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/coursebills/${coursesList[2]._id}/pdfs`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -476,7 +476,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...omit(intraCoursePayload, 'mainFee.percentage'), course: coursesList[0]._id },
         });
 
@@ -492,7 +492,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: {
             ...intraCoursePayload,
             course: coursesList[13]._id,
@@ -512,7 +512,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: singleCoursePayload,
         });
 
@@ -526,7 +526,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: {
             ...intraCoursePayload,
             course: coursesList[13]._id,
@@ -541,7 +541,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, course: coursesList[14]._id },
         });
 
@@ -563,7 +563,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: {
             ...intraCoursePayload,
             course: coursesList[13]._id,
@@ -592,7 +592,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
             method: 'POST',
             url: '/coursebills/list-creation',
             payload: omit(intraCoursePayload, param),
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(400);
@@ -624,7 +624,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
               ...intraCoursePayload,
               mainFee: { ...intraCoursePayload.mainFee, [wrongValue.key]: wrongValue.value },
             },
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(400);
@@ -643,7 +643,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
             method: 'POST',
             url: '/coursebills/list-creation',
             payload: { ...intraCoursePayload, [wrongValue.key]: wrongValue.value },
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(400);
@@ -654,7 +654,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: {
             ...intraCoursePayload,
             payer: { fundingOrganisation: courseFundingOrganisationList[0]._id, company: authCompany._id },
@@ -668,7 +668,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, mainFee: { ...intraCoursePayload.mainFee, countUnit: TRAINEE } },
         });
 
@@ -690,7 +690,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, mainFee: { ...intraCoursePayload.mainFee, count: 2 } },
         });
 
@@ -723,7 +723,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: omit(intraCoursePayload, 'mainFee.percentage'),
         });
 
@@ -734,7 +734,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, course: new ObjectId() },
         });
 
@@ -745,7 +745,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, payer: { fundingOrganisation: new ObjectId() } },
         });
 
@@ -756,7 +756,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, payer: { company: new ObjectId() } },
         });
 
@@ -767,7 +767,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, companies: [otherCompany._id] },
         });
 
@@ -778,7 +778,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, course: coursesList[10]._id, companies: [otherCompany._id] },
         });
 
@@ -810,7 +810,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: intraCoursePayload,
         });
 
@@ -826,7 +826,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, payer: { company: authCompany._id } },
         });
 
@@ -842,7 +842,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, course: coursesList[13]._id },
         });
 
@@ -858,7 +858,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: singleCoursePayload,
         });
 
@@ -880,7 +880,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
             method: 'POST',
             url: '/coursebills/list-creation',
             payload: { ...intraCoursePayload, [param.key]: param.value },
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(400);
@@ -902,7 +902,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...singleCoursePayload, course: coursesList[16]._id },
         });
 
@@ -914,7 +914,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...intraCoursePayload, quantity: 4 },
         });
 
@@ -926,7 +926,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...singleCoursePayload, quantity: 3 },
         });
 
@@ -942,7 +942,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
             const response = await app.inject({
               method: 'POST',
               url: '/coursebills/list-creation',
-              headers: { Cookie: `alenvi_token=${authToken}` },
+              headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
               payload: intraCoursePayload,
             });
 
@@ -972,7 +972,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { payer: { fundingOrganisation: courseFundingOrganisationList[0]._id } },
       });
 
@@ -995,7 +995,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { payer: { company: authCompany._id } },
       });
 
@@ -1018,7 +1018,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { payer: { fundingOrganisation: courseFundingOrganisationList[1]._id } },
       });
 
@@ -1041,7 +1041,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 130, count: 1, countUnit: GROUP } },
       });
 
@@ -1064,7 +1064,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { maturityDate: '2025-05-02T22:00:00.000+00:00' },
       });
 
@@ -1087,7 +1087,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 130, count: 1, description: 'Nouvelle description' } },
       });
 
@@ -1110,7 +1110,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 130, count: 1, description: 'Nouvelle description' } },
       });
 
@@ -1131,7 +1131,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 130, count: 1, description: '' } },
       });
 
@@ -1154,7 +1154,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[13]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 } },
       });
 
@@ -1176,7 +1176,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1190,7 +1190,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[4]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           payer: { fundingOrganisation: courseBillsList[4].payer.fundingOrganisation },
           mainFee: { price: 200, count: 2, description: 'desk rip Sean' },
@@ -1229,7 +1229,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${courseBillsList[13]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { mainFee: { ...wrongValuesMainFee, [param.key]: param.value } },
         });
 
@@ -1285,7 +1285,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[13]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { count: 1, countUnit: TRAINEE, percentage: 20 } },
       });
 
@@ -1329,7 +1329,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 130, count: 1 }, billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1340,7 +1340,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1351,7 +1351,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[5]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1363,7 +1363,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[15]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1375,7 +1375,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[12]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 240, count: 1, countUnit: TRAINEE, percentage: 20 } },
       });
 
@@ -1386,7 +1386,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[16]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 240, count: 1, countUnit: GROUP, percentage: 20 } },
       });
 
@@ -1397,7 +1397,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
           mainFee: { price: 120, count: 1, description: 'Lorem ipsum' },
@@ -1421,7 +1421,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${courseBillsList[4]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: set(forbiddenUpdatesPayload, param.key, param.value),
         });
 
@@ -1433,7 +1433,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillsList[13]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { mainFee: { price: 1080, count: 1, countUnit: TRAINEE, percentage: 90 } },
       });
 
@@ -1455,7 +1455,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${courseBillsList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { payer: { fundingOrganisation: courseFundingOrganisationList[0]._id } },
         });
 
@@ -1480,7 +1480,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: courseBillsToValidate, billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1495,7 +1495,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           _ids: courseBillsToEdit,
           payer: { company: authCompany._id },
@@ -1522,7 +1522,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           _ids: singleCourseBillsToEdit,
           payer: { company: authCompany._id },
@@ -1541,7 +1541,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: singleCourseBillsToEdit, payer: { company: authCompany._id }, mainFee: { description: '' } },
       });
 
@@ -1555,7 +1555,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [], billedAt: '2022-03-08T00:00:00.000Z' },
 
       });
@@ -1567,7 +1567,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [], payer: { company: authCompany._id } },
 
       });
@@ -1579,7 +1579,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           _ids: courseBillsToEdit,
           payer: { company: authCompany._id, fundingOrganisation: courseFundingOrganisationList[0]._id },
@@ -1593,7 +1593,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: courseBillsToEdit, billedAt: '2022-03-08T00:00:00.000Z', payer: { company: authCompany._id } },
       });
 
@@ -1604,7 +1604,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: courseBillsToEdit, payer: { company: authCompany._id }, mainFee: { price: 1400 } },
       });
 
@@ -1615,7 +1615,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           _ids: courseBillsToEdit,
           payer: { company: authCompany._id },
@@ -1630,7 +1630,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [...courseBillsToEdit, new ObjectId()], billedAt: '2022-03-08T00:00:00.000Z' },
 
       });
@@ -1642,7 +1642,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [...courseBillsToEdit, courseBillsList[9]._id], billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1653,7 +1653,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [courseBillsList[5]._id], billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1664,7 +1664,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: courseBillsToEdit, billedAt: '2022-03-08T00:00:00.000Z' },
       });
 
@@ -1676,7 +1676,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [...courseBillsToEdit, courseBillsList[9]._id], payer: { company: authCompany._id } },
       });
 
@@ -1687,7 +1687,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [courseBillsList[0]._id, courseBillsList[1]._id], payer: { company: authCompany._id } },
       });
 
@@ -1698,7 +1698,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: courseBillsToEdit, payer: { fundingOrganisation: new ObjectId() } },
       });
 
@@ -1709,7 +1709,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-edition',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: courseBillsToEdit, payer: { company: new ObjectId() } },
       });
 
@@ -1730,7 +1730,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-edition', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-edition',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { _ids: courseBillsToEdit, billedAt: '2022-03-08T00:00:00.000Z' },
         });
 
@@ -1754,7 +1754,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/{_id}/billingpurchases', () => 
       const response = await app.inject({
         method: 'POST',
         url: `/coursebills/${courseBillsList[0]._id}/billingpurchases`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1778,7 +1778,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/{_id}/billingpurchases', () => 
         const response = await app.inject({
           method: 'POST',
           url: `/coursebills/${courseBillsList[0]._id}/billingpurchases`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...payload, [param.key]: param.value },
         });
 
@@ -1845,7 +1845,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/{_id}/billingpurchases', () => 
         const response = await app.inject({
           method: 'POST',
           url: `/coursebills/${courseBillsList[0]._id}/billingpurchases`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -1876,7 +1876,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1898,7 +1898,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillWithDescriptionId}/billingpurchases/${billingPurchaseWithDescriptionId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { price: 100, count: 3, description: '' },
       });
 
@@ -1918,7 +1918,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillInvoicedId}/billingpurchases/${billingPurchaseInvoicedId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { price: 9, count: 1, description: 'Salade de gésier du matin' },
       });
 
@@ -1938,7 +1938,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { description: 'description' },
       });
 
@@ -1969,7 +1969,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { ...payload, [param.key]: param.value },
         });
 
@@ -1981,7 +1981,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { count: 1, description: 'test' },
       });
 
@@ -1992,7 +1992,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
       const response = await app.inject({
         method: 'PUT',
         url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { price: 12, description: 'test' },
       });
 
@@ -2032,7 +2032,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${courseBillInvoicedId}/billingpurchases/${billingPurchaseInvoicedId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: set(forbiddenUpdatesPayload, param.key, param.value),
         });
 
@@ -2045,7 +2045,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${billWithPercentageId}/billingpurchases/${trainerFeesWithPercentageId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: set(forbiddenUpdatesPayload, param.key, param.value),
         });
 
@@ -2068,7 +2068,7 @@ describe('COURSE BILL ROUTES - PUT /coursebills/{_id}/billingpurchases/{billingP
         const response = await app.inject({
           method: 'PUT',
           url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -2093,7 +2093,7 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}/billingpurchases/{billi
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -2164,7 +2164,7 @@ describe('COURSE BILL ROUTES - DELETE /coursebills/{_id}/billingpurchases/{billi
         const response = await app.inject({
           method: 'DELETE',
           url: `/coursebills/${courseBillId}/billingpurchases/${billingPurchaseId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -2187,7 +2187,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-deletion', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-deletion',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: courseBillsToDelete },
       });
 
@@ -2201,7 +2201,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-deletion', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-deletion',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [] },
 
       });
@@ -2213,7 +2213,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-deletion', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-deletion',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [...courseBillsToDelete, new ObjectId()] },
 
       });
@@ -2225,7 +2225,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-deletion', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebills/list-deletion',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { _ids: [...courseBillsToDelete, courseBillsList[2]._id] },
       });
 
@@ -2246,7 +2246,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-deletion', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-deletion',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { _ids: courseBillsToDelete },
         });
 

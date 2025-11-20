@@ -27,7 +27,7 @@ describe('VENDOR COMPANY ROUTES - GET /vendorcompanies', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/vendorcompanies',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -63,7 +63,7 @@ describe('VENDOR COMPANY ROUTES - GET /vendorcompanies', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/vendorcompanies',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -102,7 +102,7 @@ describe('VENDOR COMPANY ROUTES - GET /vendorcompanies', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/vendorcompanies',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -146,7 +146,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
           method: 'PUT',
           url: '/vendorcompanies',
           payload: { [payload.key]: payload.value },
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -188,7 +188,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
           method: 'PUT',
           url: '/vendorcompanies',
           payload: { [payload.key]: payload.value },
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(400);
@@ -203,7 +203,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
       const response = await app.inject({
         method: 'PUT',
         url: '/vendorcompanies',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -226,7 +226,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
           method: 'PUT',
           url: '/vendorcompanies',
           payload: { name: 'Campanil' },
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -264,7 +264,7 @@ describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
         method: 'POST',
         url: '/vendorcompanies/mandate/upload',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -290,7 +290,7 @@ describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
           method: 'POST',
           url: '/vendorcompanies/mandate/upload',
           payload: getStream(form),
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -334,7 +334,7 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
         method: 'POST',
         url: '/vendorcompanies/mandate/upload',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       sinon.assert.calledOnce(addStub);
@@ -347,7 +347,7 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
       const response = await app.inject({
         method: 'DELETE',
         url: '/vendorcompanies/mandate/upload',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -361,7 +361,7 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
       const response = await app.inject({
         method: 'DELETE',
         url: '/vendorcompanies/mandate/upload',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -381,7 +381,7 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
         const response = await app.inject({
           method: 'DELETE',
           url: '/vendorcompanies/mandate/upload',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

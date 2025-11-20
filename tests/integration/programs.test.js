@@ -35,7 +35,7 @@ describe('PROGRAMS ROUTES - POST /programs', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/programs',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'program', categories: [categoriesList[0]._id] },
       });
 
@@ -48,7 +48,7 @@ describe('PROGRAMS ROUTES - POST /programs', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/programs',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'program', categories: [new ObjectId()] },
       });
 
@@ -59,7 +59,7 @@ describe('PROGRAMS ROUTES - POST /programs', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/programs',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { categories: [categoriesList[0]._id] },
       });
 
@@ -82,7 +82,7 @@ describe('PROGRAMS ROUTES - POST /programs', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/programs',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { name: 'program', categories: [categoryId] },
         });
 
@@ -105,7 +105,7 @@ describe('PROGRAMS ROUTES - GET /programs', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/programs',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -127,7 +127,7 @@ describe('PROGRAMS ROUTES - GET /programs', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/programs',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -183,7 +183,7 @@ describe('PROGRAMS ROUTES - GET /programs/{_id}', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/programs/${programsList[3]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -246,7 +246,7 @@ describe('PROGRAMS ROUTES - GET /programs/{_id}', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/programs/${programsList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -257,7 +257,7 @@ describe('PROGRAMS ROUTES - GET /programs/{_id}', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/programs/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -279,7 +279,7 @@ describe('PROGRAMS ROUTES - GET /programs/{_id}', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/programs/${programId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -304,7 +304,7 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
         method: 'PUT',
         url: `/programs/${programsList[0]._id}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const programUpdatedCount = await Program.countDocuments(
@@ -320,7 +320,7 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
         method: 'PUT',
         url: `/programs/${new ObjectId()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -332,7 +332,7 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
         method: 'PUT',
         url: `/programs/${programId}`,
         payload: {},
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -345,7 +345,7 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
           method: 'PUT',
           url: `/programs/${programsList[0]._id}`,
           payload: { ...payload, [param]: '' },
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(400);
@@ -369,7 +369,7 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
           method: 'PUT',
           payload: { learningGoals: 'On apprend des trucs\nc\'est chouette' },
           url: `/programs/${programId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -394,7 +394,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/subprogram', () => {
         method: 'POST',
         url: `/programs/${programsList[0]._id}/subprograms`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const programUpdated = await Program.findById(programsList[0]._id).lean();
@@ -408,7 +408,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/subprogram', () => {
         method: 'POST',
         url: `/programs/${new ObjectId()}/subprograms`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -420,7 +420,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/subprogram', () => {
         method: 'POST',
         url: `/programs/${programId}/subprograms`,
         payload: {},
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -443,7 +443,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/subprogram', () => {
           method: 'POST',
           payload,
           url: `/programs/${programId}/subprograms`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -478,7 +478,7 @@ describe('PROGRAMS ROUTES - POST /programs/:id/upload', () => {
         method: 'POST',
         url: `/programs/${program._id}/upload`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const programUpdated = await Program
@@ -495,7 +495,7 @@ describe('PROGRAMS ROUTES - POST /programs/:id/upload', () => {
         method: 'POST',
         url: `/programs/${new ObjectId()}/upload`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -508,7 +508,7 @@ describe('PROGRAMS ROUTES - POST /programs/:id/upload', () => {
           method: 'POST',
           url: `/programs/${program._id}/upload`,
           payload: getStream(invalidForm),
-          headers: { ...invalidForm.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...invalidForm.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(400);
@@ -533,7 +533,7 @@ describe('PROGRAMS ROUTES - POST /programs/:id/upload', () => {
           method: 'POST',
           url: `/programs/${program._id}/upload`,
           payload: getStream(form),
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -565,7 +565,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/:id/upload', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/programs/${programsList[0]._id}/upload`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -582,7 +582,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/:id/upload', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/programs/${new ObjectId()}/upload`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -603,7 +603,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/:id/upload', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/programs/${programsList[0]._id}/upload`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -628,7 +628,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/categories', () => {
         method: 'POST',
         url: `/programs/${programsList[0]._id}/categories`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const programUpdated = await Program.findById(programsList[0]._id).lean();
@@ -642,7 +642,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/categories', () => {
         method: 'POST',
         url: `/programs/${new ObjectId()}/categories`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -653,7 +653,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/categories', () => {
         method: 'POST',
         url: `/programs/${programsList[0]._id}/categories`,
         payload: { categoryId: new ObjectId() },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -675,7 +675,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/categories', () => {
           method: 'POST',
           payload,
           url: `/programs/${programsList[0]._id}/categories`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -699,7 +699,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/{_id}/categories/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/programs/${programsList[0]._id}/categories/${programsList[0].categories[0]}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const programUpdated = await Program.findOne({ _id: programsList[0]._id }).lean();
@@ -712,7 +712,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/{_id}/categories/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/programs/${new ObjectId()}/categories/${programsList[0].categories[0]}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -722,7 +722,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/{_id}/categories/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/programs/${programsList[0]._id}/categories/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -744,7 +744,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/{_id}/categories/{_id}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/programs/${programId}/categories/${programsList[0].categories[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -772,7 +772,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[0]._id}/testers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -787,7 +787,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[0]._id}/testers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -802,7 +802,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${new ObjectId()}/testers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -818,7 +818,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[0]._id}/testers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -835,7 +835,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[0]._id}/testers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -851,7 +851,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[0]._id}/testers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -868,7 +868,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[0]._id}/testers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -879,7 +879,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[1]._id}/testers`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: pick(coach, 'local.email'),
       });
 
@@ -906,7 +906,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
         const response = await app.inject({
           method: 'POST',
           url: `/programs/${programsList[0]._id}/testers`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -931,7 +931,7 @@ describe('PROGRAMS ROUTES - DELETE /{_id}/testers/{testerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/programs/${programsList[1]._id}/testers/${coach._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -943,7 +943,7 @@ describe('PROGRAMS ROUTES - DELETE /{_id}/testers/{testerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/programs/${new ObjectId()}/testers/${coach._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -953,7 +953,7 @@ describe('PROGRAMS ROUTES - DELETE /{_id}/testers/{testerId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/programs/${programsList[0]._id}/testers/${coach._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -974,7 +974,7 @@ describe('PROGRAMS ROUTES - DELETE /{_id}/testers/{testerId}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/programs/${programsList[1]._id}/testers/${coach._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

@@ -50,7 +50,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -63,7 +63,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companyWithoutSubscription._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { billingRepresentative: holdingAdminFromOtherCompany._id },
       });
 
@@ -74,7 +74,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'Tèst' },
       });
 
@@ -87,7 +87,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { salesRepresentative: vendorAdmin._id },
       });
 
@@ -106,7 +106,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -122,7 +122,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -133,7 +133,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: authCompany.name },
       });
 
@@ -144,7 +144,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { name: 'tEST sas' },
       });
 
@@ -156,7 +156,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -168,7 +168,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -180,7 +180,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -192,7 +192,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -203,7 +203,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { salesRepresentative: usersList[1]._id },
       });
 
@@ -222,7 +222,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -235,7 +235,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${otherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -247,7 +247,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -259,7 +259,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -274,7 +274,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/companies/${companies[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: assertion.payload,
         });
 
@@ -293,7 +293,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companyWithoutSubscription._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { billingRepresentative: holdingAdminFromOtherCompany._id },
       });
 
@@ -312,7 +312,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -325,7 +325,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -337,7 +337,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companyWithoutSubscription._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -359,7 +359,7 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/companies/${companies[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -401,7 +401,7 @@ describe('COMPANIES ROUTES - POST /companies', () => {
         method: 'POST',
         url: '/companies',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -421,7 +421,7 @@ describe('COMPANIES ROUTES - POST /companies', () => {
         method: 'POST',
         url: '/companies',
         payload: { ...payload, holding: authHolding._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -436,7 +436,7 @@ describe('COMPANIES ROUTES - POST /companies', () => {
         method: 'POST',
         url: '/companies',
         payload: { name: 'Test' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -447,7 +447,7 @@ describe('COMPANIES ROUTES - POST /companies', () => {
         method: 'POST',
         url: '/companies',
         payload: { name: 'TèsT' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -458,7 +458,7 @@ describe('COMPANIES ROUTES - POST /companies', () => {
         method: 'POST',
         url: '/companies',
         payload: {},
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -469,7 +469,7 @@ describe('COMPANIES ROUTES - POST /companies', () => {
         method: 'POST',
         url: '/companies',
         payload: { name: 'Test other company', salesRepresentative: usersList[1]._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -480,7 +480,7 @@ describe('COMPANIES ROUTES - POST /companies', () => {
         method: 'POST',
         url: '/companies',
         payload: { ...payload, holding: new ObjectId() },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -504,7 +504,7 @@ describe('COMPANIES ROUTES - POST /companies', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/companies',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -526,7 +526,7 @@ describe('COMPANIES ROUTES - GET /companies', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/companies',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -537,7 +537,7 @@ describe('COMPANIES ROUTES - GET /companies', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/companies?withoutHoldingCompanies=true',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -555,7 +555,7 @@ describe('COMPANIES ROUTES - GET /companies', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies?holding=${otherHolding._id.toHexString()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -566,7 +566,7 @@ describe('COMPANIES ROUTES - GET /companies', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies?holding=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -576,7 +576,7 @@ describe('COMPANIES ROUTES - GET /companies', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies?holding=${otherHolding._id.toHexString()}&withoutHoldingCompanies=true`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -593,7 +593,7 @@ describe('COMPANIES ROUTES - GET /companies', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies?holding=${otherHolding._id.toHexString()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -603,7 +603,7 @@ describe('COMPANIES ROUTES - GET /companies', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies?holding=${authHolding._id.toHexString()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -624,7 +624,7 @@ describe('COMPANIES ROUTES - GET /companies', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/companies?holding=${otherHolding._id.toHexString()}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -643,7 +643,7 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -655,7 +655,7 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -672,7 +672,7 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -682,7 +682,7 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${otherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -699,7 +699,7 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${companyWithoutSubscription._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -709,7 +709,7 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -730,7 +730,7 @@ describe('COMPANIES ROUTES - GET /companies/:id', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/companies/${authCompany._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -761,7 +761,7 @@ describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${companies[0]._id}/mandate?mandateId=${companies[0].debitMandates[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -771,7 +771,7 @@ describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${new ObjectId()}/mandate?mandateId=${companies[0].debitMandates[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -781,7 +781,7 @@ describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${companies[0]._id}/mandate?mandateId=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -791,7 +791,7 @@ describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/companies/${new ObjectId()}/mandate`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -810,7 +810,7 @@ describe('COMPANIES ROUTES - GET /companies/:id/mandate', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/companies/${companies[0]._id}/mandate?mandateId=${companies[0].debitMandates[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -831,7 +831,7 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/mandates/{mandateId}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { signedAt: '2025-06-23T22:00:00.000Z' },
       });
 
@@ -842,7 +842,7 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/mandates/{mandateId}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${new ObjectId()}/mandates/${companies[0].debitMandates[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { signedAt: '2025-06-23T22:00:00.000Z' },
       });
 
@@ -853,7 +853,7 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/mandates/{mandateId}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/companies/${companies[0]._id}/mandates/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { signedAt: '2025-06-23T22:00:00.000Z' },
       });
 
@@ -872,7 +872,7 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/mandates/{mandateId}', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { signedAt: '2025-06-23T22:00:00.000Z' },
         });
 
@@ -910,7 +910,7 @@ describe('COMPANIES ROUTES - POST /companies/{_id}/mandates/{mandateId}/upload-s
       const response = await app.inject({
         method: 'POST',
         url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[0]._id}/upload-signed`,
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -938,7 +938,7 @@ describe('COMPANIES ROUTES - POST /companies/{_id}/mandates/{mandateId}/upload-s
       const response = await app.inject({
         method: 'POST',
         url: `/companies/${new ObjectId()}/mandates/${companies[0].debitMandates[0]._id}/upload-signed`,
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -951,7 +951,7 @@ describe('COMPANIES ROUTES - POST /companies/{_id}/mandates/{mandateId}/upload-s
       const response = await app.inject({
         method: 'POST',
         url: `/companies/${companies[0]._id}/mandates/${new ObjectId()}/upload-signed`,
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -964,7 +964,7 @@ describe('COMPANIES ROUTES - POST /companies/{_id}/mandates/{mandateId}/upload-s
       const response = await app.inject({
         method: 'POST',
         url: `/companies/${companies[0]._id}/mandates/${companies[0].debitMandates[1]._id}/upload-signed`,
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 

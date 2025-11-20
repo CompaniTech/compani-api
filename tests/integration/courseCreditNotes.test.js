@@ -33,7 +33,7 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
         method: 'POST',
         url: '/coursecreditnotes',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -49,7 +49,7 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
         method: 'POST',
         url: '/coursecreditnotes',
         payload: omit(payload, 'misc'),
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -62,7 +62,7 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
           method: 'POST',
           url: '/coursecreditnotes',
           payload: omit(payload, [param]),
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
         expect(res.statusCode).toBe(400);
       });
@@ -73,7 +73,7 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
         method: 'POST',
         url: '/coursecreditnotes',
         payload: { ...payload, courseBill: new ObjectId() },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -84,7 +84,7 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
         method: 'POST',
         url: '/coursecreditnotes',
         payload: { ...payload, courseBill: courseBillsList[1]._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -95,7 +95,7 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
         method: 'POST',
         url: '/coursecreditnotes',
         payload: { ...payload, courseBill: courseBillsList[2]._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -106,7 +106,7 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
         method: 'POST',
         url: '/coursecreditnotes',
         payload: { ...payload, date: '2022-04-06T00:00:00.000Z' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -128,7 +128,7 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
           method: 'POST',
           url: '/coursecreditnotes',
           payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -150,7 +150,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
       const response = await app.inject({
         method: 'GET',
         url: `/coursecreditnotes/${courseCreditNote[0]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -160,7 +160,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
       const response = await app.inject({
         method: 'GET',
         url: `/coursecreditnotes/${new ObjectId()}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -176,7 +176,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
       const response = await app.inject({
         method: 'GET',
         url: `/coursecreditnotes/${courseCreditNote[0]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -186,7 +186,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
       const response = await app.inject({
         method: 'GET',
         url: `/coursecreditnotes/${courseCreditNote[1]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -196,7 +196,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
       const response = await app.inject({
         method: 'GET',
         url: `/coursecreditnotes/${courseCreditNote[2]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -212,7 +212,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
       const response = await app.inject({
         method: 'GET',
         url: `/coursecreditnotes/${courseCreditNote[2]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -222,7 +222,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
       const response = await app.inject({
         method: 'GET',
         url: `/coursecreditnotes/${courseCreditNote[3]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -232,7 +232,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
       const response = await app.inject({
         method: 'GET',
         url: `/coursecreditnotes/${courseCreditNote[0]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -253,7 +253,7 @@ describe('COURSE CREDIT NOTES ROUTES - GET /coursecreditnotes/{_id}/pdfs', () =>
         const response = await app.inject({
           method: 'GET',
           url: `/coursecreditnotes/${courseCreditNote[0]._id}/pdfs`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
