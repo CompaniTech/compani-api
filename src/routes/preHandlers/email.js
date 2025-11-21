@@ -89,16 +89,12 @@ exports.authorizeSendEmailBillList = async (req) => {
     throw Boom.forbidden(translate[language].wrongCourseBills.someCoursesAreVAEI);
   }
 
-  const {
-    courseTimeline: firstCourseBillCourseTimeline,
-  } = await QuestionnaireHelper.getCourseInfos(courseBills[0].course._id);
-
   const promises = [];
   courseBills.forEach(cb => promises.push(QuestionnaireHelper.getCourseInfos(cb.course._id)));
   const results = await Promise.all(promises);
 
-  const coursesHaveNotSameTimeline = results.some(res => res.courseTimeline !== firstCourseBillCourseTimeline);
-  if (everyCourseIsGroupCourse && coursesHaveNotSameTimeline) {
+  const courseTimelines = [...new Set(results.map(res => res.courseTimeline))];
+  if (everyCourseIsGroupCourse && courseTimelines.length !== 1) {
     throw Boom.forbidden(translate[language].wrongCourseBills.courseTimeline);
   }
 
@@ -107,12 +103,11 @@ exports.authorizeSendEmailBillList = async (req) => {
     [BETWEEN_MID_AND_END_COURSE]: MIDDLE_COURSE,
     [ENDED]: END_COURSE,
   };
-  const typeIsWrong = type !== mappingBetweenTypeAndCourseTimeline[firstCourseBillCourseTimeline];
+  const typeIsWrong = type !== mappingBetweenTypeAndCourseTimeline[courseTimelines[0]];
   if (everyCourseIsGroupCourse && typeIsWrong) throw Boom.forbidden(translate[language].wrongCourseBills.wrongType);
 
-  const someBillsAreAlreadyBeenSentButNotEvery = courseBills.some(cb => cb.sendingDates && cb.sendingDates.length) &&
-    courseBills.some(cb => !cb.sendingDates);
-  if (someBillsAreAlreadyBeenSentButNotEvery) {
+  const sendingDatesNumber = [...new Set(courseBills.map(cb => get(cb, 'sendingDates', []).length))];
+  if (sendingDatesNumber.includes(0) && sendingDatesNumber.length > 1) {
     throw Boom.forbidden(translate[language].wrongCourseBills.someBillsAreAlreadyBeenSent);
   }
 

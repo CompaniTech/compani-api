@@ -1,4 +1,5 @@
 const { expect } = require('expect');
+const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
 const omit = require('lodash/omit');
 const app = require('../../server');
@@ -214,7 +215,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
   afterEach(() => {
     sendinBlueTransporter.restore();
     process.env.BILLING_COMPANI_EMAIL = '';
-    process.env.BILLING_USER_ID = {};
+    process.env.BILLING_USER_ID = '';
     process.env.VAEI_SUBPROGRAM_IDS = '';
   });
 
@@ -245,6 +246,17 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       sinon.assert.calledWithExactly(sendinBlueTransporter);
 
       expect(response.statusCode).toBe(200);
+    });
+
+    it('should return a 404 if a bill does not exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payload, bills: [...payload.bills, new ObjectId()] },
+      });
+
+      expect(response.statusCode).toBe(404);
     });
 
     it('should return 403 if a bill is linked to VAEI course and another to a GROUP course', async () => {
