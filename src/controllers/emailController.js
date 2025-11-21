@@ -15,4 +15,17 @@ const sendWelcome = async (req) => {
   }
 };
 
-module.exports = { sendWelcome };
+const sendBillEmail = async (req) => {
+  try {
+    const { type, content, recipientEmails } = req.payload;
+    const mailInfo = await EmailHelper
+      .sendBillEmail(req.pre.courseBills, type, content, recipientEmails, req.auth.credentials);
+
+    return { message: translate[language].emailSent, data: { mailInfo } };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { sendWelcome, sendBillEmail };
