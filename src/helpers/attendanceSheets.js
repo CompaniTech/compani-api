@@ -23,7 +23,7 @@ exports.create = async (payload, credentials) => {
   let fileUploaded = {};
   const formationExpoTokens = {};
 
-  const course = await Course.findOne({ _id: payload.course }, { companies: 1, type: 1 }).lean();
+  const course = await Course.findOne({ _id: payload.course }, { companies: 1, type: 1, trainees: 1 }).lean();
 
   const promises = [];
   if (payload.date) {
@@ -141,10 +141,19 @@ exports.create = async (payload, credentials) => {
       const trainees = [];
       if (payload.trainees) trainees.push(...(Array.isArray(payload.trainees) ? payload.trainees : [payload.trainees]));
       else trainees.push(...slot.traineesSignature.map(signature => signature.traineeId));
-      for (const trainee of trainees) {
-        const attendance = await Attendance.countDocuments({ trainee, courseSlot: slot.slotId });
-        if (!attendance) {
-          attendancesPromises.push(AttendanceHelper.create({ trainee, courseSlot: slot.slotId }, credentials));
+      if ([SINGLE, INTER_B2B].includes(course.type)) {
+        for (const trainee of trainees) {
+          const attendance = await Attendance.countDocuments({ trainee, courseSlot: slot.slotId });
+          if (!attendance) {
+            attendancesPromises.push(AttendanceHelper.create({ trainee, courseSlot: slot.slotId }, credentials));
+          }
+        }
+      } else {
+        await AttendanceHelper.create({ courseSlot: slot.slotId }, credentials);
+        for (const trainee of course.trainees) {
+          if (!UtilsHelper.doesArrayIncludeId(trainees, trainee)) {
+            await AttendanceHelper.update({ trainee, courseSlot: slot.slotId });
+          }
         }
       }
     }

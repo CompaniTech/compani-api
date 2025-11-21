@@ -101,6 +101,7 @@ const {
   XML_GENERATED,
   DIRECT_DEBIT,
   RECEIVED,
+  PRESENT,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -388,7 +389,11 @@ describe('SEEDS VERIFICATION', () => {
             .populate({
               path: 'course',
               select: '_id type companies subProgram trainers',
-              populate: { path: 'slots', select: 'startDate' },
+              populate: {
+                path: 'slots',
+                select: 'startDate',
+                populate: { path: 'attendances', options: { isVendorUser: true } },
+              },
             })
             .populate({ path: 'companies', select: '_id' })
             .setOptions({ allCompanies: true })
@@ -502,6 +507,24 @@ describe('SEEDS VERIFICATION', () => {
                   .every(signature => UtilsHelper.areObjectIdsEquals(signature.traineeId, attendanceSheet.trainee._id)))
             );
           expect(areTrainersInSlotAttendanceSheetTrainer).toBeTruthy();
+        });
+
+        it('should pass if for each trainee, every slot in attendance sheet is linked to attendance', () => {
+          const everySlotInASIsLinkedToAttendance = attendanceSheetList
+            .filter(as => as.slots)
+            .every(as => as.slots
+              .every((s) => {
+                const trainees = s.traineesSignature
+                  ? s.traineesSignature.map(signature => signature.traineeId)
+                  : [as.trainee._id];
+                const { attendances } = as.course.slots
+                  .find(slot => UtilsHelper.areObjectIdsEquals(slot._id, s.slotId));
+                const presentAttendances = attendances
+                  .filter(a => UtilsHelper.doesArrayIncludeId(trainees, a.trainee) && a.status === PRESENT);
+                return presentAttendances.length === trainees.length;
+              }));
+
+          expect(everySlotInASIsLinkedToAttendance).toBeTruthy();
         });
       });
 

@@ -2649,7 +2649,12 @@ describe('getCourse', () => {
                   { path: 'steps', select: 'name' },
                 ],
               },
-              { path: 'slots', select: 'step startDate endDate', options: { sort: { startDate: 1 } } },
+              {
+                path: 'slots',
+                select: 'step startDate endDate',
+                options: { sort: { startDate: 1 } },
+                populate: { path: 'missingAttendances', options: { isVendorUser: true } },
+              },
             ]],
           },
           { query: 'lean' },

@@ -8,7 +8,7 @@ const app = require('../../server');
 const { populateDB, coursesList, attendanceSheetList, slotsList, userList } = require('./seed/attendanceSheetsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
-const { WEBAPP, MOBILE, GENERATION } = require('../../src/helpers/constants');
+const { WEBAPP, MOBILE, GENERATION, MISSING } = require('../../src/helpers/constants');
 const { CompaniDate } = require('../../src/helpers/dates/companiDates');
 const Attendance = require('../../src/models/Attendance');
 const AttendanceSheet = require('../../src/models/AttendanceSheet');
@@ -356,6 +356,9 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(200);
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
       expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      const missingAttendance = await Attendance
+        .countDocuments({ courseSlot: slotsList[15]._id, trainee: userList[0]._id, status: MISSING });
+      expect(missingAttendance).toEqual(1);
       sinon.assert.calledOnce(uploadCourseFile);
       sinon.assert.calledTwice(sendNotificationToUser);
     });
@@ -1058,6 +1061,57 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 409 if try to create attendance sheet with slot linked to missing attendance (single)',
+      async () => {
+        const slots = [slotsList[23]._id.toHexString()];
+        const formData = {
+          course: coursesList[7]._id.toHexString(),
+          signature: 'test',
+          trainees: userList[1]._id.toHexString(),
+          origin: MOBILE,
+          trainer: trainer._id.toHexString(),
+        };
+
+        const form = generateFormData(formData);
+        slots.forEach(slot => form.append('slots', slot));
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/attendancesheets',
+          payload: getStream(form),
+          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(409);
+      });
+
+    it('should return 409 if try to create attendance sheet with slot linked to missing attendance (intra)',
+      async () => {
+        const slots = [{
+          slotId: slotsList[0]._id.toHexString(),
+          trainees: [userList[1]._id.toHexString(), userList[0]._id.toHexString()],
+        }];
+        const formData = {
+          course: coursesList[0]._id.toHexString(),
+          signature: 'test',
+          date: '2020-01-23T09:00:00.000Z',
+          origin: MOBILE,
+          trainer: trainer._id.toHexString(),
+        };
+
+        const form = generateFormData(formData);
+        slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/attendancesheets',
+          payload: getStream(form),
+          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(409);
+      });
   });
 
   describe('Other roles', () => {
@@ -1894,7 +1948,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
       expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
       const attendanceAfter = await Attendance.countDocuments();
-      expect(attendanceAfter).toEqual(attendanceLength - 1);
+      expect(attendanceAfter).toEqual(attendanceLength - 2);
       sinon.assert.calledThrice(deleteCourseFile);
     });
 

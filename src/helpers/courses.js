@@ -536,7 +536,12 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             ]
             : []),
         ]
-        : [{ path: 'slots', select: 'step startDate endDate', options: { sort: { startDate: 1 } } }]
+        : [{
+          path: 'slots',
+          select: 'step startDate endDate',
+          options: { sort: { startDate: 1 } },
+          populate: { path: 'missingAttendances', options: { isVendorUser: !!get(credentials, 'role.vendor.name') } },
+        }]
       ),
     ])
     .lean();
