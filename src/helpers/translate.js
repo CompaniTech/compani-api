@@ -164,6 +164,14 @@ module.exports = {
     courseCompanyAddressMissing: 'Course company address missing.',
     sumCourseBillsPercentageGreaterThan100: 'Sum of course bills percentage is greater than 100 %.',
     courseBillPriceMissing: 'Course bill price is missing.',
+    wrongCourseBills: {
+      courseType: 'Forbidden: bills must be associated to courses with the same type.',
+      courseTimeline: 'Forbidden: bills must be associated to courses with the same timeline.',
+      someCoursesAreNotVAEI: 'Forbidden: at least a courseBill is not linked to VAEI course.',
+      someBillsAreAlreadyBeenSent: 'Forbidden: some bills have been sent at least once, but not all of them.',
+      someCoursesAreVAEI: 'Forbidden: at least a courseBill is linked to VAEI course.',
+      wrongType: 'Forbidden: type must corresponds with course timeline.',
+    },
     /* Course billing items */
     courseBillingItemExists: 'Course billing item exists.',
     courseBillingItemsFound: 'Course billing items found.',
@@ -446,6 +454,14 @@ module.exports = {
     courseCompanyAddressMissing: 'L\'adresse de la structure cliente est manquante.',
     sumCourseBillsPercentageGreaterThan100: 'La somme des pourcentages des factures est supérieure à 100%.',
     courseBillPriceMissing: 'Le prix de la facture est manquant.',
+    wrongCourseBills: {
+      courseType: 'Impossible: les factures doivent être associées à des formations du même type.',
+      courseTimeline: 'Impossible: les factures doivent être associées à des formations qui ont le même avancement.',
+      someCoursesAreNotVAEI: 'Impossible: au moins une facture n\'est pas associée à une formation VAEI.',
+      someCoursesAreVAEI: 'Impossible: au moins une facture est associée à une formation VAEI.',
+      someBillsAreAlreadyBeenSent: 'Impossible: certaines factures ont été envoyées au moins une fois mais pas toutes.',
+      wrongType: 'Impossible: le type sélectionné doit correspondre à l\'avancement des formations.',
+    },
     /* Course billing items */
     courseBillingItemExists: 'Article de facturation existant.',
     courseBillingItemsFound: 'Articles de facturation trouvés.',

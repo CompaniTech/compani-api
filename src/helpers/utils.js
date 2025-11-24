@@ -323,3 +323,5 @@ exports.parseCsv = file => new Promise((resolve, reject) => {
 });
 
 exports.escapeRegex = string => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+exports.formatDownloadName = name => name.replaceAll(/ - | |'/g, '_');

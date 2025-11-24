@@ -65,6 +65,9 @@ module.exports = {
       'milliseconds',
     ];
   },
+  // EMAIL
+  VAEI: 'vaei',
+  MIDDLE_COURSE: 'middle_course',
   // EVENTS
   INTERVENTION: 'intervention',
   ABSENCE: 'absence',
