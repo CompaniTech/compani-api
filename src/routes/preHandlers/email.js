@@ -72,9 +72,9 @@ exports.authorizeSendEmailBillList = async (req) => {
   if (courseBills.length !== bills.length) throw Boom.notFound(translate[language].courseBillsNotFound);
 
   const everyCourseIsVAEI = courseBills.every(cb => isVAEICourse(cb.course));
-  const everyCourseIsNotVAEI = courseBills.every(cb => !isVAEICourse(cb.course));
+  const noneCourseIsVAEI = courseBills.every(cb => !isVAEICourse(cb.course));
 
-  const courseBillsAreLinkedToSameCourseType = everyCourseIsVAEI || everyCourseIsNotVAEI;
+  const courseBillsAreLinkedToSameCourseType = everyCourseIsVAEI || noneCourseIsVAEI;
   if (!courseBillsAreLinkedToSameCourseType) throw Boom.forbidden(translate[language].wrongCourseBills.courseType);
 
   const someCoursesAreNotVAEI = courseBills.some(cb => !isVAEICourse(cb.course));
@@ -92,7 +92,7 @@ exports.authorizeSendEmailBillList = async (req) => {
   const results = await Promise.all(promises);
 
   const courseTimelines = [...new Set(results.map(res => res.courseTimeline))];
-  if (everyCourseIsNotVAEI && courseTimelines.length !== 1) {
+  if (noneCourseIsVAEI && courseTimelines.length !== 1) {
     throw Boom.forbidden(translate[language].wrongCourseBills.courseTimeline);
   }
 
@@ -102,7 +102,7 @@ exports.authorizeSendEmailBillList = async (req) => {
     [ENDED]: END_COURSE,
   };
   const typeIsWrong = type !== mappingBetweenTypeAndCourseTimeline[courseTimelines[0]];
-  if (everyCourseIsNotVAEI && typeIsWrong) throw Boom.forbidden(translate[language].wrongCourseBills.wrongType);
+  if (noneCourseIsVAEI && typeIsWrong) throw Boom.forbidden(translate[language].wrongCourseBills.wrongType);
 
   const sendingDatesNumber = [...new Set(courseBills.map(cb => get(cb, 'sendingDates', []).length))];
   if (sendingDatesNumber.includes(0) && sendingDatesNumber.length > 1) {
