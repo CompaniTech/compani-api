@@ -259,7 +259,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 403 if a bill is linked to VAEI course and another to a GROUP course', async () => {
+    it('should return 403 if a bill is linked to VAEI course and another to a non VAEI course', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
