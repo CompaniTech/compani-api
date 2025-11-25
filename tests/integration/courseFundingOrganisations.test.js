@@ -25,7 +25,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - GET /coursefundingorganisations',
       const response = await app.inject({
         method: 'GET',
         url: '/coursefundingorganisations',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -47,7 +47,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - GET /coursefundingorganisations',
         const response = await app.inject({
           method: 'GET',
           url: '/coursefundingorganisations',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -70,7 +70,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - POST /coursefundingorganisations'
       const response = await app.inject({
         method: 'POST',
         url: '/coursefundingorganisations',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -84,7 +84,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - POST /coursefundingorganisations'
       const response = await app.inject({
         method: 'POST',
         url: '/coursefundingorganisations',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           ...payload,
           name: 'APA Paris',
@@ -123,7 +123,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - POST /coursefundingorganisations'
         const response = await app.inject({
           method: 'POST',
           url: '/coursefundingorganisations',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -146,7 +146,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - DELETE /coursefundingorganisation
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursefundingorganisations/${courseFundingOrganisationsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const count = await CourseFundingOrganisation.countDocuments();
@@ -159,7 +159,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - DELETE /coursefundingorganisation
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursefundingorganisations/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -169,7 +169,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - DELETE /coursefundingorganisation
       const response = await app.inject({
         method: 'DELETE',
         url: `/coursefundingorganisations/${courseFundingOrganisationsList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -190,7 +190,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - DELETE /coursefundingorganisation
         const response = await app.inject({
           method: 'DELETE',
           url: `/coursefundingorganisations/${courseFundingOrganisationsList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

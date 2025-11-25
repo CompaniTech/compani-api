@@ -30,7 +30,7 @@ describe('COMPANY LINK REQUESTS ROUTES - POST /companylinkrequests', () => {
         method: 'POST',
         url: '/companylinkrequests',
         payload: { company: authCompany._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -45,7 +45,7 @@ describe('COMPANY LINK REQUESTS ROUTES - POST /companylinkrequests', () => {
         method: 'POST',
         url: '/companylinkrequests',
         payload: { company: authCompany._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -58,7 +58,7 @@ describe('COMPANY LINK REQUESTS ROUTES - POST /companylinkrequests', () => {
         method: 'POST',
         url: '/companylinkrequests',
         payload: { company: authCompany._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -71,7 +71,7 @@ describe('COMPANY LINK REQUESTS ROUTES - POST /companylinkrequests', () => {
         method: 'POST',
         url: '/companylinkrequests',
         payload: { company: new ObjectId() },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -84,7 +84,7 @@ describe('COMPANY LINK REQUESTS ROUTES - POST /companylinkrequests', () => {
         method: 'POST',
         url: '/companylinkrequests',
         payload: { company: authCompany._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -104,7 +104,7 @@ describe('COMPANY LINK REQUESTS ROUTES - GET /companylinkrequests', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/companylinkrequests',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -125,7 +125,7 @@ describe('COMPANY LINK REQUESTS ROUTES - GET /companylinkrequests', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/companylinkrequests',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -146,7 +146,7 @@ describe('COMPANY LINK REQUESTS ROUTES - DELETE /companylinkrequests', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/companylinkrequests/${companyLinkRequestList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -158,7 +158,7 @@ describe('COMPANY LINK REQUESTS ROUTES - DELETE /companylinkrequests', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/companylinkrequests/${companyLinkRequestList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -178,7 +178,7 @@ describe('COMPANY LINK REQUESTS ROUTES - DELETE /companylinkrequests', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/companylinkrequests/${userWithCompanyLinkRequestList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

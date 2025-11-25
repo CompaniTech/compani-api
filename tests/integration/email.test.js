@@ -56,7 +56,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/email/send-welcome',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: receiver,
         });
 
@@ -70,7 +70,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-welcome',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { email: helperFromOtherCompany.local.email, type: 'helper' },
       });
 
@@ -81,7 +81,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-welcome',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, email: 'qwertyuiop@asdfghjkl.fr' },
       });
 
@@ -92,7 +92,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-welcome',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, type: 'poiuyt' },
       });
 
@@ -104,7 +104,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/email/send-welcome',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: omit(payload, [missingParam]),
         });
 
@@ -120,7 +120,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/email/send-welcome',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -135,7 +135,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/email/send-welcome',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { email: futureTraineeFromAuthCompany.local.email, type: TRAINEE },
         });
 
@@ -149,7 +149,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-welcome',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, email: emailUserFromOtherCompany.local.email },
       });
 
@@ -162,7 +162,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/email/send-welcome',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { email: emailUserFromThirdCompany.local.email, type: TRAINEE },
         });
 
@@ -174,7 +174,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-welcome',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, email: futureTraineeFromAuthCompany.local.email },
       });
 
@@ -191,7 +191,7 @@ describe('EMAIL ROUTES - POST emails/send-welcome', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/email/send-welcome',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 

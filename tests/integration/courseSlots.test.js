@@ -29,7 +29,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -41,7 +41,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -53,7 +53,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -65,7 +65,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -80,7 +80,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
           method: 'POST',
           url: '/courseslots',
           payload: omit({ ...payload }, param),
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(400);
@@ -95,7 +95,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/courseslots',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -114,7 +114,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
       expect(response.statusCode).toBe(200);
@@ -126,7 +126,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
       expect(response.statusCode).toBe(403);
@@ -140,7 +140,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -159,7 +159,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/courseslots',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -193,7 +193,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -223,7 +223,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[10]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -239,7 +239,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[8]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -259,7 +259,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[8]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -294,7 +294,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[5]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -306,7 +306,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[4]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -318,7 +318,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[12]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -330,7 +330,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[12]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -342,7 +342,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[13]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -354,7 +354,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[13]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -366,7 +366,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[6]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -381,7 +381,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -393,7 +393,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[8]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -407,7 +407,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -421,7 +421,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -436,7 +436,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -451,7 +451,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -466,7 +466,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -488,7 +488,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[8]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -504,7 +504,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -519,7 +519,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[9]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -542,7 +542,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[10]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -565,7 +565,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[11]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -578,7 +578,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[5]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -601,7 +601,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[10]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -619,7 +619,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -631,7 +631,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[10]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -643,7 +643,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -656,7 +656,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/courseslots/${courseSlotsList[11]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -674,7 +674,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -687,7 +687,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[3]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -708,7 +708,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/courseslots/${courseSlotsList[3]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -731,7 +731,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${courseSlotsList[6]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -750,7 +750,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${courseSlotsList[5]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -760,7 +760,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${courseSlotsList[7]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -770,7 +770,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -780,7 +780,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${courseSlotsList[4]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -796,7 +796,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${courseSlotsList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -806,7 +806,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${courseSlotsList[3]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -819,7 +819,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courseslots/${courseSlotsList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -837,7 +837,7 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/courseslots/${courseSlotsList[3]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

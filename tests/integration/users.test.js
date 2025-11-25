@@ -133,7 +133,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -164,7 +164,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -181,7 +181,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -236,7 +236,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -254,7 +254,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -272,7 +272,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -290,7 +290,7 @@ describe('USERS ROUTES - POST /users', () => {
           method: 'POST',
           url: '/users',
           payload: omit(payload, param),
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(res.statusCode).toBe(400);
@@ -308,7 +308,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -333,7 +333,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -351,7 +351,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -378,7 +378,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -403,7 +403,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -430,7 +430,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -454,7 +454,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -472,7 +472,7 @@ describe('USERS ROUTES - POST /users', () => {
         method: 'POST',
         url: '/users',
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -500,7 +500,7 @@ describe('USERS ROUTES - POST /users', () => {
           method: 'POST',
           url: '/users',
           payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -522,7 +522,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${authCompany._id}&role=coach`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -536,7 +536,7 @@ describe('USERS ROUTES - GET /users', () => {
         const res = await app.inject({
           method: 'GET',
           url: `/users?company=${authCompany._id}&role=helper&role=auxiliary`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(res.statusCode).toBe(200);
@@ -550,7 +550,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${authCompany._id}&role=Babouin`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(400);
@@ -560,7 +560,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${otherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -570,7 +570,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?holding=${authHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -586,7 +586,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${companyWithoutSubscription._id}&role=client_admin`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -598,7 +598,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?holding=${otherHolding._id}&role=client_admin`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -610,7 +610,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/users?role=client_admin',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -620,7 +620,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?holding=${authHolding._id}&role=client_admin`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -630,7 +630,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -646,7 +646,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/users',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -658,7 +658,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${otherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -669,7 +669,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?holding=${authHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -680,7 +680,7 @@ describe('USERS ROUTES - GET /users', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/users?withCompanyUsers=${true}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -691,7 +691,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${companyWithoutSubscription._id}&role=coach&includeHoldingAdmins=true`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -703,7 +703,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${authCompany._id}&role=client_admin&role=holding_admin`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -718,7 +718,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?company=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -728,7 +728,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?holding=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -738,7 +738,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?holding=${authHolding._id}&company=${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(400);
@@ -748,7 +748,7 @@ describe('USERS ROUTES - GET /users', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/users?holding=${authHolding._id}&withCompanyUsers=${true}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -758,7 +758,7 @@ describe('USERS ROUTES - GET /users', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users?holding=${authHolding._id}&includeHoldingAdmins=true`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(400);
@@ -779,7 +779,7 @@ describe('USERS ROUTES - GET /users', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/users?company=${authCompany._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -817,7 +817,7 @@ describe('USERS ROUTES - GET /users/exists', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/exists?email=${usersSeedList[0].local.email}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -840,7 +840,7 @@ describe('USERS ROUTES - GET /users/exists', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/users/exists?email=test@test.fr',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -869,7 +869,7 @@ describe('USERS ROUTES - GET /users/exists', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/users/exists?email=${usersSeedList[0].local.email}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -900,7 +900,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/users/learners?action=directory',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -918,7 +918,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/learners?companies=${authCompany._id}&startDate=2022-12-20T15:00:00.000Z&action=course`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -936,7 +936,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
         method: 'GET',
         url: `/users/learners?companies=${authCompany._id}`
           + '&startDate=2021-12-19T23:00:00.000Z&endDate=2021-12-20T22:59:59.999Z&action=course',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -947,7 +947,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/learners?companies=${authCompany._id}&action=directory`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -959,7 +959,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/learners?companies=${authCompany._id}&companies=${otherCompany._id}&action=course`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -971,7 +971,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/learners?companies=${authCompany._id}&endDate=2021-12-19T23:00:00.000Z&action=course`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(400);
@@ -982,7 +982,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
         method: 'GET',
         url: `/users/learners?companies=${authCompany._id}`
         + '&startDate=2021-12-20T22:59:59.999Z&endDate=2021-12-19T23:00:00.000Z&action=course',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(400);
@@ -1002,7 +1002,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/learners?companies=${authCompany._id}&action=directory`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -1021,7 +1021,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/learners?companies=${otherCompany._id}&action=directory`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -1037,7 +1037,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/learners?companies=${otherCompany._id}&companies=${companyWithoutSubscription._id}&action=course`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -1048,7 +1048,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/learners?companies=${authCompany._id}&companies=${otherCompany._id}&action=course`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -1066,7 +1066,7 @@ describe('USERS ROUTES - GET /users/learners', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/users/learners?action=directory',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -1089,7 +1089,7 @@ describe('USERS ROUTES - GET /users/:id', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/${userId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -1100,7 +1100,7 @@ describe('USERS ROUTES - GET /users/:id', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/${usersSeedList[13]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -1110,7 +1110,7 @@ describe('USERS ROUTES - GET /users/:id', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/${auxiliaryFromOtherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -1127,7 +1127,7 @@ describe('USERS ROUTES - GET /users/:id', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/${userId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -1138,7 +1138,7 @@ describe('USERS ROUTES - GET /users/:id', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/${holdingAdminFromAuthCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -1154,7 +1154,7 @@ describe('USERS ROUTES - GET /users/:id', () => {
       const res = await app.inject({
         method: 'GET',
         url: `/users/${trainer._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -1201,7 +1201,7 @@ describe('USERS ROUTES - GET /users/:id', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/users/${usersSeedList[1]._id.toHexString()}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -1230,7 +1230,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${userId}`,
         payload: updatePayload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -1258,7 +1258,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${userId}`,
         payload: trainerPayload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1282,7 +1282,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${userId}`,
         payload: auxiliaryPayload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -1293,7 +1293,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${helperFromOtherCompany._id}`,
         payload: {},
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
       expect(res.statusCode).toBe(404);
     });
@@ -1303,7 +1303,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
         payload: { contact: { phone: '09876', countryCode: '+33' } },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1314,7 +1314,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
         payload: { contact: { phone: '0987654321', countryCode: '33' } },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1325,7 +1325,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
         payload: { contact: { countryCode: '+33' } },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(countryCodeResponse.statusCode).toBe(400);
@@ -1334,7 +1334,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
         payload: { contact: { phone: '0987654321' } },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(phoneResponse.statusCode).toBe(400);
@@ -1345,7 +1345,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
         payload: { contact: { phone: '0987654321', countryCode: '' } },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1357,7 +1357,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${userId}`,
         payload: { contact: { phone: '' } },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1375,7 +1375,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
         payload: { identity: { title: 'monsieur' } },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1386,7 +1386,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id}`,
         payload: { local: { password: '123456!eR' } },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1397,7 +1397,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${coach._id.toHexString()}`,
         payload: { holding: authHolding._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -1413,7 +1413,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       const res = await app.inject({
         method: 'PUT',
         url: `/users/${userList[9]._id.toHexString()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { identity: { firstname: 'Test' } },
       });
 
@@ -1424,7 +1424,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       const res = await app.inject({
         method: 'PUT',
         url: `/users/${usersSeedList[0]._id.toHexString()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { identity: { firstname: 'Test' } },
       });
 
@@ -1441,7 +1441,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       const res = await app.inject({
         method: 'PUT',
         url: `/users/${usersSeedList[11]._id.toHexString()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           identity: { firstname: 'trainerUpdate' },
           biography: 'It\'s my life',
@@ -1460,7 +1460,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${usersSeedList[2]._id.toHexString()}`,
         payload: { holding: authHolding._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(200);
@@ -1473,7 +1473,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${coach._id.toHexString()}`,
         payload: { holding: new ObjectId() },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -1484,7 +1484,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${coachFromOtherCompany._id.toHexString()}`,
         payload: { holding: authHolding._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(403);
@@ -1495,7 +1495,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${holdingAdminFromAuthCompany._id.toHexString()}`,
         payload: { holding: authHolding._id },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(409);
@@ -1538,7 +1538,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${userId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1556,7 +1556,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${userId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1605,7 +1605,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         method: 'PUT',
         url: `/users/${userId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1626,7 +1626,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
           method: 'PUT',
           url: `/users/${usersSeedList[2]._id.toHexString()}`,
           payload: { identity: { firstname: 'Riri' } },
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -1668,7 +1668,7 @@ describe('USERS ROUTES - DELETE /users/:id', () => {
         const res = await app.inject({
           method: 'DELETE',
           url: `/users/${userToDelete._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(res.statusCode).toBe(test.expectedCode);
@@ -1689,7 +1689,7 @@ describe('USERS ROUTES - DELETE /users/:id', () => {
       const res = await app.inject({
         method: 'DELETE',
         url: `/users/${helperFromOtherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(res.statusCode).toBe(404);
@@ -1770,7 +1770,7 @@ describe('USERS ROUTES - DELETE /users/:id', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/users/${usersSeedList[3]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -1806,7 +1806,7 @@ describe('USERS ROUTES - POST /users/:id/upload', () => {
         method: 'POST',
         url: `/users/${user._id}/upload`,
         payload,
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1825,7 +1825,7 @@ describe('USERS ROUTES - POST /users/:id/upload', () => {
           method: 'POST',
           url: `/users/${user._id}/upload`,
           payload: getStream(invalidForm),
-          headers: { ...invalidForm.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...invalidForm.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(400);
@@ -1870,7 +1870,7 @@ describe('USERS ROUTES - POST /users/:id/upload', () => {
           method: 'POST',
           url: `/users/${user._id}/upload`,
           payload: getStream(form),
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -1904,7 +1904,7 @@ describe('USERS ROUTES - DELETE /users/:id/upload', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/users/${user._id}/upload`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1919,7 +1919,7 @@ describe('USERS ROUTES - DELETE /users/:id/upload', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/users/${new ObjectId()}/upload`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1958,7 +1958,7 @@ describe('USERS ROUTES - DELETE /users/:id/upload', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/users/${user._id}/upload`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -1980,7 +1980,7 @@ describe('USERS ROUTES - POST /users/:id/expo-token', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/users/${usersSeedList[0]._id.toHexString()}/expo-token`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { formationExpoToken: 'ExponentPushToken[jeSuisUnNouvelIdExpo]' },
       });
 
@@ -1996,7 +1996,7 @@ describe('USERS ROUTES - POST /users/:id/expo-token', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/users/${usersSeedList[0]._id.toHexString()}/expo-token`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { formationExpoToken: 'jeMeFaitPasserPourUnIdExpo' },
       });
 
@@ -2007,7 +2007,7 @@ describe('USERS ROUTES - POST /users/:id/expo-token', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/users/${usersSeedList[1]._id.toHexString()}/expo-token`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { formationExpoToken: 'ExponentPushToken[jeSuisNouvelIdExpo]' },
       });
 
@@ -2018,7 +2018,7 @@ describe('USERS ROUTES - POST /users/:id/expo-token', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/users/${usersSeedList[0]._id.toHexString()}/expo-token`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { formationExpoToken: 'ExponentPushToken[jeSuisUnAutreIdExpo]' },
       });
 
@@ -2039,7 +2039,7 @@ describe('USERS ROUTES - POST /users/:id/expo-token', () => {
         const response = await app.inject({
           method: 'POST',
           url: `/users/${usersSeedList[0]._id.toHexString()}/expo-token`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { formationExpoToken: 'ExponentPushToken[jeSuisUnAutreIdExpo]' },
         });
 
@@ -2065,7 +2065,7 @@ describe('USERS ROUTES - DELETE /users/:id/expo-token/:expoToken', () => {
         method: 'DELETE',
         url: `/users/${userId}`
         + `/expo-token/${expoToken}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -2081,7 +2081,7 @@ describe('USERS ROUTES - DELETE /users/:id/expo-token/:expoToken', () => {
         method: 'DELETE',
         url: `/users/${usersSeedList[1]._id.toHexString()}`
         + `/expo-token/${usersSeedList[0].formationExpoTokenList[0]}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -2102,7 +2102,7 @@ describe('USERS ROUTES - DELETE /users/:id/expo-token/:expoToken', () => {
           method: 'DELETE',
           url: `/users/${usersSeedList[0]._id.toHexString()}`
           + `/expo-token/${usersSeedList[0].formationExpoToken}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

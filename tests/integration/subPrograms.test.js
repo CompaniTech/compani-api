@@ -46,7 +46,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${blendedSubProgramId.toHexString()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const subProgramUpdated = await SubProgram.findById(blendedSubProgramId).lean();
@@ -64,7 +64,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${blendedSubProgramId.toHexString()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -85,7 +85,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
           method: 'PUT',
           url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
           payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -109,7 +109,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -199,7 +199,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
           method: 'PUT',
           url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
           payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(404);
@@ -211,7 +211,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -222,7 +222,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${blendedSubProgramId.toHexString()}`,
         payload: { name: '' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -233,7 +233,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${blendedSubProgramId.toHexString()}`,
         payload: { steps: [] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -244,7 +244,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${blendedSubProgramId.toHexString()}`,
         payload: { status: 'qwertyuiop' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -255,7 +255,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${blendedSubProgramId.toHexString()}`,
         payload: { name: 'new name', status: 'draft' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -266,7 +266,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
         payload: { name: 'qwertyuiop' },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -278,7 +278,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${subProgramsList[1]._id.toHexString()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -288,7 +288,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { accessCompanies: [] },
       });
 
@@ -301,7 +301,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${subProgramsList[3]._id.toHexString()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -313,7 +313,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
         method: 'PUT',
         url: `/subprograms/${subProgramsList[4]._id.toHexString()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -336,7 +336,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
           method: 'PUT',
           payload,
           url: `/subprograms/${blendedSubProgramId.toHexString()}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -362,7 +362,7 @@ describe('SUBPROGRAMS ROUTES - POST /subprograms/{_id}/step', () => {
         method: 'POST',
         url: `/subprograms/${subProgramId.toHexString()}/steps`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       const subProgramUpdated = !!await SubProgram
@@ -380,7 +380,7 @@ describe('SUBPROGRAMS ROUTES - POST /subprograms/{_id}/step', () => {
           method: 'POST',
           url: `/subprograms/${subProgramId.toHexString()}/steps`,
           payload: omit(payload, param),
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(400);
@@ -392,7 +392,7 @@ describe('SUBPROGRAMS ROUTES - POST /subprograms/{_id}/step', () => {
         method: 'POST',
         url: `/subprograms/${new ObjectId()}/steps`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -403,7 +403,7 @@ describe('SUBPROGRAMS ROUTES - POST /subprograms/{_id}/step', () => {
         method: 'POST',
         url: `/subprograms/${subProgramsList[2]._id.toHexString()}/steps`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -426,7 +426,7 @@ describe('SUBPROGRAMS ROUTES - POST /subprograms/{_id}/step', () => {
           method: 'POST',
           payload,
           url: `/subprograms/${subProgramId.toHexString()}/steps`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -450,7 +450,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
         payload: { steps: [stepsList[3]._id] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -465,7 +465,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
         payload: { steps: [stepsList[3]._id, stepsList[4]._id] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -481,7 +481,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
         method: 'PUT',
         url: `/subprograms/${new ObjectId()}/steps`,
         payload: { steps: [stepsList[0]._id] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -492,7 +492,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
         payload: { steps: [stepsList[3]._id, new ObjectId()] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -503,7 +503,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
         method: 'PUT',
         url: `/subprograms/${subProgramsList[0]._id}/steps`,
         payload: { steps: [stepsList[0]._id, stepsList[2]._id] },
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -527,7 +527,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
           method: 'PUT',
           payload,
           url: `/subprograms/${subProgramId}/steps`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -551,7 +551,7 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/subprograms/${subProgramId}/steps/${subProgramsList[0].steps[0]}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -564,7 +564,7 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/subprograms/${subProgramsList[0]._id}/steps/${stepsList[4]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -574,7 +574,7 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/subprograms/${subProgramsList[2]._id}/steps/${subProgramsList[2].steps[0]}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -584,7 +584,7 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/subprograms/${subProgramsList[6]._id}/steps/${subProgramsList[6].steps[1]}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -606,7 +606,7 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/subprograms/${subProgramId.toHexString()}/steps/${subProgramsList[0].steps[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

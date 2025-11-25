@@ -508,7 +508,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
         method: 'PUT',
         url: `/questionnairehistories/${endSelfPositionningQuestionnaireHistoryId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -528,7 +528,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
         method: 'PUT',
         url: `/questionnairehistories/${new ObjectId()}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -542,7 +542,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
         method: 'PUT',
         url: `/questionnairehistories/${startSelfPositionningQuestionnaireHistoryId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -554,7 +554,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
         method: 'PUT',
         url: `/questionnairehistories/${endSelfPositionningQuestionnaireHistoryId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -566,7 +566,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
         method: 'PUT',
         url: `/questionnairehistories/${endSelfPositionningQuestionnaireHistoryId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -581,7 +581,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
         method: 'PUT',
         url: `/questionnairehistories/${endSelfPositionningQuestionnaireHistoryId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -603,7 +603,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
           method: 'PUT',
           url: `/questionnairehistories/${endSelfPositionningQuestionnaireHistoryId}`,
           payload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -618,7 +618,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
         method: 'PUT',
         url: `/questionnairehistories/${endSelfPositionningQuestionnaireHistoryId}`,
         payload,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
