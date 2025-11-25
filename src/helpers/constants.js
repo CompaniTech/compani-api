@@ -68,6 +68,7 @@ module.exports = {
   // EMAIL
   VAEI: 'vaei',
   MIDDLE_COURSE: 'middle_course',
+  RESEND: 'resend',
   // EVENTS
   INTERVENTION: 'intervention',
   ABSENCE: 'absence',

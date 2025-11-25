@@ -16,6 +16,7 @@ const {
   ENDED,
   END_COURSE,
   MIDDLE_COURSE,
+  RESEND,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const UserCompaniesHelper = require('../../helpers/userCompanies');
@@ -94,6 +95,10 @@ exports.authorizeSendEmailBillList = async (req) => {
   const courseTimelines = [...new Set(results.map(res => res.courseTimeline))];
   if (noneCourseIsVAEI && courseTimelines.length !== 1) {
     throw Boom.forbidden(translate[language].wrongCourseBills.courseTimeline);
+  }
+
+  if (type === RESEND && courseBills.some(cb => !get(cb, 'sendingDates', []).length)) {
+    throw Boom.forbidden(translate[language].wrongCourseBills.someBillsHaveNotBeenSent);
   }
 
   const mappingBetweenTypeAndCourseTimeline = {

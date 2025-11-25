@@ -17,7 +17,7 @@ const {
 } = require('./seed/emailSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const NodemailerHelper = require('../../src/helpers/nodemailer');
-const { TRAINEE, START_COURSE, VAEI, END_COURSE } = require('../../src/helpers/constants');
+const { TRAINEE, START_COURSE, VAEI, END_COURSE, RESEND } = require('../../src/helpers/constants');
 const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 const UtilsMock = require('../utilsMock');
 
@@ -298,6 +298,19 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       expect(response.statusCode).toBe(403);
       expect(response.result.message)
         .toEqual('Impossible: au moins une facture est associée à une formation VAEI.');
+      sinon.assert.notCalled(sendinBlueTransporter);
+    });
+
+    it('should return 403 if type is RESEND but at least one bill has never been sent', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `alenvi_token=${authToken}` },
+        payload: { ...payload, type: RESEND },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message).toEqual('Impossible: au moins une facture n\'a jamais été envoyée.');
       sinon.assert.notCalled(sendinBlueTransporter);
     });
 
