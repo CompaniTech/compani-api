@@ -1080,7 +1080,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
           method: 'POST',
           url: '/attendancesheets',
           payload: getStream(form),
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(409);
@@ -1107,7 +1107,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
           method: 'POST',
           url: '/attendancesheets',
           payload: getStream(form),
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(409);
