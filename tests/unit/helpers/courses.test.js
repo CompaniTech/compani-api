@@ -74,6 +74,7 @@ const {
   COURSE_RESTART,
   COURSE_INTERRUPTION,
   MONTHLY,
+  PRESENT,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -5973,6 +5974,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
+                status: PRESENT,
                 company: { $in: [companyId, otherCompanyId] },
                 trainee: { $in: traineesIds },
               },
@@ -5986,7 +5988,10 @@ describe('generateCompletionCertificates', () => {
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
       [
-        { query: 'find', args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } }] },
+        {
+          query: 'find',
+          args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
+        },
         { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
@@ -6220,6 +6225,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
+                status: PRESENT,
                 company: { $in: [companyId, otherCompanyId] },
                 trainee: { $in: traineesIds },
               },
@@ -6233,7 +6239,10 @@ describe('generateCompletionCertificates', () => {
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
       [
-        { query: 'find', args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } }] },
+        {
+          query: 'find',
+          args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
+        },
         { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
@@ -6504,6 +6513,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
+                status: PRESENT,
                 company: { $in: [companyId, otherCompanyId] },
                 trainee: { $in: traineesIds },
               },
@@ -6517,7 +6527,10 @@ describe('generateCompletionCertificates', () => {
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
       [
-        { query: 'find', args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } }] },
+        {
+          query: 'find',
+          args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
+        },
         { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
@@ -6771,6 +6784,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
+                status: PRESENT,
                 company: { $in: [companyId, otherCompanyId] },
                 trainee: { $in: traineesIds },
               },
@@ -6784,7 +6798,10 @@ describe('generateCompletionCertificates', () => {
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
       [
-        { query: 'find', args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } }] },
+        {
+          query: 'find',
+          args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
+        },
         { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
@@ -6985,6 +7002,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
+                status: PRESENT,
                 company: { $in: course.companies.map(c => c._id) },
                 trainee: { $in: traineesIds },
               },
@@ -6998,7 +7016,10 @@ describe('generateCompletionCertificates', () => {
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
       [
-        { query: 'find', args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } }] },
+        {
+          query: 'find',
+          args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
+        },
         { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
@@ -7159,6 +7180,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
+                status: PRESENT,
                 company: { $in: [companyId] },
                 trainee: { $in: traineesIds },
               },
@@ -7172,7 +7194,10 @@ describe('generateCompletionCertificates', () => {
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
       [
-        { query: 'find', args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } }] },
+        {
+          query: 'find',
+          args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
+        },
         { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
@@ -7460,6 +7485,7 @@ describe('generateCompletionCertificates', () => {
             populate: {
               path: 'attendances',
               match: {
+                status: PRESENT,
                 company: { $in: [companyId, otherCompanyId] },
                 trainee: { $in: traineesIds },
               },
@@ -7473,7 +7499,10 @@ describe('generateCompletionCertificates', () => {
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
       [
-        { query: 'find', args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } }] },
+        {
+          query: 'find',
+          args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
+        },
         { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },

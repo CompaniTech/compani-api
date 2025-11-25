@@ -500,7 +500,7 @@ describe('listUnsubscribed', () => {
             select: 'attendances startDate endDate',
             populate: {
               path: 'attendances',
-              ...([companyId].length && { match: { company: { $in: [companyId] } } }),
+              match: { company: { $in: [companyId] }, status: PRESENT },
               select: 'trainee company',
               populate: { path: 'trainee', select: 'identity' },
               options: { isVendorUser },
@@ -616,7 +616,7 @@ describe('listUnsubscribed', () => {
             select: 'attendances startDate endDate',
             populate: {
               path: 'attendances',
-              ...(holdingCompanies.length && { match: { company: { $in: holdingCompanies } } }),
+              match: { company: { $in: holdingCompanies }, status: PRESENT },
               select: 'trainee company',
               populate: { path: 'trainee', select: 'identity' },
               options: { isVendorUser },
@@ -730,6 +730,7 @@ describe('listUnsubscribed', () => {
             select: 'attendances startDate endDate',
             populate: {
               path: 'attendances',
+              match: { status: PRESENT },
               select: 'trainee company',
               populate: { path: 'trainee', select: 'identity' },
               options: { isVendorUser },
@@ -881,7 +882,7 @@ describe('getTraineeUnsubscribedAttendances', () => {
     SinonMongoose.calledOnceWithExactly(
       attendanceFind,
       [
-        { query: 'find', args: [{ trainee: traineeId, company: trainee.company }] },
+        { query: 'find', args: [{ trainee: traineeId, company: trainee.company, status: PRESENT }] },
         {
           query: 'populate',
           args: [{
