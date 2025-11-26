@@ -105,9 +105,7 @@ exports.authorizeSendEmailBillList = async (req) => {
     };
     const typeIsWrong = type !== mappingBetweenTypeAndCourseTimeline[courseTimelines[0]];
     if (noneCourseIsVAEI && typeIsWrong) throw Boom.forbidden(translate[language].wrongCourseBills.wrongType);
-  }
-
-  if (type === RESEND && courseBills.some(cb => !get(cb, 'sendingDates', []).length)) {
+  } else if (courseBills.some(cb => !cb.sendingDates)) {
     throw Boom.forbidden(translate[language].wrongCourseBills.someBillsHaveNotBeenSent);
   }
 

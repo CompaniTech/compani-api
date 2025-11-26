@@ -168,12 +168,14 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, cred
   const getSubject = () => {
     switch (type) {
       case VAEI:
-        return `Compani : avis de facture en VAE Inversée [${billNumbers}]`;
+        return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
+        + ` en VAE Inversée [${billNumbers}]`;
       case RESEND:
-        return `Compani : relance pour ${UtilsHelper.formatQuantity('facture impayée', courseBills.length, 's', false)}
-          [${billNumbers}]`;
+        return `Compani : relance pour ${UtilsHelper.formatQuantity('facture impayée', courseBills.length, 's', false)}`
+        + ` [${billNumbers}]`;
       default:
-        return `Compani : avis de facture [${billNumbers}]`;
+        return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
+        + ` [${billNumbers}]`;
     }
   };
 

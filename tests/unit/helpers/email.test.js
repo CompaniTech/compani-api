@@ -402,22 +402,16 @@ describe('sendBillEmail', async () => {
     UtilsMock.unmockCurrentDate();
   });
 
-  it('should send bills by email (VAEI + financial manager with phone)', async () => {
+  it('should send bill by email (VAEI + financial manager with phone)', async () => {
     const credentials = { _id: new ObjectId(), role: { vendor: { name: VENDOR_ADMIN } } };
-    const courseBillIds = [new ObjectId(), new ObjectId()];
+    const courseBillId = new ObjectId();
     const payer = { _id: new ObjectId(), name: 'Structure' };
     const companies = [new ObjectId(), new ObjectId()];
     const courseBills = [
       {
-        _id: courseBillIds[0]._id,
+        _id: courseBillId,
         companies: [{ _id: companies[0] }],
         number: 'FACT-00001',
-        payer,
-      },
-      {
-        _id: courseBillIds[1]._id,
-        companies: [{ _id: companies[1] }],
-        number: 'FACT-00002',
         payer,
       },
     ];
@@ -444,26 +438,18 @@ describe('sendBillEmail', async () => {
     const sentObj = { msg: htmlContent };
     sendMail.returns(sentObj);
     sendinBlueTransporter.returns({ sendMail });
-
     userFindOne.returns(SinonMongoose.stubChainedQueries(financialUser, ['lean']));
-    generateBillPdf.onCall(0).returns({ pdf: 'pdf1' });
-    generateBillPdf.onCall(1).returns({ pdf: 'pdf2' });
+    generateBillPdf.returns({ pdf: 'pdf1' });
 
     const recipientEmails = ['test@compani.fr', 'testbis@compani.fr'];
     const result = await EmailHelper
       .sendBillEmail(courseBills, VAEI, 'Bonjour\r\n Ceci est un test', recipientEmails, credentials);
 
     expect(result).toEqual(sentObj);
-    sinon.assert.calledWithExactly(
-      generateBillPdf.getCall(0),
-      courseBillIds[0],
+    sinon.assert.calledOnceWithExactly(
+      generateBillPdf,
+      courseBillId,
       [companies[0], payer._id],
-      credentials
-    );
-    sinon.assert.calledWithExactly(
-      generateBillPdf.getCall(1),
-      courseBillIds[1],
-      [companies[1], payer._id],
       credentials
     );
     SinonMongoose.calledOnceWithExactly(
@@ -479,18 +465,15 @@ describe('sendBillEmail', async () => {
       {
         from: 'Compani <tech@compani.fr>',
         to: ['test@compani.fr', 'testbis@compani.fr'],
-        subject: 'Compani : avis de facture en VAE Inversée [FACT-00001, FACT-00002]',
+        subject: 'Compani : avis de facture en VAE Inversée [FACT-00001]',
         bcc: 'tech@compani.fr',
         html: htmlContent,
-        attachments: [
-          { filename: 'Structure_FACT-00001.pdf', content: 'pdf1', contentType: 'application/pdf' },
-          { filename: 'Structure_FACT-00002.pdf', content: 'pdf2', contentType: 'application/pdf' },
-        ],
+        attachments: [{ filename: 'Structure_FACT-00001.pdf', content: 'pdf1', contentType: 'application/pdf' }],
       }
     );
     sinon.assert.calledOnceWithExactly(
       updateManyCourseBill,
-      { _id: { $in: courseBillIds } },
+      { _id: { $in: [courseBillId] } },
       { $push: { sendingDates: '2025-11-20T11:00:00.000Z' } }
     );
   });
@@ -568,7 +551,7 @@ describe('sendBillEmail', async () => {
       {
         from: 'Compani <tech@compani.fr>',
         to: ['test@compani.fr', 'testbis@compani.fr'],
-        subject: 'Compani : avis de facture [FACT-00001, FACT-00002]',
+        subject: 'Compani : avis de factures [FACT-00001, FACT-00002]',
         bcc: 'tech@compani.fr',
         html: htmlContent,
         attachments: [
