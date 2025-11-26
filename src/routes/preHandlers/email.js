@@ -92,22 +92,24 @@ exports.authorizeSendEmailBillList = async (req) => {
   courseBills.forEach(cb => promises.push(QuestionnaireHelper.getCourseInfos(cb.course._id)));
   const results = await Promise.all(promises);
 
-  const courseTimelines = [...new Set(results.map(res => res.courseTimeline))];
-  if (noneCourseIsVAEI && courseTimelines.length !== 1) {
-    throw Boom.forbidden(translate[language].wrongCourseBills.courseTimeline);
+  if (type !== RESEND) {
+    const courseTimelines = [...new Set(results.map(res => res.courseTimeline))];
+    if (noneCourseIsVAEI && courseTimelines.length !== 1 && type !== RESEND) {
+      throw Boom.forbidden(translate[language].wrongCourseBills.courseTimeline);
+    }
+
+    const mappingBetweenTypeAndCourseTimeline = {
+      [BEFORE_MIDDLE_COURSE_END_DATE]: START_COURSE,
+      [BETWEEN_MID_AND_END_COURSE]: MIDDLE_COURSE,
+      [ENDED]: END_COURSE,
+    };
+    const typeIsWrong = type !== mappingBetweenTypeAndCourseTimeline[courseTimelines[0]];
+    if (noneCourseIsVAEI && typeIsWrong) throw Boom.forbidden(translate[language].wrongCourseBills.wrongType);
   }
 
   if (type === RESEND && courseBills.some(cb => !get(cb, 'sendingDates', []).length)) {
     throw Boom.forbidden(translate[language].wrongCourseBills.someBillsHaveNotBeenSent);
   }
-
-  const mappingBetweenTypeAndCourseTimeline = {
-    [BEFORE_MIDDLE_COURSE_END_DATE]: START_COURSE,
-    [BETWEEN_MID_AND_END_COURSE]: MIDDLE_COURSE,
-    [ENDED]: END_COURSE,
-  };
-  const typeIsWrong = type !== mappingBetweenTypeAndCourseTimeline[courseTimelines[0]];
-  if (noneCourseIsVAEI && typeIsWrong) throw Boom.forbidden(translate[language].wrongCourseBills.wrongType);
 
   const sendingDatesNumber = [...new Set(courseBills.map(cb => get(cb, 'sendingDates', []).length))];
   if (sendingDatesNumber.includes(0) && sendingDatesNumber.length > 1) {
