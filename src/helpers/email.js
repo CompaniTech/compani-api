@@ -4,7 +4,17 @@ const get = require('lodash/get');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
-const { SENDER_MAIL, TRAINER, COACH, CLIENT_ADMIN, TRAINEE, VAEI, COPPER_600, COPPER_500 } = require('./constants');
+const {
+  SENDER_MAIL,
+  TRAINER,
+  COACH,
+  CLIENT_ADMIN,
+  TRAINEE,
+  VAEI,
+  COPPER_600,
+  COPPER_500,
+  RESEND,
+} = require('./constants');
 const translate = require('./translate');
 const Course = require('../models/Course');
 const User = require('../models/User');
@@ -155,12 +165,24 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, cred
   const signatureBillingUserId = new ObjectId(process.env.BILLING_USER_ID);
   const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 }).lean();
 
+  const getSubject = () => {
+    switch (type) {
+      case VAEI:
+        return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
+        + ` en VAE Inversée [${billNumbers}]`;
+      case RESEND:
+        return `Compani : relance pour ${UtilsHelper.formatQuantity('facture impayée', courseBills.length, 's', false)}`
+        + ` [${billNumbers}]`;
+      default:
+        return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
+        + ` [${billNumbers}]`;
+    }
+  };
+
   const mailOptions = {
     from: `Compani <${senderEmail}>`,
     to: recipientEmails,
-    subject: type === VAEI
-      ? `Compani : avis de facture en VAE Inversée [${billNumbers}]`
-      : `Compani : avis de facture [${billNumbers}]`,
+    subject: getSubject(),
     bcc: senderEmail,
     html: `<p>${content.replaceAll('\r\n', '<br>')}</p>
     <p>${getSignature(billingUser)}</p>`,
