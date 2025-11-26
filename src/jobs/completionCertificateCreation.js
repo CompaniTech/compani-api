@@ -7,7 +7,7 @@ const Course = require('../models/Course');
 const Attendance = require('../models/Attendance');
 const ActivityHistory = require('../models/ActivityHistory');
 const CompletionCertificate = require('../models/CompletionCertificate');
-const { MONTHLY, MM_YYYY, MONTH } = require('../helpers/constants');
+const { MONTHLY, MM_YYYY, MONTH, PRESENT } = require('../helpers/constants');
 const { CompaniDate } = require('../helpers/dates/companiDates');
 const CoursesHelper = require('../helpers/courses');
 const EmailHelper = require('../helpers/email');
@@ -40,7 +40,7 @@ const completionCertificateCreationJob = {
         })
         .flat();
 
-      const attendanceList = await Attendance.find({ courseSlot: { $in: courseSlots } })
+      const attendanceList = await Attendance.find({ courseSlot: { $in: courseSlots }, status: PRESENT })
         .populate({ path: 'courseSlot', select: 'startDate endDate course' })
         .setOptions({ isVendorUser: true })
         .lean();
@@ -56,7 +56,10 @@ const completionCertificateCreationJob = {
           true
         );
 
-        const attendances = [...(attendancesByCourse[course._id] || []), ...unsubscribedAttendances];
+        const filteredUnsubscribedAttendances = unsubscribedAttendances
+          .filter(a => CompaniDate(a.courseSlot.startDate).isSameOrBetween(startOfMonth, endOfMonth));
+
+        const attendances = [...(attendancesByCourse[course._id] || []), ...filteredUnsubscribedAttendances];
         if (attendances.length) {
           const attendanceByTrainee = groupBy(attendances, 'trainee');
           for (const trainee of Object.keys(attendanceByTrainee)) {

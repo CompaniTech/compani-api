@@ -238,7 +238,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -252,7 +252,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, bills: [...payload.bills, new ObjectId()] },
       });
 
@@ -263,7 +263,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, bills: [courseBillsList[0]._id, courseBillsList[1]._id] },
       });
 
@@ -277,7 +277,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, type: VAEI },
       });
 
@@ -291,7 +291,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, bills: [courseBillsList[1]._id] },
       });
 
@@ -305,7 +305,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, type: END_COURSE },
       });
 
@@ -319,7 +319,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, bills: [courseBillsList[0]._id, courseBillsList[2]._id] },
       });
 
@@ -334,7 +334,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/email/send-coursebill-list',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: omit(payload, [missingParam]),
         });
 
@@ -346,7 +346,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, bills: [] },
       });
 
@@ -357,7 +357,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, type: 'wrong' },
       });
 
@@ -368,7 +368,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, recipientEmails: [] },
       });
 
@@ -379,7 +379,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, recipientEmails: [...payload.recipientEmails, 'wrong'] },
       });
 
@@ -400,7 +400,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/email/send-coursebill-list',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 

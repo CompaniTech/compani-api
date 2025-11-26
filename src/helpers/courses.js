@@ -78,6 +78,7 @@ const {
   COURSE_RESTART,
   COURSE_INTERRUPTION,
   MONTHLY,
+  PRESENT,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -1353,6 +1354,7 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
       populate: {
         path: 'attendances',
         match: {
+          status: PRESENT,
           ...(course.companies.length && { company: { $in: course.companies } }),
           ...(course.trainees.length && { trainee: { $in: course.trainees } }),
         },
@@ -1405,7 +1407,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
     .lean();
 
   const attendances = await Attendance
-    .find({ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } })
+    .find({ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT })
     .populate({ path: 'courseSlot', select: 'startDate endDate' })
     .setOptions({ isVendorUser })
     .lean();

@@ -107,7 +107,10 @@ exports.listUnsubscribed = async (query, credentials) => {
       select: 'attendances startDate endDate',
       populate: {
         path: 'attendances',
-        ...(companies.length && { match: { company: { $in: companies } } }),
+        match: {
+          status: PRESENT,
+          ...(companies.length && { company: { $in: companies } }),
+        },
         select: 'trainee company',
         populate: { path: 'trainee', select: 'identity' },
         options: { isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) },
@@ -125,7 +128,7 @@ exports.getTraineeUnsubscribedAttendances = async (traineeId, credentials) => {
   const trainee = await User.findOne({ _id: traineeId }, { company: 1 }).populate({ path: 'company' }).lean();
 
   const attendances = await Attendance
-    .find({ trainee: traineeId, company: trainee.company })
+    .find({ trainee: traineeId, company: trainee.company, status: PRESENT })
     .populate({
       path: 'courseSlot',
       select: 'course startDate endDate',
