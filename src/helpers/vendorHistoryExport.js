@@ -352,16 +352,16 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
 
   for (const slot of courseSlots) {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
-    const subscribedAttendances = [];
-    const subscribedAbsences = [];
+    const presences = [];
+    const absences = [];
     slot.attendances.forEach((attendance) => {
       const isCourseTrainee = UtilsHelper.doesArrayIncludeId(slot.course.trainees.map(t => t._id), attendance.trainee);
       if (!isCourseTrainee) return;
-      if (isCourseTrainee && attendance.status === PRESENT) subscribedAttendances.push(attendance);
-      else if (isCourseTrainee && attendance.status === MISSING) subscribedAbsences.push(attendance);
+      if (isCourseTrainee && attendance.status === PRESENT) presences.push(attendance);
+      else if (isCourseTrainee && attendance.status === MISSING) absences.push(attendance);
     });
-    const attendancesCount = subscribedAttendances.length;
-    const absencesCount = subscribedAbsences.length;
+    const presencesCount = presences.length;
+    const absencesCount = absences.length;
 
     rows.push({
       'Id Créneau': slot._id,
@@ -375,10 +375,10 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       'Date de fin': CompaniDate(slot.endDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       Durée: slotDuration,
       Adresse: getAddress(slot),
-      'Nombre de présences': attendancesCount,
+      'Nombre de présences': presencesCount,
       'Nombre d\'absences': absencesCount,
-      'Nombre de présences non prévues': slot.attendances.length - attendancesCount - absencesCount,
-      'Nombre d\'émargements non remplis': slot.course.trainees.length - attendancesCount - absencesCount,
+      'Nombre de présences non prévues': slot.attendances.length - presencesCount - absencesCount,
+      'Nombre d\'émargements non remplis': slot.course.trainees.length - presencesCount - absencesCount,
     });
   }
 
