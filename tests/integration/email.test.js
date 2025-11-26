@@ -305,7 +305,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, type: RESEND },
       });
 
