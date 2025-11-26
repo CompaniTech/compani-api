@@ -170,7 +170,8 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, cred
       case VAEI:
         return `Compani : avis de facture en VAE Inversée [${billNumbers}]`;
       case RESEND:
-        return `Compani : relance pour factures impayées [${billNumbers}]`;
+        return `Compani : relance pour ${UtilsHelper.formatQuantity('facture impayée', courseBills.length, 's', false)}
+          [${billNumbers}]`;
       default:
         return `Compani : avis de facture [${billNumbers}]`;
     }
