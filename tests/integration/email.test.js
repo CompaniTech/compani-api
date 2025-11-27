@@ -248,6 +248,20 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should resend bill list by email', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { ...payload, type: RESEND, bills: [courseBillsList[3]._id] },
+      });
+
+      expect(response.result.data.mailInfo).toEqual('emailSent');
+      sinon.assert.calledWithExactly(sendinBlueTransporter);
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return a 404 if a bill does not exist', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -287,7 +301,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       sinon.assert.notCalled(sendinBlueTransporter);
     });
 
-    it('should return 403 if a bill is linked to a VAEI course and payload type is not VAEI', async () => {
+    it('should return 403 if a bill is linked to a VAEI course and payload type is not VAEI or RESEND', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/email/send-coursebill-list',
