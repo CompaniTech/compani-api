@@ -253,7 +253,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
         method: 'POST',
         url: '/email/send-coursebill-list',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { ...payload, type: RESEND, bills: [courseBillsList[3]._id] },
+        payload: { ...payload, type: RESEND, bills: [courseBillsList[3]._id, courseBillsList[2]._id] },
       });
 
       expect(response.result.data.mailInfo).toEqual('emailSent');

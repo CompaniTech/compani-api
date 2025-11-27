@@ -72,22 +72,21 @@ exports.authorizeSendEmailBillList = async (req) => {
 
   if (courseBills.length !== bills.length) throw Boom.notFound(translate[language].courseBillsNotFound);
 
-  const everyCourseIsVAEI = courseBills.every(cb => isVAEICourse(cb.course));
-  const noneCourseIsVAEI = courseBills.every(cb => !isVAEICourse(cb.course));
-
-  const courseBillsAreLinkedToSameCourseType = everyCourseIsVAEI || noneCourseIsVAEI;
-  if (!courseBillsAreLinkedToSameCourseType) throw Boom.forbidden(translate[language].wrongCourseBills.courseType);
-
   const someCoursesAreNotVAEI = courseBills.some(cb => !isVAEICourse(cb.course));
   if (type === VAEI && someCoursesAreNotVAEI) {
     throw Boom.forbidden(translate[language].wrongCourseBills.someCoursesAreNotVAEI);
   }
 
-  const promises = [];
-  courseBills.forEach(cb => promises.push(QuestionnaireHelper.getCourseInfos(cb.course._id)));
-  const results = await Promise.all(promises);
-
   if (type !== RESEND) {
+    const everyCourseIsVAEI = courseBills.every(cb => isVAEICourse(cb.course));
+    const noneCourseIsVAEI = courseBills.every(cb => !isVAEICourse(cb.course));
+
+    const courseBillsAreLinkedToSameCourseType = everyCourseIsVAEI || noneCourseIsVAEI;
+    if (!courseBillsAreLinkedToSameCourseType) throw Boom.forbidden(translate[language].wrongCourseBills.courseType);
+
+    const promises = [];
+    courseBills.forEach(cb => promises.push(QuestionnaireHelper.getCourseInfos(cb.course._id)));
+    const results = await Promise.all(promises);
     const courseTimelines = [...new Set(results.map(res => res.courseTimeline))];
     if (noneCourseIsVAEI && courseTimelines.length !== 1) {
       throw Boom.forbidden(translate[language].wrongCourseBills.courseTimeline);
