@@ -98,6 +98,7 @@ const {
   XML_GENERATED,
   BANK_TRANSFER,
   PRESENT,
+  MISSING,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1739,6 +1740,7 @@ const courseSlotList = [
 
 const attendanceList = [
   { trainee: traineeList[0]._id, courseSlot: courseSlotList[0]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[2]._id, courseSlot: courseSlotList[0]._id, company: authCompany._id, status: MISSING },
   { trainee: traineeList[0]._id, courseSlot: courseSlotList[1]._id, company: authCompany._id, status: PRESENT },
   { trainee: traineeList[1]._id, courseSlot: courseSlotList[11]._id, company: otherCompany._id, status: PRESENT },
   { trainee: traineeList[1]._id, courseSlot: courseSlotList[2]._id, company: otherCompany._id, status: PRESENT },

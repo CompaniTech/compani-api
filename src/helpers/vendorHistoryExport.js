@@ -34,6 +34,7 @@ const {
   INTRA_HOLDING,
   INTER_B2B,
   PAYMENT_STATUS_LIST,
+  PRESENT,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -73,22 +74,27 @@ const isSlotInInterval = (slot, startDate, endDate) => CompaniDate(slot.startDat
 
 const getAttendancesCountInfos = (course) => {
   const attendances = course.slots.map(slot => slot.attendances).flat();
+  const presences = attendances.filter(a => a.status === PRESENT);
   const courseTraineeList = course.trainees.map(trainee => trainee._id);
-  const subscribedAttendances = attendances
+  const subscribedAttendances = presences
     .filter(attendance => UtilsHelper.doesArrayIncludeId(courseTraineeList, attendance.trainee))
     .length;
 
   const upComingSlots = course.slots.filter(slot => CompaniDate().isBefore(slot.startDate)).length;
   const attendancesToCome = upComingSlots * course.trainees.length;
 
-  const unsubscribedTrainees = uniqBy(attendances.map(a => a.trainee), trainee => trainee.toString())
+  const unsubscribedTrainees = uniqBy(presences.map(a => a.trainee), trainee => trainee.toString())
     .filter(attendanceTrainee => !UtilsHelper.doesArrayIncludeId(courseTraineeList, attendanceTrainee))
     .length;
 
+  const unsubscribedAttendances = presences.length - subscribedAttendances;
+
   return {
     subscribedAttendances,
-    unsubscribedAttendances: attendances.length - subscribedAttendances,
-    absences: (course.slots.length * course.trainees.length) - subscribedAttendances - attendancesToCome,
+    unsubscribedAttendances,
+    absences: attendances.length - presences.length,
+    emptyAttendances: (course.slots.length * course.trainees.length) - (attendances.length - unsubscribedAttendances)
+      - attendancesToCome,
     unsubscribedTrainees,
     pastSlots: course.slots.length - upComingSlots,
   };
@@ -168,6 +174,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     subscribedAttendances,
     unsubscribedAttendances,
     absences,
+    emptyAttendances,
     unsubscribedTrainees,
     pastSlots,
   } = getAttendancesCountInfos(course);
@@ -250,6 +257,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     'Nombre de feuilles d\'émargement chargées': asCount,
     'Nombre de présences': subscribedAttendances,
     'Nombre d\'absences': absences,
+    'Nombre d\'émargements non remplis': emptyAttendances,
     'Nombre de stagiaires non prévus': unsubscribedTrainees,
     'Nombre de présences non prévues': unsubscribedAttendances,
     Avancement: getProgress(pastSlots, course),
@@ -343,9 +351,17 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
 
   for (const slot of courseSlots) {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
-    const subscribedAttendances = slot.attendances
-      .filter(attendance => UtilsHelper.doesArrayIncludeId(slot.course.trainees.map(t => t._id), attendance.trainee))
-      .length;
+    const presences = [];
+    const absences = [];
+    const traineesIds = slot.course.trainees.map(t => t._id);
+    slot.attendances.forEach((attendance) => {
+      const isCourseTrainee = UtilsHelper.doesArrayIncludeId(traineesIds, attendance.trainee);
+      if (!isCourseTrainee) return;
+      if (attendance.status === PRESENT) presences.push(attendance);
+      else absences.push(attendance);
+    });
+    const presencesCount = presences.length;
+    const absencesCount = absences.length;
 
     rows.push({
       'Id Créneau': slot._id,
@@ -359,9 +375,10 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       'Date de fin': CompaniDate(slot.endDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       Durée: slotDuration,
       Adresse: getAddress(slot),
-      'Nombre de présences': subscribedAttendances,
-      'Nombre d\'absences': slot.course.trainees.length - subscribedAttendances,
-      'Nombre de présences non prévues': slot.attendances.length - subscribedAttendances,
+      'Nombre de présences': presencesCount,
+      'Nombre d\'absences': absencesCount,
+      'Nombre de présences non prévues': slot.attendances.length - presencesCount - absencesCount,
+      'Nombre d\'émargements non remplis': slot.course.trainees.length - presencesCount - absencesCount,
     });
   }
 
