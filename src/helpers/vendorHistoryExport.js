@@ -35,7 +35,6 @@ const {
   INTER_B2B,
   PAYMENT_STATUS_LIST,
   PRESENT,
-  MISSING,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -354,11 +353,12 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
     const presences = [];
     const absences = [];
+    const traineesIds = slot.course.trainees.map(t => t._id);
     slot.attendances.forEach((attendance) => {
-      const isCourseTrainee = UtilsHelper.doesArrayIncludeId(slot.course.trainees.map(t => t._id), attendance.trainee);
+      const isCourseTrainee = UtilsHelper.doesArrayIncludeId(traineesIds, attendance.trainee);
       if (!isCourseTrainee) return;
-      if (isCourseTrainee && attendance.status === PRESENT) presences.push(attendance);
-      else if (isCourseTrainee && attendance.status === MISSING) absences.push(attendance);
+      if (attendance.status === PRESENT) presences.push(attendance);
+      else absences.push(attendance);
     });
     const presencesCount = presences.length;
     const absencesCount = absences.length;
