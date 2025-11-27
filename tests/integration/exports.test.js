@@ -161,11 +161,11 @@ const vendorHistoryExportTypes = [
   {
     exportType: COURSE_BILL,
     expectedRows: [
-      '\ufeff"Nature";"Identifiant";"Date";"Id formation";"Formation";"Programme";"Apprenant";"Structure";"Id payeur";"Payeur";"Montant TTC";"Montant réglé";"Document lié";"Montant soldé";"Solde";"Avancement";"Début de la formation";"Milieu de la formation";"Fin de la formation"',
-      `"Facture";"FACT-00001";"08/03/2022";${coursesList[0]._id};"Test SAS - Program 1 - group 1";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"1200,00";"0,00";;;"-1200,00";"1,00";"01/05/2021";"01/05/2021";"01/05/2021"`,
-      `"Facture";"FACT-00002";"08/03/2022";${coursesList[3]._id};"Test SAS - Program 1 - group 4";"Program 1";;"Test SAS";${courseFundingOrganisation._id};"APA Paris";"1200,00";"0,00";"AV-00001";"1200,00";"0,00";"1,00";"01/02/2021";"03/02/2021";"10/02/2021"`,
-      `"Facture";"FACT-00005";"08/03/2022";${coursesList[1]._id};"Program 2";"Program 2";;"Un autre SAS";${courseFundingOrganisation._id};"APA Paris";"400,00";"100,00";;;"-300,00";"0,67";"01/02/2021";"02/02/2021";`,
-      `"Avoir";"AV-00002";"09/03/2022";${coursesList[5]._id};"Test SAS - Program 1 - group 6";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"240,00";;"FACT-00008";;;;;;`,
+      '\ufeff"Nature";"Identifiant";"Date";"Id formation";"Formation";"Programme";"Apprenant";"Structure";"Id payeur";"Payeur";"Montant TTC";"Montant réglé";"Document lié";"Montant soldé";"Solde";"Envoyé le";"Avancement";"Début de la formation";"Milieu de la formation";"Fin de la formation"',
+      `"Facture";"FACT-00001";"08/03/2022";${coursesList[0]._id};"Test SAS - Program 1 - group 1";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"1200,00";"0,00";;;"-1200,00";"08/05/2022, 08/06/2022";"1,00";"01/05/2021";"01/05/2021";"01/05/2021"`,
+      `"Facture";"FACT-00002";"08/03/2022";${coursesList[3]._id};"Test SAS - Program 1 - group 4";"Program 1";;"Test SAS";${courseFundingOrganisation._id};"APA Paris";"1200,00";"0,00";"AV-00001";"1200,00";"0,00";"08/05/2022";"1,00";"01/02/2021";"03/02/2021";"10/02/2021"`,
+      `"Facture";"FACT-00005";"08/03/2022";${coursesList[1]._id};"Program 2";"Program 2";;"Un autre SAS";${courseFundingOrganisation._id};"APA Paris";"400,00";"100,00";;;"-300,00";"";"0,67";"01/02/2021";"02/02/2021";`,
+      `"Avoir";"AV-00002";"09/03/2022";${coursesList[5]._id};"Test SAS - Program 1 - group 6";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"240,00";;"FACT-00008";;;;;;;`,
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
   },
