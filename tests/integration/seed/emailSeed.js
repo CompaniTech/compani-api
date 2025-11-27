@@ -135,6 +135,7 @@ const subProgramList = [
 
 const programsList = [
   { _id: new ObjectId(), name: 'Program 1', subPrograms: [subProgramList[0]._id] },
+  { _id: new ObjectId(), name: 'Programme VAEI', subPrograms: [subProgramList[1]._id] },
 ];
 
 const coursesList = [
@@ -199,9 +200,19 @@ const courseBillsList = [
     number: 'FACT-00003',
     sendingDates: ['2022-04-09T00:00:00.000Z'],
   },
+  { // 3 linked to VAEI course
+    _id: new ObjectId(),
+    course: coursesList[1]._id,
+    companies: [authCompany._id],
+    billedAt: '2022-03-06T00:00:00.000Z',
+    number: 'FACT-00004',
+    mainFee: { price: 1000, count: 1, description: 'Accompagnement Mars 2022', countUnit: TRAINEE },
+    payer: { company: authCompany._id },
+    sendingDates: ['2022-04-10T00:00:00.000Z'],
+  },
 ];
 
-const courseBillNumber = { _id: new ObjectId(), seq: 3 };
+const courseBillNumber = { _id: new ObjectId(), seq: 4 };
 
 const slotAddress = {
   street: '24 Avenue Daumesnil',
