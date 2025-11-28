@@ -1412,6 +1412,7 @@ const courseBillList = [
     payer: { company: authCompany._id },
     billedAt: '2022-03-08T00:00:00.000Z',
     number: 'FACT-00001',
+    sendingDates: ['2022-05-08T00:00:00.000Z', '2022-06-08T00:00:00.000Z'],
   },
   { // 1 cancelled with creditNote
     _id: new ObjectId(),
@@ -1421,6 +1422,7 @@ const courseBillList = [
     payer: { fundingOrganisation: courseFundingOrganisation._id },
     billedAt: '2022-03-08T00:00:00.000Z',
     number: 'FACT-00002',
+    sendingDates: ['2022-05-08T00:00:00.000Z'],
   },
   { // 2
     _id: new ObjectId(),
