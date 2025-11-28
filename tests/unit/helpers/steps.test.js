@@ -4,7 +4,7 @@ const { ObjectId } = require('mongodb');
 const SubProgram = require('../../../src/models/SubProgram');
 const Step = require('../../../src/models/Step');
 const StepsHelper = require('../../../src/helpers/steps');
-const { E_LEARNING, PT0S } = require('../../../src/helpers/constants');
+const { E_LEARNING, PT0S, PRESENT, MISSING } = require('../../../src/helpers/constants');
 const SinonMongoose = require('../sinonMongoose');
 
 describe('updateStep', () => {
@@ -149,9 +149,13 @@ describe('getPresenceStepProgress', () => {
       {
         startDate: '2020-11-03T09:00:00.000Z',
         endDate: '2020-11-03T12:00:00.000Z',
-        attendances: [{ _id: new ObjectId() }],
+        attendances: [{ _id: new ObjectId(), status: PRESENT }],
       },
-      { startDate: '2020-11-04T09:00:00.000Z', endDate: '2020-11-04T12:00:00.000Z', attendances: [] },
+      {
+        startDate: '2020-11-04T09:00:00.000Z',
+        endDate: '2020-11-04T12:00:00.000Z',
+        attendances: [{ _id: new ObjectId(), status: MISSING }],
+      },
     ];
 
     const result = StepsHelper.getPresenceStepProgress(slots);
