@@ -2,6 +2,7 @@ const sinon = require('sinon');
 const { expect } = require('expect');
 const Boom = require('@hapi/boom');
 const Gdrive = require('../../../src/models/Google/Drive');
+const Gsheets = require('../../../src/models/Google/Sheets');
 const GDriveStorageHelper = require('../../../src/helpers/gDriveStorage');
 
 describe('createFolder', () => {
@@ -149,5 +150,67 @@ describe('deleteFile', () => {
     await GDriveStorageHelper.deleteFile('fileId');
 
     sinon.assert.calledWithExactly(deleteFile, { fileId: 'fileId' });
+  });
+});
+
+describe('createCourseFolderAndSheet', () => {
+  let addStub;
+  let writeDataStub;
+
+  beforeEach(() => {
+    addStub = sinon.stub(Gdrive, 'add');
+    writeDataStub = sinon.stub(Gsheets, 'writeData').resolves();
+    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folder_id';
+    process.env.BILLING_COMPANI_EMAIL = 'billing@compani.fr';
+  });
+
+  afterEach(() => {
+    addStub.restore();
+    writeDataStub.restore();
+    delete process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID;
+    delete process.env.BILLING_COMPANI_EMAIL;
+  });
+
+  it('should create a VAEI course folder and sheet and write data in it', async () => {
+    const traineeName = 'TITI Toto';
+    const traineeEmail = 'toto.titi@compani.fr';
+    const traineePhone = '+33612345678';
+
+    addStub.onCall(0).returns({ id: 'folder_id' });
+    addStub.onCall(1).returns({ id: 'sheet_id' });
+
+    const result = await GDriveStorageHelper.createCourseFolderAndSheet({ traineeName, traineeEmail, traineePhone });
+
+    expect(result).toEqual({ folderId: 'folder_id', sheetId: 'sheet_id' });
+
+    sinon.assert.calledWithExactly(
+      addStub.getCall(0),
+      { name: traineeName, parentFolderId: 'parent_folder_id', folder: true }
+    );
+
+    sinon.assert.calledWithExactly(
+      addStub.getCall(1),
+      {
+        name: `${traineeName} - Fichier Apprenant`,
+        parentFolderId: 'folder_id',
+        folder: false,
+        type: 'application/vnd.google-apps.spreadsheet',
+      });
+
+    sinon.assert.calledOnceWithExactly(writeDataStub, {
+      spreadsheetId: 'sheet_id',
+      range: 'A1:F4',
+      values: [
+        ['Début de formation :', 'Tuteur.trice', 'Coach', 'Architecte de parcours', 'Apprenant.e', 'Compani'],
+        ['Prénom Nom', '', '', '', traineeName, ''],
+        ['Email', '', '', '', traineeEmail, 'billing@compani.fr'],
+        ['Tel', '', '', '', traineePhone, ''],
+      ],
+      boldRanges: [
+        { startRow: 1, endRow: 1, startCol: 1, endCol: 6 },
+        { startRow: 2, endRow: 4, startCol: 1, endCol: 1 },
+      ],
+      backgroundColorRanges: [{ startRow: 1, endRow: 1, startCol: 1, endCol: 1, color: '#ffe599' }],
+    });
   });
 });
