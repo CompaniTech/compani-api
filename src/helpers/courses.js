@@ -83,6 +83,7 @@ const {
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
+const gDriveStorageHelper = require('./gDriveStorage');
 const NotificationHelper = require('./notifications');
 const UsersHelper = require('./users');
 const VendorCompaniesHelper = require('./vendorCompanies');
@@ -109,7 +110,16 @@ exports.createCourse = async (payload, credentials) => {
       )
       .lean();
 
-    coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
+    const trainee = await User
+      .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
+      .lean();
+    const { folderId, sheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
+      traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
+      traineeEmail: trainee.local.email,
+      traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
+    });
+
+    coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company], folderId, sheetId };
   }
 
   if (payload.prices) {

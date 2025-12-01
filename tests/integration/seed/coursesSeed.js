@@ -551,6 +551,8 @@ const coursesList = [
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     tutors: [traineeFromAuthFormerlyInOther._id],
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    sheetId: 'sheetId',
   },
   { // 15 course billed INTRA without trainees and slots
     _id: new ObjectId(),
@@ -705,6 +707,8 @@ const coursesList = [
     maxTrainees: 1,
     expectedBillsCount: 0,
     prices: [{ global: 1600, company: authCompany._id }],
+    folderId: 'folderId',
+    sheetId: 'sheetId',
   },
   { // 25 Single course with tutor already in course
     _id: new ObjectId(),
@@ -721,6 +725,8 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     maxTrainees: 1,
     expectedBillsCount: 0,
+    folderId: 'folderId',
+    sheetId: 'sheetId',
   },
   { // 26 interrupted course
     _id: new ObjectId(),

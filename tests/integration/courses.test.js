@@ -9,6 +9,8 @@ const app = require('../../server');
 const Company = require('../../src/models/Company');
 const Course = require('../../src/models/Course');
 const CourseSlot = require('../../src/models/CourseSlot');
+const Gdrive = require('../../src/models/Google/Drive');
+const Gsheets = require('../../src/models/Google/Sheets');
 const User = require('../../src/models/User');
 const UserCompany = require('../../src/models/UserCompany');
 const drive = require('../../src/models/Google/Drive');
@@ -98,11 +100,25 @@ describe('NODE ENV', () => {
 
 describe('COURSES ROUTES - POST /courses', () => {
   let authToken;
+  let gdriveAddStub;
+  let gsheetsWriteDataStub;
+
   beforeEach(populateDB);
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
+      gdriveAddStub = sinon.stub(Gdrive, 'add');
+      gsheetsWriteDataStub = sinon.stub(Gsheets, 'writeData');
+      process.env.BILLING_COMPANI_EMAIL = 'test@compani.fr';
+      process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
+    });
+
+    afterEach(() => {
+      gdriveAddStub.restore();
+      gsheetsWriteDataStub.restore();
+      process.env.BILLING_COMPANI_EMAIL = '';
+      process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
     });
 
     it('should create inter_b2b course', async () => {
@@ -216,6 +232,8 @@ describe('COURSES ROUTES - POST /courses', () => {
         prices: { global: 1000, trainerFees: 200 },
       };
       const coursesCountBefore = await Course.countDocuments();
+      gdriveAddStub.onCall(0).returns({ id: 'folderId' });
+      gdriveAddStub.onCall(1).returns({ id: 'sheetId' });
 
       const response = await app.inject({
         method: 'POST',
@@ -236,6 +254,8 @@ describe('COURSES ROUTES - POST /courses', () => {
           }
         );
       expect(courseWithTrainee).toEqual(1);
+      sinon.assert.calledTwice(gdriveAddStub);
+      sinon.assert.calledOnce(gsheetsWriteDataStub);
     });
 
     it('should return 404 if invalid operationsRepresentative', async () => {
@@ -6791,6 +6811,8 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
   let parseCSV;
   let createFolderForCompany;
   let createFolder;
+  let gdriveAddStub;
+  let gsheetsWriteDataStub;
 
   beforeEach(populateDB);
   beforeEach(() => {
@@ -6800,6 +6822,10 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     parseCSV = sinon.stub(UtilsHelper, 'parseCsv');
     createFolderForCompany = sinon.stub(GDriveStorageHelper, 'createFolderForCompany');
     createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
+    gdriveAddStub = sinon.stub(Gdrive, 'add');
+    gsheetsWriteDataStub = sinon.stub(Gsheets, 'writeData');
+    process.env.BILLING_COMPANI_EMAIL = 'test@compani.fr';
+    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
     process.env.MAX_CSV_COURSE_SIZE = 30;
   });
   afterEach(() => {
@@ -6808,6 +6834,10 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     parseCSV.restore();
     createFolderForCompany.restore();
     createFolder.restore();
+    gdriveAddStub.restore();
+    gsheetsWriteDataStub.restore();
+    process.env.BILLING_COMPANI_EMAIL = '';
+    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
     process.env.MAX_CSV_COURSE_SIZE = 0;
   });
 
@@ -6826,6 +6856,12 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       createFolder.onCall(0).returns({ id: '0987654321' });
       createFolder.onCall(1).returns({ id: 'qwerty' });
       createFolder.onCall(2).returns({ id: 'asdfgh' });
+      gdriveAddStub.onCall(0).returns({ id: 'folderId1' });
+      gdriveAddStub.onCall(1).returns({ id: 'sheetId1' });
+      gdriveAddStub.onCall(2).returns({ id: 'folderId2' });
+      gdriveAddStub.onCall(3).returns({ id: 'sheetId2' });
+      gdriveAddStub.onCall(4).returns({ id: 'folderId3' });
+      gdriveAddStub.onCall(5).returns({ id: 'sheetId3' });
 
       const formData = { file: 'test' };
       const form = generateFormData(formData);
@@ -6905,6 +6941,8 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       sinon.assert.calledOnce(sendinBlueTransporter);
       sinon.assert.calledOnce(createFolderForCompany);
       sinon.assert.calledThrice(createFolder);
+      sinon.assert.callCount(gdriveAddStub, 6);
+      sinon.assert.callCount(gsheetsWriteDataStub, 3);
     });
 
     it('should return 400 if a field is missing', async () => {
