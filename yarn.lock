@@ -1550,7 +1550,7 @@ date-holidays-parser@^3.4.7:
     jalaali-js "^1.2.7"
     moment-timezone "^0.5.47"
 
-date-holidays@^3.26.5:
+date-holidays@~3.26.5:
   version "3.26.5"
   resolved "https://registry.yarnpkg.com/date-holidays/-/date-holidays-3.26.5.tgz#5d3a6a31579672d20d116f486fbb325b856fadcf"
   integrity sha512-I/nGVQAxBmLFxjwE48vWTOlZa7nKucQifHJHbkfveCco0hwE+3GvvAPYMw4iXBldvDqaruujV5AvrbOjq9UNUg==
@@ -1675,10 +1675,10 @@ doctrine@^2.1.0:
   dependencies:
     esutils "^2.0.2"
 
-docxtemplater@~3.66.6:
-  version "3.66.6"
-  resolved "https://registry.yarnpkg.com/docxtemplater/-/docxtemplater-3.66.6.tgz#2342b990c16de80e887bf591ecb4b3804d2d1c2b"
-  integrity sha512-D82tInDEMGf6McKyNTPlMAy+bC5Gd4MymPGAvfQANq+2+BU60Xbg83jQXHyBgN+zKQHsrPzl4GmHyAYK1yOTtQ==
+docxtemplater@~3.67.5:
+  version "3.67.5"
+  resolved "https://registry.yarnpkg.com/docxtemplater/-/docxtemplater-3.67.5.tgz#8e488149acb46f52ce1023a9f3b7a22f63d5cee1"
+  integrity sha512-Jnh9rdMf5sDmrfONs3nVDhZwVFxLNdP3RVHkqLQYA6eZLkWA+kx5aYy0cVmEqJcVIaFYf5JJEFdClD7fn6ZUng==
   dependencies:
     "@xmldom/xmldom" "^0.9.8"
 
