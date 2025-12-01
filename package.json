@@ -39,7 +39,7 @@
     "axios": "~1.13.2",
     "bcryptjs": "~3.0.3",
     "bignumber.js": "~9.3.1",
-    "cron": "~4.3.3",
+    "cron": "~4.3.5",
     "date-holidays": "~3.26.1",
     "docxtemplater": "~3.66.6",
     "dotenv": "~17.2.3",
