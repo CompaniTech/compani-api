@@ -110,6 +110,8 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     maxTrainees: 1,
     expectedBills: 0,
+    folderId: 'folderId',
+    sheetId: 'sheetId',
   },
   { // 2
     _id: new ObjectId(),

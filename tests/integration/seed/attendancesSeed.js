@@ -162,6 +162,8 @@ const coursesList = [
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    folderId: 'folderId',
+    sheetId: 'sheetId',
   },
   { // 2
     _id: new ObjectId(),
@@ -260,6 +262,8 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    sheetId: 'sheetId',
   },
 ];
 

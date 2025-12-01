@@ -1387,6 +1387,8 @@ const coursesList = [
     companies: [otherCompany._id],
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    sheetId: 'sheetId',
   },
 ];
 
