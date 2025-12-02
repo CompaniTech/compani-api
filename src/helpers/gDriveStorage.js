@@ -34,37 +34,26 @@ exports.deleteFile = async driveFileId => Gdrive.deleteFile({ fileId: driveFileI
 
 exports.createCourseFolderAndSheet = async ({ traineeName, traineeEmail, traineePhone }) => {
   const parentFolderId = process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID;
+  const templateId = process.env.GOOGLE_SHEET_TEMPLATE_ID;
+
+  if (!templateId) throw Boom.failedDependency('Template sheet ID missing.');
 
   const folder = await Gdrive.add({ name: traineeName, parentFolderId, folder: true });
   if (!folder) throw Boom.failedDependency('Google drive folder creation failed.');
 
   const sheetName = `${traineeName} - Fichier Apprenant`;
-  const sheet = await Gdrive.add({
+  const copiedSheet = await Gdrive.copy({
+    fileId: templateId,
     name: sheetName,
-    parentFolderId: folder.id,
-    folder: false,
-    type: 'application/vnd.google-apps.spreadsheet',
+    parents: [folder.id],
   });
-  if (!sheet) throw Boom.failedDependency('Google Sheet creation failed.');
+  if (!copiedSheet) throw Boom.failedDependency('Google Sheet copy failed.');
 
-  const billingCompaniEmail = process.env.BILLING_COMPANI_EMAIL;
   await Gsheets.writeData({
-    spreadsheetId: sheet.id,
-    range: 'A1:F4',
-    values: [
-      ['Début de formation :', 'Tuteur.trice', 'Coach', 'Architecte de parcours', 'Apprenant.e', 'Compani'],
-      ['Prénom Nom', '', '', '', traineeName, ''],
-      ['Email', '', '', '', traineeEmail, billingCompaniEmail],
-      ['Tel', '', '', '', traineePhone, ''],
-    ],
-    boldRanges: [
-      { startRow: 1, endRow: 1, startCol: 1, endCol: 6 },
-      { startRow: 2, endRow: 4, startCol: 1, endCol: 1 },
-    ],
-    backgroundColorRanges: [
-      { startRow: 1, endRow: 1, startCol: 1, endCol: 1, color: '#ffe599' }, // A1
-    ],
+    spreadsheetId: copiedSheet.id,
+    range: 'Coordonnées!E2:E4',
+    values: [[traineeName], [traineeEmail], [`'${traineePhone}`]],
   });
 
-  return { folderId: folder.id, sheetId: sheet.id };
+  return { folderId: folder.id, sheetId: copiedSheet.id };
 };

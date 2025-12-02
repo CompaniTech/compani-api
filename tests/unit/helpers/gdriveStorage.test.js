@@ -155,20 +155,23 @@ describe('deleteFile', () => {
 
 describe('createCourseFolderAndSheet', () => {
   let addStub;
+  let copyStub;
   let writeDataStub;
 
   beforeEach(() => {
     addStub = sinon.stub(Gdrive, 'add');
-    writeDataStub = sinon.stub(Gsheets, 'writeData').resolves();
+    copyStub = sinon.stub(Gdrive, 'copy');
+    writeDataStub = sinon.stub(Gsheets, 'writeData');
     process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folder_id';
-    process.env.BILLING_COMPANI_EMAIL = 'billing@compani.fr';
+    process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
   });
 
   afterEach(() => {
     addStub.restore();
+    copyStub.restore();
     writeDataStub.restore();
     delete process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID;
-    delete process.env.BILLING_COMPANI_EMAIL;
+    delete process.env.GOOGLE_SHEET_TEMPLATE_ID;
   });
 
   it('should create a VAEI course folder and sheet and write data in it', async () => {
@@ -176,41 +179,27 @@ describe('createCourseFolderAndSheet', () => {
     const traineeEmail = 'toto.titi@compani.fr';
     const traineePhone = '+33612345678';
 
-    addStub.onCall(0).returns({ id: 'folder_id' });
-    addStub.onCall(1).returns({ id: 'sheet_id' });
+    addStub.returns({ id: 'folder_id' });
+    copyStub.returns({ id: 'sheet_id' });
 
     const result = await GDriveStorageHelper.createCourseFolderAndSheet({ traineeName, traineeEmail, traineePhone });
 
     expect(result).toEqual({ folderId: 'folder_id', sheetId: 'sheet_id' });
 
-    sinon.assert.calledWithExactly(
-      addStub.getCall(0),
+    sinon.assert.calledOnceWithExactly(
+      addStub,
       { name: traineeName, parentFolderId: 'parent_folder_id', folder: true }
     );
 
     sinon.assert.calledWithExactly(
-      addStub.getCall(1),
-      {
-        name: `${traineeName} - Fichier Apprenant`,
-        parentFolderId: 'folder_id',
-        folder: false,
-        type: 'application/vnd.google-apps.spreadsheet',
-      });
+      copyStub,
+      { fileId: 'templateId', name: 'TITI Toto - Fichier Apprenant', parents: ['folder_id'] }
+    );
 
     sinon.assert.calledOnceWithExactly(writeDataStub, {
       spreadsheetId: 'sheet_id',
-      range: 'A1:F4',
-      values: [
-        ['Début de formation :', 'Tuteur.trice', 'Coach', 'Architecte de parcours', 'Apprenant.e', 'Compani'],
-        ['Prénom Nom', '', '', '', traineeName, ''],
-        ['Email', '', '', '', traineeEmail, 'billing@compani.fr'],
-        ['Tel', '', '', '', traineePhone, ''],
-      ],
-      boldRanges: [
-        { startRow: 1, endRow: 1, startCol: 1, endCol: 6 },
-        { startRow: 2, endRow: 4, startCol: 1, endCol: 1 },
-      ],
-      backgroundColorRanges: [{ startRow: 1, endRow: 1, startCol: 1, endCol: 1, color: '#ffe599' }],
+      range: 'Coordonnées!E2:E4',
+      values: [['TITI Toto'], ['toto.titi@compani.fr'], ['\'+33612345678']],
     });
   });
 });
