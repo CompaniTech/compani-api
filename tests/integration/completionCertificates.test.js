@@ -30,7 +30,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/completioncertificates?months=02-2025',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -41,7 +41,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?course=${courseList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -52,7 +52,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -62,7 +62,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/completioncertificates?months=12_2024',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -72,7 +72,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/completioncertificates',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -82,7 +82,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?months=02-2025&course=${courseList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -92,7 +92,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?course=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -108,7 +108,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -119,7 +119,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?course=${courseList[1]._id}&companies=${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -130,7 +130,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/completioncertificates?months=12-2024&companies=${otherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -147,7 +147,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
         method: 'GET',
         url: `/completioncertificates?months=12-2024&companies=${otherCompany._id}`
           + `&companies=${companyWithoutSubscription._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -159,7 +159,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
         method: 'GET',
         url: `/completioncertificates?months=12-2024&companies=${authCompany._id}`
           + `&companies=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -177,7 +177,7 @@ describe('COMPLETION CERTIFICATES ROUTES - GET /completioncertificates', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/completioncertificates?months=02-2025',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -208,7 +208,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
       const response = await app.inject({
         method: 'PUT',
         url: `/completioncertificates/${completionCertificateId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -224,7 +224,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
       const response = await app.inject({
         method: 'PUT',
         url: `/completioncertificates/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -236,7 +236,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
       const response = await app.inject({
         method: 'PUT',
         url: `/completioncertificates/${completionCertificateList[4]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -256,7 +256,7 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
         const response = await app.inject({
           method: 'PUT',
           url: `/completioncertificates/${completionCertificateList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -280,7 +280,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
       const response = await app.inject({
         method: 'POST',
         url: '/completioncertificates',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -295,7 +295,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
       const response = await app.inject({
         method: 'POST',
         url: '/completioncertificates',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -310,7 +310,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
       const response = await app.inject({
         method: 'POST',
         url: '/completioncertificates',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -323,7 +323,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
       const response = await app.inject({
         method: 'POST',
         url: '/completioncertificates',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -336,7 +336,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
       const response = await app.inject({
         method: 'POST',
         url: '/completioncertificates',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -349,7 +349,7 @@ describe('COMPLETION CERTIFICATES ROUTES - POST /completioncertificates', () => 
       const response = await app.inject({
         method: 'POST',
         url: '/completioncertificates',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -381,7 +381,7 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
       const response = await app.inject({
         method: 'DELETE',
         url: `/completioncertificates/${completionCertificateId}/file`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -395,7 +395,7 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
       const response = await app.inject({
         method: 'DELETE',
         url: `/completioncertificates/${new ObjectId()}/file`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -405,7 +405,7 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
       const response = await app.inject({
         method: 'DELETE',
         url: `/completioncertificates/${completionCertificateList[5]._id}/file`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -415,7 +415,7 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
       const response = await app.inject({
         method: 'DELETE',
         url: `/completioncertificates/${completionCertificateList[0]._id}/file`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -431,7 +431,7 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
         const response = await app.inject({
           method: 'DELETE',
           url: `/completioncertificates/${completionCertificateList[4]._id}/file`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
         expect(response.statusCode).toBe(role.expectedCode);
       });

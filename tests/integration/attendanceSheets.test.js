@@ -8,7 +8,7 @@ const app = require('../../server');
 const { populateDB, coursesList, attendanceSheetList, slotsList, userList } = require('./seed/attendanceSheetsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
-const { WEBAPP, MOBILE, GENERATION } = require('../../src/helpers/constants');
+const { WEBAPP, MOBILE, GENERATION, MISSING } = require('../../src/helpers/constants');
 const { CompaniDate } = require('../../src/helpers/dates/companiDates');
 const Attendance = require('../../src/models/Attendance');
 const AttendanceSheet = require('../../src/models/AttendanceSheet');
@@ -56,7 +56,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -83,7 +83,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -111,7 +111,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -139,7 +139,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -167,7 +167,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -195,7 +195,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -223,7 +223,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -252,7 +252,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -281,7 +281,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -320,7 +320,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -350,12 +350,15 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[0]._id });
       expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore + 1);
+      const missingAttendance = await Attendance
+        .countDocuments({ courseSlot: slotsList[15]._id, trainee: userList[0]._id, status: MISSING });
+      expect(missingAttendance).toEqual(1);
       sinon.assert.calledOnce(uploadCourseFile);
       sinon.assert.calledTwice(sendNotificationToUser);
     });
@@ -384,7 +387,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -409,7 +412,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -430,7 +433,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -452,7 +455,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -475,7 +478,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -498,7 +501,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -518,7 +521,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -538,7 +541,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -558,7 +561,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -577,7 +580,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -598,7 +601,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -622,7 +625,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -644,7 +647,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -665,7 +668,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -689,7 +692,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -713,7 +716,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -736,7 +739,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -760,7 +763,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -784,7 +787,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -808,7 +811,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -832,7 +835,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
@@ -852,7 +855,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -872,7 +875,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -892,7 +895,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -912,7 +915,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -933,7 +936,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -953,7 +956,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -977,7 +980,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1001,7 +1004,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1024,7 +1027,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1053,11 +1056,62 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
         method: 'POST',
         url: '/attendancesheets',
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 409 if try to create attendance sheet with slot linked to missing attendance (single)',
+      async () => {
+        const slots = [slotsList[23]._id.toHexString()];
+        const formData = {
+          course: coursesList[7]._id.toHexString(),
+          signature: 'test',
+          trainees: userList[1]._id.toHexString(),
+          origin: MOBILE,
+          trainer: trainer._id.toHexString(),
+        };
+
+        const form = generateFormData(formData);
+        slots.forEach(slot => form.append('slots', slot));
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/attendancesheets',
+          payload: getStream(form),
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(409);
+      });
+
+    it('should return 409 if try to create attendance sheet with slot linked to missing attendance (intra)',
+      async () => {
+        const slots = [{
+          slotId: slotsList[0]._id.toHexString(),
+          trainees: [userList[1]._id.toHexString(), userList[0]._id.toHexString()],
+        }];
+        const formData = {
+          course: coursesList[0]._id.toHexString(),
+          signature: 'test',
+          date: '2020-01-23T09:00:00.000Z',
+          origin: MOBILE,
+          trainer: trainer._id.toHexString(),
+        };
+
+        const form = generateFormData(formData);
+        slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/attendancesheets',
+          payload: getStream(form),
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(409);
+      });
   });
 
   describe('Other roles', () => {
@@ -1090,7 +1144,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
           method: 'POST',
           url: '/attendancesheets',
           payload: getStream(form),
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -1114,7 +1168,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1125,7 +1179,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1135,7 +1189,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1155,7 +1209,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/attendancesheets?course=${coursesList[1]._id}&company=${authCompany._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -1169,7 +1223,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/attendancesheets?course=${coursesList[1]._id}&company=${authCompany._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -1180,7 +1234,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[4]._id}&company=${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1191,7 +1245,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[4]._id}&company=${otherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1202,7 +1256,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[4]._id}&company=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1219,7 +1273,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[1]._id}&holding=${otherHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1230,7 +1284,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[6]._id}&holding=${otherHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1240,7 +1294,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[0]._id}&holding=${otherHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1250,7 +1304,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[0]._id}&holding=${authHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1260,7 +1314,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[0]._id}&holding=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1270,7 +1324,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1280,7 +1334,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/attendancesheets?course=${coursesList[1]._id}&holding=${otherHolding._id}&company=${otherCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1302,7 +1356,7 @@ describe('ATTENDANCE SHEETS ROUTES - GET /attendancesheets', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/attendancesheets?course=${coursesList[0]._id}&company=${authCompany._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -1333,7 +1387,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1359,7 +1413,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1379,7 +1433,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1399,7 +1453,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1419,7 +1473,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1437,7 +1491,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1451,7 +1505,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1464,7 +1518,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {},
       });
 
@@ -1478,14 +1532,14 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       await app.inject({
         method: 'PUT',
         url: `/courseslots/${slotsList[14]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { startDate: CompaniDate().add('P1D').toISO(), endDate: CompaniDate().add('P1DT2H').toISO() },
       });
 
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1499,7 +1553,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1513,7 +1567,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1527,7 +1581,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1541,7 +1595,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1555,7 +1609,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1569,7 +1623,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1583,7 +1637,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
@@ -1608,7 +1662,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
         const response = await app.inject({
           method: 'PUT',
           url: `/attendancesheets/${attendanceSheetId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
         });
 
@@ -1644,7 +1698,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[8]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1665,7 +1719,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[12]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1689,7 +1743,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[3]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1711,7 +1765,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[8]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1726,7 +1780,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${new ObjectId()}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1741,7 +1795,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[7]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1756,7 +1810,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[9]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1771,7 +1825,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[13]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1788,7 +1842,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[3]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1807,7 +1861,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}/signature', () 
         method: 'PUT',
         url: `/attendancesheets/${attendanceSheetList[8]._id}/signature`,
         payload: getStream(form),
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1835,7 +1889,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1851,7 +1905,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1869,7 +1923,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetId}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -1887,14 +1941,14 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments();
       expect(attendanceSheetsLengthAfter).toEqual(attendanceSheetsLength - 1);
       const attendanceAfter = await Attendance.countDocuments();
-      expect(attendanceAfter).toEqual(attendanceLength - 1);
+      expect(attendanceAfter).toEqual(attendanceLength - 2);
       sinon.assert.calledThrice(deleteCourseFile);
     });
 
@@ -1903,7 +1957,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -1913,7 +1967,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -1923,7 +1977,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetList[3]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1933,7 +1987,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1944,7 +1998,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/attendancesheets/${attendanceSheetId}?shouldDeleteAttendances=true`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -1974,7 +2028,7 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/attendancesheets/${attendanceSheetId}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

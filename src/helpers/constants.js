@@ -65,6 +65,10 @@ module.exports = {
       'milliseconds',
     ];
   },
+  // EMAIL
+  VAEI: 'vaei',
+  MIDDLE_COURSE: 'middle_course',
+  RESEND: 'resend',
   // EVENTS
   INTERVENTION: 'intervention',
   ABSENCE: 'absence',
@@ -678,4 +682,7 @@ module.exports = {
   // COMPLETION CERTIFICATE GENERATION MODE
   GLOBAL: 'global',
   MONTHLY: 'monthly',
+  // COURSE SLOT STATUS
+  PRESENT: 'present',
+  MISSING: 'missing',
 };

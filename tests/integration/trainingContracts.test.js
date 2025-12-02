@@ -52,7 +52,7 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainingcontracts',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -77,7 +77,7 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainingcontracts',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -96,7 +96,7 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/trainingcontracts',
-        headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
@@ -129,7 +129,7 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
         const response = await app.inject({
           method: 'POST',
           url: '/trainingcontracts',
-          headers: { ...form.getHeaders(), Cookie: `alenvi_token=${authToken}` },
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: getStream(form),
         });
 
@@ -154,7 +154,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -165,7 +165,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -182,7 +182,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[0]._id}&company=${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -192,7 +192,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[2]._id}&company=${authCompany._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -202,7 +202,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[2]._id}&company=${companyWithoutSubscription._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -219,7 +219,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[2]._id}&holding=${otherHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -229,7 +229,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[4]._id}&holding=${otherHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -239,7 +239,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[0]._id}&holding=${otherHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -249,7 +249,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[0]._id}&holding=${authHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -259,7 +259,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[2]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -269,7 +269,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/trainingcontracts?course=${courseList[2]._id}&company=${otherCompany._id}&holding=${otherHolding._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(400);
@@ -291,7 +291,7 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/trainingcontracts?course=${courseList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -319,7 +319,7 @@ describe('TRAINING CONTRACTS ROUTES - DELETE /trainingcontracts/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/trainingcontracts/${trainingContractList[0]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -331,7 +331,7 @@ describe('TRAINING CONTRACTS ROUTES - DELETE /trainingcontracts/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/trainingcontracts/${new ObjectId()}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -341,7 +341,7 @@ describe('TRAINING CONTRACTS ROUTES - DELETE /trainingcontracts/{_id}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/trainingcontracts/${trainingContractList[1]._id}`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
@@ -370,7 +370,7 @@ describe('TRAINING CONTRACTS ROUTES - DELETE /trainingcontracts/{_id}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/trainingcontracts/${trainingContractList[0]._id}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

@@ -32,6 +32,7 @@ const DatesUtilsHelper = require('./dates/utils');
 const ZipHelper = require('./zip');
 const SmsHelper = require('./sms');
 const DocxHelper = require('./docx');
+const GCloudStorageHelper = require('./gCloudStorage');
 const StepsHelper = require('./steps');
 const TrainingContractsHelper = require('./trainingContracts');
 const UserCompaniesHelper = require('./userCompanies');
@@ -77,6 +78,7 @@ const {
   COURSE_RESTART,
   COURSE_INTERRUPTION,
   MONTHLY,
+  PRESENT,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -535,7 +537,12 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             ]
             : []),
         ]
-        : [{ path: 'slots', select: 'step startDate endDate', options: { sort: { startDate: 1 } } }]
+        : [{
+          path: 'slots',
+          select: 'step startDate endDate',
+          options: { sort: { startDate: 1 } },
+          populate: { path: 'missingAttendances', options: { isVendorUser: !!get(credentials, 'role.vendor.name') } },
+        }]
       ),
     ])
     .lean();
@@ -904,6 +911,10 @@ exports.deleteCourse = async (courseId) => {
     .setOptions({ isVendorUser: true })
     .lean();
 
+  const trainerMission = await TrainerMission
+    .findOne({ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
+    .lean();
+
   return Promise.all([
     Course.deleteOne({ _id: courseId }),
     CourseBill.deleteMany({
@@ -918,6 +929,12 @@ exports.deleteCourse = async (courseId) => {
       ? [TrainingContractsHelper.deleteMany(trainingContractList.map(tc => tc._id))]
       : []
     ),
+    ...(trainerMission
+      ? [
+        TrainerMission.deleteOne({ _id: trainerMission._id }),
+        GCloudStorageHelper.deleteCourseFile(trainerMission.file.publicId),
+      ]
+      : []),
   ]);
 };
 
@@ -1337,6 +1354,7 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
       populate: {
         path: 'attendances',
         match: {
+          status: PRESENT,
           ...(course.companies.length && { company: { $in: course.companies } }),
           ...(course.trainees.length && { trainee: { $in: course.trainees } }),
         },
@@ -1389,7 +1407,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
     .lean();
 
   const attendances = await Attendance
-    .find({ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies } })
+    .find({ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT })
     .populate({ path: 'courseSlot', select: 'startDate endDate' })
     .setOptions({ isVendorUser })
     .lean();

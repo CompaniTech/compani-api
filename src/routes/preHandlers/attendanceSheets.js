@@ -16,6 +16,7 @@ const {
   SINGLE,
   INTER_B2B,
   MM_YYYY,
+  MISSING,
 } = require('../../helpers/constants');
 const DatesUtilsHelper = require('../../helpers/dates/utils');
 const translate = require('../../helpers/translate');
@@ -111,6 +112,16 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
       const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
       await checkCompletionCertificates(slotsWithoutAttendances, course._id, slots.flatMap(s => s.trainees));
 
+      const missingAttendances = courseSlots
+        .flatMap(s => s.attendances
+          .filter((a) => {
+            const { trainees } = slots.find(slot => UtilsHelper.areObjectIdsEquals(slot.slotId, s._id));
+            return UtilsHelper.doesArrayIncludeId(trainees, a.trainee) && a.status === MISSING;
+          })
+        );
+
+      if (missingAttendances.length) throw Boom.conflict(translate[language].courseSlotsLinkedToMissingAttendances);
+
       const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
       if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
 
@@ -144,6 +155,13 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 
     const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
     await checkCompletionCertificates(slotsWithoutAttendances, course._id, traineesIds);
+
+    const missingAttendances = courseSlots
+      .flatMap(s => s.attendances
+        .filter(a => UtilsHelper.doesArrayIncludeId(traineesIds, a.trainee) && a.status === MISSING)
+      );
+
+    if (missingAttendances.length) throw Boom.conflict(translate[language].courseSlotsLinkedToMissingAttendances);
 
     const attendanceSheetCount = await AttendanceSheet
       .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slots } });

@@ -8,7 +8,7 @@ const Course = require('../models/Course');
 const UtilsHelper = require('./utils');
 const CourseSlot = require('../models/CourseSlot');
 const User = require('../models/User');
-const { BLENDED, VENDOR_ROLES, COURSE, TRAINEE } = require('./constants');
+const { BLENDED, VENDOR_ROLES, COURSE, TRAINEE, PRESENT, MISSING } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 
 const createSingleAttendance = async (payload, courseTrainees, traineeId, traineesCompanyForAttendance) => {
@@ -36,6 +36,8 @@ const createManyAttendances = async (courseTrainees, courseSlotId, credentials, 
 
   const newAttendances = traineesWithoutAttendances
     .map(tId => ({ courseSlot: courseSlotId, trainee: tId, company: traineesCompanyForAttendance[tId] }));
+
+  await Attendance.updateMany({ _id: { $in: existingAttendances.map(a => a._id) } }, { $set: { status: PRESENT } });
 
   return Attendance.insertMany(newAttendances);
 };
@@ -105,7 +107,10 @@ exports.listUnsubscribed = async (query, credentials) => {
       select: 'attendances startDate endDate',
       populate: {
         path: 'attendances',
-        ...(companies.length && { match: { company: { $in: companies } } }),
+        match: {
+          status: PRESENT,
+          ...(companies.length && { company: { $in: companies } }),
+        },
         select: 'trainee company',
         populate: { path: 'trainee', select: 'identity' },
         options: { isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) },
@@ -123,7 +128,7 @@ exports.getTraineeUnsubscribedAttendances = async (traineeId, credentials) => {
   const trainee = await User.findOne({ _id: traineeId }, { company: 1 }).populate({ path: 'company' }).lean();
 
   const attendances = await Attendance
-    .find({ trainee: traineeId, company: trainee.company })
+    .find({ trainee: traineeId, company: trainee.company, status: PRESENT })
     .populate({
       path: 'courseSlot',
       select: 'course startDate endDate',
@@ -154,6 +159,21 @@ exports.getTraineeUnsubscribedAttendances = async (traineeId, credentials) => {
     }));
 
   return groupBy(unsubscribedAttendances, 'program._id');
+};
+
+exports.update = async (query) => {
+  const { courseSlot: courseSlotId, trainee: traineeId } = query;
+  if (traineeId) return Attendance.updateOne(query, { $set: { status: MISSING } });
+
+  const courseSlot = await CourseSlot.findById(courseSlotId, { course: 1 })
+    .populate({ path: 'course', select: 'trainees' })
+    .lean();
+  const { course } = courseSlot;
+
+  return Attendance.updateMany(
+    { courseSlot: courseSlotId, trainee: { $in: course.trainees } },
+    { $set: { status: MISSING } }
+  );
 };
 
 exports.delete = async (query) => {

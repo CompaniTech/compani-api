@@ -22,7 +22,7 @@ describe('ROLES ROUTES - GET /roles', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/roles',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
       expect(res.statusCode).toBe(200);
       expect(res.result.data.roles.length).toBe(rolesList.length + authRolesList.length);
@@ -32,7 +32,7 @@ describe('ROLES ROUTES - GET /roles', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/roles?name=chef',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
       expect(res.statusCode).toBe(200);
       expect(res.result.data.roles.length).toBe(1);
@@ -42,7 +42,7 @@ describe('ROLES ROUTES - GET /roles', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/roles?name=chef&name=general',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
       expect(res.statusCode).toBe(200);
       expect(res.result.data.roles.length).toBe(2);
@@ -52,7 +52,7 @@ describe('ROLES ROUTES - GET /roles', () => {
       const res = await app.inject({
         method: 'GET',
         url: '/roles?name=caporal',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
       expect(res.statusCode).toBe(404);
     });
@@ -72,7 +72,7 @@ describe('ROLES ROUTES - GET /roles', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/roles',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

@@ -21,7 +21,7 @@ describe('TAX CERTIFICATES ROUTES - GET /{_id}/pdf', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/taxcertificates/${taxCertificatesList[0]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -31,7 +31,7 @@ describe('TAX CERTIFICATES ROUTES - GET /{_id}/pdf', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/taxcertificates/${taxCertificatesList[2]._id}/pdfs`,
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(404);
@@ -50,7 +50,7 @@ describe('TAX CERTIFICATES ROUTES - GET /{_id}/pdf', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/taxcertificates/${taxCertificatesList[0]._id}/pdfs`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

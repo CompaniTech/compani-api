@@ -160,6 +160,7 @@ describe('create', () => {
   let getCompanyAtCourseRegistrationList;
   let sendAttendanceSheetSignatureRequestNotification;
   let createAttendance;
+  let updateAttendance;
 
   beforeEach(() => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
@@ -176,6 +177,7 @@ describe('create', () => {
       'sendAttendanceSheetSignatureRequestNotification'
     );
     createAttendance = sinon.stub(AttendanceHelper, 'create');
+    updateAttendance = sinon.stub(AttendanceHelper, 'update');
   });
 
   afterEach(() => {
@@ -190,6 +192,7 @@ describe('create', () => {
     getCompanyAtCourseRegistrationList.restore();
     sendAttendanceSheetSignatureRequestNotification.restore();
     createAttendance.restore();
+    updateAttendance.restore();
   });
 
   it('should create an attendance sheet for INTRA course', async () => {
@@ -221,7 +224,7 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] },
+        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] },
         { query: 'lean' },
       ]
     );
@@ -233,6 +236,7 @@ describe('create', () => {
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
     sinon.assert.notCalled(attendanceCountDocuments);
     sinon.assert.notCalled(createAttendance);
+    sinon.assert.notCalled(updateAttendance);
   });
 
   it('should upload trainer signature and create attendance sheets for INTRA', async () => {
@@ -245,7 +249,7 @@ describe('create', () => {
     ];
     const credentials = { _id: new ObjectId() };
 
-    const course = { _id: courseId, companies: [companyId], type: INTRA };
+    const course = { _id: courseId, companies: [companyId], type: INTRA, trainees: traineesId };
     const payload = {
       course: courseId,
       date: '2025-08-28T10:00:00.000Z',
@@ -288,15 +292,12 @@ describe('create', () => {
       course: courseId,
       date: '2025-08-28T10:00:00.000Z',
     });
-    attendanceCountDocuments.onCall(0).returns(1);
-    attendanceCountDocuments.onCall(1).returns(0);
-    attendanceCountDocuments.onCall(2).returns(0);
 
     await attendanceSheetHelper.create(payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledWithExactly(
       userFindOne,
@@ -339,27 +340,17 @@ describe('create', () => {
       ]
     );
     sinon.assert.calledWithExactly(
-      attendanceCountDocuments.getCall(0),
-      { trainee: traineesId[0], courseSlot: slots[0].slotId }
-    );
-    sinon.assert.calledWithExactly(
-      attendanceCountDocuments.getCall(1),
-      { trainee: traineesId[1], courseSlot: slots[0].slotId }
-    );
-    sinon.assert.calledWithExactly(
-      attendanceCountDocuments.getCall(2),
-      { trainee: traineesId[0], courseSlot: slots[1].slotId }
-    );
-    sinon.assert.calledWithExactly(
       createAttendance.getCall(0),
-      { trainee: traineesId[1], courseSlot: slots[0].slotId },
+      { courseSlot: slots[0].slotId },
       credentials
     );
     sinon.assert.calledWithExactly(
       createAttendance.getCall(1),
-      { trainee: traineesId[0], courseSlot: slots[1].slotId },
+      { courseSlot: slots[1].slotId },
       credentials
     );
+    sinon.assert.calledWithExactly(updateAttendance, { trainee: traineesId[1], courseSlot: slots[1].slotId });
+    sinon.assert.notCalled(attendanceCountDocuments);
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(formatIdentity);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
@@ -375,7 +366,7 @@ describe('create', () => {
     ];
     const credentials = { _id: new ObjectId() };
 
-    const course = { _id: courseId, companies: companyIds, type: INTRA_HOLDING };
+    const course = { _id: courseId, companies: companyIds, type: INTRA_HOLDING, trainees: traineesId };
     const payload = {
       course: courseId,
       date: '2025-08-28T10:00:00.000Z',
@@ -420,15 +411,12 @@ describe('create', () => {
       course: courseId,
       date: '2025-08-28T10:00:00.000Z',
     });
-    attendanceCountDocuments.onCall(0).returns(1);
-    attendanceCountDocuments.onCall(1).returns(0);
-    attendanceCountDocuments.onCall(2).returns(0);
 
     await attendanceSheetHelper.create(payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledWithExactly(
       userFindOne,
@@ -481,27 +469,17 @@ describe('create', () => {
       ]
     );
     sinon.assert.calledWithExactly(
-      attendanceCountDocuments.getCall(0),
-      { trainee: traineesId[0], courseSlot: slots[0].slotId }
-    );
-    sinon.assert.calledWithExactly(
-      attendanceCountDocuments.getCall(1),
-      { trainee: traineesId[1], courseSlot: slots[0].slotId }
-    );
-    sinon.assert.calledWithExactly(
-      attendanceCountDocuments.getCall(2),
-      { trainee: traineesId[0], courseSlot: slots[1].slotId }
-    );
-    sinon.assert.calledWithExactly(
       createAttendance.getCall(0),
-      { trainee: traineesId[1], courseSlot: slots[0].slotId },
+      { courseSlot: slots[0].slotId },
       credentials
     );
     sinon.assert.calledWithExactly(
       createAttendance.getCall(1),
-      { trainee: traineesId[0], courseSlot: slots[1].slotId },
+      { courseSlot: slots[1].slotId },
       credentials
     );
+    sinon.assert.calledWithExactly(updateAttendance, { trainee: traineesId[1], courseSlot: slots[1].slotId });
+    sinon.assert.notCalled(attendanceCountDocuments);
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(formatIdentity);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
@@ -534,7 +512,7 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] },
+        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] },
         { query: 'lean' },
       ]
     );
@@ -573,6 +551,7 @@ describe('create', () => {
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
     sinon.assert.notCalled(attendanceCountDocuments);
     sinon.assert.notCalled(createAttendance);
+    sinon.assert.notCalled(updateAttendance);
   });
 
   it('should upload trainer signature and create attendance sheets for INTER', async () => {
@@ -627,7 +606,7 @@ describe('create', () => {
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledWithExactly(
       attendanceSheetFindOne,
@@ -759,6 +738,7 @@ describe('create', () => {
       credentials
     );
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+    sinon.assert.notCalled(updateAttendance);
   });
 
   it('should get existing trainer signature and update attendance sheet for INTER', async () => {
@@ -845,7 +825,7 @@ describe('create', () => {
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledWithExactly(
       attendanceSheetFindOne,
@@ -972,6 +952,7 @@ describe('create', () => {
     );
     sinon.assert.notCalled(uploadCourseFile);
     sinon.assert.notCalled(create);
+    sinon.assert.notCalled(updateAttendance);
   });
 
   it('should create an attendance sheet with one slot for single course', async () => {
@@ -982,7 +963,7 @@ describe('create', () => {
     const attendanceSheetId = new ObjectId();
     const credentials = { _id: new ObjectId() };
 
-    const course = { _id: courseId, companies: [new ObjectId()] };
+    const course = { _id: courseId, companies: [new ObjectId()], type: SINGLE };
     const payload = { trainees: traineeId, course: courseId, file: 'test.pdf', slots: slotId };
     const user = { _id: traineeId, identity: { firstName: 'Eren', lastname: 'JÄGER' }, formationExpoTokenList: [] };
 
@@ -998,7 +979,7 @@ describe('create', () => {
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
@@ -1026,6 +1007,7 @@ describe('create', () => {
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+    sinon.assert.notCalled(updateAttendance);
   });
 
   it('should create an attendance sheet with multiple slots for single course', async () => {
@@ -1036,7 +1018,7 @@ describe('create', () => {
     const slots = [new ObjectId(), new ObjectId()];
     const credentials = { _id: new ObjectId() };
 
-    const course = { _id: courseId, companies: [new ObjectId()] };
+    const course = { _id: courseId, companies: [new ObjectId()], type: SINGLE };
     const payload = { trainees: traineeId, course: courseId, file: 'test.pdf', slots };
     const user = {
       _id: traineeId,
@@ -1056,7 +1038,7 @@ describe('create', () => {
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
@@ -1085,6 +1067,7 @@ describe('create', () => {
     sinon.assert.notCalled(sendAttendanceSheetSignatureRequestNotification);
     sinon.assert.notCalled(attendanceSheetFindOne);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+    sinon.assert.notCalled(updateAttendance);
   });
 
   it('should upload trainer signature and create an attendance sheet (single)', async () => {
@@ -1095,7 +1078,7 @@ describe('create', () => {
     const slots = [new ObjectId(), new ObjectId()];
     const credentials = { _id: new ObjectId() };
 
-    const course = { _id: courseId, companies: [new ObjectId()] };
+    const course = { _id: courseId, companies: [new ObjectId()], type: SINGLE };
     const payload = {
       trainees: traineeId,
       course: courseId,
@@ -1125,7 +1108,7 @@ describe('create', () => {
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
-      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: courseId }, { companies: 1, type: 1, trainees: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       userFindOne,
@@ -1172,6 +1155,7 @@ describe('create', () => {
     sinon.assert.calledWithExactly(attendanceCountDocuments.getCall(1), { trainee: traineeId, courseSlot: slots[1] });
     sinon.assert.calledOnceWithExactly(createAttendance, { trainee: traineeId, courseSlot: slots[0] }, credentials);
     sinon.assert.notCalled(attendanceSheetFindOneAndUpdate);
+    sinon.assert.notCalled(updateAttendance);
   });
 });
 

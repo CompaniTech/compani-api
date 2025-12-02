@@ -23,6 +23,7 @@ const {
   GLOBAL,
   SINGLE,
   MONTHLY,
+  PRESENT,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { auxiliaryRoleId } = require('../../seed/authRolesSeed');
@@ -270,12 +271,22 @@ const courseSlotsList = [
   },
 ];
 
-const attendance = {
-  _id: new ObjectId(),
-  trainee: traineeFromOtherCompany._id,
-  courseSlot: courseSlotsList[4]._id,
-  company: otherCompany._id,
-};
+const attendances = [
+  {
+    _id: new ObjectId(),
+    trainee: traineeFromOtherCompany._id,
+    courseSlot: courseSlotsList[4]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: traineeFromOtherCompany._id,
+    courseSlot: courseSlotsList[12]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+];
 
 const attendanceSheet = {
   _id: new ObjectId(),
@@ -309,7 +320,7 @@ const populateDB = async () => {
     CourseSlot.create(courseSlotsList),
     Step.create(stepsList),
     User.create([traineeFromOtherCompany]),
-    Attendance.create(attendance),
+    Attendance.create(attendances),
     AttendanceSheet.create(attendanceSheet),
     UserCompany.create(userCompanies),
   ]);

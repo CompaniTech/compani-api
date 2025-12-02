@@ -6,7 +6,7 @@ const Course = require('../../../src/models/Course');
 const Attendance = require('../../../src/models/Attendance');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
-const { INTER_B2B, MONTHLY, MM_YYYY, BLENDED } = require('../../../src/helpers/constants');
+const { INTER_B2B, MONTHLY, MM_YYYY, BLENDED, PRESENT } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const EmailHelper = require('../../../src/helpers/email');
 const { completionCertificateCreationJob } = require('../../../src/jobs/completionCertificateCreation');
@@ -166,7 +166,6 @@ describe('method', () => {
     findActivityHistory.onCall(1).returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     countDocumentsCompletionCertificate.onCall(0).returns(0);
     countDocumentsCompletionCertificate.onCall(1).returns(0);
-    countDocumentsCompletionCertificate.onCall(2).returns(0);
     createManyCompletionCertificate.returns([
       { course: courseIds[0], trainee: traineeIds[0], month },
       { course: courseIds[0], trainee: traineeIds[2], month },
@@ -216,7 +215,11 @@ describe('method', () => {
             select: 'attendances startDate endDate',
             populate: {
               path: 'attendances',
-              match: { company: { $in: [companyIds[0]] }, trainee: { $in: [traineeIds[0], traineeIds[2]] } },
+              match: {
+                status: PRESENT,
+                company: { $in: [companyIds[0]] },
+                trainee: { $in: [traineeIds[0], traineeIds[2]] },
+              },
               options: { isVendorUser: true },
             },
           }],
@@ -244,7 +247,7 @@ describe('method', () => {
             select: 'attendances startDate endDate',
             populate: {
               path: 'attendances',
-              match: { company: { $in: [companyIds[1]] }, trainee: { $in: [traineeIds[1]] } },
+              match: { status: PRESENT, company: { $in: [companyIds[1]] }, trainee: { $in: [traineeIds[1]] } },
               options: { isVendorUser: true },
             },
           }],
@@ -256,7 +259,7 @@ describe('method', () => {
     SinonMongoose.calledOnceWithExactly(
       findAttendance,
       [
-        { query: 'find', args: [{ courseSlot: { $in: [slotIds[0], slotIds[2], slotIds[3]] } }] },
+        { query: 'find', args: [{ courseSlot: { $in: [slotIds[0], slotIds[2], slotIds[3]] }, status: PRESENT }] },
         { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate course' }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
@@ -299,19 +302,13 @@ describe('method', () => {
     );
     SinonMongoose.calledWithExactly(
       countDocumentsCompletionCertificate,
-      [{ query: 'countDocuments', args: [{ course: courseIds[0], trainee: traineeIds[2], month }] }],
-      1
-    );
-    SinonMongoose.calledWithExactly(
-      countDocumentsCompletionCertificate,
       [{ query: 'countDocuments', args: [{ course: courseIds[1], trainee: traineeIds[1], month }] }],
-      2
+      1
     );
     sinon.assert.calledWithExactly(
       createManyCompletionCertificate,
       [
         { course: courseIds[0], trainee: traineeIds[0], month },
-        { course: courseIds[0], trainee: traineeIds[2], month },
         { course: courseIds[1], trainee: traineeIds[1], month },
       ]
     );

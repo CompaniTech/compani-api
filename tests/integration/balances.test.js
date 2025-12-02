@@ -22,7 +22,7 @@ describe('BALANCES ROUTES - GET /', () => {
       const response = await app.inject({
         method: 'GET',
         url: '/balances',
-        headers: { Cookie: `alenvi_token=${authToken}` },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
@@ -42,7 +42,7 @@ describe('BALANCES ROUTES - GET /', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/balances',
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

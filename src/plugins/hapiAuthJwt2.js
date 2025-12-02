@@ -10,7 +10,7 @@ exports.plugin = {
     server.auth.strategy('jwt', 'jwt', {
       key: process.env.TOKEN_SECRET,
       headerKey: 'x-access-token',
-      cookieKey: 'alenvi_token',
+      cookieKey: process.env.ALENVI_TOKEN,
       verifyOptions: { algorithms: ['HS256'] },
       validate,
     });

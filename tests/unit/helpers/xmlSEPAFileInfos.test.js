@@ -289,7 +289,7 @@ describe('generateSEPAFile', () => {
                 LclInstrm: { Cd: 'CORE' },
                 SeqTp: 'RCUR',
               },
-              ReqdColltnDt: '2025-09-30',
+              ReqdColltnDt: '2025-10-01',
               Cdtr: { Nm: 'VendorCompany' },
               CdtrAcct: {
                 Id: { IBAN: 'FR2817569000407686668287H77' },

@@ -117,34 +117,34 @@ const vendorHistoryExportTypes = [
   {
     exportType: COURSE,
     expectedRows: [
-      '\ufeff"Identifiant";"Type";"Payeur";"Structure";"Société mère";"Programme";"Id programme";"Sous-Programme";"Infos complémentaires";"Intervenant·es";"Début de formation";"Fin de formation";"Chargé des opérations";"Contact pour la formation";"Nombre d\'inscrits";"Nombre de dates";"Nombre de créneaux";"Nombre de créneaux à planifier";"Durée Totale";"Nombre de SMS envoyés";"Nombre de personnes connectées à l\'app";"Complétion eLearning moyenne";"Nombre de réponses au questionnaire de recueil des attentes";"Nombre de réponses au questionnaire de satisfaction";"Date de démarrage souhaitée";"Première date de démarrage souhaitée";"Nombre de feuilles d\'émargement chargées";"Nombre de présences";"Nombre d\'absences";"Nombre de stagiaires non prévus";"Nombre de présences non prévues";"Avancement";"Archivée";"Date d\'archivage";"Prix de la formation";"Nombre de factures";"Facturée";"Montant facturé";"Montant réglé";"Solde";"Date de création"',
-      `${coursesList[0]._id};"Intra";"Test SAS";"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;2;0;"4,00";2;1;"0,00";2;1;;;1;2;4;0;0;"1,00";"Oui";"08/07/2024";"${formatPrice(coursesList[0].prices[0].global)}";"1 sur 1";"Oui";"1200,00";"0,00";"-1200,00";"07/01/2018"`,
-      `${coursesList[5]._id};"Intra";"APA Paris,Test SAS";"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 6";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;3;0;0;"1,00";"Non";;;"2 sur 3";"Non";"880,00";"0,00";"-880,00";"07/01/2018"`,
-      `${coursesList[6]._id};"Intra";;"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 7";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;"1,00";"Non";;;"0 sur 0";"Non";;;;"07/01/2018"`,
-      `${coursesList[1]._id};"Inter B2B";"APA Paris";"Test SAS,Un autre SAS";"Auth Holding, Other Holding";"Program 2";${programList[1]._id};"subProgram 2";;"Gilles FORMATEUR";"01/02/2021";;"Aline CONTACT-COM";"Aline CONTACT-COM";2;2;2;1;"4,00";1;0;"0,67";1;1;"01/01/2019";"24/10/2018";0;2;2;1;2;"0,67";"Non";;"\nTest SAS: ${formatPrice(coursesList[1].prices[0].global)} (+ FF: ${formatPrice(coursesList[1].prices[0].trainerFees)})\nUn autre SAS: ${formatPrice(coursesList[1].prices[1].global)}";"2 sur 2";"Oui";"800,00";"500,00";"-300,00";"07/01/2018"`,
-      `${coursesList[2]._id};"Inter B2B";;"Test SAS,Test SAS withtout subscription,Un autre SAS";"Auth Holding, Other Holding";"Program 2";${programList[1]._id};"subProgram 2";"group 3";"Gilles FORMATEUR";;;"Aline CONTACT-COM";"Aline CONTACT-COM";3;0;0;0;"0,00";0;0;"0,44";0;1;"12/01/2022";"12/01/2022";0;0;0;0;0;;"Non";;"\nTest SAS: ${formatPrice(coursesList[2].prices[0].global)}";"0 sur 3";"Non";;;;"07/01/2018"`,
-      `${coursesList[7]._id};"Intra société mère";;;"Société mère";"Program 1";${programList[0]._id};"subProgram 1";"group 8";"Gilles FORMATEUR";"16/01/2021";"16/01/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;"1,00";"Non";;;"0 sur 0";"Non";;;;"07/01/2018"`,
-      `${coursesList[3]._id};"Intra";;"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 4";"Gilles FORMATEUR";"01/02/2021";"10/02/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";2;3;3;0;"11,00";0;1;"0,00";0;0;;;0;0;6;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
-      `${coursesList[8]._id};"Intra";;"Un autre SAS";"Other Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 9";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;1;;;0;1;0;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
-      `${coursesList[9]._id};"Individuelle";;"Un autre SAS";"Other Holding";"Program 1";${programList[0]._id};"subProgram 1";"Paul Trainee";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;1;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
+      '\ufeff"Identifiant";"Type";"Payeur";"Structure";"Société mère";"Programme";"Id programme";"Sous-Programme";"Infos complémentaires";"Intervenant·es";"Début de formation";"Fin de formation";"Chargé des opérations";"Contact pour la formation";"Nombre d\'inscrits";"Nombre de dates";"Nombre de créneaux";"Nombre de créneaux à planifier";"Durée Totale";"Nombre de SMS envoyés";"Nombre de personnes connectées à l\'app";"Complétion eLearning moyenne";"Nombre de réponses au questionnaire de recueil des attentes";"Nombre de réponses au questionnaire de satisfaction";"Date de démarrage souhaitée";"Première date de démarrage souhaitée";"Nombre de feuilles d\'émargement chargées";"Nombre de présences";"Nombre d\'absences";"Nombre d\'émargements non remplis";"Nombre de stagiaires non prévus";"Nombre de présences non prévues";"Avancement";"Archivée";"Date d\'archivage";"Prix de la formation";"Nombre de factures";"Facturée";"Montant facturé";"Montant réglé";"Solde";"Date de création"',
+      `${coursesList[0]._id};"Intra";"Test SAS";"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 1";"Gilles FORMATEUR, Simon TRAINERANDCOACH";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;2;0;"4,00";2;1;"0,00";2;1;;;1;2;1;3;0;0;"1,00";"Oui";"08/07/2024";"${formatPrice(coursesList[0].prices[0].global)}";"1 sur 1";"Oui";"1200,00";"0,00";"-1200,00";"07/01/2018"`,
+      `${coursesList[5]._id};"Intra";"APA Paris,Test SAS";"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 6";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";3;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;0;3;0;0;"1,00";"Non";;;"2 sur 3";"Non";"880,00";"0,00";"-880,00";"07/01/2018"`,
+      `${coursesList[6]._id};"Intra";;"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 7";"Gilles FORMATEUR";"12/04/2021";"12/04/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;0;"1,00";"Non";;;"0 sur 0";"Non";;;;"07/01/2018"`,
+      `${coursesList[1]._id};"Inter B2B";"APA Paris";"Test SAS,Un autre SAS";"Auth Holding, Other Holding";"Program 2";${programList[1]._id};"subProgram 2";;"Gilles FORMATEUR";"01/02/2021";;"Aline CONTACT-COM";"Aline CONTACT-COM";2;2;2;1;"4,00";1;0;"0,67";1;1;"01/01/2019";"24/10/2018";0;2;0;2;1;2;"0,67";"Non";;"\nTest SAS: ${formatPrice(coursesList[1].prices[0].global)} (+ FF: ${formatPrice(coursesList[1].prices[0].trainerFees)})\nUn autre SAS: ${formatPrice(coursesList[1].prices[1].global)}";"2 sur 2";"Oui";"800,00";"500,00";"-300,00";"07/01/2018"`,
+      `${coursesList[2]._id};"Inter B2B";;"Test SAS,Test SAS withtout subscription,Un autre SAS";"Auth Holding, Other Holding";"Program 2";${programList[1]._id};"subProgram 2";"group 3";"Gilles FORMATEUR";;;"Aline CONTACT-COM";"Aline CONTACT-COM";3;0;0;0;"0,00";0;0;"0,44";0;1;"12/01/2022";"12/01/2022";0;0;0;0;0;0;;"Non";;"\nTest SAS: ${formatPrice(coursesList[2].prices[0].global)}";"0 sur 3";"Non";;;;"07/01/2018"`,
+      `${coursesList[7]._id};"Intra société mère";;;"Société mère";"Program 1";${programList[0]._id};"subProgram 1";"group 8";"Gilles FORMATEUR";"16/01/2021";"16/01/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;0;"1,00";"Non";;;"0 sur 0";"Non";;;;"07/01/2018"`,
+      `${coursesList[3]._id};"Intra";;"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 4";"Gilles FORMATEUR";"01/02/2021";"10/02/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";2;3;3;0;"11,00";0;1;"0,00";0;0;;;0;0;0;6;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
+      `${coursesList[8]._id};"Intra";;"Un autre SAS";"Other Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 9";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;1;;;0;1;0;0;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
+      `${coursesList[9]._id};"Individuelle";;"Un autre SAS";"Other Holding";"Program 1";${programList[0]._id};"subProgram 1";"Paul Trainee";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;0;1;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
     ],
     query: 'startDate=2021-01-15T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
   },
   {
     exportType: COURSE_SLOT,
     expectedRows: [
-      '\ufeff"Id Créneau";"Id Formation";"Formation";"Étape";"Type";"Apprenant";"Date de création";"Date de début";"Date de fin";"Durée";"Adresse";"Nombre de présences";"Nombre d\'absences";"Nombre de présences non prévues"',
-      `${courseSlotList[0]._id};${coursesList[0]._id};"Test SAS - Program 1 - group 1";"étape 1";"présentiel";;"12/12/2020 11:00:00";"01/05/2021 10:00:00";"01/05/2021 12:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";1;2;0`,
-      `${courseSlotList[1]._id};${coursesList[0]._id};"Test SAS - Program 1 - group 1";"étape 2";"distanciel";;"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";1;2;0`,
-      `${courseSlotList[2]._id};${coursesList[1]._id};"Program 2";"étape 1";"présentiel";;"12/12/2020 11:00:02";"01/02/2021 09:00:00";"01/02/2021 11:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";1;1;1`,
-      `${courseSlotList[3]._id};${coursesList[1]._id};"Program 2";"étape 3";"eLearning";;"12/12/2020 11:00:03";"02/02/2021 09:00:00";"02/02/2021 11:00:00";"2,00";;1;1;1`,
-      `${courseSlotList[5]._id};${coursesList[5]._id};"Test SAS - Program 1 - group 6";"étape 1";"présentiel";;"12/12/2020 11:00:04";"12/04/2021 12:00:00";"12/04/2021 14:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";0;3;0`,
-      `${courseSlotList[6]._id};${coursesList[6]._id};"Test SAS - Program 1 - group 7";"étape 1";"présentiel";;"12/12/2020 11:00:04";"12/04/2021 12:00:00";"12/04/2021 14:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";0;0;0`,
-      `${courseSlotList[8]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 1";"présentiel";;"14/10/2020 23:00:00";"01/02/2021 10:00:00";"01/02/2021 13:00:00";"3,00";"24 Avenue Daumesnil 75012 Paris";0;2;0`,
-      `${courseSlotList[9]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 2";"distanciel";;"14/10/2020 23:00:10";"10/02/2021 09:00:00";"10/02/2021 13:00:00";"4,00";;0;2;0`,
-      `${courseSlotList[10]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 1";"présentiel";;"14/10/2020 23:00:30";"03/02/2021 09:00:00";"03/02/2021 13:00:00";"4,00";"24 Avenue Daumesnil 75012 Paris";0;2;0`,
-      `${courseSlotList[11]._id};${coursesList[8]._id};"Un autre SAS - Program 1 - group 9";"étape 2";"distanciel";;"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";1;0;0`,
-      `${courseSlotList[12]._id};${coursesList[9]._id};"Program 1 - Paul Trainee";"étape 2";"distanciel";"Paul TRAINEE";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";0;1;0`,
+      '\ufeff"Id Créneau";"Id Formation";"Formation";"Étape";"Type";"Apprenant";"Date de création";"Date de début";"Date de fin";"Durée";"Adresse";"Nombre de présences";"Nombre d\'absences";"Nombre de présences non prévues";"Nombre d\'émargements non remplis"',
+      `${courseSlotList[0]._id};${coursesList[0]._id};"Test SAS - Program 1 - group 1";"étape 1";"présentiel";;"12/12/2020 11:00:00";"01/05/2021 10:00:00";"01/05/2021 12:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";1;1;0;1`,
+      `${courseSlotList[1]._id};${coursesList[0]._id};"Test SAS - Program 1 - group 1";"étape 2";"distanciel";;"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";1;0;0;2`,
+      `${courseSlotList[2]._id};${coursesList[1]._id};"Program 2";"étape 1";"présentiel";;"12/12/2020 11:00:02";"01/02/2021 09:00:00";"01/02/2021 11:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";1;0;1;1`,
+      `${courseSlotList[3]._id};${coursesList[1]._id};"Program 2";"étape 3";"eLearning";;"12/12/2020 11:00:03";"02/02/2021 09:00:00";"02/02/2021 11:00:00";"2,00";;1;0;1;1`,
+      `${courseSlotList[5]._id};${coursesList[5]._id};"Test SAS - Program 1 - group 6";"étape 1";"présentiel";;"12/12/2020 11:00:04";"12/04/2021 12:00:00";"12/04/2021 14:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";0;0;0;3`,
+      `${courseSlotList[6]._id};${coursesList[6]._id};"Test SAS - Program 1 - group 7";"étape 1";"présentiel";;"12/12/2020 11:00:04";"12/04/2021 12:00:00";"12/04/2021 14:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";0;0;0;0`,
+      `${courseSlotList[8]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 1";"présentiel";;"14/10/2020 23:00:00";"01/02/2021 10:00:00";"01/02/2021 13:00:00";"3,00";"24 Avenue Daumesnil 75012 Paris";0;0;0;2`,
+      `${courseSlotList[9]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 2";"distanciel";;"14/10/2020 23:00:10";"10/02/2021 09:00:00";"10/02/2021 13:00:00";"4,00";;0;0;0;2`,
+      `${courseSlotList[10]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 1";"présentiel";;"14/10/2020 23:00:30";"03/02/2021 09:00:00";"03/02/2021 13:00:00";"4,00";"24 Avenue Daumesnil 75012 Paris";0;0;0;2`,
+      `${courseSlotList[11]._id};${coursesList[8]._id};"Un autre SAS - Program 1 - group 9";"étape 2";"distanciel";;"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";1;0;0;0`,
+      `${courseSlotList[12]._id};${coursesList[9]._id};"Program 1 - Paul Trainee";"étape 2";"distanciel";"Paul TRAINEE";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";0;0;0;1`,
     ],
     query: 'startDate=2021-02-01T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
   },
@@ -161,11 +161,11 @@ const vendorHistoryExportTypes = [
   {
     exportType: COURSE_BILL,
     expectedRows: [
-      '\ufeff"Nature";"Identifiant";"Date";"Id formation";"Formation";"Programme";"Apprenant";"Structure";"Id payeur";"Payeur";"Montant TTC";"Montant réglé";"Document lié";"Montant soldé";"Solde";"Avancement";"Début de la formation";"Milieu de la formation";"Fin de la formation"',
-      `"Facture";"FACT-00001";"08/03/2022";${coursesList[0]._id};"Test SAS - Program 1 - group 1";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"1200,00";"0,00";;;"-1200,00";"1,00";"01/05/2021";"01/05/2021";"01/05/2021"`,
-      `"Facture";"FACT-00002";"08/03/2022";${coursesList[3]._id};"Test SAS - Program 1 - group 4";"Program 1";;"Test SAS";${courseFundingOrganisation._id};"APA Paris";"1200,00";"0,00";"AV-00001";"1200,00";"0,00";"1,00";"01/02/2021";"03/02/2021";"10/02/2021"`,
-      `"Facture";"FACT-00005";"08/03/2022";${coursesList[1]._id};"Program 2";"Program 2";;"Un autre SAS";${courseFundingOrganisation._id};"APA Paris";"400,00";"100,00";;;"-300,00";"0,67";"01/02/2021";"02/02/2021";`,
-      `"Avoir";"AV-00002";"09/03/2022";${coursesList[5]._id};"Test SAS - Program 1 - group 6";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"240,00";;"FACT-00008";;;;;;`,
+      '\ufeff"Nature";"Identifiant";"Date";"Id formation";"Formation";"Programme";"Apprenant";"Structure";"Id payeur";"Payeur";"Montant TTC";"Montant réglé";"Document lié";"Montant soldé";"Solde";"Envoyé le";"Avancement";"Début de la formation";"Milieu de la formation";"Fin de la formation"',
+      `"Facture";"FACT-00001";"08/03/2022";${coursesList[0]._id};"Test SAS - Program 1 - group 1";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"1200,00";"0,00";;;"-1200,00";"08/05/2022, 08/06/2022";"1,00";"01/05/2021";"01/05/2021";"01/05/2021"`,
+      `"Facture";"FACT-00002";"08/03/2022";${coursesList[3]._id};"Test SAS - Program 1 - group 4";"Program 1";;"Test SAS";${courseFundingOrganisation._id};"APA Paris";"1200,00";"0,00";"AV-00001";"1200,00";"0,00";"08/05/2022";"1,00";"01/02/2021";"03/02/2021";"10/02/2021"`,
+      `"Facture";"FACT-00005";"08/03/2022";${coursesList[1]._id};"Program 2";"Program 2";;"Un autre SAS";${courseFundingOrganisation._id};"APA Paris";"400,00";"100,00";;;"-300,00";;"0,67";"01/02/2021";"02/02/2021";`,
+      `"Avoir";"AV-00002";"09/03/2022";${coursesList[5]._id};"Test SAS - Program 1 - group 6";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"240,00";;"FACT-00008";;;;;;;`,
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
   },
@@ -205,7 +205,7 @@ clientHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
         const response = await app.inject({
           method: 'GET',
           url: `/exports/${exportType}/history?${query}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -230,7 +230,7 @@ clientHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
           const response = await app.inject({
             method: 'GET',
             url: `/exports/${exportType}/history?${query}`,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(role.expectedCode);
@@ -254,7 +254,7 @@ vendorHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
         const response = await app.inject({
           method: 'GET',
           url: `/exports/${exportType}/history?${query}`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -279,7 +279,7 @@ vendorHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
           const response = await app.inject({
             method: 'GET',
             url: `/exports/${exportType}/history?${query}`,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(role.expectedCode);
@@ -391,7 +391,7 @@ dataExportTypes.forEach(({ exportType, expectedRows }) => {
         const response = await app.inject({
           method: 'GET',
           url: `/exports/${exportType}/data`,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(200);
@@ -416,7 +416,7 @@ dataExportTypes.forEach(({ exportType, expectedRows }) => {
           const response = await app.inject({
             method: 'GET',
             url: `/exports/${exportType}/data`,
-            headers: { Cookie: `alenvi_token=${authToken}` },
+            headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           });
 
           expect(response.statusCode).toBe(role.expectedCode);

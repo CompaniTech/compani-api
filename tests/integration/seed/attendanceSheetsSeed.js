@@ -21,6 +21,8 @@ const {
   GLOBAL,
   MONTHLY,
   SINGLE,
+  PRESENT,
+  MISSING,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -431,6 +433,13 @@ const slotsList = [
     course: coursesList[0]._id,
     step: steps[0]._id,
   },
+  { // 23
+    _id: new ObjectId(),
+    startDate: '2025-10-20T09:00:00.000Z',
+    endDate: '2025-10-20T11:00:00.000Z',
+    course: coursesList[7]._id,
+    step: steps[0]._id,
+  },
 ];
 
 const attendanceSheetList = [
@@ -704,14 +713,153 @@ const attendanceSheetList = [
 ];
 
 const attendancesList = [
-  { _id: new ObjectId(), courseSlot: slotsList[10]._id, trainee: userList[1]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[11]._id, trainee: userList[1]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[19]._id, trainee: userList[2]._id, company: otherCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[5]._id, trainee: userList[1]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[20]._id, trainee: userList[1]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[15]._id, trainee: userList[1]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[16]._id, trainee: userList[1]._id, company: authCompany._id },
-  { _id: new ObjectId(), courseSlot: slotsList[17]._id, trainee: userList[1]._id, company: authCompany._id },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[10]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[11]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[19]._id,
+    trainee: userList[2]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[5]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[20]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[15]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[16]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[17]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[23]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: MISSING,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[0]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: MISSING,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[1]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[6]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[8]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[9]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[12]._id,
+    trainee: userList[2]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[12]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[13]._id,
+    trainee: userList[2]._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[13]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[17]._id,
+    trainee: userList[0]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[18]._id,
+    trainee: userList[0]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[19]._id,
+    trainee: userList[4]._id,
+    company: companyWithoutSubscription._id,
+    status: PRESENT,
+  },
 ];
 
 const completionCertificates = [

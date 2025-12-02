@@ -1,12 +1,27 @@
 const Boom = require('@hapi/boom');
+const { ObjectId } = require('mongodb');
+const get = require('lodash/get');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
-const { SENDER_MAIL, TRAINER, COACH, CLIENT_ADMIN, TRAINEE } = require('./constants');
+const {
+  SENDER_MAIL,
+  TRAINER,
+  COACH,
+  CLIENT_ADMIN,
+  TRAINEE,
+  VAEI,
+  COPPER_600,
+  COPPER_500,
+  RESEND,
+} = require('./constants');
 const translate = require('./translate');
 const Course = require('../models/Course');
 const User = require('../models/User');
+const CourseBill = require('../models/CourseBill');
 const UtilsHelper = require('./utils');
+const CourseBillsHelper = require('./courseBills');
+const { CompaniDate } = require('./dates/companiDates');
 
 const { language } = translate;
 
@@ -113,6 +128,69 @@ exports.completionCertificateCreationEmail = (certificateCreated, errors, month)
     subject: `Script création des certificats de réalisation pour le mois de ${month}`,
     html: EmailOptionsHelper.completionCertificateCreationContent(certificateCreated, errors),
   };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+};
+
+const getSignature = billingUser => `<br>
+    <p style="color: ${COPPER_600}; font-size: 14px;">
+      ${UtilsHelper.formatIdentity(billingUser.identity, 'FL')}<br>
+      <span>Responsable administrative et financière</span><br>
+      ${get(billingUser, 'contact.phone') ? UtilsHelper.formatPhone(billingUser.contact) : ''}
+    </p>
+    <a href="https://www.compani.fr" target="_blank">
+      <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
+        style="width: 200px; height: auto; border: 0;">
+    </a>
+    <a href="https://app.compani.fr/login">
+      <p style="color: ${COPPER_500};">Cliquer ici pour accéder à l'espace Compani</p>
+    </a>`;
+
+exports.sendBillEmail = async (courseBills, type, content, recipientEmails, credentials) => {
+  const billsPdf = [];
+
+  for (const bill of courseBills) {
+    const companies = [...new Set([...bill.companies.map(c => c._id), bill.payer._id])];
+    const { pdf } = await CourseBillsHelper.generateBillPdf(bill._id, companies, credentials);
+
+    billsPdf.push({
+      filename: `${UtilsHelper.formatDownloadName(`${bill.payer.name} ${bill.number}`)}.pdf`,
+      content: pdf,
+      contentType: 'application/pdf',
+    });
+  }
+
+  const billNumbers = courseBills.map(cb => cb.number).join(', ');
+  const senderEmail = process.env.BILLING_COMPANI_EMAIL;
+  const signatureBillingUserId = new ObjectId(process.env.BILLING_USER_ID);
+  const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 }).lean();
+
+  const getSubject = () => {
+    switch (type) {
+      case VAEI:
+        return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
+        + ` en VAE Inversée [${billNumbers}]`;
+      case RESEND:
+        return `Compani : relance pour ${UtilsHelper.formatQuantity('facture impayée', courseBills.length, 's', false)}`
+        + ` [${billNumbers}]`;
+      default:
+        return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
+        + ` [${billNumbers}]`;
+    }
+  };
+
+  const mailOptions = {
+    from: `Compani <${senderEmail}>`,
+    to: recipientEmails,
+    subject: getSubject(),
+    bcc: senderEmail,
+    html: `<p>${content.replaceAll('\r\n', '<br>')}</p>
+    <p>${getSignature(billingUser)}</p>`,
+    attachments: billsPdf,
+  };
+
+  const courseBillIds = courseBills.map(cb => cb._id);
+  await CourseBill.updateMany({ _id: { $in: courseBillIds } }, { $push: { sendingDates: CompaniDate().toISO() } });
 
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };

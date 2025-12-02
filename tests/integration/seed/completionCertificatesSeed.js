@@ -12,7 +12,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const Program = require('../../../src/models/Program');
-const { INTER_B2B, PUBLISHED, MONTHLY, VIDEO, E_LEARNING, WEBAPP } = require('../../../src/helpers/constants');
+const { INTER_B2B, PUBLISHED, MONTHLY, VIDEO, E_LEARNING, WEBAPP, PRESENT } = require('../../../src/helpers/constants');
 const { authCompany, otherCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
 const {
   trainer,
@@ -205,15 +205,28 @@ const slotsList = [
 ];
 
 const attendancesList = [
-  { _id: new ObjectId(), courseSlot: slotsList[0]._id, trainee: noRole._id, company: authCompany._id },
+  { _id: new ObjectId(), courseSlot: slotsList[0]._id, trainee: noRole._id, company: authCompany._id, status: PRESENT },
   {
     _id: new ObjectId(),
     courseSlot: slotsList[1]._id,
     trainee: holdingAdminFromAuthCompany._id,
     company: authCompany._id,
+    status: PRESENT,
   },
-  { _id: new ObjectId(), trainee: auxiliary._id, courseSlot: slotsList[1]._id, company: authCompany._id },
-  { _id: new ObjectId(), trainee: auxiliary._id, courseSlot: slotsList[6]._id, company: authCompany._id },
+  {
+    _id: new ObjectId(),
+    trainee: auxiliary._id,
+    courseSlot: slotsList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: auxiliary._id,
+    courseSlot: slotsList[6]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
 ];
 
 const completionCertificateList = [

@@ -151,7 +151,7 @@ describe('AUTHENTICATION ROUTES - PUT /users/:id/password', () => {
           method: 'PUT',
           url: `/users/${usersSeedList[0]._id}/password`,
           payload: updatePayload,
-          headers: { Cookie: `alenvi_token=${authToken}` },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -167,7 +167,7 @@ describe('AUTHENTICATION ROUTES - POST /users/refreshToken', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/users/refreshToken',
-      headers: { Cookie: `refresh_token=${usersSeedList[1].refreshToken}` },
+      headers: { Cookie: `${process.env.REFRESH_TOKEN}=${usersSeedList[1].refreshToken}` },
     });
 
     expect(res.statusCode).toBe(200);
@@ -189,7 +189,7 @@ describe('AUTHENTICATION ROUTES - POST /users/refreshToken', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/users/refreshToken',
-      headers: { Cookie: 'refresh_token=false-refresh-token' },
+      headers: { Cookie: `${process.env.REFRESH_TOKEN}=false-refresh-token` },
     });
 
     expect(res.statusCode).toBe(401);
@@ -209,7 +209,7 @@ describe('AUTHENTICATION ROUTES - POST /users/refreshToken', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/users/refreshToken',
-      headers: { Cookie: 'refresh_token=' },
+      headers: { Cookie: `${process.env.REFRESH_TOKEN}=` },
     });
 
     expect(res.statusCode).toBe(401);

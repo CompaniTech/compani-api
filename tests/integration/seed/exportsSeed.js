@@ -97,6 +97,8 @@ const {
   RECEIVED,
   XML_GENERATED,
   BANK_TRANSFER,
+  PRESENT,
+  MISSING,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1410,6 +1412,7 @@ const courseBillList = [
     payer: { company: authCompany._id },
     billedAt: '2022-03-08T00:00:00.000Z',
     number: 'FACT-00001',
+    sendingDates: ['2022-05-08T00:00:00.000Z', '2022-06-08T00:00:00.000Z'],
   },
   { // 1 cancelled with creditNote
     _id: new ObjectId(),
@@ -1419,6 +1422,7 @@ const courseBillList = [
     payer: { fundingOrganisation: courseFundingOrganisation._id },
     billedAt: '2022-03-08T00:00:00.000Z',
     number: 'FACT-00002',
+    sendingDates: ['2022-05-08T00:00:00.000Z'],
   },
   { // 2
     _id: new ObjectId(),
@@ -1737,13 +1741,14 @@ const courseSlotList = [
 ];
 
 const attendanceList = [
-  { trainee: traineeList[0]._id, courseSlot: courseSlotList[0]._id, company: authCompany._id },
-  { trainee: traineeList[0]._id, courseSlot: courseSlotList[1]._id, company: authCompany._id },
-  { trainee: traineeList[1]._id, courseSlot: courseSlotList[11]._id, company: otherCompany._id },
-  { trainee: traineeList[1]._id, courseSlot: courseSlotList[2]._id, company: otherCompany._id },
-  { trainee: traineeList[1]._id, courseSlot: courseSlotList[3]._id, company: otherCompany._id },
-  { trainee: traineeList[3]._id, courseSlot: courseSlotList[2]._id, company: authCompany._id },
-  { trainee: traineeList[3]._id, courseSlot: courseSlotList[3]._id, company: authCompany._id },
+  { trainee: traineeList[0]._id, courseSlot: courseSlotList[0]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[2]._id, courseSlot: courseSlotList[0]._id, company: authCompany._id, status: MISSING },
+  { trainee: traineeList[0]._id, courseSlot: courseSlotList[1]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[1]._id, courseSlot: courseSlotList[11]._id, company: otherCompany._id, status: PRESENT },
+  { trainee: traineeList[1]._id, courseSlot: courseSlotList[2]._id, company: otherCompany._id, status: PRESENT },
+  { trainee: traineeList[1]._id, courseSlot: courseSlotList[3]._id, company: otherCompany._id, status: PRESENT },
+  { trainee: traineeList[3]._id, courseSlot: courseSlotList[2]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[3]._id, courseSlot: courseSlotList[3]._id, company: authCompany._id, status: PRESENT },
 ];
 
 const attendanceSheetList = [

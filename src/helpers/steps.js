@@ -2,7 +2,7 @@ const { pick, get } = require('lodash');
 const Step = require('../models/Step');
 const SubProgram = require('../models/SubProgram');
 const UtilsHelper = require('./utils');
-const { E_LEARNING, PT0S, MINUTE, SHORT_DURATION_H_MM } = require('./constants');
+const { E_LEARNING, PT0S, MINUTE, SHORT_DURATION_H_MM, PRESENT } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 
@@ -39,7 +39,7 @@ exports.getPresenceStepProgress = (slots) => {
   const slotsWithDuration = slots.map(s => ({ ...s, duration: CompaniDate(s.endDate).diff(s.startDate, MINUTE) }));
 
   const attendanceDuration = slotsWithDuration
-    .filter(slot => slot.attendances.length)
+    .filter(slot => slot.attendances.find(a => a.status === PRESENT))
     .reduce((acc, s) => acc.add(s.duration), CompaniDuration())
     .toISO();
 

@@ -15,6 +15,7 @@ const AttendanceSheet = require('../../models/AttendanceSheet');
 const Role = require('../../models/Role');
 const SubProgram = require('../../models/SubProgram');
 const Holding = require('../../models/Holding');
+const TrainerMission = require('../../models/TrainerMission');
 const UserCompany = require('../../models/UserCompany');
 const {
   TRAINER,
@@ -488,6 +489,10 @@ exports.authorizeCourseDeletion = async (req) => {
 
   const attendanceSheets = await AttendanceSheet.countDocuments({ course: req.params._id }, { limit: 1 });
   if (attendanceSheets) return Boom.forbidden(translate[language].courseDeletionForbidden.attendanceSheets);
+
+  const trainerMissions = await TrainerMission
+    .countDocuments({ courses: req.params._id, cancelledAt: { $exists: false } }, { limit: 1 });
+  if (trainerMissions) return Boom.forbidden(translate[language].courseDeletionForbidden.trainerMissions);
 
   const courseBills = await CourseBill.countDocuments(
     { course: req.params._id, billedAt: { $exists: true, $type: 'date' } },

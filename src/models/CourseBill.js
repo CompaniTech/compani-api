@@ -34,6 +34,7 @@ const CourseBillSchema = mongoose.Schema({
   billedAt: { type: Date, required() { return !!this.number; } },
   number: { type: String, required() { return !!this.billedAt; } },
   maturityDate: { type: Date },
+  sendingDates: { type: [Date], default: undefined },
 }, { timestamps: true });
 
 function formatPayer(doc, next) {

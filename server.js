@@ -56,7 +56,7 @@ const init = async () => {
   );
 
   server.state(
-    'alenvi_token',
+    process.env.ALENVI_TOKEN,
     {
       isHttpOnly: true,
       ttl: 24 * 60 * 60 * 1000,
@@ -68,7 +68,7 @@ const init = async () => {
   );
 
   server.state(
-    'refresh_token',
+    process.env.REFRESH_TOKEN,
     {
       isHttpOnly: true,
       ttl: 365 * 24 * 60 * 60 * 1000,

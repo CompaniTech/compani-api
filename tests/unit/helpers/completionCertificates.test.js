@@ -10,7 +10,7 @@ const CompletionCertificatesHelper = require('../../../src/helpers/completionCer
 const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
 const CoursesHelper = require('../../../src/helpers/courses');
 const CompletionCertificatePdf = require('../../../src/data/pdf/completionCertificate');
-const { OFFICIAL, BLENDED, E_LEARNING } = require('../../../src/helpers/constants');
+const { OFFICIAL, BLENDED, E_LEARNING, PRESENT } = require('../../../src/helpers/constants');
 const UtilsHelper = require('../../../src/helpers/utils');
 const UtilsMock = require('../../utilsMock');
 
@@ -537,13 +537,21 @@ describe('generate', () => {
       { trainee: traineeId, courseSlot: slotList[1]._id, company: companyId },
     ];
 
-    const slotIdInOtherCourse = new ObjectId();
-    const slotInOtherCourse = {
-      _id: slotIdInOtherCourse,
-      startDate: '2025-03-22T07:00:00.000Z',
-      endDate: '2025-03-22T09:30:00.000Z',
-      attendances: [{ trainee: traineeId, courseSLot: slotIdInOtherCourse, company: companyId }],
-    };
+    const slotIdsInOtherCourse = [new ObjectId(), new ObjectId()];
+    const slotsInOtherCourse = [
+      {
+        _id: slotIdsInOtherCourse[0],
+        startDate: '2025-03-22T07:00:00.000Z',
+        endDate: '2025-03-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[0], company: companyId }],
+      },
+      {
+        _id: slotIdsInOtherCourse[1],
+        startDate: '2025-02-22T07:00:00.000Z',
+        endDate: '2025-02-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[1], company: companyId }],
+      },
+    ];
     const coursesWithSameProgram = [{
       _id: new ObjectId(),
       format: BLENDED,
@@ -553,14 +561,14 @@ describe('generate', () => {
       },
       trainees: [new ObjectId()],
       companies: [companyId],
-      slots: [slotInOtherCourse],
+      slots: slotsInOtherCourse,
     }];
 
     findOneCompletionCeritificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns('4h30');
+    getTotalDuration.returns('6h30');
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getELearningDuration.returns('PT3H30M');
@@ -609,7 +617,7 @@ describe('generate', () => {
     SinonMongoose.calledOnceWithExactly(
       findAttendance,
       [
-        { query: 'find', args: [{ trainee: traineeId, courseSlot: { $in: courseSlotIdsOnMonth } }] },
+        { query: 'find', args: [{ trainee: traineeId, courseSlot: { $in: courseSlotIdsOnMonth }, status: PRESENT }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
@@ -644,7 +652,7 @@ describe('generate', () => {
             select: 'attendances startDate endDate',
             populate: {
               path: 'attendances',
-              match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] } },
+              match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
               options: { isVendorUser: true },
             },
           }],
@@ -664,7 +672,7 @@ describe('generate', () => {
       {
         trainee: {
           identity: 'Jean SAITRIEN',
-          attendanceDuration: '4h30',
+          attendanceDuration: '6h30',
           eLearningDuration: '3h30',
           companyName: 'Alenvi',
         },
@@ -752,13 +760,21 @@ describe('generate', () => {
       { trainee: traineeId, courseSlot: slotList[1]._id, company: companyId },
     ];
 
-    const slotIdInOtherCourse = new ObjectId();
-    const slotInOtherCourse = {
-      _id: slotIdInOtherCourse,
-      startDate: '2025-03-22T07:00:00.000Z',
-      endDate: '2025-03-22T09:30:00.000Z',
-      attendances: [{ trainee: traineeId, courseSLot: slotIdInOtherCourse, company: companyId }],
-    };
+    const slotIdsInOtherCourse = [new ObjectId(), new ObjectId()];
+    const slotsInOtherCourse = [
+      {
+        _id: slotIdsInOtherCourse[0],
+        startDate: '2025-03-22T07:00:00.000Z',
+        endDate: '2025-03-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[0], company: companyId }],
+      },
+      {
+        _id: slotIdsInOtherCourse[1],
+        startDate: '2025-02-22T07:00:00.000Z',
+        endDate: '2025-02-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[1], company: companyId }],
+      },
+    ];
     const coursesWithSameProgram = [{
       _id: new ObjectId(),
       format: BLENDED,
@@ -768,14 +784,14 @@ describe('generate', () => {
       },
       trainees: [new ObjectId()],
       companies: [companyId],
-      slots: [slotInOtherCourse],
+      slots: slotsInOtherCourse,
     }];
 
     findOneCompletionCeritificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns('4h30');
+    getTotalDuration.returns('6h30');
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getRealELearningDuration.returns('PT200S');
@@ -824,7 +840,7 @@ describe('generate', () => {
     SinonMongoose.calledOnceWithExactly(
       findAttendance,
       [
-        { query: 'find', args: [{ trainee: traineeId, courseSlot: { $in: courseSlotIdsOnMonth } }] },
+        { query: 'find', args: [{ trainee: traineeId, courseSlot: { $in: courseSlotIdsOnMonth }, status: PRESENT }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
@@ -859,7 +875,7 @@ describe('generate', () => {
             select: 'attendances startDate endDate',
             populate: {
               path: 'attendances',
-              match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] } },
+              match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
               options: { isVendorUser: true },
             },
           }],
@@ -874,7 +890,7 @@ describe('generate', () => {
       {
         trainee: {
           identity: 'Jean SAITRIEN',
-          attendanceDuration: '4h30',
+          attendanceDuration: '6h30',
           eLearningDuration: '0h03',
           companyName: 'Alenvi',
         },

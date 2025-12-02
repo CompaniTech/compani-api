@@ -9,7 +9,7 @@ const ActivityHistory = require('../models/ActivityHistory');
 const Attendance = require('../models/Attendance');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
-const { MM_YYYY, MONTH, DD_MM_YYYY, E_LEARNING, SHORT_DURATION_H_MM, OFFICIAL } = require('./constants');
+const { MM_YYYY, MONTH, DD_MM_YYYY, E_LEARNING, SHORT_DURATION_H_MM, OFFICIAL, PRESENT } = require('./constants');
 const UtilsHelper = require('./utils');
 const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
@@ -109,7 +109,7 @@ exports.generate = async (completionCertificateId) => {
     .filter(slot => CompaniDate(slot.startDate).isSameOrBetween(startOfMonth, endOfMonth)).map(s => s._id);
 
   const attendances = await Attendance
-    .find({ trainee: trainee._id, courseSlot: { $in: courseSlotIdsOnMonth } })
+    .find({ trainee: trainee._id, courseSlot: { $in: courseSlotIdsOnMonth }, status: PRESENT })
     .setOptions({ isVendorUser: true })
     .lean();
 
@@ -122,7 +122,9 @@ exports.generate = async (completionCertificateId) => {
     { ...pick(course, ['_id', 'trainees', 'companies']), subPrograms: get(course, 'subProgram.program.subPrograms') },
     true
   );
-  const slotsWithUnsubscribedAttendance = unsubscribedAttendances.map(a => a.courseSlot);
+  const slotsWithUnsubscribedAttendance = unsubscribedAttendances
+    .filter(a => CompaniDate(a.courseSlot.startDate).isSameOrBetween(startOfMonth, endOfMonth))
+    .map(a => a.courseSlot);
 
   const traineePresence = UtilsHelper.getTotalDuration([...slotsWithAttendance, ...slotsWithUnsubscribedAttendance]);
 
