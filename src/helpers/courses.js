@@ -110,16 +110,22 @@ exports.createCourse = async (payload, credentials) => {
       )
       .lean();
 
-    const trainee = await User
-      .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
-      .lean();
-    const { folderId, sheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
-      traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
-      traineeEmail: trainee.local.email,
-      traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
-    });
+    const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+    if (UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)) {
+      const trainee = await User
+        .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
+        .lean();
+      const { folderId, sheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
+        traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
+        traineeEmail: trainee.local.email,
+        traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
+      });
 
-    coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company], folderId, sheetId };
+      coursePayload.folderId = folderId;
+      coursePayload.sheetId = sheetId;
+    }
+
+    coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
   }
 
   if (payload.prices) {

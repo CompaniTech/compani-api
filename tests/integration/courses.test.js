@@ -112,6 +112,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       gsheetsWriteDataStub = sinon.stub(Gsheets, 'writeData');
       process.env.BILLING_COMPANI_EMAIL = 'test@compani.fr';
       process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
+      process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
     });
 
     afterEach(() => {
@@ -119,6 +120,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       gsheetsWriteDataStub.restore();
       process.env.BILLING_COMPANI_EMAIL = '';
       process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
+      process.env.VAEI_SUBPROGRAM_IDS = '';
     });
 
     it('should create inter_b2b course', async () => {
@@ -6826,6 +6828,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     gsheetsWriteDataStub = sinon.stub(Gsheets, 'writeData');
     process.env.BILLING_COMPANI_EMAIL = 'test@compani.fr';
     process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
+    process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
     process.env.MAX_CSV_COURSE_SIZE = 30;
   });
   afterEach(() => {
@@ -6838,6 +6841,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     gsheetsWriteDataStub.restore();
     process.env.BILLING_COMPANI_EMAIL = '';
     process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
+    process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.MAX_CSV_COURSE_SIZE = 0;
   });
 

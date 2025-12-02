@@ -100,6 +100,7 @@ describe('createCourse', () => {
   let userFindOne;
   let createCourseFolderAndSheet;
   const credentials = { _id: new ObjectId() };
+  const subProgramId = new ObjectId();
 
   beforeEach(() => {
     create = sinon.stub(Course, 'create');
@@ -114,6 +115,7 @@ describe('createCourse', () => {
     userFindOne = sinon.stub(User, 'findOne');
     createCourseFolderAndSheet = sinon.stub(GDriveStorageHelper, 'createCourseFolderAndSheet');
     UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
+    process.env.VAEI_SUBPROGRAM_IDS = subProgramId.toHexString();
   });
   afterEach(() => {
     create.restore();
@@ -125,6 +127,7 @@ describe('createCourse', () => {
     userFindOne.restore();
     createCourseFolderAndSheet.restore();
     UtilsMock.unmockCurrentDate();
+    process.env.VAEI_SUBPROGRAM_IDS = '';
   });
 
   it('should create an intra course', async () => {
@@ -182,7 +185,7 @@ describe('createCourse', () => {
 
   it('should create a single course', async () => {
     const steps = [{ _id: new ObjectId(), type: ON_SITE }];
-    const subProgram = { _id: new ObjectId(), steps };
+    const subProgram = { _id: subProgramId, steps };
     const traineeId = new ObjectId();
     const userCompany = { company: new ObjectId() };
     const trainee = {
