@@ -3962,10 +3962,10 @@ mongoose-autopopulate@~1.2.1:
   resolved "https://registry.yarnpkg.com/mongoose-autopopulate/-/mongoose-autopopulate-1.2.1.tgz#3768c3eba75b02db24d7424fd91c8a3b05b2a7d5"
   integrity sha512-mn6AM7iFqsB9Rqyp2XD3tqXgC+X9dEv+H+eVmunskSb3fqiT6umgwkVPpIm7+Xe5h9/b3mIP/Le670Rx6lLnUw==
 
-mongoose-lean-virtuals@~2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/mongoose-lean-virtuals/-/mongoose-lean-virtuals-2.0.0.tgz#ad66406e68cfbe8e479b1ce00ff4f28b28335163"
-  integrity sha512-f0rZnr40FzZ74mIREggCxBMK7w1WTeQ9SLH7pI+J4mpnyB0cu4UI2P1i8CdPZRF2Wquwk0ZsbetGxKM4YBGP8w==
+mongoose-lean-virtuals@~2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/mongoose-lean-virtuals/-/mongoose-lean-virtuals-2.1.0.tgz#f6498488bfebf026f64ca6ef4e2e9054b3c38d90"
+  integrity sha512-1fBeyRGzwB1yHs9L/q6QBybMgJmTcgZ8v1mjCEpRTP7FNOTOMo2yzSJmOBT9gJcpOso+mOHNQiXDfYzvMLIFTw==
   dependencies:
     mpath "^0.8.4"
 
