@@ -13,7 +13,7 @@ const Attendance = require('../../../src/models/Attendance');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
-const { vendorAdmin, trainerAndCoach, trainer } = require('../../seed/authUsersSeed');
+const { vendorAdmin, trainerAndCoach, trainer, coach, auxiliary } = require('../../seed/authUsersSeed');
 const {
   WEBAPP,
   INTRA,
@@ -89,7 +89,7 @@ const coursesList = [
   { // 0
     _id: new ObjectId(),
     subProgram: subProgramsList[0]._id,
-    trainees: [],
+    trainees: [coach._id, auxiliary._id],
     companies: [authCompany._id],
     misc: 'first session',
     type: INTRA,
@@ -185,6 +185,7 @@ const courseSlotsList = [
     endDate: '2020-04-10T12:00:00',
     course: coursesList[0]._id,
     step: stepsList[0]._id,
+    trainees: [auxiliary._id],
   },
   { // 2
     _id: new ObjectId(),
@@ -332,4 +333,5 @@ module.exports = {
   programsList,
   courseSlotsList,
   stepsList,
+  traineeFromOtherCompany,
 };

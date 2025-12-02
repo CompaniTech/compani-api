@@ -874,8 +874,8 @@ describe('list', () => {
         1
       );
 
-      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(0), coursesList[0], true);
-      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(1), coursesList[1], true);
+      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(0), coursesList[0], credentials, true);
+      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(1), coursesList[1], credentials, true);
       sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
     });
 
@@ -1147,8 +1147,8 @@ describe('list', () => {
         1
       );
 
-      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(0), coursesList[0], true);
-      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(1), coursesList[1], true);
+      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(0), coursesList[0], credentials, true);
+      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(1), coursesList[1], credentials, true);
       sinon.assert.calledOnceWithExactly(
         getCompanyAtCourseRegistrationList,
         { key: TRAINEE, value: traineeOrTutorId },
@@ -1429,8 +1429,8 @@ describe('list', () => {
         1
       );
 
-      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(0), coursesList[0], true);
-      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(1), coursesList[1], true);
+      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(0), coursesList[0], credentials, true);
+      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(1), coursesList[1], credentials, true);
       sinon.assert.calledOnceWithExactly(
         getCompanyAtCourseRegistrationList,
         { key: TRAINEE, value: traineeOrTutorId },
@@ -1723,8 +1723,8 @@ describe('list', () => {
         1
       );
 
-      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(0), coursesList[0], true);
-      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(1), coursesList[1], true);
+      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(0), coursesList[0], credentials, true);
+      sinon.assert.calledWithExactly(formatCourseWithProgress.getCall(1), coursesList[1], credentials, true);
     });
 
     it('should return courses for tutor', async () => {
@@ -1935,7 +1935,7 @@ describe('list', () => {
         2
       );
 
-      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, coursesList[1], true);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, coursesList[1], credentials, true);
     });
   });
 });
@@ -2060,6 +2060,8 @@ describe('getCourseProgress', () => {
 describe('formatCourseWithProgress', () => {
   let getProgress;
   let getCourseProgress;
+  const credentials = { _id: new ObjectId() };
+
   beforeEach(() => {
     getCourseProgress = sinon.stub(CourseHelper, 'getCourseProgress');
     getProgress = sinon.stub(StepsHelper, 'getProgress');
@@ -2070,7 +2072,7 @@ describe('formatCourseWithProgress', () => {
     getProgress.restore();
   });
 
-  it('should format course with presence progress', async () => {
+  it('should format course with presence progress filtered on concerned slots', async () => {
     const stepId = new ObjectId();
     const course = {
       misc: 'name',
@@ -2092,17 +2094,28 @@ describe('formatCourseWithProgress', () => {
         },
         ],
       },
-      slots: [{
-        startDate: '2020-11-03T09:00:00.000Z',
-        endDate: '2020-11-03T12:00:00.000Z',
-        step: { _id: stepId },
-        attendances: [],
-      }, {
-        startDate: '2020-11-04T09:00:00.000Z',
-        endDate: '2020-11-04T16:01:00.000Z',
-        step: { _id: stepId },
-        attendances: [],
-      }],
+      slots: [
+        {
+          startDate: '2020-11-03T09:00:00.000Z',
+          endDate: '2020-11-03T12:00:00.000Z',
+          step: { _id: stepId },
+          attendances: [],
+          trainees: [credentials._id],
+        },
+        {
+          startDate: '2020-11-04T09:00:00.000Z',
+          endDate: '2020-11-04T16:01:00.000Z',
+          step: { _id: stepId },
+          attendances: [],
+        },
+        {
+          startDate: '2020-11-05T09:00:00.000Z',
+          endDate: '2020-11-05T16:01:00.000Z',
+          step: { _id: stepId },
+          attendances: [],
+          trainees: [new ObjectId()],
+        },
+      ],
     };
     getProgress.onCall(0).returns({ eLearning: 1 });
     getProgress.onCall(1).returns({
@@ -2115,7 +2128,7 @@ describe('formatCourseWithProgress', () => {
       presence: { attendanceDuration: { minutes: 0 }, maxDuration: { minutes: 601 } },
     });
 
-    const result = await CourseHelper.formatCourseWithProgress(course, true);
+    const result = await CourseHelper.formatCourseWithProgress(course, credentials, true);
 
     expect(result).toMatchObject({
       ...course,
@@ -2136,12 +2149,17 @@ describe('formatCourseWithProgress', () => {
       },
     });
     sinon.assert.calledWithExactly(getProgress.getCall(0), course.subProgram.steps[0], [], true);
-    sinon.assert.calledWithExactly(getProgress.getCall(1), course.subProgram.steps[1], course.slots, true);
+    sinon.assert.calledWithExactly(
+      getProgress.getCall(1),
+      course.subProgram.steps[1],
+      [course.slots[0], course.slots[1]],
+      true
+    );
     sinon.assert.calledWithExactly(getCourseProgress.getCall(0), [
       { ...course.subProgram.steps[0], slots: [], progress: { eLearning: 1 } },
       {
         ...course.subProgram.steps[1],
-        slots: course.slots,
+        slots: [course.slots[0], course.slots[1]],
         progress: { live: 1, presence: { attendanceDuration: { minutes: 0 }, maxDuration: { minutes: 601 } } },
       },
     ]);
@@ -2185,7 +2203,7 @@ describe('formatCourseWithProgress', () => {
     getProgress.onCall(1).returns({ live: 1 });
     getCourseProgress.returns({ eLearning: 1, blended: 1 });
 
-    const result = await CourseHelper.formatCourseWithProgress(course);
+    const result = await CourseHelper.formatCourseWithProgress(course, credentials);
 
     expect(result).toMatchObject({
       ...course,
@@ -2244,7 +2262,7 @@ describe('formatCourseWithProgress', () => {
     getProgress.onCall(1).returns({ live: 1 });
     getCourseProgress.returns({ eLearning: 1, blended: 1 });
 
-    const result = await CourseHelper.formatCourseWithProgress(course, false, true);
+    const result = await CourseHelper.formatCourseWithProgress(course, credentials, false, true);
 
     expect(result).toMatchObject({
       ...course,
@@ -2366,7 +2384,7 @@ describe('getCourse', () => {
                 select: 'identity.firstname identity.lastname contact local.email picture.link '
                   + 'firstMobileConnectionDate loginCode',
               },
-              { path: 'slots', select: 'step startDate endDate address meetingLink' },
+              { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
               { path: 'slotsToPlan', select: '_id step' },
               {
                 path: 'trainers',
@@ -2467,7 +2485,7 @@ describe('getCourse', () => {
                   select: 'identity.firstname identity.lastname contact local.email picture.link '
                     + 'firstMobileConnectionDate loginCode',
                 },
-                { path: 'slots', select: 'step startDate endDate address meetingLink' },
+                { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
                 { path: 'slotsToPlan', select: '_id step' },
                 {
                   path: 'trainers',
@@ -2566,7 +2584,7 @@ describe('getCourse', () => {
                   select: 'identity.firstname identity.lastname contact local.email picture.link '
                     + 'firstMobileConnectionDate loginCode',
                 },
-                { path: 'slots', select: 'step startDate endDate address meetingLink' },
+                { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
                 { path: 'slotsToPlan', select: '_id step' },
                 {
                   path: 'trainers',
@@ -2739,7 +2757,7 @@ describe('getCourse', () => {
                 select: 'identity.firstname identity.lastname contact local.email picture.link '
                   + 'firstMobileConnectionDate loginCode',
               },
-              { path: 'slots', select: 'step startDate endDate address meetingLink' },
+              { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
               { path: 'slotsToPlan', select: '_id step' },
               {
                 path: 'trainers',
@@ -2880,7 +2898,7 @@ describe('getCourse', () => {
         ]
       );
 
-      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, false, true);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, {}, false, true);
       sinon.assert.notCalled(attendanceCountDocuments);
     });
 
@@ -3041,7 +3059,7 @@ describe('getCourse', () => {
         ]
       );
 
-      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, false, true);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, loggedUser, false, true);
       sinon.assert.calledOnceWithExactly(attendanceCountDocuments, { courseSlot: lastSlotId });
     });
 
@@ -3201,7 +3219,7 @@ describe('getCourse', () => {
         ]
       );
 
-      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, false, true);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, loggedUser, false, true);
       sinon.assert.calledOnceWithExactly(attendanceCountDocuments, { courseSlot: lastSlotId });
     });
 
@@ -3475,7 +3493,7 @@ describe('getCourse', () => {
         ]
       );
 
-      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, false, true);
+      sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, {}, false, true);
       sinon.assert.notCalled(attendanceCountDocuments);
     });
   });

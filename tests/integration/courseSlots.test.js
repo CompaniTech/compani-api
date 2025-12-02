@@ -2,12 +2,23 @@ const { expect } = require('expect');
 const omit = require('lodash/omit');
 const { ObjectId } = require('mongodb');
 const app = require('../../server');
-const { populateDB, coursesList, courseSlotsList, stepsList } = require('./seed/courseSlotsSeed');
+const {
+  populateDB,
+  coursesList,
+  courseSlotsList,
+  stepsList,
+  traineeFromOtherCompany,
+} = require('./seed/courseSlotsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const CourseHistory = require('../../src/models/CourseHistory');
-const { SLOT_DELETION, SLOT_EDITION } = require('../../src/helpers/constants');
+const { SLOT_DELETION, SLOT_EDITION, SLOT_RESTRICTION } = require('../../src/helpers/constants');
 const CourseSlot = require('../../src/models/CourseSlot');
-const { holdingAdminFromOtherCompany, holdingAdminFromAuthCompany } = require('../seed/authUsersSeed');
+const {
+  holdingAdminFromOtherCompany,
+  holdingAdminFromAuthCompany,
+  coach,
+  auxiliary,
+} = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -286,6 +297,76 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(slotListCount).toEqual(courseSlotsList.length);
     });
 
+    it('should add concerned trainees', async () => {
+      const payload = { trainees: [coach._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const courseHistory = await CourseHistory.countDocuments({
+        course: courseSlotsList[0].course,
+        'slot.startDate': courseSlotsList[0].startDate,
+        'slot.endDate': courseSlotsList[0].endDate,
+        action: SLOT_RESTRICTION,
+      });
+
+      const slot = await CourseSlot.countDocuments({
+        course: courseSlotsList[0].course,
+        startDate: courseSlotsList[0].startDate,
+        endDate: courseSlotsList[0].endDate,
+        trainees: [coach._id],
+      });
+
+      expect(courseHistory).toEqual(1);
+      expect(slot).toBeTruthy();
+    });
+
+    it('should remove concerned trainees', async () => {
+      const payload = { trainees: [coach._id, auxiliary._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[1]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const courseHistory = await CourseHistory.countDocuments({
+        course: courseSlotsList[1].course,
+        'slot.startDate': courseSlotsList[1].startDate,
+        'slot.endDate': courseSlotsList[1].endDate,
+        action: SLOT_RESTRICTION,
+      });
+
+      const slot = await CourseSlot.countDocuments({
+        course: courseSlotsList[1].course,
+        startDate: courseSlotsList[1].startDate,
+        endDate: courseSlotsList[1].endDate,
+        trainees: { $exists: false },
+      });
+
+      expect(courseHistory).toEqual(1);
+      expect(slot).toBeTruthy();
+    });
+
+    it('should return 400 if update dates and trainees', async () => {
+      const payload = { trainees: [coach._id], startDate: '', endDate: '' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 403 if course is archived', async () => {
       const payload = {
         startDate: '2020-03-04T09:00:00',
@@ -299,6 +380,30 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try add concerned trainees on single course', async () => {
+      const payload = { trainees: [traineeFromOtherCompany._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[3]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 404 if trainee not in course', async () => {
+      const payload = { trainees: [traineeFromOtherCompany._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
     });
 
     it('should return 403 as trying to remove dates and course slot has attendances', async () => {
@@ -607,6 +712,18 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to update concerned trainees', async () => {
+      const payload = { trainees: [coach._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('COACH', () => {
@@ -692,6 +809,18 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('should add concerned trainees', async () => {
+      const payload = { trainees: [coach._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
     });
   });
 
