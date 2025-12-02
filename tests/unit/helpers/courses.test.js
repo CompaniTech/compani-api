@@ -2913,7 +2913,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees sheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3074,7 +3074,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees sheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3234,7 +3234,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees sheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3370,7 +3370,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees sheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3414,7 +3414,7 @@ describe('getCourse', () => {
         slotsToPlan: [],
         tutors: [{ _id: loggedUser._id }],
         trainees: [traineeId],
-
+        sheetId: '1234',
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
@@ -3508,7 +3508,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees sheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
