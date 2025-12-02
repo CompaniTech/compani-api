@@ -38,8 +38,7 @@ exports.createCourseFolderAndSheet = async ({ traineeName, traineeEmail, trainee
 
   if (!templateId) throw Boom.failedDependency('Template sheet ID missing.');
 
-  const folder = await Gdrive.add({ name: traineeName, parentFolderId, folder: true });
-  if (!folder) throw Boom.failedDependency('Google drive folder creation failed.');
+  const folder = await exports.createFolder(traineeName, parentFolderId);
 
   const sheetName = `${traineeName} - Fichier Apprenant`;
   const copiedSheet = await Gdrive.copy({

@@ -13,10 +13,10 @@ const drive = google.drive('v3');
 exports.add = async (params) => {
   const fileMetadata = {
     name: params.name,
-    mimeType: params.folder ? 'application/vnd.google-apps.folder' : (params.type || null),
+    mimeType: params.folder ? 'application/vnd.google-apps.folder' : null,
     parents: params.parentFolderId ? [params.parentFolderId] : [],
   };
-  const media = params.folder || !params.body ? null : { body: params.body, mimeType: params.type };
+  const media = params.folder ? null : { body: params.body, mimeType: params.type };
 
   const auth = jwtClient();
   await auth.authorize();
