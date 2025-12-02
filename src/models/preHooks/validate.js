@@ -27,17 +27,16 @@ module.exports = {
   getDocListMiddlewareList,
   getDocMiddlewareList,
   queryMiddlewareList,
-  validateQuery(next) {
+  validateQuery() {
     const query = this.getQuery();
     const isPopulate = get(query, '_id.$in', null);
     const hasCompany = (query.$and && query.$and.some(q => !!q.company || !!query.companies)) ||
       (query.$or && query.$or.every(q => !!q.company || !!query.companies)) || query.company || query.companies;
     const { isVendorUser, requestingOwnInfos, allCompanies } = this.getOptions();
 
-    if (!hasCompany && !isPopulate && !isVendorUser && !requestingOwnInfos && !allCompanies) next(Boom.badRequest());
-    next();
+    if (!hasCompany && !isPopulate && !isVendorUser && !requestingOwnInfos && !allCompanies) throw Boom.badRequest();
   },
-  formatQuery(next) {
+  formatQuery() {
     const query = this.getQuery();
     const flattenQuery = {};
     for (const [key, value] of Object.entries(query)) {
@@ -53,7 +52,6 @@ module.exports = {
     }
 
     this.setQuery(flattenQuery);
-    next();
   },
   formatQueryMiddlewareList() {
     return [
@@ -70,18 +68,16 @@ module.exports = {
       'updateMany',
     ];
   },
-  validateAggregation(next) {
-    if (get(this, 'options.allCompanies', null)) next();
-    else {
-      const companyId = get(this, 'options.company', null);
-      if (!companyId) next(Boom.badRequest());
-      this.pipeline().unshift({ $match: { company: new ObjectId(companyId) } });
-      next();
-    }
+  validateAggregation() {
+    if (get(this, 'options.allCompanies', null)) return;
+
+    const companyId = get(this, 'options.company', null);
+    if (!companyId) throw Boom.badRequest();
+
+    this.pipeline().unshift({ $match: { company: new ObjectId(companyId) } });
   },
-  validateUpdateOne(next) {
+  validateUpdateOne() {
     const query = this.getQuery();
-    if (!query.company) next(Boom.badRequest());
-    next();
+    if (!query.company) throw Boom.badRequest();
   },
 };

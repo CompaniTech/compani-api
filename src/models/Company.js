@@ -75,27 +75,23 @@ const CompanySchema = mongoose.Schema({
   },
 }, { timestamps: true });
 
-function populateHolding(doc, next) {
-  if (!doc) next();
+function populateHolding(doc) {
+  if (!doc) return;
   // eslint-disable-next-line no-param-reassign
   doc.holding = doc.holding && doc.holding.holding;
-
-  return next();
 }
 
-function populateHoldings(docs, next) {
+function populateHoldings(docs) {
   for (const doc of docs) {
     if (doc && doc.holding) {
       doc.holding = doc.holding.holding;
     }
   }
-
-  return next();
 }
 
-function cryptDatas(next) {
+function cryptDatas() {
   const { $set, $unset } = this.getUpdate() || { $set: {}, $unset: {} };
-  if (!Object.keys($set).length && !Object.keys($unset).length) return next();
+  if (!Object.keys($set).length && !Object.keys($unset).length) return;
 
   if ($set.iban) $set.iban = encrypt($set.iban);
 
@@ -108,8 +104,6 @@ function cryptDatas(next) {
   if ($set['debitMandates.$.file.driveId']) {
     $set['debitMandates.$.file.driveId'] = encrypt($set['debitMandates.$.file.driveId']);
   }
-
-  return next();
 }
 
 async function decryptDatas(doc) {

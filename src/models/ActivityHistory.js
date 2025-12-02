@@ -23,19 +23,15 @@ const ActivityHistorySchema = mongoose.Schema({
   duration: { type: Number },
 }, { timestamps: true });
 
-function formatDuration(doc, next) {
+function formatDuration(doc) {
   // eslint-disable-next-line no-param-reassign
   if (doc && doc.duration) doc.duration = formatSecondsToISODuration(doc.duration);
-
-  return next();
 }
 
-function formatDurationList(docs, next) {
+function formatDurationList(docs) {
   for (const doc of docs) {
-    formatDuration(doc, next);
+    formatDuration(doc);
   }
-
-  return next();
 }
 
 getDocMiddlewareList.map(middleware => ActivityHistorySchema.post(middleware, formatDuration));
