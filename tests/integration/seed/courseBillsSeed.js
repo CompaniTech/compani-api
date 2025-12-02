@@ -284,7 +284,7 @@ const coursesList = [
     certificateGenerationMode: GLOBAL,
     prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
   { // 13 - inter course with prices
     _id: new ObjectId(),
@@ -352,7 +352,7 @@ const coursesList = [
     certificateGenerationMode: GLOBAL,
     prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
 ];
 

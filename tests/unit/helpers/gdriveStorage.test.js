@@ -184,7 +184,7 @@ describe('createCourseFolderAndSheet', () => {
 
     const result = await GDriveStorageHelper.createCourseFolderAndSheet({ traineeName, traineeEmail, traineePhone });
 
-    expect(result).toEqual({ folderId: 'folder_id', sheetId: 'sheet_id' });
+    expect(result).toEqual({ folderId: 'folder_id', gSheetId: 'sheet_id' });
 
     sinon.assert.calledOnceWithExactly(
       addStub,

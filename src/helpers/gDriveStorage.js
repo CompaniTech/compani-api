@@ -55,5 +55,5 @@ exports.createCourseFolderAndSheet = async ({ traineeName, traineeEmail, trainee
     values: [[traineeName], [traineeEmail], [`'${traineePhone}`]],
   });
 
-  return { folderId: folder.id, sheetId: copiedSheet.id };
+  return { folderId: folder.id, gSheetId: copiedSheet.id };
 };

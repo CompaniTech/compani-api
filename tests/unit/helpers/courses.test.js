@@ -214,7 +214,7 @@ describe('createCourse', () => {
 
     findOneUserCompany.returns(SinonMongoose.stubChainedQueries(userCompany, ['lean']));
     userFindOne.returns(SinonMongoose.stubChainedQueries(trainee, ['lean']));
-    createCourseFolderAndSheet.returns({ folderId: 'folderId', sheetId: 'sheetId' });
+    createCourseFolderAndSheet.returns({ folderId: 'folderId', gSheetId: 'gSheetId' });
     create.returns(course);
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
 
@@ -259,7 +259,7 @@ describe('createCourse', () => {
         companies: [userCompany.company],
         prices: [{ global: 1200, company: userCompany.company }],
         folderId: 'folderId',
-        sheetId: 'sheetId',
+        gSheetId: 'gSheetId',
       }
     );
     SinonMongoose.calledOnceWithExactly(
@@ -2916,7 +2916,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees sheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3077,7 +3077,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees sheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3237,7 +3237,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees sheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3373,7 +3373,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees sheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3417,7 +3417,7 @@ describe('getCourse', () => {
         slotsToPlan: [],
         tutors: [{ _id: loggedUser._id }],
         trainees: [traineeId],
-        sheetId: '1234',
+        gSheetId: '1234',
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
@@ -3511,7 +3511,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees sheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );

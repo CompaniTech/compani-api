@@ -113,7 +113,7 @@ const coursesList = [
     operationsRepresentative: userList[1]._id,
     certificateGenerationMode: GLOBAL,
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
 ];
 

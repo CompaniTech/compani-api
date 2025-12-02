@@ -163,7 +163,7 @@ const coursesList = [
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
   { // 2
     _id: new ObjectId(),
@@ -263,7 +263,7 @@ const coursesList = [
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
 ];
 

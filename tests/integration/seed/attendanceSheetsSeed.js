@@ -186,7 +186,7 @@ const coursesList = [
     trainers: [trainer._id, trainerAndCoach._id],
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
   { // 8 Single course
     _id: new ObjectId(),
@@ -198,7 +198,7 @@ const coursesList = [
     trainers: [userList[3]._id],
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
 ];
 

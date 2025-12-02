@@ -81,7 +81,7 @@ const CourseSchema = mongoose.Schema({
   },
   interruptedAt: { type: Date },
   folderId: { type: String, required() { return this.type === SINGLE; } },
-  sheetId: { type: String, required() { return this.type === SINGLE; } },
+  gSheetId: { type: String, required() { return this.type === SINGLE; } },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {

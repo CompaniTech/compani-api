@@ -169,7 +169,7 @@ const coursesList = [
     maxTrainees: 1,
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
 ];
 

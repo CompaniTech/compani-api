@@ -1388,7 +1388,7 @@ const coursesList = [
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
-    sheetId: 'sheetId',
+    gSheetId: 'gSheetId',
   },
 ];
 

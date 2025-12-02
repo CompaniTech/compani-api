@@ -238,7 +238,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       };
       const coursesCountBefore = await Course.countDocuments();
       gdriveAddStub.returns({ id: 'folderId' });
-      gdriveCopyStub.returns({ id: 'sheetId' });
+      gdriveCopyStub.returns({ id: 'gSheetId' });
 
       const response = await app.inject({
         method: 'POST',

@@ -115,14 +115,14 @@ exports.createCourse = async (payload, credentials) => {
       const trainee = await User
         .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
         .lean();
-      const { folderId, sheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
+      const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
         traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
       });
 
       coursePayload.folderId = folderId;
-      coursePayload.sheetId = sheetId;
+      coursePayload.gSheetId = gSheetId;
     }
 
     coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
@@ -788,7 +788,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
-    .select('_id misc format type trainees sheetId')
+    .select('_id misc format type trainees gSheetId')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
@@ -799,7 +799,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     const slotsGroupedByStep = groupBy(course.slots, 'step._id');
 
     return {
-      ...isTutor ? { course } : omit(course, ['trainees', ...!isTrainer ? 'sheetId' : []]),
+      ...omit(course, 'trainees'),
       slots: [...new Set(
         course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
       )],
