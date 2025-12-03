@@ -4277,6 +4277,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainees/{traineeId}', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if trainee is linked to slot', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[7]._id.toHexString()}/trainees/${auxiliary._id.toHexString()}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 if course type is single', async () => {
       const response = await app.inject({
         method: 'DELETE',
