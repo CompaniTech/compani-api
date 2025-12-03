@@ -442,6 +442,18 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 as trying to add concerned trainees and course slot has attendance sheet', async () => {
+      const payload = { trainees: [auxiliary._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[14]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 as trying to remove dates and course slot has completion certificate', async () => {
       const payload = { startDate: '', endDate: '' };
       const response = await app.inject({
@@ -471,6 +483,18 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[6]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 as trying to add concerned trainees on completion certificate month', async () => {
+      const payload = { trainees: [coach._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[15]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });

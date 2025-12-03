@@ -24,6 +24,7 @@ const {
   SINGLE,
   MONTHLY,
   PRESENT,
+  MOBILE,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { auxiliaryRoleId } = require('../../seed/authRolesSeed');
@@ -162,6 +163,19 @@ const coursesList = [
     holding: authHolding._id,
     certificateGenerationMode: GLOBAL,
   },
+  { // 6 month intra course with attendance sheets and completion certificates
+    _id: new ObjectId(),
+    subProgram: subProgramsList[0]._id,
+    trainees: [coach._id, auxiliary._id],
+    companies: [authCompany._id],
+    misc: 'team formation',
+    type: INTRA,
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: MONTHLY,
+    maxTrainees: 2,
+    expectedBills: 0,
+  },
 ];
 
 const courseSlotsList = [
@@ -270,6 +284,20 @@ const courseSlotsList = [
     course: coursesList[1]._id,
     step: stepsList[0]._id,
   },
+  { // 14 slot with attendance sheet
+    _id: new ObjectId(),
+    startDate: '2020-05-13T09:00:00',
+    endDate: '2020-05-13T12:00:00',
+    course: coursesList[6]._id,
+    step: stepsList[0]._id,
+  },
+  { // 15 slot in completion certificate month
+    _id: new ObjectId(),
+    startDate: '2020-06-13T09:00:00',
+    endDate: '2020-06-13T12:00:00',
+    course: coursesList[6]._id,
+    step: stepsList[0]._id,
+  },
 ];
 
 const attendances = [
@@ -287,26 +315,71 @@ const attendances = [
     company: otherCompany._id,
     status: PRESENT,
   },
+  {
+    _id: new ObjectId(),
+    trainee: coach._id,
+    courseSlot: courseSlotsList[14]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: coach._id,
+    courseSlot: courseSlotsList[15]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
 ];
 
-const attendanceSheet = {
-  _id: new ObjectId(),
-  course: coursesList[1]._id,
-  file: { publicId: 'mon upload', link: 'www.test.com' },
-  trainee: traineeFromOtherCompany._id,
-  companies: [otherCompany._id],
-  slots: [{ slotId: courseSlotsList[12]._id }],
-  origin: WEBAPP,
-  trainer: trainerAndCoach._id,
-};
+const attendanceSheets = [
+  {
+    _id: new ObjectId(),
+    course: coursesList[1]._id,
+    file: { publicId: 'mon upload', link: 'www.test.com' },
+    trainee: traineeFromOtherCompany._id,
+    companies: [otherCompany._id],
+    slots: [{ slotId: courseSlotsList[12]._id }],
+    origin: WEBAPP,
+    trainer: trainerAndCoach._id,
+  },
+  {
+    _id: new ObjectId(),
+    course: coursesList[6]._id,
+    date: '2020-05-12T22:00:00.000Z',
+    slots: [
+      {
+        slotId: courseSlotsList[14]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          { traineeId: coach._id },
+        ],
+      },
+    ],
+    companies: [authCompany._id],
+    origin: MOBILE,
+    trainer: trainer._id,
+  },
+];
 
-const completionCertificate = {
-  trainee: traineeFromOtherCompany._id,
-  month: '05-2020',
-  company: otherCompany._id,
-  course: coursesList[1]._id,
-  file: { publicId: 'comp-certif', link: 'www.certif.com' },
-};
+const completionCertificates = [
+  {
+    trainee: traineeFromOtherCompany._id,
+    month: '05-2020',
+    company: otherCompany._id,
+    course: coursesList[1]._id,
+    file: { publicId: 'comp-certif', link: 'www.certif.com' },
+  },
+  {
+    trainee: coach._id,
+    month: '06-2020',
+    company: authCompany._id,
+    course: coursesList[6]._id,
+    file: { publicId: 'comp-certif', link: 'www.certif.com' },
+  },
+];
 
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
@@ -314,7 +387,7 @@ const populateDB = async () => {
   await Promise.all([
     Activity.create(activitiesList),
     Card.create(cardsList),
-    CompletionCertificate.create(completionCertificate),
+    CompletionCertificate.create(completionCertificates),
     SubProgram.create(subProgramsList),
     Program.create(programsList),
     Course.create(coursesList),
@@ -322,7 +395,7 @@ const populateDB = async () => {
     Step.create(stepsList),
     User.create([traineeFromOtherCompany]),
     Attendance.create(attendances),
-    AttendanceSheet.create(attendanceSheet),
+    AttendanceSheet.create(attendanceSheets),
     UserCompany.create(userCompanies),
   ]);
 };
