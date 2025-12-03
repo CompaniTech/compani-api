@@ -79,7 +79,7 @@ const CardSchema = mongoose.Schema({
   id: false,
 });
 
-function save(next) {
+function save() {
   if (this.isNew) {
     switch (this.template) {
       case FILL_THE_GAPS:
@@ -122,8 +122,6 @@ function save(next) {
         break;
     }
   }
-
-  return next();
 }
 
 function setIsValid() {

@@ -37,7 +37,7 @@ const CourseBillSchema = mongoose.Schema({
   sendingDates: { type: [Date], default: undefined },
 }, { timestamps: true });
 
-function formatPayer(doc, next) {
+function formatPayer(doc) {
   if (get(doc, 'payer.company')) {
     // eslint-disable-next-line no-param-reassign
     doc.payer = doc.payer.company;
@@ -50,12 +50,10 @@ function formatPayer(doc, next) {
     // eslint-disable-next-line no-param-reassign
     doc.isPayerCompany = false;
   }
-
-  return next();
 }
 
-function formatPayers(docs, next) {
-  if (this._fields['payer.fundingOrganisation']) return next();
+function formatPayers(docs) {
+  if (this._fields['payer.fundingOrganisation']) return;
 
   for (const doc of docs) {
     if (get(doc, 'payer.company')) {
@@ -67,8 +65,6 @@ function formatPayers(docs, next) {
       doc.isPayerCompany = false;
     }
   }
-
-  return next();
 }
 
 CourseBillSchema.virtual('coursePayments', { ref: 'CoursePayment', localField: '_id', foreignField: 'courseBill' });
