@@ -100,7 +100,7 @@ describe('NODE ENV', () => {
 
 describe('COURSES ROUTES - POST /courses', () => {
   let authToken;
-  let gdriveAddStub;
+  let createFolder;
   let gdriveCopyStub;
   let gsheetsWriteDataStub;
 
@@ -109,7 +109,7 @@ describe('COURSES ROUTES - POST /courses', () => {
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
-      gdriveAddStub = sinon.stub(Gdrive, 'add');
+      createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
       gdriveCopyStub = sinon.stub(Gdrive, 'copy');
       gsheetsWriteDataStub = sinon.stub(Gsheets, 'writeData');
       process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
@@ -118,7 +118,7 @@ describe('COURSES ROUTES - POST /courses', () => {
     });
 
     afterEach(() => {
-      gdriveAddStub.restore();
+      createFolder.restore();
       gdriveCopyStub.restore();
       gsheetsWriteDataStub.restore();
       process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
@@ -237,7 +237,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         prices: { global: 1000, trainerFees: 200 },
       };
       const coursesCountBefore = await Course.countDocuments();
-      gdriveAddStub.returns({ id: 'folderId' });
+      createFolder.returns({ id: 'folderId' });
       gdriveCopyStub.returns({ id: 'gSheetId' });
 
       const response = await app.inject({
@@ -259,7 +259,7 @@ describe('COURSES ROUTES - POST /courses', () => {
           }
         );
       expect(courseWithTrainee).toEqual(1);
-      sinon.assert.calledOnce(gdriveAddStub);
+      sinon.assert.calledOnce(createFolder);
       sinon.assert.calledOnce(gdriveCopyStub);
       sinon.assert.calledOnce(gsheetsWriteDataStub);
     });
@@ -6817,7 +6817,6 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
   let parseCSV;
   let createFolderForCompany;
   let createFolder;
-  let gdriveAddStub;
   let gdriveCopyStub;
   let gsheetsWriteDataStub;
 
@@ -6829,7 +6828,6 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     parseCSV = sinon.stub(UtilsHelper, 'parseCsv');
     createFolderForCompany = sinon.stub(GDriveStorageHelper, 'createFolderForCompany');
     createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
-    gdriveAddStub = sinon.stub(Gdrive, 'add');
     gdriveCopyStub = sinon.stub(Gdrive, 'copy');
     gsheetsWriteDataStub = sinon.stub(Gsheets, 'writeData');
     process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
@@ -6843,7 +6841,6 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     parseCSV.restore();
     createFolderForCompany.restore();
     createFolder.restore();
-    gdriveAddStub.restore();
     gdriveCopyStub.restore();
     gsheetsWriteDataStub.restore();
     process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
@@ -6867,11 +6864,11 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       createFolder.onCall(0).returns({ id: '0987654321' });
       createFolder.onCall(1).returns({ id: 'qwerty' });
       createFolder.onCall(2).returns({ id: 'asdfgh' });
-      gdriveAddStub.onCall(0).returns({ id: 'folderId1' });
+      createFolder.onCall(3).returns({ id: 'folderId1' });
+      createFolder.onCall(4).returns({ id: 'folderId2' });
+      createFolder.onCall(5).returns({ id: 'folderId3' });
       gdriveCopyStub.onCall(0).returns({ id: 'sheetId1' });
-      gdriveAddStub.onCall(1).returns({ id: 'folderId2' });
       gdriveCopyStub.onCall(1).returns({ id: 'sheetId2' });
-      gdriveAddStub.onCall(2).returns({ id: 'folderId3' });
       gdriveCopyStub.onCall(2).returns({ id: 'sheetId3' });
 
       const formData = { file: 'test' };
@@ -6951,8 +6948,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       sinon.assert.calledOnce(sendNotificationToUser);
       sinon.assert.calledOnce(sendinBlueTransporter);
       sinon.assert.calledOnce(createFolderForCompany);
-      sinon.assert.calledThrice(createFolder);
-      sinon.assert.callCount(gdriveAddStub, 3);
+      sinon.assert.callCount(createFolder, 6);
       sinon.assert.callCount(gdriveCopyStub, 3);
       sinon.assert.callCount(gsheetsWriteDataStub, 3);
     });
