@@ -103,7 +103,7 @@ exports.authorizeUnsubscribedAttendancesGet = async (req) => {
 };
 
 exports.authorizeAttendanceCreation = async (req) => {
-  const courseSlot = await CourseSlot.findOne({ _id: req.payload.courseSlot }, { course: 1, startDate: 1 })
+  const courseSlot = await CourseSlot.findOne({ _id: req.payload.courseSlot }, { course: 1, startDate: 1, trainees: 1 })
     .populate({
       path: 'course',
       select: 'trainers companies archivedAt trainees type holding subProgram',
@@ -153,6 +153,12 @@ exports.authorizeAttendanceCreation = async (req) => {
         });
 
       if (!coursesWithTraineeCount) throw Boom.forbidden(translate[language].traineeMustBeRegisteredInAnotherGroup);
+    }
+
+    const isTraineeNotConcerned = courseSlot.trainees &&
+    !UtilsHelper.doesArrayIncludeId(courseSlot.trainees, req.payload.trainee);
+    if (isTraineeRegistered && isTraineeNotConcerned) {
+      throw Boom.forbidden(translate[language].traineeNotConcernedBySlot);
     }
   }
 
