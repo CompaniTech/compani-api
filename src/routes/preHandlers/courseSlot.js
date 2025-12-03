@@ -69,8 +69,14 @@ const checkPayload = async (courseSlot, payload) => {
   });
   if (completionCertificates) throw Boom.forbidden(translate[language].courseSlotDateInCompletionCertificate);
 
+  const course = await Course.findById(courseId, { subProgram: 1, trainees: 1 })
+    .populate({ path: 'subProgram', select: 'steps' })
+    .lean();
+
   if (!hasOneDate) {
-    const attendances = await Attendance.countDocuments({ courseSlot: courseSlot._id });
+    const query = { courseSlot: courseSlot._id };
+    if (payload.trainees) { query.trainee = { $in: course.trainees }; }
+    const attendances = await Attendance.countDocuments(query);
     if (attendances) throw Boom.forbidden(translate[language].courseSlotWithAttendances);
   }
 
@@ -80,10 +86,6 @@ const checkPayload = async (courseSlot, payload) => {
     const startDateBeforeEndDate = CompaniDate(startDate).isSameOrBefore(endDate);
     if (!(sameDay && startDateBeforeEndDate)) throw Boom.badRequest();
   }
-
-  const course = await Course.findById(courseId, { subProgram: 1 })
-    .populate({ path: 'subProgram', select: 'steps' })
-    .lean();
 
   if (step.type === E_LEARNING) throw Boom.badRequest();
   if (!UtilsHelper.doesArrayIncludeId(course.subProgram.steps, step._id)) throw Boom.badRequest();
