@@ -1078,8 +1078,8 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         .lean();
       companyId = get(company, '_id');
     }
-    const identityUser = await User
-      .findOne(
+    const identityUsers = await User
+      .find(
         {
           'identity.firstname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.firstname)}$`, 'i') },
           'identity.lastname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.lastname)}$`, 'i') },
@@ -1088,6 +1088,13 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
       )
       .populate({ path: 'company' })
       .lean();
+
+    let identityUser = null;
+    const userWithSameCompany = identityUsers.find(user => UtilsHelper.areObjectIdsEquals(user.company, companyId));
+    const userWithSameEmail = identityUsers.find(user => user.local.email === learner.email.toLowerCase());
+    if (companyId && userWithSameCompany) identityUser = userWithSameCompany;
+    else if (userWithSameEmail) identityUser = userWithSameEmail;
+
     let sameEmail = false;
     if (identityUser) {
       sameEmail = identityUser.local.email === learner.email.toLowerCase();
