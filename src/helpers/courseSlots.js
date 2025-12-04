@@ -41,11 +41,9 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
 
   if (has(payload, 'trainees')) {
     const course = await Course.findOne({ _id: courseSlot.course }, { trainees: 1 }).lean();
-    const query = {};
-    const courseTraineesLength = [...new Set(course.trainees.map(t => t.toHexString()))].length;
-    const payloadTraineesLength = [...new Set(payload.trainees)].length;
-    if (courseTraineesLength === payloadTraineesLength) query.$unset = { trainees: '' };
-    else query.$set = { trainees: payload.trainees };
+    const query = course.trainees.length === payload.trainees.length
+      ? { $unset: { trainees: '' } }
+      : { $set: { trainees: payload.trainees } };
     await CourseSlot.updateOne({ _id: courseSlotId }, query);
     await CourseHistoriesHelper.createHistoryOnSlotRestriction(
       { ...pick(courseSlot, ['course', 'startDate', 'endDate']) },

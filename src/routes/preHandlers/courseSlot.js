@@ -75,7 +75,9 @@ const checkPayload = async (courseSlot, payload) => {
 
   if (!hasOneDate) {
     const query = { courseSlot: courseSlot._id };
-    if (payload.trainees) { query.trainee = { $in: course.trainees }; }
+    if (payload.trainees) {
+      query.trainee = { $in: course.trainees.filter(t => !UtilsHelper.doesArrayIncludeId(payload.trainees, t)) };
+    }
     const attendances = await Attendance.countDocuments(query);
     if (attendances) throw Boom.forbidden(translate[language].courseSlotWithAttendances);
   }

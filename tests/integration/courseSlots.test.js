@@ -367,6 +367,18 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if trainees are empty', async () => {
+      const payload = { trainees: [] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 403 if course is archived', async () => {
       const payload = {
         startDate: '2020-03-04T09:00:00',

@@ -239,7 +239,7 @@ describe('ATTENDANCES ROUTES - POST /attendances', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 403 if try to create attendance on a slot linked to slot', async () => {
+    it('should return 403 if try to create attendance for a trainee not concerned by slot', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/attendances',

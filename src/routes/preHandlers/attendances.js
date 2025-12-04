@@ -155,9 +155,9 @@ exports.authorizeAttendanceCreation = async (req) => {
       if (!coursesWithTraineeCount) throw Boom.forbidden(translate[language].traineeMustBeRegisteredInAnotherGroup);
     }
 
-    const isTraineeNotConcerned = courseSlot.trainees &&
-    !UtilsHelper.doesArrayIncludeId(courseSlot.trainees, req.payload.trainee);
-    if (isTraineeRegistered && isTraineeNotConcerned) {
+    const isTraineeConcerned = !courseSlot.trainees ||
+      UtilsHelper.doesArrayIncludeId(courseSlot.trainees, req.payload.trainee);
+    if (isTraineeRegistered && !isTraineeConcerned) {
       throw Boom.forbidden(translate[language].traineeNotConcernedBySlot);
     }
   }
