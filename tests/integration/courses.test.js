@@ -6087,6 +6087,15 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
           company: 'Test SAS',
           suffix: '@test.fr',
         },
+        {
+          firstname: 'Auxiliary',
+          lastname: 'Olait',
+          email: 'auxiliary@alenvi.io',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+        },
       ]);
 
       const response = await app.inject({
@@ -6100,8 +6109,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       const usersAfter = await User.countDocuments();
       expect(usersAfter).toEqual(usersBefore + 1);
       const courseAfter = await Course.findOne({ _id: coursesList[26]._id }).lean();
-      expect(courseAfter.trainees.length).toEqual(coursesList[26].trainees.length + 2);
-      sinon.assert.calledTwice(sendNotificationToUser);
+      expect(courseAfter.trainees.length).toEqual(coursesList[26].trainees.length + 3);
+      sinon.assert.calledThrice(sendNotificationToUser);
       sinon.assert.calledOnce(sendinBlueTransporter);
     });
 
@@ -6658,6 +6667,33 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
           phone: '0687654321',
           company: 'Test SAS',
           suffix: '@test.fr',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}/trainees-csv`,
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['l\'email correspond à un autre utilisateur']);
+    });
+
+    it('should return 422 if formed email is from other learner', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Coach',
+          lastname: 'Third Company',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@alenvi.io',
         },
       ]);
 
@@ -7370,6 +7406,37 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           phone: '0687654321',
           company: 'Test SAS',
           suffix: '@test.fr',
+          subProgram: subProgramsList[4]._id,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
+          estimatedStartDate: '2025-11-01',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/single-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['l\'email correspond à un autre utilisateur']);
+    });
+
+    it('should return 422 if formed email is from other learner', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Coach',
+          lastname: 'Third Company',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@alenvi.io',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
           trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',

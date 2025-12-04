@@ -942,8 +942,9 @@ exports.authorizeUploadTraineeCSV = async (req) => {
         } else errorsByTrainee[learnerName] = [translate[language].companyNotRegisteredToCourse];
       }
     }
-    const identityUser = await User
-      .findOne(
+
+    const identityUsers = await User
+      .find(
         {
           'identity.firstname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.firstname)}$`, 'i') },
           'identity.lastname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(learner.lastname)}$`, 'i') },
@@ -952,9 +953,23 @@ exports.authorizeUploadTraineeCSV = async (req) => {
       )
       .populate({ path: 'company' })
       .lean();
+
+    let identityUser = null;
+    const formattedEmail = (
+      learner.email ||
+      (
+        `${UtilsHelper.removeDiacritics(learner.firstname).replace(/[^a-z]/gi, '')}`
+      + `.${UtilsHelper.removeDiacritics(learner.lastname).replace(/[^a-z]/gi, '')}${learner.suffix}`
+      )
+    ).toLowerCase();
+    const userWithSameEmail = identityUsers.find(user => user.local.email === formattedEmail);
+    const userWithSameCompany = identityUsers.find(user => UtilsHelper.areObjectIdsEquals(user.company, companyId));
+    if (userWithSameEmail) identityUser = userWithSameEmail;
+    else if (companyId && userWithSameCompany) identityUser = userWithSameCompany;
+
     let sameEmail = false;
     if (identityUser) {
-      sameEmail = identityUser.local.email === learner.email.toLowerCase();
+      sameEmail = identityUser.local.email === formattedEmail;
       if (identityUser.company) {
         if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, identityUser.company)) {
           if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerCompany);
@@ -965,20 +980,20 @@ exports.authorizeUploadTraineeCSV = async (req) => {
         }
       }
     }
-    if (learner.email) {
-      if (!learner.email.match(EMAIL_VALIDATION)) {
+    if (!learner.email && (!learner.suffix || !learner.suffix.match(SUFFIX_EMAIL_VALIDATION))) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingOrIncorrectSuffix);
+      else errorsByTrainee[learnerName] = [translate[language].missingOrIncorrectSuffix];
+    } else {
+      if (!formattedEmail.match(EMAIL_VALIDATION)) {
         if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectEmail);
         else errorsByTrainee[learnerName] = [translate[language].incorrectEmail];
       }
-      const emailUser = await User.findOne({ 'local.email': learner.email.toLowerCase() }, { _id: 1 }).lean();
+      const emailUser = await User.findOne({ 'local.email': formattedEmail }, { _id: 1 }).lean();
       if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, get(identityUser, '_id'))) {
         if (errorsByTrainee[learnerName]) {
           errorsByTrainee[learnerName].push(translate[language].emailLinkedToOtherLearner);
         } else errorsByTrainee[learnerName] = [translate[language].emailLinkedToOtherLearner];
       }
-    } else if (!learner.suffix || !learner.suffix.match(SUFFIX_EMAIL_VALIDATION)) {
-      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingOrIncorrectSuffix);
-      else errorsByTrainee[learnerName] = [translate[language].missingOrIncorrectSuffix];
     }
     if (learner.countryCode && !learner.countryCode.match(COUNTRY_CODE_VALIDATION)) {
       if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectCountryCode);
@@ -996,11 +1011,7 @@ exports.authorizeUploadTraineeCSV = async (req) => {
         ...identityUser && sameEmail && { _id: identityUser._id },
         'identity.firstname': learner.firstname,
         'identity.lastname': learner.lastname,
-        'local.email': learner.email ||
-        (
-          `${UtilsHelper.removeDiacritics(learner.firstname).replace(/[^a-z]/gi, '')}`
-          + `.${UtilsHelper.removeDiacritics(learner.lastname).replace(/[^a-z]/gi, '')}${learner.suffix}`
-        ).toLowerCase(),
+        'local.email': formattedEmail,
         ...learner.phone && { 'contact.phone': formattedPhone },
         ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
         company: companyId,
@@ -1078,6 +1089,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         .lean();
       companyId = get(company, '_id');
     }
+
     const identityUsers = await User
       .find(
         {
@@ -1090,14 +1102,21 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
       .lean();
 
     let identityUser = null;
+    const formattedEmail = (
+      learner.email ||
+      (
+        `${UtilsHelper.removeDiacritics(learner.firstname).replace(/[^a-z]/gi, '')}`
+      + `.${UtilsHelper.removeDiacritics(learner.lastname).replace(/[^a-z]/gi, '')}${learner.suffix}`
+      )
+    ).toLowerCase();
     const userWithSameCompany = identityUsers.find(user => UtilsHelper.areObjectIdsEquals(user.company, companyId));
-    const userWithSameEmail = identityUsers.find(user => user.local.email === learner.email.toLowerCase());
+    const userWithSameEmail = identityUsers.find(user => user.local.email === formattedEmail);
     if (companyId && userWithSameCompany) identityUser = userWithSameCompany;
     else if (userWithSameEmail) identityUser = userWithSameEmail;
 
     let sameEmail = false;
     if (identityUser) {
-      sameEmail = identityUser.local.email === learner.email.toLowerCase();
+      sameEmail = identityUser.local.email === formattedEmail;
       if (identityUser.company) {
         if (sameEmail && !UtilsHelper.areObjectIdsEquals(companyId, identityUser.company)) {
           if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].wrongLearnerCompany);
@@ -1108,20 +1127,20 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         }
       }
     }
-    if (learner.email) {
-      if (!learner.email.match(EMAIL_VALIDATION)) {
+    if (!learner.email && (!learner.suffix || !learner.suffix.match(SUFFIX_EMAIL_VALIDATION))) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingOrIncorrectSuffix);
+      else errorsByTrainee[learnerName] = [translate[language].missingOrIncorrectSuffix];
+    } else {
+      if (!formattedEmail.match(EMAIL_VALIDATION)) {
         if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectEmail);
         else errorsByTrainee[learnerName] = [translate[language].incorrectEmail];
       }
-      const emailUser = await User.findOne({ 'local.email': learner.email.toLowerCase() }, { _id: 1 }).lean();
+      const emailUser = await User.findOne({ 'local.email': formattedEmail }, { _id: 1 }).lean();
       if (emailUser && !UtilsHelper.areObjectIdsEquals(emailUser._id, get(identityUser, '_id'))) {
         if (errorsByTrainee[learnerName]) {
           errorsByTrainee[learnerName].push(translate[language].emailLinkedToOtherLearner);
         } else errorsByTrainee[learnerName] = [translate[language].emailLinkedToOtherLearner];
       }
-    } else if (!learner.suffix || !learner.suffix.match(SUFFIX_EMAIL_VALIDATION)) {
-      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingOrIncorrectSuffix);
-      else errorsByTrainee[learnerName] = [translate[language].missingOrIncorrectSuffix];
     }
     if (learner.countryCode && !learner.countryCode.match(COUNTRY_CODE_VALIDATION)) {
       if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].incorrectCountryCode);
@@ -1214,11 +1233,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         ...identityUser && sameEmail && { _id: identityUser._id },
         'identity.firstname': learner.firstname,
         'identity.lastname': learner.lastname,
-        'local.email': learner.email ||
-        (
-          `${UtilsHelper.removeDiacritics(learner.firstname).replace(/[^a-z]/gi, '')}`
-          + `.${UtilsHelper.removeDiacritics(learner.lastname).replace(/[^a-z]/gi, '')}${learner.suffix}`
-        ).toLowerCase(),
+        'local.email': formattedEmail,
         ...learner.phone && { 'contact.phone': formattedPhone },
         ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
         company: companyId || learner.company,

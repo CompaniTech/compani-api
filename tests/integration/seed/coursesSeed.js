@@ -149,7 +149,7 @@ const traineeFromThirdCompany = {
 const coachFromThirdCompany = {
   _id: new ObjectId(),
   identity: { firstname: 'Manon', lastname: 'Subscription' },
-  local: { email: 'coach_third_company@alenvi.io', password: '123456!eR' },
+  local: { email: 'coach.thirdcompany@alenvi.io', password: '123456!eR' },
   role: { client: coachRoleId },
   contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
@@ -195,6 +195,15 @@ const ROFAndCoach = {
   origin: WEBAPP,
 };
 
+const namesakeLearner = {
+  _id: new ObjectId(),
+  identity: { firstname: 'Auxiliary', lastname: 'Olait' },
+  local: { email: 'namesake@alenvi.io', password: '123456!eR' },
+  contact: { phone: '0987654312', countryCode: '+33' },
+  refreshToken: uuidv4(),
+  origin: WEBAPP,
+};
+
 const userList = [
   traineeFromOtherCompany,
   traineeFromAuthCompanyWithFormationExpoToken,
@@ -208,6 +217,7 @@ const userList = [
   traineeComingUpInAuthCompany,
   traineeFromAuthFormerlyInOther,
   ROFAndCoach,
+  namesakeLearner,
 ];
 
 const userCompanies = [
