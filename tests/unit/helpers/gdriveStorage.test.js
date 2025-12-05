@@ -178,22 +178,24 @@ describe('createCourseFolderAndSheet', () => {
     const traineeName = 'TITI Toto';
     const traineeEmail = 'toto.titi@compani.fr';
     const traineePhone = '+33612345678';
+    const traineeCompany = 'Company';
 
     add.returns({ id: 'folder_id' });
     copy.returns({ id: 'sheet_id' });
 
-    const result = await GDriveStorageHelper.createCourseFolderAndSheet({ traineeName, traineeEmail, traineePhone });
+    const result = await GDriveStorageHelper
+      .createCourseFolderAndSheet({ traineeName, traineeEmail, traineePhone, traineeCompany });
 
     expect(result).toEqual({ folderId: 'folder_id', gSheetId: 'sheet_id' });
 
     sinon.assert.calledOnceWithExactly(
       add,
-      { name: traineeName, parentFolderId: 'parent_folder_id', folder: true }
+      { name: 'TITI Toto (Company)', parentFolderId: 'parent_folder_id', folder: true }
     );
 
     sinon.assert.calledWithExactly(
       copy,
-      { fileId: 'templateId', name: 'TITI Toto - Fichier Apprenant', parents: ['folder_id'] }
+      { fileId: 'templateId', name: 'TITI Toto (Company) - Fichier Apprenant', parents: ['folder_id'] }
     );
 
     sinon.assert.calledOnceWithExactly(writeData, {

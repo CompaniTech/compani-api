@@ -249,9 +249,10 @@ describe('createCourse', () => {
     sinon.assert.calledOnceWithExactly(
       createCourseFolderAndSheet,
       {
-        traineeName: 'Toto TITI (Company)',
+        traineeName: 'Toto TITI',
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact),
+        traineeCompany: 'Company',
       }
     );
     sinon.assert.calledOnceWithExactly(

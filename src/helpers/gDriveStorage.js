@@ -32,15 +32,16 @@ exports.addFile = async (params) => {
 
 exports.deleteFile = async driveFileId => Gdrive.deleteFile({ fileId: driveFileId });
 
-exports.createCourseFolderAndSheet = async ({ traineeName, traineeEmail, traineePhone }) => {
+exports.createCourseFolderAndSheet = async ({ traineeName, traineeEmail, traineePhone, traineeCompany }) => {
   const parentFolderId = process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID;
   const templateId = process.env.GOOGLE_SHEET_TEMPLATE_ID;
 
   if (!templateId) throw Boom.failedDependency('Template sheet ID missing.');
 
-  const folder = await exports.createFolder(traineeName, parentFolderId);
+  const documentsName = `${traineeName} (${traineeCompany})`;
+  const folder = await exports.createFolder(documentsName, parentFolderId);
 
-  const sheetName = `${traineeName} - Fichier Apprenant`;
+  const sheetName = `${documentsName} - Fichier Apprenant`;
   const copiedSheet = await Gdrive.copy({
     fileId: templateId,
     name: sheetName,

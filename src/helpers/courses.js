@@ -118,9 +118,10 @@ exports.createCourse = async (payload, credentials) => {
         .lean();
 
       const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
-        traineeName: `${UtilsHelper.formatIdentity(trainee.identity, 'FL')} (${trainee.company.name})`,
+        traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
+        traineeCompany: trainee.company.name,
       });
 
       coursePayload.folderId = folderId;
