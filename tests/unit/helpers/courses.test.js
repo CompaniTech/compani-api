@@ -32,6 +32,7 @@ const DocxHelper = require('../../../src/helpers/docx');
 const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
 const StepsHelper = require('../../../src/helpers/steps');
 const TrainingContractsHelper = require('../../../src/helpers/trainingContracts');
+const GDriveStorageHelper = require('../../../src/helpers/gDriveStorage');
 const NotificationHelper = require('../../../src/helpers/notifications');
 const UserHelper = require('../../../src/helpers/users');
 const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
@@ -96,7 +97,10 @@ describe('createCourse', () => {
   let insertManyCourseSlot;
   let findOneUserCompany;
   let addTrainee;
+  let userFindOne;
+  let createCourseFolderAndSheet;
   const credentials = { _id: new ObjectId() };
+  const subProgramId = new ObjectId();
 
   beforeEach(() => {
     create = sinon.stub(Course, 'create');
@@ -108,7 +112,10 @@ describe('createCourse', () => {
     insertManyCourseSlot = sinon.stub(CourseSlot, 'insertMany');
     findOneUserCompany = sinon.stub(UserCompany, 'findOne');
     addTrainee = sinon.stub(CourseHelper, 'addTrainee');
+    userFindOne = sinon.stub(User, 'findOne');
+    createCourseFolderAndSheet = sinon.stub(GDriveStorageHelper, 'createCourseFolderAndSheet');
     UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
+    process.env.VAEI_SUBPROGRAM_IDS = subProgramId.toHexString();
   });
   afterEach(() => {
     create.restore();
@@ -117,7 +124,10 @@ describe('createCourse', () => {
     insertManyCourseSlot.restore();
     findOneUserCompany.restore();
     addTrainee.restore();
+    userFindOne.restore();
+    createCourseFolderAndSheet.restore();
     UtilsMock.unmockCurrentDate();
+    process.env.VAEI_SUBPROGRAM_IDS = '';
   });
 
   it('should create an intra course', async () => {
@@ -152,6 +162,8 @@ describe('createCourse', () => {
     expect(result.operationsRepresentative).toEqual(payload.operationsRepresentative);
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     sinon.assert.notCalled(findOneUserCompany);
+    sinon.assert.notCalled(userFindOne);
+    sinon.assert.notCalled(createCourseFolderAndSheet);
     sinon.assert.calledOnceWithExactly(
       create,
       {
@@ -171,11 +183,18 @@ describe('createCourse', () => {
     );
   });
 
-  it('should create a single course', async () => {
+  it('should create a single course (no user with same name)', async () => {
     const steps = [{ _id: new ObjectId(), type: ON_SITE }];
-    const subProgram = { _id: new ObjectId(), steps };
+    const subProgram = { _id: subProgramId, steps };
     const traineeId = new ObjectId();
     const userCompany = { company: new ObjectId() };
+    const trainee = {
+      _id: traineeId,
+      identity: { firstname: 'Toto', lastname: 'Titi' },
+      local: { email: 'toto.titi@compani.fr' },
+      contact: { phone: '0612345678', countryCode: '+33' },
+      company: { name: 'Company' },
+    };
     const payload = {
       misc: 'name',
       subProgram: subProgram._id,
@@ -195,6 +214,8 @@ describe('createCourse', () => {
     const slots = [{ course: course._id, step: steps[0]._id }];
 
     findOneUserCompany.returns(SinonMongoose.stubChainedQueries(userCompany, ['lean']));
+    userFindOne.returns(SinonMongoose.stubChainedQueries(trainee));
+    createCourseFolderAndSheet.returns({ folderId: 'folderId', gSheetId: 'gSheetId' });
     create.returns(course);
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
 
@@ -217,12 +238,31 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
+    SinonMongoose.calledOnceWithExactly(
+      userFindOne,
+      [
+        { query: 'findOne', args: [{ _id: traineeId }, { identity: 1, 'local.email': 1, contact: 1 }] },
+        { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      createCourseFolderAndSheet,
+      {
+        traineeName: 'Toto TITI',
+        traineeEmail: trainee.local.email,
+        traineePhone: UtilsHelper.formatPhone(trainee.contact),
+        traineeCompany: 'Company',
+      }
+    );
     sinon.assert.calledOnceWithExactly(
       create,
       {
         ...omit(payload, ['trainee']),
         companies: [userCompany.company],
         prices: [{ global: 1200, company: userCompany.company }],
+        folderId: 'folderId',
+        gSheetId: 'gSheetId',
       }
     );
     SinonMongoose.calledOnceWithExactly(
@@ -260,6 +300,8 @@ describe('createCourse', () => {
     sinon.assert.calledOnceWithExactly(create, payload);
     sinon.assert.notCalled(insertManyCourseSlot);
     sinon.assert.notCalled(findOneUserCompany);
+    sinon.assert.notCalled(userFindOne);
+    sinon.assert.notCalled(createCourseFolderAndSheet);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -294,6 +336,8 @@ describe('createCourse', () => {
       '2022-12-10T12:00:00.000Z'
     );
     sinon.assert.notCalled(findOneUserCompany);
+    sinon.assert.notCalled(userFindOne);
+    sinon.assert.notCalled(createCourseFolderAndSheet);
   });
 });
 
@@ -2875,7 +2919,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3036,7 +3080,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3196,7 +3240,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3332,7 +3376,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3376,7 +3420,7 @@ describe('getCourse', () => {
         slotsToPlan: [],
         tutors: [{ _id: loggedUser._id }],
         trainees: [traineeId],
-
+        gSheetId: '1234',
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
@@ -3470,7 +3514,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );

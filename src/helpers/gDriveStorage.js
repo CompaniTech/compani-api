@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const Gdrive = require('../models/Google/Drive');
+const Gsheets = require('../models/Google/Sheets');
 
 exports.createFolder = async (identity, parentFolderId) => {
   const folder = await Gdrive.add({
@@ -30,3 +31,29 @@ exports.addFile = async (params) => {
 };
 
 exports.deleteFile = async driveFileId => Gdrive.deleteFile({ fileId: driveFileId });
+
+exports.createCourseFolderAndSheet = async ({ traineeName, traineeEmail, traineePhone, traineeCompany }) => {
+  const parentFolderId = process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID;
+  const templateId = process.env.GOOGLE_SHEET_TEMPLATE_ID;
+
+  if (!templateId) throw Boom.failedDependency('Template sheet ID missing.');
+
+  const documentsName = `${traineeName} (${traineeCompany})`;
+  const folder = await exports.createFolder(documentsName, parentFolderId);
+
+  const sheetName = `${documentsName} - Fichier Apprenant`;
+  const copiedSheet = await Gdrive.copy({
+    fileId: templateId,
+    name: sheetName,
+    parents: [folder.id],
+  });
+  if (!copiedSheet) throw Boom.failedDependency('Google Sheet copy failed.');
+
+  await Gsheets.writeData({
+    spreadsheetId: copiedSheet.id,
+    range: 'Coordonnées!E2:E4',
+    values: [[traineeName], [traineeEmail], [`'${traineePhone}`]],
+  });
+
+  return { folderId: folder.id, gSheetId: copiedSheet.id };
+};

@@ -83,6 +83,7 @@ const {
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
+const gDriveStorageHelper = require('./gDriveStorage');
 const NotificationHelper = require('./notifications');
 const UsersHelper = require('./users');
 const VendorCompaniesHelper = require('./vendorCompanies');
@@ -108,6 +109,24 @@ exports.createCourse = async (payload, credentials) => {
         { company: 1 }
       )
       .lean();
+
+    const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+    if (UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)) {
+      const trainee = await User
+        .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
+        .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
+        .lean();
+
+      const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
+        traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
+        traineeEmail: trainee.local.email,
+        traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
+        traineeCompany: trainee.company.name,
+      });
+
+      coursePayload.folderId = folderId;
+      coursePayload.gSheetId = gSheetId;
+    }
 
     coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
   }
@@ -772,7 +791,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
-    .select('_id misc format type trainees')
+    .select('_id misc format type trainees gSheetId')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
@@ -783,7 +802,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     const slotsGroupedByStep = groupBy(course.slots, 'step._id');
 
     return {
-      ...isTutor ? { course } : omit(course, 'trainees'),
+      ...omit(course, 'trainees'),
       slots: [...new Set(
         course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
       )],

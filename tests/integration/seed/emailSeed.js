@@ -168,6 +168,8 @@ const coursesList = [
     expectedBillsCount: 21,
     maxTrainees: 1,
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
 ];
 

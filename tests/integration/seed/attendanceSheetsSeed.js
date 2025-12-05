@@ -185,6 +185,8 @@ const coursesList = [
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
   { // 8 Single course
     _id: new ObjectId(),
@@ -195,6 +197,8 @@ const coursesList = [
     operationsRepresentative: userList[0]._id,
     trainers: [userList[3]._id],
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
 ];
 

@@ -86,6 +86,8 @@ const courseList = [
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
   { // 1
     _id: new ObjectId(),
@@ -108,6 +110,8 @@ const courseList = [
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
 ];
 
