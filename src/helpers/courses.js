@@ -116,25 +116,9 @@ exports.createCourse = async (payload, credentials) => {
         .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
         .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
         .lean();
-      let shouldAddCompany = false;
-      const usersWithSameName = await User
-        .find({
-          _id: { $ne: payload.trainee },
-          'identity.firstname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(trainee.identity.firstname)}$`, 'i') },
-          'identity.lastname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(trainee.identity.lastname)}$`, 'i') },
-        })
-        .lean();
-      if (usersWithSameName.length) {
-        const coursesWithUserWithSameName = await Course.countDocuments({
-          subProgram: { $in: VAEI_SUBPROGRAM_IDS },
-          trainees: { $in: usersWithSameName.map(user => user._id) },
-        });
-        if (coursesWithUserWithSameName) shouldAddCompany = true;
-      }
+
       const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
-        traineeName: shouldAddCompany
-          ? `${UtilsHelper.formatIdentity(trainee.identity, 'FL')} (${trainee.company.name})`
-          : UtilsHelper.formatIdentity(trainee.identity, 'FL'),
+        traineeName: `${UtilsHelper.formatIdentity(trainee.identity, 'FL')} (${trainee.company.name})`,
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
       });

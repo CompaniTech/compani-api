@@ -98,8 +98,6 @@ describe('createCourse', () => {
   let findOneUserCompany;
   let addTrainee;
   let userFindOne;
-  let userFind;
-  let courseCountDocuments;
   let createCourseFolderAndSheet;
   const credentials = { _id: new ObjectId() };
   const subProgramId = new ObjectId();
@@ -115,8 +113,6 @@ describe('createCourse', () => {
     findOneUserCompany = sinon.stub(UserCompany, 'findOne');
     addTrainee = sinon.stub(CourseHelper, 'addTrainee');
     userFindOne = sinon.stub(User, 'findOne');
-    userFind = sinon.stub(User, 'find');
-    courseCountDocuments = sinon.stub(Course, 'countDocuments');
     createCourseFolderAndSheet = sinon.stub(GDriveStorageHelper, 'createCourseFolderAndSheet');
     UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
     process.env.VAEI_SUBPROGRAM_IDS = subProgramId.toHexString();
@@ -129,8 +125,6 @@ describe('createCourse', () => {
     findOneUserCompany.restore();
     addTrainee.restore();
     userFindOne.restore();
-    userFind.restore();
-    courseCountDocuments.restore();
     createCourseFolderAndSheet.restore();
     UtilsMock.unmockCurrentDate();
     process.env.VAEI_SUBPROGRAM_IDS = '';
@@ -169,8 +163,6 @@ describe('createCourse', () => {
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
-    sinon.assert.notCalled(userFind);
-    sinon.assert.notCalled(courseCountDocuments);
     sinon.assert.notCalled(createCourseFolderAndSheet);
     sinon.assert.calledOnceWithExactly(
       create,
@@ -223,125 +215,6 @@ describe('createCourse', () => {
 
     findOneUserCompany.returns(SinonMongoose.stubChainedQueries(userCompany, ['lean']));
     userFindOne.returns(SinonMongoose.stubChainedQueries(trainee));
-    userFind.returns(SinonMongoose.stubChainedQueries([], ['lean']));
-    createCourseFolderAndSheet.returns({ folderId: 'folderId', gSheetId: 'gSheetId' });
-    create.returns(course);
-    findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
-
-    const result = await CourseHelper.createCourse(payload, credentials);
-
-    expect(result).toEqual(course);
-    sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
-    sinon.assert.notCalled(courseCountDocuments);
-    SinonMongoose.calledOnceWithExactly(
-      findOneUserCompany,
-      [
-        {
-          query: 'findOne',
-          args: [
-            {
-              user: traineeId,
-              $or: [{ endDate: { $gt: '2022-12-21T16:00:00.000Z' } }, { endDate: { $exists: false } }],
-            },
-            { company: 1 }],
-        },
-        { query: 'lean' },
-      ]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      userFindOne,
-      [
-        { query: 'findOne', args: [{ _id: traineeId }, { identity: 1, 'local.email': 1, contact: 1 }] },
-        { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        { query: 'lean' },
-      ]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      userFind,
-      [
-        {
-          query: 'find',
-          args: [{
-            _id: { $ne: traineeId },
-            'identity.firstname': {
-              $regex: new RegExp(`^${UtilsHelper.escapeRegex(trainee.identity.firstname)}$`, 'i'),
-            },
-            'identity.lastname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(trainee.identity.lastname)}$`, 'i') },
-          }],
-        },
-        { query: 'lean' },
-      ]
-    );
-    sinon.assert.calledOnceWithExactly(
-      createCourseFolderAndSheet,
-      {
-        traineeName: 'Toto TITI',
-        traineeEmail: trainee.local.email,
-        traineePhone: UtilsHelper.formatPhone(trainee.contact),
-      }
-    );
-    sinon.assert.calledOnceWithExactly(
-      create,
-      {
-        ...omit(payload, ['trainee']),
-        companies: [userCompany.company],
-        prices: [{ global: 1200, company: userCompany.company }],
-        folderId: 'folderId',
-        gSheetId: 'gSheetId',
-      }
-    );
-    SinonMongoose.calledOnceWithExactly(
-      findOneSubProgram,
-      [
-        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1 }] },
-        { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
-        { query: 'lean' },
-      ]
-    );
-    sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
-    sinon.assert.calledOnceWithExactly(addTrainee, course._id, { trainee: traineeId }, credentials);
-  });
-
-  it('should create a single course (user with same name)', async () => {
-    const steps = [{ _id: new ObjectId(), type: ON_SITE }];
-    const subProgram = { _id: subProgramId, steps };
-    const traineeId = new ObjectId();
-    const userCompany = { company: new ObjectId() };
-    const trainee = {
-      _id: traineeId,
-      identity: { firstname: 'Toto', lastname: 'Titi' },
-      local: { email: 'toto.titi@compani.fr' },
-      contact: { phone: '0612345678', countryCode: '+33' },
-      company: { name: 'Company' },
-    };
-    const otherTrainees = [{
-      _id: new ObjectId(),
-      identity: { firstname: 'Toto', lastname: 'Titi' },
-      local: { email: 'toto.tata@compani.fr' },
-      contact: { phone: '0612345678', countryCode: '+33' },
-    }];
-    const payload = {
-      misc: 'name',
-      subProgram: subProgram._id,
-      type: SINGLE,
-      operationsRepresentative: new ObjectId(),
-      expectedBillsCount: '0',
-      hasCertifyingTest: false,
-      trainee: traineeId,
-      prices: { global: 1200 },
-    };
-    const course = {
-      _id: new ObjectId(),
-      ...omit(payload, ['trainee']),
-      companies: [userCompany.company],
-      format: 'blended',
-    };
-    const slots = [{ course: course._id, step: steps[0]._id }];
-
-    findOneUserCompany.returns(SinonMongoose.stubChainedQueries(userCompany, ['lean']));
-    userFindOne.returns(SinonMongoose.stubChainedQueries(trainee));
-    userFind.returns(SinonMongoose.stubChainedQueries(otherTrainees, ['lean']));
-    courseCountDocuments.returns(1);
     createCourseFolderAndSheet.returns({ folderId: 'folderId', gSheetId: 'gSheetId' });
     create.returns(course);
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
@@ -372,26 +245,6 @@ describe('createCourse', () => {
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
         { query: 'lean' },
       ]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      userFind,
-      [
-        {
-          query: 'find',
-          args: [{
-            _id: { $ne: traineeId },
-            'identity.firstname': {
-              $regex: new RegExp(`^${UtilsHelper.escapeRegex(trainee.identity.firstname)}$`, 'i'),
-            },
-            'identity.lastname': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(trainee.identity.lastname)}$`, 'i') },
-          }],
-        },
-        { query: 'lean' },
-      ]
-    );
-    sinon.assert.calledOnceWithExactly(
-      courseCountDocuments,
-      { subProgram: { $in: [subProgramId] }, trainees: { $in: [otherTrainees[0]._id] } }
     );
     sinon.assert.calledOnceWithExactly(
       createCourseFolderAndSheet,
@@ -447,8 +300,6 @@ describe('createCourse', () => {
     sinon.assert.notCalled(insertManyCourseSlot);
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
-    sinon.assert.notCalled(userFind);
-    sinon.assert.notCalled(courseCountDocuments);
     sinon.assert.notCalled(createCourseFolderAndSheet);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
@@ -485,8 +336,6 @@ describe('createCourse', () => {
     );
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
-    sinon.assert.notCalled(userFind);
-    sinon.assert.notCalled(courseCountDocuments);
     sinon.assert.notCalled(createCourseFolderAndSheet);
   });
 });
