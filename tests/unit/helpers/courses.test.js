@@ -858,7 +858,7 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step',
+              select: 'startDate endDate step trainees',
               populate: [
                 { path: 'step', select: 'type' },
                 {
@@ -1131,7 +1131,7 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step',
+              select: 'startDate endDate step trainees',
               populate: [
                 { path: 'step', select: 'type' },
                 {
@@ -1413,7 +1413,7 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step',
+              select: 'startDate endDate step trainees',
               populate: [
                 { path: 'step', select: 'type' },
                 {
@@ -1707,7 +1707,7 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step',
+              select: 'startDate endDate step trainees',
               populate: [
                 { path: 'step', select: 'type' },
                 {
@@ -1897,7 +1897,7 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step',
+              select: 'startDate endDate step trainees',
               populate: [
                 { path: 'step', select: 'type' },
                 {
@@ -2132,6 +2132,7 @@ describe('formatCourseWithProgress', () => {
 
     expect(result).toMatchObject({
       ...course,
+      slots: [course.slots[0], course.slots[1]],
       subProgram: {
         ...course.subProgram,
         steps: [
@@ -2866,7 +2867,7 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink',
+                select: 'startDate endDate step address meetingLink trainees',
                 populate: { path: 'step', select: 'type' },
                 options: { sort: { startDate: 1 } },
               },
@@ -3027,7 +3028,7 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink',
+                select: 'startDate endDate step address meetingLink trainees',
                 populate: { path: 'step', select: 'type' },
                 options: { sort: { startDate: 1 } },
               },
@@ -3187,7 +3188,7 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink',
+                select: 'startDate endDate step address meetingLink trainees',
                 populate: { path: 'step', select: 'type' },
                 options: { sort: { startDate: 1 } },
               },
@@ -3323,7 +3324,7 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink',
+                select: 'startDate endDate step address meetingLink trainees',
                 populate: { path: 'step', select: 'type' },
                 options: { sort: { startDate: 1 } },
               },
@@ -3461,7 +3462,7 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink',
+                select: 'startDate endDate step address meetingLink trainees',
                 populate: { path: 'step', select: 'type' },
                 options: { sort: { startDate: 1 } },
               },

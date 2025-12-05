@@ -337,7 +337,7 @@ const listForPedagogy = async (query, origin, credentials) => {
       })
       .populate({
         path: 'slots',
-        select: 'startDate endDate step',
+        select: 'startDate endDate step trainees',
         populate: [
           { path: 'step', select: 'type' },
           {
@@ -465,13 +465,15 @@ exports.formatCourseWithProgress = (course, credentials, shouldComputePresence =
 
   return {
     ...course,
-    ...shouldFormatSlots && {
-      slots: [...new Set(
-        course.slots
-          .filter(slot => isConcernedBySlot(slot, credentials))
-          .map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
-      )],
-    },
+    ...shouldFormatSlots
+      ? {
+        slots: [...new Set(
+          course.slots
+            .filter(slot => isConcernedBySlot(slot, credentials))
+            .map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
+        )],
+      }
+      : { slots: course.slots.filter(slot => isConcernedBySlot(slot, credentials)) },
     subProgram: { ...course.subProgram, steps },
     progress: exports.getCourseProgress(steps),
   };
@@ -763,7 +765,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     })
     .populate({
       path: 'slots',
-      select: 'startDate endDate step address meetingLink',
+      select: 'startDate endDate step address meetingLink trainees',
       populate: { path: 'step', select: 'type' },
       options: { sort: { startDate: 1 } },
     })
