@@ -1549,7 +1549,7 @@ describe('SEEDS VERIFICATION', () => {
             .find()
             .populate({
               path: 'course',
-              select: 'format subProgram',
+              select: 'format subProgram trainees type',
               populate: { path: 'subProgram', select: 'steps' },
               transform,
             })
@@ -1587,6 +1587,18 @@ describe('SEEDS VERIFICATION', () => {
           const everyStepIsInCourse = courseSlotList
             .every(cs => cs.step && UtilsHelper.doesArrayIncludeId(cs.course.subProgram.steps, cs.step._id));
           expect(everyStepIsInCourse).toBeTruthy();
+        });
+
+        it('should pass if concerned trainees only on non-single courses', () => {
+          const noneCourseIsSingle = courseSlotList.filter(cs => cs.trainees).every(cs => cs.course.type !== SINGLE);
+          expect(noneCourseIsSingle).toBeTruthy();
+        });
+
+        it('should pass if concerned trainees are in course', () => {
+          const someTraineesAreNotInCourse = courseSlotList
+            .filter(cs => cs.trainees)
+            .some(cs => cs.trainees.some(t => !UtilsHelper.doesArrayIncludeId(cs.course.trainees, t)));
+          expect(someTraineesAreNotInCourse).toBeFalsy();
         });
       });
 

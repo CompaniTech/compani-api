@@ -8,6 +8,7 @@ const { isObjectIdOrHexString } = require('mongoose');
 const Course = require('../../models/Course');
 const User = require('../../models/User');
 const Company = require('../../models/Company');
+const CourseSlot = require('../../models/CourseSlot');
 const CompletionCertificate = require('../../models/CompletionCertificate');
 const CompanyHolding = require('../../models/CompanyHolding');
 const CourseBill = require('../../models/CourseBill');
@@ -471,6 +472,9 @@ exports.authorizeTraineeDeletion = async (req) => {
       .countDocuments({ course: course._id, trainee: req.params.traineeId });
     if (completionCertificatesCount) throw Boom.forbidden(translate[language].traineeLinkedToCompletionCertificate);
   }
+
+  const courseSlotWithTrainee = await CourseSlot.countDocuments({ course: course._id, trainees: req.params.traineeId });
+  if (courseSlotWithTrainee) throw Boom.forbidden(translate[language].traineeLinkedToSlot);
 
   return null;
 };

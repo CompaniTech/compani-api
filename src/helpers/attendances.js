@@ -45,12 +45,12 @@ const createManyAttendances = async (courseTrainees, courseSlotId, credentials, 
 exports.create = async (payload, credentials) => {
   const { courseSlot: courseSlotId, trainee: traineeId } = payload;
 
-  const courseSlot = await CourseSlot.findById(courseSlotId, { course: 1 })
+  const courseSlot = await CourseSlot.findById(courseSlotId, { course: 1, trainees: 1 })
     .populate({ path: 'course', select: 'type trainees companies' })
     .lean();
 
   const { course } = courseSlot;
-  const traineeList = traineeId ? [traineeId] : course.trainees;
+  const traineeList = traineeId ? [traineeId] : courseSlot.trainees || course.trainees;
   const traineesCompanyListForAttendance = await CourseHistoriesHelper
     .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: traineeList });
 
@@ -58,7 +58,12 @@ exports.create = async (payload, credentials) => {
 
   if (traineeId) return createSingleAttendance(payload, course.trainees, traineeId, traineesCompanyForAttendance);
 
-  return createManyAttendances(course.trainees, courseSlotId, credentials, traineesCompanyForAttendance);
+  return createManyAttendances(
+    courseSlot.trainees || course.trainees,
+    courseSlotId,
+    credentials,
+    traineesCompanyForAttendance
+  );
 };
 
 exports.list = async (courseSlotsIds, credentials) => {

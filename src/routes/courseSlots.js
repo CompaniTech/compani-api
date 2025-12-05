@@ -32,12 +32,15 @@ exports.plugin = {
       options: {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
-          payload: Joi.object({
-            startDate: requiredDateToISOString.allow(''),
-            endDate: requiredDateToISOString.allow(''),
-            address: Joi.alternatives().try(addressValidation, {}),
-            meetingLink: Joi.string().allow(''),
-          }),
+          payload: Joi.alternatives().try(
+            Joi.object({
+              startDate: requiredDateToISOString.allow(''),
+              endDate: requiredDateToISOString.allow(''),
+              address: Joi.alternatives().try(addressValidation, {}),
+              meetingLink: Joi.string().allow(''),
+            }),
+            Joi.object({ trainees: Joi.array().items(Joi.objectId()).min(1) })
+          ),
         },
         pre: [{ method: authorizeUpdate }],
         auth: { scope: ['courses:edit'] },

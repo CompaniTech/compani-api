@@ -14,6 +14,7 @@ const {
   DAY,
   COMPANY_ADDITION,
   COMPANY_DELETION,
+  SLOT_RESTRICTION,
 } = require('./constants');
 
 exports.createHistory = async (course, createdBy, action, payload = {}) =>
@@ -138,3 +139,14 @@ exports.createHistoryOnTrainerAdditionOrDeletion = (payload, userId) =>
 
 exports.createHistoryOnCourseInterruptionOrRestart = (payload, userId) =>
   exports.createHistory(payload.courseId, userId, payload.action);
+
+exports.createHistoryOnSlotRestriction = (payload, userId) => {
+  const pickedFields = ['startDate', 'endDate'];
+
+  return exports.createHistory(
+    payload.course,
+    userId,
+    SLOT_RESTRICTION,
+    { slot: pick(payload, pickedFields) }
+  );
+};

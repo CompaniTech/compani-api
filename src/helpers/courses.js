@@ -356,7 +356,7 @@ const listForPedagogy = async (query, origin, credentials) => {
       })
       .populate({
         path: 'slots',
-        select: 'startDate endDate step',
+        select: 'startDate endDate step trainees',
         populate: [
           { path: 'step', select: 'type' },
           {
@@ -405,7 +405,7 @@ const listForPedagogy = async (query, origin, credentials) => {
   const formattedTraineeCourses = filteredTraineeCourses
     .map((course) => {
       let progress = 0;
-      const courseWithProgress = exports.formatCourseWithProgress(course, shouldComputePresence);
+      const courseWithProgress = exports.formatCourseWithProgress(course, credentials, shouldComputePresence);
 
       if (origin === MOBILE) {
         if (courseWithProgress.format === STRICTLY_E_LEARNING) progress = courseWithProgress.progress.eLearning || 0;
@@ -470,22 +470,29 @@ exports.getCourseProgress = (steps) => {
   };
 };
 
-exports.formatCourseWithProgress = (course, shouldComputePresence = false, shouldformatSlots = false) => {
+const isConcernedBySlot = (slot, credentials) => !slot.trainees || !credentials._id ||
+  UtilsHelper.doesArrayIncludeId(slot.trainees, credentials._id);
+
+exports.formatCourseWithProgress = (course, credentials, shouldComputePresence = false, shouldFormatSlots = false) => {
   const slotsGroupedByStep = groupBy(course.slots, 'step._id');
   const steps = course.subProgram.steps
     .map((step) => {
-      const slots = slotsGroupedByStep[step._id] || [];
+      const slots = (slotsGroupedByStep[step._id] || []).filter(s => isConcernedBySlot(s, credentials)) || [];
 
       return { ...step, slots, progress: StepsHelper.getProgress(step, slots, shouldComputePresence) };
     });
 
   return {
     ...course,
-    ...shouldformatSlots && {
-      slots: [...new Set(
-        course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
-      )],
-    },
+    ...shouldFormatSlots
+      ? {
+        slots: [...new Set(
+          course.slots
+            .filter(slot => isConcernedBySlot(slot, credentials))
+            .map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
+        )],
+      }
+      : { slots: course.slots.filter(slot => isConcernedBySlot(slot, credentials)) },
     subProgram: { ...course.subProgram, steps },
     progress: exports.getCourseProgress(steps),
   };
@@ -533,7 +540,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             select: 'identity.firstname identity.lastname contact local.email picture.link '
               + 'firstMobileConnectionDate loginCode',
           },
-          { path: 'slots', select: 'step startDate endDate address meetingLink' },
+          { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
           { path: 'slotsToPlan', select: '_id step' },
           {
             path: 'trainers',
@@ -777,7 +784,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     })
     .populate({
       path: 'slots',
-      select: 'startDate endDate step address meetingLink',
+      select: 'startDate endDate step address meetingLink trainees',
       populate: { path: 'step', select: 'type' },
       options: { sort: { startDate: 1 } },
     })
@@ -827,7 +834,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       await Attendance.countDocuments({ courseSlot: lastSlot._id }));
 
     return {
-      ...exports.formatCourseWithProgress(course, false, true),
+      ...exports.formatCourseWithProgress(course, !isTutor ? credentials : {}, false, true),
       areLastSlotAttendancesValidated,
       ...course.attendanceSheets && {
         attendanceSheets: course.attendanceSheets.map(as => ({
@@ -838,7 +845,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     };
   }
 
-  return exports.formatCourseWithProgress(course, false, true);
+  return exports.formatCourseWithProgress(course, {}, false, true);
 };
 
 exports.updateCourse = async (courseId, payload, credentials) => {
