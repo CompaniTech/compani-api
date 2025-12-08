@@ -12,6 +12,7 @@ const {
   TRAINER_DELETION,
   COURSE_INTERRUPTION,
   COURSE_RESTART,
+  SLOT_RESTRICTION,
 } = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
@@ -29,6 +30,7 @@ const ACTION_TYPES = [
   TRAINER_DELETION,
   COURSE_INTERRUPTION,
   COURSE_RESTART,
+  SLOT_RESTRICTION,
 ];
 
 const CourseHistorySchema = mongoose.Schema({
@@ -36,8 +38,8 @@ const CourseHistorySchema = mongoose.Schema({
   action: { type: String, required: true, enum: ACTION_TYPES, immutable: true },
   course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true, immutable: true },
   slot: {
-    startDate: { type: Date, required: () => [SLOT_CREATION, SLOT_DELETION].includes(this.action) },
-    endDate: { type: Date, required: () => [SLOT_CREATION, SLOT_DELETION].includes(this.action) },
+    startDate: { type: Date, required: () => [SLOT_CREATION, SLOT_DELETION, SLOT_RESTRICTION].includes(this.action) },
+    endDate: { type: Date, required: () => [SLOT_CREATION, SLOT_DELETION, SLOT_RESTRICTION].includes(this.action) },
     address: { type: mongoose.Schema(addressSchemaDefinition, { _id: false }) },
     meetingLink: { type: String },
   },

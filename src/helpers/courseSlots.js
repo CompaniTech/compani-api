@@ -1,9 +1,11 @@
 const Boom = require('@hapi/boom');
 const compact = require('lodash/compact');
 const get = require('lodash/get');
+const has = require('lodash/has');
 const pick = require('lodash/pick');
 const omit = require('lodash/omit');
 const translate = require('./translate');
+const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHistoriesHelper = require('./courseHistories');
 const { ON_SITE, REMOTE, DD_MM_YYYY } = require('./constants');
@@ -37,30 +39,42 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
     .populate({ path: 'step', select: '_id type' })
     .lean();
 
-  const hasConflicts = await exports.hasConflicts({ ...courseSlot, ...payload });
-  if (hasConflicts) throw Boom.conflict(translate[language].courseSlotConflict);
-
-  const shouldEmptyDates = !payload.endDate && !payload.startDate;
-  if (shouldEmptyDates) {
-    const historyPayload = pick(courseSlot, ['course', 'startDate', 'endDate', 'address', 'meetingLink']);
-    await Promise.all([
-      CourseHistoriesHelper.createHistoryOnSlotDeletion(historyPayload, user._id),
-      CourseSlot.updateOne(
-        { _id: courseSlot._id },
-        { $unset: { startDate: '', endDate: '', meetingLink: '', address: '' } }
-      ),
-    ]);
+  if (has(payload, 'trainees')) {
+    const course = await Course.findOne({ _id: courseSlot.course }, { trainees: 1 }).lean();
+    const query = course.trainees.length === payload.trainees.length
+      ? { $unset: { trainees: '' } }
+      : { $set: { trainees: payload.trainees } };
+    await CourseSlot.updateOne({ _id: courseSlotId }, query);
+    await CourseHistoriesHelper.createHistoryOnSlotRestriction(
+      { ...pick(courseSlot, ['course', 'startDate', 'endDate']) },
+      user._id
+    );
   } else {
-    const updatePayload = { $set: payload };
-    const { step } = courseSlot;
+    const hasConflicts = await exports.hasConflicts({ ...courseSlot, ...payload });
+    if (hasConflicts) throw Boom.conflict(translate[language].courseSlotConflict);
 
-    if (step.type === ON_SITE || !payload.meetingLink) updatePayload.$unset = { meetingLink: '' };
-    if (step.type === REMOTE || !payload.address) updatePayload.$unset = { ...updatePayload.$unset, address: '' };
+    const shouldEmptyDates = !payload.endDate && !payload.startDate;
+    if (shouldEmptyDates) {
+      const historyPayload = pick(courseSlot, ['course', 'startDate', 'endDate', 'address', 'meetingLink']);
+      await Promise.all([
+        CourseHistoriesHelper.createHistoryOnSlotDeletion(historyPayload, user._id),
+        CourseSlot.updateOne(
+          { _id: courseSlot._id },
+          { $unset: { startDate: '', endDate: '', meetingLink: '', address: '' } }
+        ),
+      ]);
+    } else {
+      const updatePayload = { $set: payload };
+      const { step } = courseSlot;
 
-    await Promise.all([
-      CourseHistoriesHelper.createHistoryOnSlotEdition(courseSlot, payload, user._id),
-      CourseSlot.updateOne({ _id: courseSlot._id }, updatePayload),
-    ]);
+      if (step.type === ON_SITE || !payload.meetingLink) updatePayload.$unset = { meetingLink: '' };
+      if (step.type === REMOTE || !payload.address) updatePayload.$unset = { ...updatePayload.$unset, address: '' };
+
+      await Promise.all([
+        CourseHistoriesHelper.createHistoryOnSlotEdition(courseSlot, payload, user._id),
+        CourseSlot.updateOne({ _id: courseSlot._id }, updatePayload),
+      ]);
+    }
   }
 };
 

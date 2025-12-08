@@ -1268,6 +1268,7 @@ const slots = [
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[7]._id,
     step: stepList[0]._id,
+    trainees: [auxiliary._id],
   },
   { // 13
     _id: new ObjectId(),

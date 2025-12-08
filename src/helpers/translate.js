@@ -144,6 +144,7 @@ module.exports = {
     courseQuestionnairesFound: 'Questionnaires found.',
     traineeMustBeRegisteredInAnotherGroup: 'Trainee must be registered in another group.',
     traineeLinkedToCompletionCertificate: 'Deletion forbidden : this trainee is linked to a completion certificate.',
+    traineeLinkedToSlot: 'Deletion forbidden : this trainee is linked to a slot.',
     completionCertificatesFound: 'Completion certificates found.',
     completionCertificateAlreadyGenerated: 'Completion certificates already create.',
     completionCertificateUpdated: 'Completion certificates updated.',
@@ -218,6 +219,7 @@ module.exports = {
     attendanceIsLinkedToAttendanceSheet: 'Operation forbidden : attendance is linked to attendance sheet.',
     attendanceIsLinkedToCompletionCertificate: 'Operation forbidden : attendance is linked to completion certificate.',
     someSlotsAreLinkedToCompletionCertificate: 'Edition forbidden : some slots are linked to completion certificate.',
+    traineeNotConcernedBySlot: 'Operation forbidden : trainee not concerned by slot.',
     /* Questionnaires */
     questionnairesFound: 'Questionnaires found.',
     questionnairesNotFound: 'Questionnaires not found.',
@@ -435,6 +437,7 @@ module.exports = {
     traineeMustBeRegisteredInAnotherGroup: 'L\'apprenant doit être inscrit dans un autre groupe de cette formation.',
     traineeLinkedToCompletionCertificate: 'Suppression impossible : l\'apprenant est relié à un certificat de '
       + 'réalisation.',
+    traineeLinkedToSlot: 'Suppression impossible : l\'apprenant est relié à un créneau.',
     completionCertificatesFound: 'Certificats de réalisation mensuels trouvés.',
     completionCertificateAlreadyGenerated: 'Certificats de réalisation déjà générés.',
     completionCertificateUpdated: 'Certificats de réalisation modifiés.',
@@ -515,6 +518,7 @@ module.exports = {
       + 'réalisation.',
     someSlotsAreLinkedToCompletionCertificate: 'Édition impossible : certains créneaux sélectionnés sont liés à un '
     + 'certificat de réalisation.',
+    traineeNotConcernedBySlot: 'Opération impossible : l\'apprenant n\'est pas concerné par le créneau.',
     /* Questionnaires */
     questionnairesFound: 'Liste des questionnaires trouvée.',
     questionnairesNotFound: 'Liste des questionnaires non trouvée.',
