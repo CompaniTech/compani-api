@@ -2429,7 +2429,11 @@ describe('getCourse', () => {
                 select: 'identity.firstname identity.lastname contact local.email picture.link '
                   + 'firstMobileConnectionDate loginCode',
               },
-              { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
+              {
+                path: 'slots',
+                select: 'step startDate endDate address meetingLink trainees',
+                populate: { path: 'missingAttendances', options: { isVendorUser: true } },
+              },
               { path: 'slotsToPlan', select: '_id step' },
               {
                 path: 'trainers',
@@ -2715,7 +2719,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'slots',
-                select: 'step startDate endDate',
+                select: 'step startDate endDate trainees',
                 options: { sort: { startDate: 1 } },
                 populate: { path: 'missingAttendances', options: { isVendorUser: true } },
               },
@@ -5348,8 +5352,8 @@ describe('formatInterCourseForPdf', () => {
       slots: [
         { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00' },
         { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00' },
-        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
-        { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00' },
+        { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00', trainees: [traineeIds[0]] },
+        { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00', trainees: [traineeIds[1]] },
       ],
       misc: 'des infos en plus',
       trainers: [
@@ -5384,6 +5388,7 @@ describe('formatInterCourseForPdf', () => {
     expect(result).toEqual({
       trainees: [
         {
+          _id: traineeIds[0],
           traineeName: 'trainee 1',
           registrationCompany: 'alenvi',
           course: {
@@ -5396,6 +5401,7 @@ describe('formatInterCourseForPdf', () => {
           },
         },
         {
+          _id: traineeIds[1],
           traineeName: 'trainee 2',
           registrationCompany: 'alenvi',
           course: {
@@ -5528,7 +5534,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'startDate endDate address' }],
+        args: [{ path: 'slots', select: 'startDate endDate address trainees' }],
       },
       {
         query: 'populate',
@@ -5567,7 +5573,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'startDate endDate address' }],
+        args: [{ path: 'slots', select: 'startDate endDate address trainees' }],
       },
       {
         query: 'populate',
@@ -5605,7 +5611,7 @@ describe('generateAttendanceSheets', () => {
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
-        args: [{ path: 'slots', select: 'startDate endDate address' }],
+        args: [{ path: 'slots', select: 'startDate endDate address trainees' }],
       },
       {
         query: 'populate',

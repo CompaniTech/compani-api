@@ -540,7 +540,13 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             select: 'identity.firstname identity.lastname contact local.email picture.link '
               + 'firstMobileConnectionDate loginCode',
           },
-          { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
+          {
+            path: 'slots',
+            select: 'step startDate endDate address meetingLink trainees',
+            ...get(credentials, 'role.vendor.name') && {
+              populate: { path: 'missingAttendances', options: { isVendorUser: true } },
+            },
+          },
           { path: 'slotsToPlan', select: '_id step' },
           {
             path: 'trainers',
@@ -565,7 +571,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
         ]
         : [{
           path: 'slots',
-          select: 'step startDate endDate',
+          select: 'step startDate endDate trainees',
           options: { sort: { startDate: 1 } },
           populate: { path: 'missingAttendances', options: { isVendorUser: !!get(credentials, 'role.vendor.name') } },
         }]
@@ -1044,6 +1050,7 @@ exports.formatIntraCourseSlotsForPdf = slot => ({
   _id: slot._id,
   startHour: CompaniDate(slot.startDate).format(HHhMM),
   endHour: CompaniDate(slot.endDate).format(HHhMM),
+  ...slot.trainees && { trainees: slot.trainees },
 });
 
 exports.formatInterCourseSlotsForPdf = (slot) => {
@@ -1056,6 +1063,7 @@ exports.formatInterCourseSlotsForPdf = (slot) => {
     startHour: CompaniDate(slot.startDate).format(HH_MM),
     endHour: CompaniDate(slot.endDate).format(HH_MM),
     duration,
+    ...slot.trainees && { trainees: slot.trainees },
   };
 };
 
@@ -1123,6 +1131,7 @@ exports.formatInterCourseForPdf = async (course) => {
   return {
     trainees: course.trainees.length
       ? course.trainees.map(trainee => ({
+        _id: trainee._id,
         traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
         registrationCompany: companiesById[traineesCompany[trainee._id]],
         course: { ...courseData },
@@ -1135,7 +1144,7 @@ exports.generateAttendanceSheets = async (courseId) => {
   const course = await Course
     .findOne({ _id: courseId }, { misc: 1, type: 1 })
     .populate({ path: 'companies', select: 'name' })
-    .populate({ path: 'slots', select: 'startDate endDate address' })
+    .populate({ path: 'slots', select: 'startDate endDate address trainees' })
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({

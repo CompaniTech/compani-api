@@ -279,7 +279,7 @@ exports.sign = async (attendanceSheetId, payload, credentials) => {
 exports.generate = async (attendanceSheetId) => {
   const attendanceSheet = await AttendanceSheet
     .findOne({ _id: attendanceSheetId })
-    .populate({ path: 'slots.slotId', select: 'startDate endDate address' })
+    .populate({ path: 'slots.slotId', select: 'startDate endDate address trainees' })
     .populate({ path: 'trainee', select: 'identity' })
     .populate({ path: 'trainer', select: 'identity' })
     .populate({
@@ -297,7 +297,7 @@ exports.generate = async (attendanceSheetId) => {
           select: 'steps program',
           populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
         },
-        { path: 'slots', select: 'startDate endDate address' },
+        { path: 'slots', select: 'startDate endDate address trainees' },
       ],
     })
     .lean();

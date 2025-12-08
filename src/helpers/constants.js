@@ -4,6 +4,7 @@ module.exports = {
   DEVELOPMENT: 'development',
   TEST: 'test',
   // COLOR
+  BLACK: 'black',
   COPPER_50: '#F0FAF7',
   COPPER_100: '#DAF2EE',
   COPPER_500: '#1D7C8F',
