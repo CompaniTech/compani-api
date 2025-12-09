@@ -405,7 +405,7 @@ const listForPedagogy = async (query, origin, credentials) => {
   const formattedTraineeCourses = filteredTraineeCourses
     .map((course) => {
       let progress = 0;
-      const courseWithProgress = exports.formatCourseWithProgress(course, credentials, shouldComputePresence);
+      const courseWithProgress = exports.formatCourseWithProgress(course, traineeOrTutorId, shouldComputePresence);
 
       if (origin === MOBILE) {
         if (courseWithProgress.format === STRICTLY_E_LEARNING) progress = courseWithProgress.progress.eLearning || 0;
@@ -470,14 +470,14 @@ exports.getCourseProgress = (steps) => {
   };
 };
 
-const isConcernedBySlot = (slot, credentials) => !slot.trainees || !credentials._id ||
-  UtilsHelper.doesArrayIncludeId(slot.trainees, credentials._id);
+const isConcernedBySlot = (slot, userId) => !slot.trainees || !userId ||
+  UtilsHelper.doesArrayIncludeId(slot.trainees, userId);
 
-exports.formatCourseWithProgress = (course, credentials, shouldComputePresence = false, shouldFormatSlots = false) => {
+exports.formatCourseWithProgress = (course, userId, shouldComputePresence = false, shouldFormatSlots = false) => {
   const slotsGroupedByStep = groupBy(course.slots, 'step._id');
   const steps = course.subProgram.steps
     .map((step) => {
-      const slots = (slotsGroupedByStep[step._id] || []).filter(s => isConcernedBySlot(s, credentials)) || [];
+      const slots = (slotsGroupedByStep[step._id] || []).filter(s => isConcernedBySlot(s, userId)) || [];
 
       return { ...step, slots, progress: StepsHelper.getProgress(step, slots, shouldComputePresence) };
     });
@@ -488,11 +488,11 @@ exports.formatCourseWithProgress = (course, credentials, shouldComputePresence =
       ? {
         slots: [...new Set(
           course.slots
-            .filter(slot => isConcernedBySlot(slot, credentials))
+            .filter(slot => isConcernedBySlot(slot, userId))
             .map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
         )],
       }
-      : { slots: course.slots.filter(slot => isConcernedBySlot(slot, credentials)) },
+      : { slots: course.slots.filter(slot => isConcernedBySlot(slot, userId)) },
     subProgram: { ...course.subProgram, steps },
     progress: exports.getCourseProgress(steps),
   };
@@ -840,7 +840,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       await Attendance.countDocuments({ courseSlot: lastSlot._id }));
 
     return {
-      ...exports.formatCourseWithProgress(course, !isTutor ? credentials : {}, false, true),
+      ...exports.formatCourseWithProgress(course, !isTutor ? credentials._id : null, false, true),
       areLastSlotAttendancesValidated,
       ...course.attendanceSheets && {
         attendanceSheets: course.attendanceSheets.map(as => ({
@@ -851,7 +851,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     };
   }
 
-  return exports.formatCourseWithProgress(course, {}, false, true);
+  return exports.formatCourseWithProgress(course, null, false, true);
 };
 
 exports.updateCourse = async (courseId, payload, credentials) => {

@@ -339,7 +339,10 @@ exports.generate = async (attendanceSheetId) => {
 };
 
 exports.delete = async (attendanceSheetId, shouldDeleteAttendances) => {
-  const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
+  const attendanceSheet = await AttendanceSheet
+    .findOne({ _id: attendanceSheetId })
+    .populate({ path: 'course', select: 'trainees' })
+    .lean();
 
   await AttendanceSheet.deleteOne({ _id: attendanceSheet._id });
 
@@ -358,7 +361,7 @@ exports.delete = async (attendanceSheetId, shouldDeleteAttendances) => {
         signatures.push(...slot.traineesSignature.filter(s => s.signature).map(s => s.signature));
       }
       if (!attendanceSheet.trainee && shouldDeleteAttendances) {
-        const traineesIds = slot.traineesSignature.map(signature => signature.traineeId);
+        const traineesIds = attendanceSheet.course.trainees;
         promises.push(Attendance.deleteMany({ courseSlot: slot.slotId, trainee: { $in: traineesIds } }));
       }
     }
