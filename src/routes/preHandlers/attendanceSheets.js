@@ -193,7 +193,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     .populate({
       path: 'course',
       select: 'type trainers slots',
-      populate: { path: 'slots', select: 'endDate' },
+      populate: { path: 'slots', select: 'endDate trainees' },
     })
     .lean();
 
@@ -207,7 +207,9 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
       .every(s => s.trainerSignature && s.traineesSignature.every(signature => signature.signature));
     if (attendanceSheet.file) canGenerate = false;
     if (attendanceSheet.course.type === INTER_B2B) {
-      const lastSlot = [...attendanceSheet.course.slots.sort(DatesUtilsHelper.descendingSortBy('endDate'))][0];
+      const lastSlot = attendanceSheet.course.slots
+        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, attendanceSheet.trainee))
+        .sort(DatesUtilsHelper.descendingSortBy('endDate'))[0];
       if (CompaniDate().isBefore(lastSlot.endDate)) canGenerate = false;
     }
     if (!canGenerate) throw Boom.forbidden();
