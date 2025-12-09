@@ -109,6 +109,14 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
         .lean();
       if (courseSlots.length !== slotsIds.length) throw Boom.notFound();
 
+      const traineesAreNotAllowedOnSlot = slots.some((slot) => {
+        const everyTraineeIsAllowedOnSlot = courseSlots.find(s =>
+          UtilsHelper.areObjectIdsEquals(s._id, slot.slotId) &&
+          (!s.trainees || slot.trainees.every(t => UtilsHelper.doesArrayIncludeId(s.trainees, t))));
+        return !everyTraineeIsAllowedOnSlot;
+      });
+      if (traineesAreNotAllowedOnSlot) throw Boom.forbidden();
+
       const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
       await checkCompletionCertificates(slotsWithoutAttendances, course._id, slots.flatMap(s => s.trainees));
 
@@ -152,6 +160,14 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
       .populate({ path: 'attendances', options: { isVendorUser: true } })
       .lean();
     if (courseSlots.length !== slots.length) throw Boom.notFound();
+
+    const traineesAreNotAllowedOnSlot = slots.some((slot) => {
+      const everyTraineeIsAllowedOnSlot = courseSlots.find(s =>
+        UtilsHelper.areObjectIdsEquals(s._id, slot) &&
+          (!s.trainees || traineesIds.every(t => UtilsHelper.doesArrayIncludeId(s.trainees, t))));
+      return !everyTraineeIsAllowedOnSlot;
+    });
+    if (traineesAreNotAllowedOnSlot) throw Boom.forbidden();
 
     const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
     await checkCompletionCertificates(slotsWithoutAttendances, course._id, traineesIds);

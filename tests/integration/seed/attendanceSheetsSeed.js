@@ -444,6 +444,22 @@ const slotsList = [
     course: coursesList[7]._id,
     step: steps[0]._id,
   },
+  { // 24
+    _id: new ObjectId(),
+    startDate: '2025-12-08T09:00:00.000Z',
+    endDate: '2025-12-08T11:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+    trainees: [userList[1]._id],
+  },
+  { // 25
+    _id: new ObjectId(),
+    startDate: '2025-12-08T09:00:00.000Z',
+    endDate: '2025-12-08T11:00:00.000Z',
+    course: coursesList[1]._id,
+    step: steps[0]._id,
+    trainees: [userList[1]._id],
+  },
 ];
 
 const attendanceSheetList = [

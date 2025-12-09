@@ -1112,6 +1112,52 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
 
         expect(response.statusCode).toBe(409);
       });
+
+    it('should return 403 if try to add attendance sheet on a slot for a non concerned trainee (intra)', async () => {
+      const slots = [{ slotId: slotsList[24]._id.toHexString(), trainees: [userList[0]._id.toHexString()] }];
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        signature: 'test',
+        date: '2025-12-07T23:00:00.000Z',
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach((slot) => { form.append('slots', JSON.stringify(slot)); });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to add attendance sheet on a slot for a non concerned trainee (inter)', async () => {
+      const slots = [slotsList[25]._id.toHexString()];
+      const formData = {
+        course: coursesList[1]._id.toHexString(),
+        signature: 'test',
+        trainees: userList[4]._id.toHexString(),
+        origin: MOBILE,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+      slots.forEach(slot => form.append('slots', slot));
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {
