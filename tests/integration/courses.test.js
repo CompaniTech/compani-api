@@ -865,7 +865,7 @@ describe('COURSES ROUTES - GET /courses', () => {
     expect(response.statusCode).toBe(200);
     const { traineeCourses, tutorCourses: coursesAsTutor } = response.result.data.courses;
     const coursesAsTraineeCount = traineeCourses.onGoing.length + traineeCourses.achieved.length;
-    expect(coursesAsTraineeCount).toBe(2);
+    expect(coursesAsTraineeCount).toBe(3);
     expect(coursesAsTutor.length).toBe(1);
   });
 
@@ -2399,7 +2399,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should return 403 if maxTrainees smaller than registered trainees', async () => {
-      const payload = { maxTrainees: 4 };
+      const payload = { maxTrainees: 2 };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[2]._id}`,
@@ -3278,7 +3278,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33987654321',
+          recipient: '+33798640728',
           sender: 'Compani',
           content: payload.content,
           tag: COURSE_SMS,
@@ -3303,7 +3303,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33987654321',
+          recipient: '+33798640728',
           sender: 'Compani',
           content: 'test',
           tag: COURSE_SMS,
@@ -3847,7 +3847,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
         method: 'PUT',
         url: `/courses/${intraCourseIdWithTrainee}/trainees`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { trainee: traineeFromAuthCompanyWithFormationExpoToken._id },
+        payload: { trainee: auxiliary._id },
       });
 
       expect(response.statusCode).toBe(409);
@@ -4721,6 +4721,16 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
 
       expect(response.statusCode).toBe(404);
     });
+
+    it('should return 403 if some attendances are empty', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${ALL_WORD}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('NO_ROLE', () => {
@@ -4732,7 +4742,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 200 if user is course trainee', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[5]._id}/completion-certificates?format=${PDF}`,
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${PDF}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4742,7 +4752,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return a 403 if user is not course trainee', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${PDF}`,
+        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${PDF}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4752,7 +4762,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 403 if user is accessing certificate with an other format than PDF', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[5]._id}/completion-certificates?format=${ALL_WORD}`,
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 

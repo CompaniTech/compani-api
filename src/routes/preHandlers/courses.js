@@ -5,6 +5,7 @@ const has = require('lodash/has');
 const pick = require('lodash/pick');
 const isEqual = require('lodash/isEqual');
 const { isObjectIdOrHexString } = require('mongoose');
+const Attendance = require('../../models/Attendance');
 const Course = require('../../models/Course');
 const User = require('../../models/User');
 const Company = require('../../models/Company');
@@ -199,6 +200,23 @@ exports.authorizeGetCompletionCertificates = async (req) => {
 
   if (format === ALL_WORD && !isRofOrAdmin) throw Boom.forbidden();
   if (type === OFFICIAL && !isRofOrAdmin && !isCoachOrAdmin) throw Boom.forbidden();
+
+  const courseSlots = await CourseSlot
+    .find({ course: req.params._id })
+    .populate({ path: 'course', select: 'trainees' })
+    .lean();
+
+  const courseTrainees = courseSlots[0].course.trainees;
+
+  const expectedAttendances = courseSlots.reduce((acc, slot) => {
+    if (slot.trainees) return acc + slot.trainees.length;
+    return acc + courseTrainees.length;
+  }, 0);
+
+  const attendances = await Attendance
+    .countDocuments({ courseSlot: { $in: courseSlots.map(s => s._id) }, trainee: { $in: courseTrainees } });
+
+  if (attendances !== expectedAttendances) throw Boom.forbidden(translate[language].someAttendancesAreEmpty);
 
   return null;
 };

@@ -220,6 +220,7 @@ module.exports = {
     attendanceIsLinkedToCompletionCertificate: 'Operation forbidden : attendance is linked to completion certificate.',
     someSlotsAreLinkedToCompletionCertificate: 'Edition forbidden : some slots are linked to completion certificate.',
     traineeNotConcernedBySlot: 'Operation forbidden : trainee not concerned by slot.',
+    someAttendancesAreEmpty: 'Operation forbidden : some attendances are empty.',
     /* Questionnaires */
     questionnairesFound: 'Questionnaires found.',
     questionnairesNotFound: 'Questionnaires not found.',
@@ -519,6 +520,7 @@ module.exports = {
     someSlotsAreLinkedToCompletionCertificate: 'Édition impossible : certains créneaux sélectionnés sont liés à un '
     + 'certificat de réalisation.',
     traineeNotConcernedBySlot: 'Opération impossible : l\'apprenant n\'est pas concerné par le créneau.',
+    someAttendancesAreEmpty: 'Opération impossible : certains émargements n\'ont pas été remplis.',
     /* Questionnaires */
     questionnairesFound: 'Liste des questionnaires trouvée.',
     questionnairesNotFound: 'Liste des questionnaires non trouvée.',

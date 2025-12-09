@@ -1,7 +1,9 @@
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const has = require('lodash/has');
+const Attendance = require('../../models/Attendance');
 const Course = require('../../models/Course');
+const CourseSlot = require('../../models/CourseSlot');
 const CompletionCertificate = require('../../models/CompletionCertificate');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
@@ -40,6 +42,23 @@ exports.authorizeCompletionCertificateEdit = async (req) => {
   if (get(completionCertificate, 'file.link')) {
     throw Boom.conflict(translate[language].completionCertificateAlreadyGenerated);
   }
+
+  const startOfMonth = CompaniDate(completionCertificate.month, MM_YYYY).startOf(MONTH).toDate();
+  const endOfMonth = CompaniDate(completionCertificate.month, MM_YYYY).endOf(MONTH).toDate();
+
+  const courseSlots = await CourseSlot
+    .find({ course: completionCertificate.course, endDate: { $lte: endOfMonth }, startDate: { $gte: startOfMonth } })
+    .lean();
+
+  const expectedAttendances = courseSlots.reduce((acc, slot) => {
+    if (slot.trainees && !UtilsHelper.doesArrayIncludeId(slot.trainees, completionCertificate.trainee)) return acc;
+    return acc + 1;
+  }, 0);
+
+  const attendances = await Attendance
+    .countDocuments({ courseSlot: { $in: courseSlots.map(s => s._id) }, trainee: completionCertificate.trainee });
+
+  if (attendances !== expectedAttendances) throw Boom.forbidden(translate[language].someAttendancesAreEmpty);
 
   return null;
 };
