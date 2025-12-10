@@ -1379,7 +1379,7 @@ describe('exportCourseSlotHistory', () => {
   };
 
   const courseSlotList = [
-    {
+    { // 0
       _id: new ObjectId(),
       course: courseList[0],
       startDate: '2021-05-01T08:00:00.000Z',
@@ -1389,7 +1389,7 @@ describe('exportCourseSlotHistory', () => {
       address: slotAddress,
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
     },
-    {
+    { // 1
       _id: new ObjectId(),
       course: courseList[0],
       startDate: '2021-05-01T14:00:00.000Z',
@@ -1399,7 +1399,7 @@ describe('exportCourseSlotHistory', () => {
       meetingLink: 'https://meet.google.com',
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: PRESENT }],
     },
-    {
+    { // 2
       _id: new ObjectId(),
       course: courseList[1],
       startDate: '2021-02-01T08:00:00.000Z',
@@ -1409,7 +1409,7 @@ describe('exportCourseSlotHistory', () => {
       address: slotAddress,
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
     },
-    {
+    { // 3
       _id: new ObjectId(),
       course: courseList[1],
       startDate: '2021-02-02T08:00:00.000Z',
@@ -1418,7 +1418,7 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[2],
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
     },
-    {
+    { // 4
       _id: new ObjectId(),
       course: courseList[2],
       startDate: '2022-02-02T08:00:00.000Z',
@@ -1459,6 +1459,7 @@ describe('exportCourseSlotHistory', () => {
           args: [{
             path: 'course',
             select: 'type trainees misc subProgram companies',
+            match: { type: { $ne: SINGLE } },
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
@@ -1472,8 +1473,8 @@ describe('exportCourseSlotHistory', () => {
     );
   });
 
-  it('should return an array with the header and 4 rows', async () => {
-    findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList));
+  it('should return an array with the header and 4 rows (NOT SINGLE COURSES)', async () => {
+    findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList.slice(0, 4)));
 
     const result = await ExportHelper
       .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
@@ -1564,6 +1565,58 @@ describe('exportCourseSlotHistory', () => {
         1,
         1,
       ],
+    ]);
+    SinonMongoose.calledOnceWithExactly(
+      findCourseSlot,
+      [
+        {
+          query: 'find',
+          args: [{ startDate: { $lte: '2022-01-20T22:59:59.000Z' }, endDate: { $gte: '2021-01-14T23:00:00.000Z' } }],
+        },
+        { query: 'populate', args: [{ path: 'step', select: 'type name' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type trainees misc subProgram companies',
+            match: { type: { $ne: SINGLE } },
+            populate: [
+              { path: 'companies', select: 'name' },
+              { path: 'trainees', select: 'identity' },
+              { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+            ],
+          }],
+        },
+        { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should return an array with the header and 4 rows (SINGLE COURSES)', async () => {
+    findCourseSlot.returns(SinonMongoose.stubChainedQueries([courseSlotList[4]]));
+
+    const result = await ExportHelper
+      .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, SINGLE);
+
+    expect(result).toEqual([
+      [
+        'Id Créneau',
+        'Id Formation',
+        'Formation',
+        'Étape',
+        'Type',
+        'Apprenant',
+        'Date de création',
+        'Date de début',
+        'Date de fin',
+        'Durée',
+        'Adresse',
+        'Nombre de présences',
+        'Nombre d\'absences',
+        'Nombre de présences non prévues',
+        'Nombre d\'émargements non remplis',
+      ],
       [
         courseSlotList[4]._id,
         courseIdList[2],
@@ -1595,6 +1648,7 @@ describe('exportCourseSlotHistory', () => {
           args: [{
             path: 'course',
             select: 'type trainees misc subProgram companies',
+            match: { type: SINGLE },
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },

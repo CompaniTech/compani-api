@@ -25,6 +25,7 @@ const {
   COURSE_PAYMENT,
   SELF_POSITIONNING,
   SINGLE_COURSE,
+  SINGLE_COURSE_SLOT,
 } = require('../../src/helpers/constants');
 const { getToken } = require('./helpers/authentication');
 const {
@@ -135,7 +136,7 @@ const vendorHistoryExportTypes = [
     expectedRows: [
       '\ufeff"Identifiant";"Type";"Payeur";"Structure";"Société mère";"Programme";"Id programme";"Sous-Programme";"Infos complémentaires";"Intervenant·es";"Début de formation";"Fin de formation";"Chargé des opérations";"Contact pour la formation";"Nombre d\'inscrits";"Nombre de dates";"Nombre de créneaux";"Nombre de créneaux à planifier";"Durée Totale";"Nombre de SMS envoyés";"Nombre de personnes connectées à l\'app";"Complétion eLearning moyenne";"Nombre de réponses au questionnaire de recueil des attentes";"Nombre de réponses au questionnaire de satisfaction";"Date de démarrage souhaitée";"Première date de démarrage souhaitée";"Nombre de feuilles d\'émargement chargées";"Nombre de présences";"Nombre d\'absences";"Nombre d\'émargements non remplis";"Nombre de stagiaires non prévus";"Nombre de présences non prévues";"Avancement";"Archivée";"Date d\'archivage";"Prix de la formation";"Nombre de factures";"Facturée";"Montant facturé";"Montant réglé";"Solde";"Date de création"',
       `${coursesList[9]._id};"Individuelle";;"Un autre SAS";"Other Holding";"Program 1";${programList[0]._id};"subProgram 1";"Paul Trainee";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;0;1;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
-      `${coursesList[10]._id};"Individuelle";;"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"Toto Apprenant";"Gilles FORMATEUR";"17/01/2021";"17/01/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"4,00";0;0;"0,00";0;0;;;0;0;0;1;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
+      `${coursesList[10]._id};"Individuelle";;"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"Marie Trainee";"Gilles FORMATEUR";"17/01/2021";"17/01/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"4,00";0;0;"0,00";0;0;;;0;1;0;0;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
     ],
     query: 'startDate=2021-01-15T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
   },
@@ -153,9 +154,17 @@ const vendorHistoryExportTypes = [
       `${courseSlotList[9]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 2";"distanciel";;"14/10/2020 23:00:10";"10/02/2021 09:00:00";"10/02/2021 13:00:00";"4,00";;0;0;0;2`,
       `${courseSlotList[10]._id};${coursesList[3]._id};"Test SAS - Program 1 - group 4";"étape 1";"présentiel";;"14/10/2020 23:00:30";"03/02/2021 09:00:00";"03/02/2021 13:00:00";"4,00";"24 Avenue Daumesnil 75012 Paris";0;0;0;2`,
       `${courseSlotList[11]._id};${coursesList[8]._id};"Un autre SAS - Program 1 - group 9";"étape 2";"distanciel";;"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";1;0;0;0`,
-      `${courseSlotList[12]._id};${coursesList[9]._id};"Program 1 - Paul Trainee";"étape 2";"distanciel";"Paul TRAINEE";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";0;0;0;1`,
     ],
     query: 'startDate=2021-02-01T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
+  },
+  {
+    exportType: SINGLE_COURSE_SLOT,
+    expectedRows: [
+      '\ufeff"Id Créneau";"Id Formation";"Formation";"Étape";"Type";"Apprenant";"Date de création";"Date de début";"Date de fin";"Durée";"Adresse";"Nombre de présences";"Nombre d\'absences";"Nombre de présences non prévues";"Nombre d\'émargements non remplis"',
+      `${courseSlotList[12]._id};${coursesList[9]._id};"Program 1 - Paul Trainee";"étape 2";"distanciel";"Paul TRAINEE";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";0;0;0;1`,
+      `${courseSlotList[13]._id};${coursesList[10]._id};"Program 1 - Marie Trainee";"étape 2";"distanciel";"Marie TRAINEE";"12/12/2020 11:00:01";"17/01/2021 15:00:00";"17/01/2021 19:00:00";"4,00";"https://meet.google.com";1;0;0;0`,
+    ],
+    query: 'startDate=2021-01-16T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
   },
   {
     exportType: END_OF_COURSE,

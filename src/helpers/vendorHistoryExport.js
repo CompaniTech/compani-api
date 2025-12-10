@@ -327,12 +327,13 @@ const getAddress = (slot) => {
   return '';
 };
 
-exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
+exports.exportCourseSlotHistory = async (startDate, endDate, credentials, courseType = '') => {
   const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
       select: 'type trainees misc subProgram companies',
+      match: { ...(courseType === SINGLE ? { type: SINGLE } : { type: { $ne: SINGLE } }) },
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'trainees', select: 'identity' },
@@ -346,10 +347,11 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       },
     })
     .lean();
+  const filteredCourseSlots = courseSlots.filter(s => s.course);
 
   const rows = [];
 
-  for (const slot of courseSlots) {
+  for (const slot of filteredCourseSlots) {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
     const presences = [];
     const absences = [];

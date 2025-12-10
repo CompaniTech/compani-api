@@ -1395,7 +1395,7 @@ const coursesList = [
     type: SINGLE,
     maxTrainees: 1,
     subProgram: subProgramList[0]._id,
-    misc: 'Toto Apprenant',
+    misc: 'Marie Trainee',
     trainers: [trainer._id],
     operationsRepresentative: operationsRepresentative._id,
     contact: operationsRepresentative._id,
@@ -1777,6 +1777,7 @@ const attendanceList = [
   { trainee: traineeList[1]._id, courseSlot: courseSlotList[3]._id, company: otherCompany._id, status: PRESENT },
   { trainee: traineeList[3]._id, courseSlot: courseSlotList[2]._id, company: authCompany._id, status: PRESENT },
   { trainee: traineeList[3]._id, courseSlot: courseSlotList[3]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[2]._id, courseSlot: courseSlotList[13]._id, company: authCompany._id, status: PRESENT },
 ];
 
 const attendanceSheetList = [
