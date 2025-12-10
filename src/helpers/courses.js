@@ -544,7 +544,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             path: 'slots',
             select: 'step startDate endDate address meetingLink trainees',
             ...get(credentials, 'role.vendor.name') && {
-              populate: { path: 'missingAttendances', options: { isVendorUser: true } },
+              populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
             },
           },
           { path: 'slotsToPlan', select: '_id step' },
@@ -573,7 +573,11 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           path: 'slots',
           select: 'step startDate endDate trainees',
           options: { sort: { startDate: 1 } },
-          populate: { path: 'missingAttendances', options: { isVendorUser: !!get(credentials, 'role.vendor.name') } },
+          populate: {
+            path: 'missingAttendances',
+            select: 'trainee',
+            options: { isVendorUser: !!get(credentials, 'role.vendor.name') },
+          },
         }]
       ),
     ])

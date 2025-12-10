@@ -2432,7 +2432,7 @@ describe('getCourse', () => {
               {
                 path: 'slots',
                 select: 'step startDate endDate address meetingLink trainees',
-                populate: { path: 'missingAttendances', options: { isVendorUser: true } },
+                populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
               },
               { path: 'slotsToPlan', select: '_id step' },
               {
@@ -2721,7 +2721,7 @@ describe('getCourse', () => {
                 path: 'slots',
                 select: 'step startDate endDate trainees',
                 options: { sort: { startDate: 1 } },
-                populate: { path: 'missingAttendances', options: { isVendorUser: true } },
+                populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
               },
             ]],
           },
