@@ -1390,6 +1390,23 @@ const coursesList = [
     folderId: 'folderId',
     gSheetId: 'gSheetId',
   },
+  { // 10 single
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'Toto Apprenant',
+    trainers: [trainer._id],
+    operationsRepresentative: operationsRepresentative._id,
+    contact: operationsRepresentative._id,
+    expectedBillsCount: 1,
+    trainees: [traineeList[2]._id],
+    companies: [authCompany._id],
+    createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+  },
 ];
 
 const courseFundingOrganisation = {
@@ -1737,6 +1754,15 @@ const courseSlotList = [
     step: stepList[1]._id,
     startDate: '2021-05-01T14:00:00.000Z',
     endDate: '2021-05-01T16:00:00.000Z',
+    meetingLink: 'https://meet.google.com',
+    createdAt: '2020-12-12T10:00:01.000Z',
+  },
+  { // 13
+    _id: new ObjectId(),
+    course: coursesList[10]._id,
+    step: stepList[1]._id,
+    startDate: '2021-01-17T14:00:00.000Z',
+    endDate: '2021-01-17T18:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
   },
@@ -2279,6 +2305,14 @@ const courseHistoriesList = [
     createdBy: operationsRepresentative._id,
     trainee: traineeList[1]._id,
     company: otherCompany._id,
+  },
+  {
+    _id: new ObjectId(),
+    course: coursesList[10]._id,
+    action: TRAINEE_ADDITION,
+    createdBy: operationsRepresentative._id,
+    trainee: traineeList[2]._id,
+    company: authCompany._id,
   },
 ];
 

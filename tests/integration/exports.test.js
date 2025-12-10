@@ -24,6 +24,7 @@ const {
   COURSE_BILL,
   COURSE_PAYMENT,
   SELF_POSITIONNING,
+  SINGLE_COURSE,
 } = require('../../src/helpers/constants');
 const { getToken } = require('./helpers/authentication');
 const {
@@ -126,7 +127,15 @@ const vendorHistoryExportTypes = [
       `${coursesList[7]._id};"Intra société mère";;;"Société mère";"Program 1";${programList[0]._id};"subProgram 1";"group 8";"Gilles FORMATEUR";"16/01/2021";"16/01/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";0;1;1;0;"2,00";0;0;"0,00";0;0;;;0;0;0;0;0;0;"1,00";"Non";;;"0 sur 0";"Non";;;;"07/01/2018"`,
       `${coursesList[3]._id};"Intra";;"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 4";"Gilles FORMATEUR";"01/02/2021";"10/02/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";2;3;3;0;"11,00";0;1;"0,00";0;0;;;0;0;0;6;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
       `${coursesList[8]._id};"Intra";;"Un autre SAS";"Other Holding";"Program 1";${programList[0]._id};"subProgram 1";"group 9";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;1;;;0;1;0;0;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
+    ],
+    query: 'startDate=2021-01-15T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
+  },
+  {
+    exportType: SINGLE_COURSE,
+    expectedRows: [
+      '\ufeff"Identifiant";"Type";"Payeur";"Structure";"Société mère";"Programme";"Id programme";"Sous-Programme";"Infos complémentaires";"Intervenant·es";"Début de formation";"Fin de formation";"Chargé des opérations";"Contact pour la formation";"Nombre d\'inscrits";"Nombre de dates";"Nombre de créneaux";"Nombre de créneaux à planifier";"Durée Totale";"Nombre de SMS envoyés";"Nombre de personnes connectées à l\'app";"Complétion eLearning moyenne";"Nombre de réponses au questionnaire de recueil des attentes";"Nombre de réponses au questionnaire de satisfaction";"Date de démarrage souhaitée";"Première date de démarrage souhaitée";"Nombre de feuilles d\'émargement chargées";"Nombre de présences";"Nombre d\'absences";"Nombre d\'émargements non remplis";"Nombre de stagiaires non prévus";"Nombre de présences non prévues";"Avancement";"Archivée";"Date d\'archivage";"Prix de la formation";"Nombre de factures";"Facturée";"Montant facturé";"Montant réglé";"Solde";"Date de création"',
       `${coursesList[9]._id};"Individuelle";;"Un autre SAS";"Other Holding";"Program 1";${programList[0]._id};"subProgram 1";"Paul Trainee";"Gilles FORMATEUR";"01/05/2021";"01/05/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"2,00";0;1;"0,00";0;0;;;0;0;0;1;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
+      `${coursesList[10]._id};"Individuelle";;"Test SAS";"Auth Holding";"Program 1";${programList[0]._id};"subProgram 1";"Toto Apprenant";"Gilles FORMATEUR";"17/01/2021";"17/01/2021";"Aline CONTACT-COM";"Aline CONTACT-COM";1;1;1;0;"4,00";0;0;"0,00";0;0;;;0;0;0;1;0;0;"1,00";"Non";;;"0 sur 1";"Non";;;;"07/01/2018"`,
     ],
     query: 'startDate=2021-01-15T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
   },

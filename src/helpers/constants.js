@@ -651,6 +651,7 @@ module.exports = {
   get VENDOR_EXPORT_TYPES() {
     return [
       this.COURSE,
+      this.SINGLE_COURSE,
       this.COURSE_SLOT,
       this.END_OF_COURSE,
       this.COURSE_BILL,
