@@ -327,8 +327,8 @@ const slotsList = [
   },
   { // 7
     _id: new ObjectId(),
-    startDate: '2020-01-26T09:00:00.000Z',
-    endDate: '2020-01-26T11:00:00.000Z',
+    startDate: '2020-01-28T09:00:00.000Z',
+    endDate: '2020-01-28T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
   },

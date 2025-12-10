@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const NotificationHelper = require('../../src/helpers/notifications');
 const UtilsHelper = require('../../src/helpers/utils');
+const UtilsMock = require('../utilsMock');
 const app = require('../../server');
 const { populateDB, coursesList, attendanceSheetList, slotsList, userList } = require('./seed/attendanceSheetsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
@@ -1472,6 +1473,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
     });
 
     it('should generate attendance sheet file for inter course', async () => {
+      UtilsMock.mockCurrentDate('2025-11-08T09:00:00.000Z');
       const attendanceSheetId = attendanceSheetList[11]._id;
       const payload = { action: GENERATION };
       uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
@@ -1489,6 +1491,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
         .countDocuments({ _id: attendanceSheetId, file: { $exists: true } });
       expect(attendanceSheetUpdated).toEqual(1);
       sinon.assert.calledOnce(uploadCourseFile);
+      UtilsMock.unmockCurrentDate();
     });
 
     it('should generate attendance sheet file for intra course', async () => {
