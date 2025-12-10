@@ -273,8 +273,8 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
   };
 };
 
-exports.exportCourseHistory = async (startDate, endDate, credentials) => {
-  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials);
+exports.exportCourseHistory = async (startDate, endDate, credentials, courseType = '') => {
+  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials, courseType);
 
   const filteredCourses = courses
     .filter(course => !course.slots.length || course.slots.some(slot => isSlotInInterval(slot, startDate, endDate)));

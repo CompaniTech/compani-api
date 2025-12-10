@@ -606,6 +606,7 @@ module.exports = {
   TRANSPORT: 'transport',
   WORKING_EVENT: 'working_event', // intervention or internal hours
   COURSE: 'course',
+  SINGLE_COURSE: 'single_course',
   COURSE_SLOT: 'course_slot',
   COURSE_BILL: 'course_bill',
   COURSE_PAYMENT: 'course_payment',
@@ -618,6 +619,7 @@ module.exports = {
       this.PAY,
       this.CONTRACT,
       this.COURSE,
+      this.SINGLE_COURSE,
       this.COURSE_SLOT,
       this.TRANSPORT,
       this.END_OF_COURSE,
