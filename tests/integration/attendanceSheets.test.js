@@ -240,7 +240,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[1]._id.toHexString(),
         signature: 'test',
-        trainees: coursesList[1].trainees[2].toHexString(),
+        trainees: coursesList[1].trainees[3].toHexString(),
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -269,7 +269,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const formData = {
         course: coursesList[1]._id.toHexString(),
         signature: 'test',
-        trainees: coursesList[1].trainees[1].toHexString(),
+        trainees: coursesList[1].trainees[2].toHexString(),
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -289,7 +289,7 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       const attendanceSheetsLengthAfter = await AttendanceSheet.countDocuments({ course: coursesList[1]._id });
       expect(attendanceSheetsLengthAfter).toBe(attendanceSheetsLengthBefore);
       sinon.assert.notCalled(uploadCourseFile);
-      sinon.assert.calledOnce(sendNotificationToUser);
+      sinon.assert.calledTwice(sendNotificationToUser);
     });
 
     it('should upload trainer signature and create attendance sheet for intra course (several slots and trainees)'
@@ -1625,6 +1625,20 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
     it('should return 403 if generation and trainer or trainee signature missing', async () => {
       const attendanceSheetId = attendanceSheetList[8]._id;
+      const payload = { action: GENERATION };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if some attendances are empty', async () => {
+      const attendanceSheetId = attendanceSheetList[4]._id;
       const payload = { action: GENERATION };
 
       const response = await app.inject({

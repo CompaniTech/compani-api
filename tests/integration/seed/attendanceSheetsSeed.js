@@ -60,6 +60,7 @@ const userList = [
     local: { email: 'trainerFromOtherCompany@compani.fr' },
     role: { vendor: trainerRoleId },
     origin: WEBAPP,
+    formationExpoTokenList: ['ExponentPushToken[3]', 'ExponentPushToken[c]'],
   },
   { // 4
     _id: new ObjectId(),
@@ -113,7 +114,7 @@ const coursesList = [
     _id: new ObjectId(),
     subProgram: subProgramList[0]._id,
     type: INTER_B2B,
-    trainees: [userList[1]._id, userList[2]._id, userList[4]._id],
+    trainees: [userList[1]._id, userList[2]._id, userList[4]._id, userList[3]._id],
     companies: [authCompany._id, otherCompany._id, companyWithoutSubscription._id],
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
@@ -229,6 +230,13 @@ const courseHistoriesList = [
     course: coursesList[1]._id,
     trainee: userList[4]._id,
     company: companyWithoutSubscription._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+  {
+    action: TRAINEE_ADDITION,
+    course: coursesList[1]._id,
+    trainee: userList[3]._id,
+    company: otherCompany._id,
     createdBy: trainerOrganisationManager._id,
   },
   {
@@ -513,7 +521,30 @@ const attendanceSheetList = [
   { // 4
     _id: new ObjectId(),
     course: coursesList[1]._id,
-    file: { publicId: 'fromThirdCompany', link: 'www.test.com' },
+    slots: [
+      {
+        slotId: slotsList[12]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [{
+          traineeId: userList[4]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        }],
+      },
+      {
+        slotId: slotsList[13]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [{
+          traineeId: userList[4]._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+        }],
+      },
+    ],
     trainee: userList[4]._id,
     companies: [companyWithoutSubscription._id],
     origin: MOBILE,
@@ -876,6 +907,27 @@ const attendancesList = [
   {
     _id: new ObjectId(),
     courseSlot: slotsList[19]._id,
+    trainee: userList[4]._id,
+    company: companyWithoutSubscription._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[14]._id,
+    trainee: userList[2]._id,
+    company: otherCompany._id,
+    status: MISSING,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[12]._id,
+    trainee: userList[4]._id,
+    company: companyWithoutSubscription._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[13]._id,
     trainee: userList[4]._id,
     company: companyWithoutSubscription._id,
     status: PRESENT,

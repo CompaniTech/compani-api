@@ -193,7 +193,11 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     .populate({
       path: 'course',
       select: 'type trainers slots',
-      populate: { path: 'slots', select: 'endDate trainees' },
+      populate: {
+        path: 'slots',
+        select: 'startDate trainees',
+        populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
+      },
     })
     .lean();
 
@@ -203,14 +207,27 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   if (!isVendorAndAuthorized(attendanceSheet.course.trainers, credentials)) throw Boom.forbidden();
 
   if (req.payload.action) {
-    let canGenerate = attendanceSheet.slots
-      .every(s => s.trainerSignature && s.traineesSignature.every(signature => signature.signature));
+    let canGenerate = attendanceSheet.slots.every(s => s.trainerSignature && s.traineesSignature &&
+      s.traineesSignature.every(signature => signature.signature));
     if (attendanceSheet.file) canGenerate = false;
     if (attendanceSheet.course.type === INTER_B2B) {
-      const lastSlot = attendanceSheet.course.slots
-        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, attendanceSheet.trainee))
-        .sort(DatesUtilsHelper.descendingSortBy('endDate'))[0];
-      if (CompaniDate().isBefore(lastSlot.endDate)) canGenerate = false;
+      const courseSlots = attendanceSheet.course.slots
+        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, attendanceSheet.trainee));
+      const lastSlot = courseSlots.sort(DatesUtilsHelper.descendingSortBy('startDate'))[0];
+      if (CompaniDate().isBefore(lastSlot.startDate)) canGenerate = false;
+      else {
+        const hasEmptyAttendances = courseSlots.some((slot) => {
+          const isSlotInAttendanceSheet = attendanceSheet.slots
+            .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot._id));
+          if (!isSlotInAttendanceSheet) {
+            const isTraineeMissing = (slot.missingAttendances || [])
+              .find(a => UtilsHelper.areObjectIdsEquals(a.trainee, attendanceSheet.trainee));
+            if (!isTraineeMissing) return true;
+          }
+          return false;
+        });
+        if (hasEmptyAttendances) canGenerate = false;
+      }
     }
     if (!canGenerate) throw Boom.forbidden();
   } else {
