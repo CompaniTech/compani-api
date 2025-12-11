@@ -1123,16 +1123,28 @@ describe('COURSES ROUTES - GET /courses', () => {
             subPrograms: [expect.any(Object), expect.any(Object), expect.any(Object)],
           },
         }),
-        slots: [{
-          startDate: CompaniDate('2020-03-04T08:00:00.000Z').toDate(),
-          endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
-          course: coursesList[2]._id,
-          step: {
+        slots: [
+          {
+            startDate: CompaniDate('2020-03-04T08:00:00.000Z').toDate(),
+            endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
+            course: coursesList[2]._id,
+            step: {
+              _id: expect.any(Object),
+              type: 'on_site',
+            },
             _id: expect.any(Object),
-            type: 'on_site',
           },
-          _id: expect.any(Object),
-        }],
+          {
+            startDate: CompaniDate('2025-03-04T08:00:00.000Z').toDate(),
+            endDate: CompaniDate('2025-03-04T10:00:00.000Z').toDate(),
+            course: coursesList[2]._id,
+            step: {
+              _id: expect.any(Object),
+              type: 'on_site',
+            },
+            _id: expect.any(Object),
+          },
+        ],
         slotsToPlan: [
           { _id: expect.any(Object), course: course._id },
           { _id: expect.any(Object), course: course._id },
@@ -4669,6 +4681,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
 
       authToken = await getToken('training_organisation_manager');
     });
@@ -4677,6 +4690,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 if type is CUSTOM', async () => {
@@ -4737,6 +4751,11 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getTokenByCredentials(noRole.local);
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
+    });
+
+    afterEach(() => {
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 if user is course trainee', async () => {
@@ -4780,6 +4799,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
 
       authToken = await getToken('trainer');
     });
@@ -4788,6 +4808,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 as user is the course trainer', async () => {

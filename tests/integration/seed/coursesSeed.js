@@ -1291,6 +1291,13 @@ const slots = [
     course: coursesList[12]._id,
     step: stepList[2]._id,
   },
+  { // 21
+    _id: new ObjectId(),
+    startDate: '2025-03-04T08:00:00.000Z',
+    endDate: '2025-03-04T10:00:00.000Z',
+    course: coursesList[2]._id,
+    step: stepList[0]._id,
+  },
 ];
 
 const attendanceList = [
@@ -1324,20 +1331,6 @@ const attendanceList = [
   },
   {
     _id: new ObjectId(),
-    trainee: auxiliary._id,
-    courseSlot: slots[5]._id,
-    company: authCompany._id,
-    status: PRESENT,
-  },
-  {
-    _id: new ObjectId(),
-    trainee: auxiliary._id,
-    courseSlot: slots[6]._id,
-    company: authCompany._id,
-    status: PRESENT,
-  },
-  {
-    _id: new ObjectId(),
     trainee: coach._id,
     courseSlot: slots[4]._id,
     company: authCompany._id,
@@ -1345,36 +1338,8 @@ const attendanceList = [
   },
   {
     _id: new ObjectId(),
-    trainee: coach._id,
-    courseSlot: slots[5]._id,
-    company: authCompany._id,
-    status: PRESENT,
-  },
-  {
-    _id: new ObjectId(),
-    trainee: coach._id,
-    courseSlot: slots[6]._id,
-    company: authCompany._id,
-    status: PRESENT,
-  },
-  {
-    _id: new ObjectId(),
     trainee: noRole._id,
     courseSlot: slots[4]._id,
-    company: authCompany._id,
-    status: PRESENT,
-  },
-  {
-    _id: new ObjectId(),
-    trainee: noRole._id,
-    courseSlot: slots[5]._id,
-    company: authCompany._id,
-    status: PRESENT,
-  },
-  {
-    _id: new ObjectId(),
-    trainee: noRole._id,
-    courseSlot: slots[6]._id,
     company: authCompany._id,
     status: PRESENT,
   },

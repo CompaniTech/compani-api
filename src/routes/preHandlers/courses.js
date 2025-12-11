@@ -202,7 +202,7 @@ exports.authorizeGetCompletionCertificates = async (req) => {
   if (type === OFFICIAL && !isRofOrAdmin && !isCoachOrAdmin) throw Boom.forbidden();
 
   const courseSlots = await CourseSlot
-    .find({ course: req.params._id })
+    .find({ course: req.params._id, endDate: { $lte: CompaniDate().toISO() } })
     .populate({ path: 'course', select: 'trainees' })
     .lean();
 
