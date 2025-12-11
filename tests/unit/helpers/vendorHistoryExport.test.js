@@ -586,7 +586,6 @@ describe('exportCourseHistory', () => {
     groupSlotsByDate.onCall(2).returns([]);
     groupSlotsByDate.onCall(3).returns([]);
     groupSlotsByDate.onCall(4).returns([[courseSlotList[5]]]);
-    groupSlotsByDate.onCall(5).returns([[singleCourseSlotList[0]]]);
     getTotalDurationForExport.onCall(0).returns('4,00');
     getTotalDurationForExport.onCall(1).returns('4,00');
     getTotalDurationForExport.onCall(2).returns('0,00');
