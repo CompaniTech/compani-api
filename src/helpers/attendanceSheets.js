@@ -279,7 +279,7 @@ exports.sign = async (attendanceSheetId, payload, credentials) => {
 exports.generate = async (attendanceSheetId) => {
   const attendanceSheet = await AttendanceSheet
     .findOne({ _id: attendanceSheetId })
-    .populate({ path: 'slots.slotId', select: 'startDate endDate address' })
+    .populate({ path: 'slots.slotId', select: 'startDate endDate address trainees' })
     .populate({ path: 'trainee', select: 'identity' })
     .populate({ path: 'trainer', select: 'identity' })
     .populate({
@@ -297,7 +297,7 @@ exports.generate = async (attendanceSheetId) => {
           select: 'steps program',
           populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
         },
-        { path: 'slots', select: 'startDate endDate address' },
+        { path: 'slots', select: 'startDate endDate address trainees' },
       ],
     })
     .lean();
@@ -339,7 +339,10 @@ exports.generate = async (attendanceSheetId) => {
 };
 
 exports.delete = async (attendanceSheetId, shouldDeleteAttendances) => {
-  const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }).lean();
+  const attendanceSheet = await AttendanceSheet
+    .findOne({ _id: attendanceSheetId })
+    .populate({ path: 'course', select: 'trainees' })
+    .lean();
 
   await AttendanceSheet.deleteOne({ _id: attendanceSheet._id });
 
@@ -358,7 +361,7 @@ exports.delete = async (attendanceSheetId, shouldDeleteAttendances) => {
         signatures.push(...slot.traineesSignature.filter(s => s.signature).map(s => s.signature));
       }
       if (!attendanceSheet.trainee && shouldDeleteAttendances) {
-        const traineesIds = slot.traineesSignature.map(signature => signature.traineeId);
+        const traineesIds = attendanceSheet.course.trainees;
         promises.push(Attendance.deleteMany({ courseSlot: slot.slotId, trainee: { $in: traineesIds } }));
       }
     }

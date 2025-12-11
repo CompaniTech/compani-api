@@ -4,7 +4,7 @@ const { ObjectId } = require('mongodb');
 const FileHelper = require('../../../src/helpers/file');
 const PdfHelper = require('../../../src/helpers/pdf');
 const IntraAttendanceSheet = require('../../../src/data/pdf/attendanceSheet/intraAttendanceSheet');
-const { PEACH_100, COPPER_500, INTRA, INTRA_HOLDING } = require('../../../src/helpers/constants');
+const { PEACH_100, COPPER_500, INTRA, INTRA_HOLDING, BLACK } = require('../../../src/helpers/constants');
 
 describe('getPdfContent', () => {
   let downloadImages;
@@ -188,7 +188,7 @@ describe('getPdfContent', () => {
           address: 'Rue Jean Jaurès 59620 Aulnoye-Aymeries',
           slots: [
             { _id: slotIds[0], startHour: '09h30', endHour: '12h' },
-            { _id: slotIds[1], startHour: '14h30', endHour: '16h' },
+            { _id: slotIds[1], startHour: '14h30', endHour: '16h', trainees: [traineeIds[0]] },
           ],
           date: '05/03/2020',
         },
@@ -231,7 +231,7 @@ describe('getPdfContent', () => {
         [
           { text: 'Charles LECLERC', margin: [0, 8, 0, 0] },
           { image: signaturePaths[1], width: 64, alignment: 'center' },
-          { text: '' },
+          { text: '', fillColor: BLACK },
         ],
         [
           { text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] },

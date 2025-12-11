@@ -1115,8 +1115,8 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
     ).toLowerCase();
     const userWithSameCompany = identityUsers.find(user => UtilsHelper.areObjectIdsEquals(user.company, companyId));
     const userWithSameEmail = identityUsers.find(user => user.local.email === formattedEmail);
-    if (companyId && userWithSameCompany) identityUser = userWithSameCompany;
-    else if (userWithSameEmail) identityUser = userWithSameEmail;
+    if (userWithSameEmail) identityUser = userWithSameEmail;
+    else if (companyId && userWithSameCompany) identityUser = userWithSameCompany;
 
     let sameEmail = false;
     if (identityUser) {
