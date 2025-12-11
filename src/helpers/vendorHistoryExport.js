@@ -273,8 +273,8 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
   };
 };
 
-exports.exportCourseHistory = async (startDate, endDate, credentials, courseType = '') => {
-  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials, courseType);
+exports.exportCourseHistory = async (startDate, endDate, credentials, courseTypes) => {
+  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials, courseTypes);
 
   const filteredCourses = courses
     .filter(course => !course.slots.length || course.slots.some(slot => isSlotInInterval(slot, startDate, endDate)));
@@ -327,13 +327,13 @@ const getAddress = (slot) => {
   return '';
 };
 
-exports.exportCourseSlotHistory = async (startDate, endDate, credentials, courseType = '') => {
+exports.exportCourseSlotHistory = async (startDate, endDate, credentials, courseTypes) => {
   const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
       select: 'type trainees misc subProgram companies',
-      match: { ...(courseType === SINGLE ? { type: SINGLE } : { type: { $ne: SINGLE } }) },
+      match: { type: { $in: courseTypes } },
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'trainees', select: 'identity' },

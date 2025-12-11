@@ -476,7 +476,7 @@ describe('exportCourseHistory', () => {
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList, ['lean']));
     findCourse.returns(SinonMongoose.stubChainedQueries([], ['select', 'populate', 'lean']));
 
-    const result = await ExportHelper.exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
+    const result = await ExportHelper.exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
 
     expect(result).toEqual([[NO_DATA]]);
     SinonMongoose.calledOnceWithExactly(
@@ -502,7 +502,7 @@ describe('exportCourseHistory', () => {
                 archivedAt: { $exists: false },
               },
             ],
-            type: { $ne: SINGLE },
+            type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] },
           }],
         },
         { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
@@ -611,7 +611,7 @@ describe('exportCourseHistory', () => {
     formatPrice.onCall(2).returns('250,00 €');
 
     const result = await ExportHelper
-      .exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
+      .exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
 
     expect(result).toEqual([
       [
@@ -902,7 +902,7 @@ describe('exportCourseHistory', () => {
                 archivedAt: { $exists: false },
               },
             ],
-            type: { $ne: SINGLE },
+            type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] },
           }],
         },
         { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
@@ -1053,7 +1053,7 @@ describe('exportCourseHistory', () => {
     findActivityHistory.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
     const result = await ExportHelper
-      .exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, SINGLE);
+      .exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [SINGLE]);
 
     expect(result).toEqual([
       [
@@ -1168,7 +1168,7 @@ describe('exportCourseHistory', () => {
                 archivedAt: { $exists: false },
               },
             ],
-            type: SINGLE,
+            type: { $in: [SINGLE] },
           }],
         },
         { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
@@ -1399,7 +1399,7 @@ describe('exportCourseSlotHistory', () => {
     findCourseSlot.returns(SinonMongoose.stubChainedQueries([]));
 
     const result = await ExportHelper
-      .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
+      .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
 
     expect(result).toEqual([[NO_DATA]]);
     SinonMongoose.calledOnceWithExactly(
@@ -1415,7 +1415,7 @@ describe('exportCourseSlotHistory', () => {
           args: [{
             path: 'course',
             select: 'type trainees misc subProgram companies',
-            match: { type: { $ne: SINGLE } },
+            match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
@@ -1433,7 +1433,7 @@ describe('exportCourseSlotHistory', () => {
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList.slice(0, 4)));
 
     const result = await ExportHelper
-      .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
+      .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
 
     expect(result).toEqual([
       [
@@ -1535,7 +1535,7 @@ describe('exportCourseSlotHistory', () => {
           args: [{
             path: 'course',
             select: 'type trainees misc subProgram companies',
-            match: { type: { $ne: SINGLE } },
+            match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
@@ -1553,7 +1553,7 @@ describe('exportCourseSlotHistory', () => {
     findCourseSlot.returns(SinonMongoose.stubChainedQueries([courseSlotList[4]]));
 
     const result = await ExportHelper
-      .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, SINGLE);
+      .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [SINGLE]);
 
     expect(result).toEqual([
       [
@@ -1604,7 +1604,7 @@ describe('exportCourseSlotHistory', () => {
           args: [{
             path: 'course',
             select: 'type trainees misc subProgram companies',
-            match: { type: SINGLE },
+            match: { type: { $in: [SINGLE] } },
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
