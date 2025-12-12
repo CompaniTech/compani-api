@@ -371,7 +371,8 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       Formation: CourseHelper.composeCourseName(slot.course),
       Étape: get(slot, 'step.name') || '',
       Type: STEP_TYPES[get(slot, 'step.type')] || '',
-      Apprenant: slot.course.type === SINGLE ? UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL') : '',
+      ...(courseTypes.includes(SINGLE) &&
+        { Apprenant: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL') }),
       'Date de création': CompaniDate(slot.createdAt).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de début': CompaniDate(slot.startDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de fin': CompaniDate(slot.endDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
