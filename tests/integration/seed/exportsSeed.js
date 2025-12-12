@@ -1390,6 +1390,23 @@ const coursesList = [
     folderId: 'folderId',
     gSheetId: 'gSheetId',
   },
+  { // 10 single
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'Marie Trainee',
+    trainers: [trainer._id],
+    operationsRepresentative: operationsRepresentative._id,
+    contact: operationsRepresentative._id,
+    expectedBillsCount: 1,
+    trainees: [traineeList[2]._id],
+    companies: [authCompany._id],
+    createdAt: '2018-01-07T22:00:00.000Z',
+    certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+  },
 ];
 
 const courseFundingOrganisation = {
@@ -1740,6 +1757,15 @@ const courseSlotList = [
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
   },
+  { // 13
+    _id: new ObjectId(),
+    course: coursesList[10]._id,
+    step: stepList[1]._id,
+    startDate: '2021-01-17T14:00:00.000Z',
+    endDate: '2021-01-17T18:00:00.000Z',
+    meetingLink: 'https://meet.google.com',
+    createdAt: '2020-12-12T10:00:01.000Z',
+  },
 ];
 
 const attendanceList = [
@@ -1751,6 +1777,7 @@ const attendanceList = [
   { trainee: traineeList[1]._id, courseSlot: courseSlotList[3]._id, company: otherCompany._id, status: PRESENT },
   { trainee: traineeList[3]._id, courseSlot: courseSlotList[2]._id, company: authCompany._id, status: PRESENT },
   { trainee: traineeList[3]._id, courseSlot: courseSlotList[3]._id, company: authCompany._id, status: PRESENT },
+  { trainee: traineeList[2]._id, courseSlot: courseSlotList[13]._id, company: authCompany._id, status: PRESENT },
 ];
 
 const attendanceSheetList = [
@@ -2279,6 +2306,14 @@ const courseHistoriesList = [
     createdBy: operationsRepresentative._id,
     trainee: traineeList[1]._id,
     company: otherCompany._id,
+  },
+  {
+    _id: new ObjectId(),
+    course: coursesList[10]._id,
+    action: TRAINEE_ADDITION,
+    createdBy: operationsRepresentative._id,
+    trainee: traineeList[2]._id,
+    company: authCompany._id,
   },
 ];
 

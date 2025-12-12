@@ -273,8 +273,8 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
   };
 };
 
-exports.exportCourseHistory = async (startDate, endDate, credentials) => {
-  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials);
+exports.exportCourseHistory = async (startDate, endDate, credentials, courseTypes) => {
+  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials, courseTypes);
 
   const filteredCourses = courses
     .filter(course => !course.slots.length || course.slots.some(slot => isSlotInInterval(slot, startDate, endDate)));
@@ -327,12 +327,13 @@ const getAddress = (slot) => {
   return '';
 };
 
-exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
+exports.exportCourseSlotHistory = async (startDate, endDate, credentials, courseTypes) => {
   const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
       select: 'type trainees misc subProgram companies',
+      match: { type: { $in: courseTypes } },
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'trainees', select: 'identity' },
@@ -346,10 +347,11 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       },
     })
     .lean();
+  const filteredCourseSlots = courseSlots.filter(s => s.course);
 
   const rows = [];
 
-  for (const slot of courseSlots) {
+  for (const slot of filteredCourseSlots) {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
     const presences = [];
     const absences = [];
@@ -369,7 +371,8 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       Formation: CourseHelper.composeCourseName(slot.course),
       Étape: get(slot, 'step.name') || '',
       Type: STEP_TYPES[get(slot, 'step.type')] || '',
-      Apprenant: slot.course.type === SINGLE ? UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL') : '',
+      ...(courseTypes.includes(SINGLE) &&
+        { Apprenant: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL') }),
       'Date de création': CompaniDate(slot.createdAt).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de début': CompaniDate(slot.startDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de fin': CompaniDate(slot.endDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',

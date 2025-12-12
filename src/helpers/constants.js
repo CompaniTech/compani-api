@@ -607,7 +607,9 @@ module.exports = {
   TRANSPORT: 'transport',
   WORKING_EVENT: 'working_event', // intervention or internal hours
   COURSE: 'course',
+  SINGLE_COURSE: 'single_course',
   COURSE_SLOT: 'course_slot',
+  SINGLE_COURSE_SLOT: 'single_course_slot',
   COURSE_BILL: 'course_bill',
   COURSE_PAYMENT: 'course_payment',
   get HISTORY_EXPORT_TYPES() {
@@ -619,7 +621,9 @@ module.exports = {
       this.PAY,
       this.CONTRACT,
       this.COURSE,
+      this.SINGLE_COURSE,
       this.COURSE_SLOT,
+      this.SINGLE_COURSE_SLOT,
       this.TRANSPORT,
       this.END_OF_COURSE,
       this.COURSE_BILL,
@@ -650,7 +654,9 @@ module.exports = {
   get VENDOR_EXPORT_TYPES() {
     return [
       this.COURSE,
+      this.SINGLE_COURSE,
       this.COURSE_SLOT,
+      this.SINGLE_COURSE_SLOT,
       this.END_OF_COURSE,
       this.COURSE_BILL,
       this.COURSE_PAYMENT,
