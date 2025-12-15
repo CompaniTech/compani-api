@@ -865,7 +865,7 @@ describe('COURSES ROUTES - GET /courses', () => {
     expect(response.statusCode).toBe(200);
     const { traineeCourses, tutorCourses: coursesAsTutor } = response.result.data.courses;
     const coursesAsTraineeCount = traineeCourses.onGoing.length + traineeCourses.achieved.length;
-    expect(coursesAsTraineeCount).toBe(2);
+    expect(coursesAsTraineeCount).toBe(3);
     expect(coursesAsTutor.length).toBe(1);
   });
 
@@ -1123,16 +1123,22 @@ describe('COURSES ROUTES - GET /courses', () => {
             subPrograms: [expect.any(Object), expect.any(Object), expect.any(Object)],
           },
         }),
-        slots: [{
-          startDate: CompaniDate('2020-03-04T08:00:00.000Z').toDate(),
-          endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
-          course: coursesList[2]._id,
-          step: {
+        slots: [
+          {
+            startDate: CompaniDate('2020-03-04T08:00:00.000Z').toDate(),
+            endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
+            course: coursesList[2]._id,
+            step: { _id: expect.any(Object), type: ON_SITE },
             _id: expect.any(Object),
-            type: 'on_site',
           },
-          _id: expect.any(Object),
-        }],
+          {
+            startDate: CompaniDate('2025-03-04T08:00:00.000Z').toDate(),
+            endDate: CompaniDate('2025-03-04T10:00:00.000Z').toDate(),
+            course: coursesList[2]._id,
+            step: { _id: expect.any(Object), type: ON_SITE },
+            _id: expect.any(Object),
+          },
+        ],
         slotsToPlan: [
           { _id: expect.any(Object), course: course._id },
           { _id: expect.any(Object), course: course._id },
@@ -2399,7 +2405,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should return 403 if maxTrainees smaller than registered trainees', async () => {
-      const payload = { maxTrainees: 4 };
+      const payload = { maxTrainees: 2 };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[2]._id}`,
@@ -3278,7 +3284,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33987654321',
+          recipient: '+33798640728',
           sender: 'Compani',
           content: payload.content,
           tag: COURSE_SMS,
@@ -3303,7 +3309,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33987654321',
+          recipient: '+33798640728',
           sender: 'Compani',
           content: 'test',
           tag: COURSE_SMS,
@@ -3847,7 +3853,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
         method: 'PUT',
         url: `/courses/${intraCourseIdWithTrainee}/trainees`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { trainee: traineeFromAuthCompanyWithFormationExpoToken._id },
+        payload: { trainee: auxiliary._id },
       });
 
       expect(response.statusCode).toBe(409);
@@ -4669,6 +4675,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
 
       authToken = await getToken('training_organisation_manager');
     });
@@ -4677,6 +4684,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 if type is CUSTOM', async () => {
@@ -4721,18 +4729,33 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
 
       expect(response.statusCode).toBe(404);
     });
+
+    it('should return 403 if some attendances are empty', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${ALL_WORD}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('NO_ROLE', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getTokenByCredentials(noRole.local);
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
+    });
+
+    afterEach(() => {
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 if user is course trainee', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[5]._id}/completion-certificates?format=${PDF}`,
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${PDF}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4742,7 +4765,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return a 403 if user is not course trainee', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${PDF}`,
+        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${PDF}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4752,7 +4775,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return 403 if user is accessing certificate with an other format than PDF', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[5]._id}/completion-certificates?format=${ALL_WORD}`,
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4770,6 +4793,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
 
       authToken = await getToken('trainer');
     });
@@ -4778,6 +4802,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 as user is the course trainer', async () => {
