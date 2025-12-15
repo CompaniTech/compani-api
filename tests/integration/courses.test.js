@@ -1128,20 +1128,14 @@ describe('COURSES ROUTES - GET /courses', () => {
             startDate: CompaniDate('2020-03-04T08:00:00.000Z').toDate(),
             endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
             course: coursesList[2]._id,
-            step: {
-              _id: expect.any(Object),
-              type: 'on_site',
-            },
+            step: { _id: expect.any(Object), type: ON_SITE },
             _id: expect.any(Object),
           },
           {
             startDate: CompaniDate('2025-03-04T08:00:00.000Z').toDate(),
             endDate: CompaniDate('2025-03-04T10:00:00.000Z').toDate(),
             course: coursesList[2]._id,
-            step: {
-              _id: expect.any(Object),
-              type: 'on_site',
-            },
+            step: { _id: expect.any(Object), type: ON_SITE },
             _id: expect.any(Object),
           },
         ],
