@@ -80,8 +80,26 @@ const CourseSchema = mongoose.Schema({
     id: false,
   },
   interruptedAt: { type: Date },
-  folderId: { type: String, required() { return this.type === SINGLE; } },
-  gSheetId: { type: String, required() { return this.type === SINGLE; } },
+  folderId: {
+    type: String,
+    validate: {
+      validator(value) {
+        if (value != null) return this.type === SINGLE;
+        return true;
+      },
+      message: 'folderId is only allowed when type is SINGLE',
+    },
+  },
+  gSheetId: {
+    type: String,
+    validate: {
+      validator(value) {
+        if (value != null) return this.type === SINGLE;
+        return true;
+      },
+      message: 'gSheetId is only allowed when type is SINGLE',
+    },
+  },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {
