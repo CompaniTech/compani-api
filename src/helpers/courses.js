@@ -1171,18 +1171,23 @@ exports.formatCourseForDocuments = (course, type) => {
   const theoreticalDuration = course.subProgram.steps
     .reduce((acc, step) => acc.add(step.theoreticalDuration), CompaniDuration());
 
-  const onSiteDuration = UtilsHelper.getTotalDuration(course.slots, false);
+  const durationsByTrainee = {};
+  for (const trainee of course.trainees) {
+    const slots = course.slots.filter(slot => !slot.trainees ||
+      UtilsHelper.doesArrayIncludeId(slot.trainees, trainee._id));
+    const onSiteDuration = UtilsHelper.getTotalDuration(slots, false);
 
-  const totalDuration = CompaniDuration(onSiteDuration)
-    .add(CompaniDuration(theoreticalDuration))
-    .format(SHORT_DURATION_H_MM);
+    const totalDuration = CompaniDuration(onSiteDuration)
+      .add(CompaniDuration(theoreticalDuration))
+      .format(SHORT_DURATION_H_MM);
+    durationsByTrainee[trainee._id] = {
+      onSite: CompaniDuration(onSiteDuration).format(SHORT_DURATION_H_MM),
+      total: totalDuration,
+    };
+  }
 
   return {
-    duration: {
-      onSite: CompaniDuration(onSiteDuration).format(SHORT_DURATION_H_MM),
-      eLearning: CompaniDuration(theoreticalDuration).format(SHORT_DURATION_H_MM),
-      total: totalDuration,
-    },
+    duration: { ...durationsByTrainee, eLearning: theoreticalDuration.format(SHORT_DURATION_H_MM) },
     learningGoals: get(course, 'subProgram.program.learningGoals') || '',
     subProgramId: course.subProgram._id,
     programName: get(course, 'subProgram.program.name').toUpperCase() || '',
@@ -1266,6 +1271,7 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
     .format(SHORT_DURATION_H_MM);
 
   return {
+    _id: trainee._id,
     identity,
     attendanceDuration: CompaniDuration(attendanceDuration).format(SHORT_DURATION_H_MM),
     ...(companiesNames && { companyName: companiesNames[trainee.company] }),
@@ -1276,6 +1282,7 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
 
 const generateCompletionCertificatePdf = async (courseData, courseAttendances, trainee) => {
   const {
+    _id,
     identity,
     attendanceDuration,
     eLearningDuration,
@@ -1284,7 +1291,7 @@ const generateCompletionCertificatePdf = async (courseData, courseAttendances, t
 
   const pdf = await CompletionCertificate.getPdf({
     ...omit(courseData, ['companyNamesById', 'steps']),
-    trainee: { identity, attendanceDuration, eLearningDuration, totalDuration },
+    trainee: { _id, identity, attendanceDuration, eLearningDuration, totalDuration },
     date: CompaniDate().format(DD_MM_YYYY),
   });
 
@@ -1293,6 +1300,7 @@ const generateCompletionCertificatePdf = async (courseData, courseAttendances, t
 
 const generateOfficialCompletionCertificatePdf = async (courseData, courseAttendances, trainee) => {
   const {
+    _id,
     identity,
     attendanceDuration,
     companyName,
@@ -1309,7 +1317,7 @@ const generateOfficialCompletionCertificatePdf = async (courseData, courseAttend
   const pdf = await CompletionCertificate.getPdf(
     {
       ...omit(courseData, ['companyNamesById', 'steps']),
-      trainee: { identity, attendanceDuration, companyName, eLearningDuration, totalDuration },
+      trainee: { _id, identity, attendanceDuration, companyName, eLearningDuration, totalDuration },
       date: CompaniDate().format(DD_MM_YYYY),
     },
     OFFICIAL
@@ -1320,6 +1328,7 @@ const generateOfficialCompletionCertificatePdf = async (courseData, courseAttend
 
 const generateCompletionCertificateWord = async (course, attendances, trainee, templatePath, type) => {
   const {
+    _id,
     identity,
     attendanceDuration,
     companyName,
@@ -1331,7 +1340,14 @@ const generateCompletionCertificateWord = async (course, attendances, trainee, t
     templatePath,
     {
       ...omit(course, ['companyNamesById', 'steps']),
-      trainee: { identity, attendanceDuration, ...(companyName && { companyName }), eLearningDuration, totalDuration },
+      trainee: {
+        _id,
+        identity,
+        attendanceDuration,
+        ...(companyName && { companyName }),
+        eLearningDuration,
+        totalDuration,
+      },
       date: CompaniDate().format(DD_MM_YYYY),
     }
   );
@@ -1423,7 +1439,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
   const courseTrainees = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
 
   const course = await Course.findOne({ _id: courseId })
-    .populate({ path: 'slots', select: 'startDate endDate' })
+    .populate({ path: 'slots', select: 'startDate endDate trainees' })
     .populate({ path: 'trainees', select: 'identity' })
     .populate(
       {
