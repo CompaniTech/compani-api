@@ -2959,7 +2959,7 @@ describe('getCourse', () => {
         company: { _id: authCompanyId },
       };
       const stepId = new ObjectId();
-      const lastSlotId = new ObjectId();
+      const slotIds = [new ObjectId(), new ObjectId()];
       const course = {
         _id: new ObjectId(),
         type: INTRA,
@@ -2985,14 +2985,14 @@ describe('getCourse', () => {
         },
         slots: [
           {
-            _id: new ObjectId(),
+            _id: slotIds[0],
             startDate: '2020-11-03T09:00:00.000Z',
             endDate: '2020-11-03T12:00:00.000Z',
             step: stepId,
-            attendances: [{ _id: new ObjectId() }],
+            attendances: [{ _id: loggedUser._id }],
           },
           {
-            _id: lastSlotId,
+            _id: slotIds[1],
             startDate: '2020-11-04T09:00:00.000Z',
             endDate: '2020-11-04T16:01:00.000Z',
             step: stepId,
@@ -3008,7 +3008,7 @@ describe('getCourse', () => {
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
-      attendanceCountDocuments.returns(0);
+      attendanceCountDocuments.returns(1);
 
       formatCourseWithProgress.returns({
         ...omit(course, 'trainees'),
@@ -3109,10 +3109,12 @@ describe('getCourse', () => {
       );
 
       sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, loggedUser._id, false, true);
-      sinon.assert.calledOnceWithExactly(attendanceCountDocuments, { courseSlot: lastSlotId });
+      sinon.assert.calledOnceWithExactly(
+        attendanceCountDocuments,
+        { trainee: loggedUser._id, courseSlot: { $in: slotIds } });
     });
 
-    it('should return blended course for trainee (attendance on last slot)', async () => {
+    it('should return blended course for trainee (attendance on last concerned slot)', async () => {
       const authCompanyId = new ObjectId();
       const loggedUser = {
         _id: new ObjectId(),
@@ -3120,7 +3122,7 @@ describe('getCourse', () => {
         company: { _id: authCompanyId },
       };
       const stepId = new ObjectId();
-      const lastSlotId = new ObjectId();
+      const slotIds = [new ObjectId(), new ObjectId(), new ObjectId()];
       const course = {
         _id: new ObjectId(),
         type: INTRA,
@@ -3146,18 +3148,25 @@ describe('getCourse', () => {
         },
         slots: [
           {
-            _id: new ObjectId(),
+            _id: slotIds[0],
             startDate: '2020-11-03T09:00:00.000Z',
             endDate: '2020-11-03T12:00:00.000Z',
             step: stepId,
-            attendances: [{ _id: new ObjectId() }],
+            attendances: [{ _id: loggedUser._id }],
           },
           {
-            _id: lastSlotId,
+            _id: slotIds[1],
             startDate: '2020-11-04T09:00:00.000Z',
             endDate: '2020-11-04T16:01:00.000Z',
             step: stepId,
-            attendances: [{ _id: new ObjectId() }],
+            attendances: [{ _id: loggedUser._id }],
+          },
+          {
+            _id: slotIds[2],
+            startDate: '2022-11-04T09:00:00.000Z',
+            endDate: '2022-11-04T16:01:00.000Z',
+            step: stepId,
+            trainees: [new ObjectId()],
           },
         ],
         slotsToPlan: [],
@@ -3168,7 +3177,7 @@ describe('getCourse', () => {
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
-      attendanceCountDocuments.returns(1);
+      attendanceCountDocuments.returns(2);
 
       formatCourseWithProgress.returns({
         ...omit(course, 'trainees'),
@@ -3269,7 +3278,10 @@ describe('getCourse', () => {
       );
 
       sinon.assert.calledOnceWithExactly(formatCourseWithProgress, course, loggedUser._id, false, true);
-      sinon.assert.calledOnceWithExactly(attendanceCountDocuments, { courseSlot: lastSlotId });
+      sinon.assert.calledOnceWithExactly(
+        attendanceCountDocuments,
+        { trainee: loggedUser._id, courseSlot: { $in: [slotIds[0], slotIds[1]] } }
+      );
     });
 
     it('should return course as trainer', async () => {

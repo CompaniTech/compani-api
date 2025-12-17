@@ -839,9 +839,14 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
   }
 
   if (!course.subProgram.isStrictlyELearning) {
-    const lastSlot = course.slots[course.slots.length - 1];
-    const areLastSlotAttendancesValidated = !!(!isTutor && !get(course, 'slotsToPlan.length') && lastSlot &&
-      await Attendance.countDocuments({ courseSlot: lastSlot._id }));
+    let areLastSlotAttendancesValidated = false;
+    if (!isTutor && !get(course, 'slotsToPlan.length')) {
+      const slots = course.slots
+        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, credentials._id));
+      const attendances = await Attendance
+        .countDocuments({ trainee: credentials._id, courseSlot: { $in: slots.map(s => s._id) } });
+      areLastSlotAttendancesValidated = attendances === slots.length;
+    }
 
     return {
       ...exports.formatCourseWithProgress(course, !isTutor ? credentials._id : null, false, true),

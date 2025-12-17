@@ -206,9 +206,13 @@ exports.authorizeGetCompletionCertificates = async (req) => {
     .populate({ path: 'course', select: 'trainees' })
     .lean();
 
-  const courseTrainees = courseSlots[0].course.trainees;
+  const courseTrainees = format === PDF ? [auth.credentials._id] : courseSlots[0].course.trainees;
 
   const expectedAttendances = courseSlots.reduce((acc, slot) => {
+    if (format === PDF) {
+      if (!slot.trainees || UtilsHelper.doesArrayIncludeId(slot.trainees, auth.credentials._id)) return acc + 1;
+      return acc;
+    }
     if (slot.trainees) return acc + slot.trainees.length;
     return acc + courseTrainees.length;
   }, 0);
