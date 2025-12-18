@@ -75,6 +75,7 @@ const {
   COURSE_RESTART,
   COURSE_INTERRUPTION,
   MONTHLY,
+  GLOBAL,
   PRESENT,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
@@ -2942,7 +2943,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -2963,6 +2964,7 @@ describe('getCourse', () => {
       const course = {
         _id: new ObjectId(),
         type: INTRA,
+        certificateGenerationMode: GLOBAL,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3103,7 +3105,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3126,6 +3128,7 @@ describe('getCourse', () => {
       const course = {
         _id: new ObjectId(),
         type: INTRA,
+        certificateGenerationMode: GLOBAL,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3272,7 +3275,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3296,6 +3299,7 @@ describe('getCourse', () => {
       const course = {
         _id: courseId,
         type: INTRA,
+        certificateGenerationMode: GLOBAL,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3411,7 +3415,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3432,6 +3436,7 @@ describe('getCourse', () => {
       const course = {
         _id: courseId,
         type: INTRA,
+        certificateGenerationMode: MONTHLY,
         subProgram: {
           isStrictlyELearning: false,
           steps: [{
@@ -3549,7 +3554,7 @@ describe('getCourse', () => {
               ],
             }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );

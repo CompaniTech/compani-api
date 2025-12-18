@@ -808,7 +808,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
-    .select('_id misc format type trainees gSheetId')
+    .select('_id misc format type trainees gSheetId certificateGenerationMode')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
@@ -840,7 +840,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
 
   if (!course.subProgram.isStrictlyELearning) {
     let areLastSlotAttendancesValidated = false;
-    if (!isTutor && !get(course, 'slotsToPlan.length')) {
+    if (!isTutor && !get(course, 'slotsToPlan.length') && course.certificateGenerationMode !== MONTHLY) {
       const slots = course.slots
         .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, credentials._id));
       const attendances = await Attendance
