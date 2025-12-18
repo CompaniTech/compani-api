@@ -79,6 +79,7 @@ const {
   COURSE_INTERRUPTION,
   MONTHLY,
   PRESENT,
+  MISSING,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -1045,10 +1046,15 @@ exports.addTrainee = async (courseId, payload, credentials) => {
 exports.registerToELearningCourse = async (courseId, credentials) =>
   Course.updateOne({ _id: courseId }, { $addToSet: { trainees: credentials._id } });
 
-exports.removeCourseTrainee = async (courseId, traineeId, user) => Promise.all([
-  CourseHistoriesHelper.createHistoryOnTraineeDeletion({ course: courseId, traineeId }, user._id),
-  Course.updateOne({ _id: courseId }, { $pull: { trainees: traineeId, certifiedTrainees: traineeId } }),
-]);
+exports.removeCourseTrainee = async (courseId, traineeId, user) => {
+  const slots = await CourseSlot.find({ course: courseId }, { _id: 1 }).lean();
+
+  return Promise.all([
+    CourseHistoriesHelper.createHistoryOnTraineeDeletion({ course: courseId, traineeId }, user._id),
+    Course.updateOne({ _id: courseId }, { $pull: { trainees: traineeId, certifiedTrainees: traineeId } }),
+    Attendance.deleteMany({ courseSlot: { $in: slots.map(slot => slot._id) }, trainee: traineeId, status: MISSING }),
+  ]);
+};
 
 exports.formatIntraCourseSlotsForPdf = slot => ({
   _id: slot._id,

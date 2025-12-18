@@ -76,6 +76,7 @@ const {
   COURSE_INTERRUPTION,
   MONTHLY,
   PRESENT,
+  MISSING,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseRepository = require('../../../src/repositories/CourseRepository');
@@ -5049,27 +5050,45 @@ describe('registerToELearningCourse', () => {
 describe('removeCourseTrainee', () => {
   let updateOne;
   let createHistoryOnTraineeDeletion;
+  let slotsFind;
+  let attendanceDeleteMany;
   beforeEach(() => {
     updateOne = sinon.stub(Course, 'updateOne');
     createHistoryOnTraineeDeletion = sinon.stub(CourseHistoriesHelper, 'createHistoryOnTraineeDeletion');
+    slotsFind = sinon.stub(CourseSlot, 'find');
+    attendanceDeleteMany = sinon.stub(Attendance, 'deleteMany');
   });
   afterEach(() => {
     updateOne.restore();
     createHistoryOnTraineeDeletion.restore();
+    slotsFind.restore();
+    attendanceDeleteMany.restore();
   });
 
   it('should remove a course trainee', async () => {
     const course = new ObjectId();
     const traineeId = new ObjectId();
     const removedBy = { _id: new ObjectId() };
+    const slotsIds = [new ObjectId(), new ObjectId()];
+    const slots = [{ _id: slotsIds[0] }, { _id: slotsIds[1] }];
+
+    slotsFind.returns(SinonMongoose.stubChainedQueries(slots, ['lean']));
 
     await CourseHelper.removeCourseTrainee(course, traineeId, removedBy);
+    SinonMongoose.calledOnceWithExactly(
+      slotsFind,
+      [{ query: 'find', args: [{ course }, { _id: 1 }] }, { query: 'lean' }]
+    );
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: course },
       { $pull: { trainees: traineeId, certifiedTrainees: traineeId } }
     );
     sinon.assert.calledOnceWithExactly(createHistoryOnTraineeDeletion, { course, traineeId }, removedBy._id);
+    sinon.assert.calledOnceWithExactly(
+      attendanceDeleteMany,
+      { courseSlot: { $in: slotsIds }, trainee: traineeId, status: MISSING }
+    );
   });
 });
 
