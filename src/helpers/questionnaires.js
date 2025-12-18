@@ -21,12 +21,15 @@ const {
   REVIEW,
 } = require('./constants');
 const DatesUtilsHelper = require('./dates/utils');
+const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
 
 exports.create = async payload => Questionnaire.create(payload);
 
-const getCourseTimeline = (course) => {
-  const sortedSlots = [...course.slots].sort(DatesUtilsHelper.ascendingSortBy('startDate'));
+const getCourseTimeline = (course, userId) => {
+  const sortedSlots = course.slots
+    .filter(s => !userId || !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, userId))
+    .sort(DatesUtilsHelper.ascendingSortBy('startDate'));
 
   if (!sortedSlots.length) return BEFORE_MIDDLE_COURSE_END_DATE;
 
@@ -47,7 +50,7 @@ const getCourseTimeline = (course) => {
   return BETWEEN_MID_AND_END_COURSE;
 };
 
-exports.getCourseInfos = async (courseId) => {
+exports.getCourseInfos = async (courseId, userId) => {
   const course = await Course.findOne({ _id: courseId })
     .populate({ path: 'slots', select: '-__v -createdAt -updatedAt' })
     .populate({ path: 'slotsToPlan', select: '_id' })
@@ -56,7 +59,7 @@ exports.getCourseInfos = async (courseId) => {
 
   return course.format === STRICTLY_E_LEARNING
     ? { isStrictlyELearning: true }
-    : { programId: course.subProgram.program._id, courseTimeline: getCourseTimeline(course) };
+    : { programId: course.subProgram.program._id, courseTimeline: getCourseTimeline(course, userId) };
 };
 
 exports.list = async (credentials, query = {}) => {
@@ -122,7 +125,7 @@ const findQuestionnaires = (questionnaireConditions, historiesConditions) => {
 };
 
 exports.getUserQuestionnaires = async (courseId, credentials) => {
-  const { isStrictlyELearning, courseTimeline, programId } = await exports.getCourseInfos(courseId);
+  const { isStrictlyELearning, courseTimeline, programId } = await exports.getCourseInfos(courseId, credentials._id);
 
   if (isStrictlyELearning) return [];
 

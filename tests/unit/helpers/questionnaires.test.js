@@ -991,7 +991,10 @@ describe('getUserQuestionnaires', () => {
 
     const course = {
       _id: courseId,
-      slots: [{ startDate: '2021-04-23T09:00:00.000Z', endDate: '2021-04-23T11:00:00.000Z' }],
+      slots: [
+        { startDate: '2021-04-23T09:00:00.000Z', endDate: '2021-04-23T11:00:00.000Z' },
+        { startDate: '2021-04-24T09:00:00.000Z', endDate: '2021-04-24T11:00:00.000Z', trainees: [new ObjectId()] },
+      ],
       slotsToPlan: [],
       subProgram: { program: { _id: programId } },
     };
