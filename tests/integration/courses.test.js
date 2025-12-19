@@ -4772,6 +4772,17 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if some attendances are empty', async () => {
+      UtilsMock.mockCurrentDate('2025-12-24T15:00:00.000Z');
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${PDF}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
     it('should return 403 if user is accessing certificate with an other format than PDF', async () => {
       const response = await app.inject({
         method: 'GET',

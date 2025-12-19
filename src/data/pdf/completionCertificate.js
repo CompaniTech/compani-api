@@ -30,6 +30,7 @@ const getHeader = (thumb, compani) => [
 exports.getCustomPdfContent = async (data) => {
   const [thumb, compani, lighted, emoji, signature] = await getImages();
   const { trainee, programName, duration, startDate, endDate, learningGoals, date } = data;
+  const traineeDuration = duration[trainee._id] || {};
   const isLargeProgramName = programName.length > 80;
   const hasELearningStep = duration.eLearning !== '0h';
 
@@ -63,7 +64,7 @@ exports.getCustomPdfContent = async (data) => {
     {
       text: [
         { text: 'Durée', decoration: 'underline' },
-        ` : ${duration.total} de formation ${hasELearningStep ? '' : 'en présentiel '}du `,
+        ` : ${traineeDuration.total} de formation ${hasELearningStep ? '' : 'en présentiel '}du `,
         { text: `${startDate} au ${endDate}`, color: COPPER_500 },
       ],
     },
@@ -89,7 +90,7 @@ exports.getCustomPdfContent = async (data) => {
                 'et ',
                 { text: `${trainee.eLearningDuration} en e-learning) `, bold: true },
                 'sur les ',
-                { text: `${duration.total} prévues.`, bold: true },
+                { text: `${traineeDuration.total} prévues.`, bold: true },
               ],
             }]
             : [{
@@ -98,7 +99,7 @@ exports.getCustomPdfContent = async (data) => {
                 ' a été présent(e) à ',
                 { text: trainee.attendanceDuration, bold: true },
                 ' de formation en présentiel sur les ',
-                { text: `${duration.total} prévues.`, bold: true },
+                { text: `${traineeDuration.total} prévues.`, bold: true },
               ],
             }]]),
           [{ text: 'Objectifs pédagogiques :', style: 'subTitle' }],
@@ -186,6 +187,7 @@ exports.getOfficialPdfContent = async (data) => {
     isVAEISubProgram = false,
     certificateGenerationModeIsMonthly = false,
   } = data;
+  const traineeDuration = duration[trainee._id] || {};
   const isLargeProgramName = programName.length > 60;
   const hasELearningStep = duration.eLearning !== '0h';
 
@@ -266,13 +268,13 @@ exports.getOfficialPdfContent = async (data) => {
             ...(!certificateGenerationModeIsMonthly && hasELearningStep
               ? [{
                 text: `${trainee.totalDuration} en formation (dont ${trainee.attendanceDuration} en présentiel et `
-                + `${trainee.eLearningDuration} en e-learning) sur ${duration.total} prévues. `,
+                + `${trainee.eLearningDuration} en e-learning) sur ${traineeDuration.total} prévues. `,
                 italics: true,
               }]
               : []),
             ...(!certificateGenerationModeIsMonthly && !hasELearningStep
               ? [{
-                text: `${trainee.attendanceDuration} en formation présentielle sur ${duration.total} prévues. `,
+                text: `${trainee.attendanceDuration} en formation présentielle sur ${traineeDuration.total} prévues. `,
                 italics: true,
               }]
               : []),
