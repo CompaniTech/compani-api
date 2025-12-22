@@ -14,6 +14,7 @@ const {
   COPPER_600,
   COPPER_500,
   RESEND,
+  DAY,
 } = require('./constants');
 const translate = require('./translate');
 const Course = require('../models/Course');
@@ -22,6 +23,7 @@ const CourseBill = require('../models/CourseBill');
 const UtilsHelper = require('./utils');
 const CourseBillsHelper = require('./courseBills');
 const { CompaniDate } = require('./dates/companiDates');
+const PendingCourseBill = require('../models/PendingCourseBill');
 
 const { language } = translate;
 
@@ -146,51 +148,61 @@ const getSignature = billingUser => `<br>
       <p style="color: ${COPPER_500};">Cliquer ici pour accéder à l'espace Compani</p>
     </a>`;
 
-exports.sendBillEmail = async (courseBills, type, content, recipientEmails, credentials) => {
+exports.sendBillEmail = async (courseBills, type, content, recipientEmails, sendingDate, credentials) => {
   const billsPdf = [];
+  const hasToSendBillsNow = CompaniDate().startOf(DAY).isSame(CompaniDate(sendingDate).startOf(DAY));
+  if (hasToSendBillsNow) {
+    for (const bill of courseBills) {
+      const companies = [...new Set([...bill.companies.map(c => c._id), bill.payer._id])];
+      const { pdf } = await CourseBillsHelper.generateBillPdf(bill._id, companies, credentials);
 
-  for (const bill of courseBills) {
-    const companies = [...new Set([...bill.companies.map(c => c._id), bill.payer._id])];
-    const { pdf } = await CourseBillsHelper.generateBillPdf(bill._id, companies, credentials);
+      billsPdf.push({
+        filename: `${UtilsHelper.formatDownloadName(`${bill.payer.name} ${bill.number}`)}.pdf`,
+        content: pdf,
+        contentType: 'application/pdf',
+      });
+    }
 
-    billsPdf.push({
-      filename: `${UtilsHelper.formatDownloadName(`${bill.payer.name} ${bill.number}`)}.pdf`,
-      content: pdf,
-      contentType: 'application/pdf',
-    });
+    const billNumbers = courseBills.map(cb => cb.number).join(', ');
+    const senderEmail = process.env.BILLING_COMPANI_EMAIL;
+    const signatureBillingUserId = new ObjectId(process.env.BILLING_USER_ID);
+    const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 }).lean();
+
+    const getSubject = () => {
+      switch (type) {
+        case VAEI:
+          return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
+          + ` en VAE Inversée [${billNumbers}]`;
+        case RESEND:
+          return 'Compani : relance pour '
+          + `${UtilsHelper.formatQuantity('facture impayée', courseBills.length, 's', false)} [${billNumbers}]`;
+        default:
+          return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
+          + ` [${billNumbers}]`;
+      }
+    };
+
+    const mailOptions = {
+      from: `Compani <${senderEmail}>`,
+      to: recipientEmails,
+      subject: getSubject(),
+      bcc: senderEmail,
+      html: `<p>${content.replaceAll('\r\n', '<br>')}</p>
+      <p>${getSignature(billingUser)}</p>`,
+      attachments: billsPdf,
+    };
+
+    const courseBillIds = courseBills.map(cb => cb._id);
+    await CourseBill.updateMany({ _id: { $in: courseBillIds } }, { $push: { sendingDates: CompaniDate().toISO() } });
+
+    return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
   }
 
-  const billNumbers = courseBills.map(cb => cb.number).join(', ');
-  const senderEmail = process.env.BILLING_COMPANI_EMAIL;
-  const signatureBillingUserId = new ObjectId(process.env.BILLING_USER_ID);
-  const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 }).lean();
-
-  const getSubject = () => {
-    switch (type) {
-      case VAEI:
-        return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
-        + ` en VAE Inversée [${billNumbers}]`;
-      case RESEND:
-        return `Compani : relance pour ${UtilsHelper.formatQuantity('facture impayée', courseBills.length, 's', false)}`
-        + ` [${billNumbers}]`;
-      default:
-        return `Compani : avis de ${UtilsHelper.formatQuantity('facture', courseBills.length, 's', false)}`
-        + ` [${billNumbers}]`;
-    }
-  };
-
-  const mailOptions = {
-    from: `Compani <${senderEmail}>`,
-    to: recipientEmails,
-    subject: getSubject(),
-    bcc: senderEmail,
-    html: `<p>${content.replaceAll('\r\n', '<br>')}</p>
-    <p>${getSignature(billingUser)}</p>`,
-    attachments: billsPdf,
-  };
-
-  const courseBillIds = courseBills.map(cb => cb._id);
-  await CourseBill.updateMany({ _id: { $in: courseBillIds } }, { $push: { sendingDates: CompaniDate().toISO() } });
-
-  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+  return PendingCourseBill.create({
+    courseBills: courseBills.map(c => new ObjectId(c._id)),
+    sendingDate,
+    recipientEmails,
+    content,
+    type,
+  });
 };

@@ -17,9 +17,9 @@ const sendWelcome = async (req) => {
 
 const sendBillEmail = async (req) => {
   try {
-    const { type, content, recipientEmails } = req.payload;
+    const { type, content, recipientEmails, sendingDate } = req.payload;
     const mailInfo = await EmailHelper
-      .sendBillEmail(req.pre.courseBills, type, content, recipientEmails, req.auth.credentials);
+      .sendBillEmail(req.pre.courseBills, type, content, recipientEmails, sendingDate, req.auth.credentials);
 
     return { message: translate[language].emailSent, data: { mailInfo } };
   } catch (e) {
