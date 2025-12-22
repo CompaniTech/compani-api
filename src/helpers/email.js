@@ -20,10 +20,10 @@ const translate = require('./translate');
 const Course = require('../models/Course');
 const User = require('../models/User');
 const CourseBill = require('../models/CourseBill');
+const PendingCourseBill = require('../models/PendingCourseBill');
 const UtilsHelper = require('./utils');
 const CourseBillsHelper = require('./courseBills');
 const { CompaniDate } = require('./dates/companiDates');
-const PendingCourseBill = require('../models/PendingCourseBill');
 
 const { language } = translate;
 
