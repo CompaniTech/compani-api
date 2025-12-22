@@ -224,6 +224,7 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
     content: 'Bonjour,\r\n Ceci est un test.',
     type: START_COURSE,
     recipientEmails: ['test@compani.fr', 'test2@compani.fr'],
+    sendingDate: '2021-04-08T18:45:25.437Z',
   };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -353,6 +354,18 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       expect(response.statusCode).toBe(403);
       expect(response.result.message)
         .toEqual('Impossible: certaines factures ont été envoyées au moins une fois mais pas toutes.');
+      sinon.assert.notCalled(sendinBlueTransporter);
+    });
+
+    it('should return 403 if sendingDate is in the past', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { ...payload, sendingDate: '2021-04-06T13:45:25.437Z' },
+      });
+
+      expect(response.statusCode).toBe(403);
       sinon.assert.notCalled(sendinBlueTransporter);
     });
 
