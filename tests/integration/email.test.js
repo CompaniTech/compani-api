@@ -369,6 +369,25 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       sinon.assert.notCalled(sendinBlueTransporter);
     });
 
+    it('should return 403 if a bill has already been scheduled', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: {
+          ...payload,
+          type: RESEND,
+          bills: [courseBillsList[4]._id],
+          sendingDate: '2021-04-29T18:45:25.437Z',
+        },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message)
+        .toEqual('Impossible: l\'envoi de certaines factures sélectionnées est déjà planifié.');
+      sinon.assert.notCalled(sendinBlueTransporter);
+    });
+
     ['bills', 'content', 'type', 'recipientEmails'].forEach((missingParam) => {
       it(`should return a 400 error if ${missingParam} param is missing`, async () => {
         const response = await app.inject({

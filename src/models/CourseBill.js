@@ -74,6 +74,11 @@ CourseBillSchema.virtual(
   { ref: 'CourseCreditNote', localField: '_id', foreignField: 'courseBill', justOne: true }
 );
 
+CourseBillSchema.virtual(
+  'pendingCourseBill',
+  { ref: 'PendingCourseBill', localField: '_id', foreignField: 'courseBills' }
+);
+
 CourseBillSchema.pre('find', validateQuery);
 CourseBillSchema.pre('aggregate', validateAggregation);
 queryMiddlewareList.map(middleware => CourseBillSchema.pre(middleware, formatQuery));

@@ -23,6 +23,7 @@ const UtilsHelper = require('../../helpers/utils');
 const UserCompaniesHelper = require('../../helpers/userCompanies');
 const QuestionnaireHelper = require('../../helpers/questionnaires');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
+const PendingCourseBill = require('../../models/PendingCourseBill');
 
 const { language } = translate;
 
@@ -117,6 +118,11 @@ exports.authorizeSendEmailBillList = async (req) => {
 
   const sendingDateIsInPast = CompaniDate(sendingDate).startOf(DAY).isBefore(CompaniDate().startOf(DAY));
   if (sendingDateIsInPast) throw Boom.forbidden();
+
+  const pendingCourseBillExist = await PendingCourseBill.countDocuments({ courseBills: { $in: bills } });
+  if (pendingCourseBillExist) {
+    throw Boom.forbidden(translate[language].wrongCourseBills.someBillsHaveAlreadyBeenScheduled);
+  }
 
   return courseBills;
 };

@@ -173,6 +173,7 @@ module.exports = {
       someBillsHaveNotBeenSent: 'Forbidden: at least one courseBill has not been sent.',
       someCoursesAreVAEI: 'Forbidden: at least a courseBill is linked to VAEI course.',
       wrongType: 'Forbidden: type must corresponds with course timeline.',
+      someBillsHaveAlreadyBeenScheduled: 'Forbidden: sending of certain bills is already scheduled.',
     },
     /* Course billing items */
     courseBillingItemExists: 'Course billing item exists.',
@@ -467,6 +468,7 @@ module.exports = {
       someBillsAreAlreadyBeenSent: 'Impossible: certaines factures ont été envoyées au moins une fois mais pas toutes.',
       someBillsHaveNotBeenSent: 'Impossible: au moins une facture n\'a jamais été envoyée.',
       wrongType: 'Impossible: le type sélectionné doit correspondre à l\'avancement des formations.',
+      someBillsHaveAlreadyBeenScheduled: 'Impossible: l\'envoi de certaines factures sélectionnées est déjà planifié.',
     },
     /* Course billing items */
     courseBillingItemExists: 'Article de facturation existant.',

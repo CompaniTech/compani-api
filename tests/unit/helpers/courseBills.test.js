@@ -227,43 +227,40 @@ describe('list', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'misc slots slotsToPlan subProgram companies',
-            populate: [
-              { path: 'slots' },
-              { path: 'slotsToPlan' },
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-            ],
-          }],
-        },
-        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
-        {
-          query: 'populate',
-          args: [{
-            path: 'courseCreditNote',
-            options: {
-              isVendorUser: true,
-              requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+          args: [[
+            {
+              path: 'course',
+              select: 'misc slots slotsToPlan subProgram companies',
+              populate: [
+                { path: 'slots' },
+                { path: 'slotsToPlan' },
+                { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              ],
             },
-          }],
-        },
-        {
-          query: 'populate',
-          args: [{
-            path: 'coursePayments',
-            options: {
-              isVendorUser: true,
-              requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+            { path: 'companies', select: 'name' },
+            { path: 'payer.company', select: 'name' },
+            { path: 'payer.fundingOrganisation', select: 'name' },
+            {
+              path: 'courseCreditNote',
+              options: {
+                isVendorUser: true,
+                requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+              },
             },
-            populate: {
-              path: 'xmlSEPAFileInfos',
-              select: 'name',
-              options: { isVendorUser: true },
+            {
+              path: 'coursePayments',
+              options: {
+                isVendorUser: true,
+                requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+              },
+              populate: {
+                path: 'xmlSEPAFileInfos',
+                select: 'name',
+                options: { isVendorUser: true },
+              },
             },
-          }],
+            { path: 'pendingCourseBill', options: { isVendorUser: true } },
+          ]],
         },
         {
           query: 'setOptions',
@@ -360,38 +357,34 @@ describe('list', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'misc slots slotsToPlan subProgram companies',
-            populate: [
-              { path: 'slots' },
-              { path: 'slotsToPlan' },
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-            ],
-          }],
-        },
-        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
-        {
-          query: 'populate',
-          args: [{
-            path: 'courseCreditNote',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+          args: [[
+            {
+              path: 'course',
+              select: 'misc slots slotsToPlan subProgram companies',
+              populate: [
+                { path: 'slots' },
+                { path: 'slotsToPlan' },
+                { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              ],
             },
-          }],
-        },
-        {
-          query: 'populate',
-          args: [{
-            path: 'coursePayments',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+            { path: 'companies', select: 'name' },
+            { path: 'payer.company', select: 'name' },
+            { path: 'payer.fundingOrganisation', select: 'name' },
+            {
+              path: 'courseCreditNote',
+              options: {
+                isVendorUser: false,
+                requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+              },
             },
-          }],
+            {
+              path: 'coursePayments',
+              options: {
+                isVendorUser: false,
+                requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+              },
+            },
+          ]],
         },
         {
           query: 'setOptions',

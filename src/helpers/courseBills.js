@@ -73,27 +73,30 @@ const balance = async (company, credentials) => {
 
   const courseBills = await CourseBill
     .find({ $or: [{ companies: company }, { 'payer.company': company }], billedAt: { $exists: true, $type: 'date' } })
-    .populate({
-      path: 'course',
-      select: 'misc slots slotsToPlan subProgram companies',
-      populate: [
-        { path: 'slots' },
-        { path: 'slotsToPlan' },
-        { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-      ],
-    })
-    .populate({ path: 'companies', select: 'name' })
-    .populate({ path: 'payer.company', select: 'name' })
-    .populate({ path: 'payer.fundingOrganisation', select: 'name' })
-    .populate({
-      path: 'courseCreditNote',
-      options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
-    })
-    .populate({
-      path: 'coursePayments',
-      options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
-      ...isVendorUser && { populate: { path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser } } },
-    })
+    .populate([
+      {
+        path: 'course',
+        select: 'misc slots slotsToPlan subProgram companies',
+        populate: [
+          { path: 'slots' },
+          { path: 'slotsToPlan' },
+          { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+        ],
+      },
+      { path: 'companies', select: 'name' },
+      { path: 'payer.company', select: 'name' },
+      { path: 'payer.fundingOrganisation', select: 'name' },
+      {
+        path: 'courseCreditNote',
+        options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
+      },
+      {
+        path: 'coursePayments',
+        options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
+        ...isVendorUser && { populate: { path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser } } },
+      },
+      ...(isVendorUser ? [{ path: 'pendingCourseBill', options: { isVendorUser: true } }] : []),
+    ])
     .setOptions({ isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) })
     .lean();
 

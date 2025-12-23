@@ -587,7 +587,7 @@ describe('sendBillEmail', async () => {
     sinon.assert.notCalled(pendingCourseBillCreate);
   });
 
-  it('should program send bills by email (RESEND)', async () => {
+  it('should scheduled sending bills by email (RESEND)', async () => {
     const credentials = { _id: new ObjectId(), role: { vendor: { name: VENDOR_ADMIN } } };
     const courseBillIds = [new ObjectId(), new ObjectId()];
     const payer = { _id: new ObjectId(), name: 'Structure' };
