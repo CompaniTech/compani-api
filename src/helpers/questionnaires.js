@@ -50,7 +50,7 @@ const getCourseTimeline = (course, userId) => {
   return BETWEEN_MID_AND_END_COURSE;
 };
 
-exports.getCourseInfos = async (courseId, userId) => {
+exports.getCourseInfos = async (courseId, userId = null) => {
   const course = await Course.findOne({ _id: courseId })
     .populate({ path: 'slots', select: '-__v -createdAt -updatedAt' })
     .populate({ path: 'slotsToPlan', select: '_id' })
