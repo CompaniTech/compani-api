@@ -81,7 +81,7 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
     .populate({ path: 'contact', select: 'identity' })
     .populate({
       path: 'slots',
-      select: 'attendances startDate endDate',
+      select: 'attendances startDate endDate trainees',
       populate: { path: 'attendances', options: { isVendorUser } },
     })
     .populate({ path: 'slotsToPlan', select: '_id' })

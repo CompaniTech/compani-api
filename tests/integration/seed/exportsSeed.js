@@ -1694,6 +1694,7 @@ const courseSlotList = [
     createdAt: '2020-12-12T10:00:04.000Z',
     startDate: '2021-04-12T10:00:00.000Z',
     endDate: '2021-04-12T12:00:00.000Z',
+    trainees: [traineeList[0]._id, traineeList[2]._id],
   },
   { // 6
     _id: new ObjectId(),
