@@ -1333,7 +1333,6 @@ const generateOfficialCompletionCertificatePdf = async (courseData, courseAttend
 
 const generateCompletionCertificateWord = async (course, attendances, trainee, templatePath, type) => {
   const {
-    _id,
     identity,
     attendanceDuration,
     companyName,
@@ -1345,14 +1344,8 @@ const generateCompletionCertificateWord = async (course, attendances, trainee, t
     templatePath,
     {
       ...omit(course, ['companyNamesById', 'steps']),
-      trainee: {
-        _id,
-        identity,
-        attendanceDuration,
-        ...(companyName && { companyName }),
-        eLearningDuration,
-        totalDuration,
-      },
+      duration: { onSite: course.duration[trainee._id].onSite, total: course.duration[trainee._id].total },
+      trainee: { identity, attendanceDuration, ...(companyName && { companyName }), eLearningDuration, totalDuration },
       date: CompaniDate().format(DD_MM_YYYY),
     }
   );
