@@ -70,6 +70,7 @@ const {
   REMOTE,
   GENERATION,
   PRESENT,
+  MISSING,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1239,59 +1240,59 @@ const slots = [
     step: stepList[0]._id,
     trainees: [auxiliary._id],
   },
-  { // 13
+  { // 12
     _id: new ObjectId(),
     startDate: '2020-03-10T08:00:00.000Z',
     endDate: '2020-03-10T10:00:00.000Z',
     course: coursesList[13]._id,
     step: stepList[0]._id,
   },
-  { // 14
+  { // 13
     _id: new ObjectId(),
     course: coursesList[16]._id,
     step: stepList[0]._id,
   },
-  { // 15
+  { // 14
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[19]._id,
     step: stepList[0]._id,
   },
-  { // 16
+  { // 15
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[21]._id,
     step: stepList[0]._id,
   },
-  { // 17
+  { // 16
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[22]._id,
     step: stepList[0]._id,
   },
-  { // 18
+  { // 17
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[23]._id,
     step: stepList[0]._id,
   },
-  { // 19
+  { // 18
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[24]._id,
     step: stepList[0]._id,
   },
-  { // 20
+  { // 19
     _id: new ObjectId(),
     course: coursesList[12]._id,
     step: stepList[2]._id,
   },
-  { // 21
+  { // 20
     _id: new ObjectId(),
     startDate: '2025-03-04T08:00:00.000Z',
     endDate: '2025-03-04T10:00:00.000Z',
@@ -1363,6 +1364,13 @@ const attendanceList = [
     courseSlot: slots[10]._id,
     company: authCompany._id,
     status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: coach._id,
+    courseSlot: slots[20]._id,
+    company: authCompany._id,
+    status: MISSING,
   },
 ];
 
@@ -1477,4 +1485,5 @@ module.exports = {
   traineeFromThirdCompany,
   traineeWithoutCompany,
   ROFAndCoach,
+  slots,
 };

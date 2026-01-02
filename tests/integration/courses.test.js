@@ -6,6 +6,7 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const get = require('lodash/get');
 const app = require('../../server');
+const Attendance = require('../../src/models/Attendance');
 const Company = require('../../src/models/Company');
 const Course = require('../../src/models/Course');
 const CourseSlot = require('../../src/models/CourseSlot');
@@ -37,6 +38,7 @@ const {
   GLOBAL,
   MONTHLY,
   SINGLE,
+  MISSING,
 } = require('../../src/helpers/constants');
 const {
   populateDB,
@@ -54,6 +56,7 @@ const {
   traineeFromThirdCompany,
   fourthCompany,
   ROFAndCoach,
+  slots,
 } = require('./seed/coursesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const {
@@ -4241,6 +4244,13 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainees/{traineeId}', () => {
         action: TRAINEE_DELETION,
       });
       expect(courseHistory).toEqual(1);
+
+      const missingAttendance = await Attendance.countDocuments({
+        courseSlot: slots[20]._id,
+        trainee: traineeId,
+        status: MISSING,
+      });
+      expect(missingAttendance).toEqual(0);
     });
 
     it('should delete course trainee with certification', async () => {
