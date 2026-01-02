@@ -1,8 +1,5 @@
 const mongoose = require('mongoose');
-const {
-  validateQuery,
-  validateUpdateOne,
-} = require('./preHooks/validate');
+const { validateQuery, validateUpdateOne } = require('./preHooks/validate');
 const { VAEI, START_COURSE, END_COURSE, MIDDLE_COURSE, RESEND } = require('../helpers/constants');
 
 const PendingCourseBillSchema = mongoose.Schema({

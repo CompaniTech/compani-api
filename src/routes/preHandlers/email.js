@@ -3,6 +3,7 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const User = require('../../models/User');
 const CourseBill = require('../../models/CourseBill');
+const PendingCourseBill = require('../../models/PendingCourseBill');
 const translate = require('../../helpers/translate');
 const {
   TRAINER,
@@ -23,7 +24,6 @@ const UtilsHelper = require('../../helpers/utils');
 const UserCompaniesHelper = require('../../helpers/userCompanies');
 const QuestionnaireHelper = require('../../helpers/questionnaires');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
-const PendingCourseBill = require('../../models/PendingCourseBill');
 
 const { language } = translate;
 

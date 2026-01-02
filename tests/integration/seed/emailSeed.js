@@ -23,12 +23,12 @@ const SubProgram = require('../../../src/models/SubProgram');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const VendorCompany = require('../../../src/models/VendorCompany');
-const { otherCompany, authCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
-const { clientAdminRoleId, trainerRoleId, helperRoleId, coachRoleId } = require('../../seed/authRolesSeed');
-const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { trainer, vendorAdmin } = require('../../seed/authUsersSeed');
 const { auxiliary } = require('../../../src/models/schemaDefinitions/pay');
 const PendingCourseBill = require('../../../src/models/PendingCourseBill');
+const { otherCompany, authCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
+const { clientAdminRoleId, trainerRoleId, helperRoleId, coachRoleId } = require('../../seed/authRolesSeed');
+const { trainer, vendorAdmin } = require('../../seed/authUsersSeed');
+const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 
 const emailUser = {
   _id: new ObjectId(),
