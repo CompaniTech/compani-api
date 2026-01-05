@@ -209,8 +209,8 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
 };
 
 exports.completionSendingPendingBillsEmail = (day, emailSent, pendingCourseBillDeleted) => {
-  const content = `Script exécuté.
-    ${emailSent} email envoyés et ${pendingCourseBillDeleted} éléments supprimés de la collection PendingCourseBill.`;
+  const content = `Script exécuté. ${emailSent} email envoyés et ${pendingCourseBillDeleted} éléments`
+  + ' supprimés de la collection PendingCourseBill.';
   const mailOptions = {
     from: `Compani <${SENDER_MAIL}>`,
     to: process.env.TECH_EMAILS,

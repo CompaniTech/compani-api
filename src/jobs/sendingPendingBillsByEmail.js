@@ -16,6 +16,7 @@ const sendingPendingBillsByEmailJob = {
         .find({ sendingDate: TODAY })
         .setOptions({ isVendorUser: true })
         .lean();
+      const credentials = { role: { vendor: { name: VENDOR_ADMIN } } };
 
       for (const pendingCourseBill of pendingCourseBillList) {
         const { courseBills: courseBillIds, type, content, recipientEmails, sendingDate } = pendingCourseBill;
@@ -29,7 +30,6 @@ const sendingPendingBillsByEmailJob = {
           .populate({ path: 'companies', select: 'name' })
           .lean();
 
-        const credentials = { role: { vendor: { name: VENDOR_ADMIN } } };
         await EmailHelper.sendBillEmail(courseBills, type, content, recipientEmails, sendingDate, credentials);
         emailSent += 1;
 
