@@ -2,6 +2,7 @@ const { expect } = require('expect');
 const sinon = require('sinon');
 const app = require('../../server');
 const EmailHelper = require('../../src/helpers/email');
+const UtilsMock = require('../utilsMock');
 const { populateDB, courseList, userList } = require('./seed/scriptsSeed');
 const { getToken } = require('./helpers/authentication');
 
@@ -66,6 +67,61 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
         const response = await app.inject({
           method: 'GET',
           url: '/scripts/completioncertificates-generation?month=02-2025',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', () => {
+  let authToken;
+  let sendBillEmail;
+  let completionSendingPendingBillsEmail;
+
+  describe('VENDOR_ADMIN', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getToken('vendor_admin');
+      sendBillEmail = sinon.stub(EmailHelper, 'sendBillEmail');
+      completionSendingPendingBillsEmail = sinon.stub(EmailHelper, 'completionSendingPendingBillsEmail');
+      UtilsMock.mockCurrentDate('2023-01-08T09:00:00.000Z');
+    });
+
+    afterEach(() => {
+      sendBillEmail.restore();
+      completionSendingPendingBillsEmail.restore();
+      UtilsMock.unmockCurrentDate('');
+    });
+
+    it('should send email for pendingBills sending', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/scripts/sending-pendingcoursebills-by-email',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data)
+        .toEqual({ day: '2023-01-07T23:00:00.000Z', emailSent: 1, pendingCourseBillDeleted: 1 });
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'GET',
+          url: '/scripts/sending-pendingcoursebills-by-email',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
