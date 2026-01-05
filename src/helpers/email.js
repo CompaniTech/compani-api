@@ -15,6 +15,7 @@ const {
   COPPER_500,
   RESEND,
   DAY,
+  DD_MM_YYYY,
 } = require('./constants');
 const translate = require('./translate');
 const Course = require('../models/Course');
@@ -205,4 +206,17 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
     content,
     type,
   });
+};
+
+exports.completionSendingPendingBillsEmail = (day, emailSent, pendingCourseBillDeleted) => {
+  const content = `Script exécuté.
+    ${emailSent} email envoyés et ${pendingCourseBillDeleted} éléments supprimés de la collection PendingCourseBill.`;
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: process.env.TECH_EMAILS,
+    subject: `Script envoi des factures programmé au ${CompaniDate(day).format(DD_MM_YYYY)}`,
+    html: content,
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
