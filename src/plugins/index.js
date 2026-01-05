@@ -34,7 +34,7 @@ const plugins = [
             auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
           },
           onComplete: sendingPendingBillsByEmailJob.onComplete,
-          env: 'development',
+          env: 'production',
         },
       ],
     },

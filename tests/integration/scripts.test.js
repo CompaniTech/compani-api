@@ -96,7 +96,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', ()
       UtilsMock.unmockCurrentDate('');
     });
 
-    it('should send email for pendingBills sending', async () => {
+    it('should send pendingCourseBills by email', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/scripts/sending-pendingcoursebills-by-email',
