@@ -1,4 +1,5 @@
 const Boom = require('@hapi/boom');
+const groupBy = require('lodash/groupBy');
 const PendingCourseBill = require('../models/PendingCourseBill');
 const CourseBill = require('../models/CourseBill');
 const { CompaniDate } = require('../helpers/dates/companiDates');
@@ -8,9 +9,6 @@ const { DAY, VENDOR_ADMIN } = require('../helpers/constants');
 const sendingPendingBillsByEmailJob = {
   async method(server) {
     try {
-      let emailSent = 0;
-      let pendingCourseBillDeleted = 0;
-
       const TODAY = CompaniDate().startOf(DAY).toISO();
       const pendingCourseBillList = await PendingCourseBill
         .find({ sendingDate: TODAY })
@@ -18,6 +16,8 @@ const sendingPendingBillsByEmailJob = {
         .lean();
       const credentials = { role: { vendor: { name: VENDOR_ADMIN } } };
 
+      const emailPromises = [];
+      const pendingCourseBillPromises = [];
       for (const pendingCourseBill of pendingCourseBillList) {
         const { courseBills: courseBillIds, type, content, recipientEmails, sendingDate } = pendingCourseBill;
 
@@ -30,14 +30,24 @@ const sendingPendingBillsByEmailJob = {
           .populate({ path: 'companies', select: 'name' })
           .lean();
 
-        await EmailHelper.sendBillEmail(courseBills, type, content, recipientEmails, sendingDate, credentials);
-        emailSent += 1;
-
-        await PendingCourseBill.deleteOne({ _id: pendingCourseBill._id });
-        pendingCourseBillDeleted += 1;
+        emailPromises.push(
+          EmailHelper.sendBillEmail(courseBills, type, content, recipientEmails, sendingDate, credentials)
+        );
+        pendingCourseBillPromises.push(PendingCourseBill.deleteOne({ _id: pendingCourseBill._id }));
       }
 
-      return { day: TODAY, emailSent, pendingCourseBillDeleted };
+      const { fulfilled: emailFulfilled } = await Promise
+        .allSettled(emailPromises)
+        .then(docs => groupBy(docs, 'status'));
+
+      const { fulfilled: pendingCourseBillDeletedFulfilled } = await Promise
+        .allSettled(pendingCourseBillPromises)
+        .then(docs => groupBy(docs, 'status'));
+      return {
+        day: TODAY,
+        emailSent: emailFulfilled.length,
+        pendingCourseBillDeleted: pendingCourseBillDeletedFulfilled.length,
+      };
     } catch (e) {
       server.log(['cron', 'method'], e);
       return Boom.isBoom(e) ? e : Boom.badImplementation(e);
