@@ -74,6 +74,7 @@ const UserHolding = require('../../../src/models/UserHolding');
 const User = require('../../../src/models/User');
 const VendorCompany = require('../../../src/models/VendorCompany');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
+const PendingCourseBill = require('../../../src/models/PendingCourseBill');
 const { rolesList } = require('../../seed/authRolesSeed');
 const { userList } = require('../../seed/authUsersSeed');
 const {
@@ -143,6 +144,7 @@ const deleteNonAuthenticationSeeds = async () => {
     PaymentNumber.deleteMany(),
     Payment.deleteMany(),
     Pay.deleteMany(),
+    PendingCourseBill.deleteMany(),
     Program.deleteMany(),
     QuestionnaireHistory.deleteMany(),
     Questionnaire.deleteMany(),
