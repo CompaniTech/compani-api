@@ -80,8 +80,11 @@ const getAttendancesCountInfos = (course) => {
     .filter(attendance => UtilsHelper.doesArrayIncludeId(courseTraineeList, attendance.trainee))
     .length;
 
-  const upComingSlots = course.slots.filter(slot => CompaniDate().isBefore(slot.startDate)).length;
-  const attendancesToCome = upComingSlots * course.trainees.length;
+  const upComingSlots = course.slots.filter(slot => CompaniDate().isBefore(slot.startDate));
+  const attendancesToCome = upComingSlots.reduce((acc, slot) => {
+    if (slot.trainees) return acc + slot.trainees.length;
+    return acc + course.trainees.length;
+  }, 0);
 
   const unsubscribedTrainees = uniqBy(presences.map(a => a.trainee), trainee => trainee.toString())
     .filter(attendanceTrainee => !UtilsHelper.doesArrayIncludeId(courseTraineeList, attendanceTrainee))
@@ -89,14 +92,18 @@ const getAttendancesCountInfos = (course) => {
 
   const unsubscribedAttendances = presences.length - subscribedAttendances;
 
+  const expectedAttendancesCount = course.slots.reduce((acc, slot) => {
+    if (slot.trainees) return acc + slot.trainees.length;
+    return acc + course.trainees.length;
+  }, 0);
+
   return {
     subscribedAttendances,
     unsubscribedAttendances,
     absences: attendances.length - presences.length,
-    emptyAttendances: (course.slots.length * course.trainees.length) - (attendances.length - unsubscribedAttendances)
-      - attendancesToCome,
+    emptyAttendances: expectedAttendancesCount - (attendances.length - unsubscribedAttendances) - attendancesToCome,
     unsubscribedTrainees,
-    pastSlots: course.slots.length - upComingSlots,
+    pastSlots: course.slots.length - upComingSlots.length,
   };
 };
 
@@ -381,7 +388,13 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       'Nombre de présences': presencesCount,
       'Nombre d\'absences': absencesCount,
       'Nombre de présences non prévues': slot.attendances.length - presencesCount - absencesCount,
-      'Nombre d\'émargements non remplis': slot.course.trainees.length - presencesCount - absencesCount,
+      'Nombre d\'émargements non remplis': (slot.trainees ? slot.trainees.length : slot.course.trainees.length)
+        - presencesCount - absencesCount,
+      ...(!courseTypes.includes(SINGLE) && {
+        'Nombre d\'apprenants non concernés': slot.trainees
+          ? slot.course.trainees.filter(t => !UtilsHelper.doesArrayIncludeId(slot.trainees, t._id)).length
+          : 0,
+      }),
     });
   }
 

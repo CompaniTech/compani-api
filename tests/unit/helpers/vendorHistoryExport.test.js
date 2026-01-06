@@ -99,6 +99,7 @@ describe('exportCourseHistory', () => {
       startDate: '2021-05-01T08:00:00.000Z',
       endDate: '2021-05-01T10:00:00.000Z',
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
+      trainees: [traineeList[0]._id, traineeList[1]._id],
     },
     { // 1
       _id: new ObjectId(),
@@ -531,7 +532,7 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
+            select: 'attendances startDate endDate trainees',
             populate: {
               path: 'attendances',
               options: {
@@ -687,7 +688,7 @@ describe('exportCourseHistory', () => {
         1,
         3,
         1,
-        2,
+        1,
         0,
         0,
         '1,00',
@@ -930,7 +931,7 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
+            select: 'attendances startDate endDate trainees',
             populate: {
               path: 'attendances',
               options: {
@@ -1196,7 +1197,7 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
+            select: 'attendances startDate endDate trainees',
             populate: {
               path: 'attendances',
               options: {
@@ -1343,6 +1344,7 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[0],
       address: slotAddress,
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
+      trainees: [traineeList[0]._id, traineeList[1]._id],
     },
     { // 1
       _id: new ObjectId(),
@@ -1450,6 +1452,7 @@ describe('exportCourseSlotHistory', () => {
         'Nombre d\'absences',
         'Nombre de présences non prévues',
         'Nombre d\'émargements non remplis',
+        'Nombre d\'apprenants non concernés',
       ],
       [
         courseSlotList[0]._id,
@@ -1464,6 +1467,7 @@ describe('exportCourseSlotHistory', () => {
         '24 Avenue Daumesnil 75012 Paris',
         1,
         1,
+        0,
         0,
         1,
       ],
@@ -1482,6 +1486,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         0,
         1,
+        0,
       ],
       [
         courseSlotList[2]._id,
@@ -1498,6 +1503,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         1,
         1,
+        0,
       ],
       [
         courseSlotList[3]._id,
@@ -1514,6 +1520,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         1,
         1,
+        0,
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
