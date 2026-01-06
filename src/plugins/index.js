@@ -1,6 +1,7 @@
 const { CompaniDate } = require('../helpers/dates/companiDates');
 const { MM_YYYY } = require('../helpers/constants');
 const { completionCertificateCreationJob } = require('../jobs/completionCertificateCreation');
+const { sendingPendingBillsByEmailJob } = require('../jobs/sendingPendingBillsByEmail');
 const good = require('./good');
 const hapiAuthJwt2 = require('./hapiAuthJwt2');
 const cron = require('./cron');
@@ -22,6 +23,17 @@ const plugins = [
             auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
           },
           onComplete: completionCertificateCreationJob.onComplete,
+          env: 'production',
+        },
+        {
+          name: 'sendingPendingBillsByEmail',
+          time: '0 0 9 * * *',
+          request: {
+            method: 'GET',
+            url: '/scripts/sending-pendingcoursebills-by-email',
+            auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
+          },
+          onComplete: sendingPendingBillsByEmailJob.onComplete,
           env: 'production',
         },
       ],

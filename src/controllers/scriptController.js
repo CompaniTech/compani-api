@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const { completionCertificateCreationJob } = require('../jobs/completionCertificateCreation');
+const { sendingPendingBillsByEmailJob } = require('../jobs/sendingPendingBillsByEmail');
 
 const completionCertificateCreation = async (req) => {
   try {
@@ -16,4 +17,15 @@ const completionCertificateCreation = async (req) => {
   }
 };
 
-module.exports = { completionCertificateCreation };
+const sendingPendingBillsByEmail = async (req) => {
+  try {
+    const { day, emailSent, pendingCourseBillDeleted } = await sendingPendingBillsByEmailJob.method(req);
+
+    return { data: { day, emailSent, pendingCourseBillDeleted } };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { completionCertificateCreation, sendingPendingBillsByEmail };

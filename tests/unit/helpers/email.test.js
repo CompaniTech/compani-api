@@ -636,3 +636,45 @@ describe('sendBillEmail', async () => {
       });
   });
 });
+
+describe('completionSendingPendingBillsEmail', async () => {
+  let sendMail;
+  let sendinBlueTransporter;
+
+  beforeEach(() => {
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
+    sendMail = sinon.stub();
+    process.env.TECH_EMAILS = 'tech@compani.fr';
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+    process.env.TECH_EMAILS = '';
+  });
+
+  it('should send an email to TECH_EMAILS after script has been executed', async () => {
+    const day = '2026-01-05T23:00:00.000Z';
+    const emailSent = 2;
+    const pendingCourseBillDeleted = 2;
+
+    const content = 'Script exécuté. 2 email envoyés et 2 éléments supprimés de la collection PendingCourseBill.';
+    const sentObj = { msg: content };
+
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+
+    const result = await EmailHelper.completionSendingPendingBillsEmail(day, emailSent, pendingCourseBillDeleted);
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: 'tech@compani.fr',
+        subject: 'Script envoi des factures programmé au 06/01/2026',
+        html: content,
+      }
+    );
+  });
+});
