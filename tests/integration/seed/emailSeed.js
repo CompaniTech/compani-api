@@ -10,6 +10,7 @@ const {
   MONTHLY,
   TRAINEE,
   BLENDED,
+  START_COURSE,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const Course = require('../../../src/models/Course');
@@ -22,11 +23,12 @@ const SubProgram = require('../../../src/models/SubProgram');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const VendorCompany = require('../../../src/models/VendorCompany');
+const { auxiliary } = require('../../../src/models/schemaDefinitions/pay');
+const PendingCourseBill = require('../../../src/models/PendingCourseBill');
 const { otherCompany, authCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
 const { clientAdminRoleId, trainerRoleId, helperRoleId, coachRoleId } = require('../../seed/authRolesSeed');
-const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainer, vendorAdmin } = require('../../seed/authUsersSeed');
-const { auxiliary } = require('../../../src/models/schemaDefinitions/pay');
+const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 
 const emailUser = {
   _id: new ObjectId(),
@@ -150,7 +152,7 @@ const coursesList = [
     contact: vendorAdmin._id,
     trainees: [auxiliary._id],
     companies: [authCompany._id],
-    expectedBillsCount: 2,
+    expectedBillsCount: 3,
     maxTrainees: 2,
     certificateGenerationMode: GLOBAL,
   },
@@ -168,6 +170,8 @@ const coursesList = [
     expectedBillsCount: 21,
     maxTrainees: 1,
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
 ];
 
@@ -210,9 +214,27 @@ const courseBillsList = [
     payer: { company: authCompany._id },
     sendingDates: ['2022-04-10T00:00:00.000Z'],
   },
+  { // 4
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    companies: [authCompany._id],
+    mainFee: { price: 1200, count: 1, description: 'Lorem ipsum', countUnit: GROUP },
+    payer: { company: authCompany._id },
+    billedAt: '2021-04-01T18:45:25.437Z',
+    number: 'FACT-00005',
+    sendingDates: ['2021-04-08T18:45:25.437Z'],
+  },
 ];
 
-const courseBillNumber = { _id: new ObjectId(), seq: 4 };
+const pendingCourseBillsList = [{
+  courseBills: [courseBillsList[4]._id],
+  sendingDate: '2021-04-24T13:45:25.437Z',
+  recipientEmails: ['test@compani.fr'],
+  content: 'Bonjour, ceci est un test',
+  type: START_COURSE,
+}];
+
+const courseBillNumber = { _id: new ObjectId(), seq: 5 };
 
 const slotAddress = {
   street: '24 Avenue Daumesnil',
@@ -268,6 +290,7 @@ const populateDB = async () => {
     CourseBill.create(courseBillsList),
     CourseBillsNumber.create(courseBillNumber),
     CourseSlot.create(courseSlotList),
+    PendingCourseBill.create(pendingCourseBillsList),
     Program.create(programsList),
     Step.create(stepList),
     SubProgram.create(subProgramList),

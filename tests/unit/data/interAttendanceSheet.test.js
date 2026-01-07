@@ -180,6 +180,7 @@ describe('getPdfContent', () => {
       'src/data/pdf/tmp/trainee_signature.png',
     ];
     const slotIds = [new ObjectId(), new ObjectId()];
+    const traineeIds = [new ObjectId(), new ObjectId()];
     const course = {
       name: 'Formation Test',
       slots: [
@@ -190,6 +191,7 @@ describe('getPdfContent', () => {
           startHour: '10:00',
           endHour: '13:00',
           duration: '3h',
+          trainees: [traineeIds[0]],
         },
         {
           _id: slotIds[1],
@@ -207,8 +209,8 @@ describe('getPdfContent', () => {
     };
     const data = {
       trainees: [
-        { traineeName: 'Alain TÉRIEUR', registrationCompany: 'Alenvi Home SAS', course },
-        { traineeName: 'Alex TÉRIEUR', registrationCompany: 'APEF Rouen', course },
+        { _id: traineeIds[0], traineeName: 'Alain TÉRIEUR', registrationCompany: 'Alenvi Home SAS', course },
+        { _id: traineeIds[1], traineeName: 'Alex TÉRIEUR', registrationCompany: 'APEF Rouen', course },
       ],
       signedSlots: [
         {
@@ -223,30 +225,30 @@ describe('getPdfContent', () => {
         },
       ],
     };
-    const table = {
-      body: [
-        [
-          { text: 'Créneaux', style: 'header' },
-          { text: 'Durée', style: 'header' },
-          { text: 'Signature stagiaire', style: 'header' },
-          { text: 'Signature de l\'intervenant·e', style: 'header' },
-        ],
-        [
-          { stack: [{ text: '16/09/2021' }, { text: '24 Avenue Daumesnil 75012 Paris', fontSize: 8 }] },
-          { stack: [{ text: '3h' }, { text: '10:00 - 13:00', fontSize: 8 }] },
-          { image: signaturePaths[1], width: 64, alignment: 'center' },
-          { image: signaturePaths[0], width: 64, alignment: 'center' },
-        ],
-        [
-          { stack: [{ text: '16/09/2021' }, { text: '24 Avenue Daumesnil 75012 Paris', fontSize: 8 }] },
-          { stack: [{ text: '4h' }, { text: '14:00 - 18:00', fontSize: 8 }] },
-          { image: signaturePaths[1], width: 64, alignment: 'center' },
-          { image: signaturePaths[0], width: 64, alignment: 'center' },
-        ],
+    const tableSlots = [
+      [
+        { stack: [{ text: '16/09/2021' }, { text: '24 Avenue Daumesnil 75012 Paris', fontSize: 8 }] },
+        { stack: [{ text: '3h' }, { text: '10:00 - 13:00', fontSize: 8 }] },
+        { image: signaturePaths[1], width: 64, alignment: 'center' },
+        { image: signaturePaths[0], width: 64, alignment: 'center' },
       ],
-      widths: ['auto', 'auto', '*', '*'],
-      dontBreakRows: true,
-    };
+      [
+        { stack: [{ text: '16/09/2021' }, { text: '24 Avenue Daumesnil 75012 Paris', fontSize: 8 }] },
+        { stack: [{ text: '4h' }, { text: '14:00 - 18:00', fontSize: 8 }] },
+        { image: signaturePaths[1], width: 64, alignment: 'center' },
+        { image: signaturePaths[0], width: 64, alignment: 'center' },
+      ],
+    ];
+    const tableHeader = [
+      { text: 'Créneaux', style: 'header' },
+      { text: 'Durée', style: 'header' },
+      { text: 'Signature stagiaire', style: 'header' },
+      { text: 'Signature de l\'intervenant·e', style: 'header' },
+    ];
+    const tables = [
+      { body: [tableHeader, ...tableSlots], widths: ['auto', 'auto', '*', '*'], dontBreakRows: true },
+      { body: [tableHeader, tableSlots[1]], widths: ['auto', 'auto', '*', '*'], dontBreakRows: true },
+    ];
     const pdf = {
       content: [
         {
@@ -276,7 +278,7 @@ describe('getPdfContent', () => {
           ],
           margin: [16, 0, 24, 24],
         },
-        { table, marginBottom: 8, pageBreak: 'after' },
+        { table: tables[0], marginBottom: 8, pageBreak: 'after' },
         {
           columns: [
             { image: paths[0], width: 64 },
@@ -304,7 +306,7 @@ describe('getPdfContent', () => {
           ],
           margin: [16, 0, 24, 24],
         },
-        { table, marginBottom: 8, pageBreak: 'none' },
+        { table: tables[1], marginBottom: 8, pageBreak: 'none' },
       ],
       defaultStyle: { font: 'SourceSans', fontSize: 10 },
       pageMargins: [40, 40, 40, 128],

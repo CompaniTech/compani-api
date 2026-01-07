@@ -37,30 +37,24 @@ function setAreActivitiesValid() {
   }
 }
 
-function update(next) {
+function update() {
   const { theoreticalDuration } = this.getUpdate().$set;
   if (theoreticalDuration) {
     this.getUpdate().$set.theoreticalDuration = CompaniDuration(theoreticalDuration).asSeconds();
   }
-
-  return next();
 }
 
-function formatTheoreticalDuration(doc, next) {
+function formatTheoreticalDuration(doc) {
   if (doc && doc.theoreticalDuration) {
     // eslint-disable-next-line no-param-reassign
     doc.theoreticalDuration = formatSecondsToISODuration(doc.theoreticalDuration);
   }
-
-  return next();
 }
 
-function formatTheoreticalDurationList(docs, next) {
+function formatTheoreticalDurationList(docs) {
   for (const doc of docs) {
-    formatTheoreticalDuration(doc, next);
+    formatTheoreticalDuration(doc);
   }
-
-  return next();
 }
 
 StepSchema.pre('updateOne', update);

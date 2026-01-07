@@ -1,4 +1,5 @@
 const sinon = require('sinon');
+const { ObjectId } = require('mongodb');
 const { expect } = require('expect');
 const FileHelper = require('../../../src/helpers/file');
 const PdfHelper = require('../../../src/helpers/pdf');
@@ -7,6 +8,7 @@ const { COPPER_50, COPPER_500, ORANGE_500, OFFICIAL } = require('../../../src/he
 
 describe('getCustomPdfContent', () => {
   let downloadImages;
+  const traineeId = new ObjectId();
 
   beforeEach(() => {
     downloadImages = sinon.stub(FileHelper, 'downloadImages');
@@ -27,12 +29,18 @@ describe('getCustomPdfContent', () => {
     downloadImages.returns(paths);
 
     const data = {
-      duration: { onSite: '15h', eLearning: '3h', total: '18h' },
+      duration: { [traineeId]: { onSite: '15h', total: '18h' }, eLearning: '3h' },
       learningGoals: '- but',
       programName: 'Programme',
       startDate: '25/12/2021',
       endDate: '25/02/2022',
-      trainee: { identity: 'Jean ALAIN', attendanceDuration: '14h', eLearningDuration: '1h', totalDuration: '15h' },
+      trainee: {
+        _id: traineeId,
+        identity: 'Jean ALAIN',
+        attendanceDuration: '14h',
+        eLearningDuration: '1h',
+        totalDuration: '15h',
+      },
       date: '22/03/2022',
     };
 
@@ -182,12 +190,18 @@ describe('getCustomPdfContent', () => {
     downloadImages.returns(paths);
 
     const data = {
-      duration: { onSite: '15h', eLearning: '0h', total: '15h' },
+      duration: { [traineeId]: { onSite: '15h', total: '15h' }, eLearning: '0h' },
       learningGoals: '- but',
       programName: 'Programme',
       startDate: '25/12/2021',
       endDate: '25/02/2022',
-      trainee: { identity: 'Jean ALAIN', attendanceDuration: '14h', eLearningDuration: '0h', totalDuration: '14h' },
+      trainee: {
+        _id: traineeId,
+        identity: 'Jean ALAIN',
+        attendanceDuration: '14h',
+        eLearningDuration: '0h',
+        totalDuration: '14h',
+      },
       date: '22/03/2022',
     };
 
@@ -325,6 +339,7 @@ describe('getCustomPdfContent', () => {
 
 describe('getOfficialPdfContent', () => {
   let downloadImages;
+  const traineeId = new ObjectId();
 
   beforeEach(() => {
     downloadImages = sinon.stub(FileHelper, 'downloadImages');
@@ -334,11 +349,12 @@ describe('getOfficialPdfContent', () => {
 
   it('should format and return official pdf content with eLearning steps', async () => {
     const data = {
-      duration: { onSite: '15h', eLearning: '5h', total: '20h' },
+      duration: { [traineeId]: { onSite: '15h', total: '20h' }, eLearning: '5h' },
       programName: 'Programme',
       startDate: '25/12/2021',
       endDate: '25/02/2022',
       trainee: {
+        _id: traineeId,
         identity: 'Jean PHILIPPE',
         attendanceDuration: '14h',
         companyName: 'structure',
@@ -567,11 +583,12 @@ describe('getOfficialPdfContent', () => {
 
   it('should format and return official pdf content without eLearning steps', async () => {
     const data = {
-      duration: { onSite: '15h', eLearning: '0h', total: '15h' },
+      duration: { [traineeId]: { onSite: '15h', total: '15h' }, eLearning: '0h' },
       programName: 'Programme',
       startDate: '25/12/2021',
       endDate: '25/02/2022',
       trainee: {
+        _id: traineeId,
         identity: 'Jean PHILIPPE',
         attendanceDuration: '14h',
         companyName: 'structure',
@@ -796,11 +813,12 @@ describe('getOfficialPdfContent', () => {
 
   it('shoult format and return official pdf content for VAEI courses', async () => {
     const data = {
-      duration: { onSite: '3h', eLearning: '1h30', total: '4h30' },
+      duration: { [traineeId]: { onSite: '3h', total: '1h30' }, eLearning: '4h30' },
       programName: 'Programme',
       startDate: '01/02/2025',
       endDate: '28/02/2025',
       trainee: {
+        _id: traineeId,
         identity: 'Jean SAITRIEN',
         attendanceDuration: '4h30',
         companyName: 'structure',

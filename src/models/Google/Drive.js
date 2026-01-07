@@ -125,3 +125,22 @@ exports.createPermission = async (params) => {
     });
   });
 };
+
+exports.copy = async (params) => {
+  const auth = jwtClient();
+  await auth.authorize();
+
+  const request = {
+    auth,
+    fileId: params.fileId,
+    resource: { name: params.name, parents: params.parents },
+    fields: 'id, webViewLink',
+  };
+
+  return new Promise((resolve, reject) => {
+    drive.files.copy(request, (err, res) => {
+      if (err) reject(new Error(`Google Drive API ${err}`));
+      else resolve(res.data);
+    });
+  });
+};

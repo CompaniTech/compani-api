@@ -79,10 +79,12 @@ const {
   COURSE_INTERRUPTION,
   MONTHLY,
   PRESENT,
+  MISSING,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
 const EmailHelper = require('./email');
+const gDriveStorageHelper = require('./gDriveStorage');
 const NotificationHelper = require('./notifications');
 const UsersHelper = require('./users');
 const VendorCompaniesHelper = require('./vendorCompanies');
@@ -108,6 +110,24 @@ exports.createCourse = async (payload, credentials) => {
         { company: 1 }
       )
       .lean();
+
+    const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+    if (UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)) {
+      const trainee = await User
+        .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
+        .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
+        .lean();
+
+      const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
+        traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
+        traineeEmail: trainee.local.email,
+        traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
+        traineeCompany: trainee.company.name,
+      });
+
+      coursePayload.folderId = folderId;
+      coursePayload.gSheetId = gSheetId;
+    }
 
     coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
   }
@@ -337,7 +357,7 @@ const listForPedagogy = async (query, origin, credentials) => {
       })
       .populate({
         path: 'slots',
-        select: 'startDate endDate step',
+        select: 'startDate endDate step trainees',
         populate: [
           { path: 'step', select: 'type' },
           {
@@ -386,7 +406,7 @@ const listForPedagogy = async (query, origin, credentials) => {
   const formattedTraineeCourses = filteredTraineeCourses
     .map((course) => {
       let progress = 0;
-      const courseWithProgress = exports.formatCourseWithProgress(course, shouldComputePresence);
+      const courseWithProgress = exports.formatCourseWithProgress(course, traineeOrTutorId, shouldComputePresence);
 
       if (origin === MOBILE) {
         if (courseWithProgress.format === STRICTLY_E_LEARNING) progress = courseWithProgress.progress.eLearning || 0;
@@ -451,22 +471,29 @@ exports.getCourseProgress = (steps) => {
   };
 };
 
-exports.formatCourseWithProgress = (course, shouldComputePresence = false, shouldformatSlots = false) => {
+const isConcernedBySlot = (slot, userId) => !slot.trainees || !userId ||
+  UtilsHelper.doesArrayIncludeId(slot.trainees, userId);
+
+exports.formatCourseWithProgress = (course, userId, shouldComputePresence = false, shouldFormatSlots = false) => {
   const slotsGroupedByStep = groupBy(course.slots, 'step._id');
   const steps = course.subProgram.steps
     .map((step) => {
-      const slots = slotsGroupedByStep[step._id] || [];
+      const slots = (slotsGroupedByStep[step._id] || []).filter(s => isConcernedBySlot(s, userId)) || [];
 
       return { ...step, slots, progress: StepsHelper.getProgress(step, slots, shouldComputePresence) };
     });
 
   return {
     ...course,
-    ...shouldformatSlots && {
-      slots: [...new Set(
-        course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
-      )],
-    },
+    ...shouldFormatSlots
+      ? {
+        slots: [...new Set(
+          course.slots
+            .filter(slot => isConcernedBySlot(slot, userId))
+            .map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
+        )],
+      }
+      : { slots: course.slots.filter(slot => isConcernedBySlot(slot, userId)) },
     subProgram: { ...course.subProgram, steps },
     progress: exports.getCourseProgress(steps),
   };
@@ -514,7 +541,13 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             select: 'identity.firstname identity.lastname contact local.email picture.link '
               + 'firstMobileConnectionDate loginCode',
           },
-          { path: 'slots', select: 'step startDate endDate address meetingLink' },
+          {
+            path: 'slots',
+            select: 'step startDate endDate address meetingLink trainees',
+            ...get(credentials, 'role.vendor.name') && {
+              populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
+            },
+          },
           { path: 'slotsToPlan', select: '_id step' },
           {
             path: 'trainers',
@@ -539,9 +572,13 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
         ]
         : [{
           path: 'slots',
-          select: 'step startDate endDate',
+          select: 'step startDate endDate trainees',
           options: { sort: { startDate: 1 } },
-          populate: { path: 'missingAttendances', options: { isVendorUser: !!get(credentials, 'role.vendor.name') } },
+          populate: {
+            path: 'missingAttendances',
+            select: 'trainee',
+            options: { isVendorUser: !!get(credentials, 'role.vendor.name') },
+          },
         }]
       ),
     ])
@@ -758,7 +795,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     })
     .populate({
       path: 'slots',
-      select: 'startDate endDate step address meetingLink',
+      select: 'startDate endDate step address meetingLink trainees',
       populate: { path: 'step', select: 'type' },
       options: { sort: { startDate: 1 } },
     })
@@ -772,7 +809,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
-    .select('_id misc format type trainees')
+    .select('_id misc format type trainees gSheetId certificateGenerationMode')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
@@ -783,7 +820,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     const slotsGroupedByStep = groupBy(course.slots, 'step._id');
 
     return {
-      ...isTutor ? { course } : omit(course, 'trainees'),
+      ...omit(course, 'trainees'),
       slots: [...new Set(
         course.slots.map(slot => UtilsHelper.capitalize(CompaniDate(slot.startDate).format(DAY_D_MONTH_YEAR)))
       )],
@@ -803,12 +840,17 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
   }
 
   if (!course.subProgram.isStrictlyELearning) {
-    const lastSlot = course.slots[course.slots.length - 1];
-    const areLastSlotAttendancesValidated = !!(!isTutor && !get(course, 'slotsToPlan.length') && lastSlot &&
-      await Attendance.countDocuments({ courseSlot: lastSlot._id }));
+    let areLastSlotAttendancesValidated = false;
+    if (!isTutor && !get(course, 'slotsToPlan.length') && course.certificateGenerationMode !== MONTHLY) {
+      const slots = course.slots
+        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, credentials._id));
+      const attendances = await Attendance
+        .countDocuments({ trainee: credentials._id, courseSlot: { $in: slots.map(s => s._id) } });
+      areLastSlotAttendancesValidated = attendances === slots.length;
+    }
 
     return {
-      ...exports.formatCourseWithProgress(course, false, true),
+      ...exports.formatCourseWithProgress(course, !isTutor ? credentials._id : null, false, true),
       areLastSlotAttendancesValidated,
       ...course.attendanceSheets && {
         attendanceSheets: course.attendanceSheets.map(as => ({
@@ -819,7 +861,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     };
   }
 
-  return exports.formatCourseWithProgress(course, false, true);
+  return exports.formatCourseWithProgress(course, null, false, true);
 };
 
 exports.updateCourse = async (courseId, payload, credentials) => {
@@ -1009,15 +1051,21 @@ exports.addTrainee = async (courseId, payload, credentials) => {
 exports.registerToELearningCourse = async (courseId, credentials) =>
   Course.updateOne({ _id: courseId }, { $addToSet: { trainees: credentials._id } });
 
-exports.removeCourseTrainee = async (courseId, traineeId, user) => Promise.all([
-  CourseHistoriesHelper.createHistoryOnTraineeDeletion({ course: courseId, traineeId }, user._id),
-  Course.updateOne({ _id: courseId }, { $pull: { trainees: traineeId, certifiedTrainees: traineeId } }),
-]);
+exports.removeCourseTrainee = async (courseId, traineeId, user) => {
+  const slots = await CourseSlot.find({ course: courseId }, { _id: 1 }).lean();
+
+  return Promise.all([
+    CourseHistoriesHelper.createHistoryOnTraineeDeletion({ course: courseId, traineeId }, user._id),
+    Course.updateOne({ _id: courseId }, { $pull: { trainees: traineeId, certifiedTrainees: traineeId } }),
+    Attendance.deleteMany({ courseSlot: { $in: slots.map(slot => slot._id) }, trainee: traineeId, status: MISSING }),
+  ]);
+};
 
 exports.formatIntraCourseSlotsForPdf = slot => ({
   _id: slot._id,
   startHour: CompaniDate(slot.startDate).format(HHhMM),
   endHour: CompaniDate(slot.endDate).format(HHhMM),
+  ...slot.trainees && { trainees: slot.trainees },
 });
 
 exports.formatInterCourseSlotsForPdf = (slot) => {
@@ -1030,6 +1078,7 @@ exports.formatInterCourseSlotsForPdf = (slot) => {
     startHour: CompaniDate(slot.startDate).format(HH_MM),
     endHour: CompaniDate(slot.endDate).format(HH_MM),
     duration,
+    ...slot.trainees && { trainees: slot.trainees },
   };
 };
 
@@ -1097,6 +1146,7 @@ exports.formatInterCourseForPdf = async (course) => {
   return {
     trainees: course.trainees.length
       ? course.trainees.map(trainee => ({
+        _id: trainee._id,
         traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
         registrationCompany: companiesById[traineesCompany[trainee._id]],
         course: { ...courseData },
@@ -1109,7 +1159,7 @@ exports.generateAttendanceSheets = async (courseId) => {
   const course = await Course
     .findOne({ _id: courseId }, { misc: 1, type: 1 })
     .populate({ path: 'companies', select: 'name' })
-    .populate({ path: 'slots', select: 'startDate endDate address' })
+    .populate({ path: 'slots', select: 'startDate endDate address trainees' })
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
@@ -1132,18 +1182,23 @@ exports.formatCourseForDocuments = (course, type) => {
   const theoreticalDuration = course.subProgram.steps
     .reduce((acc, step) => acc.add(step.theoreticalDuration), CompaniDuration());
 
-  const onSiteDuration = UtilsHelper.getTotalDuration(course.slots, false);
+  const durationsByTrainee = {};
+  for (const trainee of course.trainees) {
+    const slots = course.slots.filter(slot => !slot.trainees ||
+      UtilsHelper.doesArrayIncludeId(slot.trainees, trainee._id));
+    const onSiteDuration = UtilsHelper.getTotalDuration(slots, false);
 
-  const totalDuration = CompaniDuration(onSiteDuration)
-    .add(CompaniDuration(theoreticalDuration))
-    .format(SHORT_DURATION_H_MM);
+    const totalDuration = CompaniDuration(onSiteDuration)
+      .add(CompaniDuration(theoreticalDuration))
+      .format(SHORT_DURATION_H_MM);
+    durationsByTrainee[trainee._id] = {
+      onSite: CompaniDuration(onSiteDuration).format(SHORT_DURATION_H_MM),
+      total: totalDuration,
+    };
+  }
 
   return {
-    duration: {
-      onSite: CompaniDuration(onSiteDuration).format(SHORT_DURATION_H_MM),
-      eLearning: CompaniDuration(theoreticalDuration).format(SHORT_DURATION_H_MM),
-      total: totalDuration,
-    },
+    duration: { ...durationsByTrainee, eLearning: theoreticalDuration.format(SHORT_DURATION_H_MM) },
     learningGoals: get(course, 'subProgram.program.learningGoals') || '',
     subProgramId: course.subProgram._id,
     programName: get(course, 'subProgram.program.name').toUpperCase() || '',
@@ -1227,6 +1282,7 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
     .format(SHORT_DURATION_H_MM);
 
   return {
+    _id: trainee._id,
     identity,
     attendanceDuration: CompaniDuration(attendanceDuration).format(SHORT_DURATION_H_MM),
     ...(companiesNames && { companyName: companiesNames[trainee.company] }),
@@ -1237,6 +1293,7 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
 
 const generateCompletionCertificatePdf = async (courseData, courseAttendances, trainee) => {
   const {
+    _id,
     identity,
     attendanceDuration,
     eLearningDuration,
@@ -1245,7 +1302,7 @@ const generateCompletionCertificatePdf = async (courseData, courseAttendances, t
 
   const pdf = await CompletionCertificate.getPdf({
     ...omit(courseData, ['companyNamesById', 'steps']),
-    trainee: { identity, attendanceDuration, eLearningDuration, totalDuration },
+    trainee: { _id, identity, attendanceDuration, eLearningDuration, totalDuration },
     date: CompaniDate().format(DD_MM_YYYY),
   });
 
@@ -1254,6 +1311,7 @@ const generateCompletionCertificatePdf = async (courseData, courseAttendances, t
 
 const generateOfficialCompletionCertificatePdf = async (courseData, courseAttendances, trainee) => {
   const {
+    _id,
     identity,
     attendanceDuration,
     companyName,
@@ -1270,7 +1328,7 @@ const generateOfficialCompletionCertificatePdf = async (courseData, courseAttend
   const pdf = await CompletionCertificate.getPdf(
     {
       ...omit(courseData, ['companyNamesById', 'steps']),
-      trainee: { identity, attendanceDuration, companyName, eLearningDuration, totalDuration },
+      trainee: { _id, identity, attendanceDuration, companyName, eLearningDuration, totalDuration },
       date: CompaniDate().format(DD_MM_YYYY),
     },
     OFFICIAL
@@ -1292,6 +1350,7 @@ const generateCompletionCertificateWord = async (course, attendances, trainee, t
     templatePath,
     {
       ...omit(course, ['companyNamesById', 'steps']),
+      duration: { onSite: course.duration[trainee._id].onSite, total: course.duration[trainee._id].total },
       trainee: { identity, attendanceDuration, ...(companyName && { companyName }), eLearningDuration, totalDuration },
       date: CompaniDate().format(DD_MM_YYYY),
     }
@@ -1384,7 +1443,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
   const courseTrainees = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
 
   const course = await Course.findOne({ _id: courseId })
-    .populate({ path: 'slots', select: 'startDate endDate' })
+    .populate({ path: 'slots', select: 'startDate endDate trainees' })
     .populate({ path: 'trainees', select: 'identity' })
     .populate(
       {

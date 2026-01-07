@@ -18,17 +18,15 @@ const VendorCompanySchema = mongoose.Schema({
   debitMandateTemplate: { type: driveResourceSchemaDefinition, _id: false, id: false },
 }, { timestamps: true });
 
-function cryptDatas(next) {
+function cryptDatas() {
   const { $set, $unset } = this.getUpdate() || { $set: {}, $unset: {} };
-  if (!Object.keys($set).length && !Object.keys($unset).length) return next();
+  if (!Object.keys($set).length && !Object.keys($unset).length) return;
 
   if ($set.iban) $set.iban = encrypt($set.iban);
 
   if ($set.bic) $set.bic = encrypt($set.bic);
 
   if ($set.ics) $set.ics = encrypt($set.ics);
-
-  return next();
 }
 
 async function decryptDatas(doc) {

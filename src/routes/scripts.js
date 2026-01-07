@@ -1,7 +1,7 @@
 'use strict';
 
 const Joi = require('joi');
-const { completionCertificateCreation } = require('../controllers/scriptController');
+const { completionCertificateCreation, sendingPendingBillsByEmail } = require('../controllers/scriptController');
 const { monthValidation } = require('./validations/utils');
 
 exports.plugin = {
@@ -17,6 +17,13 @@ exports.plugin = {
         },
       },
       handler: completionCertificateCreation,
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/sending-pendingcoursebills-by-email',
+      options: { auth: { scope: ['scripts:run'] } },
+      handler: sendingPendingBillsByEmail,
     });
   },
 };

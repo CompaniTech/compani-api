@@ -50,6 +50,7 @@ exports.plugin = {
             content: Joi.string().required(),
             type: Joi.string().valid(VAEI, START_COURSE, MIDDLE_COURSE, END_COURSE, RESEND).required(),
             recipientEmails: Joi.array().items(Joi.string().email()).min(1).required(),
+            sendingDate: Joi.date().required(),
           }),
         },
         pre: [{ method: authorizeSendEmailBillList, assign: 'courseBills' }],

@@ -3,6 +3,7 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const User = require('../../models/User');
 const CourseBill = require('../../models/CourseBill');
+const PendingCourseBill = require('../../models/PendingCourseBill');
 const translate = require('../../helpers/translate');
 const {
   TRAINER,
@@ -17,10 +18,12 @@ const {
   END_COURSE,
   MIDDLE_COURSE,
   RESEND,
+  DAY,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const UserCompaniesHelper = require('../../helpers/userCompanies');
 const QuestionnaireHelper = require('../../helpers/questionnaires');
+const { CompaniDate } = require('../../helpers/dates/companiDates');
 
 const { language } = translate;
 
@@ -54,7 +57,7 @@ const isVAEICourse = (course) => {
 };
 
 exports.authorizeSendEmailBillList = async (req) => {
-  const { bills, type } = req.payload;
+  const { bills, type, sendingDate } = req.payload;
 
   const courseBills = await CourseBill
     .find({ _id: { $in: bills } }, { companies: 1, payer: 1, course: 1, number: 1, sendingDates: 1 })
@@ -111,6 +114,14 @@ exports.authorizeSendEmailBillList = async (req) => {
   const sendingDatesNumber = [...new Set(courseBills.map(cb => get(cb, 'sendingDates', []).length))];
   if (sendingDatesNumber.includes(0) && sendingDatesNumber.length > 1) {
     throw Boom.forbidden(translate[language].wrongCourseBills.someBillsAreAlreadyBeenSent);
+  }
+
+  const sendingDateIsInPast = CompaniDate(sendingDate).startOf(DAY).isBefore(CompaniDate().startOf(DAY));
+  if (sendingDateIsInPast) throw Boom.forbidden();
+
+  const pendingCourseBillExist = await PendingCourseBill.countDocuments({ courseBills: { $in: bills } });
+  if (pendingCourseBillExist) {
+    throw Boom.forbidden(translate[language].wrongCourseBills.someBillsHaveAlreadyBeenScheduled);
   }
 
   return courseBills;

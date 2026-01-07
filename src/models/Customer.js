@@ -151,54 +151,44 @@ const isSubscriptionUsedInEvents = async (doc) => {
   }
 };
 
-function validateAddress(next) {
+function validateAddress() {
   const { $set, $unset } = this.getUpdate();
   const setPrimaryAddressToNull = has($set, 'contact.primaryAddress') &&
     (!get($set, 'contact.primaryAddress') || !get($set, 'contact.primaryAddress.fullAddress'));
   const unsetPrimaryAddress = has($unset, 'contact.primaryAddress') ||
     has($unset, 'contact.primaryAddress.fullAddress');
   if (setPrimaryAddressToNull || unsetPrimaryAddress) throw Boom.badRequest('PrimaryAddress is required');
-
-  next();
 }
 
-function populateReferent(doc, next) {
+function populateReferent(doc) {
   const referentEndDate = get(doc, 'referent.endDate');
   if (referentEndDate && moment().isAfter(referentEndDate)) {
     // eslint-disable-next-line no-param-reassign
     delete doc.referent;
-    return next();
+    return;
   }
 
   // eslint-disable-next-line no-param-reassign
   if (get(doc, 'referent.auxiliary')) doc.referent = doc.referent.auxiliary;
-
-  return next();
 }
 
-function populateReferents(docs, next) {
+function populateReferents(docs) {
   for (const doc of docs) {
     if (doc && doc.referent) {
       doc.referent = doc.referent.auxiliary;
     }
   }
-
-  return next();
 }
 
-function populateHelpersForList(docs, next) {
+function populateHelpersForList(docs) {
   for (const doc of docs) {
     if (doc && doc.helpers) doc.helpers = doc.helpers.map(h => h.user);
   }
-
-  return next();
 }
 
-function populateHelpers(doc, next) {
+function populateHelpers(doc) {
   // eslint-disable-next-line no-param-reassign
   if (doc && doc.helpers) doc.helpers = doc.helpers.map(h => h.user);
-
-  return next();
 }
 
 const setSerialNumber = (customer) => {
@@ -212,13 +202,11 @@ const setSerialNumber = (customer) => {
   return `${lastname}${firstname}${createdAt}${timestamp.slice(-8)}`;
 };
 
-async function validate(next) {
+async function validate() {
   try {
     if (this.isNew) this.serialNumber = setSerialNumber(this);
-
-    return next();
   } catch (e) {
-    return next(e);
+    console.error('error', e);
   }
 }
 

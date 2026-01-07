@@ -183,46 +183,42 @@ const setSerialNumber = (user) => {
   return `${lastname}${firstname}${createdAt}${timestamp.slice(-8)}`;
 };
 
-async function validate(next) {
+async function validate() {
   try {
     if (this.isNew) this.serialNumber = setSerialNumber(this);
-
-    return next();
   } catch (e) {
-    return next(e);
+    console.error('error', e);
   }
 }
 
-async function save(next) {
+async function save() {
   try {
     const user = this;
 
     if (user.isModified('local.email')) {
       const validation = validateEmail(user.local.email);
-      if (validation.error) return next(Boom.badRequest(validation.error));
+      if (validation.error) throw Boom.badRequest(validation.error);
     }
 
-    if (!get(user, 'local.password') || !user.isModified('local.password')) return next();
+    if (!get(user, 'local.password') || !user.isModified('local.password')) return;
 
     const salt = await bcrypt.genSalt(SALT_WORK_FACTOR);
     const hash = await bcrypt.hash(user.local.password, salt);
     user.local.password = hash;
-
-    return next();
   } catch (e) {
-    return next(e);
+    console.error('error', e);
   }
 }
 
-async function findOneAndUpdate(next) {
+async function findOneAndUpdate() {
   try {
     const password = this.getUpdate().$set['local.password'];
     const email = this.getUpdate().$set['local.email'];
-    if (!password && !email) return next();
+    if (!password && !email) return;
 
     if (email) {
       const validation = validateEmail(email);
-      if (validation.error) return next(Boom.badRequest(validation.error));
+      if (validation.error) throw Boom.badRequest(validation.error);
     }
 
     if (password) {
@@ -230,10 +226,8 @@ async function findOneAndUpdate(next) {
       const hash = await bcrypt.hash(password, salt);
       this.getUpdate().$set['local.password'] = hash;
     }
-
-    return next();
   } catch (e) {
-    return next(e);
+    console.error('error', e);
   }
 }
 
@@ -262,72 +256,58 @@ function setContractCreationMissingInfo() {
   }
 }
 
-function populateSector(doc, next) {
+function populateSector(doc) {
   // eslint-disable-next-line no-param-reassign
   if (get(doc, 'sector.sector._id')) doc.sector = doc.sector.sector._id;
-
-  return next();
 }
 
-function populateSectors(docs, next) {
+function populateSectors(docs) {
   for (const doc of docs) {
     if (doc && doc.sector) doc.sector = doc.sector.sector;
   }
-
-  return next();
 }
 
 const getCurrentUserCompany = (userCompanies = []) => userCompanies
   .find(uc => CompaniDate().isAfter(uc.startDate) && (!uc.endDate || CompaniDate().isBefore(uc.endDate)));
 
-function populateCompany(doc, next) {
-  if (!doc) next();
+function populateCompany(doc) {
+  if (!doc) return;
 
   const currentUserCompany = getCurrentUserCompany(get(doc, 'company'));
   // eslint-disable-next-line no-param-reassign
   doc.company = currentUserCompany ? currentUserCompany.company : null;
-
-  return next();
 }
 
-function populateCompanies(docs, next) {
+function populateCompanies(docs) {
   for (const doc of docs) {
     if (doc && doc.company) {
       const currentUserCompany = getCurrentUserCompany(doc.company);
       doc.company = currentUserCompany ? currentUserCompany.company : null;
     }
   }
-
-  return next();
 }
 
-function populateHolding(doc, next) {
-  if (!doc) next();
+function populateHolding(doc) {
+  if (!doc) return;
 
   // eslint-disable-next-line no-param-reassign
   doc.holding = get(doc, 'holding.length') ? doc.holding[0].holding : null;
-
-  return next();
 }
 
-function populateHoldings(docs, next) {
+function populateHoldings(docs) {
   for (const doc of docs) {
     if (doc && get(doc, 'holding.length')) {
       doc.holding = doc.holding[0].holding;
     }
   }
-
-  return next();
 }
 
-function populateCustomers(doc, next) {
+function populateCustomers(doc) {
   // eslint-disable-next-line no-param-reassign
   if (get(doc, 'customers.customer')) doc.customers = [doc.customers.customer];
-
-  return next();
 }
 
-async function formatPayload(doc, next) {
+async function formatPayload(doc) {
   const payload = doc.toObject();
 
   if (get(doc, 'refreshToken')) delete payload.refreshToken;
@@ -335,8 +315,6 @@ async function formatPayload(doc, next) {
   if (get(doc, 'local.password')) delete payload.local.password;
 
   doc.overwrite(payload);
-
-  return next();
 }
 
 UserSchema.virtual('customers', { ref: 'Helper', localField: '_id', foreignField: 'user', justOne: true });

@@ -59,6 +59,7 @@ exports.getPdfContent = async (data) => {
     }
 
     trainee.course.slots
+      .filter(slot => !slot.trainees || UtilsHelper.doesArrayIncludeId(slot.trainees, trainee._id))
       .forEach(slot => body.push(
         getSlotTableContent(slot, slotsSignatures.find(s => UtilsHelper.areObjectIdsEquals(slot._id, s.slotId)))
       ));

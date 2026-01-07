@@ -74,7 +74,7 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseSlotFindById,
       [
-        { query: 'findById', args: [payload.courseSlot, { course: 1 }] },
+        { query: 'findById', args: [payload.courseSlot, { course: 1, trainees: 1 }] },
         { query: 'populate', args: [{ path: 'course', select: 'type trainees companies' }] },
         { query: 'lean' },
       ]
@@ -110,7 +110,7 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseSlotFindById,
       [
-        { query: 'findById', args: [payload.courseSlot, { course: 1 }] },
+        { query: 'findById', args: [payload.courseSlot, { course: 1, trainees: 1 }] },
         { query: 'populate', args: [{ path: 'course', select: 'type trainees companies' }] },
         { query: 'lean' },
       ]
@@ -146,7 +146,7 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseSlotFindById,
       [
-        { query: 'findById', args: [payload.courseSlot, { course: 1 }] },
+        { query: 'findById', args: [payload.courseSlot, { course: 1, trainees: 1 }] },
         { query: 'populate', args: [{ path: 'course', select: 'type trainees companies' }] },
         { query: 'lean' },
       ]
@@ -199,7 +199,7 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseSlotFindById,
       [
-        { query: 'findById', args: [courseSlot, { course: 1 }] },
+        { query: 'findById', args: [courseSlot, { course: 1, trainees: 1 }] },
         { query: 'populate', args: [{ path: 'course', select: 'type trainees companies' }] },
         { query: 'lean' },
       ]
@@ -227,69 +227,69 @@ describe('create', () => {
     sinon.assert.notCalled(create);
   });
 
-  it('should add several attendances for every trainee without attendance on INTER course', async () => {
-    const courseSlot = new ObjectId();
-    const attendanceId = new ObjectId();
-    const companies = [new ObjectId(), new ObjectId(), new ObjectId()];
-    const courseTrainees = [new ObjectId(), new ObjectId(), new ObjectId()];
-    const payload = { courseSlot };
-    const course = {
-      _id: new ObjectId(),
-      type: INTER_B2B,
-      trainees: [courseTrainees[0], courseTrainees[1], courseTrainees[2]],
-      companies,
-    };
+  it('should add several attendances for every trainee without attendance on INTER course (based on concerned ones)',
+    async () => {
+      const courseSlot = new ObjectId();
+      const attendanceId = new ObjectId();
+      const companies = [new ObjectId(), new ObjectId(), new ObjectId()];
+      const courseTrainees = [new ObjectId(), new ObjectId(), new ObjectId()];
+      const payload = { courseSlot };
+      const course = {
+        _id: new ObjectId(),
+        type: INTER_B2B,
+        trainees: [courseTrainees[0], courseTrainees[1], courseTrainees[2]],
+        companies,
+      };
+      const slot = { course, trainees: [courseTrainees[0], courseTrainees[1]] };
 
-    courseSlotFindById.returns(SinonMongoose.stubChainedQueries({ course }));
-    find.returns(
-      SinonMongoose
-        .stubChainedQueries([{ _id: attendanceId, courseSlot, trainee: course.trainees[0] }], ['setOptions', 'lean'])
-    );
-    getCompanyAtCourseRegistrationList.returns([
-      { trainee: courseTrainees[0], company: companies[0] },
-      { trainee: courseTrainees[1], company: companies[1] },
-      { trainee: courseTrainees[2], company: companies[2] },
-    ]);
+      courseSlotFindById.returns(SinonMongoose.stubChainedQueries(slot));
+      find.returns(
+        SinonMongoose
+          .stubChainedQueries([{ _id: attendanceId, courseSlot, trainee: course.trainees[0] }], ['setOptions', 'lean'])
+      );
+      getCompanyAtCourseRegistrationList.returns([
+        { trainee: courseTrainees[0], company: companies[0] },
+        { trainee: courseTrainees[1], company: companies[1] },
+      ]);
 
-    await AttendanceHelper.create(payload, credentials);
+      await AttendanceHelper.create(payload, credentials);
 
-    SinonMongoose.calledOnceWithExactly(
-      courseSlotFindById,
-      [
-        { query: 'findById', args: [courseSlot, { course: 1 }] },
-        { query: 'populate', args: [{ path: 'course', select: 'type trainees companies' }] },
-        { query: 'lean' },
-      ]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      find,
-      [
-        { query: 'find', args: [{ courseSlot, trainee: { $in: courseTrainees } }] },
-        { query: 'setOptions', args: [{ isVendorUser }] },
-        { query: 'lean' },
-      ]
+      SinonMongoose.calledOnceWithExactly(
+        courseSlotFindById,
+        [
+          { query: 'findById', args: [courseSlot, { course: 1, trainees: 1 }] },
+          { query: 'populate', args: [{ path: 'course', select: 'type trainees companies' }] },
+          { query: 'lean' },
+        ]
+      );
+      SinonMongoose.calledOnceWithExactly(
+        find,
+        [
+          { query: 'find', args: [{ courseSlot, trainee: { $in: [courseTrainees[0], courseTrainees[1]] } }] },
+          { query: 'setOptions', args: [{ isVendorUser }] },
+          { query: 'lean' },
+        ]
 
-    );
-    sinon.assert.calledOnceWithExactly(
-      insertMany,
-      [
-        { courseSlot, trainee: course.trainees[1], company: companies[1] },
-        { courseSlot, trainee: course.trainees[2], company: companies[2] },
-      ]
-    );
-    sinon.assert.calledOnceWithExactly(
-      updateMany,
-      { _id: { $in: [attendanceId] } },
-      { $set: { status: PRESENT } }
-    );
-    sinon.assert.calledOnceWithExactly(
-      getCompanyAtCourseRegistrationList,
-      { key: COURSE, value: course._id },
-      { key: TRAINEE, value: course.trainees }
-    );
-    sinon.assert.notCalled(userFindOne);
-    sinon.assert.notCalled(create);
-  });
+      );
+      sinon.assert.calledOnceWithExactly(
+        insertMany,
+        [
+          { courseSlot, trainee: course.trainees[1], company: companies[1] },
+        ]
+      );
+      sinon.assert.calledOnceWithExactly(
+        updateMany,
+        { _id: { $in: [attendanceId] } },
+        { $set: { status: PRESENT } }
+      );
+      sinon.assert.calledOnceWithExactly(
+        getCompanyAtCourseRegistrationList,
+        { key: COURSE, value: course._id },
+        { key: TRAINEE, value: [courseTrainees[0], courseTrainees[1]] }
+      );
+      sinon.assert.notCalled(userFindOne);
+      sinon.assert.notCalled(create);
+    });
 });
 
 describe('list', () => {

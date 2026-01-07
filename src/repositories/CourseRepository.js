@@ -49,7 +49,7 @@ exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Cour
   ])
   .lean({ virtuals: populateVirtual });
 
-exports.findCoursesForExport = async (startDate, endDate, credentials) => {
+exports.findCoursesForExport = async (startDate, endDate, credentials, courseTypes) => {
   const slots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } }).lean();
   const courseIds = slots.map(slot => slot.course);
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
@@ -61,6 +61,7 @@ exports.findCoursesForExport = async (startDate, endDate, credentials) => {
           { _id: { $in: courseIds } },
           { estimatedStartDate: { $lte: endDate, $gte: startDate }, archivedAt: { $exists: false } },
         ],
+        type: { $in: courseTypes },
       }
     )
     .select('_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices')
@@ -80,7 +81,7 @@ exports.findCoursesForExport = async (startDate, endDate, credentials) => {
     .populate({ path: 'contact', select: 'identity' })
     .populate({
       path: 'slots',
-      select: 'attendances startDate endDate',
+      select: 'attendances startDate endDate trainees',
       populate: { path: 'attendances', options: { isVendorUser } },
     })
     .populate({ path: 'slotsToPlan', select: '_id' })

@@ -80,8 +80,11 @@ const getAttendancesCountInfos = (course) => {
     .filter(attendance => UtilsHelper.doesArrayIncludeId(courseTraineeList, attendance.trainee))
     .length;
 
-  const upComingSlots = course.slots.filter(slot => CompaniDate().isBefore(slot.startDate)).length;
-  const attendancesToCome = upComingSlots * course.trainees.length;
+  const upComingSlots = course.slots.filter(slot => CompaniDate().isBefore(slot.startDate));
+  const attendancesToCome = upComingSlots.reduce((acc, slot) => {
+    if (slot.trainees) return acc + slot.trainees.length;
+    return acc + course.trainees.length;
+  }, 0);
 
   const unsubscribedTrainees = uniqBy(presences.map(a => a.trainee), trainee => trainee.toString())
     .filter(attendanceTrainee => !UtilsHelper.doesArrayIncludeId(courseTraineeList, attendanceTrainee))
@@ -89,14 +92,18 @@ const getAttendancesCountInfos = (course) => {
 
   const unsubscribedAttendances = presences.length - subscribedAttendances;
 
+  const expectedAttendancesCount = course.slots.reduce((acc, slot) => {
+    if (slot.trainees) return acc + slot.trainees.length;
+    return acc + course.trainees.length;
+  }, 0);
+
   return {
     subscribedAttendances,
     unsubscribedAttendances,
     absences: attendances.length - presences.length,
-    emptyAttendances: (course.slots.length * course.trainees.length) - (attendances.length - unsubscribedAttendances)
-      - attendancesToCome,
+    emptyAttendances: expectedAttendancesCount - (attendances.length - unsubscribedAttendances) - attendancesToCome,
     unsubscribedTrainees,
-    pastSlots: course.slots.length - upComingSlots,
+    pastSlots: course.slots.length - upComingSlots.length,
   };
 };
 
@@ -273,8 +280,8 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
   };
 };
 
-exports.exportCourseHistory = async (startDate, endDate, credentials) => {
-  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials);
+exports.exportCourseHistory = async (startDate, endDate, credentials, courseTypes) => {
+  const courses = await CourseRepository.findCoursesForExport(startDate, endDate, credentials, courseTypes);
 
   const filteredCourses = courses
     .filter(course => !course.slots.length || course.slots.some(slot => isSlotInInterval(slot, startDate, endDate)));
@@ -327,12 +334,13 @@ const getAddress = (slot) => {
   return '';
 };
 
-exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
+exports.exportCourseSlotHistory = async (startDate, endDate, credentials, courseTypes) => {
   const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
       select: 'type trainees misc subProgram companies',
+      match: { type: { $in: courseTypes } },
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'trainees', select: 'identity' },
@@ -346,10 +354,11 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       },
     })
     .lean();
+  const filteredCourseSlots = courseSlots.filter(s => s.course);
 
   const rows = [];
 
-  for (const slot of courseSlots) {
+  for (const slot of filteredCourseSlots) {
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
     const presences = [];
     const absences = [];
@@ -369,7 +378,8 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       Formation: CourseHelper.composeCourseName(slot.course),
       Étape: get(slot, 'step.name') || '',
       Type: STEP_TYPES[get(slot, 'step.type')] || '',
-      Apprenant: slot.course.type === SINGLE ? UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL') : '',
+      ...(courseTypes.includes(SINGLE) &&
+        { Apprenant: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL') }),
       'Date de création': CompaniDate(slot.createdAt).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de début': CompaniDate(slot.startDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
       'Date de fin': CompaniDate(slot.endDate).format(`${DD_MM_YYYY} ${HH_MM_SS}`) || '',
@@ -378,7 +388,13 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials) => {
       'Nombre de présences': presencesCount,
       'Nombre d\'absences': absencesCount,
       'Nombre de présences non prévues': slot.attendances.length - presencesCount - absencesCount,
-      'Nombre d\'émargements non remplis': slot.course.trainees.length - presencesCount - absencesCount,
+      'Nombre d\'émargements non remplis': (slot.trainees ? slot.trainees.length : slot.course.trainees.length)
+        - presencesCount - absencesCount,
+      ...(!courseTypes.includes(SINGLE) && {
+        'Nombre d\'apprenants non concernés': slot.trainees
+          ? slot.course.trainees.filter(t => !UtilsHelper.doesArrayIncludeId(slot.trainees, t._id)).length
+          : 0,
+      }),
     });
   }
 

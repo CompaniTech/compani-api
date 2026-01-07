@@ -2,7 +2,7 @@ const UtilsPdfHelper = require('./utils');
 const PdfHelper = require('../../../helpers/pdf');
 const FileHelper = require('../../../helpers/file');
 const UtilsHelper = require('../../../helpers/utils');
-const { COPPER_500, INTRA_HOLDING } = require('../../../helpers/constants');
+const { COPPER_500, INTRA_HOLDING, BLACK } = require('../../../helpers/constants');
 
 exports.getPdfContent = async (data) => {
   const { dates, signedSlots, trainees } = data;
@@ -76,8 +76,10 @@ exports.getPdfContent = async (data) => {
           } else if (column === 1 && isIntraHoldingCourse) {
             body[row].push({ text: trainees[row - 1].company.name, margin: [0, 8, 0, 0], alignment: 'center' });
           } else {
-            const slot = date.slots[column - indexOffset]._id;
-            const { traineesSignature } = signedSlots.find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot));
+            const slot = date.slots[column - indexOffset];
+            const isConcernedBySlot = !slot.trainees ||
+              UtilsHelper.doesArrayIncludeId(slot.trainees, trainees[row - 1]._id);
+            const { traineesSignature } = signedSlots.find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot._id));
             const traineeSignature = traineesSignature
               .find(sign => UtilsHelper.areObjectIdsEquals(sign.traineeId, trainees[row - 1]._id));
             if (traineeSignature) {
@@ -89,7 +91,7 @@ exports.getPdfContent = async (data) => {
               body[row].push(
                 { image: slotsSignatures[traineeSignature.traineeId], width: 64, alignment: 'center' }
               );
-            } else body[row].push({ text: '' });
+            } else body[row].push({ text: '', ...!isConcernedBySlot && { fillColor: BLACK } });
           }
         } else body[row].push({ text: '' });
       }

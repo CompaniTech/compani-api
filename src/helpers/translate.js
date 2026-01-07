@@ -144,6 +144,7 @@ module.exports = {
     courseQuestionnairesFound: 'Questionnaires found.',
     traineeMustBeRegisteredInAnotherGroup: 'Trainee must be registered in another group.',
     traineeLinkedToCompletionCertificate: 'Deletion forbidden : this trainee is linked to a completion certificate.',
+    traineeLinkedToSlot: 'Deletion forbidden : this trainee is linked to a slot.',
     completionCertificatesFound: 'Completion certificates found.',
     completionCertificateAlreadyGenerated: 'Completion certificates already create.',
     completionCertificateUpdated: 'Completion certificates updated.',
@@ -172,6 +173,7 @@ module.exports = {
       someBillsHaveNotBeenSent: 'Forbidden: at least one courseBill has not been sent.',
       someCoursesAreVAEI: 'Forbidden: at least a courseBill is linked to VAEI course.',
       wrongType: 'Forbidden: type must corresponds with course timeline.',
+      someBillsHaveAlreadyBeenScheduled: 'Forbidden: sending of certain bills is already scheduled.',
     },
     /* Course billing items */
     courseBillingItemExists: 'Course billing item exists.',
@@ -218,6 +220,8 @@ module.exports = {
     attendanceIsLinkedToAttendanceSheet: 'Operation forbidden : attendance is linked to attendance sheet.',
     attendanceIsLinkedToCompletionCertificate: 'Operation forbidden : attendance is linked to completion certificate.',
     someSlotsAreLinkedToCompletionCertificate: 'Edition forbidden : some slots are linked to completion certificate.',
+    traineeNotConcernedBySlot: 'Operation forbidden : trainee not concerned by slot.',
+    someAttendancesAreEmpty: 'Operation forbidden : some attendances are empty.',
     /* Questionnaires */
     questionnairesFound: 'Questionnaires found.',
     questionnairesNotFound: 'Questionnaires not found.',
@@ -435,6 +439,7 @@ module.exports = {
     traineeMustBeRegisteredInAnotherGroup: 'L\'apprenant doit être inscrit dans un autre groupe de cette formation.',
     traineeLinkedToCompletionCertificate: 'Suppression impossible : l\'apprenant est relié à un certificat de '
       + 'réalisation.',
+    traineeLinkedToSlot: 'Suppression impossible : l\'apprenant est relié à un créneau.',
     completionCertificatesFound: 'Certificats de réalisation mensuels trouvés.',
     completionCertificateAlreadyGenerated: 'Certificats de réalisation déjà générés.',
     completionCertificateUpdated: 'Certificats de réalisation modifiés.',
@@ -463,6 +468,7 @@ module.exports = {
       someBillsAreAlreadyBeenSent: 'Impossible: certaines factures ont été envoyées au moins une fois mais pas toutes.',
       someBillsHaveNotBeenSent: 'Impossible: au moins une facture n\'a jamais été envoyée.',
       wrongType: 'Impossible: le type sélectionné doit correspondre à l\'avancement des formations.',
+      someBillsHaveAlreadyBeenScheduled: 'Impossible: l\'envoi de certaines factures sélectionnées est déjà planifié.',
     },
     /* Course billing items */
     courseBillingItemExists: 'Article de facturation existant.',
@@ -515,6 +521,8 @@ module.exports = {
       + 'réalisation.',
     someSlotsAreLinkedToCompletionCertificate: 'Édition impossible : certains créneaux sélectionnés sont liés à un '
     + 'certificat de réalisation.',
+    traineeNotConcernedBySlot: 'Opération impossible : l\'apprenant n\'est pas concerné par le créneau.',
+    someAttendancesAreEmpty: 'Opération impossible : certains émargements n\'ont pas été remplis.',
     /* Questionnaires */
     questionnairesFound: 'Liste des questionnaires trouvée.',
     questionnairesNotFound: 'Liste des questionnaires non trouvée.',

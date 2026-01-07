@@ -70,6 +70,7 @@ const {
   REMOTE,
   GENERATION,
   PRESENT,
+  MISSING,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -149,7 +150,7 @@ const traineeFromThirdCompany = {
 const coachFromThirdCompany = {
   _id: new ObjectId(),
   identity: { firstname: 'Manon', lastname: 'Subscription' },
-  local: { email: 'coach_third_company@alenvi.io', password: '123456!eR' },
+  local: { email: 'coach.thirdcompany@alenvi.io', password: '123456!eR' },
   role: { client: coachRoleId },
   contact: { phone: '0734856752', countryCode: '+33' },
   refreshToken: uuidv4(),
@@ -195,6 +196,15 @@ const ROFAndCoach = {
   origin: WEBAPP,
 };
 
+const namesakeLearner = {
+  _id: new ObjectId(),
+  identity: { firstname: 'Auxiliary', lastname: 'Olait' },
+  local: { email: 'namesake@alenvi.io', password: '123456!eR' },
+  contact: { phone: '0987654312', countryCode: '+33' },
+  refreshToken: uuidv4(),
+  origin: WEBAPP,
+};
+
 const userList = [
   traineeFromOtherCompany,
   traineeFromAuthCompanyWithFormationExpoToken,
@@ -208,6 +218,7 @@ const userList = [
   traineeComingUpInAuthCompany,
   traineeFromAuthFormerlyInOther,
   ROFAndCoach,
+  namesakeLearner,
 ];
 
 const userCompanies = [
@@ -402,14 +413,7 @@ const coursesList = [
     type: INTRA,
     format: BLENDED,
     maxTrainees: 8,
-    trainees: [
-      coach._id,
-      helper._id,
-      trainerOrganisationManager._id,
-      clientAdmin._id,
-      auxiliary._id,
-      traineeFromAuthCompanyWithFormationExpoToken._id,
-    ],
+    trainees: [coach._id, auxiliary._id, noRole._id],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
@@ -551,6 +555,8 @@ const coursesList = [
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     tutors: [traineeFromAuthFormerlyInOther._id],
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
   { // 15 course billed INTRA without trainees and slots
     _id: new ObjectId(),
@@ -705,6 +711,8 @@ const coursesList = [
     maxTrainees: 1,
     expectedBillsCount: 0,
     prices: [{ global: 1600, company: authCompany._id }],
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
   { // 25 Single course with tutor already in course
     _id: new ObjectId(),
@@ -721,6 +729,8 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     maxTrainees: 1,
     expectedBillsCount: 0,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
   { // 26 interrupted course
     _id: new ObjectId(),
@@ -954,30 +964,6 @@ const courseHistories = [
   {
     action: TRAINEE_ADDITION,
     course: coursesList[2]._id,
-    trainee: helper._id,
-    company: authCompany._id,
-    createdBy: trainerOrganisationManager._id,
-    createdAt: '2023-01-03T14:00:00.000Z',
-  },
-  {
-    action: TRAINEE_ADDITION,
-    course: coursesList[2]._id,
-    trainee: trainerOrganisationManager._id,
-    company: authCompany._id,
-    createdBy: trainerOrganisationManager._id,
-    createdAt: '2023-01-03T14:00:00.000Z',
-  },
-  {
-    action: TRAINEE_ADDITION,
-    course: coursesList[2]._id,
-    trainee: clientAdmin._id,
-    company: authCompany._id,
-    createdBy: trainerOrganisationManager._id,
-    createdAt: '2023-01-03T14:00:00.000Z',
-  },
-  {
-    action: TRAINEE_ADDITION,
-    course: coursesList[2]._id,
     trainee: auxiliary._id,
     company: authCompany._id,
     createdBy: trainerOrganisationManager._id,
@@ -986,7 +972,7 @@ const courseHistories = [
   {
     action: TRAINEE_ADDITION,
     course: coursesList[2]._id,
-    trainee: traineeFromAuthCompanyWithFormationExpoToken._id,
+    trainee: noRole._id,
     company: authCompany._id,
     createdBy: trainerOrganisationManager._id,
     createdAt: '2023-01-03T14:00:00.000Z',
@@ -1252,58 +1238,66 @@ const slots = [
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[7]._id,
     step: stepList[0]._id,
+    trainees: [auxiliary._id],
   },
-  { // 13
+  { // 12
     _id: new ObjectId(),
     startDate: '2020-03-10T08:00:00.000Z',
     endDate: '2020-03-10T10:00:00.000Z',
     course: coursesList[13]._id,
     step: stepList[0]._id,
   },
-  { // 14
+  { // 13
     _id: new ObjectId(),
     course: coursesList[16]._id,
     step: stepList[0]._id,
   },
-  { // 15
+  { // 14
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[19]._id,
     step: stepList[0]._id,
   },
-  { // 16
+  { // 15
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[21]._id,
     step: stepList[0]._id,
   },
-  { // 17
+  { // 16
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[22]._id,
     step: stepList[0]._id,
   },
-  { // 18
+  { // 17
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[23]._id,
     step: stepList[0]._id,
   },
-  { // 19
+  { // 18
     _id: new ObjectId(),
     startDate: '2020-03-07T08:00:00.000Z',
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[24]._id,
     step: stepList[0]._id,
   },
-  { // 20
+  { // 19
     _id: new ObjectId(),
     course: coursesList[12]._id,
     step: stepList[2]._id,
+  },
+  { // 20
+    _id: new ObjectId(),
+    startDate: '2025-03-04T08:00:00.000Z',
+    endDate: '2025-03-04T10:00:00.000Z',
+    course: coursesList[2]._id,
+    step: stepList[0]._id,
   },
 ];
 
@@ -1328,6 +1322,55 @@ const attendanceList = [
     courseSlot: slots[0]._id,
     company: authCompany._id,
     status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: auxiliary._id,
+    courseSlot: slots[4]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: coach._id,
+    courseSlot: slots[4]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: noRole._id,
+    courseSlot: slots[4]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: auxiliary._id,
+    courseSlot: slots[10]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: auxiliary._id,
+    courseSlot: slots[11]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: traineeFromAuthFormerlyInOther._id,
+    courseSlot: slots[10]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: coach._id,
+    courseSlot: slots[20]._id,
+    company: authCompany._id,
+    status: MISSING,
   },
 ];
 
@@ -1442,4 +1485,5 @@ module.exports = {
   traineeFromThirdCompany,
   traineeWithoutCompany,
   ROFAndCoach,
+  slots,
 };

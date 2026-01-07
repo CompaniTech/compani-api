@@ -4,6 +4,7 @@ module.exports = {
   DEVELOPMENT: 'development',
   TEST: 'test',
   // COLOR
+  BLACK: 'black',
   COPPER_50: '#F0FAF7',
   COPPER_100: '#DAF2EE',
   COPPER_500: '#1D7C8F',
@@ -488,6 +489,7 @@ module.exports = {
   TRAINER_DELETION: 'trainer_deletion',
   COURSE_INTERRUPTION: 'course_interruption',
   COURSE_RESTART: 'course_restart',
+  SLOT_RESTRICTION: 'slot_restriction',
   // MediaUpload
   UPLOAD_IMAGE: 'image',
   UPLOAD_VIDEO: 'video',
@@ -605,7 +607,9 @@ module.exports = {
   TRANSPORT: 'transport',
   WORKING_EVENT: 'working_event', // intervention or internal hours
   COURSE: 'course',
+  SINGLE_COURSE: 'single_course',
   COURSE_SLOT: 'course_slot',
+  SINGLE_COURSE_SLOT: 'single_course_slot',
   COURSE_BILL: 'course_bill',
   COURSE_PAYMENT: 'course_payment',
   get HISTORY_EXPORT_TYPES() {
@@ -617,7 +621,9 @@ module.exports = {
       this.PAY,
       this.CONTRACT,
       this.COURSE,
+      this.SINGLE_COURSE,
       this.COURSE_SLOT,
+      this.SINGLE_COURSE_SLOT,
       this.TRANSPORT,
       this.END_OF_COURSE,
       this.COURSE_BILL,
@@ -648,7 +654,9 @@ module.exports = {
   get VENDOR_EXPORT_TYPES() {
     return [
       this.COURSE,
+      this.SINGLE_COURSE,
       this.COURSE_SLOT,
+      this.SINGLE_COURSE_SLOT,
       this.END_OF_COURSE,
       this.COURSE_BILL,
       this.COURSE_PAYMENT,

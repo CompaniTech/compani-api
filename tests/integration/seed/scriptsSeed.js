@@ -1,5 +1,18 @@
 const { ObjectId } = require('mongodb');
-const { WEBAPP, PUBLISHED, MONTHLY, GLOBAL, INTRA, VIDEO, SINGLE, PRESENT } = require('../../../src/helpers/constants');
+const {
+  WEBAPP,
+  PUBLISHED,
+  MONTHLY,
+  GLOBAL,
+  INTRA,
+  VIDEO,
+  SINGLE,
+  PRESENT,
+  GROUP,
+  TRAINEE,
+  START_COURSE,
+  RESEND,
+} = require('../../../src/helpers/constants');
 const User = require('../../../src/models/User');
 const Course = require('../../../src/models/Course');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -14,6 +27,9 @@ const { vendorAdmin } = require('../../seed/authUsersSeed');
 const Activity = require('../../../src/models/Activity');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Card = require('../../../src/models/Card');
+const PendingCourseBill = require('../../../src/models/PendingCourseBill');
+const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
+const CourseBill = require('../../../src/models/CourseBill');
 
 const userList = [
   { // 0
@@ -86,6 +102,8 @@ const courseList = [
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
   { // 1
     _id: new ObjectId(),
@@ -108,6 +126,8 @@ const courseList = [
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
 ];
 
@@ -149,6 +169,56 @@ const activityHistoryList = [
   { _id: new ObjectId(), activity: activityList[0]._id, user: userList[2]._id, date: '2025-02-25T10:05:32.582Z' },
 ];
 
+const courseBillList = [
+  { // 0
+    _id: new ObjectId(),
+    course: courseList[0]._id,
+    companies: [authCompany._id],
+    mainFee: { price: 1200.20, count: 1, countUnit: GROUP },
+    billedAt: '2022-03-06T00:00:00.000Z',
+    number: 'FACT-00001',
+    payer: { company: authCompany._id },
+  },
+  { // 1
+    _id: new ObjectId(),
+    course: courseList[1]._id,
+    companies: [authCompany._id],
+    billedAt: '2022-03-06T00:00:00.000Z',
+    number: 'FACT-00002',
+    mainFee: { price: 1200, count: 1, description: 'Accompagnement Mars 2022', countUnit: TRAINEE },
+    payer: { company: authCompany._id },
+  },
+  { // 2
+    _id: new ObjectId(),
+    course: courseList[0]._id,
+    companies: [authCompany._id],
+    mainFee: { price: 1200, count: 1, description: 'Lorem ipsum', countUnit: GROUP },
+    payer: { company: authCompany._id },
+    billedAt: '2022-04-06T00:00:00.000Z',
+    number: 'FACT-00003',
+    sendingDates: ['2022-04-09T00:00:00.000Z'],
+  },
+];
+
+const pendingCourseBillList = [
+  {
+    courseBills: [courseBillList[0]._id, courseBillList[1]._id],
+    sendingDate: '2023-01-07T23:00:00.000Z',
+    recipientEmails: ['test@compani.fr'],
+    content: 'Bonjour, ceci est un test',
+    type: START_COURSE,
+  },
+  {
+    courseBills: [courseBillList[2]._id],
+    sendingDate: '2023-01-12T23:00:00.000Z',
+    recipientEmails: ['test@compani.fr'],
+    content: 'Bonjour, ceci est une relance',
+    type: RESEND,
+  },
+];
+
+const courseBillNumber = { _id: new ObjectId(), seq: 3 };
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
@@ -158,7 +228,10 @@ const populateDB = async () => {
     ActivityHistory.create(activityHistoryList),
     Card.create(cardsList),
     Course.create(courseList),
+    CourseBill.create(courseBillList),
+    CourseBillsNumber.create(courseBillNumber),
     CourseSlot.create(slotList),
+    PendingCourseBill.create(pendingCourseBillList),
     Step.create(stepList),
     SubProgram.create(subProgramList),
     User.create(userList),

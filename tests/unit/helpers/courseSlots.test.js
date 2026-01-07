@@ -3,6 +3,7 @@ const { expect } = require('expect');
 const omit = require('lodash/omit');
 const { ObjectId } = require('mongodb');
 const CourseSlot = require('../../../src/models/CourseSlot');
+const Course = require('../../../src/models/Course');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
 const SinonMongoose = require('../sinonMongoose');
@@ -90,20 +91,26 @@ describe('updateCourseSlot', () => {
   let hasConflicts;
   let createHistoryOnSlotEdition;
   let createHistoryOnSlotDeletion;
+  let createHistoryOnSlotRestriction;
   let findOne;
+  let courseFindOne;
   beforeEach(() => {
     updateOne = sinon.stub(CourseSlot, 'updateOne');
     findOne = sinon.stub(CourseSlot, 'findOne');
+    courseFindOne = sinon.stub(Course, 'findOne');
     hasConflicts = sinon.stub(CourseSlotsHelper, 'hasConflicts');
     createHistoryOnSlotEdition = sinon.stub(CourseHistoriesHelper, 'createHistoryOnSlotEdition');
     createHistoryOnSlotDeletion = sinon.stub(CourseHistoriesHelper, 'createHistoryOnSlotDeletion');
+    createHistoryOnSlotRestriction = sinon.stub(CourseHistoriesHelper, 'createHistoryOnSlotRestriction');
   });
   afterEach(() => {
     updateOne.restore();
     findOne.restore();
+    courseFindOne.restore();
     hasConflicts.restore();
     createHistoryOnSlotEdition.restore();
     createHistoryOnSlotDeletion.restore();
+    createHistoryOnSlotRestriction.restore();
   });
 
   it('should update a remote course slot with meetingLink', async () => {
@@ -125,6 +132,8 @@ describe('updateCourseSlot', () => {
       ]
     );
     sinon.assert.notCalled(createHistoryOnSlotDeletion);
+    sinon.assert.notCalled(courseFindOne);
+    sinon.assert.notCalled(createHistoryOnSlotRestriction);
     sinon.assert.calledOnceWithExactly(hasConflicts, { ...slot, ...payload });
     sinon.assert.calledOnceWithExactly(createHistoryOnSlotEdition, slot, payload, user._id);
     sinon.assert.calledOnceWithExactly(
@@ -153,6 +162,8 @@ describe('updateCourseSlot', () => {
       ]
     );
     sinon.assert.notCalled(createHistoryOnSlotDeletion);
+    sinon.assert.notCalled(courseFindOne);
+    sinon.assert.notCalled(createHistoryOnSlotRestriction);
     sinon.assert.calledOnceWithExactly(hasConflicts, { ...slot, ...payload });
     sinon.assert.calledOnceWithExactly(createHistoryOnSlotEdition, slot, payload, user._id);
     sinon.assert.calledOnceWithExactly(
@@ -181,6 +192,8 @@ describe('updateCourseSlot', () => {
       ]
     );
     sinon.assert.notCalled(createHistoryOnSlotDeletion);
+    sinon.assert.notCalled(courseFindOne);
+    sinon.assert.notCalled(createHistoryOnSlotRestriction);
     sinon.assert.calledOnceWithExactly(hasConflicts, { ...slot, ...payload });
     sinon.assert.calledOnceWithExactly(createHistoryOnSlotEdition, slot, payload, user._id);
     sinon.assert.calledOnceWithExactly(
@@ -209,6 +222,8 @@ describe('updateCourseSlot', () => {
       ]
     );
     sinon.assert.notCalled(createHistoryOnSlotDeletion);
+    sinon.assert.notCalled(courseFindOne);
+    sinon.assert.notCalled(createHistoryOnSlotRestriction);
     sinon.assert.calledOnceWithExactly(hasConflicts, { ...slot, ...payload });
     sinon.assert.calledOnceWithExactly(createHistoryOnSlotEdition, slot, payload, user._id);
     sinon.assert.calledOnceWithExactly(
@@ -242,6 +257,8 @@ describe('updateCourseSlot', () => {
       ]
     );
     sinon.assert.notCalled(createHistoryOnSlotEdition);
+    sinon.assert.notCalled(courseFindOne);
+    sinon.assert.notCalled(createHistoryOnSlotRestriction);
     sinon.assert.calledOnceWithExactly(hasConflicts, { ...slot, ...payload });
     sinon.assert.calledOnceWithExactly(createHistoryOnSlotDeletion, omit(slot, '_id'), user._id);
     sinon.assert.calledOnceWithExactly(
@@ -249,6 +266,92 @@ describe('updateCourseSlot', () => {
       { _id: slot._id },
       { $unset: { startDate: '', endDate: '', meetingLink: '', address: '' } }
     );
+  });
+
+  it('should add concerned trainees', async () => {
+    const slotId = new ObjectId();
+    const courseId = new ObjectId();
+    const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const slot = {
+      _id: slotId,
+      startDate: '2020-03-03T20:00:00.000Z',
+      endDate: '2020-03-03T22:00:00.000Z',
+      trainees: [traineesIds[0], traineesIds[1]],
+      course: courseId,
+    };
+    const course = { _id: courseId, trainees: traineesIds };
+    const user = { _id: new ObjectId() };
+    const payload = { trainees: [traineesIds[1], traineesIds[2]] };
+    findOne.returns(SinonMongoose.stubChainedQueries(slot));
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
+    await CourseSlotsHelper.updateCourseSlot(slotId, payload, user);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: slotId }] },
+        { query: 'populate', args: [{ path: 'step', select: '_id type' }] },
+        { query: 'lean' },
+      ]
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(createHistoryOnSlotEdition);
+    sinon.assert.notCalled(hasConflicts);
+    sinon.assert.notCalled(createHistoryOnSlotDeletion);
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: slot._id },
+      { $set: { trainees: [traineesIds[1], traineesIds[2]] } }
+    );
+    sinon.assert.calledOnceWithExactly(createHistoryOnSlotRestriction,
+      { course: courseId, startDate: '2020-03-03T20:00:00.000Z', endDate: '2020-03-03T22:00:00.000Z' },
+      user._id);
+  });
+
+  it('should remove concerned trainees', async () => {
+    const slotId = new ObjectId();
+    const courseId = new ObjectId();
+    const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const slot = {
+      _id: slotId,
+      startDate: '2020-03-03T20:00:00.000Z',
+      endDate: '2020-03-03T22:00:00.000Z',
+      trainees: [traineesIds[0], traineesIds[1]],
+      course: courseId,
+    };
+    const course = { _id: courseId, trainees: traineesIds };
+    const user = { _id: new ObjectId() };
+    const payload = { trainees: traineesIds };
+    findOne.returns(SinonMongoose.stubChainedQueries(slot));
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
+    await CourseSlotsHelper.updateCourseSlot(slotId, payload, user);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: slotId }] },
+        { query: 'populate', args: [{ path: 'step', select: '_id type' }] },
+        { query: 'lean' },
+      ]
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(createHistoryOnSlotEdition);
+    sinon.assert.notCalled(hasConflicts);
+    sinon.assert.notCalled(createHistoryOnSlotDeletion);
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: slot._id }, { $unset: { trainees: '' } });
+    sinon.assert.calledOnceWithExactly(createHistoryOnSlotRestriction,
+      { course: courseId, startDate: '2020-03-03T20:00:00.000Z', endDate: '2020-03-03T22:00:00.000Z' },
+      user._id);
   });
 
   it('should throw an error if conflicts', async () => {

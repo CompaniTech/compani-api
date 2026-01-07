@@ -105,7 +105,7 @@ describe('ATTENDANCES ROUTES - POST /attendances', () => {
         company: authCompany._id,
         status: PRESENT,
       });
-      expect(courseSlotAttendancesAfter).toBe(courseSlotAttendancesBefore + 3);
+      expect(courseSlotAttendancesAfter).toBe(courseSlotAttendancesBefore + 2);
     });
 
     it('should add attendances for registered trainee even if not in the company anymore', async () => {
@@ -234,6 +234,17 @@ describe('ATTENDANCES ROUTES - POST /attendances', () => {
         url: '/attendances',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { trainee: traineeList[0]._id, courseSlot: slotsList[13]._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to create attendance for a trainee not concerned by slot', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendances',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { trainee: traineeList[8]._id, courseSlot: slotsList[0]._id },
       });
 
       expect(response.statusCode).toBe(403);

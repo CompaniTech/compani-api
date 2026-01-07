@@ -6,9 +6,12 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const get = require('lodash/get');
 const app = require('../../server');
+const Attendance = require('../../src/models/Attendance');
 const Company = require('../../src/models/Company');
 const Course = require('../../src/models/Course');
 const CourseSlot = require('../../src/models/CourseSlot');
+const Gdrive = require('../../src/models/Google/Drive');
+const Gsheets = require('../../src/models/Google/Sheets');
 const User = require('../../src/models/User');
 const UserCompany = require('../../src/models/UserCompany');
 const drive = require('../../src/models/Google/Drive');
@@ -35,6 +38,7 @@ const {
   GLOBAL,
   MONTHLY,
   SINGLE,
+  MISSING,
 } = require('../../src/helpers/constants');
 const {
   populateDB,
@@ -52,6 +56,7 @@ const {
   traineeFromThirdCompany,
   fourthCompany,
   ROFAndCoach,
+  slots,
 } = require('./seed/coursesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const {
@@ -98,11 +103,30 @@ describe('NODE ENV', () => {
 
 describe('COURSES ROUTES - POST /courses', () => {
   let authToken;
+  let createFolder;
+  let gdriveCopy;
+  let gsheetsWriteData;
+
   beforeEach(populateDB);
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
+      createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
+      gdriveCopy = sinon.stub(Gdrive, 'copy');
+      gsheetsWriteData = sinon.stub(Gsheets, 'writeData');
+      process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
+      process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
+      process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
+    });
+
+    afterEach(() => {
+      createFolder.restore();
+      gdriveCopy.restore();
+      gsheetsWriteData.restore();
+      process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
+      process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
+      process.env.VAEI_SUBPROGRAM_IDS = '';
     });
 
     it('should create inter_b2b course', async () => {
@@ -216,6 +240,8 @@ describe('COURSES ROUTES - POST /courses', () => {
         prices: { global: 1000, trainerFees: 200 },
       };
       const coursesCountBefore = await Course.countDocuments();
+      createFolder.returns({ id: 'folderId' });
+      gdriveCopy.returns({ id: 'gSheetId' });
 
       const response = await app.inject({
         method: 'POST',
@@ -236,6 +262,9 @@ describe('COURSES ROUTES - POST /courses', () => {
           }
         );
       expect(courseWithTrainee).toEqual(1);
+      sinon.assert.calledOnce(createFolder);
+      sinon.assert.calledOnce(gdriveCopy);
+      sinon.assert.calledOnce(gsheetsWriteData);
     });
 
     it('should return 404 if invalid operationsRepresentative', async () => {
@@ -839,7 +868,7 @@ describe('COURSES ROUTES - GET /courses', () => {
     expect(response.statusCode).toBe(200);
     const { traineeCourses, tutorCourses: coursesAsTutor } = response.result.data.courses;
     const coursesAsTraineeCount = traineeCourses.onGoing.length + traineeCourses.achieved.length;
-    expect(coursesAsTraineeCount).toBe(2);
+    expect(coursesAsTraineeCount).toBe(3);
     expect(coursesAsTutor.length).toBe(1);
   });
 
@@ -1097,16 +1126,22 @@ describe('COURSES ROUTES - GET /courses', () => {
             subPrograms: [expect.any(Object), expect.any(Object), expect.any(Object)],
           },
         }),
-        slots: [{
-          startDate: CompaniDate('2020-03-04T08:00:00.000Z').toDate(),
-          endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
-          course: coursesList[2]._id,
-          step: {
+        slots: [
+          {
+            startDate: CompaniDate('2020-03-04T08:00:00.000Z').toDate(),
+            endDate: CompaniDate('2020-03-04T10:00:00.000Z').toDate(),
+            course: coursesList[2]._id,
+            step: { _id: expect.any(Object), type: ON_SITE },
             _id: expect.any(Object),
-            type: 'on_site',
           },
-          _id: expect.any(Object),
-        }],
+          {
+            startDate: CompaniDate('2025-03-04T08:00:00.000Z').toDate(),
+            endDate: CompaniDate('2025-03-04T10:00:00.000Z').toDate(),
+            course: coursesList[2]._id,
+            step: { _id: expect.any(Object), type: ON_SITE },
+            _id: expect.any(Object),
+          },
+        ],
         slotsToPlan: [
           { _id: expect.any(Object), course: course._id },
           { _id: expect.any(Object), course: course._id },
@@ -2373,7 +2408,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should return 403 if maxTrainees smaller than registered trainees', async () => {
-      const payload = { maxTrainees: 4 };
+      const payload = { maxTrainees: 2 };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[2]._id}`,
@@ -3252,7 +3287,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33987654321',
+          recipient: '+33798640728',
           sender: 'Compani',
           content: payload.content,
           tag: COURSE_SMS,
@@ -3277,7 +3312,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/sms', () => {
       sinon.assert.calledWithExactly(
         SmsHelperStub,
         {
-          recipient: '+33987654321',
+          recipient: '+33798640728',
           sender: 'Compani',
           content: 'test',
           tag: COURSE_SMS,
@@ -3821,7 +3856,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees', () => {
         method: 'PUT',
         url: `/courses/${intraCourseIdWithTrainee}/trainees`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { trainee: traineeFromAuthCompanyWithFormationExpoToken._id },
+        payload: { trainee: auxiliary._id },
       });
 
       expect(response.statusCode).toBe(409);
@@ -4209,6 +4244,13 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainees/{traineeId}', () => {
         action: TRAINEE_DELETION,
       });
       expect(courseHistory).toEqual(1);
+
+      const missingAttendance = await Attendance.countDocuments({
+        courseSlot: slots[20]._id,
+        trainee: traineeId,
+        status: MISSING,
+      });
+      expect(missingAttendance).toEqual(0);
     });
 
     it('should delete course trainee with certification', async () => {
@@ -4271,6 +4313,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainees/{traineeId}', () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courses/${coursesList[2]._id.toHexString()}/trainees/${auxiliary._id.toHexString()}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if trainee is linked to slot', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[7]._id.toHexString()}/trainees/${auxiliary._id.toHexString()}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4633,6 +4685,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
 
       authToken = await getToken('training_organisation_manager');
     });
@@ -4641,6 +4694,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 if type is CUSTOM', async () => {
@@ -4685,18 +4739,33 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
 
       expect(response.statusCode).toBe(404);
     });
+
+    it('should return 403 if some attendances are empty', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${ALL_WORD}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('NO_ROLE', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getTokenByCredentials(noRole.local);
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
+    });
+
+    afterEach(() => {
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 if user is course trainee', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[5]._id}/completion-certificates?format=${PDF}`,
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${PDF}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4706,17 +4775,28 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
     it('should return a 403 if user is not course trainee', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${PDF}`,
+        url: `/courses/${courseIdFromOtherCompany}/completion-certificates?format=${PDF}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if some attendances are empty', async () => {
+      UtilsMock.mockCurrentDate('2025-12-24T15:00:00.000Z');
+
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${PDF}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
     it('should return 403 if user is accessing certificate with an other format than PDF', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[5]._id}/completion-certificates?format=${ALL_WORD}`,
+        url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4734,6 +4814,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
 
       authToken = await getToken('trainer');
     });
@@ -4742,6 +4823,7 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+      UtilsMock.unmockCurrentDate('');
     });
 
     it('should return 200 as user is the course trainer', async () => {
@@ -6061,6 +6143,15 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
           company: 'Test SAS',
           suffix: '@test.fr',
         },
+        {
+          firstname: 'Auxiliary',
+          lastname: 'Olait',
+          email: 'auxiliary@alenvi.io',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@test.fr',
+        },
       ]);
 
       const response = await app.inject({
@@ -6074,8 +6165,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       const usersAfter = await User.countDocuments();
       expect(usersAfter).toEqual(usersBefore + 1);
       const courseAfter = await Course.findOne({ _id: coursesList[26]._id }).lean();
-      expect(courseAfter.trainees.length).toEqual(coursesList[26].trainees.length + 2);
-      sinon.assert.calledTwice(sendNotificationToUser);
+      expect(courseAfter.trainees.length).toEqual(coursesList[26].trainees.length + 3);
+      sinon.assert.calledThrice(sendNotificationToUser);
       sinon.assert.calledOnce(sendinBlueTransporter);
     });
 
@@ -6646,6 +6737,33 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainees-csv', () => {
       expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['l\'email correspond à un autre utilisateur']);
     });
 
+    it('should return 422 if formed email is from other learner', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Coach',
+          lastname: 'Third Company',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@alenvi.io',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}/trainees-csv`,
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['l\'email correspond à un autre utilisateur']);
+    });
+
     it('should return 422 if no suffix and no email', async () => {
       const formData = { file: 'test' };
       const form = generateFormData(formData);
@@ -6791,6 +6909,8 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
   let parseCSV;
   let createFolderForCompany;
   let createFolder;
+  let gdriveCopy;
+  let gsheetsWriteData;
 
   beforeEach(populateDB);
   beforeEach(() => {
@@ -6800,6 +6920,11 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     parseCSV = sinon.stub(UtilsHelper, 'parseCsv');
     createFolderForCompany = sinon.stub(GDriveStorageHelper, 'createFolderForCompany');
     createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
+    gdriveCopy = sinon.stub(Gdrive, 'copy');
+    gsheetsWriteData = sinon.stub(Gsheets, 'writeData');
+    process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
+    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
+    process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
     process.env.MAX_CSV_COURSE_SIZE = 30;
   });
   afterEach(() => {
@@ -6808,6 +6933,11 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     parseCSV.restore();
     createFolderForCompany.restore();
     createFolder.restore();
+    gdriveCopy.restore();
+    gsheetsWriteData.restore();
+    process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
+    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
+    process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.MAX_CSV_COURSE_SIZE = 0;
   });
 
@@ -6826,6 +6956,12 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       createFolder.onCall(0).returns({ id: '0987654321' });
       createFolder.onCall(1).returns({ id: 'qwerty' });
       createFolder.onCall(2).returns({ id: 'asdfgh' });
+      createFolder.onCall(3).returns({ id: 'folderId1' });
+      createFolder.onCall(4).returns({ id: 'folderId2' });
+      createFolder.onCall(5).returns({ id: 'folderId3' });
+      gdriveCopy.onCall(0).returns({ id: 'sheetId1' });
+      gdriveCopy.onCall(1).returns({ id: 'sheetId2' });
+      gdriveCopy.onCall(2).returns({ id: 'sheetId3' });
 
       const formData = { file: 'test' };
       const form = generateFormData(formData);
@@ -6904,7 +7040,9 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       sinon.assert.calledOnce(sendNotificationToUser);
       sinon.assert.calledOnce(sendinBlueTransporter);
       sinon.assert.calledOnce(createFolderForCompany);
-      sinon.assert.calledThrice(createFolder);
+      sinon.assert.callCount(createFolder, 6);
+      sinon.assert.callCount(gdriveCopy, 3);
+      sinon.assert.callCount(gsheetsWriteData, 3);
     });
 
     it('should return 400 if a field is missing', async () => {
@@ -7324,6 +7462,37 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           phone: '0687654321',
           company: 'Test SAS',
           suffix: '@test.fr',
+          subProgram: subProgramsList[4]._id,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',
+          estimatedStartDate: '2025-11-01',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/single-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toEqual(['l\'email correspond à un autre utilisateur']);
+    });
+
+    it('should return 422 if formed email is from other learner', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Coach',
+          lastname: 'Third Company',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Test SAS',
+          suffix: '@alenvi.io',
           subProgram: subProgramsList[4]._id,
           operationsRepresentative: 'training-organisation-manager@alenvi.io',
           trainers: 'trainer@alenvi.io,trainercoach@alenvi.io',

@@ -112,6 +112,8 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[1]._id,
     certificateGenerationMode: GLOBAL,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
 ];
 

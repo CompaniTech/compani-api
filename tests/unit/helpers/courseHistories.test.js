@@ -18,6 +18,7 @@ const {
   TRAINER_ADDITION,
   TRAINER_DELETION,
   COURSE_INTERRUPTION,
+  SLOT_RESTRICTION,
 } = require('../../../src/helpers/constants');
 const SinonMongoose = require('../sinonMongoose');
 
@@ -719,6 +720,37 @@ describe('createHistoryOnCourseInterruptionOrRestart', () => {
       courseId,
       userId,
       COURSE_INTERRUPTION
+    );
+  });
+});
+
+describe('createHistoryOnSlotRestriction', () => {
+  let createHistory;
+
+  beforeEach(() => {
+    createHistory = sinon.stub(CourseHistoriesHelper, 'createHistory');
+  });
+
+  afterEach(() => {
+    createHistory.restore();
+  });
+
+  it('should create a courseHistory', async () => {
+    const payload = {
+      course: new ObjectId(),
+      startDate: '2019-02-03T09:00:00.000Z',
+      endDate: '2019-02-03T10:00:00.000Z',
+    };
+    const userId = new ObjectId();
+
+    await CourseHistoriesHelper.createHistoryOnSlotRestriction(payload, userId);
+
+    sinon.assert.calledOnceWithExactly(
+      createHistory,
+      payload.course,
+      userId,
+      SLOT_RESTRICTION,
+      { slot: { startDate: '2019-02-03T09:00:00.000Z', endDate: '2019-02-03T10:00:00.000Z' } }
     );
   });
 });

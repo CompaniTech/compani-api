@@ -162,6 +162,8 @@ const coursesList = [
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
   { // 2
     _id: new ObjectId(),
@@ -260,6 +262,8 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
 ];
 
@@ -270,6 +274,7 @@ const slotsList = [
     endDate: '2020-01-20T14:00:00.000Z',
     course: coursesList[0],
     step: steps[0]._id,
+    trainees: [traineeList[0]._id, traineeList[3]._id],
   },
   { // 1
     _id: new ObjectId(),
