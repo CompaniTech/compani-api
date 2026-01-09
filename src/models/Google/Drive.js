@@ -23,7 +23,7 @@ exports.add = async (params) => {
 
   return new Promise((resolve, reject) => {
     drive.files.create(
-      { auth, resource: fileMetadata, media, fields: ['id, webViewLink'] },
+      { auth, resource: fileMetadata, media, fields: ['id, webViewLink'], supportsAllDrives: true },
       (err, item) => {
         if (err) reject(new Error(`Google Drive API ${err}`));
         else resolve(item.data);
@@ -38,7 +38,7 @@ exports.deleteFile = async (params) => {
 
   return new Promise((resolve, reject) => {
     drive.files.delete(
-      { auth, fileId: params.fileId },
+      { auth, fileId: params.fileId, supportsAllDrives: true },
       (err, file) => {
         if ([403, 404].includes(get(err, 'response.status'))) resolve();
         if (err) reject(new Error(`Google Drive API ${err}`));
@@ -54,7 +54,7 @@ exports.getFileById = async (params) => {
 
   return new Promise((resolve, reject) => {
     drive.files.get(
-      { auth, fileId: `${params.fileId}`, fields: ['name, webViewLink, thumbnailLink'] },
+      { auth, fileId: `${params.fileId}`, fields: ['name, webViewLink, thumbnailLink'], supportsAllDrives: true },
       (err, response) => {
         if (err) reject(new Error(`Google Drive API ${err}`));
         else resolve(response.data);
@@ -70,7 +70,7 @@ exports.downloadFileById = async (params) => {
 
   return new Promise((resolve, reject) => {
     drive.files.get(
-      { auth, fileId: `${params.fileId}`, alt: 'media' },
+      { auth, fileId: `${params.fileId}`, alt: 'media', supportsAllDrives: true },
       { responseType: 'stream' },
       // eslint-disable-next-line consistent-return
       (err, res) => {
@@ -97,6 +97,8 @@ exports.list = async (params) => {
       auth,
       fields: 'nextPageToken, files(name, id, createdTime)',
       pageToken: params.nextPageToken || '',
+      supportsAllDrives: true,
+      includeItemsFromAllDrives: true,
     };
     if (params.folderId) {
       query.q = `'${params.folderId}' in parents and mimeType != 'application/vnd.google-apps.folder'`;
@@ -135,6 +137,7 @@ exports.copy = async (params) => {
     fileId: params.fileId,
     resource: { name: params.name, parents: params.parents },
     fields: 'id, webViewLink',
+    supportsAllDrives: true,
   };
 
   return new Promise((resolve, reject) => {
