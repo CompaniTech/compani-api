@@ -604,9 +604,9 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       .hasUserAccessToCompany(credentials, get(t, isBlended ? 'registrationCompany' : 'company')));
 
   const traineesIds = trainees.map(t => t._id);
-  const slots = get(credentials, 'role.vendor') || !isBlended
+  const slots = get(credentials, 'role.vendor')
     ? fetchedCourse.slots
-    : fetchedCourse.slots
+    : (fetchedCourse.slots || [])
       .filter(s => !s.trainees || s.trainees.some(t => UtilsHelper.doesArrayIncludeId(traineesIds, t)))
       .map(s => (!s.trainees
         ? s
