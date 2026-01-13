@@ -190,6 +190,8 @@ describe('createCourse', () => {
     const subProgram = { _id: subProgramId, steps };
     const traineeId = new ObjectId();
     const userCompany = { company: new ObjectId() };
+    const coach = { _id: new ObjectId(), name: 'Jean COACH', email: 'coach@compani.fr', phone: '+33123456789' };
+    const architect = { _id: new ObjectId(), name: 'Jill ARCHI', email: 'architect@compani.fr', phone: '+33123456789' };
     const trainee = {
       _id: traineeId,
       identity: { firstname: 'Toto', lastname: 'Titi' },
@@ -206,6 +208,8 @@ describe('createCourse', () => {
       hasCertifyingTest: false,
       trainee: traineeId,
       prices: { global: 1200 },
+      coach,
+      architect,
     };
     const course = {
       _id: new ObjectId(),
@@ -255,12 +259,14 @@ describe('createCourse', () => {
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact),
         traineeCompany: 'Company',
+        coach,
+        architect,
       }
     );
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        ...omit(payload, ['trainee']),
+        ...omit(payload, ['trainee', 'coach', 'architect']),
         companies: [userCompany.company],
         prices: [{ global: 1200, company: userCompany.company }],
         folderId: 'folderId',
@@ -8734,7 +8740,8 @@ describe('uploadSingleCourseCSV', () => {
     const subProgramId = new ObjectId();
     const operationsRepresentativeId = new ObjectId();
     const courseId = new ObjectId();
-    const trainerIds = [new ObjectId(), new ObjectId()];
+    const coach = { _id: new ObjectId(), name: 'Jean COACH', email: 'coach@compani.fr', phone: '+33123456789' };
+    const architect = { _id: new ObjectId(), name: 'Jill ARCHI', email: 'architect@compani.fr', phone: '+33123456789' };
     const learnerList = [
       {
         'identity.firstname': 'Jean',
@@ -8743,7 +8750,8 @@ describe('uploadSingleCourseCSV', () => {
         company: 'Company',
         subProgram: subProgramId,
         operationsRepresentative: operationsRepresentativeId,
-        trainers: trainerIds,
+        coach,
+        architect,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
       },
     ];
@@ -8758,6 +8766,8 @@ describe('uploadSingleCourseCSV', () => {
       trainee: userId,
       hasCertifyingTest: false,
       estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      coach,
+      architect,
     };
 
     companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
@@ -8787,8 +8797,8 @@ describe('uploadSingleCourseCSV', () => {
     sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
     sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
     sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
-    sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: trainerIds[0] }, credentials);
-    sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: trainerIds[1] }, credentials);
+    sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: coach._id }, credentials);
+    sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: architect._id }, credentials);
     sinon.assert.notCalled(courseCountDocuments);
     sinon.assert.notCalled(userCompanyCountDocuments);
     sinon.assert.notCalled(createUserCompany);
@@ -8810,7 +8820,8 @@ describe('uploadSingleCourseCSV', () => {
         company: 'Company',
         subProgram: subProgramId,
         operationsRepresentative: operationsRepresentativeId,
-        trainers: [],
+        coach: null,
+        architect: null,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
       },
     ];
@@ -8824,6 +8835,8 @@ describe('uploadSingleCourseCSV', () => {
       certificateGenerationMode: MONTHLY,
       trainee: userId,
       hasCertifyingTest: false,
+      coach: null,
+      architect: null,
       estimatedStartDate: '2025-03-03T15:00:00.000Z',
     };
 
@@ -8867,7 +8880,8 @@ describe('uploadSingleCourseCSV', () => {
         company: companyId,
         subProgram: subProgramId,
         operationsRepresentative: operationsRepresentativeId,
-        trainers: [],
+        coach: null,
+        architect: null,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
       },
     ];
@@ -8881,6 +8895,8 @@ describe('uploadSingleCourseCSV', () => {
       certificateGenerationMode: MONTHLY,
       trainee: userId,
       hasCertifyingTest: false,
+      coach: null,
+      architect: null,
       estimatedStartDate: '2025-03-03T15:00:00.000Z',
     };
 
@@ -8926,7 +8942,8 @@ describe('uploadSingleCourseCSV', () => {
         company: 'Company',
         subProgram: subProgramId,
         operationsRepresentative: operationsRepresentativeId,
-        trainers: [],
+        coach: null,
+        architect: null,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
       },
     ];

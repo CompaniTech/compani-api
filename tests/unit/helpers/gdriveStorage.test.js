@@ -174,7 +174,52 @@ describe('createCourseFolderAndSheet', () => {
     delete process.env.GOOGLE_SHEET_TEMPLATE_ID;
   });
 
-  it('should create a VAEI course folder and sheet and write data in it', async () => {
+  it('should create a VAEI course folder and sheet and write data in it (with coach and architect)', async () => {
+    const traineeName = 'TITI Toto';
+    const traineeEmail = 'toto.titi@compani.fr';
+    const traineePhone = '+33612345678';
+    const traineeCompany = 'Company';
+    const coach = { name: 'Jean COACH', email: 'coach@compani.fr', phone: '+33123456789' };
+    const architect = { name: 'Jill ARCHIE', email: 'architect@compani.fr', phone: '' };
+
+    add.returns({ id: 'folder_id' });
+    copy.returns({ id: 'sheet_id' });
+
+    const result = await GDriveStorageHelper
+      .createCourseFolderAndSheet({ traineeName, traineeEmail, traineePhone, traineeCompany, coach, architect });
+
+    expect(result).toEqual({ folderId: 'folder_id', gSheetId: 'sheet_id' });
+
+    sinon.assert.calledOnceWithExactly(
+      add,
+      { name: 'TITI Toto (Company)', parentFolderId: 'parent_folder_id', folder: true }
+    );
+
+    sinon.assert.calledWithExactly(
+      copy,
+      { fileId: 'templateId', name: 'TITI Toto (Company) - Fichier Apprenant', parents: ['folder_id'] }
+    );
+
+    sinon.assert.calledWithExactly(writeData.getCall(0), {
+      spreadsheetId: 'sheet_id',
+      range: 'Coordonnées!E2:E4',
+      values: [['TITI Toto'], ['toto.titi@compani.fr'], ['\'+33612345678']],
+    });
+
+    sinon.assert.calledWithExactly(writeData.getCall(1), {
+      spreadsheetId: 'sheet_id',
+      range: 'Coordonnées!C2:C4',
+      values: [['Jean COACH'], ['coach@compani.fr'], ['\'+33123456789']],
+    });
+
+    sinon.assert.calledWithExactly(writeData.getCall(2), {
+      spreadsheetId: 'sheet_id',
+      range: 'Coordonnées!D2:D4',
+      values: [['Jill ARCHIE'], ['architect@compani.fr'], ['']],
+    });
+  });
+
+  it('should create a VAEI course folder and sheet and write data in it (without coach or architect)', async () => {
     const traineeName = 'TITI Toto';
     const traineeEmail = 'toto.titi@compani.fr';
     const traineePhone = '+33612345678';
@@ -183,8 +228,14 @@ describe('createCourseFolderAndSheet', () => {
     add.returns({ id: 'folder_id' });
     copy.returns({ id: 'sheet_id' });
 
-    const result = await GDriveStorageHelper
-      .createCourseFolderAndSheet({ traineeName, traineeEmail, traineePhone, traineeCompany });
+    const result = await GDriveStorageHelper.createCourseFolderAndSheet({
+      traineeName,
+      traineeEmail,
+      traineePhone,
+      traineeCompany,
+      coach: null,
+      architect: null,
+    });
 
     expect(result).toEqual({ folderId: 'folder_id', gSheetId: 'sheet_id' });
 
