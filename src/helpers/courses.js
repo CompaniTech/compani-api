@@ -100,8 +100,8 @@ const { CompaniDuration } = require('./dates/companiDurations');
 
 exports.createCourse = async (payload, credentials) => {
   let coursePayload = payload.company
-    ? { ...omit(payload, 'company'), companies: [payload.company] }
-    : payload;
+    ? { ...omit(payload, ['company', 'coach', 'architect']), companies: [payload.company] }
+    : omit(payload, ['coach', 'architect']);
 
   if (payload.type === SINGLE) {
     const company = await UserCompany
@@ -123,6 +123,8 @@ exports.createCourse = async (payload, credentials) => {
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
         traineeCompany: trainee.company.name,
+        ...payload.coach && { coach: payload.coach },
+        ...payload.architect && { architect: payload.architect },
       });
 
       coursePayload.folderId = folderId;
@@ -1743,7 +1745,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
     }
     if (!userId) {
       const newUser = await UsersHelper.createUser(
-        { ...omit(learner, ['operationsRepresentative', 'subProgram', 'trainers']), company, origin: WEBAPP },
+        { ...omit(learner, ['operationsRepresentative', 'subProgram', 'coach', 'architect']), company, origin: WEBAPP },
         credentials
       );
       userId = newUser._id;
@@ -1758,7 +1760,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       if (!userCompany) await UserCompaniesHelper.create({ user: userId, company });
     }
 
-    const { subProgram, operationsRepresentative, estimatedStartDate, trainers } = learner;
+    const { subProgram, operationsRepresentative, estimatedStartDate, coach, architect } = learner;
     const identity = { firstname: learner['identity.firstname'], lastname: learner['identity.lastname'] };
     const payload = {
       subProgram,
@@ -1771,10 +1773,11 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       trainee: userId,
       hasCertifyingTest: false,
       estimatedStartDate,
+      coach,
+      architect,
     };
     const course = await exports.createCourse(payload, credentials);
-    if (trainers.length) {
-      for (const trainer of trainers) await exports.addTrainer(course._id, { trainer }, credentials);
-    }
+    if (coach) await exports.addTrainer(course._id, { trainer: coach._id }, credentials);
+    if (architect) await exports.addTrainer(course._id, { trainer: architect._id }, credentials);
   }
 };

@@ -32,7 +32,14 @@ exports.addFile = async (params) => {
 
 exports.deleteFile = async driveFileId => Gdrive.deleteFile({ fileId: driveFileId });
 
-exports.createCourseFolderAndSheet = async ({ traineeName, traineeEmail, traineePhone, traineeCompany }) => {
+exports.createCourseFolderAndSheet = async ({
+  traineeName,
+  traineeEmail,
+  traineePhone,
+  traineeCompany,
+  coach = null,
+  architect = null,
+}) => {
   const parentFolderId = process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID;
   const templateId = process.env.GOOGLE_SHEET_TEMPLATE_ID;
 
@@ -52,8 +59,23 @@ exports.createCourseFolderAndSheet = async ({ traineeName, traineeEmail, trainee
   await Gsheets.writeData({
     spreadsheetId: copiedSheet.id,
     range: 'Coordonnées!E2:E4',
-    values: [[traineeName], [traineeEmail], [`'${traineePhone}`]],
+    values: [[traineeName], [traineeEmail], [traineePhone ? `'${traineePhone}` : '']],
   });
+
+  if (coach) {
+    await Gsheets.writeData({
+      spreadsheetId: copiedSheet.id,
+      range: 'Coordonnées!C2:C4',
+      values: [[coach.name], [coach.email], [coach.phone ? `'${coach.phone}` : '']],
+    });
+  }
+  if (architect) {
+    await Gsheets.writeData({
+      spreadsheetId: copiedSheet.id,
+      range: 'Coordonnées!D2:D4',
+      values: [[architect.name], [architect.email], [architect.phone ? `'${architect.phone}` : '']],
+    });
+  }
 
   return { folderId: folder.id, gSheetId: copiedSheet.id };
 };
