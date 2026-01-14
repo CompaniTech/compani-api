@@ -101,7 +101,7 @@ const { CompaniDuration } = require('./dates/companiDurations');
 exports.createCourse = async (payload, credentials) => {
   let coursePayload = payload.company
     ? { ...omit(payload, ['company', 'coach', 'architect']), companies: [payload.company] }
-    : { ...omit(payload, ['coach', 'architect']) };
+    : omit(payload, ['coach', 'architect']);
 
   if (payload.type === SINGLE) {
     const company = await UserCompany
