@@ -598,13 +598,26 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
 
   // A coach/client_admin is not supposed to read infos on trainees from other companies
   // espacially for INTER_B2B courses.
+  const trainees = get(credentials, 'role.vendor')
+    ? courseTrainees
+    : courseTrainees.filter(t => UtilsHelper
+      .hasUserAccessToCompany(credentials, get(t, isBlended ? 'registrationCompany' : 'company')));
+
+  const traineesIds = trainees.map(t => t._id);
+  const slots = get(credentials, 'role.vendor')
+    ? fetchedCourse.slots
+    : (fetchedCourse.slots || [])
+      .filter(s => !s.trainees || s.trainees.some(t => UtilsHelper.doesArrayIncludeId(traineesIds, t)))
+      .map(s => (!s.trainees
+        ? s
+        : { ...s, trainees: s.trainees.filter(t => UtilsHelper.doesArrayIncludeId(traineesIds, t)) }
+      ));
+
   return {
     ...fetchedCourse,
     totalTheoreticalDuration: exports.getTotalTheoreticalDuration(fetchedCourse),
-    trainees: get(credentials, 'role.vendor')
-      ? courseTrainees
-      : courseTrainees.filter(t => UtilsHelper
-        .hasUserAccessToCompany(credentials, get(t, isBlended ? 'registrationCompany' : 'company'))),
+    trainees,
+    ...isBlended && { slots },
   };
 };
 

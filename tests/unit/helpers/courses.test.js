@@ -2474,13 +2474,14 @@ describe('getCourse', () => {
         format: BLENDED,
         trainees: [{ _id: traineeIds[0] }, { _id: traineeIds[1] }],
         subProgram: { steps: [] },
-        slots: [{ step: new ObjectId() }],
+        slots: [{ step: new ObjectId() }, { step: new ObjectId(), trainees: [traineeIds[1]] }],
       };
 
       const courseWithFilteredTrainees = {
         type: INTER_B2B,
         trainees: [{ _id: traineeIds[0], registrationCompany: authCompanyId }],
         totalTheoreticalDuration: 'PT0S',
+        slots: [course.slots[0]],
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course));
