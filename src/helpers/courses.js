@@ -1120,6 +1120,8 @@ exports.formatIntraCourseForPdf = (course) => {
     company: UtilsHelper.formatName(course.companies),
     trainer: course.trainers.length === 1 ? UtilsHelper.formatIdentity(course.trainers[0].identity, 'FL') : '',
     type: course.type,
+    maxTrainees: course.maxTrainees,
+    trainees: course.trainees,
   };
 
   const slotsGroupedByDate = exports.groupSlotsByDate(course.slots);
@@ -1172,10 +1174,14 @@ exports.formatInterCourseForPdf = async (course) => {
 
 exports.generateAttendanceSheets = async (courseId) => {
   const course = await Course
-    .findOne({ _id: courseId }, { misc: 1, type: 1 })
+    .findOne({ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 })
     .populate({ path: 'companies', select: 'name' })
     .populate({ path: 'slots', select: 'startDate endDate address trainees' })
-    .populate({ path: 'trainees', select: 'identity' })
+    .populate({
+      path: 'trainees',
+      select: 'identity',
+      populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+    })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
       path: 'subProgram',

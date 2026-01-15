@@ -5573,7 +5573,7 @@ describe('generateAttendanceSheets', () => {
     await CourseHelper.generateAttendanceSheets(courseId);
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
-      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1 }] },
+      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
@@ -5581,7 +5581,13 @@ describe('generateAttendanceSheets', () => {
       },
       {
         query: 'populate',
-        args: [{ path: 'trainees', select: 'identity' }],
+        args: [
+          {
+            path: 'trainees',
+            select: 'identity',
+            populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+          },
+        ],
       },
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
@@ -5612,7 +5618,7 @@ describe('generateAttendanceSheets', () => {
     await CourseHelper.generateAttendanceSheets(courseId);
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
-      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1 }] },
+      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
@@ -5620,7 +5626,13 @@ describe('generateAttendanceSheets', () => {
       },
       {
         query: 'populate',
-        args: [{ path: 'trainees', select: 'identity' }],
+        args: [
+          {
+            path: 'trainees',
+            select: 'identity',
+            populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+          },
+        ],
       },
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
@@ -5650,7 +5662,7 @@ describe('generateAttendanceSheets', () => {
     await CourseHelper.generateAttendanceSheets(courseId);
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
-      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1 }] },
+      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
@@ -5658,7 +5670,13 @@ describe('generateAttendanceSheets', () => {
       },
       {
         query: 'populate',
-        args: [{ path: 'trainees', select: 'identity' }],
+        args: [
+          {
+            path: 'trainees',
+            select: 'identity',
+            populate: { path: 'company', populate: { path: 'company', select: ' name' } },
+          },
+        ],
       },
       { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
       {
