@@ -208,12 +208,7 @@ exports.getOfficialPdfContent = async (data) => {
 
   const header = [
     { columns: [{ image: logo, width: 60 }, {}, { image: compani, width: 130 }], marginBottom: 24 },
-    {
-      text: `CERTIFICAT DE RÉALISATION${monthlyGlobalCertificateData ? ' FINAL' : ''}`,
-      style: 'title',
-      alignment: 'center',
-      marginBottom: 24,
-    },
+    { text: 'CERTIFICAT DE PARTICIPATION SESSION 1', style: 'title', alignment: 'center', marginBottom: 24 },
   ];
 
   const durationContent = [{ text: 'pour une durée de ', bold: true }];
@@ -365,8 +360,46 @@ exports.getOfficialPdfContent = async (data) => {
     ...actionDetailsSection,
     {
       text: [
-        { text: durationContent },
-        ...!monthlyGlobalCertificateData ? [{ text: '2', fontSize: 8, bold: true }] : [],
+        { text: 'qui s\'est déroulée du ', bold: true },
+        { text: `${startDate} `, italics: true },
+        { text: 'au ', bold: true },
+        { text: `${endDate}`, italics: true },
+      ],
+      marginLeft: 4,
+      marginBottom: 8,
+      marginTop: 4,
+    },
+    {
+      text: [
+        {
+          text: [
+            { text: 'pour une durée de ', bold: true },
+            ...(certificateGenerationModeIsMonthly
+              ? [{
+                text: `${trainee.attendanceDuration} d’accompagnement à distance et en présentiel, et `
+                 + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
+                + `${isVAEISubProgram || isPRISubProgram
+                  ? 'Ce certificat est lié à une facture de frais pédagogiques.'
+                  : ''}`,
+                italic: true,
+              }]
+              : []),
+            ...(!certificateGenerationModeIsMonthly && hasELearningStep
+              ? [{
+                text: `${trainee.totalDuration} en formation (dont ${trainee.attendanceDuration} en présentiel et `
+                + `${trainee.eLearningDuration} en e-learning) sur ${traineeDuration.total} prévues. `,
+                italics: true,
+              }]
+              : []),
+            ...(!certificateGenerationModeIsMonthly && !hasELearningStep
+              ? [{
+                text: `${trainee.attendanceDuration} en formation sur 8h00 prévues. `,
+                italics: true,
+              }]
+              : []),
+          ],
+        },
+        { text: '2', fontSize: 8, bold: true },
       ],
       marginBottom: 8,
       marginLeft: 4,
