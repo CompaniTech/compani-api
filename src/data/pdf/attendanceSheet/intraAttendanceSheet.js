@@ -1,4 +1,3 @@
-const get = require('lodash/get');
 const UtilsPdfHelper = require('./utils');
 const PdfHelper = require('../../../helpers/pdf');
 const FileHelper = require('../../../helpers/file');
@@ -94,18 +93,11 @@ exports.getPdfContent = async (data) => {
               );
             } else body[row].push({ text: '', ...!isConcernedBySlot && { fillColor: BLACK } });
           }
-        } else if (date.course.trainees[row - 1]) {
+        } else if (trainees && trainees[row - 1]) {
           if (column === 0) {
-            body[row].push({ text: UtilsHelper.formatIdentity(date.course.trainees[row - 1].identity, 'FL') });
+            body[row].push({ text: trainees[row - 1].traineeName });
           } else if (column === 1 && isIntraHoldingCourse) {
-            body[row]
-              .push(
-                {
-                  text: get(date.course.trainees[row - 1], 'company.name'),
-                  margin: [0, 8, 0, 0],
-                  alignment: 'center',
-                }
-              );
+            body[row].push({ text: trainees[row - 1].registrationCompany, margin: [0, 8, 0, 0], alignment: 'center' });
           } else body[row].push({ text: '' });
         } else body[row].push({ text: '' });
       }

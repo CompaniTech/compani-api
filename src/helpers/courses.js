@@ -1111,7 +1111,7 @@ const getLiveDuration = (steps) => {
     .format(SHORT_DURATION_H_MM);
 };
 
-exports.formatIntraCourseForPdf = (course) => {
+exports.formatIntraCourseForPdf = async (course) => {
   const possibleMisc = course.misc ? ` - ${course.misc}` : '';
   const name = course.subProgram.program.name + possibleMisc;
   const courseData = {
@@ -1121,10 +1121,22 @@ exports.formatIntraCourseForPdf = (course) => {
     trainer: course.trainers.length === 1 ? UtilsHelper.formatIdentity(course.trainers[0].identity, 'FL') : '',
     type: course.type,
     maxTrainees: course.maxTrainees,
-    trainees: course.trainees,
   };
 
   const slotsGroupedByDate = exports.groupSlotsByDate(course.slots);
+
+  let traineesCompany;
+  let companiesById;
+  if (course.trainees.length) {
+    const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
+      .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
+    traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
+
+    const companiesList = await Company
+      .find({ _id: { $in: [...new Set(traineesCompanyAtCourseRegistration.map(t => t.company))] } }, { name: 1 })
+      .lean();
+    companiesById = mapValues(keyBy(companiesList, '_id'), 'name');
+  }
 
   return {
     dates: slotsGroupedByDate.map(groupedSlots => ({
@@ -1133,6 +1145,13 @@ exports.formatIntraCourseForPdf = (course) => {
       slots: groupedSlots.map(slot => exports.formatIntraCourseSlotsForPdf(slot)),
       date: CompaniDate(groupedSlots[0].startDate).format(DD_MM_YYYY),
     })),
+    trainees: course.trainees.length
+      ? course.trainees.map(trainee => ({
+        _id: trainee._id,
+        traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
+        registrationCompany: companiesById[traineesCompany[trainee._id]],
+      }))
+      : [],
   };
 };
 
@@ -1177,11 +1196,7 @@ exports.generateAttendanceSheets = async (courseId) => {
     .findOne({ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 })
     .populate({ path: 'companies', select: 'name' })
     .populate({ path: 'slots', select: 'startDate endDate address trainees' })
-    .populate({
-      path: 'trainees',
-      select: 'identity',
-      populate: { path: 'company', populate: { path: 'company', select: ' name' } },
-    })
+    .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
       path: 'subProgram',
@@ -1191,7 +1206,7 @@ exports.generateAttendanceSheets = async (courseId) => {
     .lean();
 
   const pdf = [INTRA, INTRA_HOLDING].includes(course.type)
-    ? await IntraAttendanceSheet.getPdf(exports.formatIntraCourseForPdf(course))
+    ? await IntraAttendanceSheet.getPdf(await exports.formatIntraCourseForPdf(course))
     : await InterAttendanceSheet.getPdf(await exports.formatInterCourseForPdf(course));
 
   return { fileName: 'emargement.pdf', pdf };

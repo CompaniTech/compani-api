@@ -31,11 +31,6 @@ describe('getPdfContent', () => {
       trainer: 'Ken Kaneki',
       type: INTRA,
       maxTrainees: 5,
-      trainees: [
-        { identity: { firstname: 'Michel', lastname: 'Drucker' } },
-        { identity: { firstname: 'Philippe', lastname: 'Etchebest' } },
-        { identity: { firstname: 'Alain', lastname: 'Ducas' } },
-      ],
     };
     const data = {
       dates: [
@@ -51,6 +46,11 @@ describe('getPdfContent', () => {
           slots: [{ startHour: '09h30', endHour: '12h' }],
           date: '08/09/2020',
         },
+      ],
+      trainees: [
+        { traineeName: 'Michel DRUCKER' },
+        { traineeName: 'Philippe ETCHEBEST' },
+        { traineeName: 'Alain DUCAS' },
       ],
     };
     const table = {
@@ -341,11 +341,6 @@ describe('getPdfContent', () => {
       trainer: '',
       type: INTRA_HOLDING,
       maxTrainees: 5,
-      trainees: [
-        { identity: { firstname: 'Michel', lastname: 'Drucker' }, company: { name: 'Structure A' } },
-        { identity: { firstname: 'Philippe', lastname: 'Etcheb' }, company: { name: 'Structure B' } },
-        { identity: { firstname: 'Alain', lastname: 'Ducas' }, company: { name: 'Structure A' } },
-      ],
     };
     const data = {
       dates: [
@@ -361,6 +356,11 @@ describe('getPdfContent', () => {
           slots: [{ startHour: '09h30', endHour: '12h' }],
           date: '08/09/2020',
         },
+      ],
+      trainees: [
+        { traineeName: 'Michel DRUCKER', registrationCompany: 'Structure A' },
+        { traineeName: 'Philippe ETCHEB', registrationCompany: 'Structure B' },
+        { traineeName: 'Alain DUCAS', registrationCompany: 'Structure A' },
       ],
     };
     const table = {
@@ -491,7 +491,6 @@ describe('getPdfContent', () => {
       trainer: 'Anne Onyme',
       type: INTRA_HOLDING,
       maxTrainees: 5,
-      trainees: [],
     };
     const data = {
       dates: [
@@ -502,6 +501,7 @@ describe('getPdfContent', () => {
           date: '05/03/2020',
         },
       ],
+      trainees: [],
     };
     const table = {
       body: [
