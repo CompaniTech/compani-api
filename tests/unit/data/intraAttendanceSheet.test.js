@@ -18,6 +18,7 @@ describe('getPdfContent', () => {
   });
 
   it('should format and return pdf content without signed slots (intra)', async () => {
+    const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const paths = [
       'src/data/pdf/tmp/conscience.png',
       'src/data/pdf/tmp/compani.png',
@@ -37,7 +38,7 @@ describe('getPdfContent', () => {
         {
           course,
           address: 'Rue Jean Jaurès 59620 Aulnoye-Aymeries',
-          slots: [{ startHour: '09h30', endHour: '12h' }],
+          slots: [{ startHour: '09h30', endHour: '12h', trainees: [traineeIds[0]] }],
           date: '05/03/2020',
         },
         {
@@ -48,30 +49,51 @@ describe('getPdfContent', () => {
         },
       ],
       trainees: [
-        { traineeName: 'Michel DRUCKER' },
-        { traineeName: 'Philippe ETCHEBEST' },
-        { traineeName: 'Alain DUCAS' },
+        { _id: traineeIds[0], traineeName: 'Michel DRUCKER' },
+        { _id: traineeIds[1], traineeName: 'Philippe ETCHEBEST' },
+        { _id: traineeIds[2], traineeName: 'Alain DUCAS' },
       ],
     };
-    const table = {
-      body: [
-        [{ text: 'Prénom NOM', style: 'header' }, { text: '09h30 - 12h', style: 'header' }],
-        [{ text: 'Michel DRUCKER' }, { text: '' }],
-        [{ text: 'Philippe ETCHEBEST' }, { text: '' }],
-        [{ text: 'Alain DUCAS' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] }, { text: '' }],
-      ],
-      widths: ['50%', '*'],
-      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
-      dontBreakRows: true,
-    };
+    const table = [
+      {
+        body: [
+          [{ text: 'Prénom NOM', style: 'header' }, { text: '09h30 - 12h', style: 'header' }],
+          [{ text: 'Michel DRUCKER' }, { text: '' }],
+          [{ text: 'Philippe ETCHEBEST' }, { text: '', fillColor: BLACK }],
+          [{ text: 'Alain DUCAS' }, { text: '', fillColor: BLACK }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] }, { text: '' }],
+        ],
+        widths: ['50%', '*'],
+        heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+        dontBreakRows: true,
+      },
+      {
+        body: [
+          [{ text: 'Prénom NOM', style: 'header' }, { text: '09h30 - 12h', style: 'header' }],
+          [{ text: 'Michel DRUCKER' }, { text: '' }],
+          [{ text: 'Philippe ETCHEBEST' }, { text: '' }],
+          [{ text: 'Alain DUCAS' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] }, { text: '' }],
+        ],
+        widths: ['50%', '*'],
+        heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+        dontBreakRows: true,
+      },
+    ];
     const pdf = {
       content: [
         {
@@ -101,7 +123,7 @@ describe('getPdfContent', () => {
           ],
           margin: [16, 0, 24, 24],
         },
-        { table, marginBottom: 8, pageBreak: 'after' },
+        { table: table[0], marginBottom: 8, pageBreak: 'after' },
         {
           columns: [
             { image: paths[0], width: 64 },
@@ -129,7 +151,7 @@ describe('getPdfContent', () => {
           ],
           margin: [16, 0, 24, 24],
         },
-        { table, marginBottom: 8, pageBreak: 'none' },
+        { table: table[1], marginBottom: 8, pageBreak: 'none' },
       ],
       defaultStyle: { font: 'SourceSans', fontSize: 10 },
       pageMargins: [40, 40, 40, 128],

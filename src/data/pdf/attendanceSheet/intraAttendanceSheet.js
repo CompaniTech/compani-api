@@ -98,7 +98,13 @@ exports.getPdfContent = async (data) => {
             body[row].push({ text: trainees[row - 1].traineeName });
           } else if (column === 1 && isIntraHoldingCourse) {
             body[row].push({ text: trainees[row - 1].registrationCompany, margin: [0, 8, 0, 0], alignment: 'center' });
-          } else body[row].push({ text: '' });
+          } else {
+            const slot = date.slots[column - indexOffset];
+            const isConcernedBySlot = !slot.trainees ||
+              UtilsHelper.doesArrayIncludeId(slot.trainees, trainees[row - 1]._id);
+
+            body[row].push({ text: '', ...!isConcernedBySlot && { fillColor: BLACK } });
+          }
         } else body[row].push({ text: '' });
       }
     }
