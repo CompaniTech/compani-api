@@ -200,7 +200,7 @@ exports.getOfficialPdfContent = async (data) => {
 
   const header = [
     { columns: [{ image: logo, width: 60 }, {}, { image: compani, width: 130 }], marginBottom: 24 },
-    { text: 'CERTIFICAT DE RÉALISATION', style: 'title', alignment: 'center', marginBottom: 24 },
+    { text: 'CERTIFICAT DE PARTICIPATION SESSION 1', style: 'title', alignment: 'center', marginBottom: 24 },
   ];
 
   const body = [
@@ -274,7 +274,7 @@ exports.getOfficialPdfContent = async (data) => {
               : []),
             ...(!certificateGenerationModeIsMonthly && !hasELearningStep
               ? [{
-                text: `${trainee.attendanceDuration} en formation présentielle sur ${traineeDuration.total} prévues. `,
+                text: `${trainee.attendanceDuration} en formation sur 8h00 prévues. `,
                 italics: true,
               }]
               : []),
