@@ -40,7 +40,7 @@ exports.getPdfContent = async (data) => {
           ...new Set(signedSlots.flatMap(slot => slot.traineesSignature.map(s => s.traineeId.toHexString()))),
         ].length + 1 || 0
       )
-      : 11;
+      : date.course.maxTrainees + 6; // Add 6 lines : 5 lines for unsubscribed trainees and 1 for the last line
 
     for (let row = 1; row <= numberOfRows; row++) {
       body.push([]);
@@ -93,10 +93,22 @@ exports.getPdfContent = async (data) => {
               );
             } else body[row].push({ text: '', ...!isConcernedBySlot && { fillColor: BLACK } });
           }
+        } else if (trainees && trainees[row - 1]) {
+          if (column === 0) {
+            body[row].push({ text: trainees[row - 1].traineeName });
+          } else if (column === 1 && isIntraHoldingCourse) {
+            body[row].push({ text: trainees[row - 1].registrationCompany, margin: [0, 8, 0, 0], alignment: 'center' });
+          } else {
+            const slot = date.slots[column - indexOffset];
+            const isConcernedBySlot = !slot.trainees ||
+              UtilsHelper.doesArrayIncludeId(slot.trainees, trainees[row - 1]._id);
+
+            body[row].push({ text: '', ...!isConcernedBySlot && { fillColor: BLACK } });
+          }
         } else body[row].push({ text: '' });
       }
     }
-    const heights = Array(14).fill(28);
+    const heights = Array(numberOfRows).fill(28);
     heights[0] = 'auto';
     const widths = body[0].length < 4 ? ['50%'] : ['40%'];
     if (isIntraHoldingCourse) widths.push(body[0].length < 4 ? '30%' : '25%');
