@@ -1127,7 +1127,7 @@ exports.formatIntraCourseForPdf = async (course) => {
 
   let traineesCompany;
   let companiesById;
-  if (course.trainees.length) {
+  if (course.trainees.length && course.type === INTRA_HOLDING) {
     const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
       .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
     traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
@@ -1149,7 +1149,7 @@ exports.formatIntraCourseForPdf = async (course) => {
       ? course.trainees.map(trainee => ({
         _id: trainee._id,
         traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
-        registrationCompany: companiesById[traineesCompany[trainee._id]],
+        ...(course.type === INTRA_HOLDING && { registrationCompany: companiesById[traineesCompany[trainee._id]] }),
       }))
       : [],
   };

@@ -69,12 +69,9 @@ exports.getPdfContent = async (data) => {
           } else body[row].push({ text: '' });
         } else if (signedSlots) {
           if (column === 0) {
-            body[row].push({
-              text: UtilsHelper.formatIdentity(trainees[row - 1].identity, 'FL'),
-              margin: [0, 8, 0, 0],
-            });
+            body[row].push({ text: trainees[row - 1].traineeName, margin: [0, 8, 0, 0] });
           } else if (column === 1 && isIntraHoldingCourse) {
-            body[row].push({ text: trainees[row - 1].company.name, margin: [0, 8, 0, 0], alignment: 'center' });
+            body[row].push({ text: trainees[row - 1].registrationCompany, margin: [0, 8, 0, 0], alignment: 'center' });
           } else {
             const slot = date.slots[column - indexOffset];
             const isConcernedBySlot = !slot.trainees ||

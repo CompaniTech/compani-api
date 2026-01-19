@@ -240,8 +240,8 @@ describe('getPdfContent', () => {
 
       ],
       trainees: [
-        { _id: traineeIds[0], identity: { firstname: 'Carlos', lastname: 'Sainz' } },
-        { _id: traineeIds[1], identity: { firstname: 'Charles', lastname: 'Leclerc' } },
+        { _id: traineeIds[0], traineeName: 'Carlos SAINZ' },
+        { _id: traineeIds[1], traineeName: 'Charles LECLERC' },
       ],
     };
     const table = {
@@ -662,16 +662,8 @@ describe('getPdfContent', () => {
         },
       ],
       trainees: [
-        {
-          _id: traineeIds[0],
-          identity: { firstname: 'Carlos', lastname: 'Sainz' },
-          company: { name: 'Alenvi Home SAS' },
-        },
-        {
-          _id: traineeIds[1],
-          identity: { firstname: 'Charles', lastname: 'Leclerc' },
-          company: { name: 'Biens Communs' },
-        },
+        { _id: traineeIds[0], traineeName: 'Carlos SAINZ', registrationCompany: 'Alenvi Home SAS' },
+        { _id: traineeIds[1], traineeName: 'Charles LECLERC', registrationCompany: 'Biens Communs' },
       ],
     };
     const table = {
@@ -834,16 +826,8 @@ describe('getPdfContent', () => {
 
       ],
       trainees: [
-        {
-          _id: traineeIds[0],
-          identity: { firstname: 'Carlos', lastname: 'Sainz' },
-          company: { name: 'Alenvi Home SAS' },
-        },
-        {
-          _id: traineeIds[1],
-          identity: { firstname: 'Charles', lastname: 'Leclerc' },
-          company: { name: 'Biens Communs' },
-        },
+        { _id: traineeIds[0], traineeName: 'Carlos SAINZ', registrationCompany: 'Alenvi Home SAS' },
+        { _id: traineeIds[1], traineeName: 'Charles LECLERC', registrationCompany: 'Biens Communs' },
       ],
     };
     const table = {
