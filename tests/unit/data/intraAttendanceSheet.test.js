@@ -17,7 +17,8 @@ describe('getPdfContent', () => {
     downloadImages.restore();
   });
 
-  it('it should format and return pdf content without signed slots (intra)', async () => {
+  it('should format and return pdf content without signed slots (intra)', async () => {
+    const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const paths = [
       'src/data/pdf/tmp/conscience.png',
       'src/data/pdf/tmp/compani.png',
@@ -30,13 +31,14 @@ describe('getPdfContent', () => {
       company: 'Alenvi Home SAS',
       trainer: 'Ken Kaneki',
       type: INTRA,
+      maxTrainees: 5,
     };
     const data = {
       dates: [
         {
           course,
           address: 'Rue Jean Jaurès 59620 Aulnoye-Aymeries',
-          slots: [{ startHour: '09h30', endHour: '12h' }],
+          slots: [{ startHour: '09h30', endHour: '12h', trainees: [traineeIds[0]] }],
           date: '05/03/2020',
         },
         {
@@ -46,26 +48,52 @@ describe('getPdfContent', () => {
           date: '08/09/2020',
         },
       ],
-    };
-    const table = {
-      body: [
-        [{ text: 'Prénom NOM', style: 'header' }, { text: '09h30 - 12h', style: 'header' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }],
-        [{ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] }, { text: '' }],
+      trainees: [
+        { _id: traineeIds[0], traineeName: 'Michel DRUCKER' },
+        { _id: traineeIds[1], traineeName: 'Philippe ETCHEBEST' },
+        { _id: traineeIds[2], traineeName: 'Alain DUCAS' },
       ],
-      widths: ['50%', '*'],
-      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
-      dontBreakRows: true,
     };
+    const table = [
+      {
+        body: [
+          [{ text: 'Prénom NOM', style: 'header' }, { text: '09h30 - 12h', style: 'header' }],
+          [{ text: 'Michel DRUCKER' }, { text: '' }],
+          [{ text: 'Philippe ETCHEBEST' }, { text: '', fillColor: BLACK }],
+          [{ text: 'Alain DUCAS' }, { text: '', fillColor: BLACK }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] }, { text: '' }],
+        ],
+        widths: ['50%', '*'],
+        heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+        dontBreakRows: true,
+      },
+      {
+        body: [
+          [{ text: 'Prénom NOM', style: 'header' }, { text: '09h30 - 12h', style: 'header' }],
+          [{ text: 'Michel DRUCKER' }, { text: '' }],
+          [{ text: 'Philippe ETCHEBEST' }, { text: '' }],
+          [{ text: 'Alain DUCAS' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: '' }, { text: '' }],
+          [{ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] }, { text: '' }],
+        ],
+        widths: ['50%', '*'],
+        heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+        dontBreakRows: true,
+      },
+    ];
     const pdf = {
       content: [
         {
@@ -95,7 +123,7 @@ describe('getPdfContent', () => {
           ],
           margin: [16, 0, 24, 24],
         },
-        { table, marginBottom: 8, pageBreak: 'after' },
+        { table: table[0], marginBottom: 8, pageBreak: 'after' },
         {
           columns: [
             { image: paths[0], width: 64 },
@@ -123,7 +151,7 @@ describe('getPdfContent', () => {
           ],
           margin: [16, 0, 24, 24],
         },
-        { table, marginBottom: 8, pageBreak: 'none' },
+        { table: table[1], marginBottom: 8, pageBreak: 'none' },
       ],
       defaultStyle: { font: 'SourceSans', fontSize: 10 },
       pageMargins: [40, 40, 40, 128],
@@ -157,7 +185,7 @@ describe('getPdfContent', () => {
     sinon.assert.calledOnceWithExactly(downloadImages, imageList);
   });
 
-  it('it should format and return pdf content with signed slots (intra)', async () => {
+  it('should format and return pdf content with signed slots (intra)', async () => {
     const paths = [
       'src/data/pdf/tmp/conscience.png',
       'src/data/pdf/tmp/compani.png',
@@ -212,8 +240,8 @@ describe('getPdfContent', () => {
 
       ],
       trainees: [
-        { _id: traineeIds[0], identity: { firstname: 'Carlos', lastname: 'Sainz' } },
-        { _id: traineeIds[1], identity: { firstname: 'Charles', lastname: 'Leclerc' } },
+        { _id: traineeIds[0], traineeName: 'Carlos SAINZ' },
+        { _id: traineeIds[1], traineeName: 'Charles LECLERC' },
       ],
     };
     const table = {
@@ -240,7 +268,7 @@ describe('getPdfContent', () => {
         ],
       ],
       widths: ['50%', '*', '*'],
-      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      heights: ['auto', 28, 28],
       dontBreakRows: true,
     };
     const pdf = {
@@ -321,7 +349,7 @@ describe('getPdfContent', () => {
     );
   });
 
-  it('it should format and return pdf content (intra_holding) (1 slot per day)', async () => {
+  it('should format and return pdf content (intra_holding) (1 slot per day)', async () => {
     const paths = [
       'src/data/pdf/tmp/conscience.png',
       'src/data/pdf/tmp/compani.png',
@@ -334,6 +362,7 @@ describe('getPdfContent', () => {
       company: 'Alenvi Home SAS, Biens Communs',
       trainer: '',
       type: INTRA_HOLDING,
+      maxTrainees: 5,
     };
     const data = {
       dates: [
@@ -350,6 +379,11 @@ describe('getPdfContent', () => {
           date: '08/09/2020',
         },
       ],
+      trainees: [
+        { traineeName: 'Michel DRUCKER', registrationCompany: 'Structure A' },
+        { traineeName: 'Philippe ETCHEB', registrationCompany: 'Structure B' },
+        { traineeName: 'Alain DUCAS', registrationCompany: 'Structure A' },
+      ],
     };
     const table = {
       body: [
@@ -358,9 +392,9 @@ describe('getPdfContent', () => {
           { text: 'Structure', style: 'header' },
           { text: '09h30 - 12h', style: 'header' },
         ],
-        [{ text: '' }, { text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }, { text: '' }],
-        [{ text: '' }, { text: '' }, { text: '' }],
+        [{ text: 'Michel DRUCKER' }, { text: 'Structure A', margin: [0, 8, 0, 0], alignment: 'center' }, { text: '' }],
+        [{ text: 'Philippe ETCHEB' }, { text: 'Structure B', margin: [0, 8, 0, 0], alignment: 'center' }, { text: '' }],
+        [{ text: 'Alain DUCAS' }, { text: 'Structure A', margin: [0, 8, 0, 0], alignment: 'center' }, { text: '' }],
         [{ text: '' }, { text: '' }, { text: '' }],
         [{ text: '' }, { text: '' }, { text: '' }],
         [{ text: '' }, { text: '' }, { text: '' }],
@@ -371,7 +405,7 @@ describe('getPdfContent', () => {
         [{ text: 'Signature de l\'intervenant·e', italics: true, margin: [0, 8, 0, 0] }, { text: '' }, { text: '' }],
       ],
       widths: ['50%', '30%', '*'],
-      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
       dontBreakRows: true,
     };
     const pdf = {
@@ -465,7 +499,7 @@ describe('getPdfContent', () => {
     sinon.assert.calledOnceWithExactly(downloadImages, imageList);
   });
 
-  it('it should format and return pdf content (intra_holding) (2 slots per day)', async () => {
+  it('should format and return pdf content (intra_holding) (2 slots per day)', async () => {
     const paths = [
       'src/data/pdf/tmp/conscience.png',
       'src/data/pdf/tmp/compani.png',
@@ -478,6 +512,7 @@ describe('getPdfContent', () => {
       company: 'Alenvi Home SAS, Biens Communs',
       trainer: 'Anne Onyme',
       type: INTRA_HOLDING,
+      maxTrainees: 5,
     };
     const data = {
       dates: [
@@ -488,6 +523,7 @@ describe('getPdfContent', () => {
           date: '05/03/2020',
         },
       ],
+      trainees: [],
     };
     const table = {
       body: [
@@ -514,7 +550,7 @@ describe('getPdfContent', () => {
         ],
       ],
       widths: ['40%', '25%', '*', '*'],
-      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
       dontBreakRows: true,
     };
     const pdf = {
@@ -580,7 +616,7 @@ describe('getPdfContent', () => {
     sinon.assert.calledOnceWithExactly(downloadImages, imageList);
   });
 
-  it('it should format and return pdf content with signed slots (intra holding) (1 slot per day)', async () => {
+  it('should format and return pdf content with signed slots (intra holding) (1 slot per day)', async () => {
     const paths = [
       'src/data/pdf/tmp/conscience.png',
       'src/data/pdf/tmp/compani.png',
@@ -626,16 +662,8 @@ describe('getPdfContent', () => {
         },
       ],
       trainees: [
-        {
-          _id: traineeIds[0],
-          identity: { firstname: 'Carlos', lastname: 'Sainz' },
-          company: { name: 'Alenvi Home SAS' },
-        },
-        {
-          _id: traineeIds[1],
-          identity: { firstname: 'Charles', lastname: 'Leclerc' },
-          company: { name: 'Biens Communs' },
-        },
+        { _id: traineeIds[0], traineeName: 'Carlos SAINZ', registrationCompany: 'Alenvi Home SAS' },
+        { _id: traineeIds[1], traineeName: 'Charles LECLERC', registrationCompany: 'Biens Communs' },
       ],
     };
     const table = {
@@ -662,7 +690,7 @@ describe('getPdfContent', () => {
         ],
       ],
       widths: ['50%', '30%', '*'],
-      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      heights: ['auto', 28, 28],
       dontBreakRows: true,
     };
     const pdf = {
@@ -743,7 +771,7 @@ describe('getPdfContent', () => {
     );
   });
 
-  it('it should format and return pdf content with signed slots (intra holding) (2 slots per day)', async () => {
+  it('should format and return pdf content with signed slots (intra holding) (2 slots per day)', async () => {
     const paths = [
       'src/data/pdf/tmp/conscience.png',
       'src/data/pdf/tmp/compani.png',
@@ -798,16 +826,8 @@ describe('getPdfContent', () => {
 
       ],
       trainees: [
-        {
-          _id: traineeIds[0],
-          identity: { firstname: 'Carlos', lastname: 'Sainz' },
-          company: { name: 'Alenvi Home SAS' },
-        },
-        {
-          _id: traineeIds[1],
-          identity: { firstname: 'Charles', lastname: 'Leclerc' },
-          company: { name: 'Biens Communs' },
-        },
+        { _id: traineeIds[0], traineeName: 'Carlos SAINZ', registrationCompany: 'Alenvi Home SAS' },
+        { _id: traineeIds[1], traineeName: 'Charles LECLERC', registrationCompany: 'Biens Communs' },
       ],
     };
     const table = {
@@ -838,7 +858,7 @@ describe('getPdfContent', () => {
         ],
       ],
       widths: ['40%', '25%', '*', '*'],
-      heights: ['auto', 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+      heights: ['auto', 28, 28],
       dontBreakRows: true,
     };
     const pdf = {

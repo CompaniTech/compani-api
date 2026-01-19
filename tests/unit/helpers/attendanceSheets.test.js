@@ -1565,11 +1565,7 @@ describe('generate', () => {
             select: 'type misc companies subProgram slots trainees',
             populate: [
               { path: 'companies', select: 'name' },
-              {
-                path: 'trainees',
-                select: 'identity',
-                populate: { path: 'company', populate: { path: 'company', select: ' name' } },
-              },
+              { path: 'trainees', select: 'identity' },
               {
                 path: 'subProgram',
                 select: 'steps program',
@@ -1712,11 +1708,7 @@ describe('generate', () => {
             select: 'type misc companies subProgram slots trainees',
             populate: [
               { path: 'companies', select: 'name' },
-              {
-                path: 'trainees',
-                select: 'identity',
-                populate: { path: 'company', populate: { path: 'company', select: ' name' } },
-              },
+              { path: 'trainees', select: 'identity' },
               {
                 path: 'subProgram',
                 select: 'steps program',
@@ -1858,6 +1850,10 @@ describe('generate', () => {
         { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '9h00', endHour: '11h00' }] },
         { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '14h00', endHour: '16h00' }] },
       ],
+      trainees: [
+        { _id: traineeIds[0], traineeName: 'Sainz CARLOS' },
+        { _id: traineeIds[1], traineeName: 'Charles LECLERC' },
+      ],
     });
 
     getPdfIntra.returns('pdf');
@@ -1880,11 +1876,7 @@ describe('generate', () => {
             select: 'type misc companies subProgram slots trainees',
             populate: [
               { path: 'companies', select: 'name' },
-              {
-                path: 'trainees',
-                select: 'identity',
-                populate: { path: 'company', populate: { path: 'company', select: ' name' } },
-              },
+              { path: 'trainees', select: 'identity' },
               {
                 path: 'subProgram',
                 select: 'steps program',
@@ -1923,8 +1915,8 @@ describe('generate', () => {
           },
         ],
         trainees: [
-          { _id: traineeIds[0], identity: { lastname: 'Sainz', firstname: 'Carlos' } },
-          { _id: traineeIds[1], identity: { lastname: 'Leclerc', firstname: 'Charles' } },
+          { _id: traineeIds[0], traineeName: 'Sainz CARLOS' },
+          { _id: traineeIds[1], traineeName: 'Charles LECLERC' },
         ],
       });
     sinon.assert.calledOnceWithExactly(
@@ -2066,6 +2058,10 @@ describe('generate', () => {
         { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '9h00', endHour: '11h00' }] },
         { course: { name: 'Program 1 misc' }, date: '04/01/2020', slots: [{ startHour: '14h00', endHour: '16h00' }] },
       ],
+      trainees: [
+        { _id: traineeIds[0], traineeName: 'Carlos SAINZ', registrationCompany: 'Alenvi' },
+        { _id: traineeIds[1], traineeName: 'Charles LECLERC', registrationCompany: 'Biens Communs' },
+      ],
     });
 
     getPdfIntra.returns('pdf');
@@ -2088,11 +2084,7 @@ describe('generate', () => {
             select: 'type misc companies subProgram slots trainees',
             populate: [
               { path: 'companies', select: 'name' },
-              {
-                path: 'trainees',
-                select: 'identity',
-                populate: { path: 'company', populate: { path: 'company', select: ' name' } },
-              },
+              { path: 'trainees', select: 'identity' },
               {
                 path: 'subProgram',
                 select: 'steps program',
@@ -2131,16 +2123,8 @@ describe('generate', () => {
           },
         ],
         trainees: [
-          {
-            _id: traineeIds[0],
-            identity: { lastname: 'Sainz', firstname: 'Carlos' },
-            company: { _id: companyIds[0], name: 'Alenvi' },
-          },
-          {
-            _id: traineeIds[1],
-            identity: { lastname: 'Leclerc', firstname: 'Charles' },
-            company: { _id: companyIds[1], name: 'Biens Communs' },
-          },
+          { _id: traineeIds[0], traineeName: 'Carlos SAINZ', registrationCompany: 'Alenvi' },
+          { _id: traineeIds[1], traineeName: 'Charles LECLERC', registrationCompany: 'Biens Communs' },
         ],
       });
     sinon.assert.calledOnceWithExactly(
