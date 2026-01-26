@@ -64,16 +64,57 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
         ),
       ]);
     } else {
-      const updatePayload = { $set: payload };
+      const updatePayload = { $set: omit(payload, 'wholeDay') };
       const { step } = courseSlot;
 
       if (step.type === ON_SITE || !payload.meetingLink) updatePayload.$unset = { meetingLink: '' };
       if (step.type === REMOTE || !payload.address) updatePayload.$unset = { ...updatePayload.$unset, address: '' };
-
-      await Promise.all([
+      const promises = [
         CourseHistoriesHelper.createHistoryOnSlotEdition(courseSlot, payload, user._id),
         CourseSlot.updateOne({ _id: courseSlot._id }, updatePayload),
-      ]);
+      ];
+      if (payload.wholeDay) {
+        const afternonStartDate = CompaniDate(payload.startDate).set({ hour: 14, minute: 0 }).toISO();
+        const afternoonEndDate = CompaniDate(payload.endDate).set({ hour: 17, minute: 30 }).toISO();
+
+        const hasConflictsOnAfternoon = await exports
+          .hasConflicts({ startDate: afternonStartDate, endDate: afternoonEndDate, course: courseSlot.course });
+        if (hasConflictsOnAfternoon) throw Boom.conflict(translate[language].courseSlotWholeDayConflict);
+
+        const slotData = pick(courseSlot, ['course', 'step', 'address', 'meetingLink']);
+        const slotToPlan = await CourseSlot
+          .findOne({
+            course: courseSlot.course,
+            step: step._id,
+            startDate: { $exists: false },
+            endDate: { $exists: false },
+            _id: { $ne: courseSlot._id },
+          })
+          .lean();
+        if (slotToPlan) {
+          promises.push(
+            CourseSlot.updateOne(
+              { _id: slotToPlan._id },
+              { $set: { ...slotData, startDate: afternonStartDate, endDate: afternoonEndDate } }
+            )
+          );
+        } else {
+          promises.push(CourseSlot.create({
+            ...slotData,
+            startDate: afternonStartDate,
+            endDate: afternoonEndDate,
+          }
+          ));
+        }
+        promises.push(
+          CourseHistoriesHelper.createHistoryOnSlotCreation(
+            { startDate: afternonStartDate, endDate: afternoonEndDate, ...slotData },
+            user._id
+          )
+        );
+      }
+
+      await Promise.all(promises);
     }
   }
 };

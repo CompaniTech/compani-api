@@ -87,6 +87,13 @@ const checkPayload = async (courseSlot, payload) => {
     const sameDay = CompaniDate(startDate).isSame(endDate, 'day');
     const startDateBeforeEndDate = CompaniDate(startDate).isSameOrBefore(endDate);
     if (!(sameDay && startDateBeforeEndDate)) throw Boom.badRequest();
+    if (payload.wholeDay) {
+      const startHour = CompaniDate(startDate).getUnits(['hour', 'minute']);
+      const endHour = CompaniDate(endDate).getUnits(['hour', 'minute']);
+      if (startHour.hour !== 9 || startHour.minute !== 0 || endHour.hour !== 12 || endHour.minute !== 30) {
+        throw Boom.badRequest();
+      }
+    }
   }
 
   if (step.type === E_LEARNING) throw Boom.badRequest();
