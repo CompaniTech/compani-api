@@ -14,6 +14,7 @@ const {
   ARCHIVED,
   ACTIVATED,
   EVENT_TRANSPORT_MODE_LIST,
+  CUSTOMER_STATUS,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const UtilsHelper = require('./utils');
@@ -70,10 +71,10 @@ const formatIdentity = person => `${person.firstname} ${person.lastname}`;
 
 const getStatus = (customer) => {
   if (isEmpty(customer)) return '';
-  if (customer.archivedAt) return ARCHIVED;
-  if (customer.stoppedAt) return STOPPED;
+  if (customer.archivedAt) return CUSTOMER_STATUS[ARCHIVED];
+  if (customer.stoppedAt) return CUSTOMER_STATUS[STOPPED];
 
-  return ACTIVATED;
+  return CUSTOMER_STATUS[ACTIVATED];
 };
 
 exports.exportCustomers = async (credentials) => {

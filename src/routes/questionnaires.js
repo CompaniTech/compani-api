@@ -169,7 +169,7 @@ exports.plugin = {
           }),
         },
         auth: { scope: ['questionnaires:edit'] },
-        pre: [{ method: authorizeQuestionnaireEdit }],
+        pre: [{ method: authorizeQuestionnaireEdit, assign: 'questionnaireToArchiveId' }],
       },
       handler: update,
     });

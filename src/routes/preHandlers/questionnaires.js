@@ -66,18 +66,17 @@ exports.authorizeQuestionnaireEdit = async (req) => {
 
   if (questionnaire.status === PUBLISHED && !req.payload.name) throw Boom.forbidden();
 
+  let publishedQuestionnaireWithSameType = null;
   const questionnaireQuery = {
     type: questionnaire.type,
     status: PUBLISHED,
     ...(questionnaire.program && { program: questionnaire.program }),
   };
-  const publishedQuestionnaireWithSameTypeExists = await Questionnaire.countDocuments(questionnaireQuery);
-  if (req.payload.status === PUBLISHED && publishedQuestionnaireWithSameTypeExists) {
-    throw Boom.conflict(translate[language].publishedQuestionnaireWithSameTypeExists);
-  }
+  publishedQuestionnaireWithSameType = await Questionnaire.findOne(questionnaireQuery).lean();
+
   if (req.payload.status === PUBLISHED && !questionnaire.areCardsValid) throw Boom.forbidden();
 
-  return null;
+  return get(publishedQuestionnaireWithSameType, '_id', null);
 };
 
 exports.authorizeCardDeletion = async (req) => {
