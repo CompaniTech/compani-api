@@ -38,6 +38,7 @@ exports.plugin = {
               endDate: requiredDateToISOString.allow(''),
               address: Joi.alternatives().try(addressValidation, {}),
               meetingLink: Joi.string().allow(''),
+              wholeDay: Joi.boolean(),
             }),
             Joi.object({ trainees: Joi.array().items(Joi.objectId()).min(1) })
           ),
