@@ -47,7 +47,7 @@ const getById = async (req) => {
 
 const update = async (req) => {
   try {
-    await QuestionnaireHelper.update(req.params._id, req.payload);
+    await QuestionnaireHelper.update(req.params._id, req.payload, req.pre.questionnaireToArchiveId);
 
     return { message: translate[language].questionnaireUpdated };
   } catch (e) {

@@ -19,6 +19,7 @@ const {
   BETWEEN_MID_AND_END_COURSE,
   ENDED,
   REVIEW,
+  ARCHIVED,
 } = require('./constants');
 const DatesUtilsHelper = require('./dates/utils');
 const UtilsHelper = require('./utils');
@@ -87,7 +88,19 @@ exports.getQuestionnaire = async id => Questionnaire.findOne({ _id: id })
   .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
   .lean({ virtuals: true });
 
-exports.update = async (id, payload) => Questionnaire.findOneAndUpdate({ _id: id }, { $set: payload }).lean();
+exports.update = async (id, payload, questionnaireToArchiveId) => {
+  if (questionnaireToArchiveId) {
+    await Questionnaire.updateOne(
+      { _id: questionnaireToArchiveId },
+      { $set: { status: ARCHIVED, archivedAt: CompaniDate().toISO() } }
+    );
+  }
+  const formattedPayload = payload;
+  if (payload.status === PUBLISHED) {
+    formattedPayload.publishedAt = CompaniDate().toISO();
+  }
+  return Questionnaire.findOneAndUpdate({ _id: id }, { $set: formattedPayload }).lean();
+};
 
 exports.addCard = async (questionnaireId, payload) => {
   const card = await CardHelper.createCard(payload);

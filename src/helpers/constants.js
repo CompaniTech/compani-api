@@ -579,9 +579,16 @@ module.exports = {
   NOTE_CREATION: 'note_creation',
   NOTE_UPDATE: 'note_update',
   // STATUS
-  ACTIVATED: 'Actif',
-  STOPPED: 'Arrêté',
-  ARCHIVED: 'Archivé',
+  ACTIVATED: 'activated',
+  STOPPED: 'stopped',
+  ARCHIVED: 'archived',
+  get CUSTOMER_STATUS() {
+    return {
+      [this.ACTIVATED]: 'Actif',
+      [this.STOPPED]: 'Arrêté',
+      [this.ARCHIVED]: 'Archivé',
+    };
+  },
   // EXPORTS
   SERVICE: 'service',
   SECTOR: 'sector',

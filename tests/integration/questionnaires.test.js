@@ -23,6 +23,7 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  ARCHIVED,
 } = require('../../src/helpers/constants');
 const { companyWithoutSubscription, authCompany } = require('../seed/authCompaniesSeed');
 const UtilsMock = require('../utilsMock');
@@ -742,6 +743,44 @@ describe('QUESTIONNAIRES ROUTES - PUT /questionnaires/{_id}', () => {
       expect(questionnairesCount).toBe(1);
     });
 
+    it('should archive old questionnaire if questionnaire with same type is already published', async () => {
+      const payload = { status: PUBLISHED };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/questionnaires/${questionnairesList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const oldQuestionnaire = await Questionnaire.countDocuments({ _id: questionnairesList[1]._id, status: ARCHIVED });
+      expect(oldQuestionnaire).toBe(1);
+
+      const publishedQuestionnaire = await Questionnaire
+        .countDocuments({ _id: questionnairesList[0]._id, status: PUBLISHED });
+      expect(publishedQuestionnaire).toBe(1);
+    });
+
+    it('should archive old questionnaire if self_positionning questionnaire with same program is already published',
+      async () => {
+        const payload = { status: PUBLISHED };
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/questionnaires/${questionnairesList[4]._id}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload,
+        });
+
+        expect(response.statusCode).toBe(200);
+        const oldQuestionnaire = await Questionnaire
+          .countDocuments({ _id: questionnairesList[3]._id, status: ARCHIVED });
+        expect(oldQuestionnaire).toBe(1);
+
+        const publishedQuestionnaire = await Questionnaire
+          .countDocuments({ _id: questionnairesList[4]._id, status: PUBLISHED });
+        expect(publishedQuestionnaire).toBe(1);
+      });
+
     it('should return 400 if questionnaire status is not PUBLISHED', async () => {
       await Questionnaire.deleteMany({ _id: questionnairesList[1]._id });
 
@@ -817,30 +856,6 @@ describe('QUESTIONNAIRES ROUTES - PUT /questionnaires/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(403);
-    });
-
-    it('should return 409 if questionnaire with same type is already published', async () => {
-      const payload = { status: PUBLISHED };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/questionnaires/${questionnairesList[0]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(409);
-    });
-
-    it('should return 409 if self_positionning questionnaire with same program is already published', async () => {
-      const payload = { status: PUBLISHED };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/questionnaires/${questionnairesList[4]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(409);
     });
   });
 
