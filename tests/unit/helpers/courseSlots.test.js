@@ -363,7 +363,7 @@ describe('updateCourseSlot', () => {
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: slot._id },
-      { $unset: { startDate: '', endDate: '', meetingLink: '', address: '', trainees: '' } }
+      { $unset: { startDate: '', endDate: '', meetingLink: '', address: '', trainees: '', trainers: '' } }
     );
   });
 
