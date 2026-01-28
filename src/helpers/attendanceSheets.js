@@ -287,11 +287,7 @@ exports.generate = async (attendanceSheetId) => {
       select: 'type misc companies subProgram slots trainees',
       populate: [
         { path: 'companies', select: 'name' },
-        {
-          path: 'trainees',
-          select: 'identity',
-          populate: { path: 'company', populate: { path: 'company', select: ' name' } },
-        },
+        { path: 'trainees', select: 'identity' },
         {
           path: 'subProgram',
           select: 'steps program',
@@ -325,11 +321,11 @@ exports.generate = async (attendanceSheetId) => {
       formattedCourse.companies = formattedCourse.companies
         .filter(c => UtilsHelper.doesArrayIncludeId(attendanceSheet.companies, c._id));
     }
-    const formattedCourseForIntra = await CoursesHelper.formatIntraCourseForPdf(formattedCourse);
     const traineesWithSignature = signedSlots.flatMap(s => s.traineesSignature.map(t => t.traineeId));
-    const trainees = attendanceSheet.course.trainees
+    formattedCourse.trainees = attendanceSheet.course.trainees
       .filter(t => UtilsHelper.doesArrayIncludeId(traineesWithSignature, t._id));
-    pdf = await IntraAttendanceSheet.getPdf({ ...formattedCourseForIntra, signedSlots, trainees });
+    const formattedCourseForIntra = await CoursesHelper.formatIntraCourseForPdf(formattedCourse);
+    pdf = await IntraAttendanceSheet.getPdf({ ...formattedCourseForIntra, signedSlots });
     fileName = `emargements_${formattedCourseForIntra.dates[0].date}`;
   }
   const fileUploaded = await GCloudStorageHelper

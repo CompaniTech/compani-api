@@ -11,7 +11,7 @@ const {
 } = require('./seed/courseSlotsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const CourseHistory = require('../../src/models/CourseHistory');
-const { SLOT_DELETION, SLOT_EDITION, SLOT_RESTRICTION } = require('../../src/helpers/constants');
+const { SLOT_DELETION, SLOT_EDITION, SLOT_RESTRICTION, SLOT_CREATION } = require('../../src/helpers/constants');
 const CourseSlot = require('../../src/models/CourseSlot');
 const {
   holdingAdminFromOtherCompany,
@@ -297,6 +297,51 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(slotListCount).toEqual(courseSlotsList.length);
     });
 
+    it('should add slot for whole day', async () => {
+      const payload = {
+        startDate: '2020-03-04T08:00:00.000Z',
+        endDate: '2020-03-04T11:30:00.000Z',
+        address: {
+          street: '39 rue de Ponthieu',
+          zipCode: '75008',
+          city: 'Paris',
+          fullAddress: '37 rue de Ponthieu 75008 Paris',
+          location: { type: 'Point', coordinates: [2.0987, 1.2345] },
+        },
+        wholeDay: true,
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const afternoonSlot = await CourseSlot.countDocuments({
+        course: courseSlotsList[0].course,
+        startDate: '2020-03-04T13:00:00.000Z',
+        endDate: '2020-03-04T16:30:00.000Z',
+      });
+      expect(afternoonSlot).toEqual(1);
+
+      const editionHistory = await CourseHistory.countDocuments({
+        course: courseSlotsList[0].course,
+        'update.startDate.to': payload.startDate,
+        action: SLOT_EDITION,
+      });
+      expect(editionHistory).toEqual(1);
+
+      const creationHistory = await CourseHistory.countDocuments({
+        course: courseSlotsList[0].course,
+        'slot.startDate': '2020-03-04T13:00:00.000Z',
+        'slot.endDate': '2020-03-04T16:30:00.000Z',
+        action: SLOT_CREATION,
+      });
+      expect(creationHistory).toEqual(1);
+    });
+
     it('should add concerned trainees', async () => {
       const payload = { trainees: [coach._id] };
       const response = await app.inject({
@@ -369,6 +414,29 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
 
     it('should return 400 if trainees are empty', async () => {
       const payload = { trainees: [] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if try to add slot on whole day but start and end hour are incorrect', async () => {
+      const payload = {
+        startDate: '2020-03-04T08:00:00.000Z',
+        endDate: '2020-03-04T12:30:00.000Z',
+        address: {
+          street: '39 rue de Ponthieu',
+          zipCode: '75008',
+          city: 'Paris',
+          fullAddress: '37 rue de Ponthieu 75008 Paris',
+          location: { type: 'Point', coordinates: [2.0987, 1.2345] },
+        },
+        wholeDay: true,
+      };
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
@@ -522,6 +590,29 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[1]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
+    it('should return 409 if try to create slot on whole day but slot conflict', async () => {
+      const payload = {
+        startDate: '2020-03-10T08:00:00.000Z',
+        endDate: '2020-03-10T11:30:00.000Z',
+        address: {
+          street: '39 rue de Ponthieu',
+          zipCode: '75008',
+          city: 'Paris',
+          fullAddress: '37 rue de Ponthieu 75008 Paris',
+          location: { type: 'Point', coordinates: [2.0987, 1.2345] },
+        },
+        wholeDay: true,
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });

@@ -50,6 +50,18 @@ exports.authorizeCreate = async (req) => {
   }
 };
 
+const hasConflicts = async (slot) => {
+  const query = {
+    course: slot.course,
+    startDate: { $lt: slot.endDate },
+    endDate: { $gt: slot.startDate },
+  };
+  if (slot._id) query._id = { $ne: slot._id };
+  const slotsInConflict = await CourseSlot.countDocuments(query);
+
+  return !!slotsInConflict;
+};
+
 const checkPayload = async (courseSlot, payload) => {
   const { course: courseId, step } = courseSlot;
   const { startDate, endDate } = payload;
@@ -87,6 +99,23 @@ const checkPayload = async (courseSlot, payload) => {
     const sameDay = CompaniDate(startDate).isSame(endDate, 'day');
     const startDateBeforeEndDate = CompaniDate(startDate).isSameOrBefore(endDate);
     if (!(sameDay && startDateBeforeEndDate)) throw Boom.badRequest();
+
+    const slotHasConflicts = await hasConflicts({ ...courseSlot, ...payload });
+    if (slotHasConflicts) throw Boom.conflict(translate[language].courseSlotConflict);
+    if (payload.wholeDay) {
+      const startHour = CompaniDate(startDate).getUnits(['hour', 'minute']);
+      const endHour = CompaniDate(endDate).getUnits(['hour', 'minute']);
+      if (startHour.hour !== 9 || startHour.minute !== 0 || endHour.hour !== 12 || endHour.minute !== 30) {
+        throw Boom.badRequest();
+      }
+
+      const afternonStartDate = CompaniDate(payload.startDate).set({ hour: 14, minute: 0 }).toISO();
+      const afternoonEndDate = CompaniDate(payload.endDate).set({ hour: 17, minute: 30 }).toISO();
+      const hasConflictsOnAfternoon = await hasConflicts(
+        { startDate: afternonStartDate, endDate: afternoonEndDate, course: courseSlot.course }
+      );
+      if (hasConflictsOnAfternoon) throw Boom.conflict(translate[language].courseSlotWholeDayConflict);
+    }
   }
 
   if (step.type === E_LEARNING) throw Boom.badRequest();

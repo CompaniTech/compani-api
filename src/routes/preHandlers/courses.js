@@ -1070,7 +1070,8 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
     'suffix',
     'subProgram',
     'operationsRepresentative',
-    'trainers',
+    'coach',
+    'architect',
     'estimatedStartDate',
   ].sort();
   if (!isEqual(Object.keys(learnerList[0]).sort(), allowedKeys)) {
@@ -1217,29 +1218,63 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         } else errorsByTrainee[learnerName] = [translate[language].unknownOperationsRepresentative];
       }
     }
-    const trainersIds = [];
-    if (learner.trainers) {
-      const trainersEmail = learner.trainers.split(',').map(email => email.trim()).filter(Boolean);
-      if (!trainersEmail.every(email => email.match(EMAIL_VALIDATION))) {
+    let formattedCoach = null;
+    if (learner.coach) {
+      if (!learner.coach.trim().match(EMAIL_VALIDATION)) {
         if (errorsByTrainee[learnerName]) {
-          errorsByTrainee[learnerName].push(translate[language].incorrectEmailForTrainer);
-        } else errorsByTrainee[learnerName] = [translate[language].incorrectEmailForTrainer];
+          errorsByTrainee[learnerName].push(translate[language].incorrectEmailForCoach);
+        } else errorsByTrainee[learnerName] = [translate[language].incorrectEmailForCoach];
       } else {
-        for (const trainerEmail of trainersEmail) {
-          const trainer = await User
-            .findOne(
-              {
-                'local.email': trainerEmail.toLowerCase(),
-                'role.vendor': { $in: [trainingOrganisationManagerRole._id, trainerRole._id] },
-              },
-              { _id: 1 })
-            .lean();
-          trainersIds.push(get(trainer, '_id'));
-          if (!trainer) {
-            if (errorsByTrainee[learnerName]) {
-              errorsByTrainee[learnerName].push(translate[language].unknownTrainer);
-            } else errorsByTrainee[learnerName] = [translate[language].unknownTrainer];
-          }
+        const coach = await User
+          .findOne(
+            {
+              'local.email': learner.coach.trim().toLowerCase(),
+              'role.vendor': { $in: [trainingOrganisationManagerRole._id, trainerRole._id] },
+            },
+            { _id: 1, identity: 1, local: 1, contact: 1 })
+          .lean();
+
+        if (!coach) {
+          if (errorsByTrainee[learnerName]) {
+            errorsByTrainee[learnerName].push(translate[language].unknownCoach);
+          } else errorsByTrainee[learnerName] = [translate[language].unknownCoach];
+        } else {
+          formattedCoach = {
+            _id: coach._id,
+            name: UtilsHelper.formatIdentity(coach.identity, 'FL'),
+            email: coach.local.email,
+            phone: UtilsHelper.formatPhone(coach.contact || {}),
+          };
+        }
+      }
+    }
+
+    let formattedArchitect = null;
+    if (learner.architect) {
+      if (!learner.architect.trim().match(EMAIL_VALIDATION)) {
+        if (errorsByTrainee[learnerName]) {
+          errorsByTrainee[learnerName].push(translate[language].incorrectEmailForArchitect);
+        } else errorsByTrainee[learnerName] = [translate[language].incorrectEmailForArchitect];
+      } else {
+        const architect = await User
+          .findOne(
+            {
+              'local.email': learner.architect.trim().toLowerCase(),
+              'role.vendor': { $in: [trainingOrganisationManagerRole._id, trainerRole._id] },
+            },
+            { _id: 1, identity: 1, local: 1, contact: 1 })
+          .lean();
+        if (!architect) {
+          if (errorsByTrainee[learnerName]) {
+            errorsByTrainee[learnerName].push(translate[language].unknownArchitect);
+          } else errorsByTrainee[learnerName] = [translate[language].unknownArchitect];
+        } else {
+          formattedArchitect = {
+            _id: architect._id,
+            name: UtilsHelper.formatIdentity(architect.identity, 'FL'),
+            email: architect.local.email,
+            phone: UtilsHelper.formatPhone(architect.contact || {}),
+          };
         }
       }
     }
@@ -1264,7 +1299,8 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         ...learner.phone && { 'contact.countryCode': learner.countryCode || '+33' },
         company: companyId || learner.company,
         operationsRepresentative: operationsRepresentativeId,
-        trainers: trainersIds,
+        coach: formattedCoach,
+        architect: formattedArchitect,
         subProgram: learner.subProgram,
         ...formattedDate && { estimatedStartDate: formattedDate },
       });
