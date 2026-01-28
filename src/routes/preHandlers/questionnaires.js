@@ -76,7 +76,7 @@ exports.authorizeQuestionnaireEdit = async (req) => {
 
   if (req.payload.status === PUBLISHED && !questionnaire.areCardsValid) throw Boom.forbidden();
 
-  return req.payload.status === PUBLISHED ? get(publishedQuestionnaireWithSameType, '_id', null) : null;
+  return get(publishedQuestionnaireWithSameType, '_id', null);
 };
 
 exports.authorizeCardDeletion = async (req) => {

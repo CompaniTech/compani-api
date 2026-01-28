@@ -89,7 +89,7 @@ exports.getQuestionnaire = async id => Questionnaire.findOne({ _id: id })
   .lean({ virtuals: true });
 
 exports.update = async (id, payload, questionnaireToArchiveId) => {
-  if (questionnaireToArchiveId) {
+  if (questionnaireToArchiveId && payload.status === PUBLISHED) {
     await Questionnaire.updateOne(
       { _id: questionnaireToArchiveId },
       { $set: { status: ARCHIVED, archivedAt: CompaniDate().toISO() } }
