@@ -11,6 +11,7 @@ const CourseSlotSchema = mongoose.Schema({
   meetingLink: { type: String, trim: true },
   step: { type: mongoose.Schema.Types.ObjectId, ref: 'Step', required: true },
   trainees: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
+  trainers: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => CourseSlotSchema.pre(middleware, formatQuery));
