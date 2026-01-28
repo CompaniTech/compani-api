@@ -312,7 +312,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       };
       const response = await app.inject({
         method: 'PUT',
-        url: `/courseslots/${courseSlotsList[0]._id}`,
+        url: `/courseslots/${courseSlotsList[1]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
@@ -320,21 +320,21 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(response.statusCode).toBe(200);
 
       const afternoonSlot = await CourseSlot.countDocuments({
-        course: courseSlotsList[0].course,
+        course: courseSlotsList[1].course,
         startDate: '2020-03-04T13:00:00.000Z',
         endDate: '2020-03-04T16:30:00.000Z',
       });
       expect(afternoonSlot).toEqual(1);
 
       const editionHistory = await CourseHistory.countDocuments({
-        course: courseSlotsList[0].course,
-        'update.startDate.to': payload.startDate,
+        course: courseSlotsList[1].course,
+        'update.startHour.to': payload.startDate,
         action: SLOT_EDITION,
       });
       expect(editionHistory).toEqual(1);
 
       const creationHistory = await CourseHistory.countDocuments({
-        course: courseSlotsList[0].course,
+        course: courseSlotsList[1].course,
         'slot.startDate': '2020-03-04T13:00:00.000Z',
         'slot.endDate': '2020-03-04T16:30:00.000Z',
         action: SLOT_CREATION,

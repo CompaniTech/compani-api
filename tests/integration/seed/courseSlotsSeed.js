@@ -197,8 +197,8 @@ const courseSlotsList = [
   },
   { // 1
     _id: new ObjectId(),
-    startDate: '2020-04-10T09:00:00',
-    endDate: '2020-04-10T12:00:00',
+    startDate: '2020-03-04T13:00:00.000Z',
+    endDate: '2020-03-04T16:30:00.000Z',
     course: coursesList[0]._id,
     step: stepsList[0]._id,
     trainees: [auxiliary._id],
