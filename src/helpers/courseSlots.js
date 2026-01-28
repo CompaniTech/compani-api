@@ -41,7 +41,7 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
         CourseHistoriesHelper.createHistoryOnSlotDeletion(historyPayload, user._id),
         CourseSlot.updateOne(
           { _id: courseSlot._id },
-          { $unset: { startDate: '', endDate: '', meetingLink: '', address: '', trainees: '' } }
+          { $unset: { startDate: '', endDate: '', meetingLink: '', address: '', trainees: '', trainers: '' } }
         ),
       ]);
     } else {
