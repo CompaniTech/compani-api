@@ -57,7 +57,7 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
       if (payload.wholeDay) {
         const afternonStartDate = CompaniDate(payload.startDate).set({ hour: 14, minute: 0 }).toISO();
         const afternoonEndDate = CompaniDate(payload.endDate).set({ hour: 17, minute: 30 }).toISO();
-        const slotData = pick(courseSlot, ['course', 'step', 'address', 'meetingLink']);
+        const slotData = pick(courseSlot, ['course', 'step', 'address', 'meetingLink', 'trainees']);
         const slotToPlan = await CourseSlot
           .findOne({
             course: courseSlot.course,

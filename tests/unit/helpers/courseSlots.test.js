@@ -266,7 +266,8 @@ describe('updateCourseSlot', () => {
   it('should update a course slot to whole day (create second slot)', async () => {
     const slotIds = [new ObjectId(), new ObjectId()];
     const courseId = new ObjectId();
-    const slot = { _id: slotIds[0], step: { _id: new ObjectId(), type: ON_SITE }, course: courseId };
+    const trainees = [new ObjectId()];
+    const slot = { _id: slotIds[0], step: { _id: new ObjectId(), type: ON_SITE }, course: courseId, trainees };
     const user = { _id: new ObjectId() };
     const payload = {
       startDate: '2020-03-03T08:00:00.000Z',
@@ -317,6 +318,7 @@ describe('updateCourseSlot', () => {
         step: slot.step,
         startDate: '2020-03-03T13:00:00.000Z',
         endDate: '2020-03-03T16:30:00.000Z',
+        trainees,
       },
       user._id
     );
@@ -327,7 +329,13 @@ describe('updateCourseSlot', () => {
     );
     sinon.assert.calledOnceWithExactly(
       create,
-      { course: courseId, step: slot.step, startDate: '2020-03-03T13:00:00.000Z', endDate: '2020-03-03T16:30:00.000Z' }
+      {
+        course: courseId,
+        step: slot.step,
+        startDate: '2020-03-03T13:00:00.000Z',
+        endDate: '2020-03-03T16:30:00.000Z',
+        trainees,
+      }
     );
   });
 
