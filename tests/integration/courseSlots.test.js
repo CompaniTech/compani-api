@@ -321,8 +321,8 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
 
       const afternoonSlot = await CourseSlot.countDocuments({
         course: courseSlotsList[1].course,
-        startDate: '2020-03-04T13:00:00.000Z',
-        endDate: '2020-03-04T16:30:00.000Z',
+        startDate: '2020-03-04T12:30:00.000Z',
+        endDate: '2020-03-04T16:00:00.000Z',
       });
       expect(afternoonSlot).toEqual(1);
 
@@ -335,8 +335,8 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
 
       const creationHistory = await CourseHistory.countDocuments({
         course: courseSlotsList[1].course,
-        'slot.startDate': '2020-03-04T13:00:00.000Z',
-        'slot.endDate': '2020-03-04T16:30:00.000Z',
+        'slot.startDate': '2020-03-04T12:30:00.000Z',
+        'slot.endDate': '2020-03-04T16:00:00.000Z',
         action: SLOT_CREATION,
       });
       expect(creationHistory).toEqual(1);

@@ -239,8 +239,9 @@ describe('updateCourseSlot', () => {
       {
         course: courseId,
         step: slot.step,
-        startDate: '2020-03-03T13:00:00.000Z',
-        endDate: '2020-03-03T16:30:00.000Z',
+        startDate: '2020-03-03T12:30:00.000Z',
+        endDate: '2020-03-03T16:00:00.000Z',
+        address: { fullAddress: '24 avenue Daumesnil' },
       },
       user._id
     );
@@ -256,8 +257,9 @@ describe('updateCourseSlot', () => {
         $set: {
           course: courseId,
           step: slot.step,
-          startDate: '2020-03-03T13:00:00.000Z',
-          endDate: '2020-03-03T16:30:00.000Z',
+          startDate: '2020-03-03T12:30:00.000Z',
+          endDate: '2020-03-03T16:00:00.000Z',
+          address: { fullAddress: '24 avenue Daumesnil' },
         },
       }
     );
@@ -316,8 +318,9 @@ describe('updateCourseSlot', () => {
       {
         course: courseId,
         step: slot.step,
-        startDate: '2020-03-03T13:00:00.000Z',
-        endDate: '2020-03-03T16:30:00.000Z',
+        startDate: '2020-03-03T12:30:00.000Z',
+        endDate: '2020-03-03T16:00:00.000Z',
+        address: { fullAddress: '24 avenue Daumesnil' },
         trainees,
       },
       user._id
@@ -332,8 +335,9 @@ describe('updateCourseSlot', () => {
       {
         course: courseId,
         step: slot.step,
-        startDate: '2020-03-03T13:00:00.000Z',
-        endDate: '2020-03-03T16:30:00.000Z',
+        startDate: '2020-03-03T12:30:00.000Z',
+        endDate: '2020-03-03T16:00:00.000Z',
+        address: { fullAddress: '24 avenue Daumesnil' },
         trainees,
       }
     );

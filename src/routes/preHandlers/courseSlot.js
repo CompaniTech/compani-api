@@ -109,8 +109,8 @@ const checkPayload = async (courseSlot, payload) => {
         throw Boom.badRequest();
       }
 
-      const afternonStartDate = CompaniDate(payload.startDate).set({ hour: 14, minute: 0 }).toISO();
-      const afternoonEndDate = CompaniDate(payload.endDate).set({ hour: 17, minute: 30 }).toISO();
+      const afternonStartDate = CompaniDate(payload.startDate).set({ hour: 13, minute: 30 }).toISO();
+      const afternoonEndDate = CompaniDate(payload.endDate).set({ hour: 17, minute: 0 }).toISO();
       const hasConflictsOnAfternoon = await hasConflicts(
         { _id: courseSlot._id, startDate: afternonStartDate, endDate: afternoonEndDate, course: courseSlot.course }
       );
