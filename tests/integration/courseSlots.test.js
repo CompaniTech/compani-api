@@ -18,6 +18,8 @@ const {
   holdingAdminFromAuthCompany,
   coach,
   auxiliary,
+  trainer,
+  trainerAndCoach,
 } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
@@ -486,6 +488,29 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(response.statusCode).toBe(404);
     });
 
+    it('should return 404 if one trainer is not in course (intra)', async () => {
+      const payload = {
+        startDate: '2020-03-04T09:00:00',
+        endDate: '2020-03-04T11:00:00',
+        address: {
+          street: '39 rue de Ponthieu',
+          zipCode: '75008',
+          city: 'Paris',
+          fullAddress: '37 rue de Ponthieu 75008 Paris',
+          location: { type: 'Point', coordinates: [2.0987, 1.2345] },
+        },
+        trainers: [trainer._id, new ObjectId()],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
     it('should return 403 as trying to remove dates and course slot has attendances', async () => {
       const payload = { startDate: '', endDate: '' };
       const response = await app.inject({
@@ -851,6 +876,23 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if user try to edit trainers in course slot (intra)', async () => {
+      authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
+      const payload = {
+        startDate: '2020-03-04T09:00:00.000Z',
+        endDate: '2020-03-04T11:00:00.000Z',
+        trainers: [trainer._id],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[9]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('COACH', () => {
@@ -906,6 +948,22 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
 
         expect(response.statusCode).toBe(403);
       });
+
+    it('should return 403 if user try to edit trainers in course slot (intra)', async () => {
+      const payload = {
+        startDate: '2020-03-04T09:00:00.000Z',
+        endDate: '2020-03-04T11:00:00.000Z',
+        trainers: [trainer._id],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('TRAINER', () => {
@@ -948,6 +1006,22 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 403 as user is course trainer but his credentials are not in trainers', async () => {
+      const payload = {
+        startDate: '2020-03-04T09:00:00.000Z',
+        endDate: '2020-03-04T11:00:00.000Z',
+        trainers: [trainerAndCoach._id],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[2]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
     });
   });
 

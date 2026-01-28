@@ -127,6 +127,7 @@ const checkPayload = async (courseSlot, payload) => {
 
 exports.authorizeUpdate = async (req) => {
   try {
+    const { credentials } = req.auth;
     const courseSlot = await CourseSlot
       .findOne({ _id: req.params._id }, { course: 1, step: 1, startDate: 1 })
       .populate({ path: 'step', select: 'type' })
@@ -146,7 +147,20 @@ exports.authorizeUpdate = async (req) => {
       const courseCompanies = [INTRA, INTRA_HOLDING].includes(course.type) ? course.companies : [];
       const courseHolding = course.type === INTRA_HOLDING ? course.holding : null;
       const courseTrainerIds = get(course, 'trainers', []);
-      checkAuthorization(req.auth.credentials, courseTrainerIds, courseCompanies, courseHolding);
+      checkAuthorization(credentials, courseTrainerIds, courseCompanies, courseHolding);
+
+      if (has(req.payload, 'trainers')) {
+        const { trainers } = req.payload;
+        const userClientRole = get(credentials, 'role.client.name');
+        const userVendorRole = get(credentials, 'role.vendor.name');
+        if (userClientRole && !userVendorRole) throw Boom.forbidden();
+
+        const everyTrainerIsInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(courseTrainerIds, t));
+        if (!everyTrainerIsInCourse) throw Boom.notFound();
+
+        const isTrainer = userVendorRole === TRAINER;
+        if (isTrainer && !UtilsHelper.doesArrayIncludeId(trainers, credentials._id)) throw Boom.forbidden();
+      }
     }
     await checkPayload(courseSlot, req.payload);
 
