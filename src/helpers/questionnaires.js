@@ -95,11 +95,13 @@ exports.update = async (id, payload, questionnaireToArchiveId) => {
       { $set: { status: ARCHIVED, archivedAt: CompaniDate().toISO() } }
     );
   }
-  const formattedPayload = payload;
-  if (payload.status === PUBLISHED) {
-    formattedPayload.publishedAt = CompaniDate().toISO();
-  }
-  return Questionnaire.findOneAndUpdate({ _id: id }, { $set: formattedPayload }).lean();
+
+  return Questionnaire
+    .findOneAndUpdate(
+      { _id: id },
+      { $set: { ...payload, ...payload.status === PUBLISHED && { publishedAt: CompaniDate().toISO() } } }
+    )
+    .lean();
 };
 
 exports.addCard = async (questionnaireId, payload) => {
