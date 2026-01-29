@@ -299,6 +299,8 @@ describe('validate', () => {
           'attendances:edit',
           'courseslots:create',
           'holdings:read',
+          'programs:edit',
+          'programs:read',
           'questionnaires:read',
           'questionnairehistories:edit',
         ],

@@ -72,7 +72,7 @@ describe('PROGRAMS ROUTES - POST /programs', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -118,7 +118,7 @@ describe('PROGRAMS ROUTES - GET /programs', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -269,7 +269,7 @@ describe('PROGRAMS ROUTES - GET /programs/{_id}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -358,7 +358,7 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -432,7 +432,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/subprogram', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -521,7 +521,7 @@ describe('PROGRAMS ROUTES - POST /programs/:id/upload', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
@@ -595,7 +595,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/:id/upload', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
@@ -665,7 +665,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/categories', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -734,7 +734,7 @@ describe('PROGRAMS ROUTES - DELETE /programs/{_id}/categories/{_id}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -892,7 +892,7 @@ describe('PROGRAMS ROUTES - POST /{_id}/testers', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
     const payload = {
       identity: { lastname: 'test', firstname: 'test' },
@@ -965,7 +965,7 @@ describe('PROGRAMS ROUTES - DELETE /{_id}/testers/{testerId}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {

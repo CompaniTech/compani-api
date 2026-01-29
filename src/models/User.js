@@ -160,6 +160,7 @@ const UserSchema = mongoose.Schema({
   origin: { type: String, enum: ORIGIN_OPTIONS, required: true, immutable: true },
   formationExpoTokenList: [{ type: String }],
   loginCode: { type: String },
+  isProgramEditor: { type: Boolean, default: false },
 }, {
   timestamps: true,
   toObject: { virtuals: true },
