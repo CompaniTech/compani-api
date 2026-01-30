@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 const mongooseLeanVirtuals = require('mongoose-lean-virtuals');
-const { DRAFT, PUBLISHED, EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING } = require('../helpers/constants');
+const { DRAFT, PUBLISHED, EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING, ARCHIVED } = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 
-const STATUS_TYPES = [DRAFT, PUBLISHED];
+const STATUS_TYPES = [DRAFT, PUBLISHED, ARCHIVED];
 const QUESTIONNAIRE_TYPES = [EXPECTATIONS, END_OF_COURSE, SELF_POSITIONNING];
 
 const QuestionnaireSchema = mongoose.Schema({
@@ -12,6 +12,8 @@ const QuestionnaireSchema = mongoose.Schema({
   type: { type: String, required: true, enum: QUESTIONNAIRE_TYPES },
   cards: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Card' }],
   program: { type: mongoose.Schema.Types.ObjectId, ref: 'Program' },
+  publishedAt: { type: Date },
+  archivedAt: { type: Date },
 }, { timestamps: true, id: false });
 
 QuestionnaireSchema.virtual('histories', {
