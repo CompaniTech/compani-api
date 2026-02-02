@@ -62,6 +62,7 @@ const {
   DRAFT,
   E_LEARNING,
   PUBLISHED,
+  ARCHIVED,
   FILL_THE_GAPS,
   SINGLE_CHOICE_QUESTION,
   QUESTION_ANSWER,
@@ -2176,9 +2177,9 @@ describe('SEEDS VERIFICATION', () => {
           expect(someUserHaveAnsweredMoreThanTwiceSameQuestionnaire).toBeFalsy();
         });
 
-        it('should pass if every questionnaire exists and is published', () => {
+        it('should pass if every questionnaire exists and is published or archived', () => {
           const everyQuestionnaireExists = questionnaireHistoryList
-            .every(qh => qh.questionnaire && qh.questionnaire.status === PUBLISHED);
+            .every(qh => qh.questionnaire && [PUBLISHED, ARCHIVED].includes(qh.questionnaire.status));
 
           expect(everyQuestionnaireExists).toBeTruthy();
         });

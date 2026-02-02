@@ -568,6 +568,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
           { path: 'contact', select: 'identity.firstname identity.lastname contact' },
+          { path: 'questionnaires', options: { isVendorUser: true } },
           ...(isRofOrAdmin
             ? [
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
@@ -826,6 +827,10 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       match: { $or: [{ trainee: credentials._id }, { 'slots.traineesSignature.traineeId': credentials._id }] },
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
+    })
+    .populate({
+      path: 'questionnaires',
+      options: { isVendorUser: !!get(credentials, 'role.vendor'), requestingOwnInfos: !!credentials._id },
     })
     .select('_id misc format type trainees gSheetId certificateGenerationMode')
     .lean({ autopopulate: true, virtuals: true });

@@ -32,6 +32,7 @@ const {
   START_COURSE,
   INTRA,
   GLOBAL,
+  ARCHIVED,
 } = require('../../../src/helpers/constants');
 const { trainerRoleId } = require('../../seed/authRolesSeed');
 const { companyWithoutSubscription, authCompany } = require('../../seed/authCompaniesSeed');
@@ -89,7 +90,7 @@ const questionnairesList = [
   {
     _id: new ObjectId(),
     name: 'test',
-    status: PUBLISHED,
+    status: ARCHIVED,
     type: EXPECTATIONS,
     cards: [cardsList[2]._id, cardsList[3]._id],
   },
@@ -123,6 +124,13 @@ const questionnairesList = [
     type: SELF_POSITIONNING,
     program: programsList[2]._id,
     cards: [cardsList[1]._id, cardsList[3]._id],
+  },
+  {
+    _id: new ObjectId(),
+    name: 'test',
+    status: PUBLISHED,
+    type: EXPECTATIONS,
+    cards: [cardsList[2]._id, cardsList[3]._id],
   },
 ];
 

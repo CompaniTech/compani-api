@@ -171,7 +171,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaires.length).toEqual(6);
+      expect(response.result.data.questionnaires.length).toEqual(7);
     });
 
     it('should get questionnaires linked to course', async () => {
@@ -307,11 +307,11 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires/{_id}', () => {
     it('should get questionnaire', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/questionnaires/${questionnairesList[1]._id}`,
+        url: `/questionnaires/${questionnairesList[6]._id}`,
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaire._id).toEqual(questionnairesList[1]._id);
+      expect(response.result.data.questionnaire._id).toEqual(questionnairesList[6]._id);
     });
   });
 
@@ -320,7 +320,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires/{_id}', () => {
       authToken = await getTokenByCredentials(noRoleNoCompany.local);
       const response = await app.inject({
         method: 'GET',
-        url: `/questionnaires/${questionnairesList[1]._id}`,
+        url: `/questionnaires/${questionnairesList[6]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -944,6 +944,17 @@ describe('QUESTIONNAIRES ROUTES - POST /questionnaires/{_id}/card', () => {
     });
 
     it('should return a 403 if questionnaire is published', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/questionnaires/${questionnairesList[6]._id.toHexString()}/cards`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 403 if questionnaire is archived', async () => {
       const response = await app.inject({
         method: 'POST',
         url: `/questionnaires/${questionnairesList[1]._id.toHexString()}/cards`,

@@ -137,7 +137,22 @@ CourseSchema.virtual('attendanceSheets', {
   options: { sort: { createdAt: 1 } },
 });
 
+CourseSchema.virtual('questionnaires', {
+  ref: 'QuestionnaireHistory',
+  localField: '_id',
+  foreignField: 'course',
+});
+
+function populateQuestionnaires(doc) {
+  if (!doc || !doc.questionnaires) return;
+
+  // eslint-disable-next-line no-param-reassign
+  doc.questionnaires = [...new Set(doc.questionnaires.map(q => q.questionnaire))];
+}
+
 queryMiddlewareList.map(middleware => CourseSchema.pre(middleware, formatQuery));
+
+CourseSchema.post('findOne', populateQuestionnaires);
 
 CourseSchema.plugin(mongooseLeanVirtuals);
 

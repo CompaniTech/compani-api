@@ -88,7 +88,7 @@ exports.authorizeSendEmailBillList = async (req) => {
     if (!courseBillsAreLinkedToSameCourseType) throw Boom.forbidden(translate[language].wrongCourseBills.courseType);
 
     const promises = [];
-    courseBills.forEach(cb => promises.push(QuestionnaireHelper.getCourseInfos(cb.course._id)));
+    courseBills.forEach(cb => promises.push(QuestionnaireHelper.getCourseInfos(cb.course._id, req.auth.credentials)));
     const results = await Promise.all(promises);
     const courseTimelines = [...new Set(results.map(res => res.courseTimeline))];
     if (noneCourseIsVAEI && courseTimelines.length !== 1) {
