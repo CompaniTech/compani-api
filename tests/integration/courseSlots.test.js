@@ -202,6 +202,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
           fullAddress: '37 rue de Ponthieu 75008 Paris',
           location: { type: 'Point', coordinates: [2.0987, 1.2345] },
         },
+        trainers: [trainer._id],
       };
       const response = await app.inject({
         method: 'PUT',
@@ -972,7 +973,11 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
     });
 
     it('should return 200 as user is course trainer', async () => {
-      const payload = { startDate: '2020-03-04T09:00:00.000Z', endDate: '2020-03-04T11:00:00.000Z' };
+      const payload = {
+        startDate: '2020-03-04T09:00:00.000Z',
+        endDate: '2020-03-04T11:00:00.000Z',
+        trainers: [trainer._id],
+      };
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[2]._id}`,

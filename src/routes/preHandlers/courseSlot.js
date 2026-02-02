@@ -151,9 +151,8 @@ exports.authorizeUpdate = async (req) => {
 
       if (has(req.payload, 'trainers')) {
         const { trainers } = req.payload;
-        const userClientRole = get(credentials, 'role.client.name');
         const userVendorRole = get(credentials, 'role.vendor.name');
-        if (userClientRole && !userVendorRole) throw Boom.forbidden();
+        if (!userVendorRole) throw Boom.forbidden();
 
         const everyTrainerIsInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(courseTrainerIds, t));
         if (!everyTrainerIsInCourse) throw Boom.notFound();
