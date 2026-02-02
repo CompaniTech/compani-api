@@ -8,6 +8,7 @@ const CompletionCertificate = require('../../models/CompletionCertificate');
 const Step = require('../../models/Step');
 const Attendance = require('../../models/Attendance');
 const AttendanceSheet = require('../../models/AttendanceSheet');
+const CourseHistory = require('../../models/CourseHistory');
 const translate = require('../../helpers/translate');
 const { checkAuthorization } = require('./courses');
 const {
@@ -19,6 +20,7 @@ const {
   MM_YYYY,
   TRAINER,
   SINGLE,
+  TRAINER_DELETION,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
@@ -168,8 +170,11 @@ exports.authorizeUpdate = async (req) => {
         const userVendorRole = get(credentials, 'role.vendor.name');
         if (!userVendorRole) throw Boom.forbidden();
 
-        const everyTrainerIsInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(courseTrainerIds, t));
-        if (!everyTrainerIsInCourse) throw Boom.notFound();
+        const courseHistories = await CourseHistory.find({ course: courseId, action: TRAINER_DELETION }).lean();
+        const trainerCourseHistories = courseHistories.map(cH => cH.trainer);
+        const everyTrainerIsOrWasInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(courseTrainerIds, t)) ||
+          trainers.every(t => UtilsHelper.doesArrayIncludeId(trainerCourseHistories, t));
+        if (!everyTrainerIsOrWasInCourse) throw Boom.notFound();
 
         const isTrainer = userVendorRole === TRAINER;
         if (isTrainer && !UtilsHelper.doesArrayIncludeId(trainers, credentials._id)) throw Boom.forbidden();
