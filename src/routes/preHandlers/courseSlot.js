@@ -63,8 +63,14 @@ const hasConflicts = async (slot) => {
 };
 
 const checkPayload = async (courseSlot, payload) => {
-  const { course: courseId, step } = courseSlot;
-  const { startDate, endDate } = payload;
+  const {
+    course: courseId,
+    step,
+    trainers: initialTrainers,
+    startDate: initialStartDate,
+    endDate: initialEndDate,
+  } = courseSlot;
+  const { startDate, endDate, trainers } = payload;
   const hasBothDates = !!(startDate && endDate);
   const hasOneDate = !!(startDate || endDate);
 
@@ -85,7 +91,14 @@ const checkPayload = async (courseSlot, payload) => {
     .populate({ path: 'subProgram', select: 'steps' })
     .lean();
 
-  if (!hasOneDate) {
+  const editTrainers = (trainers || []).length > 0 && (
+    !trainers.every(t => UtilsHelper.doesArrayIncludeId(initialTrainers, t)) ||
+    !initialTrainers.every(t => UtilsHelper.doesArrayIncludeId(trainers, t))
+  );
+  const editDates = (startDate && !CompaniDate(startDate).isSame(initialStartDate)) ||
+    (endDate && !CompaniDate(endDate).isSame(initialEndDate));
+
+  if (editTrainers || editDates || !hasOneDate) {
     const query = { courseSlot: courseSlot._id };
     if (payload.trainees) {
       query.trainee = { $in: course.trainees.filter(t => !UtilsHelper.doesArrayIncludeId(payload.trainees, t)) };
@@ -129,7 +142,7 @@ exports.authorizeUpdate = async (req) => {
   try {
     const { credentials } = req.auth;
     const courseSlot = await CourseSlot
-      .findOne({ _id: req.params._id }, { course: 1, step: 1, startDate: 1 })
+      .findOne({ _id: req.params._id }, { course: 1, step: 1, startDate: 1, endDate: 1, trainers: 1 })
       .populate({ path: 'step', select: 'type' })
       .lean();
     if (!courseSlot) throw Boom.notFound(translate[language].courseSlotNotFound);

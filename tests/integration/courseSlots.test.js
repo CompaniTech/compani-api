@@ -516,12 +516,39 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const payload = { startDate: '', endDate: '' };
       const response = await app.inject({
         method: 'PUT',
-        url: `/courseslots/${courseSlotsList[4]._id}`,
+        url: `/courseslots/${courseSlotsList[14]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
       expect(response.statusCode).toBe(403);
+      expect(response.result.message).toEqual('Impossible: ce créneau de formation est émargé.');
+    });
+
+    it('should return 403 as trying to edit dates and course slot has attendances', async () => {
+      const payload = { startDate: '2020-05-10T10:00:00', endDate: '2020-05-10T11:00:00' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[14]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message).toEqual('Impossible: ce créneau de formation est émargé.');
+    });
+
+    it('should return 403 as trying to edit trainers and course slot has attendances', async () => {
+      const payload = { startDate: '2020-05-13T09:00:00', endDate: '2020-05-13T12:00:00', trainers: [trainer._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[14]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message).toEqual('Impossible: ce créneau de formation est émargé.');
     });
 
     it('should return 403 as trying to update dates and course slot has attendance sheet', async () => {

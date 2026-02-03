@@ -331,13 +331,6 @@ const attendances = [
     company: authCompany._id,
     status: PRESENT,
   },
-  {
-    _id: new ObjectId(),
-    trainee: vendorAdmin._id,
-    courseSlot: courseSlotsList[0]._id,
-    company: authCompany._id,
-    status: PRESENT,
-  },
 ];
 
 const attendanceSheets = [
