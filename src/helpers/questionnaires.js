@@ -64,7 +64,7 @@ exports.getCourseInfos = async (courseId, credentials, allCompanies = false) => 
         requestingOwnInfos: !!get(credentials, '_id'),
         allCompanies,
       },
-      populate: { path: 'questionnaire', select: ' _id type' },
+      populate: { path: 'questionnaire', select: '_id type' },
     })
     .lean({ virtuals: true });
 
@@ -99,8 +99,11 @@ exports.list = async (credentials, query = {}) => {
   }
 
   const isFromNotLogged = !credentials;
-  const { isStrictlyELearning, programId, questionnaires } = await exports
-    .getCourseInfos(courseId, credentials, isFromNotLogged);
+  const {
+    isStrictlyELearning,
+    programId,
+    questionnaires,
+  } = await exports.getCourseInfos(courseId, credentials, isFromNotLogged);
 
   if (isStrictlyELearning) return [];
 
@@ -175,12 +178,17 @@ const findQuestionnaires = async (questionnaireConditions, historiesConditions, 
     .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
     .lean({ virtuals: true });
 
-  return getCourseQuestionnaires(questionnaires);
+  const courseQuestionnanires = getCourseQuestionnaires(questionnaires);
+  return courseQuestionnanires.filter(q => q && !q.histories.length);
 };
 
 exports.getUserQuestionnaires = async (courseId, credentials) => {
-  const { isStrictlyELearning, courseTimeline, programId, questionnaires: questionnaireList } = await exports
-    .getCourseInfos(courseId, credentials);
+  const {
+    isStrictlyELearning,
+    courseTimeline,
+    programId,
+    questionnaires: questionnaireList,
+  } = await exports.getCourseInfos(courseId, credentials);
   if (isStrictlyELearning) return [];
 
   switch (courseTimeline) {
@@ -191,13 +199,11 @@ exports.getUserQuestionnaires = async (courseId, credentials) => {
       const qType = courseTimeline === BEFORE_MIDDLE_COURSE_END_DATE ? [EXPECTATIONS] : [END_OF_COURSE];
       const timeline = courseTimeline === BEFORE_MIDDLE_COURSE_END_DATE ? START_COURSE : END_COURSE;
 
-      const questionnaires = await findQuestionnaires(
+      return findQuestionnaires(
         { typeList: [...qType, SELF_POSITIONNING], program: programId },
         { course: courseId, user: credentials._id, timeline },
-        questionnaireList.filter(q => [...qType, SELF_POSITIONNING].includes(q.type)).map(q => new ObjectId(q._id))
+        questionnaireList.filter(q => [...qType, SELF_POSITIONNING].includes(q.type)).map(q => q._id)
       );
-
-      return questionnaires.filter(q => q && !q.histories.length);
     }
   }
 

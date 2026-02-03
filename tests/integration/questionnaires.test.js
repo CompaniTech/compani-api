@@ -857,6 +857,18 @@ describe('QUESTIONNAIRES ROUTES - PUT /questionnaires/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if try to update cards order on archived questionnaire', async () => {
+      const payload = { cards: [questionnairesList[1].cards[1], questionnairesList[1].cards[0]] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/questionnaires/${questionnairesList[1]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {
@@ -1028,7 +1040,7 @@ describe('QUESTIONNAIRES ROUTES - DELETE /questionnaires/cards/{cardId}', () => 
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 403 if activity is published', async () => {
+    it('should return 403 if questionnaire is published', async () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/questionnaires/cards/${publishedQuestionnaire.cards[0].toHexString()}`,
