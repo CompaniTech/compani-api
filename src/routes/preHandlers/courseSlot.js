@@ -171,9 +171,9 @@ exports.authorizeUpdate = async (req) => {
         if (!userVendorRole) throw Boom.forbidden();
 
         const courseHistories = await CourseHistory.find({ course: courseId, action: TRAINER_DELETION }).lean();
-        const trainerCourseHistories = courseHistories.map(cH => cH.trainer);
-        const everyTrainerIsOrWasInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(courseTrainerIds, t)) ||
-          trainers.every(t => UtilsHelper.doesArrayIncludeId(trainerCourseHistories, t));
+        const trainerIds = [...courseTrainerIds, ...courseHistories.map(cH => cH.trainer)];
+
+        const everyTrainerIsOrWasInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(trainerIds, t));
         if (!everyTrainerIsOrWasInCourse) throw Boom.notFound();
 
         const isTrainer = userVendorRole === TRAINER;
