@@ -95,8 +95,9 @@ const checkPayload = async (courseSlot, payload) => {
     !trainers.every(t => UtilsHelper.doesArrayIncludeId(initialTrainers, t)) ||
     !initialTrainers.every(t => UtilsHelper.doesArrayIncludeId(trainers, t))
   );
-  const editDates = (startDate && !CompaniDate(startDate).isSame(initialStartDate)) ||
-    (endDate && !CompaniDate(endDate).isSame(initialEndDate));
+  const editStartDate = startDate && (!initialStartDate || !CompaniDate(startDate).isSame(initialStartDate));
+  const editEndDate = endDate && (!initialEndDate || !CompaniDate(endDate).isSame(initialEndDate));
+  const editDates = editStartDate || editEndDate;
 
   if (editTrainers || editDates || !hasOneDate) {
     const query = { courseSlot: courseSlot._id };

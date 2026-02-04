@@ -300,6 +300,22 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(slotListCount).toEqual(courseSlotsList.length);
     });
 
+    it('should plan slot', async () => {
+      const payload = {
+        startDate: '2020-06-14T09:00:00',
+        endDate: '2020-06-14T11:00:00',
+        trainers: [trainerAndCoach._id],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[6]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should add slot for whole day', async () => {
       const payload = {
         startDate: '2020-03-04T08:00:00.000Z',
