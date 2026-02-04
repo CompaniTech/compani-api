@@ -516,7 +516,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const payload = { startDate: '', endDate: '' };
       const response = await app.inject({
         method: 'PUT',
-        url: `/courseslots/${courseSlotsList[14]._id}`,
+        url: `/courseslots/${courseSlotsList[7]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
@@ -529,7 +529,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const payload = { startDate: '2020-05-10T10:00:00', endDate: '2020-05-10T11:00:00' };
       const response = await app.inject({
         method: 'PUT',
-        url: `/courseslots/${courseSlotsList[14]._id}`,
+        url: `/courseslots/${courseSlotsList[7]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
@@ -542,7 +542,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const payload = { startDate: '2020-05-13T09:00:00', endDate: '2020-05-13T12:00:00', trainers: [trainer._id] };
       const response = await app.inject({
         method: 'PUT',
-        url: `/courseslots/${courseSlotsList[14]._id}`,
+        url: `/courseslots/${courseSlotsList[7]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
