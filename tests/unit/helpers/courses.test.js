@@ -2439,8 +2439,11 @@ describe('getCourse', () => {
               },
               {
                 path: 'slots',
-                select: 'step startDate endDate address meetingLink trainees',
-                populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
+                select: 'step startDate endDate address meetingLink trainees trainers',
+                populate: [
+                  { path: 'trainers', select: 'identity' },
+                  { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
+                ],
               },
               { path: 'slotsToPlan', select: '_id step' },
               {
@@ -2543,7 +2546,11 @@ describe('getCourse', () => {
                   select: 'identity.firstname identity.lastname contact local.email picture.link '
                     + 'firstMobileConnectionDate loginCode',
                 },
-                { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
+                {
+                  path: 'slots',
+                  select: 'step startDate endDate address meetingLink trainees trainers',
+                  populate: [{ path: 'trainers', select: 'identity' }],
+                },
                 { path: 'slotsToPlan', select: '_id step' },
                 {
                   path: 'trainers',
@@ -2642,7 +2649,11 @@ describe('getCourse', () => {
                   select: 'identity.firstname identity.lastname contact local.email picture.link '
                     + 'firstMobileConnectionDate loginCode',
                 },
-                { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
+                {
+                  path: 'slots',
+                  select: 'step startDate endDate address meetingLink trainees trainers',
+                  populate: [{ path: 'trainers', select: 'identity' }],
+                },
                 { path: 'slotsToPlan', select: '_id step' },
                 {
                   path: 'trainers',
@@ -2815,7 +2826,11 @@ describe('getCourse', () => {
                 select: 'identity.firstname identity.lastname contact local.email picture.link '
                   + 'firstMobileConnectionDate loginCode',
               },
-              { path: 'slots', select: 'step startDate endDate address meetingLink trainees' },
+              {
+                path: 'slots',
+                select: 'step startDate endDate address meetingLink trainees trainers',
+                populate: [{ path: 'trainers', select: 'identity' }],
+              },
               { path: 'slotsToPlan', select: '_id step' },
               {
                 path: 'trainers',

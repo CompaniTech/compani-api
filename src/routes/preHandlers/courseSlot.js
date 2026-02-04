@@ -63,8 +63,14 @@ const hasConflicts = async (slot) => {
 };
 
 const checkPayload = async (courseSlot, payload) => {
-  const { course: courseId, step } = courseSlot;
-  const { startDate, endDate } = payload;
+  const {
+    course: courseId,
+    step,
+    trainers: initialTrainers,
+    startDate: initialStartDate,
+    endDate: initialEndDate,
+  } = courseSlot;
+  const { startDate, endDate, trainers } = payload;
   const hasBothDates = !!(startDate && endDate);
   const hasOneDate = !!(startDate || endDate);
 
@@ -85,7 +91,15 @@ const checkPayload = async (courseSlot, payload) => {
     .populate({ path: 'subProgram', select: 'steps' })
     .lean();
 
-  if (!hasOneDate) {
+  const editTrainers = (trainers || []).length > 0 && (
+    !trainers.every(t => UtilsHelper.doesArrayIncludeId(initialTrainers, t)) ||
+    !initialTrainers.every(t => UtilsHelper.doesArrayIncludeId(trainers, t))
+  );
+  const editStartDate = startDate && (!initialStartDate || !CompaniDate(startDate).isSame(initialStartDate));
+  const editEndDate = endDate && (!initialEndDate || !CompaniDate(endDate).isSame(initialEndDate));
+  const editDates = editStartDate || editEndDate;
+
+  if (editTrainers || editDates || !hasOneDate) {
     const query = { courseSlot: courseSlot._id };
     if (payload.trainees) {
       query.trainee = { $in: course.trainees.filter(t => !UtilsHelper.doesArrayIncludeId(payload.trainees, t)) };
@@ -127,8 +141,9 @@ const checkPayload = async (courseSlot, payload) => {
 
 exports.authorizeUpdate = async (req) => {
   try {
+    const { credentials } = req.auth;
     const courseSlot = await CourseSlot
-      .findOne({ _id: req.params._id }, { course: 1, step: 1, startDate: 1 })
+      .findOne({ _id: req.params._id }, { course: 1, step: 1, startDate: 1, endDate: 1, trainers: 1 })
       .populate({ path: 'step', select: 'type' })
       .lean();
     if (!courseSlot) throw Boom.notFound(translate[language].courseSlotNotFound);
@@ -146,7 +161,19 @@ exports.authorizeUpdate = async (req) => {
       const courseCompanies = [INTRA, INTRA_HOLDING].includes(course.type) ? course.companies : [];
       const courseHolding = course.type === INTRA_HOLDING ? course.holding : null;
       const courseTrainerIds = get(course, 'trainers', []);
-      checkAuthorization(req.auth.credentials, courseTrainerIds, courseCompanies, courseHolding);
+      checkAuthorization(credentials, courseTrainerIds, courseCompanies, courseHolding);
+
+      if (has(req.payload, 'trainers')) {
+        const { trainers } = req.payload;
+        const userVendorRole = get(credentials, 'role.vendor.name');
+        if (!userVendorRole) throw Boom.forbidden();
+
+        const everyTrainerIsInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(courseTrainerIds, t));
+        if (!everyTrainerIsInCourse) throw Boom.notFound();
+
+        const isTrainer = userVendorRole === TRAINER;
+        if (isTrainer && !UtilsHelper.doesArrayIncludeId(trainers, credentials._id)) throw Boom.forbidden();
+      }
     }
     await checkPayload(courseSlot, req.payload);
 
