@@ -466,7 +466,15 @@ const slotsList = [
     endDate: '2025-12-08T11:00:00.000Z',
     course: coursesList[1]._id,
     step: steps[0]._id,
-    trainees: [userList[1]._id],
+    trainees: [userList[1]._id, userList[2]._id],
+  },
+  { // 26
+    _id: new ObjectId(),
+    startDate: '2025-12-15T09:00:00.000Z',
+    endDate: '2025-12-15T11:00:00.000Z',
+    course: coursesList[1]._id,
+    step: steps[0]._id,
+    trainees: [userList[2]._id],
   },
 ];
 
@@ -764,173 +772,180 @@ const attendanceSheetList = [
 ];
 
 const attendancesList = [
-  {
+  { // 0
     _id: new ObjectId(),
     courseSlot: slotsList[10]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 1
     _id: new ObjectId(),
     courseSlot: slotsList[11]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 2
     _id: new ObjectId(),
     courseSlot: slotsList[19]._id,
     trainee: userList[2]._id,
     company: otherCompany._id,
     status: PRESENT,
   },
-  {
+  { // 3
     _id: new ObjectId(),
     courseSlot: slotsList[5]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 4
     _id: new ObjectId(),
     courseSlot: slotsList[20]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 5
     _id: new ObjectId(),
     courseSlot: slotsList[15]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 6
     _id: new ObjectId(),
     courseSlot: slotsList[16]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 7
     _id: new ObjectId(),
     courseSlot: slotsList[17]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 8
     _id: new ObjectId(),
     courseSlot: slotsList[23]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: MISSING,
   },
-  {
+  { // 9
     _id: new ObjectId(),
     courseSlot: slotsList[0]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: MISSING,
   },
-  {
+  { // 10
     _id: new ObjectId(),
     courseSlot: slotsList[1]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 11
     _id: new ObjectId(),
     courseSlot: slotsList[6]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 12
     _id: new ObjectId(),
     courseSlot: slotsList[8]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 13
     _id: new ObjectId(),
     courseSlot: slotsList[9]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 14
     _id: new ObjectId(),
     courseSlot: slotsList[12]._id,
     trainee: userList[2]._id,
     company: otherCompany._id,
     status: PRESENT,
   },
-  {
+  { // 15
     _id: new ObjectId(),
     courseSlot: slotsList[12]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 16
     _id: new ObjectId(),
     courseSlot: slotsList[13]._id,
     trainee: userList[2]._id,
     company: otherCompany._id,
     status: PRESENT,
   },
-  {
+  { // 17
     _id: new ObjectId(),
     courseSlot: slotsList[13]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 18
     _id: new ObjectId(),
     courseSlot: slotsList[17]._id,
     trainee: userList[0]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 19
     _id: new ObjectId(),
     courseSlot: slotsList[18]._id,
     trainee: userList[0]._id,
     company: authCompany._id,
     status: PRESENT,
   },
-  {
+  { // 20
     _id: new ObjectId(),
     courseSlot: slotsList[19]._id,
     trainee: userList[4]._id,
     company: companyWithoutSubscription._id,
     status: PRESENT,
   },
-  {
+  { // 21
     _id: new ObjectId(),
     courseSlot: slotsList[14]._id,
     trainee: userList[2]._id,
     company: otherCompany._id,
     status: MISSING,
   },
-  {
+  { // 22
     _id: new ObjectId(),
     courseSlot: slotsList[12]._id,
     trainee: userList[4]._id,
     company: companyWithoutSubscription._id,
     status: PRESENT,
   },
-  {
+  { // 23
     _id: new ObjectId(),
     courseSlot: slotsList[13]._id,
     trainee: userList[4]._id,
     company: companyWithoutSubscription._id,
     status: PRESENT,
+  },
+  { // 24
+    _id: new ObjectId(),
+    courseSlot: slotsList[25]._id,
+    trainee: userList[2]._id,
+    company: otherCompany._id,
+    status: MISSING,
   },
 ];
 

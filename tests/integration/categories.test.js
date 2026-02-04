@@ -59,7 +59,7 @@ describe('CATEGORIES ROUTES - POST /categories', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -105,7 +105,7 @@ describe('CATEGORIES ROUTES - GET /categories', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -174,7 +174,7 @@ describe('CATEGORIES ROUTES - PUT /categories/{_id}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -240,7 +240,7 @@ describe('CATEGORIES ROUTES - DELETE /categories/{_id}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {

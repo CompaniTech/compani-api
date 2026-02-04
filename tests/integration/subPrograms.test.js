@@ -325,7 +325,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -415,7 +415,7 @@ describe('SUBPROGRAMS ROUTES - POST /subprograms/{_id}/step', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
@@ -515,14 +515,14 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
         authToken = await getToken(role.name);
         const subProgramId = subProgramsList[0]._id;
-        const payload = { steps: stepsList[3]._id };
+        const payload = { steps: [stepsList[3]._id] };
         const response = await app.inject({
           method: 'PUT',
           payload,
@@ -596,7 +596,7 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
 
     roles.forEach((role) => {

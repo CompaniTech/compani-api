@@ -5055,7 +5055,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
@@ -5064,7 +5064,7 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
           method: 'POST',
           url: `/courses/${coursesList[8]._id}/accessrules`,
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload: { company: otherCompany._id },
+          payload: { companies: [otherCompany._id] },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
@@ -5123,7 +5123,7 @@ describe('COURSES ROUTES - DELETE /:_id/accessrules/:accessRuleId', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
     ];
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {

@@ -39,6 +39,7 @@ exports.plugin = {
               address: Joi.alternatives().try(addressValidation, {}),
               meetingLink: Joi.string().allow(''),
               wholeDay: Joi.boolean(),
+              trainers: Joi.array().items(Joi.objectId()).min(1),
             }),
             Joi.object({ trainees: Joi.array().items(Joi.objectId()).min(1) })
           ),

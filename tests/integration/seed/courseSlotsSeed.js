@@ -333,8 +333,8 @@ const attendances = [
   },
   {
     _id: new ObjectId(),
-    trainee: vendorAdmin._id,
-    courseSlot: courseSlotsList[0]._id,
+    trainee: coach._id,
+    courseSlot: courseSlotsList[7]._id,
     company: authCompany._id,
     status: PRESENT,
   },

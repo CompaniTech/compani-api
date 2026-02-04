@@ -1473,10 +1473,19 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
     });
 
     it('should generate attendance sheet file for inter course', async () => {
-      UtilsMock.mockCurrentDate('2025-11-08T09:00:00.000Z');
+      UtilsMock.mockCurrentDate('2025-12-16T09:00:00.000Z');
       const attendanceSheetId = attendanceSheetList[11]._id;
       const payload = { action: GENERATION };
       uploadCourseFile.returns({ publicId: '1234567890', link: 'https://test.com/signature.pdf' });
+
+      await Attendance
+        .create({
+          _id: new ObjectId(),
+          courseSlot: slotsList[26]._id,
+          trainee: userList[2]._id,
+          company: otherCompany._id,
+          status: MISSING,
+        });
 
       const response = await app.inject({
         method: 'PUT',
@@ -1580,7 +1589,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
       await app.inject({
         method: 'PUT',
-        url: `/courseslots/${slotsList[14]._id}`,
+        url: `/courseslots/${slotsList[26]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { startDate: CompaniDate().add('P1D').toISO(), endDate: CompaniDate().add('P1DT2H').toISO() },
       });
