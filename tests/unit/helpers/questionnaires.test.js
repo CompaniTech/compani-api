@@ -124,7 +124,7 @@ describe('list', () => {
     );
   });
 
-  it('should return all linked to course questionnaires', async () => {
+  it('should return all questionnaires linked to course', async () => {
     const courseId = new ObjectId();
     const programId = new ObjectId();
     const credentials = { _id: new ObjectId(), company: { _id: new ObjectId() } };

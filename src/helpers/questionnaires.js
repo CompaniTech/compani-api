@@ -178,8 +178,8 @@ const findQuestionnaires = async (questionnaireConditions, historiesConditions, 
     .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
     .lean({ virtuals: true });
 
-  const courseQuestionnanires = getCourseQuestionnaires(questionnaires);
-  return courseQuestionnanires.filter(q => q && !q.histories.length);
+  const courseQuestionnaires = getCourseQuestionnaires(questionnaires);
+  return courseQuestionnaires.filter(q => q && !q.histories.length);
 };
 
 exports.getUserQuestionnaires = async (courseId, credentials) => {
