@@ -22,6 +22,7 @@ const {
   SURVEY,
   REVIEW,
   LIST,
+  ARCHIVED,
 } = require('../../../src/helpers/constants');
 const SinonMongoose = require('../sinonMongoose');
 const UtilsMock = require('../../utilsMock');
@@ -195,13 +196,18 @@ describe('getQuestionnaire', () => {
   });
 });
 
-describe('editQuestionnaire', () => {
+describe('update', () => {
   let findOneAndUpdate;
+  let updateOne;
   beforeEach(() => {
     findOneAndUpdate = sinon.stub(Questionnaire, 'findOneAndUpdate');
+    updateOne = sinon.stub(Questionnaire, 'updateOne');
+    UtilsMock.mockCurrentDate('2021-04-13T15:00:00.000Z');
   });
   afterEach(() => {
     findOneAndUpdate.restore();
+    updateOne.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should update questionnaire', async () => {
@@ -214,10 +220,38 @@ describe('editQuestionnaire', () => {
     const result = await QuestionnaireHelper.update(questionnaireId, { name: 'test2', cards });
 
     expect(result).toMatchObject(questionnaire);
+    sinon.assert.notCalled(updateOne);
     SinonMongoose.calledOnceWithExactly(
       findOneAndUpdate,
       [
         { query: 'findOneAndUpdate', args: [{ _id: questionnaireId }, { $set: { name: 'test2', cards } }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should publish questionnaire and archive old one', async () => {
+    const questionnaireId = new ObjectId();
+    const oldQuestionnaireId = new ObjectId();
+    const questionnaire = { _id: questionnaireId, name: 'test2', status: PUBLISHED };
+
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(questionnaire, ['lean']));
+
+    const result = await QuestionnaireHelper.update(questionnaireId, { status: PUBLISHED }, oldQuestionnaireId);
+
+    expect(result).toMatchObject({ ...questionnaire, status: PUBLISHED });
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: oldQuestionnaireId },
+      { $set: { status: ARCHIVED, archivedAt: '2021-04-13T15:00:00.000Z' } }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [{ _id: questionnaireId }, { $set: { status: PUBLISHED, publishedAt: '2021-04-13T15:00:00.000Z' } }],
+        },
         { query: 'lean' },
       ]
     );
