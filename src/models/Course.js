@@ -143,6 +143,7 @@ CourseSchema.virtual('questionnaires', {
   ref: 'QuestionnaireHistory',
   localField: '_id',
   foreignField: 'course',
+  options: { bypassValidateQuery: true },
 });
 
 function populateQuestionnaires(doc) {

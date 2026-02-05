@@ -52,20 +52,12 @@ const getCourseTimeline = (course, userId) => {
   return BETWEEN_MID_AND_END_COURSE;
 };
 
-exports.getCourseInfos = async (courseId, credentials, allCompanies = false) => {
+exports.getCourseInfos = async (courseId, credentials) => {
   const course = await Course.findOne({ _id: courseId })
     .populate({ path: 'slots', select: '-__v -createdAt -updatedAt' })
     .populate({ path: 'slotsToPlan', select: '_id' })
     .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } })
-    .populate({
-      path: 'questionnaires',
-      options: {
-        isVendorUser: !!get(credentials, 'role.vendor'),
-        requestingOwnInfos: !!get(credentials, '_id'),
-        allCompanies,
-      },
-      populate: { path: 'questionnaire', select: '_id type' },
-    })
+    .populate({ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } })
     .lean({ virtuals: true });
 
   return course.format === STRICTLY_E_LEARNING
@@ -98,12 +90,7 @@ exports.list = async (credentials, query = {}) => {
       .lean();
   }
 
-  const isFromNotLogged = !credentials;
-  const {
-    isStrictlyELearning,
-    programId,
-    questionnaires,
-  } = await exports.getCourseInfos(courseId, credentials, isFromNotLogged);
+  const { isStrictlyELearning, programId, questionnaires } = await exports.getCourseInfos(courseId, credentials);
 
   if (isStrictlyELearning) return [];
 

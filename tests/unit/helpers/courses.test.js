@@ -2460,7 +2460,7 @@ describe('getCourse', () => {
                 select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               { path: 'contact', select: 'identity.firstname identity.lastname contact' },
-              { path: 'questionnaires', options: { isVendorUser: true } },
+              { path: 'questionnaires' },
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
               { path: 'bills', select: '_id companies', options: { isVendorUser: true } },
             ]],
@@ -2969,7 +2969,7 @@ describe('getCourse', () => {
           },
           {
             query: 'populate',
-            args: [{ path: 'questionnaires', options: { isVendorUser: false, requestingOwnInfos: true } }],
+            args: [{ path: 'questionnaires' }],
           },
           { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
@@ -3135,7 +3135,7 @@ describe('getCourse', () => {
           },
           {
             query: 'populate',
-            args: [{ path: 'questionnaires', options: { isVendorUser: false, requestingOwnInfos: true } }],
+            args: [{ path: 'questionnaires' }],
           },
           { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
@@ -3309,7 +3309,7 @@ describe('getCourse', () => {
           },
           {
             query: 'populate',
-            args: [{ path: 'questionnaires', options: { isVendorUser: false, requestingOwnInfos: true } }],
+            args: [{ path: 'questionnaires' }],
           },
           { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
@@ -3453,7 +3453,7 @@ describe('getCourse', () => {
           },
           {
             query: 'populate',
-            args: [{ path: 'questionnaires', options: { isVendorUser: true, requestingOwnInfos: true } }],
+            args: [{ path: 'questionnaires' }],
           },
           { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
@@ -3596,7 +3596,7 @@ describe('getCourse', () => {
           },
           {
             query: 'populate',
-            args: [{ path: 'questionnaires', options: { isVendorUser: false, requestingOwnInfos: true } }],
+            args: [{ path: 'questionnaires' }],
           },
           { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },

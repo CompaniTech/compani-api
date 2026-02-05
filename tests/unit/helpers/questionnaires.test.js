@@ -109,15 +109,7 @@ describe('list', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: true,
-              requestingOwnInfos: false,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -166,17 +158,7 @@ describe('list', () => {
         },
         {
           query: 'populate',
-          args: [
-            {
-              path: 'questionnaires',
-              options: {
-                isVendorUser: false,
-                requestingOwnInfos: true,
-                allCompanies: false,
-              },
-              populate: { path: 'questionnaire', select: '_id type' },
-            },
-          ],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -407,15 +389,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -452,15 +426,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -570,15 +536,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -664,15 +622,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -767,15 +717,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -854,15 +796,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -934,15 +868,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -980,15 +906,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -1092,15 +1010,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -1198,15 +1108,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -1296,15 +1198,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -1384,15 +1278,7 @@ describe('getUserQuestionnaires', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'questionnaires',
-            options: {
-              isVendorUser: false,
-              requestingOwnInfos: true,
-              allCompanies: false,
-            },
-            populate: { path: 'questionnaire', select: '_id type' },
-          }],
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]

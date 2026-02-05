@@ -140,15 +140,7 @@ describe('addQuestionnaireHistory', () => {
           {
             query: 'populate',
             args: [
-              {
-                path: 'questionnaires',
-                options: {
-                  isVendorUser: false,
-                  requestingOwnInfos: true,
-                  allCompanies: false,
-                },
-                populate: { path: 'questionnaire', select: '_id type' },
-              },
+              { path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } },
             ],
           },
           { query: 'lean', args: [{ virtuals: true }] },
@@ -233,15 +225,7 @@ describe('addQuestionnaireHistory', () => {
         {
           query: 'populate',
           args: [
-            {
-              path: 'questionnaires',
-              options: {
-                isVendorUser: false,
-                requestingOwnInfos: true,
-                allCompanies: false,
-              },
-              populate: { path: 'questionnaire', select: '_id type' },
-            },
+            { path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } },
           ],
         },
         { query: 'lean', args: [{ virtuals: true }] },
@@ -326,15 +310,7 @@ describe('addQuestionnaireHistory', () => {
         {
           query: 'populate',
           args: [
-            {
-              path: 'questionnaires',
-              options: {
-                isVendorUser: false,
-                requestingOwnInfos: true,
-                allCompanies: false,
-              },
-              populate: { path: 'questionnaire', select: '_id type' },
-            },
+            { path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } },
           ],
         },
         { query: 'lean', args: [{ virtuals: true }] },
