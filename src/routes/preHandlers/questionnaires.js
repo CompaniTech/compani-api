@@ -64,7 +64,7 @@ exports.authorizeQuestionnaireEdit = async (req) => {
     .lean({ virtuals: true });
   if (!questionnaire) throw Boom.notFound();
 
-  if (questionnaire.status === PUBLISHED && !req.payload.name) throw Boom.forbidden();
+  if (questionnaire.status !== DRAFT && !req.payload.name) throw Boom.forbidden();
 
   let publishedQuestionnaireWithSameType = null;
   const questionnaireQuery = {
@@ -83,7 +83,7 @@ exports.authorizeCardDeletion = async (req) => {
   const card = await Card.countDocuments({ _id: req.params.cardId });
   if (!card) throw Boom.notFound();
 
-  const questionnaire = await Questionnaire.countDocuments({ cards: req.params.cardId, status: PUBLISHED });
+  const questionnaire = await Questionnaire.countDocuments({ cards: req.params.cardId, status: { $ne: DRAFT } });
   if (questionnaire) throw Boom.forbidden();
 
   return null;

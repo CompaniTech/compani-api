@@ -44,7 +44,7 @@ describe('addQuestionnaireHistory', () => {
     UtilsMock.unmockCurrentDate();
   });
 
-  it('should create a questionnaireHistory', async () => {
+  it('should create a questionnaireHistory (not connected)', async () => {
     const questionnaireId = new ObjectId();
     const questionnaire = { _id: questionnaireId, type: EXPECTATIONS };
     const company = new ObjectId();
@@ -56,12 +56,15 @@ describe('addQuestionnaireHistory', () => {
     findOneQuestionnaire.returns(SinonMongoose.stubChainedQueries(questionnaire, ['lean']));
     countDocumentsQH.returns(0);
 
-    await QuestionnaireHistoriesHelper.addQuestionnaireHistory({
-      course: courseId,
-      user: userId,
-      questionnaire: questionnaireId,
-      questionnaireAnswersList,
-    });
+    await QuestionnaireHistoriesHelper.addQuestionnaireHistory(
+      {
+        course: courseId,
+        user: userId,
+        questionnaire: questionnaireId,
+        questionnaireAnswersList,
+      },
+      null
+    );
 
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
@@ -83,78 +86,90 @@ describe('addQuestionnaireHistory', () => {
     sinon.assert.notCalled(findOneCourse);
   });
 
-  it('should create a questionnaireHistory with timeline START_COURSE (SELF_POSITIONNING)', async () => {
-    const questionnaireId = new ObjectId();
-    const questionnaire = { _id: questionnaireId, type: SELF_POSITIONNING };
-    const company = new ObjectId();
-    const userId = new ObjectId();
-    const courseId = new ObjectId();
-    const programId = new ObjectId();
-    const questionnaireAnswersList = [{ card: new ObjectId(), answerList: ['blabla'] }];
-    const course = {
-      _id: courseId,
-      slots: [{ startDate: '2021-04-20T09:00:00.000Z', endDate: '2021-04-20T11:00:00.000Z' }],
-      slotsToPlan: [],
-      subProgram: { program: { _id: programId } },
-    };
+  it('should create a questionnaireHistory with timeline START_COURSE (SELF_POSITIONNING) (connected)',
+    async () => {
+      const credentials = { _id: new ObjectId() };
+      const questionnaireId = new ObjectId();
+      const questionnaire = { _id: questionnaireId, type: SELF_POSITIONNING };
+      const company = new ObjectId();
+      const userId = new ObjectId();
+      const courseId = new ObjectId();
+      const programId = new ObjectId();
+      const questionnaireAnswersList = [{ card: new ObjectId(), answerList: ['blabla'] }];
+      const course = {
+        _id: courseId,
+        slots: [{ startDate: '2021-04-20T09:00:00.000Z', endDate: '2021-04-20T11:00:00.000Z' }],
+        slotsToPlan: [],
+        subProgram: { program: { _id: programId } },
+      };
 
-    getCompanyAtCourseRegistrationList.returns([{ company }, { company: new ObjectId() }]);
-    findOneQuestionnaire.returns(SinonMongoose.stubChainedQueries(questionnaire, ['lean']));
-    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
-    countDocumentsQH.returns(0);
+      getCompanyAtCourseRegistrationList.returns([{ company }, { company: new ObjectId() }]);
+      findOneQuestionnaire.returns(SinonMongoose.stubChainedQueries(questionnaire, ['lean']));
+      findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+      countDocumentsQH.returns(0);
 
-    await QuestionnaireHistoriesHelper.addQuestionnaireHistory({
-      course: courseId,
-      user: userId,
-      questionnaire: questionnaireId,
-      questionnaireAnswersList,
+      await QuestionnaireHistoriesHelper.addQuestionnaireHistory(
+        {
+          course: courseId,
+          user: userId,
+          questionnaire: questionnaireId,
+          questionnaireAnswersList,
+        },
+        credentials
+      );
+
+      sinon.assert.calledOnceWithExactly(
+        getCompanyAtCourseRegistrationList,
+        { key: COURSE, value: courseId },
+        { key: TRAINEE, value: [userId] }
+      );
+      SinonMongoose.calledOnceWithExactly(
+        findOneQuestionnaire,
+        [{ query: 'findOne', args: [{ _id: questionnaireId }, { type: 1 }] }, { query: 'lean' }]
+      );
+      SinonMongoose.calledOnceWithExactly(
+        findOneCourse,
+        [
+          { query: 'findOne', args: [{ _id: courseId }] },
+          { query: 'populate', args: [{ path: 'slots', select: '-__v -createdAt -updatedAt' }] },
+          { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
+          {
+            query: 'populate',
+            args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
+          },
+          {
+            query: 'populate',
+            args: [
+              { path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } },
+            ],
+          },
+          { query: 'lean', args: [{ virtuals: true }] },
+        ]
+      );
+      SinonMongoose.calledOnceWithExactly(
+        countDocumentsQH,
+        [
+          {
+            query: 'countDocuments',
+            args: [{ course: courseId, user: userId, questionnaire: questionnaireId, timeline: START_COURSE }],
+          },
+        ]
+      );
+      sinon.assert.calledOnceWithExactly(
+        create,
+        {
+          course: courseId,
+          user: userId,
+          questionnaire: questionnaireId,
+          questionnaireAnswersList,
+          company,
+          timeline: START_COURSE,
+        }
+      );
     });
 
-    sinon.assert.calledOnceWithExactly(
-      getCompanyAtCourseRegistrationList,
-      { key: COURSE, value: courseId },
-      { key: TRAINEE, value: [userId] }
-    );
-    SinonMongoose.calledOnceWithExactly(
-      findOneQuestionnaire,
-      [{ query: 'findOne', args: [{ _id: questionnaireId }, { type: 1 }] }, { query: 'lean' }]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      findOneCourse,
-      [
-        { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: '-__v -createdAt -updatedAt' }] },
-        { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
-        {
-          query: 'populate',
-          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
-        },
-        { query: 'lean', args: [{ virtuals: true }] },
-      ]
-    );
-    SinonMongoose.calledOnceWithExactly(
-      countDocumentsQH,
-      [
-        {
-          query: 'countDocuments',
-          args: [{ course: courseId, user: userId, questionnaire: questionnaireId, timeline: START_COURSE }],
-        },
-      ]
-    );
-    sinon.assert.calledOnceWithExactly(
-      create,
-      {
-        course: courseId,
-        user: userId,
-        questionnaire: questionnaireId,
-        questionnaireAnswersList,
-        company,
-        timeline: START_COURSE,
-      }
-    );
-  });
-
-  it('should create a questionnaireHistory with timeline END_COURSE (SELF_POSITIONNING)', async () => {
+  it('should create a questionnaireHistory with timeline END_COURSE (SELF_POSITIONNING) (connected)', async () => {
+    const credentials = { _id: new ObjectId() };
     const questionnaireId = new ObjectId();
     const questionnaire = { _id: questionnaireId, type: SELF_POSITIONNING };
     const company = new ObjectId();
@@ -178,12 +193,15 @@ describe('addQuestionnaireHistory', () => {
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
     countDocumentsQH.returns(0);
 
-    await QuestionnaireHistoriesHelper.addQuestionnaireHistory({
-      course: courseId,
-      user: userId,
-      questionnaire: questionnaireId,
-      questionnaireAnswersList,
-    });
+    await QuestionnaireHistoriesHelper.addQuestionnaireHistory(
+      {
+        course: courseId,
+        user: userId,
+        questionnaire: questionnaireId,
+        questionnaireAnswersList,
+      },
+      credentials
+    );
 
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
@@ -203,6 +221,12 @@ describe('addQuestionnaireHistory', () => {
         {
           query: 'populate',
           args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
+        },
+        {
+          query: 'populate',
+          args: [
+            { path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } },
+          ],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -229,7 +253,8 @@ describe('addQuestionnaireHistory', () => {
     );
   });
 
-  it('should create a questionnaireHistory with timeline UNKNOWN (SELF_POSITIONNING)', async () => {
+  it('should create a questionnaireHistory with timeline UNKNOWN (SELF_POSITIONNING) (connected)', async () => {
+    const credentials = { _id: new ObjectId() };
     const questionnaireId = new ObjectId();
     const questionnaire = { _id: questionnaireId, type: SELF_POSITIONNING };
     const company = new ObjectId();
@@ -253,12 +278,15 @@ describe('addQuestionnaireHistory', () => {
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
     countDocumentsQH.returns(0);
 
-    await QuestionnaireHistoriesHelper.addQuestionnaireHistory({
-      course: courseId,
-      user: userId,
-      questionnaire: questionnaireId,
-      questionnaireAnswersList,
-    });
+    await QuestionnaireHistoriesHelper.addQuestionnaireHistory(
+      {
+        course: courseId,
+        user: userId,
+        questionnaire: questionnaireId,
+        questionnaireAnswersList,
+      },
+      credentials
+    );
 
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,
@@ -278,6 +306,12 @@ describe('addQuestionnaireHistory', () => {
         {
           query: 'populate',
           args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
+        },
+        {
+          query: 'populate',
+          args: [
+            { path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } },
+          ],
         },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -303,7 +337,7 @@ describe('addQuestionnaireHistory', () => {
     );
   });
 
-  it('should create a questionnaireHistory with timeline in payload (SELF_POSITIONNING)', async () => {
+  it('should create a questionnaireHistory with timeline in payload (SELF_POSITIONNING) (not connected)', async () => {
     const questionnaireId = new ObjectId();
     const questionnaire = { _id: questionnaireId, type: SELF_POSITIONNING };
     const company = new ObjectId();
@@ -315,14 +349,17 @@ describe('addQuestionnaireHistory', () => {
     findOneQuestionnaire.returns(SinonMongoose.stubChainedQueries(questionnaire, ['lean']));
     countDocumentsQH.returns(0);
 
-    await QuestionnaireHistoriesHelper.addQuestionnaireHistory({
-      course: courseId,
-      user: userId,
-      questionnaire: questionnaireId,
-      questionnaireAnswersList,
-      timeline: START_COURSE,
-      origin: WEBAPP,
-    });
+    await QuestionnaireHistoriesHelper.addQuestionnaireHistory(
+      {
+        course: courseId,
+        user: userId,
+        questionnaire: questionnaireId,
+        questionnaireAnswersList,
+        timeline: START_COURSE,
+        origin: WEBAPP,
+      },
+      null
+    );
 
     sinon.assert.calledOnceWithExactly(
       getCompanyAtCourseRegistrationList,

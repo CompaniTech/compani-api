@@ -20,7 +20,7 @@ const translate = require('./translate');
 
 const { language } = translate;
 
-exports.addQuestionnaireHistory = async (payload) => {
+exports.addQuestionnaireHistory = async (payload, credentials) => {
   const { user: userId, questionnaire: questionnaireId, course: courseId } = payload;
   const traineesCompanyAtCourseRegistrationList = await CourseHistoriesHelper
     .getCompanyAtCourseRegistrationList({ key: COURSE, value: courseId }, { key: TRAINEE, value: [userId] });
@@ -32,7 +32,7 @@ exports.addQuestionnaireHistory = async (payload) => {
     if (payload.origin === WEBAPP) {
       timeline = payload.timeline;
     } else {
-      const { courseTimeline } = await QuestionnaireHelper.getCourseInfos(courseId);
+      const { courseTimeline } = await QuestionnaireHelper.getCourseInfos(courseId, credentials, false);
 
       switch (courseTimeline) {
         case BEFORE_MIDDLE_COURSE_END_DATE:

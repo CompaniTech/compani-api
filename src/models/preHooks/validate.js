@@ -32,9 +32,11 @@ module.exports = {
     const isPopulate = get(query, '_id.$in', null);
     const hasCompany = (query.$and && query.$and.some(q => !!q.company || !!query.companies)) ||
       (query.$or && query.$or.every(q => !!q.company || !!query.companies)) || query.company || query.companies;
-    const { isVendorUser, requestingOwnInfos, allCompanies } = this.getOptions();
+    const { isVendorUser, requestingOwnInfos, allCompanies, bypassValidateQuery } = this.getOptions();
 
-    if (!hasCompany && !isPopulate && !isVendorUser && !requestingOwnInfos && !allCompanies) throw Boom.badRequest();
+    if (!hasCompany && !isPopulate && !isVendorUser && !requestingOwnInfos && !allCompanies && !bypassValidateQuery) {
+      throw Boom.badRequest();
+    }
   },
   formatQuery() {
     const query = this.getQuery();
