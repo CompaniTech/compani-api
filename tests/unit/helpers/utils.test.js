@@ -839,3 +839,17 @@ describe('escapeRegex', () => {
     expect('ehpad saint jean portieux (HH) *+?^').toMatch(new RegExp(`^${result}$`, 'i'));
   });
 });
+
+describe('sanitizeFileName', () => {
+  it('should replace illegal, reserved or control characters', () => {
+    const result = UtilsHelper.sanitizeFileName('1\x002?3://4..');
+
+    expect(result).toBe('1_2_3___4_');
+  });
+
+  it('should replace Windows reserved characters', () => {
+    const result = UtilsHelper.sanitizeFileName('nul');
+
+    expect(result).toBe('_');
+  });
+});

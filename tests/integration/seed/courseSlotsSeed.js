@@ -12,8 +12,16 @@ const SubProgram = require('../../../src/models/SubProgram');
 const Attendance = require('../../../src/models/Attendance');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
+const CourseHistory = require('../../../src/models/CourseHistory');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
-const { vendorAdmin, trainerAndCoach, trainer, coach, auxiliary } = require('../../seed/authUsersSeed');
+const {
+  vendorAdmin,
+  trainerAndCoach,
+  trainer,
+  coach,
+  auxiliary,
+  trainerOrganisationManager,
+} = require('../../seed/authUsersSeed');
 const {
   WEBAPP,
   INTRA,
@@ -25,6 +33,7 @@ const {
   MONTHLY,
   PRESENT,
   MOBILE,
+  TRAINER_DELETION,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { auxiliaryRoleId } = require('../../seed/authRolesSeed');
@@ -135,7 +144,7 @@ const coursesList = [
     misc: 'third company',
     type: INTRA,
     maxTrainees: 8,
-    trainers: [trainer._id],
+    trainers: [trainerAndCoach._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
   },
@@ -302,6 +311,16 @@ const courseSlotsList = [
   },
 ];
 
+const courseHistoriesList = [
+  {
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    action: TRAINER_DELETION,
+    trainer: trainer._id,
+    createdBy: trainerOrganisationManager._id,
+  },
+];
+
 const attendances = [
   {
     _id: new ObjectId(),
@@ -396,6 +415,7 @@ const populateDB = async () => {
   await Promise.all([
     Activity.create(activitiesList),
     Card.create(cardsList),
+    CourseHistory.create(courseHistoriesList),
     CompletionCertificate.create(completionCertificates),
     SubProgram.create(subProgramsList),
     Program.create(programsList),
