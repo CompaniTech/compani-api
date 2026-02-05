@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
 const mongooseLeanVirtuals = require('mongoose-lean-virtuals');
+const has = require('lodash/has');
+const uniqBy = require('lodash/uniqBy');
 const {
   INTRA,
   INTER_B2B,
@@ -147,7 +149,12 @@ function populateQuestionnaires(doc) {
   if (!doc || !doc.questionnaires) return;
 
   // eslint-disable-next-line no-param-reassign
-  doc.questionnaires = [...new Set(doc.questionnaires.map(q => q.questionnaire))];
+  doc.questionnaires = uniqBy(
+    doc.questionnaires, q => (
+      has(q.questionnaire, '_id') ? q.questionnaire._id.toHexString() : q.questionnaire.toHexString()
+    )
+  )
+    .map(q => q.questionnaire);
 }
 
 queryMiddlewareList.map(middleware => CourseSchema.pre(middleware, formatQuery));
