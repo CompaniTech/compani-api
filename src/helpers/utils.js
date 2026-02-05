@@ -325,3 +325,22 @@ exports.parseCsv = file => new Promise((resolve, reject) => {
 exports.escapeRegex = string => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 exports.formatDownloadName = name => name.replaceAll(/ - | |'/g, '_');
+
+const ILLEGAL_REGEX = /[/?<>\\:*|"]/g;
+// eslint-disable-next-line no-control-regex
+const CONTROL_REGEX = /[\x00-\x1f\x80-\x9f]/g;
+const WINDOWS_RESERVED_REGEX = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
+const RESERVED_REGEX = /[. ]+$/;
+
+exports.sanitizeFileName = (name) => {
+  if (typeof name !== 'string') {
+    throw new Error('Input must be string');
+  }
+  const replacement = '_';
+  const sanitized = name
+    .replace(ILLEGAL_REGEX, replacement)
+    .replace(CONTROL_REGEX, replacement)
+    .replace(RESERVED_REGEX, replacement)
+    .replace(WINDOWS_RESERVED_REGEX, replacement);
+  return sanitized;
+};

@@ -79,7 +79,7 @@ exports.generateTransactionInfos = transaction => ({
 
 exports.generateSEPAFile = async (paymentIds, name) => {
   const xmlContent = XmlHelper.createDocument();
-  const outputPath = path.join(os.tmpdir(), name);
+  const outputPath = path.join(os.tmpdir(), UtilsHelper.sanitizeFileName(name));
 
   const payments = await CoursePayment
     .find({ _id: { $in: paymentIds } })
