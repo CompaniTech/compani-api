@@ -389,6 +389,7 @@ exports.plugin = {
         auth: { scope: ['courses:edit'] },
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
+          query: Joi.object({ isPreFilled: Joi.boolean().default(true) }),
         },
         pre: [{ method: authorizeGetAttendanceSheets }, { method: authorizeGetDocuments }],
       },

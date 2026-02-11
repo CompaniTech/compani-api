@@ -4498,7 +4498,7 @@ describe('COURSES ROUTES - GET /{_id}/attendance-sheets', () => {
     it('should return 200 for intra course', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${intraCourseIdFromAuthCompany}/attendance-sheets`,
+        url: `/courses/${intraCourseIdFromAuthCompany}/attendance-sheets?isPreFilled=true`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -4518,7 +4518,7 @@ describe('COURSES ROUTES - GET /{_id}/attendance-sheets', () => {
     it('should return 200 for intra_holding course', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/${coursesList[21]._id}/attendance-sheets`,
+        url: `/courses/${coursesList[21]._id}/attendance-sheets?isPreFilled=false`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 

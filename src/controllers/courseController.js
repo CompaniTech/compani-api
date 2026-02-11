@@ -171,7 +171,7 @@ const downloadAttendanceSheets = async (req, h) => {
     req.log('courseController - downloadAttendanceSheets - params', req.params);
     req.log('courseController - downloadAttendanceSheets - company', get(req, 'auth.credentials.company._id'));
 
-    const { pdf, fileName } = await CoursesHelper.generateAttendanceSheets(req.params._id);
+    const { pdf, fileName } = await CoursesHelper.generateAttendanceSheets(req.params._id, req.query);
 
     return h.response(pdf)
       .header('content-disposition', `inline; filename=${fileName}.pdf`)

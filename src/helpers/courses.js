@@ -1196,7 +1196,7 @@ exports.formatInterCourseForPdf = async (course) => {
   };
 };
 
-exports.generateAttendanceSheets = async (courseId) => {
+exports.generateAttendanceSheets = async (courseId, query) => {
   const course = await Course
     .findOne({ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 })
     .populate({ path: 'companies', select: 'name' })
@@ -1211,7 +1211,8 @@ exports.generateAttendanceSheets = async (courseId) => {
     .lean();
 
   const pdf = [INTRA, INTRA_HOLDING].includes(course.type)
-    ? await IntraAttendanceSheet.getPdf(await exports.formatIntraCourseForPdf(course))
+    ? await IntraAttendanceSheet
+      .getPdf(await exports.formatIntraCourseForPdf(query.isPreFilled ? course : { ...course, trainees: [] }))
     : await InterAttendanceSheet.getPdf(await exports.formatInterCourseForPdf(course));
 
   return { fileName: 'emargement.pdf', pdf };

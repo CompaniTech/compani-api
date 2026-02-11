@@ -5659,7 +5659,7 @@ describe('generateAttendanceSheets', () => {
     formatInterCourseForPdf.returns({ name: 'la formation - des infos en plus' });
     interAttendanceSheetGetPdf.returns('pdf');
 
-    await CourseHelper.generateAttendanceSheets(courseId);
+    await CourseHelper.generateAttendanceSheets(courseId, { isPreFilled: true });
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
       { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
@@ -5686,7 +5686,7 @@ describe('generateAttendanceSheets', () => {
     sinon.assert.calledOnceWithExactly(interAttendanceSheetGetPdf, { name: 'la formation - des infos en plus' });
   });
 
-  it('should download attendance sheet for intra course', async () => {
+  it('should download attendance sheet for intra course (prefilled)', async () => {
     const courseId = new ObjectId();
     const course = { misc: 'des infos en plus', type: INTRA };
 
@@ -5695,7 +5695,7 @@ describe('generateAttendanceSheets', () => {
     formatIntraCourseForPdf.returns({ name: 'la formation - des infos en plus' });
     intraAttendanceSheetGetPdf.returns('pdf');
 
-    await CourseHelper.generateAttendanceSheets(courseId);
+    await CourseHelper.generateAttendanceSheets(courseId, { isPreFilled: true });
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
       { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
@@ -5721,16 +5721,20 @@ describe('generateAttendanceSheets', () => {
     sinon.assert.calledOnceWithExactly(intraAttendanceSheetGetPdf, { name: 'la formation - des infos en plus' });
   });
 
-  it('should download attendance sheet for intra_holding course', async () => {
+  it('should download attendance sheet for intra_holding course (empty)', async () => {
     const courseId = new ObjectId();
-    const course = { misc: 'des infos en plus', type: INTRA_HOLDING };
+    const course = {
+      misc: 'des infos en plus',
+      type: INTRA_HOLDING,
+      trainees: [{ identity: { lastname: 'A', firstname: 'B' } }],
+    };
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
 
     formatIntraCourseForPdf.returns({ name: 'la formation - des infos en plus' });
     intraAttendanceSheetGetPdf.returns('pdf');
 
-    await CourseHelper.generateAttendanceSheets(courseId);
+    await CourseHelper.generateAttendanceSheets(courseId, { isPreFilled: false });
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
       { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
@@ -5751,7 +5755,10 @@ describe('generateAttendanceSheets', () => {
       },
       { query: 'lean' },
     ]);
-    sinon.assert.calledOnceWithExactly(formatIntraCourseForPdf, course);
+    sinon.assert.calledOnceWithExactly(
+      formatIntraCourseForPdf,
+      { misc: 'des infos en plus', type: INTRA_HOLDING, trainees: [] }
+    );
     sinon.assert.notCalled(formatInterCourseForPdf);
     sinon.assert.calledOnceWithExactly(intraAttendanceSheetGetPdf, { name: 'la formation - des infos en plus' });
   });
