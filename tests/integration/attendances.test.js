@@ -264,6 +264,18 @@ describe('ATTENDANCES ROUTES - POST /attendances', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should return 403 if courseSlot trainers does not contain trainer', async () => {
+      authToken = await getTokenByCredentials(trainerAndCoach.local);
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendances',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { trainee: traineeList[3]._id, courseSlot: slotsList[0]._id },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 if courseSlot is not from trainer\'s courses', async () => {
       authToken = await getTokenByCredentials(userList[1].local);
       const response = await app.inject({
@@ -994,6 +1006,17 @@ describe('ATTENDANCES ROUTES - PUT /attendances', () => {
       });
 
       expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 403 if courseSlot trainers does not contain trainer', async () => {
+      authToken = await getTokenByCredentials(trainerAndCoach.local);
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendances?courseSlot=${slotsList[3]._id}&trainee=${traineeList[2]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 403 if courseSlot is not from trainer\'s courses', async () => {
