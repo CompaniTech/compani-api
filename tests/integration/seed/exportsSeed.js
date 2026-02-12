@@ -2098,9 +2098,7 @@ const questionnaireHistoriesList = [
     course: coursesList[3]._id,
     user: traineeList[0]._id,
     questionnaire: questionnaireList[3]._id,
-    questionnaireAnswersList: [
-      { card: cardList[4]._id, answerList: ['3'] },
-    ],
+    questionnaireAnswersList: [{ card: cardList[4]._id, answerList: ['3'] }],
     origin: WEBAPP,
     createdAt: '2021-01-20T11:31:37.000Z',
     company: authCompany._id,

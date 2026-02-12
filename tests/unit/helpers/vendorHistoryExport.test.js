@@ -1666,7 +1666,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
   ];
   const questionnaires = [
     {
-      type: 'end_of_course',
+      type: END_OF_COURSE,
       cards,
       status: PUBLISHED,
       histories: [
@@ -1686,7 +1686,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           company: { name: 'créole' },
           questionnaire: {
             _id: new ObjectId(),
-            type: 'end_of_course',
+            type: END_OF_COURSE,
             cards,
           },
           questionnaireAnswersList: [
@@ -1720,7 +1720,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           company: { name: 'Reggae Music' },
           questionnaire: {
             _id: new ObjectId(),
-            type: 'end_of_course',
+            type: END_OF_COURSE,
             cards,
           },
           questionnaireAnswersList: [
@@ -1746,7 +1746,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           company: { name: 'Reggae Music' },
           questionnaire: {
             _id: new ObjectId(),
-            type: 'end_of_course',
+            type: END_OF_COURSE,
             cards,
           },
           questionnaireAnswersList: [
@@ -1763,7 +1763,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
       ],
     },
     {
-      type: 'end_of_course',
+      type: END_OF_COURSE,
       status: ARCHIVED,
       cards: newCards,
       histories: [
@@ -1783,7 +1783,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           company: { name: 'créole' },
           questionnaire: {
             _id: new ObjectId(),
-            type: 'end_of_course',
+            type: END_OF_COURSE,
             cards: newCards,
           },
           questionnaireAnswersList: [{ card: { _id: newCards[0]._id }, answerList: ['5'] }],
@@ -1911,7 +1911,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
       [
         {
           query: 'find',
-          args: [{ type: 'end_of_course', status: { $ne: DRAFT } }],
+          args: [{ type: END_OF_COURSE, status: { $ne: DRAFT } }],
         },
         { query: 'populate', args: [{ path: 'cards', select: 'question template' }] },
         {
