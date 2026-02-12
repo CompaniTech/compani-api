@@ -35,6 +35,7 @@ const {
   INTER_B2B,
   PAYMENT_STATUS_LIST,
   PRESENT,
+  DRAFT,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -426,8 +427,8 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
   const rows = [];
   const isRofOrAdmin = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
 
-  const endOfCourseQuestionnaire = await Questionnaire
-    .findOne({ type: END_OF_COURSE })
+  const endOfCourseQuestionnaires = await Questionnaire
+    .find({ type: END_OF_COURSE, status: { $ne: DRAFT } })
     .populate({ path: 'cards', select: 'question template' })
     .populate({
       path: 'histories',
@@ -449,9 +450,13 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
     })
     .lean({ virtuals: true });
 
-  for (const qHistory of endOfCourseQuestionnaire.histories) {
-    const questionsAnswers = endOfCourseQuestionnaire.cards
-      .filter(card => [OPEN_QUESTION, SURVEY, QUESTION_ANSWER].includes(card.template))
+  const cards = endOfCourseQuestionnaires
+    .filter(q => get(q, 'histories.length'))
+    .flatMap(q => q.cards)
+    .filter(card => [OPEN_QUESTION, SURVEY, QUESTION_ANSWER].includes(card.template));
+
+  for (const qHistory of endOfCourseQuestionnaires.flatMap(q => q.histories)) {
+    const questionsAnswers = cards
       .reduce((acc, card) => ({
         ...acc,
         [card.question]: _getAnswerForExport(card, qHistory.questionnaireAnswersList),
