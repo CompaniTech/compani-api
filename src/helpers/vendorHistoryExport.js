@@ -457,10 +457,10 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
 
   for (const qHistory of endOfCourseQuestionnaires.flatMap(q => q.histories)) {
     const questionsAnswers = cards
-      .reduce((acc, card) => ({
-        ...acc,
-        [card.question]: _getAnswerForExport(card, qHistory.questionnaireAnswersList),
-      }), {});
+      .reduce((acc, card) => {
+        acc[card.question] = _getAnswerForExport(card, qHistory.questionnaireAnswersList);
+        return acc;
+      }, {});
 
     const row = {
       'Id formation': get(qHistory, 'course._id') || '',
