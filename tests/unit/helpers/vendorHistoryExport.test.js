@@ -1345,6 +1345,7 @@ describe('exportCourseSlotHistory', () => {
       address: slotAddress,
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
       trainees: [traineeList[0]._id, traineeList[1]._id],
+      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
     },
     { // 1
       _id: new ObjectId(),
@@ -1355,6 +1356,7 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[1],
       meetingLink: 'https://meet.google.com',
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: PRESENT }],
+      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
     },
     { // 2
       _id: new ObjectId(),
@@ -1365,6 +1367,7 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[0],
       address: slotAddress,
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
+      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
     },
     { // 3
       _id: new ObjectId(),
@@ -1374,6 +1377,7 @@ describe('exportCourseSlotHistory', () => {
       createdAt: '2020-12-12T10:00:03.000Z',
       step: stepList[2],
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
+      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
     },
     { // 4
       _id: new ObjectId(),
@@ -1383,6 +1387,7 @@ describe('exportCourseSlotHistory', () => {
       createdAt: '2020-12-12T10:00:03.000Z',
       step: stepList[0],
       attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
+      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
     },
   ];
 
@@ -1425,6 +1430,7 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
         { query: 'lean' },
       ]
     );
@@ -1450,9 +1456,11 @@ describe('exportCourseSlotHistory', () => {
         'Adresse',
         'Nombre de présences',
         'Nombre d\'absences',
+        'Durée absences',
         'Nombre de présences non prévues',
         'Nombre d\'émargements non remplis',
         'Nombre d\'apprenants non concernés',
+        'Intervenants',
       ],
       [
         courseSlotList[0]._id,
@@ -1467,9 +1475,11 @@ describe('exportCourseSlotHistory', () => {
         '24 Avenue Daumesnil 75012 Paris',
         1,
         1,
+        '2,00',
         0,
         0,
         1,
+        'Gilles FORMATEUR',
       ],
       [
         courseSlotList[1]._id,
@@ -1484,9 +1494,11 @@ describe('exportCourseSlotHistory', () => {
         'https://meet.google.com',
         2,
         0,
+        '0,00',
         0,
         1,
         0,
+        'Gilles FORMATEUR',
       ],
       [
         courseSlotList[2]._id,
@@ -1501,9 +1513,11 @@ describe('exportCourseSlotHistory', () => {
         '24 Avenue Daumesnil 75012 Paris',
         1,
         0,
+        '0,00',
         1,
         1,
         0,
+        'Gilles FORMATEUR',
       ],
       [
         courseSlotList[3]._id,
@@ -1518,9 +1532,11 @@ describe('exportCourseSlotHistory', () => {
         '',
         1,
         0,
+        '0,00',
         1,
         1,
         0,
+        'Gilles FORMATEUR',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1545,6 +1561,7 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
         { query: 'lean' },
       ]
     );
@@ -1571,8 +1588,10 @@ describe('exportCourseSlotHistory', () => {
         'Adresse',
         'Nombre de présences',
         'Nombre d\'absences',
+        'Durée absences',
         'Nombre de présences non prévues',
         'Nombre d\'émargements non remplis',
+        'Intervenants',
       ],
       [
         courseSlotList[4]._id,
@@ -1588,8 +1607,10 @@ describe('exportCourseSlotHistory', () => {
         '',
         1,
         0,
+        '0,00',
         0,
         0,
+        'Gilles FORMATEUR',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1614,6 +1635,7 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
         { query: 'lean' },
       ]
     );
