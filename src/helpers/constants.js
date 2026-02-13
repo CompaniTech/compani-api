@@ -227,6 +227,8 @@ module.exports = {
       [this.XML_GENERATED]: 'Fichier XML associé',
     };
   },
+  PAID: 'paid',
+  NOT_PAID: 'not_paid',
   // SURCHARGES
   PUBLIC_HOLIDAY: 'publicHoliday',
   TWENTY_FIFTH_OF_DECEMBER: 'twentyFifthOfDecember',
