@@ -246,13 +246,18 @@ const formatQuery = (query, credentials) => {
   return formattedQuery;
 };
 
-const formatCourseStepsList = (course) => {
+const formatCourseStepsList = (course, trainerIdRequestingOperations = null) => {
   if (course.subProgram.isStrictlyELearning) return [];
 
   const courseName = get(course, 'subProgram.program.name');
   const courseMisc = course.misc || '';
   const courseSteps = get(course, 'subProgram.steps');
-  const stepSlotsList = groupBy(course.slots.filter(s => get(s, 'step._id')), s => s.step._id);
+  const stepSlotsList = groupBy(
+    course.slots
+      .filter(s => get(s, 'step._id') &&
+        (!trainerIdRequestingOperations || UtilsHelper.doesArrayIncludeId(s.trainers, trainerIdRequestingOperations))),
+    s => s.step._id
+  );
 
   return Object.entries(stepSlotsList)
     .filter(([, stepSlots]) => !!stepSlots.find(slot => CompaniDate().isBefore(slot.endDate)))
@@ -292,7 +297,7 @@ const listForOperations = async (query, origin, credentials) => {
   if (origin === MOBILE) {
     return {
       courses: courses.sort((a, b) => UtilsHelper.sortStrings(a._id.toHexString(), b._id.toHexString())),
-      nextSteps: courses.map(formatCourseStepsList)
+      nextSteps: courses.map(c => formatCourseStepsList(c, query.trainer))
         .flat()
         .filter(step => step.slots && step.slots.length)
         .sort(DatesUtilsHelper.ascendingSortBy('nextSlot')),
@@ -424,7 +429,7 @@ const listForPedagogy = async (query, origin, credentials) => {
     return {
       tutorCourses,
       traineeCourses: { onGoing, achieved },
-      nextSteps: onGoing.map(formatCourseStepsList)
+      nextSteps: onGoing.map(c => formatCourseStepsList(c))
         .flat()
         .filter(step => step.slots && step.slots.length)
         .sort(DatesUtilsHelper.ascendingSortBy('nextSlot')),
