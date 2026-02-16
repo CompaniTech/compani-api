@@ -1652,6 +1652,7 @@ const courseSlotList = [
     endDate: '2021-05-01T10:00:00.000Z',
     address: slotAddress,
     createdAt: '2020-12-12T10:00:00.000Z',
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 1
     _id: new ObjectId(),
@@ -1661,6 +1662,7 @@ const courseSlotList = [
     endDate: '2021-05-01T16:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 2
     _id: new ObjectId(),
@@ -1670,6 +1672,7 @@ const courseSlotList = [
     endDate: '2021-02-01T10:00:00.000Z',
     address: slotAddress,
     createdAt: '2020-12-12T10:00:02.000Z',
+    trainers: [trainer._id],
   },
   { // 3
     _id: new ObjectId(),
@@ -1678,6 +1681,7 @@ const courseSlotList = [
     startDate: '2021-02-02T08:00:00.000Z',
     endDate: '2021-02-02T10:00:00.000Z',
     createdAt: '2020-12-12T10:00:03.000Z',
+    trainers: [trainer._id],
   },
   { // 4
     _id: new ObjectId(),
@@ -1685,6 +1689,7 @@ const courseSlotList = [
     step: stepList[3]._id,
     address: slotAddress,
     createdAt: '2020-12-12T10:00:04.000Z',
+    trainers: [trainer._id],
   },
   { // 5
     _id: new ObjectId(),
@@ -1695,6 +1700,7 @@ const courseSlotList = [
     startDate: '2021-04-12T10:00:00.000Z',
     endDate: '2021-04-12T12:00:00.000Z',
     trainees: [traineeList[0]._id, traineeList[2]._id],
+    trainers: [trainer._id],
   },
   { // 6
     _id: new ObjectId(),
@@ -1704,6 +1710,7 @@ const courseSlotList = [
     createdAt: '2020-12-12T10:00:04.000Z',
     startDate: '2021-04-12T10:00:00.000Z',
     endDate: '2021-04-12T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 7 - out of COURSE_SLOT export period
     _id: new ObjectId(),
@@ -1713,6 +1720,7 @@ const courseSlotList = [
     createdAt: '2020-12-12T10:00:04.000Z',
     startDate: '2021-01-16T10:00:00.000Z',
     endDate: '2021-01-16T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 8
     _id: new ObjectId(),
@@ -1722,6 +1730,7 @@ const courseSlotList = [
     createdAt: '2020-10-14T21:00:00.000Z',
     startDate: '2021-02-01T09:00:00.000Z',
     endDate: '2021-02-01T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 9
     _id: new ObjectId(),
@@ -1730,6 +1739,7 @@ const courseSlotList = [
     createdAt: '2020-10-14T21:00:10.000Z',
     startDate: '2021-02-10T08:00:00.000Z',
     endDate: '2021-02-10T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 10
     _id: new ObjectId(),
@@ -1739,6 +1749,7 @@ const courseSlotList = [
     createdAt: '2020-10-14T21:00:30.000Z',
     startDate: '2021-02-03T08:00:00.000Z',
     endDate: '2021-02-03T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 11
     _id: new ObjectId(),
@@ -1748,6 +1759,7 @@ const courseSlotList = [
     endDate: '2021-05-01T16:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id],
   },
   { // 12
     _id: new ObjectId(),
@@ -1757,6 +1769,7 @@ const courseSlotList = [
     endDate: '2021-05-01T16:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id],
   },
   { // 13
     _id: new ObjectId(),
@@ -1766,6 +1779,7 @@ const courseSlotList = [
     endDate: '2021-01-17T18:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id],
   },
 ];
 

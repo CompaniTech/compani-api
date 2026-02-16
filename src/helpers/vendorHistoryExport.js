@@ -353,6 +353,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
       },
     })
+    .populate({ path: 'trainers', select: 'identity' })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 
@@ -371,6 +372,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     });
     const presencesCount = presences.length;
     const absencesCount = absences.length;
+    const absencesDuration = NumbersHelper.multiply(absencesCount, Number(slotDuration.replace(',', '.')));
 
     rows.push({
       'Id Créneau': slot._id,
@@ -387,6 +389,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       Adresse: getAddress(slot),
       'Nombre de présences': presencesCount,
       'Nombre d\'absences': absencesCount,
+      'Durée absences': UtilsHelper.formatFloatForExport(absencesDuration),
       'Nombre de présences non prévues': slot.attendances.length - presencesCount - absencesCount,
       'Nombre d\'émargements non remplis': (slot.trainees ? slot.trainees.length : slot.course.trainees.length)
         - presencesCount - absencesCount,
@@ -395,6 +398,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           ? slot.course.trainees.filter(t => !UtilsHelper.doesArrayIncludeId(slot.trainees, t._id)).length
           : 0,
       }),
+      Intervenants: (slot.trainers || []).map(t => UtilsHelper.formatIdentity(t.identity, 'FL')).join(', '),
     });
   }
 
