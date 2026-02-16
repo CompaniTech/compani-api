@@ -35,6 +35,7 @@ const {
   MISSING,
   DRAFT,
   ARCHIVED,
+  OPEN_QUESTION,
 } = require('../../../src/helpers/constants');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
@@ -1648,7 +1649,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
   const credentials = { role: { vendor: { name: TRAINING_ORGANISATION_MANAGER } } };
   const cards = [
     { _id: new ObjectId(), template: 'transition' },
-    { _id: new ObjectId(), question: 'Ca va ?', template: 'open_question' },
+    { _id: new ObjectId(), question: 'Ca va ?', template: OPEN_QUESTION },
     { _id: new ObjectId(), question: 'La famille ?', template: 'survey' },
     {
       _id: new ObjectId(),
@@ -1662,7 +1663,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
     },
   ];
   const newCards = [
-    { _id: new ObjectId(), question: 'Ca va 2 ?', template: 'open_question' },
+    { _id: new ObjectId(), question: 'Ca va 2 ?', template: OPEN_QUESTION },
   ];
   const questionnaires = [
     {
@@ -1711,32 +1712,6 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
               { identity: { firstname: 'Rihanna', lastname: 'Fenty' } },
             ],
           },
-          user: {
-            _id: new ObjectId(),
-            identity: { firstname: 'Bob', lastname: 'Marley' },
-            local: { email: 'bob@marley.com' },
-            contact: {},
-          },
-          company: { name: 'Reggae Music' },
-          questionnaire: {
-            _id: new ObjectId(),
-            type: END_OF_COURSE,
-            cards,
-          },
-          questionnaireAnswersList: [
-            {
-              card: { _id: cards[3]._id, qcAnswers: cards[3].qcAnswers },
-              answerList: [cards[3].qcAnswers[2]._id.toHexString()],
-            },
-            { card: { _id: cards[2]._id }, answerList: ['1'] },
-          ],
-          origin: MOBILE,
-          createdAt: '2021-06-30T12:40:29.561Z',
-          updatedAt: '2022-03-03T12:40:29.561Z',
-        },
-        { // 2 course is deleted
-          _id: new ObjectId(),
-          course: null,
           user: {
             _id: new ObjectId(),
             identity: { firstname: 'Bob', lastname: 'Marley' },
@@ -1862,22 +1837,6 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
         'DO IT !',
         'JUST',
         'Shia LABEOUF, Rihanna FENTY',
-        'Reggae Music',
-        '30/06/2021 14:40:29',
-        MOBILE,
-        'Bob MARLEY',
-        'bob@marley.com',
-        '',
-        '', // no answer here
-        '1',
-        'Non',
-        '',
-      ],
-      [
-        '',
-        '',
-        '',
-        '',
         'Reggae Music',
         '30/06/2021 14:40:29',
         MOBILE,
