@@ -1842,13 +1842,15 @@ const questionnaireList = [
     name: 'attentes',
     status: PUBLISHED,
     cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
     type: END_OF_COURSE,
     name: 'satisfaction',
-    status: PUBLISHED,
+    status: ARCHIVED,
     cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
@@ -1857,13 +1859,15 @@ const questionnaireList = [
     name: 'auto-positionnement',
     status: PUBLISHED,
     cards: [cardList[4]._id, cardList[5]._id, cardList[6]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
     type: END_OF_COURSE,
     name: 'fin',
-    status: ARCHIVED,
+    status: PUBLISHED,
     cards: [cardList[4]._id],
+    publishedAt: '2022-01-01T00:00:00.000Z',
   },
 ];
 

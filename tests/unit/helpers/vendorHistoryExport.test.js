@@ -1669,7 +1669,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
     {
       type: END_OF_COURSE,
       cards,
-      status: PUBLISHED,
+      status: ARCHIVED,
       histories: [
         { // 0 all questions answered
           _id: new ObjectId(),
@@ -1736,10 +1736,11 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           updatedAt: '2022-03-03T12:40:29.561Z',
         },
       ],
+      publishedAt: '2020-07-01T12:00:00.000Z',
     },
     {
       type: END_OF_COURSE,
-      status: ARCHIVED,
+      status: PUBLISHED,
       cards: newCards,
       histories: [
         {
@@ -1767,6 +1768,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           updatedAt: '2022-03-03T12:40:29.561Z',
         },
       ],
+      publishedAt: '2021-07-01T12:00:00.000Z',
     },
   ];
   let findQuestionnaires;

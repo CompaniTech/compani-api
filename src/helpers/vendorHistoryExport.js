@@ -452,6 +452,7 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
 
   const cards = endOfCourseQuestionnaires
     .filter(q => get(q, 'histories.length'))
+    .sort(DatesUtilsHelper.ascendingSortBy('publishedAt'))
     .flatMap(q => q.cards)
     .filter(card => [OPEN_QUESTION, SURVEY, QUESTION_ANSWER].includes(card.template));
 
