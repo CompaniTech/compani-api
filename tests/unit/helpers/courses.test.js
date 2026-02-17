@@ -408,7 +408,7 @@ describe('list', () => {
   });
 
   describe('OPERATIONS', () => {
-    it('should return courses', async () => {
+    it('should return courses (webapp)', async () => {
       const trainerId = new ObjectId();
       const coursesList = [
         {
@@ -426,15 +426,15 @@ describe('list', () => {
               theoreticalDuration: 'PT5400S',
               areActivitiesValid: false,
             }],
-            slots: [
-              {
-                startDate: '2019-11-06T09:00:00.000Z',
-                endDate: '2019-11-06T12:00:00.000Z',
-                step: new ObjectId(),
-                attendances: [{ _id: new ObjectId() }],
-              },
-            ],
           },
+          slots: [
+            {
+              startDate: '2019-11-06T09:00:00.000Z',
+              endDate: '2019-11-06T12:00:00.000Z',
+              step: new ObjectId(),
+              attendances: [{ _id: new ObjectId() }],
+            },
+          ],
           trainers: [{ _id: trainerId, identity: { firstname: 'Un nouveau', lastname: 'Prof' } }],
           trainees: [],
           operationsRepresentative: { identity: { firstname: 'charge', lastname: 'operations' } },
@@ -455,15 +455,15 @@ describe('list', () => {
               theoreticalDuration: 'PT5400S',
               areActivitiesValid: false,
             }],
-            slots: [
-              {
-                startDate: '2019-13-06T09:00:00.000Z',
-                endDate: '2019-13-06T12:00:00.000Z',
-                step: new ObjectId(),
-                attendances: [{ _id: new ObjectId() }],
-              },
-            ],
           },
+          slots: [
+            {
+              startDate: '2019-12-06T09:00:00.000Z',
+              endDate: '2019-12-06T12:00:00.000Z',
+              step: new ObjectId(),
+              attendances: [{ _id: new ObjectId() }],
+            },
+          ],
           trainers: [{ _id: trainerId, identity: { firstname: 'Un autre', lastname: 'Prof' } }],
           trainees: [],
           operationsRepresentative: { identity: { firstname: 'charge', lastname: 'operations' } },
@@ -474,7 +474,7 @@ describe('list', () => {
       findCourseAndPopulate.returns(coursesList);
 
       const query = {
-        trainers: [trainerId],
+        trainer: trainerId,
         format: 'blended',
         action: 'operations',
         origin: 'webapp',
@@ -485,8 +485,212 @@ describe('list', () => {
       expect(result).toMatchObject(coursesList);
       sinon.assert.calledOnceWithExactly(
         findCourseAndPopulate,
-        { trainers: [trainerId], format: 'blended', archivedAt: { $exists: false } },
+        { trainers: trainerId, format: 'blended', archivedAt: { $exists: false } },
         'webapp'
+      );
+      sinon.assert.notCalled(getTotalTheoreticalDurationSpy);
+      sinon.assert.notCalled(userFindOne);
+      sinon.assert.notCalled(find);
+      sinon.assert.notCalled(formatCourseWithProgress);
+      sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    });
+
+    it('should return courses (mobile)', async () => {
+      const now = CompaniDate();
+      const trainerIds = [new ObjectId(), new ObjectId()];
+      const stepIds = [new ObjectId(), new ObjectId()];
+      const attendanceIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+      const slotIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+      const coursesList = [
+        {
+          _id: new ObjectId(),
+          type: INTRA,
+          misc: 'name',
+          companies: [new ObjectId()],
+          subProgram: {
+            program: { name: 'Formation' },
+            steps: [{
+              _id: stepIds[0],
+              activities: [{ activityHistories: [{}, {}] }],
+              name: 'Développement personnel test',
+              type: ON_SITE,
+              theoreticalDuration: 'PT5400S',
+              areActivitiesValid: false,
+            }],
+          },
+          slots: [
+            {
+              _id: slotIds[0],
+              startDate: now.add('P1M').toISO(),
+              endDate: now.add('P1MT3600S').toISO(),
+              step: { _id: stepIds[0], type: ON_SITE },
+              attendances: [{ _id: attendanceIds[0] }],
+              trainers: [trainerIds[0]],
+            },
+            {
+              _id: slotIds[1],
+              startDate: now.add('P2M').toISO(),
+              endDate: now.add('P2MT3600S').toISO(),
+              step: { _id: stepIds[0], type: ON_SITE },
+              attendances: [{ _id: attendanceIds[1] }],
+              trainers: [trainerIds[1]],
+            },
+          ],
+          trainers: [
+            { _id: trainerIds[0], identity: { firstname: 'Un nouveau', lastname: 'Prof' } },
+            { _id: trainerIds[1], identity: { firstname: 'Un autre', lastname: 'Prof' } },
+          ],
+          trainees: [],
+          operationsRepresentative: { identity: { firstname: 'charge', lastname: 'operations' } },
+          salesRepresentative: { identity: { firstname: 'charge', lastname: 'd\'accompagnement' } },
+        },
+        {
+          _id: new ObjectId(),
+          type: INTRA,
+          misc: 'program',
+          companies: [new ObjectId()],
+          subProgram: {
+            program: { name: 'Super formation' },
+            steps: [{
+              _id: stepIds[1],
+              activities: [{ activityHistories: [{}, {}] }],
+              name: 'Intégrer des nouvelles personnes dans une équipe',
+              type: ON_SITE,
+              theoreticalDuration: 'PT5400S',
+              areActivitiesValid: false,
+            }],
+          },
+          slots: [
+            {
+              _id: slotIds[2],
+              startDate: now.add('P3M').toISO(),
+              endDate: now.add('P3MT3600S').toISO(),
+              step: { _id: stepIds[1], type: ON_SITE },
+              attendances: [{ _id: attendanceIds[2] }],
+              trainers: [trainerIds[0]],
+            },
+          ],
+          trainers: [{ _id: trainerIds[0], identity: { firstname: 'Un nouveau', lastname: 'Prof' } }],
+          trainees: [],
+          operationsRepresentative: { identity: { firstname: 'charge', lastname: 'operations' } },
+          salesRepresentative: { identity: { firstname: 'charge', lastname: 'd\'accompagnement' } },
+        },
+      ];
+
+      findCourseAndPopulate.returns(coursesList);
+
+      const query = {
+        trainer: trainerIds[0],
+        format: 'blended',
+        action: 'operations',
+        origin: 'mobile',
+        isArchived: false,
+      };
+      const result = await CourseHelper.list(query, credentials);
+
+      expect(result).toMatchObject({
+        courses: [
+          {
+            _id: coursesList[0]._id,
+            type: INTRA,
+            misc: 'name',
+            companies: [coursesList[0].companies[0]],
+            operationsRepresentative: { identity: { firstname: 'charge', lastname: 'operations' } },
+            salesRepresentative: { identity: { firstname: 'charge', lastname: 'd\'accompagnement' } },
+            slots: [
+              {
+                _id: slotIds[0],
+                startDate: now.add('P1M').toISO(),
+                endDate: now.add('P1MT3600S').toISO(),
+                step: { _id: stepIds[0], type: ON_SITE },
+                attendances: [{ _id: attendanceIds[0] }],
+                trainers: [trainerIds[0]],
+              },
+              {
+                _id: slotIds[1],
+                startDate: now.add('P2M').toISO(),
+                endDate: now.add('P2MT3600S').toISO(),
+                step: { _id: stepIds[0], type: ON_SITE },
+                attendances: [{ _id: attendanceIds[1] }],
+                trainers: [trainerIds[1]],
+              },
+            ],
+            subProgram: {
+              steps: [{
+                _id: stepIds[0],
+                activities: [{ activityHistories: [{}, {}] }],
+                name: 'Développement personnel test',
+                type: ON_SITE,
+                theoreticalDuration: 'PT5400S',
+                areActivitiesValid: false,
+              }],
+            },
+            trainees: [],
+            trainers: [
+              { _id: trainerIds[0], identity: { firstname: 'Un nouveau', lastname: 'Prof' } },
+              { _id: trainerIds[1], identity: { firstname: 'Un autre', lastname: 'Prof' } },
+            ],
+          },
+          {
+            _id: coursesList[1]._id,
+            type: INTRA,
+            misc: 'program',
+            companies: [coursesList[1].companies[0]],
+            operationsRepresentative: { identity: { firstname: 'charge', lastname: 'operations' } },
+            salesRepresentative: { identity: { firstname: 'charge', lastname: 'd\'accompagnement' } },
+            slots: [
+              {
+                _id: slotIds[2],
+                startDate: now.add('P3M').toISO(),
+                endDate: now.add('P3MT3600S').toISO(),
+                step: { _id: stepIds[1], type: ON_SITE },
+                attendances: [{ _id: attendanceIds[2] }],
+                trainers: [trainerIds[0]],
+              },
+            ],
+            subProgram: {
+              steps: [{
+                _id: stepIds[1],
+                activities: [{ activityHistories: [{}, {}] }],
+                name: 'Intégrer des nouvelles personnes dans une équipe',
+                type: ON_SITE,
+                theoreticalDuration: 'PT5400S',
+                areActivitiesValid: false,
+              }],
+            },
+            trainees: [],
+            trainers: [{ _id: trainerIds[0], identity: { firstname: 'Un nouveau', lastname: 'Prof' } }],
+          },
+        ],
+        nextSteps: [
+          {
+            name: 'Formation',
+            misc: 'name',
+            stepIndex: 0,
+            nextSlot: now.add('P1MT3600S').toISO(),
+            type: ON_SITE,
+            slots: [now.add('P1MT3600S').toISO()],
+            _id: slotIds[0],
+            progress: undefined,
+            courseId: coursesList[0]._id,
+          },
+          {
+            name: 'Super formation',
+            misc: 'program',
+            stepIndex: 0,
+            nextSlot: now.add('P3MT3600S').toISO(),
+            type: ON_SITE,
+            slots: [now.add('P3MT3600S').toISO()],
+            _id: slotIds[2],
+            progress: undefined,
+            courseId: coursesList[1]._id,
+          },
+        ],
+      });
+      sinon.assert.calledOnceWithExactly(
+        findCourseAndPopulate,
+        { trainers: trainerIds[0], format: 'blended', archivedAt: { $exists: false } },
+        'mobile'
       );
       sinon.assert.notCalled(getTotalTheoreticalDurationSpy);
       sinon.assert.notCalled(userFindOne);
