@@ -2055,6 +2055,33 @@ describe('SEEDS VERIFICATION', () => {
 
           expect(everyPublishedQuestionnaireHasValidCards).toBeTruthy();
         });
+
+        it('should pass if non-draft questionnaires have a publication date', () => {
+          const everyPublishedQuestionnaireHasPublicationDate = questionnaireList
+            .every(questionnaire => questionnaire.status === DRAFT || questionnaire.publishedAt);
+
+          expect(everyPublishedQuestionnaireHasPublicationDate).toBeTruthy();
+
+          const noneDraftQuestionnaireHasPublicationDate = questionnaireList
+            .every(questionnaire => questionnaire.status !== DRAFT || !questionnaire.publishedAt);
+
+          expect(noneDraftQuestionnaireHasPublicationDate).toBeTruthy();
+        });
+
+        it('should pass if archived questionnaires have an archiving date', () => {
+          const everyArchivedQuestionnaireHasArchivingDate = questionnaireList
+            .every(questionnaire => questionnaire.status !== ARCHIVED || questionnaire.archivedAt);
+
+          expect(everyArchivedQuestionnaireHasArchivingDate).toBeTruthy();
+        });
+
+        it('should pass if archiving date is after publication date', () => {
+          const everyArchivingDateIsAfterPublicationDate = questionnaireList
+            .every(questionnaire => !questionnaire.archivedAt ||
+              CompaniDate(questionnaire.archivedAt).isAfter(questionnaire.publishedAt));
+
+          expect(everyArchivingDateIsAfterPublicationDate).toBeTruthy();
+        });
       });
 
       describe('Collection QuestionnaireHistory', () => {

@@ -1851,6 +1851,7 @@ const questionnaireList = [
     status: ARCHIVED,
     cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
     publishedAt: '2021-01-01T00:00:00.000Z',
+    archivedAt: '2022-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
