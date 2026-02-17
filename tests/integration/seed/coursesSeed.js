@@ -871,10 +871,12 @@ const courseCreditNoteNumber = { _id: new ObjectId(), seq: 2 };
 const questionnaire = {
   _id: new ObjectId(),
   name: 'questionnaire',
-  status: 'published',
+  status: PUBLISHED,
   cards: [cardsList[2]._id],
   type: 'end_of_course',
+  publishedAt: '2020-01-01T00:00:00.000Z',
 };
+
 const questionnaireHistory = {
   course: coursesList[0]._id,
   questionnaire: questionnaire._id,
