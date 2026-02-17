@@ -392,7 +392,7 @@ describe('SEEDS VERIFICATION', () => {
               select: '_id type companies subProgram trainers',
               populate: {
                 path: 'slots',
-                select: 'startDate',
+                select: 'startDate trainers trainees',
                 populate: { path: 'attendances', options: { isVendorUser: true } },
               },
             })
@@ -526,6 +526,34 @@ describe('SEEDS VERIFICATION', () => {
               }));
 
           expect(everySlotInASIsLinkedToAttendance).toBeTruthy();
+        });
+
+        it('should pass if every attendance sheet trainee is linked to attendance sheet\'s slots', () => {
+          const everyASTraineeIsLinkedToASSlots = attendanceSheetList
+            .filter(as => as.trainee && as.slots)
+            .every(as => as.slots
+              .every((s) => {
+                const sl = as.course.slots.find(slot => UtilsHelper.areObjectIdsEquals(slot._id, s.slotId));
+
+                return !sl.trainees || UtilsHelper.doesArrayIncludeId(sl.trainees, as.trainee._id);
+              })
+            );
+
+          expect(everyASTraineeIsLinkedToASSlots).toBeTruthy();
+        });
+
+        it('should pass if every attendance sheet trainer is linked to attendance sheet\'s slots', () => {
+          const everyASTrainerIsLinkedToASSlots = attendanceSheetList
+            .filter(as => as.trainer && as.slots)
+            .every(as => as.slots
+              .every((s) => {
+                const sl = as.course.slots.find(slot => UtilsHelper.areObjectIdsEquals(slot._id, s.slotId));
+
+                return !sl.trainers || UtilsHelper.doesArrayIncludeId(sl.trainers, as.trainer._id);
+              })
+            );
+
+          expect(everyASTrainerIsLinkedToASSlots).toBeTruthy();
         });
       });
 
@@ -1555,6 +1583,7 @@ describe('SEEDS VERIFICATION', () => {
               transform,
             })
             .populate({ path: 'step', select: 'type', transform })
+            .populate({ path: 'trainers', select: '_id', transform })
             .lean();
         });
 
@@ -1600,6 +1629,11 @@ describe('SEEDS VERIFICATION', () => {
             .filter(cs => cs.trainees)
             .some(cs => cs.trainees.some(t => !UtilsHelper.doesArrayIncludeId(cs.course.trainees, t)));
           expect(someTraineesAreNotInCourse).toBeFalsy();
+        });
+
+        it('should pass if every slot trainer exists', () => {
+          const everyTrainerExists = courseSlotList.every(cs => !cs.trainers || cs.trainers.every(t => t._id));
+          expect(everyTrainerExists).toBeTruthy();
         });
       });
 

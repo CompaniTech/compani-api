@@ -117,6 +117,10 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
       });
       if (traineesAreNotAllowedOnSlot) throw Boom.forbidden();
 
+      const trainerIsNotSlotTrainer = courseSlots
+        .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, credentials._id));
+      if (trainerIsNotSlotTrainer) throw Boom.forbidden();
+
       const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
       await checkCompletionCertificates(slotsWithoutAttendances, course._id, slots.flatMap(s => s.trainees));
 
@@ -149,6 +153,9 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 
   if (isSingleCourse && !(req.payload.slots && traineesIds)) throw Boom.badRequest();
   if (req.payload.slots) {
+    const vendorRole = get(credentials, 'role.vendor');
+    const loggedUserIsTrainer = get(vendorRole, 'name') === TRAINER;
+
     const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
     const someSlotsContainWrongKeys = slots.some((s) => {
       const keys = Object.keys(s);
@@ -168,6 +175,12 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
       return !everyTraineeIsAllowedOnSlot;
     });
     if (traineesAreNotAllowedOnSlot) throw Boom.forbidden();
+
+    if (loggedUserIsTrainer) {
+      const trainerIsNotSlotTrainer = courseSlots
+        .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, credentials._id));
+      if (trainerIsNotSlotTrainer) throw Boom.forbidden();
+    }
 
     const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
     await checkCompletionCertificates(slotsWithoutAttendances, course._id, traineesIds);
@@ -233,9 +246,10 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   } else {
     if (attendanceSheet.course.type !== SINGLE) throw Boom.forbidden();
 
-    const courseSlotCount = await CourseSlot
-      .countDocuments({ _id: { $in: req.payload.slots }, course: attendanceSheet.course._id });
-    if (courseSlotCount !== req.payload.slots.length) throw Boom.notFound();
+    const courseSlots = await CourseSlot
+      .find({ _id: { $in: req.payload.slots }, course: attendanceSheet.course._id })
+      .lean();
+    if (courseSlots.length !== req.payload.slots.length) throw Boom.notFound();
 
     const slotAlreadyLinkedToAS = await AttendanceSheet
       .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
@@ -250,6 +264,14 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
       .find({ _id: { $in: [...attendancesToAdd, ...attendancesToDelete] } })
       .lean();
     await checkCompletionCertificates(courseSlotsToEdit, attendanceSheet.course._id, [attendanceSheet.trainee]);
+
+    const vendorRole = get(credentials, 'role.vendor');
+    const loggedUserIsTrainer = get(vendorRole, 'name') === TRAINER;
+    if (loggedUserIsTrainer) {
+      const trainerIsNotSlotTrainer = courseSlots
+        .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, credentials._id));
+      if (trainerIsNotSlotTrainer) throw Boom.forbidden();
+    }
   }
 
   return null;
