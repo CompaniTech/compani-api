@@ -196,6 +196,8 @@ module.exports = {
     courseSlotDateInCompletionCertificate: 'Impossible to add course slot : completion certificate on this date.',
     courseSlotsLinkedToMissingAttendances: 'Course slots linked to missing attendances.',
     courseSlotWholeDayConflict: 'There is already a slot on the afternoon for this day.',
+    noSlotLinkedToTrainerOnThisDay: 'No slot linked to trainer on this day.',
+    trainerNotLinkedToSlot: 'Trainer is not linked to this slot.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Course funding organisations found.',
     courseFundingOrganisationsNotFound: 'Course funding organisations not found.',
@@ -498,6 +500,8 @@ module.exports = {
     courseSlotsLinkedToMissingAttendances: 'Certains émargements à inclure dans la feuille d\'émargement sont déjà'
     + ' notés comme absents.',
     courseSlotWholeDayConflict: 'Il existe déjà un créneau sur l\'après-midi pour cette journée.',
+    noSlotLinkedToTrainerOnThisDay: 'Il n\'y a pas de créneau lié à cet intervenant pour cette journée.',
+    trainerNotLinkedToSlot: 'Certains créneaux ne sont pas liés à l\'intervenant.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
     courseFundingOrganisationsNotFound: 'Financeurs non trouvés.',

@@ -88,10 +88,19 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 
   if (!UtilsHelper.doesArrayIncludeId(course.trainers, req.payload.trainer)) throw Boom.forbidden();
 
+  const vendorRole = get(credentials, 'role.vendor');
+  const loggedUserIsTrainer = get(vendorRole, 'name') === TRAINER;
+  if (loggedUserIsTrainer && !UtilsHelper.areObjectIdsEquals(req.payload.trainer, credentials._id)) {
+    throw Boom.forbidden();
+  }
+
   if ([INTRA, INTRA_HOLDING].includes(course.type)) {
     if (req.payload.trainees) throw Boom.badRequest();
-    const isCourseSlotDate = course.slots.some(slot => CompaniDate(slot.startDate).isSame(req.payload.date, DAY));
-    if (!isCourseSlotDate) throw Boom.forbidden();
+    const dateCourseSlots = course.slots.filter(slot => CompaniDate(slot.startDate).isSame(req.payload.date, DAY));
+    if (!dateCourseSlots.length) throw Boom.forbidden();
+    const isSlotDateLinkedToTrainerSlots = dateCourseSlots
+      .some(slot => slot.trainers && UtilsHelper.doesArrayIncludeId(slot.trainers, req.payload.trainer));
+    if (!isSlotDateLinkedToTrainerSlots) throw Boom.forbidden(translate[language].noSlotLinkedToTrainerOnThisDay);
     if (req.payload.signature) {
       const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
       const everySlotContainsGoodKeys = slots.every((s) => {
@@ -153,9 +162,6 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 
   if (isSingleCourse && !(req.payload.slots && traineesIds)) throw Boom.badRequest();
   if (req.payload.slots) {
-    const vendorRole = get(credentials, 'role.vendor');
-    const loggedUserIsTrainer = get(vendorRole, 'name') === TRAINER;
-
     const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
     const someSlotsContainWrongKeys = slots.some((s) => {
       const keys = Object.keys(s);
@@ -176,11 +182,9 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     });
     if (traineesAreNotAllowedOnSlot) throw Boom.forbidden();
 
-    if (loggedUserIsTrainer) {
-      const trainerIsNotSlotTrainer = courseSlots
-        .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, credentials._id));
-      if (trainerIsNotSlotTrainer) throw Boom.forbidden();
-    }
+    const trainerIsNotSlotTrainer = courseSlots
+      .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, req.payload.trainer));
+    if (trainerIsNotSlotTrainer) throw Boom.forbidden(translate[language].trainerNotLinkedToSlot);
 
     const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
     await checkCompletionCertificates(slotsWithoutAttendances, course._id, traineesIds);
@@ -267,11 +271,13 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
 
     const vendorRole = get(credentials, 'role.vendor');
     const loggedUserIsTrainer = get(vendorRole, 'name') === TRAINER;
-    if (loggedUserIsTrainer) {
-      const trainerIsNotSlotTrainer = courseSlots
-        .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, credentials._id));
-      if (trainerIsNotSlotTrainer) throw Boom.forbidden();
+    if (loggedUserIsTrainer && !UtilsHelper.areObjectIdsEquals(attendanceSheet.trainer, credentials._id)) {
+      throw Boom.forbidden();
     }
+
+    const slotTrainerIsNotASTrainer = courseSlots
+      .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, attendanceSheet.trainer));
+    if (slotTrainerIsNotASTrainer) throw Boom.forbidden();
   }
 
   return null;

@@ -1160,12 +1160,54 @@ describe('ATTENDANCE SHEETS ROUTES - POST /attendancesheets', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if try to upload attendance sheet for another trainer', async () => {
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        file: 'test',
+        date: '2020-01-22T23:00:00.000Z',
+        origin: WEBAPP,
+        trainer: trainerAndCoach._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try to upload attendance sheet on a date without trainer slot', async () => {
+      const formData = {
+        course: coursesList[0]._id.toHexString(),
+        file: 'test',
+        date: '2025-01-23T23:00:00.000Z',
+        origin: WEBAPP,
+        trainer: trainer._id.toHexString(),
+      };
+
+      const form = generateFormData(formData);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/attendancesheets',
+        payload: getStream(form),
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 if try to add attendance sheet on another trainer slot (intra)', async () => {
       const slots = [{ slotId: slotsList[27]._id.toHexString(), trainees: [userList[0]._id.toHexString()] }];
       const formData = {
         course: coursesList[0]._id.toHexString(),
         signature: 'test',
-        date: '2025-12-07T23:00:00.000Z',
+        date: '2025-01-23T23:00:00.000Z',
         origin: MOBILE,
         trainer: trainer._id.toHexString(),
       };
@@ -1751,6 +1793,22 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
     it('should return 403 if try to update attendances on a slot linked to completion certificate', async () => {
       const attendanceSheetId = attendanceSheetList[5]._id;
       const payload = { slots: [slotsList[21]._id] };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if try edit attendance sheet linked to another trainer', async () => {
+      authToken = await getTokenByCredentials(trainerAndCoach.local);
+
+      const attendanceSheetId = attendanceSheetList[5]._id;
+      const payload = { slots: [slotsList[4]._id] };
 
       const response = await app.inject({
         method: 'PUT',
