@@ -5659,7 +5659,7 @@ describe('generateAttendanceSheets', () => {
     formatInterCourseForPdf.returns({ name: 'la formation - des infos en plus' });
     interAttendanceSheetGetPdf.returns('pdf');
 
-    await CourseHelper.generateAttendanceSheets(courseId, { isPreFilled: true });
+    await CourseHelper.generateAttendanceSheets(courseId, {});
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
       { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },

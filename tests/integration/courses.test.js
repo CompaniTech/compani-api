@@ -4535,6 +4535,16 @@ describe('COURSES ROUTES - GET /{_id}/attendance-sheets', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should return 400 if isPreFilled query on inter course', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${interCourseIdFromAuthCompany}/attendance-sheets?isPreFilled=true`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 404 if course does not exist', async () => {
       const invalidId = (new ObjectId()).toHexString();
       const response = await app.inject({
