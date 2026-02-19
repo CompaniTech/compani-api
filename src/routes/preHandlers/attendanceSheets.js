@@ -99,7 +99,7 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     const dateCourseSlots = course.slots.filter(slot => CompaniDate(slot.startDate).isSame(req.payload.date, DAY));
     if (!dateCourseSlots.length) throw Boom.forbidden();
     const isSlotDateLinkedToTrainerSlots = dateCourseSlots
-      .some(slot => !slot.trainers || UtilsHelper.doesArrayIncludeId(slot.trainers, req.payload.trainer));
+      .some(slot => UtilsHelper.doesArrayIncludeId(slot.trainers || [], req.payload.trainer));
     if (!isSlotDateLinkedToTrainerSlots) throw Boom.forbidden(translate[language].noSlotLinkedToTrainerOnThisDay);
     if (req.payload.signature) {
       const slots = Array.isArray(req.payload.slots) ? req.payload.slots : [req.payload.slots];
@@ -127,7 +127,7 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
       if (traineesAreNotAllowedOnSlot) throw Boom.forbidden();
 
       const trainerIsNotSlotTrainer = courseSlots
-        .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, credentials._id));
+        .some(slot => !UtilsHelper.doesArrayIncludeId(slot.trainers || [], credentials._id));
       if (trainerIsNotSlotTrainer) throw Boom.forbidden();
 
       const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
@@ -183,7 +183,7 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     if (traineesAreNotAllowedOnSlot) throw Boom.forbidden();
 
     const trainerIsNotSlotTrainer = courseSlots
-      .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, req.payload.trainer));
+      .some(slot => !UtilsHelper.doesArrayIncludeId(slot.trainers || [], req.payload.trainer));
     if (trainerIsNotSlotTrainer) throw Boom.forbidden(translate[language].trainerNotLinkedToSlot);
 
     const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
@@ -276,7 +276,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     }
 
     const slotTrainerIsNotASTrainer = courseSlots
-      .some(slot => slot.trainers && !UtilsHelper.doesArrayIncludeId(slot.trainers, attendanceSheet.trainer));
+      .some(slot => !UtilsHelper.doesArrayIncludeId(slot.trainers || [], attendanceSheet.trainer));
     if (slotTrainerIsNotASTrainer) throw Boom.forbidden();
   }
 
