@@ -290,6 +290,7 @@ const slotsList = [
     endDate: '2020-01-23T11:00:00.000Z',
     course: coursesList[0]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 1
     _id: new ObjectId(),
@@ -297,6 +298,7 @@ const slotsList = [
     endDate: '2020-01-25T11:00:00.000Z',
     course: coursesList[2]._id,
     step: steps[0]._id,
+    trainers: [userList[3]._id],
   },
   { // 2
     _id: new ObjectId(),
@@ -304,6 +306,7 @@ const slotsList = [
     endDate: '2020-01-25T11:00:00.000Z',
     course: coursesList[5]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 3
     _id: new ObjectId(),
@@ -311,6 +314,7 @@ const slotsList = [
     endDate: '2020-01-25T11:00:00.000Z',
     course: coursesList[6]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 4
     _id: new ObjectId(),
@@ -318,6 +322,7 @@ const slotsList = [
     endDate: '2020-01-25T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 5
     _id: new ObjectId(),
@@ -325,6 +330,7 @@ const slotsList = [
     endDate: '2020-01-26T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 6
     _id: new ObjectId(),
@@ -332,6 +338,7 @@ const slotsList = [
     endDate: '2020-01-27T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 7
     _id: new ObjectId(),
@@ -339,6 +346,7 @@ const slotsList = [
     endDate: '2020-01-28T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 8
     _id: new ObjectId(),
@@ -346,6 +354,7 @@ const slotsList = [
     endDate: '2020-01-26T11:00:00.000Z',
     course: coursesList[8]._id,
     step: steps[0]._id,
+    trainers: [userList[3]._id],
   },
   { // 9
     _id: new ObjectId(),
@@ -353,6 +362,7 @@ const slotsList = [
     endDate: '2020-02-26T11:00:00.000Z',
     course: coursesList[8]._id,
     step: steps[0]._id,
+    trainers: [userList[3]._id],
   },
   { // 10
     _id: new ObjectId(),
@@ -360,6 +370,7 @@ const slotsList = [
     endDate: '2020-03-26T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 11
     _id: new ObjectId(),
@@ -367,6 +378,7 @@ const slotsList = [
     endDate: '2021-03-26T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 12
     _id: new ObjectId(),
@@ -374,6 +386,7 @@ const slotsList = [
     endDate: '2021-03-26T11:00:00.000Z',
     course: coursesList[1]._id,
     step: steps[0]._id,
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 13
     _id: new ObjectId(),
@@ -381,6 +394,7 @@ const slotsList = [
     endDate: '2021-03-27T11:00:00.000Z',
     course: coursesList[1]._id,
     step: steps[0]._id,
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 14
     _id: new ObjectId(),
@@ -388,6 +402,7 @@ const slotsList = [
     endDate: '2021-03-28T11:00:00.000Z',
     course: coursesList[1]._id,
     step: steps[0]._id,
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 15
     _id: new ObjectId(),
@@ -395,6 +410,7 @@ const slotsList = [
     endDate: '2021-01-23T11:00:00.000Z',
     course: coursesList[0]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 16
     _id: new ObjectId(),
@@ -402,6 +418,7 @@ const slotsList = [
     endDate: '2021-01-23T15:00:00.000Z',
     course: coursesList[0]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 17
     _id: new ObjectId(),
@@ -409,6 +426,7 @@ const slotsList = [
     endDate: '2021-01-24T15:00:00.000Z',
     course: coursesList[0]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 18
     _id: new ObjectId(),
@@ -416,6 +434,7 @@ const slotsList = [
     endDate: '2021-01-24T12:00:00.000Z',
     course: coursesList[0]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 19
     _id: new ObjectId(),
@@ -423,6 +442,7 @@ const slotsList = [
     endDate: '2021-01-25T11:00:00.000Z',
     course: coursesList[5]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 20
     _id: new ObjectId(),
@@ -430,6 +450,7 @@ const slotsList = [
     endDate: '2025-09-25T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 21
     _id: new ObjectId(),
@@ -437,6 +458,7 @@ const slotsList = [
     endDate: '2025-09-20T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 22
     _id: new ObjectId(),
@@ -444,6 +466,7 @@ const slotsList = [
     endDate: '2025-09-18T11:00:00.000Z',
     course: coursesList[0]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 23
     _id: new ObjectId(),
@@ -451,6 +474,7 @@ const slotsList = [
     endDate: '2025-10-20T11:00:00.000Z',
     course: coursesList[7]._id,
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 24
     _id: new ObjectId(),
@@ -459,6 +483,7 @@ const slotsList = [
     course: coursesList[0]._id,
     step: steps[0]._id,
     trainees: [userList[1]._id],
+    trainers: [trainer._id],
   },
   { // 25
     _id: new ObjectId(),
@@ -467,6 +492,7 @@ const slotsList = [
     course: coursesList[1]._id,
     step: steps[0]._id,
     trainees: [userList[1]._id, userList[2]._id],
+    trainers: [trainer._id],
   },
   { // 26
     _id: new ObjectId(),
@@ -475,6 +501,23 @@ const slotsList = [
     course: coursesList[1]._id,
     step: steps[0]._id,
     trainees: [userList[2]._id],
+    trainers: [trainerAndCoach._id],
+  },
+  { // 27
+    _id: new ObjectId(),
+    startDate: '2025-01-24T09:00:00.000Z',
+    endDate: '2025-01-24T12:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+    trainers: [trainerAndCoach._id],
+  },
+  { // 28
+    _id: new ObjectId(),
+    startDate: '2026-02-15T09:00:00.000Z',
+    endDate: '2026-02-15T11:00:00.000Z',
+    course: coursesList[7]._id,
+    step: steps[0]._id,
+    trainers: [trainerAndCoach._id],
   },
 ];
 

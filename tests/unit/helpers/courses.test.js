@@ -2944,7 +2944,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'slots',
-                select: 'step startDate endDate trainees',
+                select: 'step startDate endDate trainees trainers',
                 options: { sort: { startDate: 1 } },
                 populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
               },
