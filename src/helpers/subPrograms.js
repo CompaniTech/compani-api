@@ -7,6 +7,7 @@ const UserCompany = require('../models/UserCompany');
 const { INTER_B2C, STRICTLY_E_LEARNING, DRAFT } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const NotificationHelper = require('./notifications');
+const UtilsHelper = require('./utils');
 
 exports.addSubProgram = async (programId, payload) => {
   const subProgram = await SubProgram.create(payload);
@@ -14,7 +15,18 @@ exports.addSubProgram = async (programId, payload) => {
 };
 
 exports.updateSubProgram = async (subProgramId, payload) => {
-  if (!payload.status) return SubProgram.updateOne({ _id: subProgramId }, { $set: payload });
+  if (payload.name || payload.steps) return SubProgram.updateOne({ _id: subProgramId }, { $set: payload });
+
+  if (payload.prices) {
+    const subProgram = await SubProgram.findOne({ _id: subProgramId }, { priceVersions: 1 }).lean();
+    const lastVersionPrices = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
+    if (payload.prices !== lastVersionPrices) {
+      await SubProgram.updateOne(
+        { _id: subProgramId },
+        { $push: { priceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
+      );
+    }
+  }
 
   const subProgram = await SubProgram
     .findOneAndUpdate({ _id: subProgramId }, { $set: { status: payload.status } })
