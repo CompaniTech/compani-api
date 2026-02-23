@@ -140,71 +140,6 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(subProgramUpdated).toEqual(expect.objectContaining({ _id: subProgramId, status: 'published' }));
     });
 
-    it('should return a 403 trying to publish with empty eLearning step', async () => {
-      const subProgramId = subProgramsList[5]._id;
-      const payload = { status: 'published', accessCompanies: [authCompany._id] };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/subprograms/${subProgramId.toHexString()}`,
-        payload,
-        headers: { 'x-access-token': authToken },
-      });
-
-      expect(response.statusCode).toBe(403);
-    });
-
-    it('should return a 403 trying to publish with empty activity', async () => {
-      const subProgramId = subProgramsList[6]._id;
-      const payload = { status: 'published', accessCompanies: [authCompany._id] };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/subprograms/${subProgramId.toHexString()}`,
-        payload,
-        headers: { 'x-access-token': authToken },
-      });
-
-      expect(response.statusCode).toBe(403);
-    });
-
-    it('should return a 403 trying to publish on_site step with empty theoreticalDuration', async () => {
-      const subProgramId = subProgramsList[8]._id;
-      const payload = { status: 'published', accessCompanies: [authCompany._id] };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/subprograms/${subProgramId.toHexString()}`,
-        payload,
-        headers: { 'x-access-token': authToken },
-      });
-
-      expect(response.statusCode).toBe(403);
-    });
-
-    it('should return a 403 trying to publish elearning step with empty theoreticalDuration', async () => {
-      const subProgramId = subProgramsList[9]._id;
-      const payload = { status: 'published', accessCompanies: [authCompany._id] };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/subprograms/${subProgramId.toHexString()}`,
-        payload,
-        headers: { 'x-access-token': authToken },
-      });
-
-      expect(response.statusCode).toBe(403);
-    });
-
-    it('should return a 404 if user tries to publish strictly e-learning subProgram with wrong accessCompany',
-      async () => {
-        const payload = { status: 'published', accessCompanies: [new ObjectId(), otherCompany._id] };
-        const response = await app.inject({
-          method: 'PUT',
-          url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
-          payload,
-          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        });
-
-        expect(response.statusCode).toBe(404);
-      });
-
     it('should return 400 if setting status to draft ', async () => {
       const payload = { status: 'draft' };
       const response = await app.inject({
@@ -261,17 +196,6 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return a 403 if trying to update a subprogram with status published', async () => {
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
-        payload: { name: 'qwertyuiop' },
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-      });
-
-      expect(response.statusCode).toBe(403);
-    });
-
     it('should return a 400 if step is not from subprogram', async () => {
       const payload = { steps: [subProgramsList[0].steps[1], subProgramsList[0].steps[0]] };
       const response = await app.inject({
@@ -295,16 +219,80 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return a 409 if a published eLearning subprogram already exist in program', async () => {
-      const payload = { status: 'published' };
+    it('should return a 404 if user tries to publish strictly e-learning subProgram with wrong accessCompany',
+      async () => {
+        const payload = { status: 'published', accessCompanies: [new ObjectId(), otherCompany._id] };
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/subprograms/${eLearningSubProgramId.toHexString()}`,
+          payload,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(404);
+      });
+
+    it('should return a 403 if trying to update a subprogram with status published', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/subprograms/${subProgramsList[3]._id.toHexString()}`,
-        payload,
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload: { name: 'qwertyuiop' },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
-      expect(response.statusCode).toBe(409);
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 403 trying to publish with empty eLearning step', async () => {
+      const subProgramId = subProgramsList[5]._id;
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramId.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 403 trying to publish with empty activity', async () => {
+      const subProgramId = subProgramsList[6]._id;
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramId.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 403 trying to publish on_site step with empty theoreticalDuration', async () => {
+      const subProgramId = subProgramsList[8]._id;
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramId.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 403 trying to publish elearning step with empty theoreticalDuration', async () => {
+      const subProgramId = subProgramsList[9]._id;
+      const payload = { status: 'published', accessCompanies: [authCompany._id] };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramId.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return a 403 if subprogram is invalid', async () => {
@@ -317,6 +305,18 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 409 if a published eLearning subprogram already exist in program', async () => {
+      const payload = { status: 'published' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[3]._id.toHexString()}`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(409);
     });
   });
 
