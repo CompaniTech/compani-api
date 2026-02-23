@@ -10,6 +10,13 @@ const SubProgramSchema = mongoose.Schema({
   name: { type: String, required: true },
   steps: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Step' }],
   status: { type: String, default: DRAFT, enum: STATUS_TYPES },
+  priceVersions: [{
+    prices: [{
+      step: { type: mongoose.Schema.Types.ObjectId, ref: 'Step', required: true },
+      hourlyAmount: { type: Number, required: true },
+    }],
+    effectiveDate: { type: Date, required: true },
+  }],
 }, { timestamps: true, id: false });
 
 SubProgramSchema.virtual('program', {
