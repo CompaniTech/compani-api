@@ -47,7 +47,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
   if (!subProgram) throw Boom.notFound();
 
-  if (subProgram.status !== DRAFT) throw Boom.forbidden();
+  if (subProgram.status !== DRAFT && !req.payload.prices) throw Boom.forbidden();
 
   if (req.payload.status === PUBLISHED && !subProgram.areStepsValid) throw Boom.forbidden();
 
@@ -80,8 +80,8 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
   if (req.payload.prices) {
     if (subProgram.status !== PUBLISHED) throw Boom.forbidden();
-    const subProgramStepIds = subProgram.steps.map(s => s._id);
 
+    const subProgramStepIds = subProgram.steps.map(s => s._id);
     const someStepAreNotLinkedToSubprogram = req.payload.prices
       .some(p => !UtilsHelper.doesArrayIncludeId(subProgramStepIds, p.step));
     if (someStepAreNotLinkedToSubprogram) throw Boom.forbidden();

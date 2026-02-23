@@ -103,7 +103,15 @@ const stepsList = [
 const subProgramsList = [
   { _id: new ObjectId(), name: 'subProgram 0', status: DRAFT, steps: [stepsList[0]._id, stepsList[1]._id] },
   { _id: new ObjectId(), name: 'subProgram 1', status: DRAFT, steps: [stepsList[1]._id] },
-  { _id: new ObjectId(), name: 'subProgram 2', status: PUBLISHED, steps: [stepsList[0]._id] },
+  {
+    _id: new ObjectId(),
+    name: 'subProgram 2',
+    status: PUBLISHED,
+    steps: [stepsList[0]._id],
+    priceVersions: [
+      { prices: [{ step: stepsList[0]._id, hourlyAmount: 50 }], effectiveDate: '2026-02-01T09:00:00.000Z' },
+    ],
+  },
   { _id: new ObjectId(), name: 'subProgram 3', status: DRAFT, steps: [stepsList[1]._id] },
   { _id: new ObjectId(), name: 'subProgram 4', status: PUBLISHED, steps: [stepsList[2]._id] },
   { _id: new ObjectId(), name: 'subProgram 5', status: DRAFT, steps: [stepsList[3]._id] },

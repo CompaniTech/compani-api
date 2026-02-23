@@ -39,7 +39,7 @@ exports.plugin = {
                 accessCompanies: Joi.array().items(Joi.objectId()).min(1),
               }),
             Joi.object({
-              prices: Joi.array
+              prices: Joi.array()
                 .items({ step: Joi.objectId().required(), hourlyAmount: Joi.number().positive().required() })
                 .min(1)
                 .required(),

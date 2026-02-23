@@ -307,6 +307,54 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if adding price version on non published subProgram', async () => {
+      const payload = {
+        prices: [{ step: subProgramsList[0].steps[0], hourlyAmount: 25 }],
+        effectiveDate: '2026-01-31T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[0]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if one step is not linked to subProgram', async () => {
+      const payload = {
+        prices: [{ step: new ObjectId(), hourlyAmount: 30 }, { step: stepsList[0]._id, hourlyAmount: 40 }],
+        effectiveDate: '2026-01-31T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if effectiveDate is before or equal to last version', async () => {
+      const payload = {
+        prices: [{ step: subProgramsList[2].steps[0], hourlyAmount: 35 }],
+        effectiveDate: '2026-01-31T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return a 409 if a published eLearning subprogram already exist in program', async () => {
       const payload = { status: 'published' };
       const response = await app.inject({
