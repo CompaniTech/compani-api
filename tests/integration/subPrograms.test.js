@@ -140,6 +140,43 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(subProgramUpdated).toEqual(expect.objectContaining({ _id: subProgramId, status: 'published' }));
     });
 
+    it('should add first price version if none exist', async () => {
+      const payload = {
+        prices: [{ step: subProgramsList[4].steps[0], hourlyAmount: 50 }],
+        effectiveDate: '2026-01-31T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[4]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[4]._id);
+      expect(updatedSubProgram.priceVersions.length).toBe(1);
+    });
+
+    it('should add a new price version', async () => {
+      const payload = {
+        prices: [{ step: subProgramsList[2].steps[0], hourlyAmount: 100 }],
+        effectiveDate: '2026-02-25T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id);
+      expect(updatedSubProgram.priceVersions.length).toBe(2);
+    });
+
     it('should return 400 if setting status to draft ', async () => {
       const payload = { status: 'draft' };
       const response = await app.inject({
