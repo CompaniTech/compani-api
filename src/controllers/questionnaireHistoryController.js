@@ -6,7 +6,7 @@ const { language } = translate;
 
 const addQuestionnaireHistory = async (req) => {
   try {
-    await QuestionnaireHistoryHelper.addQuestionnaireHistory(req.payload);
+    await QuestionnaireHistoryHelper.addQuestionnaireHistory(req.payload, req.auth.credentials);
 
     return { message: translate[language].questionnaireHistoryCreated };
   } catch (e) {

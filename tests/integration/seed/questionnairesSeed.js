@@ -32,6 +32,7 @@ const {
   START_COURSE,
   INTRA,
   GLOBAL,
+  ARCHIVED,
 } = require('../../../src/helpers/constants');
 const { trainerRoleId } = require('../../seed/authRolesSeed');
 const { companyWithoutSubscription, authCompany } = require('../../seed/authCompaniesSeed');
@@ -89,9 +90,11 @@ const questionnairesList = [
   {
     _id: new ObjectId(),
     name: 'test',
-    status: PUBLISHED,
+    status: ARCHIVED,
     type: EXPECTATIONS,
     cards: [cardsList[2]._id, cardsList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
+    archivedAt: '2022-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
@@ -99,6 +102,7 @@ const questionnairesList = [
     status: PUBLISHED,
     type: END_OF_COURSE,
     cards: [cardsList[2]._id, cardsList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
@@ -107,6 +111,7 @@ const questionnairesList = [
     type: SELF_POSITIONNING,
     program: programsList[0]._id,
     cards: [cardsList[1]._id, cardsList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
@@ -123,6 +128,14 @@ const questionnairesList = [
     type: SELF_POSITIONNING,
     program: programsList[2]._id,
     cards: [cardsList[1]._id, cardsList[3]._id],
+  },
+  {
+    _id: new ObjectId(),
+    name: 'test',
+    status: PUBLISHED,
+    type: EXPECTATIONS,
+    cards: [cardsList[2]._id, cardsList[3]._id],
+    publishedAt: '2022-01-01T00:00:00.000Z',
   },
 ];
 

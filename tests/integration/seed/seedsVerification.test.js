@@ -62,6 +62,7 @@ const {
   DRAFT,
   E_LEARNING,
   PUBLISHED,
+  ARCHIVED,
   FILL_THE_GAPS,
   SINGLE_CHOICE_QUESTION,
   QUESTION_ANSWER,
@@ -391,7 +392,7 @@ describe('SEEDS VERIFICATION', () => {
               select: '_id type companies subProgram trainers',
               populate: {
                 path: 'slots',
-                select: 'startDate',
+                select: 'startDate trainers trainees',
                 populate: { path: 'attendances', options: { isVendorUser: true } },
               },
             })
@@ -525,6 +526,34 @@ describe('SEEDS VERIFICATION', () => {
               }));
 
           expect(everySlotInASIsLinkedToAttendance).toBeTruthy();
+        });
+
+        it('should pass if every attendance sheet trainee is linked to attendance sheet\'s slots', () => {
+          const everyASTraineeIsLinkedToASSlots = attendanceSheetList
+            .filter(as => as.trainee && as.slots)
+            .every(as => as.slots
+              .every((s) => {
+                const sl = as.course.slots.find(slot => UtilsHelper.areObjectIdsEquals(slot._id, s.slotId));
+
+                return !sl.trainees || UtilsHelper.doesArrayIncludeId(sl.trainees, as.trainee._id);
+              })
+            );
+
+          expect(everyASTraineeIsLinkedToASSlots).toBeTruthy();
+        });
+
+        it('should pass if every attendance sheet trainer is linked to attendance sheet\'s slots', () => {
+          const everyASTrainerIsLinkedToASSlots = attendanceSheetList
+            .filter(as => as.trainer && as.slots)
+            .every(as => as.slots
+              .every((s) => {
+                const sl = as.course.slots.find(slot => UtilsHelper.areObjectIdsEquals(slot._id, s.slotId));
+
+                return !sl.trainers || UtilsHelper.doesArrayIncludeId(sl.trainers, as.trainer._id);
+              })
+            );
+
+          expect(everyASTrainerIsLinkedToASSlots).toBeTruthy();
         });
       });
 
@@ -1554,6 +1583,7 @@ describe('SEEDS VERIFICATION', () => {
               transform,
             })
             .populate({ path: 'step', select: 'type', transform })
+            .populate({ path: 'trainers', select: '_id', transform })
             .lean();
         });
 
@@ -1599,6 +1629,11 @@ describe('SEEDS VERIFICATION', () => {
             .filter(cs => cs.trainees)
             .some(cs => cs.trainees.some(t => !UtilsHelper.doesArrayIncludeId(cs.course.trainees, t)));
           expect(someTraineesAreNotInCourse).toBeFalsy();
+        });
+
+        it('should pass if every slot trainer exists', () => {
+          const everyTrainerExists = courseSlotList.every(cs => !cs.trainers || cs.trainers.every(t => t._id));
+          expect(everyTrainerExists).toBeTruthy();
         });
       });
 
@@ -2054,6 +2089,33 @@ describe('SEEDS VERIFICATION', () => {
 
           expect(everyPublishedQuestionnaireHasValidCards).toBeTruthy();
         });
+
+        it('should pass if non-draft questionnaires have a publication date', () => {
+          const everyPublishedQuestionnaireHasPublicationDate = questionnaireList
+            .every(questionnaire => questionnaire.status === DRAFT || questionnaire.publishedAt);
+
+          expect(everyPublishedQuestionnaireHasPublicationDate).toBeTruthy();
+
+          const noneDraftQuestionnaireHasPublicationDate = questionnaireList
+            .every(questionnaire => questionnaire.status !== DRAFT || !questionnaire.publishedAt);
+
+          expect(noneDraftQuestionnaireHasPublicationDate).toBeTruthy();
+        });
+
+        it('should pass if archived questionnaires have an archiving date', () => {
+          const everyArchivedQuestionnaireHasArchivingDate = questionnaireList
+            .every(questionnaire => questionnaire.status !== ARCHIVED || questionnaire.archivedAt);
+
+          expect(everyArchivedQuestionnaireHasArchivingDate).toBeTruthy();
+        });
+
+        it('should pass if archiving date is after publication date', () => {
+          const everyArchivingDateIsAfterPublicationDate = questionnaireList
+            .every(questionnaire => !questionnaire.archivedAt ||
+              CompaniDate(questionnaire.archivedAt).isAfter(questionnaire.publishedAt));
+
+          expect(everyArchivingDateIsAfterPublicationDate).toBeTruthy();
+        });
       });
 
       describe('Collection QuestionnaireHistory', () => {
@@ -2176,9 +2238,9 @@ describe('SEEDS VERIFICATION', () => {
           expect(someUserHaveAnsweredMoreThanTwiceSameQuestionnaire).toBeFalsy();
         });
 
-        it('should pass if every questionnaire exists and is published', () => {
+        it('should pass if every questionnaire exists and is published or archived', () => {
           const everyQuestionnaireExists = questionnaireHistoryList
-            .every(qh => qh.questionnaire && qh.questionnaire.status === PUBLISHED);
+            .every(qh => qh.questionnaire && [PUBLISHED, ARCHIVED].includes(qh.questionnaire.status));
 
           expect(everyQuestionnaireExists).toBeTruthy();
         });

@@ -77,6 +77,7 @@ const questionnairesList = [
     status: PUBLISHED,
     type: EXPECTATIONS,
     cards: [cardsList[0]._id, cardsList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
@@ -85,6 +86,7 @@ const questionnairesList = [
     type: SELF_POSITIONNING,
     program: programsList[0]._id,
     cards: [cardsList[0]._id, cardsList[1]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
@@ -93,6 +95,7 @@ const questionnairesList = [
     type: SELF_POSITIONNING,
     program: programsList[1]._id,
     cards: [cardsList[1]._id, cardsList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
 ];
 

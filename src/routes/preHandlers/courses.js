@@ -203,10 +203,11 @@ exports.authorizeGetCompletionCertificates = async (req) => {
 
   const courseSlots = await CourseSlot
     .find({ course: req.params._id, endDate: { $lte: CompaniDate().toISO() } })
-    .populate({ path: 'course', select: 'trainees' })
     .lean();
 
-  const courseTrainees = format === PDF ? [auth.credentials._id] : courseSlots[0].course.trainees;
+  const course = await Course.findOne({ _id: req.params._id }, { trainees: 1 }).lean();
+
+  const courseTrainees = format === PDF ? [auth.credentials._id] : course.trainees;
 
   const expectedAttendances = courseSlots.reduce((acc, slot) => {
     if (format === PDF) {
@@ -666,6 +667,7 @@ exports.authorizeGetAttendanceSheets = async (req) => {
   const course = await Course.findOne({ _id: req.params._id }, { type: 1, format: 1 }).lean();
   if (!course) throw Boom.notFound();
   if (course.format === STRICTLY_E_LEARNING || (course.type === INTER_B2B && !userVendorRole)) throw Boom.forbidden();
+  if (![INTRA, INTRA_HOLDING].includes(course.type) && has(req, 'query.isPreFilled')) throw Boom.badRequest();
 
   return null;
 };

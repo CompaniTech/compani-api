@@ -27,8 +27,10 @@ const { CompaniDate } = require('../../helpers/dates/companiDates');
 
 const { language } = translate;
 
-const isTrainerAuthorized = (loggedUserId, trainersIds) => {
-  if (!UtilsHelper.doesArrayIncludeId(trainersIds, loggedUserId)) throw Boom.forbidden();
+const isTrainerAuthorized = (loggedUserId, trainersIds, slotTrainersId) => {
+  const isAuthorized = UtilsHelper.doesArrayIncludeId(trainersIds, loggedUserId) &&
+    UtilsHelper.doesArrayIncludeId(slotTrainersId, loggedUserId);
+  if (!isAuthorized) throw Boom.forbidden();
 
   return null;
 };
@@ -103,7 +105,8 @@ exports.authorizeUnsubscribedAttendancesGet = async (req) => {
 };
 
 exports.authorizeAttendanceCreation = async (req) => {
-  const courseSlot = await CourseSlot.findOne({ _id: req.payload.courseSlot }, { course: 1, startDate: 1, trainees: 1 })
+  const courseSlot = await CourseSlot
+    .findOne({ _id: req.payload.courseSlot }, { course: 1, startDate: 1, trainees: 1, trainers: 1 })
     .populate({
       path: 'course',
       select: 'trainers companies archivedAt trainees type holding subProgram',
@@ -117,7 +120,9 @@ exports.authorizeAttendanceCreation = async (req) => {
 
   const { credentials } = req.auth;
   const trainersIds = courseSlot.course.trainers;
-  if (get(credentials, 'role.vendor.name') === TRAINER) isTrainerAuthorized(credentials._id, trainersIds);
+  if (get(credentials, 'role.vendor.name') === TRAINER) {
+    isTrainerAuthorized(credentials._id, trainersIds, courseSlot.trainers);
+  }
 
   const { course } = courseSlot;
   if (course.archivedAt) throw Boom.forbidden();
@@ -197,7 +202,9 @@ const authorizeAttendanceUpdate = async (req, status, courseTrainees = []) => {
 
   const { credentials } = req.auth;
   const trainersIds = courseSlot.course.trainers;
-  if (get(credentials, 'role.vendor.name') === TRAINER) isTrainerAuthorized(credentials._id, trainersIds);
+  if (get(credentials, 'role.vendor.name') === TRAINER) {
+    isTrainerAuthorized(credentials._id, trainersIds, courseSlot.trainers);
+  }
 
   const isLinkedToAttendanceSheet = await AttendanceSheet.countDocuments(
     {

@@ -35,6 +35,7 @@ const {
   INTER_B2B,
   PAYMENT_STATUS_LIST,
   PRESENT,
+  DRAFT,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -353,6 +354,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
       },
     })
+    .populate({ path: 'trainers', select: 'identity' })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 
@@ -371,6 +373,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     });
     const presencesCount = presences.length;
     const absencesCount = absences.length;
+    const absencesDuration = NumbersHelper.multiply(absencesCount, Number(slotDuration.replace(',', '.')));
 
     rows.push({
       'Id Créneau': slot._id,
@@ -387,6 +390,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       Adresse: getAddress(slot),
       'Nombre de présences': presencesCount,
       'Nombre d\'absences': absencesCount,
+      'Durée absences': UtilsHelper.formatFloatForExport(absencesDuration),
       'Nombre de présences non prévues': slot.attendances.length - presencesCount - absencesCount,
       'Nombre d\'émargements non remplis': (slot.trainees ? slot.trainees.length : slot.course.trainees.length)
         - presencesCount - absencesCount,
@@ -395,6 +399,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           ? slot.course.trainees.filter(t => !UtilsHelper.doesArrayIncludeId(slot.trainees, t._id)).length
           : 0,
       }),
+      Intervenants: (slot.trainers || []).map(t => UtilsHelper.formatIdentity(t.identity, 'FL')).join(', '),
     });
   }
 
@@ -422,8 +427,8 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
   const rows = [];
   const isRofOrAdmin = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
 
-  const endOfCourseQuestionnaire = await Questionnaire
-    .findOne({ type: END_OF_COURSE })
+  const endOfCourseQuestionnaires = await Questionnaire
+    .find({ type: END_OF_COURSE, status: { $ne: DRAFT } })
     .populate({ path: 'cards', select: 'question template' })
     .populate({
       path: 'histories',
@@ -445,13 +450,18 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
     })
     .lean({ virtuals: true });
 
-  for (const qHistory of endOfCourseQuestionnaire.histories) {
-    const questionsAnswers = endOfCourseQuestionnaire.cards
-      .filter(card => [OPEN_QUESTION, SURVEY, QUESTION_ANSWER].includes(card.template))
-      .reduce((acc, card) => ({
-        ...acc,
-        [card.question]: _getAnswerForExport(card, qHistory.questionnaireAnswersList),
-      }), {});
+  const cards = endOfCourseQuestionnaires
+    .filter(q => get(q, 'histories.length'))
+    .sort(DatesUtilsHelper.ascendingSortBy('publishedAt'))
+    .flatMap(q => q.cards)
+    .filter(card => [OPEN_QUESTION, SURVEY, QUESTION_ANSWER].includes(card.template));
+
+  for (const qHistory of endOfCourseQuestionnaires.flatMap(q => q.histories)) {
+    const questionsAnswers = cards
+      .reduce((acc, card) => {
+        acc[card.question] = _getAnswerForExport(card, qHistory.questionnaireAnswersList);
+        return acc;
+      }, {});
 
     const row = {
       'Id formation': get(qHistory, 'course._id') || '',

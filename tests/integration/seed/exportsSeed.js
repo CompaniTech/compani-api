@@ -99,6 +99,7 @@ const {
   BANK_TRANSFER,
   PRESENT,
   MISSING,
+  ARCHIVED,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1080,15 +1081,19 @@ const labels = {
 };
 
 const cardList = [
-  { _id: new ObjectId(), template: TRANSITION, title: 'test' },
-  { _id: new ObjectId(), template: OPEN_QUESTION, question: 'Où est Charlie ?' },
-  {
+  { // 0
+    _id: new ObjectId(), template: TRANSITION, title: 'test',
+  },
+  { // 1
+    _id: new ObjectId(), template: OPEN_QUESTION, question: 'Où est Charlie ?',
+  },
+  { // 2
     _id: new ObjectId(),
     template: SURVEY,
     question: 'Comment gagner 100 euros par heure sans travailler ?',
     labels: { 1: 'premier niveau', 5: 'dernier niveau' },
   },
-  {
+  { // 3
     _id: new ObjectId(),
     template: QUESTION_ANSWER,
     question: 'Combien coûte une chocolatine ?',
@@ -1098,19 +1103,19 @@ const cardList = [
       { _id: new ObjectId(), text: '50 euros' },
     ],
   },
-  {
+  { // 4
     _id: new ObjectId(),
     template: SURVEY,
     question: 'Je me sens capable de faire la toilette d\'un résident seule',
     labels,
   },
-  {
+  { // 5
     _id: new ObjectId(),
     template: SURVEY,
     question: 'Je me sens capable de proposer une animation adaptée a tous les residents',
     labels,
   },
-  {
+  { // 6
     _id: new ObjectId(),
     template: SURVEY,
     question: 'Je me sens capable de cuisiner avec un groupe de residents',
@@ -1652,6 +1657,7 @@ const courseSlotList = [
     endDate: '2021-05-01T10:00:00.000Z',
     address: slotAddress,
     createdAt: '2020-12-12T10:00:00.000Z',
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 1
     _id: new ObjectId(),
@@ -1661,6 +1667,7 @@ const courseSlotList = [
     endDate: '2021-05-01T16:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 2
     _id: new ObjectId(),
@@ -1670,6 +1677,7 @@ const courseSlotList = [
     endDate: '2021-02-01T10:00:00.000Z',
     address: slotAddress,
     createdAt: '2020-12-12T10:00:02.000Z',
+    trainers: [trainer._id],
   },
   { // 3
     _id: new ObjectId(),
@@ -1678,6 +1686,7 @@ const courseSlotList = [
     startDate: '2021-02-02T08:00:00.000Z',
     endDate: '2021-02-02T10:00:00.000Z',
     createdAt: '2020-12-12T10:00:03.000Z',
+    trainers: [trainer._id],
   },
   { // 4
     _id: new ObjectId(),
@@ -1685,6 +1694,7 @@ const courseSlotList = [
     step: stepList[3]._id,
     address: slotAddress,
     createdAt: '2020-12-12T10:00:04.000Z',
+    trainers: [trainer._id],
   },
   { // 5
     _id: new ObjectId(),
@@ -1695,6 +1705,7 @@ const courseSlotList = [
     startDate: '2021-04-12T10:00:00.000Z',
     endDate: '2021-04-12T12:00:00.000Z',
     trainees: [traineeList[0]._id, traineeList[2]._id],
+    trainers: [trainer._id],
   },
   { // 6
     _id: new ObjectId(),
@@ -1704,6 +1715,7 @@ const courseSlotList = [
     createdAt: '2020-12-12T10:00:04.000Z',
     startDate: '2021-04-12T10:00:00.000Z',
     endDate: '2021-04-12T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 7 - out of COURSE_SLOT export period
     _id: new ObjectId(),
@@ -1713,6 +1725,7 @@ const courseSlotList = [
     createdAt: '2020-12-12T10:00:04.000Z',
     startDate: '2021-01-16T10:00:00.000Z',
     endDate: '2021-01-16T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 8
     _id: new ObjectId(),
@@ -1722,6 +1735,7 @@ const courseSlotList = [
     createdAt: '2020-10-14T21:00:00.000Z',
     startDate: '2021-02-01T09:00:00.000Z',
     endDate: '2021-02-01T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 9
     _id: new ObjectId(),
@@ -1730,6 +1744,7 @@ const courseSlotList = [
     createdAt: '2020-10-14T21:00:10.000Z',
     startDate: '2021-02-10T08:00:00.000Z',
     endDate: '2021-02-10T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 10
     _id: new ObjectId(),
@@ -1739,6 +1754,7 @@ const courseSlotList = [
     createdAt: '2020-10-14T21:00:30.000Z',
     startDate: '2021-02-03T08:00:00.000Z',
     endDate: '2021-02-03T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 11
     _id: new ObjectId(),
@@ -1748,6 +1764,7 @@ const courseSlotList = [
     endDate: '2021-05-01T16:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id],
   },
   { // 12
     _id: new ObjectId(),
@@ -1757,6 +1774,7 @@ const courseSlotList = [
     endDate: '2021-05-01T16:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id],
   },
   { // 13
     _id: new ObjectId(),
@@ -1766,6 +1784,7 @@ const courseSlotList = [
     endDate: '2021-01-17T18:00:00.000Z',
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id],
   },
 ];
 
@@ -1823,13 +1842,16 @@ const questionnaireList = [
     name: 'attentes',
     status: PUBLISHED,
     cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
     type: END_OF_COURSE,
     name: 'satisfaction',
-    status: PUBLISHED,
+    status: ARCHIVED,
     cards: [cardList[0]._id, cardList[1]._id, cardList[2]._id, cardList[3]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
+    archivedAt: '2022-01-01T00:00:00.000Z',
   },
   {
     _id: new ObjectId(),
@@ -1838,6 +1860,15 @@ const questionnaireList = [
     name: 'auto-positionnement',
     status: PUBLISHED,
     cards: [cardList[4]._id, cardList[5]._id, cardList[6]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
+  },
+  {
+    _id: new ObjectId(),
+    type: END_OF_COURSE,
+    name: 'fin',
+    status: PUBLISHED,
+    cards: [cardList[4]._id],
+    publishedAt: '2022-01-01T00:00:00.000Z',
   },
 ];
 
@@ -2065,6 +2096,16 @@ const questionnaireHistoriesList = [
     timeline: END_COURSE,
     createdAt: '2021-12-10T20:30:04.000Z',
     origin: MOBILE,
+    company: authCompany._id,
+  },
+  { // archived end of course questionnaire
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    user: traineeList[0]._id,
+    questionnaire: questionnaireList[3]._id,
+    questionnaireAnswersList: [{ card: cardList[4]._id, answerList: ['3'] }],
+    origin: WEBAPP,
+    createdAt: '2021-01-20T11:31:37.000Z',
     company: authCompany._id,
   },
 ];

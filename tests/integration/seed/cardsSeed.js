@@ -15,6 +15,7 @@ const {
   SURVEY,
   OPEN_QUESTION,
   QUESTION_ANSWER,
+  PUBLISHED,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 
@@ -181,9 +182,10 @@ const questionnairesList = [
   {
     _id: new ObjectId(),
     name: 'test',
-    status: 'published',
+    status: PUBLISHED,
     type: 'expectations',
     cards: [cardsList[6]._id, cardsList[9]._id],
+    publishedAt: '2021-01-01T00:00:00.000Z',
   },
 ];
 

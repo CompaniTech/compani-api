@@ -246,13 +246,18 @@ const formatQuery = (query, credentials) => {
   return formattedQuery;
 };
 
-const formatCourseStepsList = (course) => {
+const formatCourseStepsList = (course, trainerIdRequestingOperations = null) => {
   if (course.subProgram.isStrictlyELearning) return [];
 
   const courseName = get(course, 'subProgram.program.name');
   const courseMisc = course.misc || '';
   const courseSteps = get(course, 'subProgram.steps');
-  const stepSlotsList = groupBy(course.slots.filter(s => get(s, 'step._id')), s => s.step._id);
+  const stepSlotsList = groupBy(
+    course.slots
+      .filter(s => get(s, 'step._id') &&
+        (!trainerIdRequestingOperations || UtilsHelper.doesArrayIncludeId(s.trainers, trainerIdRequestingOperations))),
+    s => s.step._id
+  );
 
   return Object.entries(stepSlotsList)
     .filter(([, stepSlots]) => !!stepSlots.find(slot => CompaniDate().isBefore(slot.endDate)))
@@ -292,7 +297,7 @@ const listForOperations = async (query, origin, credentials) => {
   if (origin === MOBILE) {
     return {
       courses: courses.sort((a, b) => UtilsHelper.sortStrings(a._id.toHexString(), b._id.toHexString())),
-      nextSteps: courses.map(formatCourseStepsList)
+      nextSteps: courses.map(c => formatCourseStepsList(c, query.trainer))
         .flat()
         .filter(step => step.slots && step.slots.length)
         .sort(DatesUtilsHelper.ascendingSortBy('nextSlot')),
@@ -424,7 +429,7 @@ const listForPedagogy = async (query, origin, credentials) => {
     return {
       tutorCourses,
       traineeCourses: { onGoing, achieved },
-      nextSteps: onGoing.map(formatCourseStepsList)
+      nextSteps: onGoing.map(c => formatCourseStepsList(c))
         .flat()
         .filter(step => step.slots && step.slots.length)
         .sort(DatesUtilsHelper.ascendingSortBy('nextSlot')),
@@ -568,6 +573,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
           { path: 'contact', select: 'identity.firstname identity.lastname contact' },
+          ...get(credentials, 'role.vendor.name') ? [{ path: 'questionnaires' }] : [],
           ...(isRofOrAdmin
             ? [
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
@@ -577,7 +583,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
         ]
         : [{
           path: 'slots',
-          select: 'step startDate endDate trainees',
+          select: 'step startDate endDate trainees trainers',
           options: { sort: { startDate: 1 } },
           populate: {
             path: 'missingAttendances',
@@ -827,6 +833,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       options: { requestingOwnInfos: true },
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
+    .populate({ path: 'questionnaires' })
     .select('_id misc format type trainees gSheetId certificateGenerationMode')
     .lean({ autopopulate: true, virtuals: true });
 
@@ -1194,7 +1201,7 @@ exports.formatInterCourseForPdf = async (course) => {
   };
 };
 
-exports.generateAttendanceSheets = async (courseId) => {
+exports.generateAttendanceSheets = async (courseId, query) => {
   const course = await Course
     .findOne({ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 })
     .populate({ path: 'companies', select: 'name' })
@@ -1209,7 +1216,8 @@ exports.generateAttendanceSheets = async (courseId) => {
     .lean();
 
   const pdf = [INTRA, INTRA_HOLDING].includes(course.type)
-    ? await IntraAttendanceSheet.getPdf(await exports.formatIntraCourseForPdf(course))
+    ? await IntraAttendanceSheet
+      .getPdf(await exports.formatIntraCourseForPdf(query.isPreFilled ? course : { ...course, trainees: [] }))
     : await InterAttendanceSheet.getPdf(await exports.formatInterCourseForPdf(course));
 
   return { fileName: 'emargement.pdf', pdf };

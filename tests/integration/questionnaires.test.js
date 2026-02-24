@@ -23,6 +23,7 @@ const {
   SELF_POSITIONNING,
   START_COURSE,
   END_COURSE,
+  ARCHIVED,
 } = require('../../src/helpers/constants');
 const { companyWithoutSubscription, authCompany } = require('../seed/authCompaniesSeed');
 const UtilsMock = require('../utilsMock');
@@ -170,7 +171,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaires.length).toEqual(6);
+      expect(response.result.data.questionnaires.length).toEqual(7);
     });
 
     it('should get questionnaires linked to course', async () => {
@@ -306,11 +307,11 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires/{_id}', () => {
     it('should get questionnaire', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/questionnaires/${questionnairesList[1]._id}`,
+        url: `/questionnaires/${questionnairesList[6]._id}`,
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.questionnaire._id).toEqual(questionnairesList[1]._id);
+      expect(response.result.data.questionnaire._id).toEqual(questionnairesList[6]._id);
     });
   });
 
@@ -319,7 +320,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires/{_id}', () => {
       authToken = await getTokenByCredentials(noRoleNoCompany.local);
       const response = await app.inject({
         method: 'GET',
-        url: `/questionnaires/${questionnairesList[1]._id}`,
+        url: `/questionnaires/${questionnairesList[6]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -742,6 +743,44 @@ describe('QUESTIONNAIRES ROUTES - PUT /questionnaires/{_id}', () => {
       expect(questionnairesCount).toBe(1);
     });
 
+    it('should archive old questionnaire if questionnaire with same type is already published', async () => {
+      const payload = { status: PUBLISHED };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/questionnaires/${questionnairesList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const oldQuestionnaire = await Questionnaire.countDocuments({ _id: questionnairesList[1]._id, status: ARCHIVED });
+      expect(oldQuestionnaire).toBe(1);
+
+      const publishedQuestionnaire = await Questionnaire
+        .countDocuments({ _id: questionnairesList[0]._id, status: PUBLISHED });
+      expect(publishedQuestionnaire).toBe(1);
+    });
+
+    it('should archive old questionnaire if self_positionning questionnaire with same program is already published',
+      async () => {
+        const payload = { status: PUBLISHED };
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/questionnaires/${questionnairesList[4]._id}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload,
+        });
+
+        expect(response.statusCode).toBe(200);
+        const oldQuestionnaire = await Questionnaire
+          .countDocuments({ _id: questionnairesList[3]._id, status: ARCHIVED });
+        expect(oldQuestionnaire).toBe(1);
+
+        const publishedQuestionnaire = await Questionnaire
+          .countDocuments({ _id: questionnairesList[4]._id, status: PUBLISHED });
+        expect(publishedQuestionnaire).toBe(1);
+      });
+
     it('should return 400 if questionnaire status is not PUBLISHED', async () => {
       await Questionnaire.deleteMany({ _id: questionnairesList[1]._id });
 
@@ -819,28 +858,16 @@ describe('QUESTIONNAIRES ROUTES - PUT /questionnaires/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 409 if questionnaire with same type is already published', async () => {
-      const payload = { status: PUBLISHED };
+    it('should return 403 if try to update cards order on archived questionnaire', async () => {
+      const payload = { cards: [questionnairesList[1].cards[1], questionnairesList[1].cards[0]] };
       const response = await app.inject({
         method: 'PUT',
-        url: `/questionnaires/${questionnairesList[0]._id}`,
+        url: `/questionnaires/${questionnairesList[1]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
 
-      expect(response.statusCode).toBe(409);
-    });
-
-    it('should return 409 if self_positionning questionnaire with same program is already published', async () => {
-      const payload = { status: PUBLISHED };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/questionnaires/${questionnairesList[4]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(409);
+      expect(response.statusCode).toBe(403);
     });
   });
 
@@ -931,6 +958,17 @@ describe('QUESTIONNAIRES ROUTES - POST /questionnaires/{_id}/card', () => {
     it('should return a 403 if questionnaire is published', async () => {
       const response = await app.inject({
         method: 'POST',
+        url: `/questionnaires/${questionnairesList[6]._id.toHexString()}/cards`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 403 if questionnaire is archived', async () => {
+      const response = await app.inject({
+        method: 'POST',
         url: `/questionnaires/${questionnairesList[1]._id.toHexString()}/cards`,
         payload,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
@@ -1002,7 +1040,7 @@ describe('QUESTIONNAIRES ROUTES - DELETE /questionnaires/cards/{cardId}', () => 
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 403 if activity is published', async () => {
+    it('should return 403 if questionnaire is published', async () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/questionnaires/cards/${publishedQuestionnaire.cards[0].toHexString()}`,
