@@ -229,6 +229,12 @@ module.exports = {
   },
   PAID: 'paid',
   NOT_PAID: 'not_paid',
+  get SLOT_STATUS() {
+    return {
+      [this.PAID]: 'Payé',
+      [this.NOT_PAID]: 'Non payé',
+    };
+  },
   // SURCHARGES
   PUBLIC_HOLIDAY: 'publicHoliday',
   TWENTY_FIFTH_OF_DECEMBER: 'twentyFifthOfDecember',

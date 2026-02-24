@@ -36,6 +36,8 @@ const {
   DRAFT,
   ARCHIVED,
   OPEN_QUESTION,
+  PAID,
+  NOT_PAID,
 } = require('../../../src/helpers/constants');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
@@ -1349,6 +1351,7 @@ describe('exportCourseSlotHistory', () => {
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
       trainees: [traineeList[0]._id, traineeList[1]._id],
       trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      status: PAID,
     },
     { // 1
       _id: new ObjectId(),
@@ -1360,6 +1363,7 @@ describe('exportCourseSlotHistory', () => {
       meetingLink: 'https://meet.google.com',
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: PRESENT }],
       trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      status: PAID,
     },
     { // 2
       _id: new ObjectId(),
@@ -1371,6 +1375,7 @@ describe('exportCourseSlotHistory', () => {
       address: slotAddress,
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
       trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      status: PAID,
     },
     { // 3
       _id: new ObjectId(),
@@ -1381,6 +1386,7 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[2],
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
       trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      status: NOT_PAID,
     },
     { // 4
       _id: new ObjectId(),
@@ -1391,6 +1397,7 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[0],
       attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
       trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      status: PAID,
     },
   ];
 
@@ -1464,6 +1471,7 @@ describe('exportCourseSlotHistory', () => {
         'Nombre d\'émargements non remplis',
         'Nombre d\'apprenants non concernés',
         'Intervenants',
+        'Statut',
       ],
       [
         courseSlotList[0]._id,
@@ -1483,6 +1491,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         1,
         'Gilles FORMATEUR',
+        'Payé',
       ],
       [
         courseSlotList[1]._id,
@@ -1502,6 +1511,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        'Payé',
       ],
       [
         courseSlotList[2]._id,
@@ -1521,6 +1531,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        'Payé',
       ],
       [
         courseSlotList[3]._id,
@@ -1540,6 +1551,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        'Non payé',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1595,6 +1607,7 @@ describe('exportCourseSlotHistory', () => {
         'Nombre de présences non prévues',
         'Nombre d\'émargements non remplis',
         'Intervenants',
+        'Statut',
       ],
       [
         courseSlotList[4]._id,
@@ -1614,6 +1627,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         0,
         'Gilles FORMATEUR',
+        'Payé',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
