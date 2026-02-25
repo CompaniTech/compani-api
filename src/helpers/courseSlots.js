@@ -1,14 +1,106 @@
+const { ObjectId } = require('mongodb');
 const compact = require('lodash/compact');
 const get = require('lodash/get');
+const groupBy = require('lodash/groupBy');
 const has = require('lodash/has');
 const pick = require('lodash/pick');
 const omit = require('lodash/omit');
+const uniqBy = require('lodash/uniqBy');
 const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
+const CourseHelper = require('./courses');
 const CourseHistoriesHelper = require('./courseHistories');
-const { ON_SITE, REMOTE, DD_MM_YYYY } = require('./constants');
+const { ON_SITE, REMOTE, DD_MM_YYYY, SINGLE, DAY, SLOT_STATUS, MINUTE, MISSING } = require('./constants');
 const DatesUtilsHelper = require('./dates/utils');
+const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
+
+exports.list = async (query) => {
+  const singleCourses = await Course.find({ type: SINGLE }, { _id: 1 }).lean();
+  const singleCourseIds = singleCourses.map(course => new ObjectId(course._id));
+
+  const courseSlots = await CourseSlot
+    .find({ course: { $in: singleCourseIds }, startDate: { $gte: query.startDate }, endDate: { $lte: query.endDate } })
+    .populate({ path: 'step', select: '_id name' })
+    .populate({ path: 'trainers', select: 'identity' })
+    .populate({
+      path: 'course',
+      select: '_id misc subProgram trainees',
+      populate: [
+        { path: 'trainees', select: 'identity' },
+        { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+      ],
+    })
+    .populate({ path: 'attendances', select: 'status', options: { isVendorUser: true } })
+    .lean();
+  const filteredCourseSlots = courseSlots.filter(slot => slot.attendances.length);
+
+  const trainers = uniqBy(
+    filteredCourseSlots.flatMap(slot => (slot.trainers || []).map(trainer => trainer)),
+    t => t._id.toHexString()
+  );
+
+  const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
+  const slotsGroupByTrainer = {};
+  for (const trainer of trainers) {
+    const trainerSlots = filteredCourseSlots
+      .filter(slot => UtilsHelper.doesArrayIncludeId((slot.trainers || []).map(t => t._id), trainer._id));
+    const slotsByCourse = groupBy(trainerSlots, slot => slot.course._id.toHexString());
+
+    const trainerCourses = [];
+    for (const course of Object.keys(slotsByCourse)) {
+      const currentCourseSlots = slotsByCourse[course];
+      const collectiveSlots = [];
+      const singleTraineeSlots = [];
+
+      currentCourseSlots.forEach((slot) => {
+        if (UtilsHelper.doesArrayIncludeId(collectiveStepIds, slot.step._id)) collectiveSlots.push(slot);
+        else singleTraineeSlots.push(slot);
+      });
+
+      const collectiveSlotsGroupByDay = groupBy(
+        collectiveSlots,
+        slot => CompaniDate(slot.startDate).startOf(DAY).format(DD_MM_YYYY)
+      );
+      const singleTraineeSlotsGroupByStep = groupBy(singleTraineeSlots, slot => slot.step._id);
+
+      const formattedCollectiveSlots = {};
+      Object.entries(collectiveSlotsGroupByDay).forEach(([day, slots]) => {
+        const traineeName = UtilsHelper.formatIdentity(slots[0].course.trainees[0].identity, 'FL');
+        formattedCollectiveSlots[day] = slots.map(slot => ({
+          traineeName,
+          startDate: CompaniDate(slot.startDate).toISO(),
+          endDate: CompaniDate(slot.endDate).toISO(),
+          duration: CompaniDate(slot.endDate).diff(slot.startDate, MINUTE),
+          isAbsence: slot.attendances[0].status === MISSING,
+          status: SLOT_STATUS[slot.status],
+        }));
+      });
+
+      const formattedSingleTraineeSlots = {};
+      Object.values(singleTraineeSlotsGroupByStep).forEach((slots) => {
+        const stepName = slots[0].step.name;
+        formattedSingleTraineeSlots[stepName] = slots.map(slot => ({
+          startDate: CompaniDate(slot.startDate).toISO(),
+          endDate: CompaniDate(slot.endDate).toISO(),
+          duration: CompaniDate(slot.endDate).diff(slot.startDate, MINUTE),
+          isAbsence: slot.attendances[0].status === MISSING,
+          status: SLOT_STATUS[slot.status],
+        }));
+      });
+
+      trainerCourses.push({
+        _id: course,
+        name: CourseHelper.composeCourseName(currentCourseSlots[0].course),
+        singleTraineeSlots: formattedSingleTraineeSlots,
+        collectiveSlots: formattedCollectiveSlots,
+      });
+    }
+    slotsGroupByTrainer[trainer._id] = { identity: trainer.identity, courses: trainerCourses };
+  }
+
+  return slotsGroupByTrainer;
+};
 
 exports.createCourseSlot = async (payload) => {
   const slots = new Array(payload.quantity).fill(omit(payload, ['quantity']));

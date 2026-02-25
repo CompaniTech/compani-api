@@ -4,6 +4,20 @@ const translate = require('../helpers/translate');
 
 const { language } = translate;
 
+const list = async (req) => {
+  try {
+    const courseSlots = await CourseSlotsHelper.list(req.query);
+
+    return {
+      message: translate[language].courseSlotsFound,
+      data: { courseSlots },
+    };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 const create = async (req) => {
   try {
     const courseSlot = await CourseSlotsHelper.createCourseSlot(req.payload);
@@ -44,4 +58,4 @@ const remove = async (req) => {
   }
 };
 
-module.exports = { create, update, remove };
+module.exports = { list, create, update, remove };

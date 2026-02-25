@@ -1,12 +1,182 @@
 const sinon = require('sinon');
 const omit = require('lodash/omit');
 const { ObjectId } = require('mongodb');
+const { expect } = require('expect');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
 const SinonMongoose = require('../sinonMongoose');
-const { REMOTE, ON_SITE } = require('../../../src/helpers/constants');
+const { REMOTE, ON_SITE, PRESENT, MISSING, SINGLE, NOT_PAID } = require('../../../src/helpers/constants');
+
+describe('list', () => {
+  let courseSlotsFind;
+  let courseFind;
+  beforeEach(() => {
+    courseSlotsFind = sinon.stub(CourseSlot, 'find');
+    courseFind = sinon.stub(Course, 'find');
+    process.env.COLLECTIVE_STEP_IDS = new ObjectId();
+  });
+  afterEach(() => {
+    courseSlotsFind.restore();
+    courseFind.restore();
+    process.env.COLLECTIVE_STEP_IDS = '';
+  });
+
+  it('should return slots grouped by trainer between two dates', async () => {
+    const collectiveStepId = process.env.COLLECTIVE_STEP_IDS;
+    const courseIds = [new ObjectId(), new ObjectId()];
+    const traineesIds = [new ObjectId(), new ObjectId()];
+    const trainerId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const slots = [
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-03T12:00:00.000Z',
+        endDate: '2020-05-03T13:00:00.000Z',
+        step: { _id: new ObjectId(), name: 'step 1' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[0],
+          misc: 'indiv 1',
+          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          trainees: [{ _id: traineesIds[0], identity: { firstname: 'App', lastname: 'One' } }],
+        },
+        attendances: [{ status: PRESENT }],
+        status: NOT_PAID,
+      },
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-04T12:00:00.000Z',
+        endDate: '2020-05-04T13:00:00.000Z',
+        step: { _id: collectiveStepId, name: 'step collective' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[0],
+          misc: 'indiv 1',
+          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          trainees: [{ _id: traineesIds[0], identity: { firstname: 'App', lastname: 'One' } }],
+        },
+        attendances: [{ status: MISSING }],
+        status: NOT_PAID,
+      },
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-05T12:00:00.000Z',
+        endDate: '2020-05-05T13:00:00.000Z',
+        step: { _id: new ObjectId(), name: 'step 2' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[0],
+          misc: 'indiv 1',
+          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          trainees: [{ _id: traineesIds[0], identity: { firstname: 'App', lastname: 'One' } }],
+        },
+        attendances: [],
+        status: NOT_PAID,
+      },
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-06T12:00:00.000Z',
+        endDate: '2020-05-06T13:00:00.000Z',
+        step: { _id: new ObjectId(), name: 'step 3' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[1],
+          misc: 'indiv 2',
+          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          trainees: [{ _id: traineesIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
+        },
+        attendances: [{ status: PRESENT }],
+        status: NOT_PAID,
+      },
+    ];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries(courseIds.map(c => ({ _id: c })), ['lean']));
+    courseSlotsFind.returns(SinonMongoose.stubChainedQueries(slots));
+
+    const result = await CourseSlotsHelper
+      .list({ startDate: '2020-04-30T22:00:00.000Z', endDate: '2020-05-31T21:59:59.999Z' });
+
+    expect(result).toEqual({
+      [trainerId]: {
+        identity: { firstname: 'Jean', lastname: 'Pierre' },
+        courses: [
+          {
+            _id: courseIds[0].toHexString(),
+            name: 'program - indiv 1',
+            singleTraineeSlots: {
+              'step 1': [{
+                startDate: '2020-05-03T12:00:00.000Z',
+                endDate: '2020-05-03T13:00:00.000Z',
+                duration: 'PT60M',
+                isAbsence: false,
+                status: 'Non réglé',
+              }],
+            },
+            collectiveSlots: {
+              '04/05/2020': [{
+                traineeName: 'App ONE',
+                startDate: '2020-05-04T12:00:00.000Z',
+                endDate: '2020-05-04T13:00:00.000Z',
+                duration: 'PT60M',
+                isAbsence: true,
+                status: 'Non réglé',
+              }],
+            },
+          },
+          {
+            _id: courseIds[1].toHexString(),
+            name: 'program - indiv 2',
+            singleTraineeSlots: {
+              'step 3': [{
+                startDate: '2020-05-06T12:00:00.000Z',
+                endDate: '2020-05-06T13:00:00.000Z',
+                duration: 'PT60M',
+                isAbsence: false,
+                status: 'Non réglé',
+              }],
+            },
+            collectiveSlots: {},
+          },
+        ],
+      },
+    });
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFind,
+      [{ query: 'find', args: [{ type: SINGLE }, { _id: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseSlotsFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            course: { $in: courseIds },
+            startDate: { $gte: '2020-04-30T22:00:00.000Z' },
+            endDate: { $lte: '2020-05-31T21:59:59.999Z' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'step', select: '_id name' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: '_id misc subProgram trainees',
+            populate: [
+              { path: 'trainees', select: 'identity' },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+            ],
+          }],
+        },
+        { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+});
 
 describe('createCourseSlot', () => {
   let insertMany;

@@ -28,6 +28,64 @@ describe('NODE ENV', () => {
   });
 });
 
+describe('COURSE SLOTS ROUTES - GET /courseslots/trainers-billing', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+      process.env.COLLECTIVE_STEP_IDS = new ObjectId();
+    });
+
+    it('should return all single course slots on period', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courseslots/trainers-billing?startDate=2020-04-30T22:00:00.000Z&endDate=2020-05-31T21:59:59.999Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const result = response.result.data.courseSlots;
+      const trainerIds = Object.keys(result);
+      const trainerSingleTraineesSlotsByStep = Object.values(result)[0].courses[0].singleTraineeSlots;
+      const singleSlots = Object.values(trainerSingleTraineesSlotsByStep)[0];
+      expect(trainerIds.length).toBe(1);
+      expect(singleSlots.length).toBe(2);
+    });
+
+    it('should return 400 if missing date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courseslots/trainers-billing?startDate=2020-04-30T22:00:00.000Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return 403 for role ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'GET',
+          url: '/courseslots/trainers-billing?startDate=2020-04-30T22:00:00.000Z&endDate=2020-05-31T21:59:59.999Z',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
 describe('COURSE SLOTS ROUTES - POST /courseslots', () => {
   let authToken;
   beforeEach(populateDB);
