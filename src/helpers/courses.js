@@ -17,6 +17,7 @@ const { isObjectIdOrHexString } = require('mongoose');
 const { CompaniDate } = require('./dates/companiDates');
 const Company = require('../models/Company');
 const Course = require('../models/Course');
+const Gsheets = require('../models/Google/Sheets');
 const User = require('../models/User');
 const UserCompany = require('../models/UserCompany');
 const Questionnaire = require('../models/Questionnaire');
@@ -1732,11 +1733,26 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
 };
 
 exports.addTutor = async (courseId, payload) => {
-  await Course.updateOne({ _id: courseId }, { $addToSet: { tutors: payload.tutor } });
+  const course = await Course.findOneAndUpdate({ _id: courseId }, { $addToSet: { tutors: payload.tutor } }).lean();
 
   const tutor = await User
-    .findOne({ _id: payload.tutor }, { firstMobileConnectionDate: 1, loginCode: 1 })
+    .findOne(
+      { _id: payload.tutor },
+      { firstMobileConnectionDate: 1, loginCode: 1, identity: 1, contact: 1, 'local.email': 1 }
+    )
     .lean();
+
+  if (course.gSheetId) {
+    const tutorName = UtilsHelper.formatIdentity(tutor.identity, 'FL');
+    const tutorEmail = tutor.local.email;
+    const tutorPhone = UtilsHelper.formatPhone(tutor.contact || {});
+
+    await Gsheets.writeData({
+      spreadsheetId: course.gSheetId,
+      range: 'Coordonnées!B2:B4',
+      values: [[tutorName], [tutorEmail], [tutorPhone ? `'${tutorPhone}` : '']],
+    });
+  }
 
   if (!(tutor.firstMobileConnectionDate || tutor.loginCode)) {
     const loginCode = String(Math.floor(Math.random() * 9000 + 1000));

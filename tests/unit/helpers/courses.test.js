@@ -18,6 +18,7 @@ const CourseHistory = require('../../../src/models/CourseHistory');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const CourseSmsHistory = require('../../../src/models/CourseSmsHistory');
 const Drive = require('../../../src/models/Google/Drive');
+const Sheet = require('../../../src/models/Google/Sheets');
 const Questionnaire = require('../../../src/models/Questionnaire');
 const TrainingContract = require('../../../src/models/TrainingContract');
 const CompanyHelper = require('../../../src/helpers/companies');
@@ -8810,57 +8811,120 @@ describe('removeTrainer', () => {
 });
 
 describe('addTutor', () => {
-  let courseUpdateOne;
+  let courseFindOneAndUpdate;
   let userFindOne;
   let userUpdateOne;
   let emailAddTutor;
+  let gSheetWriteData;
 
   beforeEach(() => {
-    courseUpdateOne = sinon.stub(Course, 'updateOne');
+    courseFindOneAndUpdate = sinon.stub(Course, 'findOneAndUpdate');
     userFindOne = sinon.stub(User, 'findOne');
     userUpdateOne = sinon.stub(User, 'updateOne');
     emailAddTutor = sinon.stub(EmailHelper, 'addTutor');
+    gSheetWriteData = sinon.stub(Sheet, 'writeData');
   });
 
   afterEach(() => {
-    courseUpdateOne.restore();
+    courseFindOneAndUpdate.restore();
     userFindOne.restore();
     userUpdateOne.restore();
     emailAddTutor.restore();
+    gSheetWriteData.restore();
   });
 
-  it('should add tutor to course (without connection infos)', async () => {
+  it('should add tutor to course (without connection infos or gSheetId)', async () => {
     const tutorId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', tutors: [new ObjectId()] };
     const payload = { tutor: tutorId };
-    const tutor = { _id: tutorId };
+    const tutor = {
+      _id: tutorId,
+      identity: { firstname: 'Jeanne', lastname: 'Tutor' },
+      contact: { phone: '0987654321', countryCode: '+33' },
+      local: { email: 'tutor@email.com' },
+    };
 
     emailAddTutor.returns('email sent');
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
     userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['lean']));
 
     const result = await CourseHelper.addTutor(course._id, payload);
 
     expect(result).toEqual('email sent');
+    sinon.assert.notCalled(gSheetWriteData);
     sinon.assert.calledOnce(userUpdateOne);
-    sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $addToSet: { tutors: tutorId } });
     sinon.assert.calledOnceWithExactly(emailAddTutor, course._id, tutorId);
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: course._id }, { $addToSet: { tutors: tutorId } }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      userFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [
+            { _id: tutorId },
+            { firstMobileConnectionDate: 1, loginCode: 1, identity: 1, contact: 1, 'local.email': 1 },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
   });
 
-  it('should add tutor to course (with connection infos)', async () => {
+  it('should add tutor to course (with connection infos and gSheetId)', async () => {
     const tutorId = new ObjectId();
-    const course = { _id: new ObjectId(), misc: 'Test', tutors: [new ObjectId()] };
+    const course = { _id: new ObjectId(), misc: 'Test', tutors: [new ObjectId()], gSheetId: '12345' };
     const payload = { tutor: tutorId };
-    const tutor = { _id: tutorId, firstMobileConnectionDate: '2022-12-10T12:00:00.000Z' };
+    const tutor = {
+      _id: tutorId,
+      firstMobileConnectionDate: '2022-12-10T12:00:00.000Z',
+      identity: { firstname: 'Jeanne', lastname: 'Tutor' },
+      contact: { phone: '0987654321', countryCode: '+33' },
+      local: { email: 'tutor@email.com' },
+    };
 
     emailAddTutor.returns('email sent');
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
     userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['lean']));
 
     const result = await CourseHelper.addTutor(course._id, payload);
 
     expect(result).toEqual('email sent');
     sinon.assert.notCalled(userUpdateOne);
-    sinon.assert.calledOnceWithExactly(courseUpdateOne, { _id: course._id }, { $addToSet: { tutors: tutorId } });
     sinon.assert.calledOnceWithExactly(emailAddTutor, course._id, tutorId);
+    sinon.assert.calledOnceWithExactly(
+      gSheetWriteData,
+      {
+        spreadsheetId: '12345',
+        range: 'Coordonnées!B2:B4',
+        values: [['Jeanne TUTOR'], ['tutor@email.com'], ['\'+33 9 87 65 43 21']],
+      }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        { query: 'findOneAndUpdate', args: [{ _id: course._id }, { $addToSet: { tutors: tutorId } }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      userFindOne,
+      [
+        {
+          query: 'findOne',
+          args: [
+            { _id: tutorId },
+            { firstMobileConnectionDate: 1, loginCode: 1, identity: 1, contact: 1, 'local.email': 1 },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
   });
 });
 
