@@ -11,7 +11,9 @@ const SubProgramSchema = mongoose.Schema({
   steps: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Step' }],
   status: { type: String, default: DRAFT, enum: STATUS_TYPES },
   priceVersions: [{
+    _id: false,
     prices: [{
+      _id: false,
       step: { type: mongoose.Schema.Types.ObjectId, ref: 'Step', required: true },
       hourlyAmount: { type: Number, required: true },
     }],

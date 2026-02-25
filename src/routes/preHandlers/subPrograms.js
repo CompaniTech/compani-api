@@ -86,7 +86,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
       .some(p => !UtilsHelper.doesArrayIncludeId(subProgramStepIds, p.step));
     if (someStepAreNotLinkedToSubprogram) throw Boom.forbidden();
 
-    if (subProgram.priceVersions.length) {
+    if (subProgram.priceVersions) {
       const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
       if (lastPriceVersion) {
         const effectiveDate = CompaniDate(req.payload.effectiveDate);

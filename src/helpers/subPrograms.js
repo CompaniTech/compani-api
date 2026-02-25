@@ -19,8 +19,17 @@ exports.updateSubProgram = async (subProgramId, payload) => {
 
   if (payload.prices) {
     const subProgram = await SubProgram.findOne({ _id: subProgramId }, { priceVersions: 1 }).lean();
-    const lastVersionPrices = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
-    if (payload.prices !== lastVersionPrices) {
+
+    let shouldCreateNewVersion = !subProgram.priceVersions;
+    if (subProgram.priceVersions) {
+      const lastVersion = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
+      shouldCreateNewVersion = !payload.prices
+        .every(p => lastVersion.prices
+          .find(lvp => UtilsHelper.areObjectIdsEquals(lvp.step, p.step) && lvp.hourlyAmount === p.hourlyAmount)
+        );
+    }
+
+    if (shouldCreateNewVersion) {
       await SubProgram.updateOne(
         { _id: subProgramId },
         { $push: { priceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
