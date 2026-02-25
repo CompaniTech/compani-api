@@ -9,6 +9,7 @@ const Course = require('../../../src/models/Course');
 const UserCompany = require('../../../src/models/UserCompany');
 const SubProgramHelper = require('../../../src/helpers/subPrograms');
 const NotificationHelper = require('../../../src/helpers/notifications');
+const UtilsHelper = require('../../../src/helpers/utils');
 const SinonMongoose = require('../sinonMongoose');
 const UtilsMock = require('../../utilsMock');
 
@@ -48,6 +49,8 @@ describe('updatedSubProgram', () => {
   let userCompanyFind;
   let courseCreateStub;
   let sendNewElearningCourseNotification;
+  let getLastVersion;
+  let findOne;
 
   beforeEach(() => {
     updateOne = sinon.stub(SubProgram, 'updateOne');
@@ -58,6 +61,8 @@ describe('updatedSubProgram', () => {
     courseCreateStub = sinon.stub(Course, 'create');
     sendNewElearningCourseNotification = sinon.stub(NotificationHelper, 'sendNewElearningCourseNotification');
     UtilsMock.mockCurrentDate('2025-03-31T14:00:00.000Z');
+    getLastVersion = sinon.stub(UtilsHelper, 'getLastVersion');
+    findOne = sinon.stub(SubProgram, 'findOne');
   });
 
   afterEach(() => {
@@ -69,6 +74,8 @@ describe('updatedSubProgram', () => {
     courseCreateStub.restore();
     sendNewElearningCourseNotification.restore();
     UtilsMock.unmockCurrentDate();
+    getLastVersion.restore();
+    findOne.restore();
   });
 
   it('should update a subProgram name', async () => {
@@ -83,6 +90,8 @@ describe('updatedSubProgram', () => {
     sinon.assert.notCalled(userCompanyFind);
     sinon.assert.notCalled(courseCreateStub);
     sinon.assert.notCalled(sendNewElearningCourseNotification);
+    sinon.assert.notCalled(getLastVersion);
+    sinon.assert.notCalled(findOne);
   });
 
   describe('update status', () => {
@@ -127,6 +136,8 @@ describe('updatedSubProgram', () => {
       sinon.assert.notCalled(courseCreateStub);
       sinon.assert.notCalled(userCompanyFind);
       sinon.assert.notCalled(sendNewElearningCourseNotification);
+      sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOne);
     });
 
     it('if subProgram is strictly e-learning, should also create new course', async () => {
@@ -185,6 +196,8 @@ describe('updatedSubProgram', () => {
         { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
       );
       sinon.assert.notCalled(userCompanyFind);
+      sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOne);
     });
 
     it('should create course with restricted access if subProgram is strictly e-learning and payload has accessCompany',
@@ -272,7 +285,141 @@ describe('updatedSubProgram', () => {
           course._id,
           { _id: { $in: userIds }, formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
         );
+        sinon.assert.notCalled(getLastVersion);
+        sinon.assert.notCalled(findOne);
       });
+  });
+
+  describe('add price version #tag', () => {
+    it('should create a new price version if subProgram.priceVersions does not exist', async () => {
+      const stepIds = [new ObjectId(), new ObjectId()];
+      const subProgram = {
+        _id: new ObjectId(),
+        name: 'Un sous-programme',
+        status: 'published',
+        steps: [stepIds[0], stepIds[1]],
+        isStrictlyELearning: false,
+      };
+      const payload = {
+        effectiveDate: '2026-02-01T14:00:00.000Z',
+        prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+      };
+
+      findOne.returns(SinonMongoose.stubChainedQueries(subProgram, ['lean']));
+
+      await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+      SinonMongoose.calledOnceWithExactly(
+        findOne,
+        [{ query: 'findOne', args: [{ _id: subProgram._id }, { priceVersions: 1 }] }, { query: 'lean' }]
+      );
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgram._id },
+        {
+          $push: {
+            priceVersions: {
+              prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+              effectiveDate: '2026-02-01T14:00:00.000Z',
+            },
+          },
+        }
+      );
+      sinon.assert.notCalled(getLastVersion);
+    });
+
+    it('should create a new price version if payload.prices is different from last version', async () => {
+      const stepIds = [new ObjectId(), new ObjectId()];
+      const subProgram = {
+        _id: new ObjectId(),
+        name: 'Un sous-programme',
+        status: 'published',
+        steps: [stepIds[0], stepIds[1]],
+        isStrictlyELearning: false,
+        priceVersions: [{
+          effectiveDate: '2026-02-01T14:00:00.000Z',
+          prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+        }],
+      };
+      const payload = {
+        effectiveDate: '2026-02-25T14:00:00.000Z',
+        prices: [{ step: stepIds[0], hourlyAmount: 100 }, { step: stepIds[1], hourlyAmount: 200 }],
+      };
+
+      findOne.returns(SinonMongoose.stubChainedQueries(subProgram, ['lean']));
+      getLastVersion.returns({
+        effectiveDate: '2026-02-01T14:00:00.000Z',
+        prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+      });
+
+      await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+      SinonMongoose.calledOnceWithExactly(
+        findOne,
+        [{ query: 'findOne', args: [{ _id: subProgram._id }, { priceVersions: 1 }] }, { query: 'lean' }]
+      );
+      sinon.assert.calledOnceWithExactly(
+        getLastVersion,
+        [{
+          effectiveDate: '2026-02-01T14:00:00.000Z',
+          prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+        }],
+        'effectiveDate'
+      );
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgram._id },
+        {
+          $push: {
+            priceVersions: {
+              prices: [{ step: stepIds[0], hourlyAmount: 100 }, { step: stepIds[1], hourlyAmount: 200 }],
+              effectiveDate: '2026-02-25T14:00:00.000Z',
+            },
+          },
+        }
+      );
+    });
+
+    it('should not create a new price version if payload.prices is identical to last version', async () => {
+      const stepIds = [new ObjectId(), new ObjectId()];
+      const subProgram = {
+        _id: new ObjectId(),
+        name: 'Un sous-programme',
+        status: 'published',
+        steps: [stepIds[0], stepIds[1]],
+        isStrictlyELearning: false,
+        priceVersions: [{
+          effectiveDate: '2026-02-01T14:00:00.000Z',
+          prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+        }],
+      };
+      const payload = {
+        effectiveDate: '2026-02-25T14:00:00.000Z',
+        prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+      };
+
+      findOne.returns(SinonMongoose.stubChainedQueries(subProgram, ['lean']));
+      getLastVersion.returns({
+        effectiveDate: '2026-02-01T14:00:00.000Z',
+        prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+      });
+
+      await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+      SinonMongoose.calledOnceWithExactly(
+        findOne,
+        [{ query: 'findOne', args: [{ _id: subProgram._id }, { priceVersions: 1 }] }, { query: 'lean' }]
+      );
+      sinon.assert.calledOnceWithExactly(
+        getLastVersion,
+        [{
+          effectiveDate: '2026-02-01T14:00:00.000Z',
+          prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+        }],
+        'effectiveDate'
+      );
+      sinon.assert.notCalled(updateOne);
+    });
   });
 });
 

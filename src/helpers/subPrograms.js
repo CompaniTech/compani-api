@@ -30,11 +30,13 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     }
 
     if (shouldCreateNewVersion) {
-      await SubProgram.updateOne(
+      return SubProgram.updateOne(
         { _id: subProgramId },
         { $push: { priceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
       );
     }
+
+    return null;
   }
 
   const subProgram = await SubProgram
