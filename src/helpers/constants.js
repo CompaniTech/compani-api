@@ -231,8 +231,8 @@ module.exports = {
   NOT_PAID: 'not_paid',
   get SLOT_STATUS() {
     return {
-      [this.PAID]: 'Payé',
-      [this.NOT_PAID]: 'Non payé',
+      [this.PAID]: 'Réglé',
+      [this.NOT_PAID]: 'Non réglé',
     };
   },
   // SURCHARGES

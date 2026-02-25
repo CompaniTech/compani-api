@@ -1491,7 +1491,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         1,
         'Gilles FORMATEUR',
-        'Payé',
+        'Réglé',
       ],
       [
         courseSlotList[1]._id,
@@ -1511,7 +1511,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
-        'Payé',
+        'Réglé',
       ],
       [
         courseSlotList[2]._id,
@@ -1531,7 +1531,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
-        'Payé',
+        'Réglé',
       ],
       [
         courseSlotList[3]._id,
@@ -1551,7 +1551,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
-        'Non payé',
+        'Non réglé',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1627,7 +1627,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         0,
         'Gilles FORMATEUR',
-        'Payé',
+        'Réglé',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
