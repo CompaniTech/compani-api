@@ -36,6 +36,7 @@ const {
   PAYMENT_STATUS_LIST,
   PRESENT,
   DRAFT,
+  SLOT_STATUS,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -400,6 +401,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           : 0,
       }),
       Intervenants: (slot.trainers || []).map(t => UtilsHelper.formatIdentity(t.identity, 'FL')).join(', '),
+      Statut: SLOT_STATUS[slot.status],
     });
   }
 
