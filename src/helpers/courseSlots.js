@@ -10,7 +10,7 @@ const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHelper = require('./courses');
 const CourseHistoriesHelper = require('./courseHistories');
-const { ON_SITE, REMOTE, DD_MM_YYYY, SINGLE, DAY, SLOT_STATUS, MINUTE, MISSING } = require('./constants');
+const { ON_SITE, REMOTE, DD_MM_YYYY, SINGLE, DAY, MINUTE, MISSING } = require('./constants');
 const DatesUtilsHelper = require('./dates/utils');
 const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
@@ -35,16 +35,20 @@ exports.list = async (query) => {
     .lean();
   const filteredCourseSlots = courseSlots.filter(slot => slot.attendances.length);
 
-  const trainers = uniqBy(
-    filteredCourseSlots.flatMap(slot => (slot.trainers || []).map(trainer => trainer)),
-    t => t._id.toHexString()
-  );
+  const trainers = uniqBy(filteredCourseSlots.flatMap(slot => (slot.trainers || [])), t => t._id.toHexString());
 
   const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
-  const slotsGroupByTrainer = {};
+  const slotsByTrainer = filteredCourseSlots.reduce((acc, slot) => {
+    (slot.trainers || []).forEach((t) => {
+      if (!acc[t._id]) acc[t._id] = [slot];
+      else acc[t._id].push(slot);
+    });
+    return acc;
+  }, {});
+
+  const formattedSlotsGroupByTrainer = {};
   for (const trainer of trainers) {
-    const trainerSlots = filteredCourseSlots
-      .filter(slot => UtilsHelper.doesArrayIncludeId((slot.trainers || []).map(t => t._id), trainer._id));
+    const trainerSlots = slotsByTrainer[trainer._id];
     const slotsByCourse = groupBy(trainerSlots, slot => slot.course._id.toHexString());
 
     const trainerCourses = [];
@@ -73,7 +77,7 @@ exports.list = async (query) => {
           endDate: CompaniDate(slot.endDate).toISO(),
           duration: CompaniDate(slot.endDate).diff(slot.startDate, MINUTE),
           isAbsence: slot.attendances[0].status === MISSING,
-          status: SLOT_STATUS[slot.status],
+          status: slot.status,
         }));
       });
 
@@ -85,7 +89,7 @@ exports.list = async (query) => {
           endDate: CompaniDate(slot.endDate).toISO(),
           duration: CompaniDate(slot.endDate).diff(slot.startDate, MINUTE),
           isAbsence: slot.attendances[0].status === MISSING,
-          status: SLOT_STATUS[slot.status],
+          status: slot.status,
         }));
       });
 
@@ -96,10 +100,10 @@ exports.list = async (query) => {
         collectiveSlots: formattedCollectiveSlots,
       });
     }
-    slotsGroupByTrainer[trainer._id] = { identity: trainer.identity, courses: trainerCourses };
+    formattedSlotsGroupByTrainer[trainer._id] = { identity: trainer.identity, courses: trainerCourses };
   }
 
-  return slotsGroupByTrainer;
+  return formattedSlotsGroupByTrainer;
 };
 
 exports.createCourseSlot = async (payload) => {

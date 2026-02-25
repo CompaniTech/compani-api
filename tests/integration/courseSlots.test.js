@@ -54,6 +54,16 @@ describe('COURSE SLOTS ROUTES - GET /courseslots/trainers-billing', () => {
       expect(singleSlots.length).toBe(2);
     });
 
+    it('should return 400 if start date is after end date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courseslots/trainers-billing?startDate=2020-04-30T22:00:00.000Z&endDate=2020-03-31T21:59:59.999Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 400 if missing date', async () => {
       const response = await app.inject({
         method: 'GET',

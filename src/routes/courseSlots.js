@@ -16,7 +16,7 @@ exports.plugin = {
         validate: {
           query: Joi.object({
             startDate: requiredDateToISOString,
-            endDate: requiredDateToISOString,
+            endDate: requiredDateToISOString && Joi.date().min(Joi.ref('startDate')).required(),
           }),
         },
         auth: { scope: ['courseslots:read'] },
