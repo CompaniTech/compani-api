@@ -88,10 +88,10 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
     if (subProgram.priceVersions) {
       const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
-      if (lastPriceVersion) {
-        const effectiveDate = CompaniDate(req.payload.effectiveDate);
-        const effectiveDateIsAfterLastVersionDate = effectiveDate.isAfter(lastPriceVersion.effectiveDate);
-        if (!effectiveDateIsAfterLastVersionDate) throw Boom.forbidden();
+      const effectiveDate = CompaniDate(req.payload.effectiveDate);
+      const effectiveDateIsAfterLastVersionDate = effectiveDate.isAfter(lastPriceVersion.effectiveDate);
+      if (!effectiveDateIsAfterLastVersionDate) {
+        throw Boom.forbidden(translate[language].subProgramWrongPriceVersionDate);
       }
     }
   }

@@ -23,10 +23,11 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     let shouldCreateNewVersion = !subProgram.priceVersions;
     if (subProgram.priceVersions) {
       const lastVersion = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
-      shouldCreateNewVersion = !payload.prices
-        .every(p => lastVersion.prices
-          .find(lvp => UtilsHelper.areObjectIdsEquals(lvp.step, p.step) && lvp.hourlyAmount === p.hourlyAmount)
-        );
+      shouldCreateNewVersion = payload.prices.some((p) => {
+        const matchingPrice = lastVersion.prices.find(lvp => UtilsHelper.areObjectIdsEquals(lvp.step, p.step));
+
+        return matchingPrice.hourlyAmount !== p.hourlyAmount;
+      });
     }
 
     if (shouldCreateNewVersion) {
