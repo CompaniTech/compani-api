@@ -114,6 +114,7 @@ describe('validate', () => {
           'coursepayments:read',
           'courses:create',
           'courseslots:create',
+          'courseslots:read',
           'exports:read',
           'holdings:edit',
           'holdings:read',

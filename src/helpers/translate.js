@@ -186,6 +186,7 @@ module.exports = {
     coursePaymentStatusError: 'Forbidden : payment is linked to a xml file and can\'t be changed to "Pending" status.',
     coursePaymentNotLinkedToXml: 'Forbidden : can\'t edit to XML_GENERATED.',
     /* Course slots */
+    courseSlotsFound: 'Course slots found.',
     courseSlotCreated: 'Course slot created.',
     courseSlotUpdated: 'Course slot updated.',
     courseSlotDeleted: 'Course slot deleted.',
@@ -488,6 +489,7 @@ module.exports = {
     coursePaymentNotLinkedToXml: 'Impossible de passer le statut en "Fichier XML associé" car un paiement n\'est pas'
       + ' associé à un fichier XML.',
     /* Course slots */
+    courseSlotsFound: 'Créneaux de formation trouvés.',
     courseSlotCreated: 'Créneau de formation créé.',
     courseSlotUpdated: 'Créneau de formation mis à jour.',
     courseSlotDeleted: 'Créneau de formation supprimé.',

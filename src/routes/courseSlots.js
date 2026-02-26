@@ -2,13 +2,28 @@
 
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
-const { create, update, remove } = require('../controllers/courseSlotController');
+const { create, update, remove, list } = require('../controllers/courseSlotController');
 const { addressValidation, requiredDateToISOString } = require('./validations/utils');
 const { authorizeCreate, authorizeUpdate, authorizeDeletion } = require('./preHandlers/courseSlot');
 
 exports.plugin = {
   name: 'routes-course-slots',
   register: async (server) => {
+    server.route({
+      method: 'GET',
+      path: '/trainers-billing',
+      options: {
+        validate: {
+          query: Joi.object({
+            startDate: requiredDateToISOString,
+            endDate: requiredDateToISOString && Joi.date().min(Joi.ref('startDate')).required(),
+          }),
+        },
+        auth: { scope: ['courseslots:read'] },
+      },
+      handler: list,
+    });
+
     server.route({
       method: 'POST',
       path: '/',

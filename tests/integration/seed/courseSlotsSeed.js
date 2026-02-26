@@ -225,6 +225,7 @@ const courseSlotsList = [
     endDate: '2020-04-10T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id],
   },
   { // 4 slot with attendance
     _id: new ObjectId(),
@@ -232,6 +233,7 @@ const courseSlotsList = [
     endDate: '2020-05-10T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id],
   },
   { // 5 old session slot
     _id: new ObjectId(),
@@ -287,6 +289,7 @@ const courseSlotsList = [
     endDate: '2020-05-10T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id],
   },
   { // 13 slot in completion certificate month
     _id: new ObjectId(),
@@ -294,6 +297,7 @@ const courseSlotsList = [
     endDate: '2020-05-13T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id],
   },
   { // 14 slot with attendance sheet
     _id: new ObjectId(),
