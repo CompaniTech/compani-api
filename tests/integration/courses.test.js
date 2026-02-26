@@ -5922,16 +5922,19 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
   let authToken;
   let sendinBlueTransporter;
   let addTutorContent;
+  let gsheetsWriteData;
 
   beforeEach(populateDB);
   beforeEach(() => {
     sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
       .returns({ sendMail: sinon.stub().returns('emailSent') });
     addTutorContent = sinon.stub(EmailOptionsHelper, 'addTutorContent').returns('content for tutor');
+    gsheetsWriteData = sinon.stub(Gsheets, 'writeData');
   });
   afterEach(() => {
     sendinBlueTransporter.restore();
     addTutorContent.restore();
+    gsheetsWriteData.restore();
   });
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -5954,6 +5957,14 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
       sinon.assert.calledOnceWithExactly(sendinBlueTransporter);
       sinon.assert
         .calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Trainee WITHEXPOTOKEN (TUTOR)', 'program');
+      sinon.assert.calledOnceWithExactly(
+        gsheetsWriteData,
+        {
+          spreadsheetId: 'gSheetId',
+          range: 'Coordonnées!B2:B4',
+          values: [['Auxiliary OLAIT'], ['auxiliary@alenvi.io'], ['']],
+        }
+      );
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
