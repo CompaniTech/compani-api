@@ -61,6 +61,7 @@ exports.list = async (query) => {
         if (UtilsHelper.doesArrayIncludeId(collectiveStepIds, slot.step._id)) collectiveSlots.push(slot);
         else singleTraineeSlots.push(slot);
       });
+      if (!singleTraineeSlots.length) continue;
 
       const singleTraineeSlotsGroupByStep = groupBy(singleTraineeSlots, slot => slot.step._id);
 
