@@ -52,9 +52,9 @@ exports.list = async (query) => {
     const slotsByCourse = groupBy(trainerSlots, slot => slot.course._id.toHexString());
 
     const trainerCourses = [];
+    const collectiveSlots = [];
     for (const course of Object.keys(slotsByCourse)) {
       const currentCourseSlots = slotsByCourse[course];
-      const collectiveSlots = [];
       const singleTraineeSlots = [];
 
       currentCourseSlots.forEach((slot) => {
@@ -62,24 +62,7 @@ exports.list = async (query) => {
         else singleTraineeSlots.push(slot);
       });
 
-      const collectiveSlotsGroupByDay = groupBy(
-        collectiveSlots,
-        slot => CompaniDate(slot.startDate).startOf(DAY).format(DD_MM_YYYY)
-      );
       const singleTraineeSlotsGroupByStep = groupBy(singleTraineeSlots, slot => slot.step._id);
-
-      const formattedCollectiveSlots = {};
-      Object.entries(collectiveSlotsGroupByDay).forEach(([day, slots]) => {
-        const traineeName = UtilsHelper.formatIdentity(slots[0].course.trainees[0].identity, 'FL');
-        formattedCollectiveSlots[day] = slots.map(slot => ({
-          traineeName,
-          startDate: CompaniDate(slot.startDate).toISO(),
-          endDate: CompaniDate(slot.endDate).toISO(),
-          duration: CompaniDate(slot.endDate).diff(slot.startDate, MINUTE),
-          isAbsence: slot.attendances[0].status === MISSING,
-          status: slot.status,
-        }));
-      });
 
       const formattedSingleTraineeSlots = {};
       Object.values(singleTraineeSlotsGroupByStep).forEach((slots) => {
@@ -97,10 +80,33 @@ exports.list = async (query) => {
         _id: course,
         name: CourseHelper.composeCourseName(currentCourseSlots[0].course),
         singleTraineeSlots: formattedSingleTraineeSlots,
-        collectiveSlots: formattedCollectiveSlots,
       });
     }
-    formattedSlotsGroupByTrainer[trainer._id] = { identity: trainer.identity, courses: trainerCourses };
+
+    const collectiveSlotsGroupByDay = groupBy(
+      collectiveSlots,
+      slot => CompaniDate(slot.startDate).startOf(DAY).format(DD_MM_YYYY)
+    );
+    const formattedCollectiveSlots = {};
+    Object.entries(collectiveSlotsGroupByDay).forEach(([day, slots]) => {
+      formattedCollectiveSlots[day] = slots.map((slot) => {
+        const traineeName = UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL');
+        return {
+          traineeName,
+          startDate: CompaniDate(slot.startDate).toISO(),
+          endDate: CompaniDate(slot.endDate).toISO(),
+          duration: CompaniDate(slot.endDate).diff(slot.startDate, MINUTE),
+          isAbsence: slot.attendances[0].status === MISSING,
+          status: slot.status,
+        };
+      });
+    });
+
+    formattedSlotsGroupByTrainer[trainer._id] = {
+      identity: trainer.identity,
+      courses: trainerCourses,
+      collectiveSlots: formattedCollectiveSlots,
+    };
   }
 
   return formattedSlotsGroupByTrainer;

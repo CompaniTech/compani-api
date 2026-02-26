@@ -114,16 +114,6 @@ describe('list', () => {
                 status: NOT_PAID,
               }],
             },
-            collectiveSlots: {
-              '04/05/2020': [{
-                traineeName: 'App ONE',
-                startDate: '2020-05-04T12:00:00.000Z',
-                endDate: '2020-05-04T13:00:00.000Z',
-                duration: 'PT60M',
-                isAbsence: true,
-                status: NOT_PAID,
-              }],
-            },
           },
           {
             _id: courseIds[1].toHexString(),
@@ -137,9 +127,18 @@ describe('list', () => {
                 status: NOT_PAID,
               }],
             },
-            collectiveSlots: {},
           },
         ],
+        collectiveSlots: {
+          '04/05/2020': [{
+            traineeName: 'App ONE',
+            startDate: '2020-05-04T12:00:00.000Z',
+            endDate: '2020-05-04T13:00:00.000Z',
+            duration: 'PT60M',
+            isAbsence: true,
+            status: NOT_PAID,
+          }],
+        },
       },
     });
 
