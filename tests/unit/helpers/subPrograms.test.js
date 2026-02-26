@@ -290,7 +290,7 @@ describe('updatedSubProgram', () => {
       });
   });
 
-  describe('add price version #tag', () => {
+  describe('add price version', () => {
     it('should create a new price version if subProgram.priceVersions does not exist', async () => {
       const stepIds = [new ObjectId(), new ObjectId()];
       const subProgram = {

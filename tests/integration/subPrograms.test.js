@@ -154,7 +154,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const updatedSubProgram = await SubProgram.findById(subProgramsList[4]._id);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[4]._id).lean();
       expect(updatedSubProgram.priceVersions.length).toBe(1);
     });
 
@@ -173,7 +173,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
       expect(updatedSubProgram.priceVersions.length).toBe(2);
     });
 
