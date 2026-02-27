@@ -100,7 +100,7 @@ exports.addTutor = async (courseId, tutorId) => {
 
     const tutorIdentity = UtilsHelper.formatIdentity(tutor.identity, 'FL');
 
-    const course = await Course.findOne({ _id: courseId }, { subProgram: 1, trainees: 1 })
+    const course = await Course.findOne({ _id: courseId }, { subProgram: 1, trainees: 1, gSheetId: 1 })
       .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
       .populate({ path: 'trainees', select: 'identity' })
       .lean();
@@ -115,7 +115,8 @@ exports.addTutor = async (courseId, tutorId) => {
       from: `Compani <${SENDER_MAIL}>`,
       to: tutor.local.email,
       subject: 'Vous avez été nommé tuteur d\'une formation',
-      html: EmailOptionsHelper.addTutorContent(tutorIdentity, learnerIdentity, courseName),
+      html: EmailOptionsHelper
+        .addTutorContent(tutorIdentity, tutor.local.email, learnerIdentity, courseName, course.gSheetId),
     };
     return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
   } catch (error) {

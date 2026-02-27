@@ -221,6 +221,7 @@ describe('addTutor', () => {
       _id: new ObjectId(),
       subProgram: { program: { name: 'Program 1' } },
       trainees: [{ _id: new ObjectId(), identity: { firstname: 'Robyn', lastname: 'FENTY' } }],
+      gSheetId: '12345',
     };
     const addNewTutorContent = 'content for tutor';
 
@@ -243,7 +244,7 @@ describe('addTutor', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1 }] },
+        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1, gSheetId: 1 }] },
         {
           query: 'populate',
           args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
@@ -264,7 +265,14 @@ describe('addTutor', () => {
         html: addNewTutorContent,
       }
     );
-    sinon.assert.calledWithExactly(addTutorContent, 'Bat MAN', 'Robyn FENTY', 'Program 1');
+    sinon.assert.calledWithExactly(
+      addTutorContent,
+      'Bat MAN',
+      'aude+test95@compani.fr',
+      'Robyn FENTY',
+      'Program 1',
+      '12345'
+    );
   });
 
   it('should send an email to new tutor (several trainees)', async () => {
@@ -280,6 +288,7 @@ describe('addTutor', () => {
         { _id: new ObjectId(), identity: { firstname: 'Robyn', lastname: 'FENTY' } },
         { _id: new ObjectId(), identity: { firstname: 'Robin', lastname: 'Hood' } },
       ],
+      gSheetId: '12345',
     };
     const addNewTutorContent = 'content for tutor';
 
@@ -301,7 +310,7 @@ describe('addTutor', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1 }] },
+        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1, gSheetId: 1 }] },
         {
           query: 'populate',
           args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
@@ -321,7 +330,7 @@ describe('addTutor', () => {
         html: addNewTutorContent,
       }
     );
-    sinon.assert.calledWithExactly(addTutorContent, 'Bat MAN', '', 'Program 1');
+    sinon.assert.calledWithExactly(addTutorContent, 'Bat MAN', 'aude+test95@compani.fr', '', 'Program 1', '12345');
   });
 });
 
