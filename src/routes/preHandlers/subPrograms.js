@@ -7,6 +7,7 @@ const Step = require('../../models/Step');
 const { PUBLISHED, DRAFT, TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
+const { CompaniDate } = require('../../helpers/dates/companiDates');
 
 const { language } = translate;
 
@@ -46,7 +47,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
   if (!subProgram) throw Boom.notFound();
 
-  if (subProgram.status !== DRAFT) throw Boom.forbidden();
+  if (subProgram.status !== DRAFT && !req.payload.prices) throw Boom.forbidden();
 
   if (req.payload.status === PUBLISHED && !subProgram.areStepsValid) throw Boom.forbidden();
 
@@ -74,6 +75,24 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
     if (prog.subPrograms.some(sp => sp.isStrictlyELearning)) {
       throw Boom.conflict(translate[language].eLearningSubProgramAlreadyExists);
+    }
+  }
+
+  if (req.payload.prices) {
+    if (subProgram.status !== PUBLISHED) throw Boom.forbidden();
+
+    const subProgramStepIds = subProgram.steps.map(s => s._id);
+    const someStepAreNotLinkedToSubprogram = req.payload.prices
+      .some(p => !UtilsHelper.doesArrayIncludeId(subProgramStepIds, p.step));
+    if (someStepAreNotLinkedToSubprogram) throw Boom.forbidden();
+
+    if (subProgram.priceVersions) {
+      const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
+      const effectiveDate = CompaniDate(req.payload.effectiveDate);
+      const effectiveDateIsAfterLastVersionDate = effectiveDate.isAfter(lastPriceVersion.effectiveDate);
+      if (!effectiveDateIsAfterLastVersionDate) {
+        throw Boom.forbidden(translate[language].subProgramWrongPriceVersionDate);
+      }
     }
   }
 

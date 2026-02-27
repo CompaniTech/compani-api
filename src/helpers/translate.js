@@ -90,6 +90,7 @@ module.exports = {
     subProgramsNotFound: 'Sub-programs not found.',
     subProgramUpdated: 'Sub-program updated.',
     eLearningSubProgramAlreadyExists: 'A published eLearning sub-program already exists.',
+    subProgramWrongPriceVersionDate: 'Forbidden: a version with a later effectiveDate exists.',
     /* Steps */
     stepUpdated: 'Step updated.',
     stepsFound: 'Steps found.',
@@ -390,6 +391,7 @@ module.exports = {
     subProgramFound: 'Sous-Programme trouvé.',
     subProgramsNotFound: 'Sous-Programmes non trouvés.',
     eLearningSubProgramAlreadyExists: 'Un sous-programme eLearning publié existe déjà.',
+    subProgramWrongPriceVersionDate: 'Impossible : une version avec une date d\'effet postérieure existe déjà.',
     /* Steps */
     stepsFound: 'Liste des étapes trouvée.',
     stepUpdated: 'Étape mise à jour.',
