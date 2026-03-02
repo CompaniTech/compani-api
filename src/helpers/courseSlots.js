@@ -112,8 +112,9 @@ exports.list = async (query) => {
           );
 
           const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
-          const { hourlyAmount } = matchingSubProgamPriceVersion.prices
+          const price = matchingSubProgamPriceVersion.prices
             .find(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
+          const hourlyAmount = price ? price.hourlyAmount : 0;
           const amount = NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours());
           return {
             startDate: CompaniDate(slot.startDate).toISO(),
@@ -167,8 +168,9 @@ exports.list = async (query) => {
         );
         const traineeName = UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL');
         const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
-        const { hourlyAmount } = matchingSubProgamPriceVersion.prices
+        const price = matchingSubProgamPriceVersion.prices
           .find(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
+        const hourlyAmount = price ? price.hourlyAmount : 0;
         const amount = NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours());
 
         return {

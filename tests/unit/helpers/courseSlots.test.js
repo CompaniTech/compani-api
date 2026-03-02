@@ -6,41 +6,67 @@ const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
+const UtilsHelper = require('../../../src/helpers/utils');
 const SinonMongoose = require('../sinonMongoose');
 const { REMOTE, ON_SITE, PRESENT, MISSING, SINGLE, NOT_PAID } = require('../../../src/helpers/constants');
 
 describe('list', () => {
   let courseSlotsFind;
   let courseFind;
+  let getMatchingVersion;
   beforeEach(() => {
     courseSlotsFind = sinon.stub(CourseSlot, 'find');
     courseFind = sinon.stub(Course, 'find');
+    getMatchingVersion = sinon.stub(UtilsHelper, 'getMatchingVersion');
     process.env.COLLECTIVE_STEP_IDS = new ObjectId();
   });
   afterEach(() => {
     courseSlotsFind.restore();
     courseFind.restore();
+    getMatchingVersion.restore();
     process.env.COLLECTIVE_STEP_IDS = '';
   });
 
   it('should return slots grouped by trainer between two dates', async () => {
-    const collectiveStepId = process.env.COLLECTIVE_STEP_IDS;
+    const collectiveStepId = new ObjectId(process.env.COLLECTIVE_STEP_IDS);
     const courseIds = [new ObjectId(), new ObjectId()];
     const traineeIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
     const subProgramId = new ObjectId();
+    const stepIds = [new ObjectId(), new ObjectId(), new ObjectId()];
 
     const slots = [
       {
         _id: new ObjectId(),
         startDate: '2020-05-03T12:00:00.000Z',
         endDate: '2020-05-03T13:00:00.000Z',
-        step: { _id: new ObjectId(), name: 'step 1' },
+        step: { _id: stepIds[0], name: 'step 1' },
         trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
-          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              {
+                effectiveDate: '2019-01-01T00:00:00.000Z',
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 50 },
+                  { step: collectiveStepId, hourlyAmount: 100 },
+                  { step: stepIds[1], hourlyAmount: 50 },
+                ],
+              },
+              {
+                effectiveDate: '2020-05-04T08:00:00.000Z',
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                ],
+              },
+            ],
+          },
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
@@ -55,7 +81,28 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
-          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              {
+                effectiveDate: '2019-01-01T00:00:00.000Z',
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 50 },
+                  { step: collectiveStepId, hourlyAmount: 100 },
+                  { step: stepIds[1], hourlyAmount: 50 },
+                ],
+              },
+              {
+                effectiveDate: '2020-05-04T08:00:00.000Z',
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                ],
+              },
+            ],
+          },
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
@@ -65,12 +112,33 @@ describe('list', () => {
         _id: new ObjectId(),
         startDate: '2020-05-05T12:00:00.000Z',
         endDate: '2020-05-05T13:00:00.000Z',
-        step: { _id: new ObjectId(), name: 'step 2' },
+        step: { _id: stepIds[1], name: 'step 2' },
         trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
-          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              {
+                effectiveDate: '2019-01-01T00:00:00.000Z',
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 50 },
+                  { step: collectiveStepId, hourlyAmount: 100 },
+                  { step: stepIds[1], hourlyAmount: 50 },
+                ],
+              },
+              {
+                effectiveDate: '2020-05-04T08:00:00.000Z',
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                ],
+              },
+            ],
+          },
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [],
@@ -80,12 +148,21 @@ describe('list', () => {
         _id: new ObjectId(),
         startDate: '2020-05-06T12:00:00.000Z',
         endDate: '2020-05-06T13:00:00.000Z',
-        step: { _id: new ObjectId(), name: 'step 3' },
+        step: { _id: stepIds[2], name: 'step 3' },
         trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
         course: {
           _id: courseIds[1],
           misc: 'indiv 2',
-          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              {
+                effectiveDate: '2019-01-01T00:00:00.000Z',
+                prices: [{ step: stepIds[2], hourlyAmount: 50 }, { step: collectiveStepId, hourlyAmount: 100 }],
+              },
+            ],
+          },
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: PRESENT }],
@@ -100,7 +177,16 @@ describe('list', () => {
         course: {
           _id: courseIds[1],
           misc: 'indiv 2',
-          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              {
+                effectiveDate: '2019-01-01T00:00:00.000Z',
+                prices: [{ step: stepIds[2], hourlyAmount: 50 }, { step: collectiveStepId, hourlyAmount: 100 }],
+              },
+            ],
+          },
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: PRESENT }],
@@ -110,6 +196,10 @@ describe('list', () => {
 
     courseFind.returns(SinonMongoose.stubChainedQueries(courseIds.map(c => ({ _id: c })), ['lean']));
     courseSlotsFind.returns(SinonMongoose.stubChainedQueries(slots));
+    getMatchingVersion.onCall(0).returns({ prices: [{ step: stepIds[0], hourlyAmount: 50 }] });
+    getMatchingVersion.onCall(1).returns({ prices: [{ step: collectiveStepId, hourlyAmount: 110 }] });
+    getMatchingVersion.onCall(2).returns({ prices: [{ step: stepIds[2], hourlyAmount: 50 }] });
+    getMatchingVersion.onCall(3).returns({ prices: [{ step: collectiveStepId, hourlyAmount: 100 }] });
 
     const result = await CourseSlotsHelper
       .list({ startDate: '2020-04-30T22:00:00.000Z', endDate: '2020-05-31T21:59:59.999Z' });
@@ -128,6 +218,7 @@ describe('list', () => {
                 duration: 'PT60M',
                 isAbsence: false,
                 status: NOT_PAID,
+                amount: '50',
               }],
             },
             paidSingleSlotsDuration: 'PT0S',
@@ -145,6 +236,7 @@ describe('list', () => {
                 duration: 'PT60M',
                 isAbsence: false,
                 status: NOT_PAID,
+                amount: '0',
               }],
             },
             paidSingleSlotsDuration: 'PT0S',
@@ -163,6 +255,7 @@ describe('list', () => {
                 duration: 'PT60M',
                 isAbsence: true,
                 status: NOT_PAID,
+                amount: '0',
               },
               {
                 traineeName: 'App TWO',
@@ -171,6 +264,7 @@ describe('list', () => {
                 duration: 'PT60M',
                 isAbsence: false,
                 status: NOT_PAID,
+                amount: '100',
               },
             ],
           },
@@ -212,7 +306,7 @@ describe('list', () => {
             select: '_id misc subProgram trainees',
             populate: [
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'subProgram', select: 'program priceVersions', populate: { path: 'program', select: 'name' } },
             ],
           }],
         },
@@ -220,6 +314,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.callCount(getMatchingVersion, 4);
   });
 });
 
