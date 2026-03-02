@@ -257,7 +257,7 @@ describe('list', () => {
               path: 'courseBill',
               select: 'number payer',
               populate: [
-                { path: 'payer.company', select: 'name' },
+                { path: 'payer.company', select: 'name bic iban debitMandates' },
                 { path: 'payer.fundingOrganisation', select: 'name' },
               ],
             },
