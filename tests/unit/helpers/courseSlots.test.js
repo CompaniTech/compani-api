@@ -26,9 +26,10 @@ describe('list', () => {
   it('should return slots grouped by trainer between two dates', async () => {
     const collectiveStepId = process.env.COLLECTIVE_STEP_IDS;
     const courseIds = [new ObjectId(), new ObjectId()];
-    const traineesIds = [new ObjectId(), new ObjectId()];
+    const traineeIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
     const subProgramId = new ObjectId();
+
     const slots = [
       {
         _id: new ObjectId(),
@@ -40,7 +41,7 @@ describe('list', () => {
           _id: courseIds[0],
           misc: 'indiv 1',
           subProgram: { _id: subProgramId, program: { name: 'program' } },
-          trainees: [{ _id: traineesIds[0], identity: { firstname: 'App', lastname: 'One' } }],
+          trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
         status: NOT_PAID,
@@ -55,7 +56,7 @@ describe('list', () => {
           _id: courseIds[0],
           misc: 'indiv 1',
           subProgram: { _id: subProgramId, program: { name: 'program' } },
-          trainees: [{ _id: traineesIds[0], identity: { firstname: 'App', lastname: 'One' } }],
+          trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
         status: NOT_PAID,
@@ -70,7 +71,7 @@ describe('list', () => {
           _id: courseIds[0],
           misc: 'indiv 1',
           subProgram: { _id: subProgramId, program: { name: 'program' } },
-          trainees: [{ _id: traineesIds[0], identity: { firstname: 'App', lastname: 'One' } }],
+          trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [],
         status: NOT_PAID,
@@ -85,7 +86,22 @@ describe('list', () => {
           _id: courseIds[1],
           misc: 'indiv 2',
           subProgram: { _id: subProgramId, program: { name: 'program' } },
-          trainees: [{ _id: traineesIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
+          trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
+        },
+        attendances: [{ status: PRESENT }],
+        status: NOT_PAID,
+      },
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-04T12:00:00.000Z',
+        endDate: '2020-05-04T13:00:00.000Z',
+        step: { _id: collectiveStepId, name: 'step collective' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[1],
+          misc: 'indiv 2',
+          subProgram: { _id: subProgramId, program: { name: 'program' } },
+          trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: PRESENT }],
         status: NOT_PAID,
@@ -114,6 +130,10 @@ describe('list', () => {
                 status: NOT_PAID,
               }],
             },
+            paidSingleSlotsDuration: 'PT0S',
+            paidSingleSlotsAbsenceDuration: 'PT0S',
+            notPaidSingleSlotsDuration: 'PT60M',
+            notPaidSingleSlotsAbsenceDuration: 'PT0S',
           },
           {
             _id: courseIds[1].toHexString(),
@@ -127,18 +147,44 @@ describe('list', () => {
                 status: NOT_PAID,
               }],
             },
+            paidSingleSlotsDuration: 'PT0S',
+            paidSingleSlotsAbsenceDuration: 'PT0S',
+            notPaidSingleSlotsDuration: 'PT60M',
+            notPaidSingleSlotsAbsenceDuration: 'PT0S',
           },
         ],
         collectiveSlots: {
-          '04/05/2020': [{
-            traineeName: 'App ONE',
-            startDate: '2020-05-04T12:00:00.000Z',
-            endDate: '2020-05-04T13:00:00.000Z',
-            duration: 'PT60M',
-            isAbsence: true,
-            status: NOT_PAID,
-          }],
+          slots: {
+            '04/05/2020': [
+              {
+                traineeName: 'App ONE',
+                startDate: '2020-05-04T12:00:00.000Z',
+                endDate: '2020-05-04T13:00:00.000Z',
+                duration: 'PT60M',
+                isAbsence: true,
+                status: NOT_PAID,
+              },
+              {
+                traineeName: 'App TWO',
+                startDate: '2020-05-04T12:00:00.000Z',
+                endDate: '2020-05-04T13:00:00.000Z',
+                duration: 'PT60M',
+                isAbsence: false,
+                status: NOT_PAID,
+              },
+            ],
+          },
+          globalInfos: {
+            paidCollectiveSlotsDuration: 'PT0S',
+            paidCollectiveSlotsAbsenceDuration: 'PT0S',
+            notPaidCollectiveSlotsDuration: 'PT60M',
+            notPaidCollectiveSlotsAbsenceDuration: 'PT60M',
+          },
         },
+        totalPaidSlotsDuration: 'PT0S',
+        totalPaidSlotsAbsenceDuration: 'PT0S',
+        totalNotPaidSlotsDuration: 'PT180M',
+        totalNotPaidSlotsAbsenceDuration: 'PT60M',
       },
     });
 
