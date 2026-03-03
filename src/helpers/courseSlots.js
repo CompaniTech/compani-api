@@ -24,9 +24,7 @@ const getSlotsDuration = slots => slots.reduce(
       if (slot.isAbsence) {
         acc.paidSlotsAbsenceDuration = CompaniDuration(acc.paidSlotsAbsenceDuration).add(slot.duration);
       }
-    }
-
-    if (slot.status === NOT_PAID) {
+    } else {
       acc.notPaidSlotsDuration = CompaniDuration(acc.notPaidSlotsDuration).add(slot.duration);
       if (slot.isAbsence) {
         acc.notPaidSlotsAbsenceDuration = CompaniDuration(acc.notPaidSlotsAbsenceDuration).add(slot.duration);
@@ -43,6 +41,19 @@ const getSlotsDuration = slots => slots.reduce(
 );
 
 const filterPriceVersion = date => version => CompaniDate(version.effectiveDate).isSameOrBefore(date);
+
+const getHourlyAmount = (slot) => {
+  const matchingSubProgamPriceVersion = UtilsHelper.getMatchingVersion(
+    slot.startDate,
+    { ...omit(slot.course.subProgram, 'priceVersions'), versions: slot.course.subProgram.priceVersions },
+    'effectiveDate',
+    filterPriceVersion
+  );
+  const price = matchingSubProgamPriceVersion.prices
+    .find(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
+
+  return price ? price.hourlyAmount : 0;
+};
 
 exports.list = async (query) => {
   const singleCourses = await Course.find({ type: SINGLE }, { _id: 1 }).lean();
@@ -103,19 +114,23 @@ exports.list = async (query) => {
       Object.values(singleTraineeSlotsGroupByStep).forEach((slots) => {
         const { step } = slots[0];
 
-        formattedSingleTraineeSlots[step.name] = slots.map((slot) => {
-          const matchingSubProgamPriceVersion = UtilsHelper.getMatchingVersion(
-            slot.startDate,
-            { ...omit(slot.course.subProgram, 'priceVersions'), versions: slot.course.subProgram.priceVersions },
-            'effectiveDate',
-            filterPriceVersion
-          );
-
+        let toPayDuration = CompaniDuration('PT0S');
+        let paidDuration = CompaniDuration('PT0S');
+        let toPayAmount = 0;
+        let paidAmount = 0;
+        const stepSlots = slots.map((slot) => {
+          const hourlyAmount = getHourlyAmount(slot);
           const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
-          const price = matchingSubProgamPriceVersion.prices
-            .find(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
-          const hourlyAmount = price ? price.hourlyAmount : 0;
           const amount = NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours());
+
+          if (slot.status === NOT_PAID) {
+            toPayDuration = toPayDuration.add(CompaniDuration(duration));
+            toPayAmount = NumbersHelper.add(toPayAmount, amount);
+          } else {
+            paidDuration = paidDuration.add(CompaniDuration(duration));
+            paidAmount = NumbersHelper.add(paidAmount, amount);
+          }
+
           return {
             startDate: CompaniDate(slot.startDate).toISO(),
             endDate: CompaniDate(slot.endDate).toISO(),
@@ -125,10 +140,18 @@ exports.list = async (query) => {
             amount,
           };
         });
+
+        formattedSingleTraineeSlots[step.name] = {
+          slots: stepSlots,
+          toPayDuration: toPayDuration.toISO(),
+          paidDuration: paidDuration.toISO(),
+          toPayAmount,
+          paidAmount,
+        };
       });
 
       const singleSlots = Object.values(formattedSingleTraineeSlots)
-        .flatMap(slots => slots.flatMap(s => (Array.isArray(s) ? s : s)));
+        .flatMap(val => val.slots.flatMap(s => (Array.isArray(s) ? s : s)));
       const {
         paidSlotsDuration: paidSingleSlotsDuration,
         paidSlotsAbsenceDuration: paidSingleSlotsAbsenceDuration,
@@ -160,17 +183,9 @@ exports.list = async (query) => {
     const formattedCollectiveSlots = {};
     Object.entries(collectiveSlotsGroupByDay).forEach(([day, slots]) => {
       formattedCollectiveSlots[day] = slots.map((slot) => {
-        const matchingSubProgamPriceVersion = UtilsHelper.getMatchingVersion(
-          slot.startDate,
-          { ...omit(slot.course.subProgram, 'priceVersions'), versions: slot.course.subProgram.priceVersions },
-          'effectiveDate',
-          filterPriceVersion
-        );
         const traineeName = UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL');
         const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
-        const price = matchingSubProgamPriceVersion.prices
-          .find(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
-        const hourlyAmount = price ? price.hourlyAmount : 0;
+        const hourlyAmount = getHourlyAmount(slot);
         const amount = NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours());
 
         return {

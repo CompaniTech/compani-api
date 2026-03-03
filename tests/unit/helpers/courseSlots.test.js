@@ -6,24 +6,20 @@ const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
-const UtilsHelper = require('../../../src/helpers/utils');
 const SinonMongoose = require('../sinonMongoose');
 const { REMOTE, ON_SITE, PRESENT, MISSING, SINGLE, NOT_PAID } = require('../../../src/helpers/constants');
 
 describe('list', () => {
   let courseSlotsFind;
   let courseFind;
-  let getMatchingVersion;
   beforeEach(() => {
     courseSlotsFind = sinon.stub(CourseSlot, 'find');
     courseFind = sinon.stub(Course, 'find');
-    getMatchingVersion = sinon.stub(UtilsHelper, 'getMatchingVersion');
     process.env.COLLECTIVE_STEP_IDS = new ObjectId();
   });
   afterEach(() => {
     courseSlotsFind.restore();
     courseFind.restore();
-    getMatchingVersion.restore();
     process.env.COLLECTIVE_STEP_IDS = '';
   });
 
@@ -196,10 +192,6 @@ describe('list', () => {
 
     courseFind.returns(SinonMongoose.stubChainedQueries(courseIds.map(c => ({ _id: c })), ['lean']));
     courseSlotsFind.returns(SinonMongoose.stubChainedQueries(slots));
-    getMatchingVersion.onCall(0).returns({ prices: [{ step: stepIds[0], hourlyAmount: 50 }] });
-    getMatchingVersion.onCall(1).returns({ prices: [{ step: collectiveStepId, hourlyAmount: 110 }] });
-    getMatchingVersion.onCall(2).returns({ prices: [{ step: stepIds[2], hourlyAmount: 50 }] });
-    getMatchingVersion.onCall(3).returns({ prices: [{ step: collectiveStepId, hourlyAmount: 100 }] });
 
     const result = await CourseSlotsHelper
       .list({ startDate: '2020-04-30T22:00:00.000Z', endDate: '2020-05-31T21:59:59.999Z' });
@@ -212,14 +204,20 @@ describe('list', () => {
             _id: courseIds[0].toHexString(),
             name: 'program - indiv 1',
             singleTraineeSlots: {
-              'step 1': [{
-                startDate: '2020-05-03T12:00:00.000Z',
-                endDate: '2020-05-03T13:00:00.000Z',
-                duration: 'PT60M',
-                isAbsence: false,
-                status: NOT_PAID,
-                amount: '50',
-              }],
+              'step 1': {
+                slots: [{
+                  startDate: '2020-05-03T12:00:00.000Z',
+                  endDate: '2020-05-03T13:00:00.000Z',
+                  duration: 'PT60M',
+                  isAbsence: false,
+                  status: NOT_PAID,
+                  amount: '50',
+                }],
+                toPayDuration: 'PT60M',
+                paidDuration: 'PT0S',
+                toPayAmount: '50',
+                paidAmount: 0,
+              },
             },
             paidSingleSlotsDuration: 'PT0S',
             paidSingleSlotsAbsenceDuration: 'PT0S',
@@ -230,14 +228,20 @@ describe('list', () => {
             _id: courseIds[1].toHexString(),
             name: 'program - indiv 2',
             singleTraineeSlots: {
-              'step 3': [{
-                startDate: '2020-05-06T12:00:00.000Z',
-                endDate: '2020-05-06T13:00:00.000Z',
-                duration: 'PT60M',
-                isAbsence: false,
-                status: NOT_PAID,
-                amount: '0',
-              }],
+              'step 3': {
+                slots: [{
+                  startDate: '2020-05-06T12:00:00.000Z',
+                  endDate: '2020-05-06T13:00:00.000Z',
+                  duration: 'PT60M',
+                  isAbsence: false,
+                  status: NOT_PAID,
+                  amount: '50',
+                }],
+                toPayDuration: 'PT60M',
+                paidDuration: 'PT0S',
+                toPayAmount: '50',
+                paidAmount: 0,
+              },
             },
             paidSingleSlotsDuration: 'PT0S',
             paidSingleSlotsAbsenceDuration: 'PT0S',
@@ -255,7 +259,7 @@ describe('list', () => {
                 duration: 'PT60M',
                 isAbsence: true,
                 status: NOT_PAID,
-                amount: '0',
+                amount: '110',
               },
               {
                 traineeName: 'App TWO',
@@ -314,7 +318,6 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.callCount(getMatchingVersion, 4);
   });
 });
 
