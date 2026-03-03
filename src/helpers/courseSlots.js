@@ -124,6 +124,7 @@ const formatCollectiveSlots = (collectiveSlots) => {
       const dates = `${startISO}_${endISO}`;
 
       daySlots.push({
+        courseId: slot.course._id,
         traineeName: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL'),
         startDate: startISO,
         endDate: endISO,
@@ -131,6 +132,7 @@ const formatCollectiveSlots = (collectiveSlots) => {
         isAbsence,
         status: slot.status,
         amount,
+        stepName: slot.step.name,
       });
 
       if (!slotsByDates[dates]) {

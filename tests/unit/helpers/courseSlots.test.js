@@ -286,6 +286,7 @@ describe('list', () => {
             '04/05/2020': {
               slots: [
                 {
+                  courseId: courseIds[0],
                   traineeName: 'App ONE',
                   startDate: '2020-05-04T12:00:00.000Z',
                   endDate: '2020-05-04T13:00:00.000Z',
@@ -293,8 +294,10 @@ describe('list', () => {
                   isAbsence: true,
                   status: NOT_PAID,
                   amount: '110',
+                  stepName: 'step collective',
                 },
                 {
+                  courseId: courseIds[1],
                   traineeName: 'App TWO',
                   startDate: '2020-05-04T12:00:00.000Z',
                   endDate: '2020-05-04T13:00:00.000Z',
@@ -302,6 +305,7 @@ describe('list', () => {
                   isAbsence: false,
                   status: NOT_PAID,
                   amount: '110',
+                  stepName: 'step collective',
                 },
               ],
               paidAmount: 0,
@@ -427,6 +431,7 @@ describe('list', () => {
             '05/05/2020': {
               slots: [
                 {
+                  courseId: courseIds[0],
                   traineeName: 'App ONE',
                   startDate: '2020-05-05T12:00:00.000Z',
                   endDate: '2020-05-05T13:00:00.000Z',
@@ -434,8 +439,10 @@ describe('list', () => {
                   isAbsence: true,
                   status: NOT_PAID,
                   amount: '110',
+                  stepName: 'step collective',
                 },
                 {
+                  courseId: courseIds[1],
                   traineeName: 'App TWO',
                   startDate: '2020-05-05T12:00:00.000Z',
                   endDate: '2020-05-05T13:00:00.000Z',
@@ -443,6 +450,7 @@ describe('list', () => {
                   isAbsence: true,
                   status: NOT_PAID,
                   amount: '110',
+                  stepName: 'step collective',
                 },
               ],
               paidAmount: 0,
@@ -568,6 +576,7 @@ describe('list', () => {
             '05/05/2020': {
               slots: [
                 {
+                  courseId: courseIds[0],
                   traineeName: 'App ONE',
                   startDate: '2020-05-05T12:00:00.000Z',
                   endDate: '2020-05-05T13:00:00.000Z',
@@ -575,8 +584,10 @@ describe('list', () => {
                   isAbsence: true,
                   status: PAID,
                   amount: '110',
+                  stepName: 'step collective',
                 },
                 {
+                  courseId: courseIds[1],
                   traineeName: 'App TWO',
                   startDate: '2020-05-05T12:00:00.000Z',
                   endDate: '2020-05-05T13:00:00.000Z',
@@ -584,6 +595,7 @@ describe('list', () => {
                   isAbsence: true,
                   status: PAID,
                   amount: '110',
+                  stepName: 'step collective',
                 },
               ],
               paidAmount: '110',
