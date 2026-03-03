@@ -174,7 +174,14 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
           promises.push(
             CourseSlot.updateOne(
               { _id: slotToPlan._id },
-              { $set: { ...slotData, startDate: afternonStartDate, endDate: afternoonEndDate } }
+              {
+                $set: {
+                  ...slotData,
+                  startDate: afternonStartDate,
+                  endDate: afternoonEndDate,
+                  trainers: payload.trainers,
+                },
+              }
             )
           );
         } else {
@@ -182,6 +189,7 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
             ...slotData,
             startDate: afternonStartDate,
             endDate: afternoonEndDate,
+            trainers: payload.trainers,
           }
           ));
         }
