@@ -84,9 +84,10 @@ describe('list', () => {
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
-                  { step: stepIds[0], hourlyAmount: 50 },
-                  { step: collectiveStepId, hourlyAmount: 100 },
-                  { step: stepIds[1], hourlyAmount: 50 },
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                  { step: stepIds[2], hourlyAmount: 60 },
                 ],
               },
               {
@@ -95,6 +96,7 @@ describe('list', () => {
                   { step: stepIds[0], hourlyAmount: 60 },
                   { step: collectiveStepId, hourlyAmount: 110 },
                   { step: stepIds[1], hourlyAmount: 60 },
+                  { step: stepIds[2], hourlyAmount: 60 },
                 ],
               },
             ],
@@ -120,9 +122,10 @@ describe('list', () => {
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
-                  { step: stepIds[0], hourlyAmount: 50 },
-                  { step: collectiveStepId, hourlyAmount: 100 },
-                  { step: stepIds[1], hourlyAmount: 50 },
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                  { step: stepIds[2], hourlyAmount: 60 },
                 ],
               },
               {
@@ -131,6 +134,7 @@ describe('list', () => {
                   { step: stepIds[0], hourlyAmount: 60 },
                   { step: collectiveStepId, hourlyAmount: 110 },
                   { step: stepIds[1], hourlyAmount: 60 },
+                  { step: stepIds[2], hourlyAmount: 60 },
                 ],
               },
             ],
@@ -155,7 +159,21 @@ describe('list', () => {
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
-                prices: [{ step: stepIds[2], hourlyAmount: 50 }, { step: collectiveStepId, hourlyAmount: 100 }],
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                  { step: stepIds[2], hourlyAmount: 60 },
+                ],
+              },
+              {
+                effectiveDate: '2020-05-04T08:00:00.000Z',
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                  { step: stepIds[2], hourlyAmount: 60 },
+                ],
               },
             ],
           },
@@ -179,7 +197,21 @@ describe('list', () => {
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
-                prices: [{ step: stepIds[2], hourlyAmount: 50 }, { step: collectiveStepId, hourlyAmount: 100 }],
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                  { step: stepIds[2], hourlyAmount: 60 },
+                ],
+              },
+              {
+                effectiveDate: '2020-05-04T08:00:00.000Z',
+                prices: [
+                  { step: stepIds[0], hourlyAmount: 60 },
+                  { step: collectiveStepId, hourlyAmount: 110 },
+                  { step: stepIds[1], hourlyAmount: 60 },
+                  { step: stepIds[2], hourlyAmount: 60 },
+                ],
               },
             ],
           },
@@ -235,11 +267,11 @@ describe('list', () => {
                   duration: 'PT60M',
                   isAbsence: false,
                   status: NOT_PAID,
-                  amount: '50',
+                  amount: '60',
                 }],
                 toPayDuration: 'PT60M',
                 paidDuration: 'PT0S',
-                toPayAmount: '50',
+                toPayAmount: '60',
                 paidAmount: 0,
               },
             },
@@ -251,28 +283,34 @@ describe('list', () => {
         ],
         collectiveSlots: {
           slots: {
-            '04/05/2020': [
-              {
-                traineeName: 'App ONE',
-                startDate: '2020-05-04T12:00:00.000Z',
-                endDate: '2020-05-04T13:00:00.000Z',
-                duration: 'PT60M',
-                isAbsence: true,
-                status: NOT_PAID,
-                amount: '110',
-              },
-              {
-                traineeName: 'App TWO',
-                startDate: '2020-05-04T12:00:00.000Z',
-                endDate: '2020-05-04T13:00:00.000Z',
-                duration: 'PT60M',
-                isAbsence: false,
-                status: NOT_PAID,
-                amount: '100',
-              },
-            ],
+            '04/05/2020': {
+              slots: [
+                {
+                  traineeName: 'App ONE',
+                  startDate: '2020-05-04T12:00:00.000Z',
+                  endDate: '2020-05-04T13:00:00.000Z',
+                  duration: 'PT60M',
+                  isAbsence: true,
+                  status: NOT_PAID,
+                  amount: '110',
+                },
+                {
+                  traineeName: 'App TWO',
+                  startDate: '2020-05-04T12:00:00.000Z',
+                  endDate: '2020-05-04T13:00:00.000Z',
+                  duration: 'PT60M',
+                  isAbsence: false,
+                  status: NOT_PAID,
+                  amount: '110',
+                },
+              ],
+              paidAmount: 0,
+              paidDuration: 'PT0S',
+              toPayAmount: '110',
+              toPayDuration: 'PT60M',
+            },
           },
-          globalInfos: {
+          totals: {
             paidCollectiveSlotsDuration: 'PT0S',
             paidCollectiveSlotsAbsenceDuration: 'PT0S',
             notPaidCollectiveSlotsDuration: 'PT60M',
