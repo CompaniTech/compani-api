@@ -15,6 +15,7 @@ const CourseSlotSchema = mongoose.Schema({
   trainees: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
   trainers: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
   status: { type: String, enum: COURSE_SLOT_STATUS, default: NOT_PAID },
+  trainerBillNumber: { type: String, default: undefined },
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => CourseSlotSchema.pre(middleware, formatQuery));

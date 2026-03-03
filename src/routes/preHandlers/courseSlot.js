@@ -219,3 +219,23 @@ exports.authorizeDeletion = async (req) => {
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
   }
 };
+
+exports.authorizeCourseSlotEdition = async (req) => {
+  try {
+    const { _ids } = req.payload;
+    const courseSlots = await CourseSlot
+      .find({ _id: { $in: _ids }, trainerBillNumber: { $exists: false } }, { trainers: 1 })
+      .lean();
+    if (courseSlots.length !== _ids.length) throw Boom.notFound();
+
+    const firstSlotTrainerIds = courseSlots[0].trainers;
+    const slotsAreLinkedToSameTrainer = courseSlots.every(slot => slot.trainers
+      .some(tId => UtilsHelper.doesArrayIncludeId(firstSlotTrainerIds, tId)));
+    if (!slotsAreLinkedToSameTrainer) throw Boom.forbidden();
+
+    return null;
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};

@@ -10,7 +10,7 @@ const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHelper = require('./courses');
 const CourseHistoriesHelper = require('./courseHistories');
-const { ON_SITE, REMOTE, DD_MM_YYYY, SINGLE, DAY, MINUTE, MISSING, NOT_PAID } = require('./constants');
+const { ON_SITE, REMOTE, DD_MM_YYYY, SINGLE, DAY, MINUTE, MISSING, NOT_PAID, PAID } = require('./constants');
 const DatesUtilsHelper = require('./dates/utils');
 const UtilsHelper = require('./utils');
 const NumbersHelper = require('./numbers');
@@ -403,3 +403,8 @@ exports.formatSlotDates = (slots) => {
 
   return [...new Set(slotDatesWithDuplicate)];
 };
+
+exports.updateSlotList = async payload => CourseSlot.updateMany(
+  { _id: { $in: payload._ids } },
+  { $set: { status: PAID, trainerBillNumber: payload.trainerBillNumber } }
+);

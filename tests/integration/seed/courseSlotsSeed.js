@@ -34,6 +34,7 @@ const {
   PRESENT,
   MOBILE,
   TRAINER_DELETION,
+  PAID,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { auxiliaryRoleId } = require('../../seed/authRolesSeed');
@@ -308,6 +309,8 @@ const courseSlotsList = [
     course: coursesList[1]._id,
     step: stepsList[0]._id,
     trainers: [trainerAndCoach._id],
+    status: PAID,
+    trainerBillNumber: 'FACT_0012',
   },
   { // 13 slot in completion certificate month
     _id: new ObjectId(),
@@ -315,7 +318,7 @@ const courseSlotsList = [
     endDate: '2020-05-13T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
-    trainers: [trainerAndCoach._id],
+    trainers: [trainer._id],
   },
   { // 14 slot with attendance sheet
     _id: new ObjectId(),

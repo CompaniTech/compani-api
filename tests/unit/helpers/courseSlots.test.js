@@ -1136,3 +1136,26 @@ describe('removeCourseSlot', () => {
     sinon.assert.calledOnceWithExactly(deleteOne, { _id: courseSlotId });
   });
 });
+
+describe('updateSlotList', () => {
+  let updateMany;
+  beforeEach(() => {
+    updateMany = sinon.stub(CourseSlot, 'updateMany');
+  });
+  afterEach(() => {
+    updateMany.restore();
+  });
+
+  it('should update slots', async () => {
+    const courseSlotIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const payload = { _ids: courseSlotIds, trainerBillNumber: 'FACT_0001' };
+
+    await CourseSlotsHelper.updateSlotList(payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: courseSlotIds } },
+      { $set: { status: PAID, trainerBillNumber: 'FACT_0001' } }
+    );
+  });
+});

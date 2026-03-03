@@ -2,9 +2,14 @@
 
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
-const { create, update, remove, list } = require('../controllers/courseSlotController');
+const { create, update, remove, list, updateSlotList } = require('../controllers/courseSlotController');
 const { addressValidation, requiredDateToISOString } = require('./validations/utils');
-const { authorizeCreate, authorizeUpdate, authorizeDeletion } = require('./preHandlers/courseSlot');
+const {
+  authorizeCreate,
+  authorizeUpdate,
+  authorizeDeletion,
+  authorizeCourseSlotEdition,
+} = require('./preHandlers/courseSlot');
 
 exports.plugin = {
   name: 'routes-course-slots',
@@ -76,6 +81,22 @@ exports.plugin = {
         auth: { scope: ['courseslots:create'] },
       },
       handler: remove,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/list-edition',
+      options: {
+        validate: {
+          payload: Joi.object({
+            _ids: Joi.array().items(Joi.objectId()).min(1).required(),
+            trainerBillNumber: Joi.string().required(),
+          }),
+        },
+        pre: [{ method: authorizeCourseSlotEdition }],
+        auth: { scope: ['courseslots:edit-list'] },
+      },
+      handler: updateSlotList,
     });
   },
 };

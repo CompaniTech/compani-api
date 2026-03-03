@@ -1307,3 +1307,109 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
     });
   });
 });
+
+describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should update slots', async () => {
+      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id], trainerBillNumber: 'FACT_0001' };
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courseslots/list-edition',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 400 if _ids is empty', async () => {
+      const payload = { _ids: [], trainerBillNumber: 'FACT_0001' };
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courseslots/list-edition',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if trainerBillNumber is not defined', async () => {
+      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id] };
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courseslots/list-edition',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if a slot has trainerBillNumber', async () => {
+      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[12]._id], trainerBillNumber: 'FACT_0001' };
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courseslots/list-edition',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if a slot does not exist', async () => {
+      const payload = { _ids: [courseSlotsList[3]._id, new ObjectId()], trainerBillNumber: 'FACT_0001' };
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courseslots/list-edition',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if a slot is linked to an other trainer', async () => {
+      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[13]._id], trainerBillNumber: 'FACT_0001' };
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courseslots/list-edition',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'trainer', expectedCode: 403 },
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id], trainerBillNumber: 'FACT_0001' };
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'POST',
+          url: '/courseslots/list-edition',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload,
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
