@@ -99,54 +99,68 @@ const formatSingleTraineeSlots = (singleTraineeSlots) => {
 };
 
 const formatCollectiveSlots = (collectiveSlots) => {
-  const slotsGroupByDay = groupBy(
-    collectiveSlots,
-    slot => CompaniDate(slot.startDate).startOf(DAY).format(DD_MM_YYYY)
-  );
+  const slotsGroupByDay = groupBy(collectiveSlots, slot => CompaniDate(slot.startDate).startOf(DAY).format(DD_MM_YYYY));
 
   const formattedCollectiveSlots = {};
+
   let totalPaidDuration = CompaniDuration('PT0S');
   let totalPaidAbsenceDuration = CompaniDuration('PT0S');
   let totalNotPaidDuration = CompaniDuration('PT0S');
   let totalNotPaidAbsenceDuration = CompaniDuration('PT0S');
-  Object.entries(slotsGroupByDay).forEach(([day, slots]) => {
-    const daySlots = slots.map((slot) => {
-      const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
-      const hourlyAmount = getHourlyAmount(slot);
-      const amount = NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours());
 
-      return {
+  Object.entries(slotsGroupByDay).forEach(([day, slots]) => {
+    const daySlots = [];
+    const slotsByDates = {};
+
+    slots.forEach((slot) => {
+      const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
+      const durationObj = CompaniDuration(duration);
+      const hourlyAmount = getHourlyAmount(slot);
+      const amount = NumbersHelper.multiply(hourlyAmount, durationObj.asHours());
+      const isAbsence = slot.attendances[0].status === MISSING;
+
+      const startISO = CompaniDate(slot.startDate).toISO();
+      const endISO = CompaniDate(slot.endDate).toISO();
+      const dates = `${startISO}_${endISO}`;
+
+      daySlots.push({
         traineeName: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL'),
-        startDate: CompaniDate(slot.startDate).toISO(),
-        endDate: CompaniDate(slot.endDate).toISO(),
+        startDate: startISO,
+        endDate: endISO,
         duration,
-        isAbsence: slot.attendances[0].status === MISSING,
+        isAbsence,
         status: slot.status,
         amount,
-      };
-    });
+      });
 
-    const uniqueDaySlots = daySlots.filter((slot, index, all) => index === all
-      .findIndex(s => CompaniDate(s.startDate).isSame(slot.startDate) && CompaniDate(s.endDate).isSame(slot.endDate))
-    );
+      if (!slotsByDates[dates]) {
+        slotsByDates[dates] = {
+          durationObj,
+          amount,
+          status: slot.status,
+          allAbsent: isAbsence,
+        };
+      } else {
+        slotsByDates[dates].allAbsent = slotsByDates[dates].allAbsent && isAbsence;
+      }
+    });
 
     let dayToPayDuration = CompaniDuration('PT0S');
     let dayPaidDuration = CompaniDuration('PT0S');
     let dayToPayAmount = 0;
     let dayPaidAmount = 0;
 
-    uniqueDaySlots.forEach((slot) => {
-      const durationObj = CompaniDuration(slot.duration);
-      if (slot.status === NOT_PAID) {
+    Object.values(slotsByDates).forEach(({ durationObj, amount, status, allAbsent }) => {
+      if (status === NOT_PAID) {
         dayToPayDuration = dayToPayDuration.add(durationObj);
-        dayToPayAmount = NumbersHelper.add(dayToPayAmount, slot.amount);
+        dayToPayAmount = NumbersHelper.add(dayToPayAmount, amount);
         totalNotPaidDuration = totalNotPaidDuration.add(durationObj);
-        if (slot.isAbsence) totalNotPaidAbsenceDuration = totalNotPaidAbsenceDuration.add(durationObj);
+        if (allAbsent) totalNotPaidAbsenceDuration = totalNotPaidAbsenceDuration.add(durationObj);
       } else {
         dayPaidDuration = dayPaidDuration.add(durationObj);
-        dayPaidAmount = NumbersHelper.add(dayPaidAmount, slot.amount);
+        dayPaidAmount = NumbersHelper.add(dayPaidAmount, amount);
         totalPaidDuration = totalPaidDuration.add(durationObj);
-        if (slot.isAbsence) totalPaidAbsenceDuration = totalPaidAbsenceDuration.add(durationObj);
+        if (allAbsent) totalPaidAbsenceDuration = totalPaidAbsenceDuration.add(durationObj);
       }
     });
 

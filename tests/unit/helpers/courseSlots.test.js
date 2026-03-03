@@ -7,7 +7,7 @@ const Course = require('../../../src/models/Course');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
 const SinonMongoose = require('../sinonMongoose');
-const { REMOTE, ON_SITE, PRESENT, MISSING, SINGLE, NOT_PAID } = require('../../../src/helpers/constants');
+const { REMOTE, ON_SITE, PRESENT, MISSING, SINGLE, NOT_PAID, PAID } = require('../../../src/helpers/constants');
 
 describe('list', () => {
   let courseSlotsFind;
@@ -66,7 +66,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
-        status: NOT_PAID,
+        status: PAID,
       },
       {
         _id: new ObjectId(),
@@ -242,18 +242,18 @@ describe('list', () => {
                   endDate: '2020-05-03T13:00:00.000Z',
                   duration: 'PT60M',
                   isAbsence: false,
-                  status: NOT_PAID,
+                  status: PAID,
                   amount: '50',
                 }],
-                toPayDuration: 'PT60M',
-                paidDuration: 'PT0S',
-                toPayAmount: '50',
-                paidAmount: 0,
+                toPayDuration: 'PT0S',
+                paidDuration: 'PT60M',
+                toPayAmount: 0,
+                paidAmount: '50',
               },
             },
-            paidSingleSlotsDuration: 'PT0S',
+            paidSingleSlotsDuration: 'PT60M',
             paidSingleSlotsAbsenceDuration: 'PT0S',
-            notPaidSingleSlotsDuration: 'PT60M',
+            notPaidSingleSlotsDuration: 'PT0S',
             notPaidSingleSlotsAbsenceDuration: 'PT0S',
           },
           {
@@ -314,13 +314,295 @@ describe('list', () => {
             paidCollectiveSlotsDuration: 'PT0S',
             paidCollectiveSlotsAbsenceDuration: 'PT0S',
             notPaidCollectiveSlotsDuration: 'PT60M',
+            notPaidCollectiveSlotsAbsenceDuration: 'PT0S',
+          },
+        },
+        totalPaidSlotsDuration: 'PT60M',
+        totalPaidSlotsAbsenceDuration: 'PT0S',
+        totalNotPaidSlotsDuration: 'PT120M',
+        totalNotPaidSlotsAbsenceDuration: 'PT0S',
+      },
+    });
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFind,
+      [{ query: 'find', args: [{ type: SINGLE }, { _id: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseSlotsFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            course: { $in: courseIds },
+            startDate: { $gte: '2020-04-30T22:00:00.000Z' },
+            endDate: { $lte: '2020-05-31T21:59:59.999Z' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'step', select: '_id name' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: '_id misc subProgram trainees',
+            populate: [
+              { path: 'trainees', select: 'identity' },
+              { path: 'subProgram', select: 'program priceVersions', populate: { path: 'program', select: 'name' } },
+            ],
+          }],
+        },
+        { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should return slots grouped by trainer between two dates - not_paid collective slots with absence', async () => {
+    const collectiveStepId = new ObjectId(process.env.COLLECTIVE_STEP_IDS);
+    const courseIds = [new ObjectId(), new ObjectId()];
+    const traineeIds = [new ObjectId(), new ObjectId()];
+    const trainerId = new ObjectId();
+    const subProgramId = new ObjectId();
+
+    const slots = [
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-05T12:00:00.000Z',
+        endDate: '2020-05-05T13:00:00.000Z',
+        step: { _id: collectiveStepId, name: 'step collective' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[0],
+          misc: 'indiv 1',
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
+              { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
+            ],
+          },
+          trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
+        },
+        attendances: [{ status: MISSING }],
+        status: NOT_PAID,
+      },
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-05T12:00:00.000Z',
+        endDate: '2020-05-05T13:00:00.000Z',
+        step: { _id: collectiveStepId, name: 'step collective' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[1],
+          misc: 'indiv 2',
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
+              { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
+            ],
+          },
+          trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
+        },
+        attendances: [{ status: MISSING }],
+        status: NOT_PAID,
+      },
+    ];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries(courseIds.map(c => ({ _id: c })), ['lean']));
+    courseSlotsFind.returns(SinonMongoose.stubChainedQueries(slots));
+
+    const result = await CourseSlotsHelper
+      .list({ startDate: '2020-04-30T22:00:00.000Z', endDate: '2020-05-31T21:59:59.999Z' });
+
+    expect(result).toEqual({
+      [trainerId]: {
+        identity: { firstname: 'Jean', lastname: 'Pierre' },
+        courses: [],
+        collectiveSlots: {
+          slots: {
+            '05/05/2020': {
+              slots: [
+                {
+                  traineeName: 'App ONE',
+                  startDate: '2020-05-05T12:00:00.000Z',
+                  endDate: '2020-05-05T13:00:00.000Z',
+                  duration: 'PT60M',
+                  isAbsence: true,
+                  status: NOT_PAID,
+                  amount: '110',
+                },
+                {
+                  traineeName: 'App TWO',
+                  startDate: '2020-05-05T12:00:00.000Z',
+                  endDate: '2020-05-05T13:00:00.000Z',
+                  duration: 'PT60M',
+                  isAbsence: true,
+                  status: NOT_PAID,
+                  amount: '110',
+                },
+              ],
+              paidAmount: 0,
+              paidDuration: 'PT0S',
+              toPayAmount: '110',
+              toPayDuration: 'PT60M',
+            },
+          },
+          totals: {
+            paidCollectiveSlotsDuration: 'PT0S',
+            paidCollectiveSlotsAbsenceDuration: 'PT0S',
+            notPaidCollectiveSlotsDuration: 'PT60M',
             notPaidCollectiveSlotsAbsenceDuration: 'PT60M',
           },
         },
         totalPaidSlotsDuration: 'PT0S',
         totalPaidSlotsAbsenceDuration: 'PT0S',
-        totalNotPaidSlotsDuration: 'PT180M',
+        totalNotPaidSlotsDuration: 'PT60M',
         totalNotPaidSlotsAbsenceDuration: 'PT60M',
+      },
+    });
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFind,
+      [{ query: 'find', args: [{ type: SINGLE }, { _id: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseSlotsFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            course: { $in: courseIds },
+            startDate: { $gte: '2020-04-30T22:00:00.000Z' },
+            endDate: { $lte: '2020-05-31T21:59:59.999Z' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'step', select: '_id name' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: '_id misc subProgram trainees',
+            populate: [
+              { path: 'trainees', select: 'identity' },
+              { path: 'subProgram', select: 'program priceVersions', populate: { path: 'program', select: 'name' } },
+            ],
+          }],
+        },
+        { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should return slots grouped by trainer between two dates - paid collective slots with absence', async () => {
+    const collectiveStepId = new ObjectId(process.env.COLLECTIVE_STEP_IDS);
+    const courseIds = [new ObjectId(), new ObjectId()];
+    const traineeIds = [new ObjectId(), new ObjectId()];
+    const trainerId = new ObjectId();
+    const subProgramId = new ObjectId();
+
+    const slots = [
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-05T12:00:00.000Z',
+        endDate: '2020-05-05T13:00:00.000Z',
+        step: { _id: collectiveStepId, name: 'step collective' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[0],
+          misc: 'indiv 1',
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
+              { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
+            ],
+          },
+          trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
+        },
+        attendances: [{ status: MISSING }],
+        status: PAID,
+      },
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-05T12:00:00.000Z',
+        endDate: '2020-05-05T13:00:00.000Z',
+        step: { _id: collectiveStepId, name: 'step collective' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseIds[1],
+          misc: 'indiv 2',
+          subProgram: {
+            _id: subProgramId,
+            program: { name: 'program' },
+            priceVersions: [
+              { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
+              { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
+            ],
+          },
+          trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
+        },
+        attendances: [{ status: MISSING }],
+        status: PAID,
+      },
+    ];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries(courseIds.map(c => ({ _id: c })), ['lean']));
+    courseSlotsFind.returns(SinonMongoose.stubChainedQueries(slots));
+
+    const result = await CourseSlotsHelper
+      .list({ startDate: '2020-04-30T22:00:00.000Z', endDate: '2020-05-31T21:59:59.999Z' });
+
+    expect(result).toEqual({
+      [trainerId]: {
+        identity: { firstname: 'Jean', lastname: 'Pierre' },
+        courses: [],
+        collectiveSlots: {
+          slots: {
+            '05/05/2020': {
+              slots: [
+                {
+                  traineeName: 'App ONE',
+                  startDate: '2020-05-05T12:00:00.000Z',
+                  endDate: '2020-05-05T13:00:00.000Z',
+                  duration: 'PT60M',
+                  isAbsence: true,
+                  status: PAID,
+                  amount: '110',
+                },
+                {
+                  traineeName: 'App TWO',
+                  startDate: '2020-05-05T12:00:00.000Z',
+                  endDate: '2020-05-05T13:00:00.000Z',
+                  duration: 'PT60M',
+                  isAbsence: true,
+                  status: PAID,
+                  amount: '110',
+                },
+              ],
+              paidAmount: '110',
+              paidDuration: 'PT60M',
+              toPayAmount: 0,
+              toPayDuration: 'PT0S',
+            },
+          },
+          totals: {
+            paidCollectiveSlotsDuration: 'PT60M',
+            paidCollectiveSlotsAbsenceDuration: 'PT60M',
+            notPaidCollectiveSlotsDuration: 'PT0S',
+            notPaidCollectiveSlotsAbsenceDuration: 'PT0S',
+          },
+        },
+        totalPaidSlotsDuration: 'PT60M',
+        totalPaidSlotsAbsenceDuration: 'PT60M',
+        totalNotPaidSlotsDuration: 'PT0S',
+        totalNotPaidSlotsAbsenceDuration: 'PT0S',
       },
     });
 
