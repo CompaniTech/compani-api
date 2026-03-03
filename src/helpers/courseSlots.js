@@ -69,12 +69,14 @@ const formatSingleTraineeSlots = (singleTraineeSlots) => {
       }
 
       return {
+        _id: slot._id,
         startDate: CompaniDate(slot.startDate).toISO(),
         endDate: CompaniDate(slot.endDate).toISO(),
         duration,
         isAbsence,
         status: slot.status,
         amount,
+        ...(slot.trainerBillNumber && { trainerBillNumber: slot.trainerBillNumber }),
       };
     });
 
@@ -124,6 +126,7 @@ const formatCollectiveSlots = (collectiveSlots) => {
       const dates = `${startISO}_${endISO}`;
 
       daySlots.push({
+        _id: slot._id,
         courseId: slot.course._id,
         traineeName: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL'),
         startDate: startISO,
@@ -133,6 +136,7 @@ const formatCollectiveSlots = (collectiveSlots) => {
         status: slot.status,
         amount,
         stepName: slot.step.name,
+        ...(slot.trainerBillNumber && { trainerBillNumber: slot.trainerBillNumber }),
       });
 
       if (!slotsByDates[dates]) {
