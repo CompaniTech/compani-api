@@ -103,6 +103,7 @@ const {
   DIRECT_DEBIT,
   RECEIVED,
   PRESENT,
+  PAID,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -1634,6 +1635,11 @@ describe('SEEDS VERIFICATION', () => {
         it('should pass if every slot trainer exists', () => {
           const everyTrainerExists = courseSlotList.every(cs => !cs.trainers || cs.trainers.every(t => t._id));
           expect(everyTrainerExists).toBeTruthy();
+        });
+
+        it('should pass if every slot with trainerBillNumber is paid', () => {
+          const everySlotIsPaid = courseSlotList.every(cs => !cs.trainerBillNumber || cs.status === PAID);
+          expect(everySlotIsPaid).toBeTruthy();
         });
       });
 

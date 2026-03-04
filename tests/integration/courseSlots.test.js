@@ -1365,6 +1365,18 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
       expect(response.statusCode).toBe(404);
     });
 
+    it('should return 404 if a slot is already PAID', async () => {
+      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[14]._id], trainerBillNumber: 'FACT_0002' };
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courseslots/list-edition',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
     it('should return 404 if a slot does not exist', async () => {
       const payload = { _ids: [courseSlotsList[3]._id, new ObjectId()], trainerBillNumber: 'FACT_0001' };
       const response = await app.inject({

@@ -21,6 +21,7 @@ const {
   TRAINER,
   SINGLE,
   TRAINER_DELETION,
+  NOT_PAID,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
@@ -224,7 +225,7 @@ exports.authorizeCourseSlotEdition = async (req) => {
   try {
     const { _ids } = req.payload;
     const courseSlots = await CourseSlot
-      .find({ _id: { $in: _ids }, trainerBillNumber: { $exists: false } }, { trainers: 1 })
+      .find({ _id: { $in: _ids }, status: NOT_PAID, trainerBillNumber: { $exists: false } }, { trainers: 1 })
       .lean();
     if (courseSlots.length !== _ids.length) throw Boom.notFound();
 

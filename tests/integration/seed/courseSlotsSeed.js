@@ -326,6 +326,8 @@ const courseSlotsList = [
     endDate: '2020-05-13T12:00:00',
     course: coursesList[6]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
+    status: PAID,
   },
   { // 15 slot in completion certificate month
     _id: new ObjectId(),
