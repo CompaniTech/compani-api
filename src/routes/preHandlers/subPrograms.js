@@ -4,7 +4,14 @@ const SubProgram = require('../../models/SubProgram');
 const Program = require('../../models/Program');
 const Company = require('../../models/Company');
 const Step = require('../../models/Step');
-const { PUBLISHED, DRAFT, TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN } = require('../../helpers/constants');
+const CourseSlot = require('../../models/CourseSlot');
+const {
+  PUBLISHED,
+  DRAFT,
+  TRAINING_ORGANISATION_MANAGER,
+  VENDOR_ADMIN,
+  DD_MM_YYYY,
+} = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
@@ -86,13 +93,28 @@ exports.authorizeSubProgramUpdate = async (req) => {
       .some(p => !UtilsHelper.doesArrayIncludeId(subProgramStepIds, p.step));
     if (someStepAreNotLinkedToSubprogram) throw Boom.forbidden();
 
+    const effectiveDate = CompaniDate(req.payload.effectiveDate);
     if (subProgram.priceVersions) {
       const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
-      const effectiveDate = CompaniDate(req.payload.effectiveDate);
       const effectiveDateIsAfterLastVersionDate = effectiveDate.isAfter(lastPriceVersion.effectiveDate);
       if (!effectiveDateIsAfterLastVersionDate) {
         throw Boom.forbidden(translate[language].subProgramWrongPriceVersionDate);
       }
+    }
+
+    const paidSlots = await CourseSlot
+      .find({ trainerBills: { $exists: true } })
+      .populate({ path: 'course', select: 'subProgram' })
+      .sort({ startDate: -1 })
+      .lean();
+    const filteredPaidSlots = paidSlots
+      .filter(s => UtilsHelper.areObjectIdsEquals(s.course.subProgram, req.params._id));
+    const lastPaidSlot = filteredPaidSlots[0];
+    if (lastPaidSlot && effectiveDate.isBefore(lastPaidSlot.startDate)) {
+      const message = `${translate[language].paidSlotsBeforeSubProgramEffectiveDate}`
+        + ` (${CompaniDate(lastPaidSlot.startDate).format(DD_MM_YYYY)})`;
+
+      throw Boom.forbidden(message);
     }
   }
 
