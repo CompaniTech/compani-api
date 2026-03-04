@@ -90,7 +90,8 @@ exports.plugin = {
         validate: {
           payload: Joi.object({
             _ids: Joi.array().items(Joi.objectId()).min(1).required(),
-            trainerBillNumber: Joi.string().required(),
+            trainer: Joi.objectId().required(),
+            billNumber: Joi.string().required(),
           }),
         },
         pre: [{ method: authorizeCourseSlotEdition }],

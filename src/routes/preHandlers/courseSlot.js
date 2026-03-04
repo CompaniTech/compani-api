@@ -21,7 +21,6 @@ const {
   TRAINER,
   SINGLE,
   TRAINER_DELETION,
-  NOT_PAID,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
@@ -223,16 +222,17 @@ exports.authorizeDeletion = async (req) => {
 
 exports.authorizeCourseSlotEdition = async (req) => {
   try {
-    const { _ids } = req.payload;
+    const { _ids, trainer } = req.payload;
     const courseSlots = await CourseSlot
-      .find({ _id: { $in: _ids }, status: NOT_PAID, trainerBillNumber: { $exists: false } }, { trainers: 1 })
+      .find({ _id: { $in: _ids }, trainers: trainer }, { trainers: 1, trainerBills: 1 })
       .lean();
     if (courseSlots.length !== _ids.length) throw Boom.notFound();
 
-    const firstSlotTrainerIds = courseSlots[0].trainers;
-    const slotsAreLinkedToSameTrainer = courseSlots.every(slot => slot.trainers
-      .some(tId => UtilsHelper.doesArrayIncludeId(firstSlotTrainerIds, tId)));
-    if (!slotsAreLinkedToSameTrainer) throw Boom.forbidden();
+    const someSlotAreAlreadyPaidForTrainer = courseSlots.some((slot) => {
+      const trainersWithBillNumber = (slot.trainerBills || []).map(b => b.trainer);
+      return UtilsHelper.doesArrayIncludeId(trainersWithBillNumber, trainer);
+    });
+    if (someSlotAreAlreadyPaidForTrainer) throw Boom.forbidden();
 
     return null;
   } catch (e) {

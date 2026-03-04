@@ -1318,7 +1318,12 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
     });
 
     it('should update slots', async () => {
-      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id], trainerBillNumber: 'FACT_0001' };
+      const payload = {
+        _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id],
+        billNumber: 'FACT_0001',
+        trainer: trainerAndCoach._id,
+      };
+
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots/list-edition',
@@ -1330,7 +1335,12 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
     });
 
     it('should return 400 if _ids is empty', async () => {
-      const payload = { _ids: [], trainerBillNumber: 'FACT_0001' };
+      const payload = {
+        _ids: [],
+        billNumber: 'FACT_0001',
+        trainer: trainerAndCoach._id,
+      };
+
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots/list-edition',
@@ -1341,8 +1351,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return 400 if trainerBillNumber is not defined', async () => {
-      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id] };
+    it('should return 400 if billNumber is not defined', async () => {
+      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id], trainer: trainerAndCoach._id };
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots/list-edition',
@@ -1353,8 +1363,9 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return 404 if a slot has trainerBillNumber', async () => {
-      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[12]._id], trainerBillNumber: 'FACT_0001' };
+    it('should return 400 if trainer is not defined', async () => {
+      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id], billNumber: 'FACT_0001' };
+
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots/list-edition',
@@ -1362,11 +1373,16 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
         payload,
       });
 
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(400);
     });
 
-    it('should return 404 if a slot is already PAID', async () => {
-      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[14]._id], trainerBillNumber: 'FACT_0002' };
+    it('should return 404 if trainer is not the trainer of one slot', async () => {
+      const payload = {
+        _ids: [courseSlotsList[3]._id, courseSlotsList[5]._id],
+        billNumber: 'FACT_0001',
+        trainer: trainerAndCoach._id,
+      };
+
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots/list-edition',
@@ -1378,7 +1394,11 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
     });
 
     it('should return 404 if a slot does not exist', async () => {
-      const payload = { _ids: [courseSlotsList[3]._id, new ObjectId()], trainerBillNumber: 'FACT_0001' };
+      const payload = {
+        _ids: [courseSlotsList[3]._id, new ObjectId()],
+        billNumber: 'FACT_0001',
+        trainer: trainerAndCoach._id,
+      };
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots/list-edition',
@@ -1389,8 +1409,12 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 403 if a slot is linked to an other trainer', async () => {
-      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[13]._id], trainerBillNumber: 'FACT_0001' };
+    it('should return 403 if a slot is already link to a trainer\'s bill', async () => {
+      const payload = {
+        _ids: [courseSlotsList[3]._id, courseSlotsList[12]._id],
+        billNumber: 'FACT_0001',
+        trainer: trainerAndCoach._id,
+      };
       const response = await app.inject({
         method: 'POST',
         url: '/courseslots/list-edition',
@@ -1411,7 +1435,12 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
     ];
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
-        const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id], trainerBillNumber: 'FACT_0001' };
+        const payload = {
+          _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id],
+          billNumber: 'FACT_0001',
+          trainer: trainerAndCoach._id,
+        };
+
         authToken = await getToken(role.name);
         const response = await app.inject({
           method: 'POST',

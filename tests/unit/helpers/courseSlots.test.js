@@ -66,8 +66,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
-        status: PAID,
-        trainerBillNumber: 'FACT_0001',
+        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
       },
       {
         _id: new ObjectId(),
@@ -105,7 +104,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        status: NOT_PAID,
       },
       {
         _id: new ObjectId(),
@@ -143,7 +141,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [],
-        status: NOT_PAID,
       },
       {
         _id: new ObjectId(),
@@ -181,7 +178,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: PRESENT }],
-        status: NOT_PAID,
       },
       {
         _id: new ObjectId(),
@@ -219,7 +215,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: PRESENT }],
-        status: NOT_PAID,
       },
     ];
 
@@ -396,7 +391,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        status: NOT_PAID,
       },
       {
         _id: new ObjectId(),
@@ -418,7 +412,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: MISSING }],
-        status: NOT_PAID,
       },
     ];
 
@@ -543,8 +536,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        status: PAID,
-        trainerBillNumber: 'FACT_0001',
+        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
       },
       {
         _id: new ObjectId(),
@@ -566,8 +558,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: MISSING }],
-        status: PAID,
-        trainerBillNumber: 'FACT_0001',
+        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
       },
     ];
 
@@ -1162,14 +1153,14 @@ describe('updateSlotList', () => {
 
   it('should update slots', async () => {
     const courseSlotIds = [new ObjectId(), new ObjectId(), new ObjectId()];
-    const payload = { _ids: courseSlotIds, trainerBillNumber: 'FACT_0001' };
+    const payload = { _ids: courseSlotIds, billNumber: 'FACT_0001', trainer: new ObjectId() };
 
     await CourseSlotsHelper.updateSlotList(payload);
 
     sinon.assert.calledOnceWithExactly(
       updateMany,
       { _id: { $in: courseSlotIds } },
-      { $set: { status: PAID, trainerBillNumber: 'FACT_0001' } }
+      { $push: { trainerBills: { trainer: payload.trainer, billNumber: payload.billNumber } } }
     );
   });
 });
