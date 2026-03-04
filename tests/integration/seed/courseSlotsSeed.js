@@ -34,7 +34,6 @@ const {
   PRESENT,
   MOBILE,
   TRAINER_DELETION,
-  PAID,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { auxiliaryRoleId } = require('../../seed/authRolesSeed');

@@ -37,6 +37,8 @@ const {
   PRESENT,
   DRAFT,
   SLOT_STATUS,
+  PAID,
+  NOT_PAID,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const DatesUtilsHelper = require('./dates/utils');
@@ -376,6 +378,13 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     const absencesCount = absences.length;
     const absencesDuration = NumbersHelper.multiply(absencesCount, Number(slotDuration.replace(',', '.')));
 
+    const trainersStatus = (slot.trainers || []).map((trainer) => {
+      const trainerBill = (slot.trainerBills || [])
+        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainer._id));
+
+      return [UtilsHelper.formatIdentity(trainer.identity, 'FL'), SLOT_STATUS[trainerBill ? PAID : NOT_PAID]];
+    });
+
     rows.push({
       'Id Créneau': slot._id,
       'Id Formation': slot.course._id,
@@ -401,7 +410,9 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           : 0,
       }),
       Intervenants: (slot.trainers || []).map(t => UtilsHelper.formatIdentity(t.identity, 'FL')).join(', '),
-      Statut: SLOT_STATUS[slot.status],
+      Statut: (slot.trainers || []).length === 1
+        ? trainersStatus[0][1]
+        : trainersStatus.map(([name, value]) => `${name} : ${value}`).join(', '),
     });
   }
 
