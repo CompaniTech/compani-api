@@ -49,7 +49,7 @@ describe('COURSE SLOTS ROUTES - GET /courseslots/trainers-billing', () => {
       const result = response.result.data.courseSlots;
       const trainerIds = Object.keys(result);
       const trainerSingleTraineesSlotsByStep = Object.values(result)[0].courses[0].singleTraineeSlots;
-      const singleSlots = Object.values(trainerSingleTraineesSlotsByStep)[0];
+      const singleSlots = Object.values(trainerSingleTraineesSlotsByStep)[0].slots;
       expect(trainerIds.length).toBe(1);
       expect(singleSlots.length).toBe(2);
     });

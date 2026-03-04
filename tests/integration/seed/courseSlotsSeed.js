@@ -86,6 +86,24 @@ const subProgramsList = [
     name: 'sous-programme A',
     steps: [stepsList[0]._id, stepsList[1]._id, stepsList[4]._id],
     status: PUBLISHED,
+    priceVersions: [
+      {
+        effectiveDate: '2020-02-01T23:00:00',
+        prices: [
+          { step: stepsList[0]._id, hourlyAmount: 30 },
+          { step: stepsList[1]._id, hourlyAmount: 40 },
+          { step: stepsList[4]._id, hourlyAmount: 50 },
+        ],
+      },
+      {
+        effectiveDate: '2020-05-13T23:00:00',
+        prices: [
+          { step: stepsList[0]._id, hourlyAmount: 40 },
+          { step: stepsList[1]._id, hourlyAmount: 50 },
+          { step: stepsList[4]._id, hourlyAmount: 60 },
+        ],
+      },
+    ],
   },
   { _id: new ObjectId(), name: 'sous-programme B', steps: [stepsList[2]._id, stepsList[3]._id] },
 ];
