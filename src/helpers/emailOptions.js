@@ -89,7 +89,7 @@ const addTutorContent = (tutorIdentity, tutorEmail, learnerIdentity, courseName,
   <p> Merci beaucoup d'avoir accepté d'être tuteur pour ${learnerIdentity ? `${learnerIdentity}` : 'votre apprenant'} ! Nous sommes très heureux de l'accompagner avec vous pendant cette formation "${courseName}".</p>
   ${gSheetId ? `<p> Voici le fichier de suivi de sa formation :</p><p>https://docs.google.com/spreadsheets/d/${gSheetId}</p>` : ''}
   <p>Nous vous avons également créé un compte sur Compani, notre application mobile, qu'il vous faut télécharger sur le magasin d'applications de votre téléphone via les boutons au bas de cet email. Vous pouvez vous y connecter avec votre email : ${tutorEmail}</p>
-  <p><strong style="color: red">Nous vous prions de vous connecter uniquement avec cet email.</strong></p>
+  <p><strong style="color: red">Nous vous prions de vous connecter uniquement avec cet email et de ne pas créer de compte vous-même. Si vous avez des soucis de connexion, n’hésitez pas à nous écrire à l’adresse suivante : ${process.env.BILLING_COMPANI_EMAIL}</strong></p>
   <p>Vous y retrouverez tous les rendez-vous de la formation ainsi que les modules théoriques (e-learning) que votre apprenant va suivre et que vous pouvez faire pour l'accompagner dans l'onglet "Mes formations", section "Tutorat".</p>
   <p>Pour information, la formation dédiée aux tuteurs.trices est <strong>obligatoire</strong> et est divisée en trois sessions :</p>
   <ul>
