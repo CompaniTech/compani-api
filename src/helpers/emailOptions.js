@@ -98,10 +98,9 @@ const addTutorContent = (tutorIdentity, tutorEmail, learnerIdentity, courseName,
     <li>Réalisation en autonomie de trois modules e-learning. (4h00)</li>
     <li><strong>Session 3 :</strong> Accompagner la préparation au passage de la VAE Aide-Soignant (1h00)</li>
   </ul>
-  <p>À l’issue de la session 1 et 3, un certificat de réalisation vous sera envoyé.</p>
+  <p>À l’issue des sessions 1 et 3, un certificat de réalisation vous sera envoyé.</p>
   <p>Nous organisons prochainement la session 1 de la formation des tuteurs.trices VAEI en visioconférence :</p>
-  <p><strong>Une invitation Google vous sera envoyée prochainement. Merci de confirmer votre présence, en acceptant l'invitation.</strong></p>
-  <p>Cette session sera animée par notre responsable pédagogique, Claire Bolzinger.</p>
+  <p><strong>Une invitation Google vous sera envoyée sur cette adresse email. Merci de confirmer votre présence, en acceptant l'invitation.</strong></p>
   <p>N’hésitez pas à nous écrire pour toute question.</p>
   <p>Bien cordialement,<br>
   L'équipe Compani</p>
