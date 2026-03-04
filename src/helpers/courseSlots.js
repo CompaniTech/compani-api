@@ -160,7 +160,10 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
       if (payload.wholeDay) {
         const afternonStartDate = CompaniDate(payload.startDate).set({ hour: 13, minute: 30 }).toISO();
         const afternoonEndDate = CompaniDate(payload.endDate).set({ hour: 17, minute: 0 }).toISO();
-        const slotData = pick({ ...courseSlot, ...payload }, ['course', 'step', 'address', 'meetingLink', 'trainees']);
+        const slotData = pick(
+          { ...courseSlot, ...payload },
+          ['course', 'step', 'address', 'meetingLink', 'trainees', 'trainers']
+        );
         const slotToPlan = await CourseSlot
           .findOne({
             course: courseSlot.course,
@@ -178,12 +181,7 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
             )
           );
         } else {
-          promises.push(CourseSlot.create({
-            ...slotData,
-            startDate: afternonStartDate,
-            endDate: afternoonEndDate,
-          }
-          ));
+          promises.push(CourseSlot.create({ ...slotData, startDate: afternonStartDate, endDate: afternoonEndDate }));
         }
         promises.push(
           CourseHistoriesHelper.createHistoryOnSlotCreation(
