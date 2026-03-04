@@ -5956,7 +5956,14 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
       expect(course).toEqual(1);
       sinon.assert.calledOnceWithExactly(sendinBlueTransporter);
       sinon.assert
-        .calledOnceWithExactly(addTutorContent, 'Auxiliary OLAIT', 'Trainee WITHEXPOTOKEN (TUTOR)', 'program');
+        .calledOnceWithExactly(
+          addTutorContent,
+          'Auxiliary OLAIT',
+          'auxiliary@alenvi.io',
+          'Trainee WITHEXPOTOKEN (TUTOR)',
+          'program',
+          'gSheetId'
+        );
       sinon.assert.calledOnceWithExactly(
         gsheetsWriteData,
         {
