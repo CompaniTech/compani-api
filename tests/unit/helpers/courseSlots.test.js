@@ -412,6 +412,7 @@ describe('updateCourseSlot', () => {
         startDate: '2020-03-03T12:30:00.000Z',
         endDate: '2020-03-03T16:00:00.000Z',
         address: { fullAddress: '24 avenue Daumesnil' },
+        trainers: payload.trainers,
       },
       user._id
     );
@@ -494,6 +495,7 @@ describe('updateCourseSlot', () => {
         endDate: '2020-03-03T16:00:00.000Z',
         address: { fullAddress: '24 avenue Daumesnil' },
         trainees,
+        trainers: payload.trainers,
       },
       user._id
     );
