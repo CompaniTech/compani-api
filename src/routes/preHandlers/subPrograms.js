@@ -111,7 +111,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
     const lastPaidSlot = paidSlots[0];
     if (lastPaidSlot && effectiveDate.isBefore(lastPaidSlot.startDate)) {
       const message = `${translate[language].paidSlotsBeforeSubProgramEffectiveDate}`
-        + ` (${CompaniDate(lastPaidSlot.startDate).format(DD_MM_YYYY)})`;
+        + ` (le ${CompaniDate(lastPaidSlot.startDate).format(DD_MM_YYYY)})`;
 
       throw Boom.forbidden(message);
     }

@@ -91,7 +91,7 @@ module.exports = {
     subProgramUpdated: 'Sub-program updated.',
     eLearningSubProgramAlreadyExists: 'A published eLearning sub-program already exists.',
     subProgramWrongPriceVersionDate: 'Forbidden: a version with a later effectiveDate exists.',
-    paidSlotsBeforeSubProgramEffectiveDate: 'Forbidden: a slot is paid before effectiveDate.',
+    paidSlotsBeforeSubProgramEffectiveDate: 'Forbidden: a slot is paid after effectiveDate.',
     /* Steps */
     stepUpdated: 'Step updated.',
     stepsFound: 'Steps found.',
@@ -394,7 +394,7 @@ module.exports = {
     subProgramsNotFound: 'Sous-Programmes non trouvés.',
     eLearningSubProgramAlreadyExists: 'Un sous-programme eLearning publié existe déjà.',
     subProgramWrongPriceVersionDate: 'Impossible : une version avec une date d\'effet postérieure existe déjà.',
-    paidSlotsBeforeSubProgramEffectiveDate: 'Impossible: un créneau est noté réglé avant la date d\'effet renseignée.',
+    paidSlotsBeforeSubProgramEffectiveDate: 'Impossible: un créneau est noté réglé après la date d\'effet renseignée.',
     /* Steps */
     stepsFound: 'Liste des étapes trouvée.',
     stepUpdated: 'Étape mise à jour.',

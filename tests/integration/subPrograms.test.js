@@ -407,7 +407,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
       expect(response.result.message)
-        .toBe('Impossible: un créneau est noté réglé avant la date d\'effet renseignée. (26/02/2026)');
+        .toBe('Impossible: un créneau est noté réglé après la date d\'effet renseignée. (le 26/02/2026)');
     });
 
     it('should return a 409 if a published eLearning subprogram already exist in program', async () => {
