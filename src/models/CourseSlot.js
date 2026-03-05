@@ -18,6 +18,7 @@ const CourseSlotSchema = mongoose.Schema({
       billNumber: { type: String, required: true },
     }],
     _id: false,
+    default: undefined,
   },
 }, { timestamps: true });
 
