@@ -66,7 +66,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
-        status: PAID,
+        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
       },
       {
         _id: new ObjectId(),
@@ -104,7 +104,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        status: NOT_PAID,
       },
       {
         _id: new ObjectId(),
@@ -142,7 +141,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [],
-        status: NOT_PAID,
       },
       {
         _id: new ObjectId(),
@@ -180,7 +178,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: PRESENT }],
-        status: NOT_PAID,
       },
       {
         _id: new ObjectId(),
@@ -218,7 +215,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: PRESENT }],
-        status: NOT_PAID,
       },
     ];
 
@@ -238,12 +234,14 @@ describe('list', () => {
             singleTraineeSlots: {
               'step 1': {
                 slots: [{
+                  _id: slots[0]._id,
                   startDate: '2020-05-03T12:00:00.000Z',
                   endDate: '2020-05-03T13:00:00.000Z',
                   duration: 'PT60M',
                   isAbsence: false,
                   status: PAID,
                   amount: '50',
+                  trainerBillNumber: 'FACT_0001',
                 }],
                 toPayDuration: 'PT0S',
                 paidDuration: 'PT60M',
@@ -262,6 +260,7 @@ describe('list', () => {
             singleTraineeSlots: {
               'step 3': {
                 slots: [{
+                  _id: slots[3]._id,
                   startDate: '2020-05-06T12:00:00.000Z',
                   endDate: '2020-05-06T13:00:00.000Z',
                   duration: 'PT60M',
@@ -286,6 +285,7 @@ describe('list', () => {
             '04/05/2020': {
               slots: [
                 {
+                  _id: slots[1]._id,
                   courseId: courseIds[0],
                   traineeName: 'App ONE',
                   startDate: '2020-05-04T12:00:00.000Z',
@@ -297,6 +297,7 @@ describe('list', () => {
                   stepName: 'step collective',
                 },
                 {
+                  _id: slots[4]._id,
                   courseId: courseIds[1],
                   traineeName: 'App TWO',
                   startDate: '2020-05-04T12:00:00.000Z',
@@ -390,7 +391,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        status: NOT_PAID,
       },
       {
         _id: new ObjectId(),
@@ -412,7 +412,6 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: MISSING }],
-        status: NOT_PAID,
       },
     ];
 
@@ -431,6 +430,7 @@ describe('list', () => {
             '05/05/2020': {
               slots: [
                 {
+                  _id: slots[0]._id,
                   courseId: courseIds[0],
                   traineeName: 'App ONE',
                   startDate: '2020-05-05T12:00:00.000Z',
@@ -442,6 +442,7 @@ describe('list', () => {
                   stepName: 'step collective',
                 },
                 {
+                  _id: slots[1]._id,
                   courseId: courseIds[1],
                   traineeName: 'App TWO',
                   startDate: '2020-05-05T12:00:00.000Z',
@@ -535,7 +536,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        status: PAID,
+        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
       },
       {
         _id: new ObjectId(),
@@ -557,7 +558,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: MISSING }],
-        status: PAID,
+        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
       },
     ];
 
@@ -576,6 +577,7 @@ describe('list', () => {
             '05/05/2020': {
               slots: [
                 {
+                  _id: slots[0]._id,
                   courseId: courseIds[0],
                   traineeName: 'App ONE',
                   startDate: '2020-05-05T12:00:00.000Z',
@@ -585,8 +587,10 @@ describe('list', () => {
                   status: PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  trainerBillNumber: 'FACT_0001',
                 },
                 {
+                  _id: slots[1]._id,
                   courseId: courseIds[1],
                   traineeName: 'App TWO',
                   startDate: '2020-05-05T12:00:00.000Z',
@@ -596,6 +600,7 @@ describe('list', () => {
                   status: PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  trainerBillNumber: 'FACT_0001',
                 },
               ],
               paidAmount: '110',
@@ -1134,5 +1139,28 @@ describe('removeCourseSlot', () => {
     await CourseSlotsHelper.removeCourseSlot(courseSlotId);
 
     sinon.assert.calledOnceWithExactly(deleteOne, { _id: courseSlotId });
+  });
+});
+
+describe('updateSlotList', () => {
+  let updateMany;
+  beforeEach(() => {
+    updateMany = sinon.stub(CourseSlot, 'updateMany');
+  });
+  afterEach(() => {
+    updateMany.restore();
+  });
+
+  it('should update slots', async () => {
+    const courseSlotIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const payload = { _ids: courseSlotIds, billNumber: 'FACT_0001', trainer: new ObjectId() };
+
+    await CourseSlotsHelper.updateSlotList(payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: courseSlotIds } },
+      { $push: { trainerBills: { trainer: payload.trainer, billNumber: payload.billNumber } } }
+    );
   });
 });

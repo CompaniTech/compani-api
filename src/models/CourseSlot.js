@@ -1,9 +1,7 @@
 const mongoose = require('mongoose');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
-const { MISSING, PAID, NOT_PAID } = require('../helpers/constants');
-
-const COURSE_SLOT_STATUS = [PAID, NOT_PAID];
+const { MISSING } = require('../helpers/constants');
 
 const CourseSlotSchema = mongoose.Schema({
   course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
@@ -14,7 +12,14 @@ const CourseSlotSchema = mongoose.Schema({
   step: { type: mongoose.Schema.Types.ObjectId, ref: 'Step', required: true },
   trainees: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
   trainers: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
-  status: { type: String, enum: COURSE_SLOT_STATUS, default: NOT_PAID },
+  trainerBills: {
+    type: [{
+      trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      billNumber: { type: String, required: true },
+    }],
+    _id: false,
+    default: undefined,
+  },
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => CourseSlotSchema.pre(middleware, formatQuery));

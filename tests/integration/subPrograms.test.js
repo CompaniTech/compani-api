@@ -161,7 +161,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     it('should add a new price version', async () => {
       const payload = {
         prices: [{ step: subProgramsList[2].steps[0], hourlyAmount: 100 }],
-        effectiveDate: '2026-02-25T09:00:00.000Z',
+        effectiveDate: '2026-02-28T09:00:00.000Z',
       };
 
       const response = await app.inject({
@@ -390,6 +390,24 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if effectiveDate is before last paid slot', async () => {
+      const payload = {
+        prices: [{ step: subProgramsList[2].steps[0], hourlyAmount: 35 }],
+        effectiveDate: '2026-02-25T23:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message)
+        .toBe('Impossible: un créneau est noté réglé après la date d\'effet renseignée. (le 26/02/2026)');
     });
 
     it('should return a 409 if a published eLearning subprogram already exist in program', async () => {

@@ -36,8 +36,6 @@ const {
   DRAFT,
   ARCHIVED,
   OPEN_QUESTION,
-  PAID,
-  NOT_PAID,
 } = require('../../../src/helpers/constants');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
@@ -1339,6 +1337,8 @@ describe('exportCourseSlotHistory', () => {
     location: { type: 'Point', coordinates: [2.37345, 48.848024] },
   };
 
+  const trainer = { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } };
+
   const courseSlotList = [
     { // 0
       _id: new ObjectId(),
@@ -1350,8 +1350,8 @@ describe('exportCourseSlotHistory', () => {
       address: slotAddress,
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
       trainees: [traineeList[0]._id, traineeList[1]._id],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
-      status: PAID,
+      trainers: [trainer],
+      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
     },
     { // 1
       _id: new ObjectId(),
@@ -1362,8 +1362,8 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[1],
       meetingLink: 'https://meet.google.com',
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: PRESENT }],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
-      status: PAID,
+      trainers: [trainer],
+      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
     },
     { // 2
       _id: new ObjectId(),
@@ -1374,8 +1374,8 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[0],
       address: slotAddress,
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
-      status: PAID,
+      trainers: [trainer],
+      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
     },
     { // 3
       _id: new ObjectId(),
@@ -1385,8 +1385,7 @@ describe('exportCourseSlotHistory', () => {
       createdAt: '2020-12-12T10:00:03.000Z',
       step: stepList[2],
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
-      status: NOT_PAID,
+      trainers: [trainer],
     },
     { // 4
       _id: new ObjectId(),
@@ -1396,8 +1395,8 @@ describe('exportCourseSlotHistory', () => {
       createdAt: '2020-12-12T10:00:03.000Z',
       step: stepList[0],
       attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
-      status: PAID,
+      trainers: [trainer],
+      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
     },
   ];
 

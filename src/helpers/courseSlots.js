@@ -10,7 +10,7 @@ const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHelper = require('./courses');
 const CourseHistoriesHelper = require('./courseHistories');
-const { ON_SITE, REMOTE, DD_MM_YYYY, SINGLE, DAY, MINUTE, MISSING, NOT_PAID } = require('./constants');
+const { ON_SITE, REMOTE, DD_MM_YYYY, SINGLE, DAY, MINUTE, MISSING, NOT_PAID, PAID } = require('./constants');
 const DatesUtilsHelper = require('./dates/utils');
 const UtilsHelper = require('./utils');
 const NumbersHelper = require('./numbers');
@@ -32,7 +32,7 @@ const getHourlyAmount = (slot) => {
   return price ? price.hourlyAmount : 0;
 };
 
-const formatSingleTraineeSlots = (singleTraineeSlots) => {
+const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
   const singleTraineeSlotsGroupByStep = groupBy(singleTraineeSlots, slot => slot.step._id);
 
   const formattedSingleTraineeSlots = {};
@@ -55,8 +55,11 @@ const formatSingleTraineeSlots = (singleTraineeSlots) => {
       const hourlyAmount = getHourlyAmount(slot);
       const amount = NumbersHelper.multiply(hourlyAmount, durationObj.asHours());
       const isAbsence = slot.attendances[0].status === MISSING;
+      const trainerBill = (slot.trainerBills || [])
+        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainerId));
+      const slotStatus = trainerBill ? PAID : NOT_PAID;
 
-      if (slot.status === NOT_PAID) {
+      if (slotStatus === NOT_PAID) {
         stepToPayDuration = stepToPayDuration.add(durationObj);
         stepToPayAmount = NumbersHelper.add(stepToPayAmount, amount);
         notPaidDuration = notPaidDuration.add(durationObj);
@@ -69,12 +72,14 @@ const formatSingleTraineeSlots = (singleTraineeSlots) => {
       }
 
       return {
+        _id: slot._id,
         startDate: CompaniDate(slot.startDate).toISO(),
         endDate: CompaniDate(slot.endDate).toISO(),
         duration,
         isAbsence,
-        status: slot.status,
+        status: slotStatus,
         amount,
+        ...(trainerBill && trainerBill.billNumber && { trainerBillNumber: trainerBill.billNumber }),
       };
     });
 
@@ -98,7 +103,7 @@ const formatSingleTraineeSlots = (singleTraineeSlots) => {
   };
 };
 
-const formatCollectiveSlots = (collectiveSlots) => {
+const formatCollectiveSlots = (collectiveSlots, trainerId) => {
   const slotsGroupByDay = groupBy(collectiveSlots, slot => CompaniDate(slot.startDate).startOf(DAY).format(DD_MM_YYYY));
 
   const formattedCollectiveSlots = {};
@@ -123,23 +128,29 @@ const formatCollectiveSlots = (collectiveSlots) => {
       const endISO = CompaniDate(slot.endDate).toISO();
       const dates = `${startISO}_${endISO}`;
 
+      const trainerBill = (slot.trainerBills || [])
+        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainerId));
+      const slotStatus = trainerBill ? PAID : NOT_PAID;
+
       daySlots.push({
+        _id: slot._id,
         courseId: slot.course._id,
         traineeName: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL'),
         startDate: startISO,
         endDate: endISO,
         duration,
         isAbsence,
-        status: slot.status,
+        status: slotStatus,
         amount,
         stepName: slot.step.name,
+        ...(trainerBill && trainerBill.billNumber && { trainerBillNumber: trainerBill.billNumber }),
       });
 
       if (!slotsByDates[dates]) {
         slotsByDates[dates] = {
           durationObj,
           amount,
-          status: slot.status,
+          status: slotStatus,
           allAbsent: isAbsence,
         };
       } else {
@@ -238,7 +249,10 @@ exports.list = async (query) => {
       });
       if (!singleTraineeSlots.length) continue;
 
-      const { slots: formattedSingleSlots, totals: courseTotals } = formatSingleTraineeSlots(singleTraineeSlots);
+      const {
+        slots: formattedSingleSlots,
+        totals: courseTotals,
+      } = formatSingleTraineeSlots(singleTraineeSlots, trainer._id);
 
       trainerCourses.push({
         _id: courseId,
@@ -258,7 +272,7 @@ exports.list = async (query) => {
         .add(courseTotals.notPaidSingleSlotsAbsenceDuration);
     }
 
-    const { slots: formattedCollectiveSlots, totals } = formatCollectiveSlots(collectiveSlots);
+    const { slots: formattedCollectiveSlots, totals } = formatCollectiveSlots(collectiveSlots, trainer._id);
     const {
       paidCollectiveSlotsDuration,
       paidCollectiveSlotsAbsenceDuration,
@@ -403,3 +417,8 @@ exports.formatSlotDates = (slots) => {
 
   return [...new Set(slotDatesWithDuplicate)];
 };
+
+exports.updateSlotList = async payload => CourseSlot.updateMany(
+  { _id: { $in: payload._ids } },
+  { $push: { trainerBills: { trainer: payload.trainer, billNumber: payload.billNumber } } }
+);
