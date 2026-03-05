@@ -751,12 +751,56 @@ describe('formatRumNumber', () => {
 });
 
 describe('parseCsv', () => {
-  it('should parse CSV content into an array of objects', async () => {
+  it('should parse CSV content into an array of objects (with semicolon)', async () => {
     const csvContent =
       `Firstname;Lastname;email;phone;countryCode;company;suffix
       Jean;Leclerc;jean@compani.fr;0609876543;;Alenvi Paris - Home SAS;
       Pierre;Lalouche;;0609876544;;Alenvi Paris - Home SAS;@compani.fr
       Tom;Leclerc;tom@compani.fr;0609876545;;Alenvi Paris - Home SAS;`;
+
+    const mockFile = new Readable();
+    mockFile.push(csvContent);
+    mockFile.push(null);
+
+    const result = await UtilsHelper.parseCsv(mockFile);
+
+    expect(result).toEqual([
+      {
+        firstname: 'Jean',
+        lastname: 'Leclerc',
+        email: 'jean@compani.fr',
+        phone: '0609876543',
+        countryCode: '',
+        company: 'Alenvi Paris - Home SAS',
+        suffix: '',
+      },
+      {
+        firstname: 'Pierre',
+        lastname: 'Lalouche',
+        email: '',
+        phone: '0609876544',
+        countryCode: '',
+        company: 'Alenvi Paris - Home SAS',
+        suffix: '@compani.fr',
+      },
+      {
+        firstname: 'Tom',
+        lastname: 'Leclerc',
+        email: 'tom@compani.fr',
+        phone: '0609876545',
+        countryCode: '',
+        company: 'Alenvi Paris - Home SAS',
+        suffix: '',
+      },
+    ]);
+  });
+
+  it('should parse CSV content into an array of objects (with comma)', async () => {
+    const csvContent =
+      `Firstname,Lastname,email,phone,countryCode,company,suffix
+      Jean,Leclerc,jean@compani.fr,0609876543,,Alenvi Paris - Home SAS,
+      Pierre,Lalouche,,0609876544,,Alenvi Paris - Home SAS,@compani.fr
+      Tom,Leclerc,tom@compani.fr,0609876545,,Alenvi Paris - Home SAS,`;
 
     const mockFile = new Readable();
     mockFile.push(csvContent);
