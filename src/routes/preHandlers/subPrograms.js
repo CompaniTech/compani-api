@@ -50,6 +50,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
       select: '_id type theoreticalDuration',
       populate: { path: 'activities', populate: 'cards' },
     })
+    .populate({ path: 'courses' })
     .lean({ virtuals: true });
 
   if (!subProgram) throw Boom.notFound();
@@ -103,13 +104,11 @@ exports.authorizeSubProgramUpdate = async (req) => {
     }
 
     const paidSlots = await CourseSlot
-      .find({ trainerBills: { $exists: true } })
-      .populate({ path: 'course', select: 'subProgram' })
+      .find({ trainerBills: { $exists: true }, course: { $in: subProgram.courses } })
       .sort({ startDate: -1 })
       .lean();
-    const filteredPaidSlots = paidSlots
-      .filter(s => UtilsHelper.areObjectIdsEquals(s.course.subProgram, req.params._id));
-    const lastPaidSlot = filteredPaidSlots[0];
+
+    const lastPaidSlot = paidSlots[0];
     if (lastPaidSlot && effectiveDate.isBefore(lastPaidSlot.startDate)) {
       const message = `${translate[language].paidSlotsBeforeSubProgramEffectiveDate}`
         + ` (${CompaniDate(lastPaidSlot.startDate).format(DD_MM_YYYY)})`;
