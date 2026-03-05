@@ -199,7 +199,7 @@ const coursesList = [
     companies: [authCompany._id],
     misc: 'team formation',
     type: INTRA,
-    trainers: [trainer._id],
+    trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
     maxTrainees: 3,
@@ -332,6 +332,15 @@ const courseSlotsList = [
     endDate: '2020-06-13T12:00:00',
     course: coursesList[6]._id,
     step: stepsList[0]._id,
+  },
+  { // 16 slot with several trainers and only one trainerBill
+    _id: new ObjectId(),
+    startDate: '2020-05-11T09:00:00',
+    endDate: '2020-05-11T12:00:00',
+    course: coursesList[6]._id,
+    step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id, trainer._id],
+    trainerBills: [{ trainer: trainer._id, billNumber: 'Fact_test' }],
   },
 ];
 

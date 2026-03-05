@@ -1319,7 +1319,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
 
     it('should update slots', async () => {
       const payload = {
-        _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id],
+        _ids: [courseSlotsList[3]._id, courseSlotsList[16]._id],
         billNumber: 'FACT_0001',
         trainer: trainerAndCoach._id,
       };
