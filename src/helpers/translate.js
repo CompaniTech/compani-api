@@ -90,6 +90,8 @@ module.exports = {
     subProgramsNotFound: 'Sub-programs not found.',
     subProgramUpdated: 'Sub-program updated.',
     eLearningSubProgramAlreadyExists: 'A published eLearning sub-program already exists.',
+    subProgramWrongPriceVersionDate: 'Forbidden: a version with a later effectiveDate exists.',
+    paidSlotsBeforeSubProgramEffectiveDate: 'Forbidden: a slot is paid after effectiveDate.',
     /* Steps */
     stepUpdated: 'Step updated.',
     stepsFound: 'Steps found.',
@@ -186,6 +188,7 @@ module.exports = {
     coursePaymentStatusError: 'Forbidden : payment is linked to a xml file and can\'t be changed to "Pending" status.',
     coursePaymentNotLinkedToXml: 'Forbidden : can\'t edit to XML_GENERATED.',
     /* Course slots */
+    courseSlotsFound: 'Course slots found.',
     courseSlotCreated: 'Course slot created.',
     courseSlotUpdated: 'Course slot updated.',
     courseSlotDeleted: 'Course slot deleted.',
@@ -198,6 +201,7 @@ module.exports = {
     courseSlotWholeDayConflict: 'There is already a slot on the afternoon for this day.',
     noSlotLinkedToTrainerOnThisDay: 'No slot linked to trainer on this day.',
     trainerNotLinkedToSlot: 'Trainer is not linked to this slot.',
+    courseSlotsUpdated: 'Course slots updated.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Course funding organisations found.',
     courseFundingOrganisationsNotFound: 'Course funding organisations not found.',
@@ -389,6 +393,8 @@ module.exports = {
     subProgramFound: 'Sous-Programme trouvé.',
     subProgramsNotFound: 'Sous-Programmes non trouvés.',
     eLearningSubProgramAlreadyExists: 'Un sous-programme eLearning publié existe déjà.',
+    subProgramWrongPriceVersionDate: 'Impossible : une version avec une date d\'effet postérieure existe déjà.',
+    paidSlotsBeforeSubProgramEffectiveDate: 'Impossible: un créneau est noté réglé après la date d\'effet renseignée.',
     /* Steps */
     stepsFound: 'Liste des étapes trouvée.',
     stepUpdated: 'Étape mise à jour.',
@@ -488,6 +494,7 @@ module.exports = {
     coursePaymentNotLinkedToXml: 'Impossible de passer le statut en "Fichier XML associé" car un paiement n\'est pas'
       + ' associé à un fichier XML.',
     /* Course slots */
+    courseSlotsFound: 'Créneaux de formation trouvés.',
     courseSlotCreated: 'Créneau de formation créé.',
     courseSlotUpdated: 'Créneau de formation mis à jour.',
     courseSlotDeleted: 'Créneau de formation supprimé.',
@@ -502,6 +509,7 @@ module.exports = {
     courseSlotWholeDayConflict: 'Il existe déjà un créneau sur l\'après-midi pour cette journée.',
     noSlotLinkedToTrainerOnThisDay: 'Il n\'y a pas de créneau lié à cet intervenant pour cette journée.',
     trainerNotLinkedToSlot: 'Certains créneaux ne sont pas liés à l\'intervenant.',
+    courseSlotsUpdated: 'Créneaux mis à jour.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
     courseFundingOrganisationsNotFound: 'Financeurs non trouvés.',

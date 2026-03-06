@@ -9,7 +9,7 @@ const Card = require('../../../src/models/Card');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
-const { vendorAdmin } = require('../../seed/authUsersSeed');
+const { vendorAdmin, trainer } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL } = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
@@ -103,7 +103,15 @@ const stepsList = [
 const subProgramsList = [
   { _id: new ObjectId(), name: 'subProgram 0', status: DRAFT, steps: [stepsList[0]._id, stepsList[1]._id] },
   { _id: new ObjectId(), name: 'subProgram 1', status: DRAFT, steps: [stepsList[1]._id] },
-  { _id: new ObjectId(), name: 'subProgram 2', status: PUBLISHED, steps: [stepsList[0]._id] },
+  {
+    _id: new ObjectId(),
+    name: 'subProgram 2',
+    status: PUBLISHED,
+    steps: [stepsList[0]._id],
+    priceVersions: [
+      { prices: [{ step: stepsList[0]._id, hourlyAmount: 50 }], effectiveDate: '2026-02-01T09:00:00.000Z' },
+    ],
+  },
   { _id: new ObjectId(), name: 'subProgram 3', status: DRAFT, steps: [stepsList[1]._id] },
   { _id: new ObjectId(), name: 'subProgram 4', status: PUBLISHED, steps: [stepsList[2]._id] },
   { _id: new ObjectId(), name: 'subProgram 5', status: DRAFT, steps: [stepsList[3]._id] },
@@ -144,6 +152,7 @@ const coursesList = [{
   companies: [authCompany._id],
   operationsRepresentative: vendorAdmin._id,
   certificateGenerationMode: GLOBAL,
+  trainers: [trainer._id],
 }];
 
 const courseSlotsList = [
@@ -153,6 +162,15 @@ const courseSlotsList = [
     endDate: '2020-03-10T12:00:00.000Z',
     course: coursesList[0]._id,
     step: stepsList[0]._id,
+  },
+  {
+    _id: new ObjectId(),
+    startDate: '2026-02-26T09:00:00.000Z',
+    endDate: '2026-02-26T12:00:00.000Z',
+    course: coursesList[0]._id,
+    step: stepsList[0]._id,
+    trainers: [trainer._id],
+    trainerBills: [{ trainer: trainer._id, billNumber: '1245' }],
   },
 ];
 

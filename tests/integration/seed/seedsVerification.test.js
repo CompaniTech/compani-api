@@ -1635,6 +1635,12 @@ describe('SEEDS VERIFICATION', () => {
           const everyTrainerExists = courseSlotList.every(cs => !cs.trainers || cs.trainers.every(t => t._id));
           expect(everyTrainerExists).toBeTruthy();
         });
+
+        it('should pass if every slot with trainerBill contains trainer and billNumber', () => {
+          const everySlotTrainerBillsContainGoodValues = courseSlotList
+            .every(cs => !cs.trainerBills || cs.trainerBills.every(b => b.billNumber && b.trainer));
+          expect(everySlotTrainerBillsContainGoodValues).toBeTruthy();
+        });
       });
 
       describe('Collection CourseSmsHistory', () => {

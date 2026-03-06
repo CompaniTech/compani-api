@@ -1337,6 +1337,8 @@ describe('exportCourseSlotHistory', () => {
     location: { type: 'Point', coordinates: [2.37345, 48.848024] },
   };
 
+  const trainer = { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } };
+
   const courseSlotList = [
     { // 0
       _id: new ObjectId(),
@@ -1348,7 +1350,8 @@ describe('exportCourseSlotHistory', () => {
       address: slotAddress,
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
       trainees: [traineeList[0]._id, traineeList[1]._id],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      trainers: [trainer],
+      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
     },
     { // 1
       _id: new ObjectId(),
@@ -1359,7 +1362,8 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[1],
       meetingLink: 'https://meet.google.com',
       attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: PRESENT }],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      trainers: [trainer],
+      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
     },
     { // 2
       _id: new ObjectId(),
@@ -1370,7 +1374,8 @@ describe('exportCourseSlotHistory', () => {
       step: stepList[0],
       address: slotAddress,
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      trainers: [trainer],
+      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
     },
     { // 3
       _id: new ObjectId(),
@@ -1380,7 +1385,7 @@ describe('exportCourseSlotHistory', () => {
       createdAt: '2020-12-12T10:00:03.000Z',
       step: stepList[2],
       attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      trainers: [trainer],
     },
     { // 4
       _id: new ObjectId(),
@@ -1390,7 +1395,8 @@ describe('exportCourseSlotHistory', () => {
       createdAt: '2020-12-12T10:00:03.000Z',
       step: stepList[0],
       attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [{ identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } }],
+      trainers: [trainer],
+      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
     },
   ];
 
@@ -1464,6 +1470,7 @@ describe('exportCourseSlotHistory', () => {
         'Nombre d\'émargements non remplis',
         'Nombre d\'apprenants non concernés',
         'Intervenants',
+        'Statut',
       ],
       [
         courseSlotList[0]._id,
@@ -1483,6 +1490,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         1,
         'Gilles FORMATEUR',
+        'Réglé',
       ],
       [
         courseSlotList[1]._id,
@@ -1502,6 +1510,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        'Réglé',
       ],
       [
         courseSlotList[2]._id,
@@ -1521,6 +1530,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        'Réglé',
       ],
       [
         courseSlotList[3]._id,
@@ -1540,6 +1550,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        'Non réglé',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1595,6 +1606,7 @@ describe('exportCourseSlotHistory', () => {
         'Nombre de présences non prévues',
         'Nombre d\'émargements non remplis',
         'Intervenants',
+        'Statut',
       ],
       [
         courseSlotList[4]._id,
@@ -1614,6 +1626,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         0,
         'Gilles FORMATEUR',
+        'Réglé',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(

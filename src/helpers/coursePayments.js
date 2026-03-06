@@ -33,7 +33,10 @@ exports.list = async query => CoursePayment
   .populate({
     path: 'courseBill',
     select: 'number payer',
-    populate: [{ path: 'payer.company', select: 'name' }, { path: 'payer.fundingOrganisation', select: 'name' }],
+    populate: [
+      { path: 'payer.company', select: 'name bic iban debitMandates' },
+      { path: 'payer.fundingOrganisation', select: 'name' },
+    ],
   })
   .populate({ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } })
   .setOptions({ isVendorUser: true })

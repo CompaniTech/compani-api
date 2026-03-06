@@ -86,6 +86,24 @@ const subProgramsList = [
     name: 'sous-programme A',
     steps: [stepsList[0]._id, stepsList[1]._id, stepsList[4]._id],
     status: PUBLISHED,
+    priceVersions: [
+      {
+        effectiveDate: '2020-02-01T23:00:00',
+        prices: [
+          { step: stepsList[0]._id, hourlyAmount: 30 },
+          { step: stepsList[1]._id, hourlyAmount: 40 },
+          { step: stepsList[4]._id, hourlyAmount: 50 },
+        ],
+      },
+      {
+        effectiveDate: '2020-05-13T23:00:00',
+        prices: [
+          { step: stepsList[0]._id, hourlyAmount: 40 },
+          { step: stepsList[1]._id, hourlyAmount: 50 },
+          { step: stepsList[4]._id, hourlyAmount: 60 },
+        ],
+      },
+    ],
   },
   { _id: new ObjectId(), name: 'sous-programme B', steps: [stepsList[2]._id, stepsList[3]._id] },
 ];
@@ -181,7 +199,7 @@ const coursesList = [
     companies: [authCompany._id],
     misc: 'team formation',
     type: INTRA,
-    trainers: [trainer._id],
+    trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
     maxTrainees: 3,
@@ -225,6 +243,7 @@ const courseSlotsList = [
     endDate: '2020-04-10T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id],
   },
   { // 4 slot with attendance
     _id: new ObjectId(),
@@ -232,6 +251,7 @@ const courseSlotsList = [
     endDate: '2020-05-10T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id],
   },
   { // 5 old session slot
     _id: new ObjectId(),
@@ -287,6 +307,8 @@ const courseSlotsList = [
     endDate: '2020-05-10T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id],
+    trainerBills: [{ trainer: trainerAndCoach._id, billNumber: 'FACT_0012' }],
   },
   { // 13 slot in completion certificate month
     _id: new ObjectId(),
@@ -294,6 +316,7 @@ const courseSlotsList = [
     endDate: '2020-05-13T12:00:00',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   { // 14 slot with attendance sheet
     _id: new ObjectId(),
@@ -301,6 +324,7 @@ const courseSlotsList = [
     endDate: '2020-05-13T12:00:00',
     course: coursesList[6]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   { // 15 slot in completion certificate month
     _id: new ObjectId(),
@@ -308,6 +332,15 @@ const courseSlotsList = [
     endDate: '2020-06-13T12:00:00',
     course: coursesList[6]._id,
     step: stepsList[0]._id,
+  },
+  { // 16 slot with several trainers and only one trainerBill
+    _id: new ObjectId(),
+    startDate: '2020-05-11T09:00:00',
+    endDate: '2020-05-11T12:00:00',
+    course: coursesList[6]._id,
+    step: stepsList[0]._id,
+    trainers: [trainerAndCoach._id, trainer._id],
+    trainerBills: [{ trainer: trainer._id, billNumber: 'Fact_test' }],
   },
 ];
 
