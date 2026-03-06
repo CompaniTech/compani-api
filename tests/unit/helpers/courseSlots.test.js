@@ -23,7 +23,7 @@ describe('list', () => {
     process.env.COLLECTIVE_STEP_IDS = '';
   });
 
-  it('should return slots grouped by trainer between two dates', async () => {
+  it('should return slots grouped by trainer between two dates (with trainerId)', async () => {
     const collectiveStepId = new ObjectId(process.env.COLLECTIVE_STEP_IDS);
     const courseIds = [new ObjectId(), new ObjectId()];
     const traineeIds = [new ObjectId(), new ObjectId()];
@@ -222,7 +222,7 @@ describe('list', () => {
     courseSlotsFind.returns(SinonMongoose.stubChainedQueries(slots));
 
     const result = await CourseSlotsHelper
-      .list({ startDate: '2020-04-30T22:00:00.000Z', endDate: '2020-05-31T21:59:59.999Z' });
+      .list({ startDate: '2020-04-30T22:00:00.000Z', endDate: '2020-05-31T21:59:59.999Z', trainerId });
 
     expect(result).toEqual({
       [trainerId]: {
@@ -342,6 +342,7 @@ describe('list', () => {
             course: { $in: courseIds },
             startDate: { $gte: '2020-04-30T22:00:00.000Z' },
             endDate: { $lte: '2020-05-31T21:59:59.999Z' },
+            trainers: trainerId,
           }],
         },
         { query: 'populate', args: [{ path: 'step', select: '_id name' }] },

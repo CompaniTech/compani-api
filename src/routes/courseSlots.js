@@ -9,6 +9,7 @@ const {
   authorizeUpdate,
   authorizeDeletion,
   authorizeCourseSlotEdition,
+  authorizeCourseSlotListGet,
 } = require('./preHandlers/courseSlot');
 
 exports.plugin = {
@@ -22,8 +23,10 @@ exports.plugin = {
           query: Joi.object({
             startDate: requiredDateToISOString,
             endDate: requiredDateToISOString && Joi.date().min(Joi.ref('startDate')).required(),
+            trainerId: Joi.objectId(),
           }),
         },
+        pre: [{ method: authorizeCourseSlotListGet }],
         auth: { scope: ['courseslots:read'] },
       },
       handler: list,

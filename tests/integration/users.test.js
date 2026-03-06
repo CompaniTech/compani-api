@@ -1160,6 +1160,7 @@ describe('USERS ROUTES - GET /users/:id', () => {
       expect(res.statusCode).toBe(200);
       expect(UtilsHelper.areObjectIdsEquals(res.result.data.user._id, trainer._id)).toBeTruthy();
       expect(res.result.data.user.role.vendor).toBeDefined();
+      expect(res.result.data.user.isSingleCourseTrainer).toBeTruthy();
     });
   });
 
