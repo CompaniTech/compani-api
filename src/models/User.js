@@ -27,6 +27,7 @@ const {
   NONE,
   HOLDING_ADMIN,
   MOBILE_CONNECTION_MODE,
+  SINGLE,
 } = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const { CompaniDate } = require('../helpers/dates/companiDates');
@@ -362,6 +363,16 @@ UserSchema.virtual(
 UserSchema.virtual('holding', { ref: 'UserHolding', localField: '_id', foreignField: 'user' });
 
 UserSchema.virtual('contractCreationMissingInfo').get(setContractCreationMissingInfo);
+
+UserSchema.virtual(
+  'isSingleCourseTrainer',
+  {
+    ref: 'Course',
+    localField: '_id',
+    foreignField: 'trainers',
+    count: true,
+    match: { type: SINGLE },
+  });
 
 UserSchema.pre('validate', validate);
 UserSchema.pre('save', save);

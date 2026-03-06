@@ -300,6 +300,7 @@ describe('validate', () => {
           'users:list',
           'attendances:edit',
           'courseslots:create',
+          'courseslots:read',
           'holdings:read',
           'programs:edit',
           'programs:read',

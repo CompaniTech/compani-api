@@ -987,6 +987,7 @@ describe('getUser', () => {
           args: [{ path: 'companyLinkRequest', populate: { path: 'company', select: '_id name' } }],
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
+        { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1036,6 +1037,7 @@ describe('getUser', () => {
           args: [{ path: 'companyLinkRequest', populate: { path: 'company', select: '_id name' } }],
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
+        { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1080,6 +1082,7 @@ describe('getUser', () => {
           args: [{ path: 'companyLinkRequest', populate: { path: 'company', select: '_id name' } }],
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
+        { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1120,6 +1123,7 @@ describe('getUser', () => {
           args: [{ path: 'companyLinkRequest', populate: { path: 'company', select: '_id name' } }],
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
+        { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1165,6 +1169,7 @@ describe('getUser', () => {
             args: [{ path: 'companyLinkRequest', populate: { path: 'company', select: '_id name' } }],
           },
           { query: 'populate', args: [{ path: 'userCompanyList' }] },
+          { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
           { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
         ]
       );
