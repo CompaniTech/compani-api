@@ -292,7 +292,7 @@ exports.parseCsv = file => new Promise((resolve, reject) => {
       const line = l.replace(/\r$/, '').trim();
       if (!line) return;
 
-      const values = line.split(';').map(v => v.trim());
+      const values = line.split(/[,;]/).map(v => v.trim());
 
       if (!headers.length) {
         headers = values.map(v => exports.uncapitalize(v));
@@ -309,7 +309,7 @@ exports.parseCsv = file => new Promise((resolve, reject) => {
   file.on('end', () => {
     if (leftover) {
       leftover = leftover.replace(/\r$/, '').trim();
-      const values = leftover.split(';').map(v => v.trim());
+      const values = leftover.split(/[,;]/).map(v => v.trim());
       const obj = {};
       headers.forEach((header, i) => {
         obj[header] = values[i] || '';
