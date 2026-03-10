@@ -73,6 +73,62 @@ describe('COURSE SLOTS ROUTES - GET /courseslots/trainers-billing', () => {
 
       expect(response.statusCode).toBe(400);
     });
+
+    it('should return 404 if trainerId doesn\'t exist', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courseslots/trainers-billing?startDate=2020-04-30T22:00:00.000Z&endDate=2020-05-31T21:59:59.999Z'
+          + `&trainerId=${new ObjectId()}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('TRAINER', () => {
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(trainerAndCoach.local);
+      process.env.COLLECTIVE_STEP_IDS = new ObjectId();
+    });
+
+    it('should return all single course slots on period for trainer', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courseslots/trainers-billing?startDate=2020-04-30T22:00:00.000Z&endDate=2020-05-31T21:59:59.999Z'
+          + `&trainerId=${trainerAndCoach._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const result = response.result.data.courseSlots;
+      const trainerIds = Object.keys(result);
+      const trainerSingleTraineesSlotsByStep = Object.values(result)[0].courses[0].singleTraineeSlots;
+      const singleSlots = Object.values(trainerSingleTraineesSlotsByStep)[0].slots;
+      expect(trainerIds.length).toBe(1);
+      expect(singleSlots.length).toBe(2);
+    });
+
+    it('should return 400 if no trainerId', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courseslots/trainers-billing?startDate=2020-04-30T22:00:00.000Z&endDate=2020-05-31T21:59:59.999Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 403 if trainerId is not logged user id', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courseslots/trainers-billing?startDate=2020-04-30T22:00:00.000Z&endDate=2020-05-31T21:59:59.999Z'
+          + `&trainerId=${trainer._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
   });
 
   describe('Other roles', () => {
@@ -80,7 +136,6 @@ describe('COURSE SLOTS ROUTES - GET /courseslots/trainers-billing', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'trainer', expectedCode: 403 },
     ];
     roles.forEach((role) => {
       it(`should return 403 for role ${role.name}`, async () => {

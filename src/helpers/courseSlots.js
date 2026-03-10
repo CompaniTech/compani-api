@@ -200,9 +200,15 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
 exports.list = async (query) => {
   const singleCourses = await Course.find({ type: SINGLE }, { _id: 1 }).lean();
   const singleCourseIds = singleCourses.map(course => new ObjectId(course._id));
+  const findQuery = {
+    course: { $in: singleCourseIds },
+    startDate: { $gte: query.startDate },
+    endDate: { $lte: query.endDate },
+    ...(query.trainerId && { trainers: query.trainerId }),
+  };
 
   const courseSlots = await CourseSlot
-    .find({ course: { $in: singleCourseIds }, startDate: { $gte: query.startDate }, endDate: { $lte: query.endDate } })
+    .find(findQuery)
     .populate({ path: 'step', select: '_id name' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
