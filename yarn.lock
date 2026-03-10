@@ -189,10 +189,10 @@
   dependencies:
     googleapis-common "^8.0.0"
 
-"@googleapis/sheets@~12.0.0":
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/@googleapis/sheets/-/sheets-12.0.0.tgz#9206246efa3f94620ef7a94a7aa7ee2de146d39e"
-  integrity sha512-VCJAm3Vzz1nzuUrPP9ETOujlC7kuwdeWiWLdgXAeg+NWu7tKUzu+pe5l55GDqYAEEpCXrxkAlw4gSx+A44zgLg==
+"@googleapis/sheets@~13.0.1":
+  version "13.0.1"
+  resolved "https://registry.yarnpkg.com/@googleapis/sheets/-/sheets-13.0.1.tgz#093554e36b94436b73fd094292b707b5b72811ba"
+  integrity sha512-XTYObncN5Rqexc0uITZIN9OWTEyE/ZR2S6c7wAniqHe2oGXW9gcHR9f9hQwPMHFUTHjH7Jkj8SLdt0O0u37y2A==
   dependencies:
     googleapis-common "^8.0.0"
 
