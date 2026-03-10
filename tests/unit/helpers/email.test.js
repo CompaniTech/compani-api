@@ -114,7 +114,7 @@ describe('sendWelcome', () => {
     sinon.assert.notCalled(welcomeTraineeContent);
   });
 
-  it('should send email to coach', async () => {
+  it('should send email to client_admin', async () => {
     createPasswordToken.returns(passwordToken);
     coachCustomContent.returns(coachWelcomeCustomText);
     baseWelcomeContent.returns(baseWelcomeText);
@@ -144,7 +144,7 @@ describe('sendWelcome', () => {
     sinon.assert.notCalled(welcomeTraineeContent);
   });
 
-  it('should send email to trainee', async () => {
+  it('should send email to trainee (without params content)', async () => {
     welcomeTraineeContent.returns('Bonjour à tous et passez une bonne journée');
     sendinBlueTransporter.returns({ sendMail });
     sendMail.returns(sentObj);
@@ -152,7 +152,30 @@ describe('sendWelcome', () => {
     const result = await EmailHelper.sendWelcome('trainee', email);
 
     expect(result).toEqual(sentObj);
-    sinon.assert.calledOnceWithExactly(welcomeTraineeContent);
+    sinon.assert.calledOnceWithExactly(welcomeTraineeContent, '');
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: email,
+        subject: 'Bienvenue dans votre espace Compani',
+        html: 'Bonjour à tous et passez une bonne journée',
+      }
+    );
+    sinon.assert.notCalled(trainerCustomContent);
+    sinon.assert.notCalled(coachCustomContent);
+  });
+
+  it('should send email to trainee (with params content)', async () => {
+    welcomeTraineeContent.returns('Bonjour à tous et passez une bonne journée');
+    sendinBlueTransporter.returns({ sendMail });
+    sendMail.returns(sentObj);
+
+    const result = await EmailHelper.sendWelcome('trainee', email, 'test');
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledOnceWithExactly(welcomeTraineeContent, 'test');
     sinon.assert.calledWithExactly(sendinBlueTransporter);
     sinon.assert.calledOnceWithExactly(
       sendMail,
@@ -175,7 +198,7 @@ describe('sendWelcome', () => {
     } catch (e) {
       expect(e).toEqual(Boom.failedDependency(translate[language].emailNotSent));
     } finally {
-      sinon.assert.calledOnceWithExactly(welcomeTraineeContent);
+      sinon.assert.calledOnceWithExactly(welcomeTraineeContent, '');
       sinon.assert.calledWithExactly(sendinBlueTransporter);
       sinon.assert.notCalled(sendMail);
       sinon.assert.notCalled(trainerCustomContent);

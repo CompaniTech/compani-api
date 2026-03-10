@@ -28,7 +28,7 @@ const { CompaniDate } = require('./dates/companiDates');
 
 const { language } = translate;
 
-exports.sendWelcome = async (type, email) => {
+exports.sendWelcome = async (type, email, welcomeTraineeContent = '') => {
   const passwordToken = await AuthenticationHelper.createPasswordToken(email);
 
   const subject = 'Bienvenue dans votre espace Compani';
@@ -40,7 +40,7 @@ exports.sendWelcome = async (type, email) => {
       from: `Compani <${SENDER_MAIL}>`,
       to: email,
       subject,
-      html: EmailOptionsHelper.welcomeTraineeContent(),
+      html: EmailOptionsHelper.welcomeTraineeContent(welcomeTraineeContent),
     };
     try {
       return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);

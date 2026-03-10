@@ -112,13 +112,12 @@ exports.createCourse = async (payload, credentials) => {
       )
       .lean();
 
+    const trainee = await User
+      .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
+      .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
+      .lean();
     const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
     if (UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)) {
-      const trainee = await User
-        .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
-        .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
-        .lean();
-
       const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
         traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
         traineeEmail: trainee.local.email,
@@ -133,6 +132,19 @@ exports.createCourse = async (payload, credentials) => {
     }
 
     coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
+    const courseContent = 'Vous y trouverez tous les rendez-vous de la formation ainsi que les modules théoriques '
+      + '(e-learning) pour vous accompagner dans cette formation.';
+    await EmailHelper.sendWelcome(TRAINEE, trainee.local.email, courseContent);
+
+    if (get(trainee, 'contact.phone')) {
+      await SmsHelper.send({
+        tag: COURSE_SMS,
+        content: 'Téléchargez et connectez vous à l\'application Compani via ce lien https://apple.co/33kKzcU (Apple) '
+          + 'ou https://bit.ly/3en5OkF (Android) et explorez vos premiers e-learnings !',
+        recipient: `${trainee.contact.countryCode}${trainee.contact.phone.substring(1)}`,
+        sender: 'Compani',
+      });
+    }
   }
 
   if (payload.prices) {

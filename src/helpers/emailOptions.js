@@ -45,13 +45,12 @@ const verificationCodeEmail = verificationCode => `<p>Bonjour,</p>
     <p>Bien cordialement,<br>
       L'équipe Compani</p>`;
 
-const welcomeTraineeContent = () => `<p>Bonjour,</p>
+const courseContent = `Vous y trouverez de nombreuses formations ludiques pour vous accompagner dans votre quotidien : 
+  les troubles cognitifs, la communication empathique, gérer la fin de vie et le deuil, et bien d'autres encore... `;
+const welcomeTraineeContent = (content = courseContent) => `<p>Bonjour,</p>
   <p>Bienvenue sur Compani Formation, l'outil au service du prendre soin,
   nous venons de vous créer votre compte apprenant.</p>
-  <p>
-  Vous y trouverez de nombreuses formations ludiques pour vous accompagner dans votre quotidien : 
-  les troubles cognitifs, la communication empathique, gérer la fin de vie et le deuil, et bien d'autres encore... 
-  </p>
+  <p>${content}</p>
   <p>
   Nous vous invitons à télécharger l'application Compani Formation sur votre store et
     à cliquer sur “c’est ma première connexion” pour vous créer un mot de passe. 

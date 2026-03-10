@@ -102,6 +102,8 @@ describe('createCourse', () => {
   let addTrainee;
   let userFindOne;
   let createCourseFolderAndSheet;
+  let sendWelcome;
+  let smsSend;
   const credentials = { _id: new ObjectId() };
   const subProgramId = new ObjectId();
 
@@ -117,6 +119,8 @@ describe('createCourse', () => {
     addTrainee = sinon.stub(CourseHelper, 'addTrainee');
     userFindOne = sinon.stub(User, 'findOne');
     createCourseFolderAndSheet = sinon.stub(GDriveStorageHelper, 'createCourseFolderAndSheet');
+    sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
+    smsSend = sinon.stub(SmsHelper, 'send');
     UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
     process.env.VAEI_SUBPROGRAM_IDS = subProgramId.toHexString();
   });
@@ -129,6 +133,8 @@ describe('createCourse', () => {
     addTrainee.restore();
     userFindOne.restore();
     createCourseFolderAndSheet.restore();
+    sendWelcome.restore();
+    smsSend.restore();
     UtilsMock.unmockCurrentDate();
     process.env.VAEI_SUBPROGRAM_IDS = '';
   });
@@ -167,6 +173,8 @@ describe('createCourse', () => {
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
     sinon.assert.notCalled(createCourseFolderAndSheet);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(smsSend);
     sinon.assert.calledOnceWithExactly(
       create,
       {
@@ -282,6 +290,23 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.calledOnceWithExactly(
+      sendWelcome,
+      TRAINEE,
+      'toto.titi@compani.fr',
+      'Vous y trouverez tous les rendez-vous de la formation ainsi que les modules théoriques (e-learning) pour vous '
+        + 'accompagner dans cette formation.'
+    );
+    sinon.assert.calledOnceWithExactly(
+      smsSend,
+      {
+        tag: COURSE_SMS,
+        content: 'Téléchargez et connectez vous à l\'application Compani via ce lien https://apple.co/33kKzcU (Apple) '
+          + 'ou https://bit.ly/3en5OkF (Android) et explorez vos premiers e-learnings !',
+        recipient: '+33612345678',
+        sender: 'Compani',
+      }
+    );
     sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
     sinon.assert.calledOnceWithExactly(addTrainee, course._id, { trainee: traineeId }, credentials);
   });
@@ -311,6 +336,8 @@ describe('createCourse', () => {
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
     sinon.assert.notCalled(createCourseFolderAndSheet);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(smsSend);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -347,6 +374,8 @@ describe('createCourse', () => {
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
     sinon.assert.notCalled(createCourseFolderAndSheet);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(smsSend);
   });
 });
 
