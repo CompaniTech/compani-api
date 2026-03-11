@@ -43,7 +43,7 @@
     "cron": "~4.4.0",
     "date-holidays": "~3.26.9",
     "docxtemplater": "~3.68.3",
-    "dotenv": "~17.2.3",
+    "dotenv": "~17.3.1",
     "flat": "~5.0.2",
     "form-data": "~4.0.5",
     "hapi-auth-jwt2": "~11.0.0",
