@@ -7082,7 +7082,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       const courseAfter = await Course.countDocuments();
       expect(courseAfter).toEqual(courseBefore + 3);
       sinon.assert.calledOnce(sendNotificationToUser);
-      sinon.assert.callCount(sendinBlueTransporter, 4);
+      sinon.assert.callCount(sendinBlueTransporter, 3);
       sinon.assert.calledOnce(smsSend);
       sinon.assert.calledOnce(createFolderForCompany);
       sinon.assert.callCount(createFolder, 6);

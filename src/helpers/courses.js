@@ -1809,7 +1809,6 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
         credentials
       );
       userId = newUser._id;
-      await EmailHelper.sendWelcome(TRAINEE, learner['local.email']);
     } else {
       const courseAlreadyExists = await Course
         .countDocuments({ trainees: userId, type: SINGLE, subProgram: learner.subProgram });

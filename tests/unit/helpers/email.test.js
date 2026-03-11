@@ -33,6 +33,8 @@ describe('sendWelcome', () => {
   const baseWelcomeText = 'base content';
   const passwordToken = 'passwordToken';
   const sentObj = { msg: 'Message sent !' };
+  const content = 'Vous y trouverez de nombreuses formations ludiques pour vous accompagner dans votre quotidien : les '
+  + 'troubles cognitifs, la communication empathique, gérer la fin de vie et le deuil, et bien d\'autres encore... ';
 
   beforeEach(() => {
     trainerCustomContent = sinon.stub(EmailOptionsHelper, 'trainerCustomContent');
@@ -152,7 +154,7 @@ describe('sendWelcome', () => {
     const result = await EmailHelper.sendWelcome('trainee', email);
 
     expect(result).toEqual(sentObj);
-    sinon.assert.calledOnceWithExactly(welcomeTraineeContent, '');
+    sinon.assert.calledOnceWithExactly(welcomeTraineeContent, content);
     sinon.assert.calledWithExactly(sendinBlueTransporter);
     sinon.assert.calledOnceWithExactly(
       sendMail,
@@ -198,7 +200,7 @@ describe('sendWelcome', () => {
     } catch (e) {
       expect(e).toEqual(Boom.failedDependency(translate[language].emailNotSent));
     } finally {
-      sinon.assert.calledOnceWithExactly(welcomeTraineeContent, '');
+      sinon.assert.calledOnceWithExactly(welcomeTraineeContent, content);
       sinon.assert.calledWithExactly(sendinBlueTransporter);
       sinon.assert.notCalled(sendMail);
       sinon.assert.notCalled(trainerCustomContent);

@@ -9092,7 +9092,6 @@ describe('uploadSingleCourseCSV', () => {
   let createUser;
   let createCourse;
   let addTrainer;
-  let sendWelcome;
 
   beforeEach(() => {
     companyFindOne = sinon.stub(Company, 'findOne');
@@ -9103,7 +9102,6 @@ describe('uploadSingleCourseCSV', () => {
     createUser = sinon.stub(UserHelper, 'createUser');
     createCourse = sinon.stub(CourseHelper, 'createCourse');
     addTrainer = sinon.stub(CourseHelper, 'addTrainer');
-    sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
   });
 
   afterEach(() => {
@@ -9115,7 +9113,6 @@ describe('uploadSingleCourseCSV', () => {
     createUserCompany.restore();
     createCourse.restore();
     addTrainer.restore();
-    sendWelcome.restore();
   });
 
   it('should create course with new trainee and new company', async () => {
@@ -9180,7 +9177,6 @@ describe('uploadSingleCourseCSV', () => {
     );
 
     sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
-    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
     sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
     sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: coach._id }, credentials);
     sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: architect._id }, credentials);
@@ -9246,7 +9242,6 @@ describe('uploadSingleCourseCSV', () => {
     sinon.assert.calledOnceWithExactly(userCompanyCountDocuments, { user: userId, company: companyId });
     sinon.assert.calledOnceWithExactly(createUserCompany, { user: userId, company: companyId });
     sinon.assert.notCalled(createUser);
-    sinon.assert.notCalled(sendWelcome);
     sinon.assert.notCalled(addTrainer);
   });
 
@@ -9304,7 +9299,6 @@ describe('uploadSingleCourseCSV', () => {
     );
 
     sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
-    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
     sinon.assert.notCalled(createCompany);
     sinon.assert.notCalled(courseCountDocuments);
     sinon.assert.notCalled(addTrainer);
@@ -9344,7 +9338,6 @@ describe('uploadSingleCourseCSV', () => {
 
     sinon.assert.notCalled(createCompany);
     sinon.assert.notCalled(createUser);
-    sinon.assert.notCalled(sendWelcome);
     sinon.assert.notCalled(createCourse);
     sinon.assert.notCalled(addTrainer);
     sinon.assert.notCalled(userCompanyCountDocuments);
