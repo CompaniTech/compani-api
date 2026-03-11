@@ -138,7 +138,7 @@ exports.generate = async (completionCertificateId) => {
 
   const dates = { startDate: startOfMonth, endDate: endOfMonth };
 
-  let eLearningDuration = {};
+  let eLearningDuration;
   if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, course.subProgram._id)) {
     const filteredActivityHistories = activityHistories
       .filter(aH => (CompaniDate(aH.date).isSameOrBetween(dates.startDate, dates.endDate)));

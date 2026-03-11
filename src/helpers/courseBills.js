@@ -265,7 +265,7 @@ exports.createBillList = async (payload) => {
 };
 
 exports.updateCourseBill = async (courseBillId, payload) => {
-  let formattedPayload = {};
+  let formattedPayload;
 
   if (payload.billedAt) {
     const lastBillNumber = await CourseBillsNumber
@@ -368,8 +368,8 @@ exports.updateBillList = async (payload) => {
     const payloadToUnset = {};
     if (get(payload, 'mainFee.description') === '') {
       payloadToSet = Object.keys(payload.mainFee).length === 1
-        ? payloadToSet = omit(payloadToSet, 'mainFee')
-        : payloadToSet = omit(payloadToSet, 'mainFee.description');
+        ? omit(payloadToSet, 'mainFee')
+        : omit(payloadToSet, 'mainFee.description');
       payloadToUnset['mainFee.description'] = '';
     }
 
