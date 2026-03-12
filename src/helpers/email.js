@@ -224,3 +224,38 @@ exports.completionSendingPendingBillsEmail = (day, emailSent, pendingCourseBillD
 
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
+
+exports.completionSendingSmsRemindersEmail = (result) => {
+  const totalSentReminders = Object.values(result).flatMap(reminder => reminder.sentReminders);
+  const totalNotSentReminders = Object.values(result).flatMap(reminder => reminder.notSentReminders);
+  let body = `<p>Script exécuté. ${totalSentReminders.length + totalNotSentReminders.length} rappels traités.</p>`;
+
+  Object.entries(result).forEach(([reminderName, data]) => {
+    const { sentReminders } = data;
+    const { notSentReminders } = data;
+    if (sentReminders.length || notSentReminders.length) {
+      body = body.concat(`<p>${reminderName} :</p>`);
+    }
+    if (sentReminders.length) {
+      const htmlSentReminders = sentReminders.map(r => `<li>Apprenant: ${r.toHexString()}</li>`).join('');
+      body = body.concat(
+        `<ul><p>Rappel envoyé pour les apprenants suivants :</p>${htmlSentReminders}</ul>`
+      );
+    }
+    if (notSentReminders.length) {
+      const htmlNotSentReminders = notSentReminders.map(r => `<li>Apprenant: ${r.toHexString()}</li>`).join('');
+      body = body.concat(
+        `<ul><p>Numéro de téléphone manquant :</p>${htmlNotSentReminders}</ul><br/>`
+      );
+    }
+  });
+
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: process.env.TECH_EMAILS,
+    subject: 'Script envoi des rappels SMS',
+    html: body,
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+};

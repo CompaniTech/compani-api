@@ -712,3 +712,55 @@ describe('completionSendingPendingBillsEmail', async () => {
     );
   });
 });
+
+describe('completionSendingSmsRemindersEmail', async () => {
+  let sendMail;
+  let sendinBlueTransporter;
+
+  beforeEach(() => {
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
+    sendMail = sinon.stub();
+    process.env.TECH_EMAILS = 'tech@compani.fr';
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+    process.env.TECH_EMAILS = '';
+  });
+
+  it('should send an email to TECH_EMAILS after script has been executed', async () => {
+    const traineeIds = [new ObjectId(), new ObjectId()];
+    const res = {
+      'Relance elearning avant évaluation': {
+        sentReminders: [traineeIds[0]],
+        notSentReminders: [traineeIds[1]],
+      },
+    };
+    const test = '<p>Script exécuté. 2 rappels traités.</p>'
+    + '<p>Relance elearning avant évaluation :</p>'
+    + '<ul><p>Rappel envoyé pour les apprenants suivants :</p>'
+    + `<li>Apprenant: ${traineeIds[0].toHexString()}</li>`
+    + '</ul>'
+    + '<ul><p>Numéro de téléphone manquant :</p>'
+    + `<li>Apprenant: ${traineeIds[1].toHexString()}</li>`
+    + '</ul><br/>';
+    const sentObj = { msg: test };
+
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+
+    const result = await EmailHelper.completionSendingSmsRemindersEmail(res);
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: 'tech@compani.fr',
+        subject: 'Script envoi des rappels SMS',
+        html: test,
+      }
+    );
+  });
+});

@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
 const { completionCertificateCreationJob } = require('../jobs/completionCertificateCreation');
 const { sendingPendingBillsByEmailJob } = require('../jobs/sendingPendingBillsByEmail');
+const { sendingSmsRemindersJob } = require('../jobs/sendingSmsReminders');
 
 const completionCertificateCreation = async (req) => {
   try {
@@ -28,4 +29,15 @@ const sendingPendingBillsByEmail = async (req) => {
   }
 };
 
-module.exports = { completionCertificateCreation, sendingPendingBillsByEmail };
+const sendingSmsReminders = async (req) => {
+  try {
+    const result = await sendingSmsRemindersJob.method(req);
+
+    return { data: result };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { completionCertificateCreation, sendingPendingBillsByEmail, sendingSmsReminders };

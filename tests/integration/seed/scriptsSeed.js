@@ -36,6 +36,7 @@ const userList = [
     _id: new ObjectId(),
     identity: { firstname: 'trainee', lastname: 'toto' },
     local: { email: 'trainee@alenvi.io' },
+    contact: { countryCode: '+33', phone: '0987654321' },
     origin: WEBAPP,
   },
   { // 1
@@ -146,6 +147,20 @@ const slotList = [
     course: courseList[1]._id,
     step: stepList[0]._id,
   },
+  { // 2
+    _id: new ObjectId(),
+    startDate: '2023-01-22T09:00:00.000Z',
+    endDate: '2023-01-22T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[0]._id,
+  },
+  { // 2
+    _id: new ObjectId(),
+    startDate: '2023-01-22T09:00:00.000Z',
+    endDate: '2023-01-22T11:00:00.000Z',
+    course: courseList[2]._id,
+    step: stepList[0]._id,
+  },
 ];
 
 const attendanceList = [
@@ -239,4 +254,4 @@ const populateDB = async () => {
   ]);
 };
 
-module.exports = { populateDB, courseList, userList };
+module.exports = { populateDB, courseList, userList, stepList };
