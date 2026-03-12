@@ -22,7 +22,7 @@ const sendingSmsRemindersJob = {
         })
         .populate({
           path: 'course',
-          select: 'trainees interruptedAt',
+          select: 'trainees interruptedAt archivedAt',
           populate: { path: 'trainees', select: 'contact' },
         })
         .lean();
@@ -30,9 +30,9 @@ const sendingSmsRemindersJob = {
       const promises = [];
       result['Relance elearning avant évaluation'] = {};
       for (const slot of evaluationSlotsInTwoWeeks) {
-        if (slot.course.interruptedAt) continue;
+        if (slot.course.interruptedAt || slot.course.archivedAt) continue;
         const trainee = slot.course.trainees[0];
-        const traineeContact = get(slot.course.trainees[0], 'contact');
+        const traineeContact = get(trainee, 'contact');
         if (get(traineeContact, 'phone')) {
           promises.push(
             SmsHelper.send({

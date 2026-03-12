@@ -78,7 +78,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt',
+            select: 'trainees interruptedAt archivedAt',
             populate: { path: 'trainees', select: 'contact' },
           }],
         },
