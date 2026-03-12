@@ -400,6 +400,8 @@ module.exports = {
   STRICTLY_E_LEARNING: 'strictly_e_learning',
   CONVOCATION: 'convocation',
   REMINDER: 'reminder',
+  COURSE_SMS: 'Formation',
+  PASSWORD_SMS: 'Mot de passe',
   OPERATIONS: 'operations',
   PEDAGOGY: 'pedagogy',
   // PROGRAMS

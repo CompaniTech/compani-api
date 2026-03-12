@@ -106,6 +106,8 @@ describe('COURSES ROUTES - POST /courses', () => {
   let createFolder;
   let gdriveCopy;
   let gsheetsWriteData;
+  let sendinBlueTransporter;
+  let smsSend;
 
   beforeEach(populateDB);
 
@@ -115,6 +117,9 @@ describe('COURSES ROUTES - POST /courses', () => {
       createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
       gdriveCopy = sinon.stub(Gdrive, 'copy');
       gsheetsWriteData = sinon.stub(Gsheets, 'writeData');
+      sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
+        .returns({ sendMail: sinon.stub().returns('emailSent') });
+      smsSend = sinon.stub(SmsHelper, 'send');
       process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
       process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
       process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
@@ -124,6 +129,8 @@ describe('COURSES ROUTES - POST /courses', () => {
       createFolder.restore();
       gdriveCopy.restore();
       gsheetsWriteData.restore();
+      sendinBlueTransporter.restore();
+      smsSend.restore();
       process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
       process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
       process.env.VAEI_SUBPROGRAM_IDS = '';
@@ -265,6 +272,8 @@ describe('COURSES ROUTES - POST /courses', () => {
       sinon.assert.calledOnce(createFolder);
       sinon.assert.calledOnce(gdriveCopy);
       sinon.assert.calledOnce(gsheetsWriteData);
+      sinon.assert.calledOnce(sendinBlueTransporter);
+      sinon.assert.calledOnce(smsSend);
     });
 
     it('should return 404 if invalid operationsRepresentative', async () => {
@@ -6939,6 +6948,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
   let createFolder;
   let gdriveCopy;
   let gsheetsWriteData;
+  let smsSend;
 
   beforeEach(populateDB);
   beforeEach(() => {
@@ -6950,6 +6960,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     createFolder = sinon.stub(GDriveStorageHelper, 'createFolder');
     gdriveCopy = sinon.stub(Gdrive, 'copy');
     gsheetsWriteData = sinon.stub(Gsheets, 'writeData');
+    smsSend = sinon.stub(SmsHelper, 'send');
     process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
     process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
     process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
@@ -6963,6 +6974,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     createFolder.restore();
     gdriveCopy.restore();
     gsheetsWriteData.restore();
+    smsSend.restore();
     process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
     process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
     process.env.VAEI_SUBPROGRAM_IDS = '';
@@ -7070,7 +7082,8 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       const courseAfter = await Course.countDocuments();
       expect(courseAfter).toEqual(courseBefore + 3);
       sinon.assert.calledOnce(sendNotificationToUser);
-      sinon.assert.calledOnce(sendinBlueTransporter);
+      sinon.assert.callCount(sendinBlueTransporter, 3);
+      sinon.assert.calledOnce(smsSend);
       sinon.assert.calledOnce(createFolderForCompany);
       sinon.assert.callCount(createFolder, 6);
       sinon.assert.callCount(gdriveCopy, 3);

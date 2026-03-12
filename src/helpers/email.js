@@ -28,7 +28,7 @@ const { CompaniDate } = require('./dates/companiDates');
 
 const { language } = translate;
 
-exports.sendWelcome = async (type, email) => {
+exports.sendWelcome = async (type, email, welcomeTraineeContent = '') => {
   const passwordToken = await AuthenticationHelper.createPasswordToken(email);
 
   const subject = 'Bienvenue dans votre espace Compani';
@@ -36,11 +36,14 @@ exports.sendWelcome = async (type, email) => {
   const options = { passwordToken, companyName: 'Compani' };
 
   if (type === TRAINEE) {
+    const content = welcomeTraineeContent || 'Vous y trouverez de nombreuses formations ludiques pour vous accompagner '
+      + 'dans votre quotidien : les troubles cognitifs, la communication empathique, gérer la fin de vie et le deuil, '
+      + 'et bien d\'autres encore... ';
     const mailOptions = {
       from: `Compani <${SENDER_MAIL}>`,
       to: email,
       subject,
-      html: EmailOptionsHelper.welcomeTraineeContent(),
+      html: EmailOptionsHelper.welcomeTraineeContent(content),
     };
     try {
       return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
