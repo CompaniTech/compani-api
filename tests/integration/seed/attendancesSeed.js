@@ -377,6 +377,14 @@ const slotsList = [
     step: steps[0]._id,
     trainerBills: [{ trainer: trainer._id, billNumber: 'test' }],
   },
+  { // 15
+    _id: new ObjectId(),
+    startDate: '2025-03-27T16:00:00.000Z',
+    endDate: '2025-03-27T17:00:00.000Z',
+    course: coursesList[10],
+    step: steps[0]._id,
+    trainerBills: [{ trainer: trainer._id, billNumber: 'test' }],
+  },
 ];
 
 const attendancesList = [
@@ -477,6 +485,13 @@ const attendancesList = [
     trainee: traineeList[0]._id,
     company: authCompany._id,
     status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[15]._id,
+    trainee: traineeList[0]._id,
+    company: authCompany._id,
+    status: MISSING,
   },
 ];
 

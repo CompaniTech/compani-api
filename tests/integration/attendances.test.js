@@ -1152,7 +1152,7 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
     it('should return 403 if slot is linked to trainerBill', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/attendances?courseSlot=${slotsList[14]._id}&trainee=${traineeList[0]._id}`,
+        url: `/attendances?courseSlot=${slotsList[15]._id}&trainee=${traineeList[0]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
