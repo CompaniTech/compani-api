@@ -29,7 +29,8 @@ const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 
 exports.getNetInclTaxes = (bill) => {
-  const mainFeeTotal = NumbersHelper.oldMultiply(bill.mainFee.price, bill.mainFee.count);
+  const { price, count } = bill.mainFee;
+  const mainFeeTotal = NumbersHelper.oldMultiply(price || 0, count || 0);
   const billingPurchaseTotal = bill.billingPurchaseList
     ? bill.billingPurchaseList.map(p => NumbersHelper.oldMultiply(p.price, p.count)).reduce((acc, val) => acc + val, 0)
     : 0;
