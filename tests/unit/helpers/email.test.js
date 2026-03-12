@@ -531,13 +531,13 @@ describe('sendBillEmail', async () => {
     const companies = [new ObjectId(), new ObjectId()];
     const courseBills = [
       {
-        _id: courseBillIds[0]._id,
+        _id: courseBillIds[0],
         companies: [{ _id: companies[0] }],
         number: 'FACT-00001',
         payer,
       },
       {
-        _id: courseBillIds[1]._id,
+        _id: courseBillIds[1],
         companies: [{ _id: companies[1] }],
         number: 'FACT-00002',
         payer,
@@ -628,14 +628,14 @@ describe('sendBillEmail', async () => {
     const companies = [new ObjectId(), new ObjectId()];
     const courseBills = [
       {
-        _id: courseBillIds[0]._id,
+        _id: courseBillIds[0],
         companies: [{ _id: companies[0] }],
         number: 'FACT-00001',
         payer,
         sendingDate: ['2025-09-09T00:00:00.000Z'],
       },
       {
-        _id: courseBillIds[1]._id,
+        _id: courseBillIds[1],
         companies: [{ _id: companies[1] }],
         number: 'FACT-00002',
         payer,
