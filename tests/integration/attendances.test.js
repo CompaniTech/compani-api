@@ -935,6 +935,18 @@ describe('ATTENDANCES ROUTES - PUT /attendances', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if slot is linked to trainerBill', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendances?courseSlot=${slotsList[14]._id}&trainee=${traineeList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message)
+        .toEqual('Opération impossible : le créneau est réglé et relié à une facture d\'un intervenant.');
+    });
+
     it('should return 403 if attendance is linked to attendance sheet (intra) (with traineeId)', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -1135,6 +1147,18 @@ describe('ATTENDANCES ROUTES - DELETE /attendances', () => {
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if slot is linked to trainerBill', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/attendances?courseSlot=${slotsList[14]._id}&trainee=${traineeList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message)
+        .toEqual('Opération impossible : le créneau est réglé et relié à une facture d\'un intervenant.');
     });
 
     it('should return 403 if attendance is linked to attendance sheet (intra) (with traineeId)', async () => {
