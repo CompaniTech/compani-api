@@ -29,7 +29,7 @@ describe('method', () => {
   });
 
   it('should send reminders by sms', async () => {
-    const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const courseSlots = [
       {
         startDate: '2026-01-18T15:00:00.000Z',
@@ -45,6 +45,11 @@ describe('method', () => {
         startDate: '2026-01-18T15:00:00.000Z',
         step: process.env.VAEI_EVALUATION_STEP_ID,
         course: { interruptedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[2] }] },
+      },
+      {
+        startDate: '2026-01-18T15:00:00.000Z',
+        step: process.env.VAEI_EVALUATION_STEP_ID,
+        course: { archivedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[3] }] },
       },
     ];
 
