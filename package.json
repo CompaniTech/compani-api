@@ -74,14 +74,14 @@
     "xmlbuilder": "~15.1.1"
   },
   "devDependencies": {
-    "@eslint/js": "~10.0.1",
     "@eslint/eslintrc": "~3.3.5",
+    "@eslint/js": "~10.0.1",
     "@hapi/eslint-plugin": "~7.0.0",
     "eslint": "~10.0.3",
     "eslint-config-airbnb-base": "~15.0.0",
     "eslint-plugin-import": "~2.32.0",
     "eslint-plugin-mocha": "~11.2.0",
-    "expect": "~30.2.0",
+    "expect": "~30.3.0",
     "mocha": "~11.7.5",
     "sinon": "~21.0.0"
   }
