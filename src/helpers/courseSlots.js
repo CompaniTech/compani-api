@@ -224,7 +224,7 @@ exports.list = async (query) => {
     if (!slot.attendances.length) return acc;
 
     const hourlyAmount = getHourlyAmount(slot);
-    if (hourlyAmount > 0) acc.push({ ...slot, hourlyAmount });
+    if (hourlyAmount) acc.push({ ...slot, hourlyAmount });
     return acc;
   }, []);
 
