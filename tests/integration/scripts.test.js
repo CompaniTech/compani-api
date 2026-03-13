@@ -170,6 +170,10 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
             sentReminders: [userList[0]._id],
             notSentReminders: [userList[2]._id],
           },
+          'Veille d\'évaluation': {
+            sentReminders: [userList[0]._id],
+            notSentReminders: [userList[2]._id],
+          },
         });
     });
   });
