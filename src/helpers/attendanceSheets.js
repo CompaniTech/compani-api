@@ -20,7 +20,6 @@ exports.create = async (payload, credentials) => {
   let fileName;
   let companies;
   let slots = [];
-  let fileUploaded = {};
   const formationExpoTokens = {};
 
   const course = await Course.findOne({ _id: payload.course }, { companies: 1, type: 1, trainees: 1 }).lean();
@@ -116,7 +115,7 @@ exports.create = async (payload, credentials) => {
   }
 
   if (payload.file) {
-    fileUploaded = await GCloudStorageHelper.uploadCourseFile({
+    const fileUploaded = await GCloudStorageHelper.uploadCourseFile({
       fileName: `emargement_${fileName}`,
       file: payload.file,
     });

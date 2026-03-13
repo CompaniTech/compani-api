@@ -66,13 +66,12 @@ exports.authorizeQuestionnaireEdit = async (req) => {
 
   if (questionnaire.status !== DRAFT && !req.payload.name) throw Boom.forbidden();
 
-  let publishedQuestionnaireWithSameType = null;
   const questionnaireQuery = {
     type: questionnaire.type,
     status: PUBLISHED,
     ...(questionnaire.program && { program: questionnaire.program }),
   };
-  publishedQuestionnaireWithSameType = await Questionnaire.findOne(questionnaireQuery).lean();
+  const publishedQuestionnaireWithSameType = await Questionnaire.findOne(questionnaireQuery).lean();
 
   if (req.payload.status === PUBLISHED && !questionnaire.areCardsValid) throw Boom.forbidden();
 

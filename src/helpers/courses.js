@@ -425,10 +425,10 @@ const listForPedagogy = async (query, origin, credentials) => {
   const achieved = [];
   const formattedTraineeCourses = filteredTraineeCourses
     .map((course) => {
-      let progress = 0;
       const courseWithProgress = exports.formatCourseWithProgress(course, traineeOrTutorId, shouldComputePresence);
 
       if (origin === MOBILE) {
+        let progress;
         if (courseWithProgress.format === STRICTLY_E_LEARNING) progress = courseWithProgress.progress.eLearning || 0;
         else progress = courseWithProgress.progress.blended || 0;
         if (progress < 1) onGoing.push(courseWithProgress);
@@ -727,12 +727,13 @@ exports.getCourseFollowUp = async (course, query, credentials) => {
     })
     .lean();
 
-  let filteredTrainees = [];
   if (query.trainee) {
     return {
       trainee: exports.getTraineesWithElearningProgress(courseFollowUp.trainees, courseFollowUp.subProgram.steps)[0],
     };
   }
+
+  let filteredTrainees;
   if (!companies.length) filteredTrainees = courseFollowUp.trainees;
   else if (courseWithTrainees.format === STRICTLY_E_LEARNING) {
     filteredTrainees = courseFollowUp.trainees.filter(t => UtilsHelper.doesArrayIncludeId(companies, t.company));
@@ -1321,7 +1322,7 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
 
   const attendanceDuration = UtilsHelper.getTotalDuration(traineeSlots, false);
 
-  let eLearningDuration = {};
+  let eLearningDuration;
   if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, subProgramId)) {
     const activityHistories = uniqBy(
       steps

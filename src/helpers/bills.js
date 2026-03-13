@@ -78,11 +78,11 @@ exports.formatBillDetailsForPdf = (bill) => {
     const volume = sub.service.nature === HOURLY ? sub.hours : sub.events.length;
     const unitInclTaxes = exports.getUnitInclTaxes(bill, sub);
 
-    let total = 0;
     const customerFundings = get(bill, 'customer.fundings') || [];
     const matchingFunding = customerFundings
       .find(funding => UtilsHelper.areObjectIdsEquals(funding.subscription, sub.subscription));
 
+    let total;
     if (bill.thirdPartyPayer && matchingFunding && matchingFunding.nature === HOURLY) {
       total = NumbersHelper.toString(sub.inclTaxes);
     } else {

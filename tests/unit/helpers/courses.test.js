@@ -6011,7 +6011,7 @@ describe('formatCourseForDocuments', () => {
     const subProgramId = new ObjectId();
     const traineesIds = [new ObjectId(), new ObjectId()];
     const course = {
-      trainees: traineesIds,
+      trainees: [{ _id: traineesIds[0] }, { _id: traineesIds[1] }],
       slots: [
         { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', trainees: [traineesIds[0]] },
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
@@ -6067,7 +6067,7 @@ describe('formatCourseForDocuments', () => {
     const companies = [{ _id: companyId, name: 'structure' }, { _id: otherCompanyId, name: 'other structure' }];
     const traineesIds = [new ObjectId(), new ObjectId()];
     const course = {
-      trainees: traineesIds,
+      trainees: [{ _id: traineesIds[0] }, { _id: traineesIds[1] }],
       slots: [
         { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', trainees: [traineesIds[0]] },
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
