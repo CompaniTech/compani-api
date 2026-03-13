@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
+const compact = require('lodash/compact');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
@@ -226,23 +227,23 @@ exports.completionSendingPendingBillsEmail = (day, emailSent, pendingCourseBillD
 };
 
 exports.completionSendingSmsRemindersEmail = (result) => {
-  const totalSentReminders = Object.values(result).flatMap(reminder => reminder.sentReminders);
-  const totalNotSentReminders = Object.values(result).flatMap(reminder => reminder.notSentReminders);
+  const totalSentReminders = compact(Object.values(result).flatMap(reminder => reminder.sentReminders));
+  const totalNotSentReminders = compact(Object.values(result).flatMap(reminder => reminder.notSentReminders));
   let body = `<p>Script exécuté. ${totalSentReminders.length + totalNotSentReminders.length} rappels traités.</p>`;
 
   Object.entries(result).forEach(([reminderName, data]) => {
     const { sentReminders } = data;
     const { notSentReminders } = data;
-    if (sentReminders.length || notSentReminders.length) {
+    if ((sentReminders && sentReminders.length) || (notSentReminders && notSentReminders.length)) {
       body = body.concat(`<p>${reminderName} :</p>`);
     }
-    if (sentReminders.length) {
+    if (sentReminders && sentReminders.length) {
       const htmlSentReminders = sentReminders.map(r => `<li>Apprenant: ${r.toHexString()}</li>`).join('');
       body = body.concat(
         `<ul><p>Rappel envoyé pour les apprenants suivants :</p>${htmlSentReminders}</ul>`
       );
     }
-    if (notSentReminders.length) {
+    if (notSentReminders && notSentReminders.length) {
       const htmlNotSentReminders = notSentReminders.map(r => `<li>Apprenant: ${r.toHexString()}</li>`).join('');
       body = body.concat(
         `<ul><p>Numéro de téléphone manquant :</p>${htmlNotSentReminders}</ul><br/>`
