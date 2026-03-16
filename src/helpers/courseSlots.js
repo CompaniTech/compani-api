@@ -52,8 +52,7 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
     const stepSlots = slots.map((slot) => {
       const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
       const durationObj = CompaniDuration(duration);
-      const hourlyAmount = getHourlyAmount(slot);
-      const amount = NumbersHelper.multiply(hourlyAmount, durationObj.asHours());
+      const amount = NumbersHelper.multiply(slot.hourlyAmount, durationObj.asHours());
       const isAbsence = slot.attendances[0].status === MISSING;
       const trainerBill = (slot.trainerBills || [])
         .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainerId));
@@ -120,8 +119,7 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
     slots.forEach((slot) => {
       const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
       const durationObj = CompaniDuration(duration);
-      const hourlyAmount = getHourlyAmount(slot);
-      const amount = NumbersHelper.multiply(hourlyAmount, durationObj.asHours());
+      const amount = NumbersHelper.multiply(slot.hourlyAmount, durationObj.asHours());
       const isAbsence = slot.attendances[0].status === MISSING;
 
       const startISO = CompaniDate(slot.startDate).toISO();
@@ -221,7 +219,14 @@ exports.list = async (query) => {
     })
     .populate({ path: 'attendances', select: 'status', options: { isVendorUser: true } })
     .lean();
-  const filteredCourseSlots = courseSlots.filter(slot => slot.attendances.length);
+
+  const filteredCourseSlots = courseSlots.reduce((acc, slot) => {
+    if (!slot.attendances.length) return acc;
+
+    const hourlyAmount = getHourlyAmount(slot);
+    if (hourlyAmount) acc.push({ ...slot, hourlyAmount });
+    return acc;
+  }, []);
 
   const trainers = uniqBy(filteredCourseSlots.flatMap(slot => (slot.trainers || [])), t => t._id.toHexString());
 
