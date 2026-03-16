@@ -57,25 +57,41 @@ describe('method', () => {
       {
         startDate: '2026-01-05T15:00:00.000Z',
         step: process.env.VAEI_EVALUATION_STEP_ID,
-        trainers: [{ _id: trainerId, identity: { lastname: 'Form', firstname: 'Claire' } }],
+        trainers: [{
+          _id: trainerId,
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          contact: { countryCode: '+33', phone: '0987654321' },
+        }],
         course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
         step: process.env.VAEI_EVALUATION_STEP_ID,
-        trainers: [{ _id: trainerId, identity: { lastname: 'Form', firstname: 'Claire' } }],
+        trainers: [{
+          _id: trainerId,
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          contact: { countryCode: '+33', phone: '0987654321' },
+        }],
         course: { trainees: [{ _id: traineeIds[1] }] },
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
         step: process.env.VAEI_EVALUATION_STEP_ID,
-        trainers: [{ _id: trainerId, identity: { lastname: 'Form', firstname: 'Claire' } }],
+        trainers: [{
+          _id: trainerId,
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          contact: { countryCode: '+33', phone: '0987654321' },
+        }],
         course: { interruptedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[2] }] },
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
         step: process.env.VAEI_EVALUATION_STEP_ID,
-        trainers: [{ _id: trainerId, identity: { lastname: 'Form', firstname: 'Claire' } }],
+        trainers: [{
+          _id: trainerId,
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          contact: { countryCode: '+33', phone: '0987654321' },
+        }],
         course: { archivedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[0] }] },
       },
     ];
@@ -134,7 +150,7 @@ describe('method', () => {
         },
         {
           query: 'populate',
-          args: [{ path: 'trainers', select: 'identity' }],
+          args: [{ path: 'trainers', select: 'identity contact' }],
         },
         { query: 'lean' },
       ],
@@ -156,7 +172,7 @@ describe('method', () => {
         recipient: '+33987654321',
         sender: 'Compani',
         content: 'Formation VAEI :\nN\'oubliez pas votre évaluation avec votre architecte de parcours Claire FORM qui '
-        + 'aura lieu demain à 16:00, en visio. Si besoin, contactez votre architecte de parcours.',
+        + 'aura lieu demain à 16:00, en visio. Si besoin, contactez votre architecte de parcours (+33987654321).',
         tag: 'Formation VAEI',
       }
     );
@@ -217,7 +233,7 @@ describe('method', () => {
         },
         {
           query: 'populate',
-          args: [{ path: 'trainers', select: 'identity' }],
+          args: [{ path: 'trainers', select: 'identity contact' }],
         },
         { query: 'lean' },
       ],

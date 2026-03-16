@@ -63,7 +63,7 @@ const getEvaluationSlotsIn1D = async () => {
       select: 'trainees trainers interruptedAt archivedAt',
       populate: { path: 'trainees', select: 'contact' },
     })
-    .populate({ path: 'trainers', select: 'identity' })
+    .populate({ path: 'trainers', select: 'identity contact' })
     .lean();
 
   const promises = [];
@@ -74,6 +74,10 @@ const getEvaluationSlotsIn1D = async () => {
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     if (get(traineeContact, 'phone')) {
+      const architect = slot.trainers[0];
+      const architectPhone = get(architect, 'contact.phone')
+        ? ` (${architect.contact.countryCode}${architect.contact.phone.substring(1)})`
+        : '';
       promises.push(
         SmsHelper.send({
           recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
@@ -82,7 +86,7 @@ const getEvaluationSlotsIn1D = async () => {
             + 'N\'oubliez pas votre évaluation avec votre architecte de parcours '
             + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
             + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)},`
-            + ' en visio. Si besoin, contactez votre architecte de parcours.',
+            + ` en visio. Si besoin, contactez votre architecte de parcours${architectPhone}.`,
           tag: 'Formation VAEI',
         })
       );
