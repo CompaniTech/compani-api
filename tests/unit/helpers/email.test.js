@@ -735,6 +735,7 @@ describe('completionSendingSmsRemindersEmail', async () => {
         sentReminders: [traineeIds[0]],
         notSentReminders: [traineeIds[1]],
       },
+      'Veille d\'évaluation': {},
     };
     const test = '<p>Script exécuté. 2 rappels traités.</p>'
     + '<p>Relance elearning avant évaluation :</p>'

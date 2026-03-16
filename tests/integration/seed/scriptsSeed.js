@@ -146,6 +146,7 @@ const slotList = [
     endDate: '2025-02-25T11:00:00.000Z',
     course: courseList[1]._id,
     step: stepList[0]._id,
+    trainers: [userList[1]._id],
   },
   { // 2
     _id: new ObjectId(),
@@ -153,13 +154,31 @@ const slotList = [
     endDate: '2023-01-22T11:00:00.000Z',
     course: courseList[0]._id,
     step: stepList[0]._id,
+    trainers: [userList[1]._id],
   },
-  { // 2
+  { // 3
     _id: new ObjectId(),
     startDate: '2023-01-22T09:00:00.000Z',
     endDate: '2023-01-22T11:00:00.000Z',
     course: courseList[2]._id,
     step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 4
+    _id: new ObjectId(),
+    startDate: '2023-01-09T09:00:00.000Z',
+    endDate: '2023-01-09T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 5
+    _id: new ObjectId(),
+    startDate: '2023-01-09T09:00:00.000Z',
+    endDate: '2023-01-09T11:00:00.000Z',
+    course: courseList[2]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
   },
 ];
 
