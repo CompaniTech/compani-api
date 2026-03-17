@@ -36,29 +36,29 @@ describe('method', () => {
     const courseSlots2W = [
       {
         startDate: '2026-01-18T15:00:00.000Z',
-        step: process.env.VAEI_EVALUATION_STEP_ID,
+        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
       },
       {
         startDate: '2026-01-18T15:00:00.000Z',
-        step: process.env.VAEI_EVALUATION_STEP_ID,
+        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         course: { trainees: [{ _id: traineeIds[1] }] },
       },
       {
         startDate: '2026-01-18T15:00:00.000Z',
-        step: process.env.VAEI_EVALUATION_STEP_ID,
+        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         course: { interruptedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[2] }] },
       },
       {
         startDate: '2026-01-18T15:00:00.000Z',
-        step: process.env.VAEI_EVALUATION_STEP_ID,
+        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         course: { archivedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[3] }] },
       },
     ];
     const courseSlots1D = [
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: process.env.VAEI_EVALUATION_STEP_ID,
+        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         trainers: [{
           _id: trainerId,
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -68,7 +68,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: process.env.VAEI_EVALUATION_STEP_ID,
+        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         trainers: [{
           _id: trainerId,
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -78,7 +78,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: process.env.VAEI_EVALUATION_STEP_ID,
+        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         trainers: [{
           _id: trainerId,
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -88,7 +88,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: process.env.VAEI_EVALUATION_STEP_ID,
+        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         trainers: [{
           _id: trainerId,
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -98,7 +98,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: process.env.VAEI_CODEV_STEP_ID,
+        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
         trainers: [{
           _id: trainerId,
           identity: { lastname: 'Form', firstname: 'Claire' },

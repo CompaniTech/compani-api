@@ -76,21 +76,29 @@ const getTraineeSlotsIn1D = async () => {
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     if (get(traineeContact, 'phone')) {
-      const architect = slot.trainers[0];
-      const architectPhone = get(architect, 'contact.phone')
-        ? ` (${architect.contact.countryCode}${architect.contact.phone.substring(1)})`
+      const trainer = slot.trainers[0];
+      const trainerPhone = get(trainer, 'contact.phone')
+        ? ` (${trainer.contact.countryCode}${trainer.contact.phone.substring(1)})`
         : '';
-      const content = UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_EVALUATION_STEP_ID)
-        ? 'Formation VAEI :\n'
+      let content = '';
+      switch (slot.step.toHexString()) {
+        case process.env.VAEI_EVALUATION_STEP_ID:
+          evaluationSlotsIn1DSentReminders.push(trainee._id);
+          content = 'Formation VAEI :\n'
             + 'N\'oubliez pas votre évaluation avec votre architecte de parcours '
             + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
             + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)},`
-            + ` en visio. Si besoin, contactez votre architecte de parcours${architectPhone}.`
-        : 'Formation VAEI :\n'
+            + ` en visio. Si besoin, contactez votre architecte de parcours${trainerPhone}.`;
+          break;
+        case process.env.VAEI_CODEV_STEP_ID:
+          codevSlotsIn1DSentReminders.push(trainee._id);
+          content = 'Formation VAEI :\n'
             + 'N\'oubliez pas votre rendez-vous d\'accompagnement collectif avec votre animateur.rice '
             + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
             + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)}.`
-            + ` Si besoin, contactez votre animateur de CODEV${architectPhone}.`;
+            + ` Si besoin, contactez votre animateur de CODEV${trainerPhone}.`;
+          break;
+      }
       promises.push(
         SmsHelper.send({
           recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
@@ -99,12 +107,15 @@ const getTraineeSlotsIn1D = async () => {
           tag: 'Formation VAEI',
         })
       );
-      if (UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_EVALUATION_STEP_ID)) {
-        evaluationSlotsIn1DSentReminders.push(trainee._id);
-      } else codevSlotsIn1DSentReminders.push(trainee._id);
-    } else if (UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_EVALUATION_STEP_ID)) {
-      evaluationSlotsIn1DNotSentReminders.push(trainee._id);
-    } else codevSlotsIn1DNotSentReminders.push(trainee._id);
+    } else {
+      switch (slot.step.toHexString()) {
+        case process.env.VAEI_EVALUATION_STEP_ID:
+          evaluationSlotsIn1DNotSentReminders.push(trainee._id);
+          break;
+        case process.env.VAEI_CODEV_STEP_ID:
+          codevSlotsIn1DNotSentReminders.push(trainee._id);
+      }
+    }
   }
 
   return {
@@ -133,7 +144,7 @@ const sendingSmsRemindersJob = {
       };
       if (evaluationSlotsIn2WPromises.length) promises.push(...evaluationSlotsIn2WPromises);
 
-      // 1 day before VAEI evaluation
+      // 1 day before VAEI slot
       const {
         evaluationSlotsIn1DSentReminders,
         evaluationSlotsIn1DNotSentReminders,
