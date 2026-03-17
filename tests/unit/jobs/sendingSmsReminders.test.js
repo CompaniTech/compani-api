@@ -18,6 +18,7 @@ describe('method', () => {
     UtilsMock.mockCurrentDate('2026-01-04T15:00:00.000Z');
     process.env.TECH_EMAILS = 'tech@compani.fr';
     process.env.VAEI_EVALUATION_STEP_ID = new ObjectId();
+    process.env.VAEI_CODEV_STEP_ID = new ObjectId();
   });
 
   afterEach(() => {
@@ -26,6 +27,7 @@ describe('method', () => {
     UtilsMock.unmockCurrentDate();
     process.env.TECH_EMAILS = '';
     process.env.VAEI_EVALUATION_STEP_ID = '';
+    process.env.VAEI_CODEV_STEP_ID = '';
   });
 
   it('should send reminders by sms', async () => {
@@ -94,6 +96,16 @@ describe('method', () => {
         }],
         course: { archivedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[0] }] },
       },
+      {
+        startDate: '2026-01-05T15:00:00.000Z',
+        step: process.env.VAEI_CODEV_STEP_ID,
+        trainers: [{
+          _id: trainerId,
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          contact: { countryCode: '+33', phone: '0987654321' },
+        }],
+        course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
+      },
     ];
 
     findSlots.onCall(0).returns(SinonMongoose.stubChainedQueries(courseSlots2W));
@@ -106,6 +118,7 @@ describe('method', () => {
     expect(res).toEqual({
       'Relance elearning avant évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
       'Veille d\'évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
+      'Veille de CODEV': { sentReminders: [traineeIds[0]] },
     });
 
     SinonMongoose.calledWithExactly(
@@ -136,7 +149,9 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+            step: {
+              $in: [new ObjectId(process.env.VAEI_EVALUATION_STEP_ID), new ObjectId(process.env.VAEI_CODEV_STEP_ID)],
+            },
             startDate: { $gte: new Date('2026-01-04T23:00:00.000Z'), $lte: new Date('2026-01-05T22:59:59.999Z') },
           }],
         },
@@ -176,6 +191,17 @@ describe('method', () => {
         tag: 'Formation VAEI',
       }
     );
+    sinon.assert.calledWithExactly(
+      smsSend.getCall(2),
+      {
+        recipient: '+33987654321',
+        sender: 'Compani',
+        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous d\'accompagnement collectif avec votre '
+        + 'animateur.rice Claire FORM qui aura lieu demain à 16:00. Si besoin, contactez votre animateur de CODEV '
+        + '(+33987654321).',
+        tag: 'Formation VAEI',
+      }
+    );
   });
 
   it('should return empty result if no matching slot', async () => {
@@ -189,6 +215,7 @@ describe('method', () => {
     expect(res).toEqual({
       'Relance elearning avant évaluation': {},
       'Veille d\'évaluation': {},
+      'Veille de CODEV': {},
     });
 
     SinonMongoose.calledWithExactly(
@@ -219,7 +246,9 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+            step: {
+              $in: [new ObjectId(process.env.VAEI_EVALUATION_STEP_ID), new ObjectId(process.env.VAEI_CODEV_STEP_ID)],
+            },
             startDate: { $gte: new Date('2026-01-04T23:00:00.000Z'), $lte: new Date('2026-01-05T22:59:59.999Z') },
           }],
         },
