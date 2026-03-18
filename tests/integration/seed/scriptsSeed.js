@@ -86,7 +86,7 @@ const subProgramList = [
   {
     _id: new ObjectId(),
     name: 'Subprogram 2',
-    steps: [stepList[0]._id, stepList[2]._id],
+    steps: [stepList[0]._id, stepList[1]._id, stepList[2]._id],
     status: PUBLISHED,
   },
   { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[1]._id], status: PUBLISHED },
@@ -178,6 +178,22 @@ const slotList = [
     endDate: '2023-01-09T11:00:00.000Z',
     course: courseList[2]._id,
     step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 6
+    _id: new ObjectId(),
+    startDate: '2023-01-15T09:00:00.000Z',
+    endDate: '2023-01-15T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 7
+    _id: new ObjectId(),
+    startDate: '2023-01-15T09:00:00.000Z',
+    endDate: '2023-01-15T11:00:00.000Z',
+    course: courseList[2]._id,
+    step: stepList[1]._id,
     trainers: [userList[1]._id],
   },
 ];

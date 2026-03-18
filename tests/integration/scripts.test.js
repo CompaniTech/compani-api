@@ -15,17 +15,11 @@ describe('NODE ENV', () => {
 
 describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () => {
   let authToken;
-  let completionCertificateCreationEmail;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
-      completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
-    });
-
-    afterEach(() => {
-      completionCertificateCreationEmail.restore();
     });
 
     it('should send email for completion certificates', async () => {
@@ -80,20 +74,17 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
 describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', () => {
   let authToken;
   let sendBillEmail;
-  let completionSendingPendingBillsEmail;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
       sendBillEmail = sinon.stub(EmailHelper, 'sendBillEmail');
-      completionSendingPendingBillsEmail = sinon.stub(EmailHelper, 'completionSendingPendingBillsEmail');
       UtilsMock.mockCurrentDate('2023-01-08T09:00:00.000Z');
     });
 
     afterEach(() => {
       sendBillEmail.restore();
-      completionSendingPendingBillsEmail.restore();
       UtilsMock.unmockCurrentDate('');
     });
 
@@ -107,6 +98,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', ()
       expect(response.statusCode).toBe(200);
       expect(response.result.data)
         .toEqual({ day: '2023-01-07T23:00:00.000Z', emailSent: 1, pendingCourseBillDeleted: 1 });
+      sinon.assert.calledOnce(sendBillEmail);
     });
   });
 
@@ -135,25 +127,24 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', ()
 describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
   let authToken;
   let smsSend;
-  let completionSendingSmsRemindersEmail;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
       smsSend = sinon.stub(SmsHelper, 'send');
-      completionSendingSmsRemindersEmail = sinon.stub(EmailHelper, 'completionSendingSmsRemindersEmail');
       UtilsMock.mockCurrentDate('2023-01-08T09:00:00.000Z');
       process.env.TECH_EMAIL = 'tech@compani.fr';
       process.env.VAEI_EVALUATION_STEP_ID = stepList[0]._id;
+      process.env.VAEI_CODEV_STEP_ID = stepList[1]._id;
     });
 
     afterEach(() => {
       smsSend.restore();
-      completionSendingSmsRemindersEmail.restore();
       UtilsMock.unmockCurrentDate('');
       process.env.TECH_EMAIL = '';
       process.env.VAEI_EVALUATION_STEP_ID = '';
+      process.env.VAEI_CODEV_STEP_ID = '';
     });
 
     it('should send reminders by sms', async () => {
@@ -175,7 +166,12 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
             notSentReminders: [userList[2]._id],
           },
           'Veille de CODEV': {},
+          '1 semaine avant 1er codev': {
+            sentReminders: [userList[0]._id],
+            notSentReminders: [userList[2]._id],
+          },
         });
+      sinon.assert.callCount(smsSend, 3);
     });
   });
 
