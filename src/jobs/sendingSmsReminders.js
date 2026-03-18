@@ -25,8 +25,8 @@ const getEvaluationSlotsIn2W = async () => {
     .lean();
 
   const promises = [];
-  const sentReminders = [];
-  const notSentReminders = [];
+  const evaluationSlotsIn2WSentReminders = [];
+  const evaluationSlotsIn2WNotSentReminders = [];
   for (const slot of evaluationSlotsIn2W) {
     if (slot.course.interruptedAt || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
@@ -42,17 +42,17 @@ const getEvaluationSlotsIn2W = async () => {
           tag: 'Formation VAEI',
         })
       );
-      sentReminders.push(trainee._id);
-    } else notSentReminders.push(trainee._id);
+      evaluationSlotsIn2WSentReminders.push(trainee._id);
+    } else evaluationSlotsIn2WNotSentReminders.push(trainee._id);
   }
 
-  return { sentReminders, notSentReminders, promises };
+  return { evaluationSlotsIn2WSentReminders, evaluationSlotsIn2WNotSentReminders, promises };
 };
 
-const getEvaluationSlotsIn1D = async () => {
-  const evaluationSlotsIn1D = await CourseSlot
+const getTraineeSlotsIn1D = async () => {
+  const slotsIn1D = await CourseSlot
     .find({
-      step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+      step: { $in: [new ObjectId(process.env.VAEI_EVALUATION_STEP_ID), new ObjectId(process.env.VAEI_CODEV_STEP_ID)] },
       startDate: {
         $gte: CompaniDate().add('P1D').startOf(DAY).toDate(),
         $lte: CompaniDate().add('P1D').endOf(DAY).toDate(),
@@ -67,34 +67,64 @@ const getEvaluationSlotsIn1D = async () => {
     .lean();
 
   const promises = [];
-  const sentReminders = [];
-  const notSentReminders = [];
-  for (const slot of evaluationSlotsIn1D) {
+  const evaluationSlotsIn1DSentReminders = [];
+  const evaluationSlotsIn1DNotSentReminders = [];
+  const codevSlotsIn1DSentReminders = [];
+  const codevSlotsIn1DNotSentReminders = [];
+  for (const slot of slotsIn1D) {
     if (slot.course.interruptedAt || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     if (get(traineeContact, 'phone')) {
-      const architect = slot.trainers[0];
-      const architectPhone = get(architect, 'contact.phone')
-        ? ` (${architect.contact.countryCode}${architect.contact.phone.substring(1)})`
+      const trainer = slot.trainers[0];
+      const trainerPhone = get(trainer, 'contact.phone')
+        ? ` (${trainer.contact.countryCode}${trainer.contact.phone.substring(1)})`
         : '';
+      let content = '';
+      switch (slot.step.toHexString()) {
+        case process.env.VAEI_EVALUATION_STEP_ID:
+          evaluationSlotsIn1DSentReminders.push(trainee._id);
+          content = 'Formation VAEI :\n'
+            + 'N\'oubliez pas votre évaluation avec votre architecte de parcours '
+            + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
+            + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)},`
+            + ` en visio. Si besoin, contactez votre architecte de parcours${trainerPhone}.`;
+          break;
+        case process.env.VAEI_CODEV_STEP_ID:
+          codevSlotsIn1DSentReminders.push(trainee._id);
+          content = 'Formation VAEI :\n'
+            + 'N\'oubliez pas votre rendez-vous d\'accompagnement collectif avec votre animateur.rice '
+            + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
+            + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)}, en visio.`
+            + ` Si besoin, contactez votre animateur.rice de CODEV${trainerPhone}.`;
+          break;
+      }
       promises.push(
         SmsHelper.send({
           recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
           sender: 'Compani',
-          content: 'Formation VAEI :\n'
-            + 'N\'oubliez pas votre évaluation avec votre architecte de parcours '
-            + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
-            + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)},`
-            + ` en visio. Si besoin, contactez votre architecte de parcours${architectPhone}.`,
+          content,
           tag: 'Formation VAEI',
         })
       );
-      sentReminders.push(trainee._id);
-    } else notSentReminders.push(trainee._id);
+    } else {
+      switch (slot.step.toHexString()) {
+        case process.env.VAEI_EVALUATION_STEP_ID:
+          evaluationSlotsIn1DNotSentReminders.push(trainee._id);
+          break;
+        case process.env.VAEI_CODEV_STEP_ID:
+          codevSlotsIn1DNotSentReminders.push(trainee._id);
+      }
+    }
   }
 
-  return { sentReminders, notSentReminders, promises };
+  return {
+    evaluationSlotsIn1DSentReminders,
+    evaluationSlotsIn1DNotSentReminders,
+    codevSlotsIn1DSentReminders,
+    codevSlotsIn1DNotSentReminders,
+    promises,
+  };
 };
 
 const sendingSmsRemindersJob = {
@@ -104,8 +134,8 @@ const sendingSmsRemindersJob = {
       const promises = [];
       // 2 weeks before VAEI evaluation
       const {
-        sentReminders: evaluationSlotsIn2WSentReminders,
-        notSentReminders: evaluationSlotsIn2WNotSentReminders,
+        evaluationSlotsIn2WSentReminders,
+        evaluationSlotsIn2WNotSentReminders,
         promises: evaluationSlotsIn2WPromises,
       } = await getEvaluationSlotsIn2W();
       result['Relance elearning avant évaluation'] = {
@@ -114,15 +144,21 @@ const sendingSmsRemindersJob = {
       };
       if (evaluationSlotsIn2WPromises.length) promises.push(...evaluationSlotsIn2WPromises);
 
-      // 1 day before VAEI evaluation
+      // 1 day before VAEI slot
       const {
-        sentReminders: evaluationSlotsIn1DSentReminders,
-        notSentReminders: evaluationSlotsIn1DNotSentReminders,
+        evaluationSlotsIn1DSentReminders,
+        evaluationSlotsIn1DNotSentReminders,
+        codevSlotsIn1DSentReminders,
+        codevSlotsIn1DNotSentReminders,
         promises: evaluationSlotsIn1DPromises,
-      } = await getEvaluationSlotsIn1D();
+      } = await getTraineeSlotsIn1D();
       result['Veille d\'évaluation'] = {
         ...evaluationSlotsIn1DSentReminders.length && { sentReminders: evaluationSlotsIn1DSentReminders },
         ...evaluationSlotsIn1DNotSentReminders.length && { notSentReminders: evaluationSlotsIn1DNotSentReminders },
+      };
+      result['Veille de CODEV'] = {
+        ...codevSlotsIn1DSentReminders.length && { sentReminders: codevSlotsIn1DSentReminders },
+        ...codevSlotsIn1DNotSentReminders.length && { notSentReminders: codevSlotsIn1DNotSentReminders },
       };
       if (evaluationSlotsIn1DPromises.length) promises.push(...evaluationSlotsIn1DPromises);
 
