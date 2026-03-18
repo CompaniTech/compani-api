@@ -36,6 +36,9 @@ const {
   DRAFT,
   ARCHIVED,
   OPEN_QUESTION,
+  SURVEY,
+  QUESTION_ANSWER,
+  TRANSITION,
 } = require('../../../src/helpers/constants');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
@@ -1661,13 +1664,13 @@ describe('exportCourseSlotHistory', () => {
 describe('exportEndOfCourseQuestionnaireHistory', () => {
   const credentials = { role: { vendor: { name: TRAINING_ORGANISATION_MANAGER } } };
   const cards = [
-    { _id: new ObjectId(), template: 'transition' },
+    { _id: new ObjectId(), template: TRANSITION },
     { _id: new ObjectId(), question: 'Ca va ?', template: OPEN_QUESTION },
-    { _id: new ObjectId(), question: 'La famille ?', template: 'survey' },
+    { _id: new ObjectId(), question: 'La famille ?', template: SURVEY },
     {
       _id: new ObjectId(),
       question: 'Les ami.es ?',
-      template: 'question_answer',
+      template: QUESTION_ANSWER,
       qcAnswers: [
         { _id: new ObjectId(), text: 'Oui' },
         { _id: new ObjectId(), text: 'Peut être' },
@@ -2571,7 +2574,7 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
       { _id: courseSlotIdList[4], course: courseList[2]._id, startDate: '2021-04-02T08:00:00.000Z', endDate: '2021-04-02T10:00:00.000Z' },
     ];
 
-    const cardIdList = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const cardIdList = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const labels = {
       1: 'Je me sens en difficulté',
       2: 'En difficulté mais j\'identifie des axes de progression',
@@ -2579,25 +2582,38 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
       4: 'J\'y arrive parfois',
       5: 'Oui peu importe le contexte',
     };
+    const qcAnswersIds = [new ObjectId(), new ObjectId(), new ObjectId()];
 
     const cardList = [
       {
         _id: cardIdList[0],
-        template: 'survey',
+        template: SURVEY,
         question: 'Je me sens capable de faire la toilette d\'un résident seule',
         labels,
       },
       {
         _id: cardIdList[1],
-        template: 'survey',
+        template: SURVEY,
         question: 'Je me sens capable de proposer une animation adaptée a tous les residents',
         labels,
       },
       {
         _id: cardIdList[2],
-        template: 'survey',
+        template: SURVEY,
         question: 'Je me sens capable de cuisiner avec les residents',
         labels,
+      },
+      {
+        _id: cardIdList[3],
+        template: QUESTION_ANSWER,
+        question: 'En tant qu\'aide soignant, quelles sont vos forces ? ?',
+        isQuestionAnswerMultipleChoiced: true,
+        isMandatory: true,
+        qcAnswers: [
+          { _id: qcAnswersIds[0], text: 'la gestion du stress' },
+          { _id: qcAnswersIds[1], text: 'mon efficacité' },
+          { _id: qcAnswersIds[2], text: 'la communication' },
+        ],
       },
     ];
     const questionnaire = { _id: new ObjectId(), name: 'auto-positionnement', program: programIdList[0], cards: cardIdList[0], type: SELF_POSITIONNING };
@@ -2606,28 +2622,28 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
       user: traineeIdList[1],
       questionnaire,
       timeline: 'start_course',
-      questionnaireAnswersList: [{ card: cardList[0], answerList: ['3'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[1], answerList: ['4'] }],
+      questionnaireAnswersList: [{ card: cardList[0], answerList: ['3'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[2], answerList: ['4'] }, { card: cardList[3], answerList: [qcAnswersIds[0], qcAnswersIds[1]] }],
     },
     {
       course: courseIdList[0],
       user: traineeIdList[1],
       questionnaire,
       timeline: 'end_course',
-      questionnaireAnswersList: [{ card: cardList[0], answerList: ['4'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[1], answerList: ['3'] }],
+      questionnaireAnswersList: [{ card: cardList[0], answerList: ['4'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[2], answerList: ['3'] }, { card: cardList[3], answerList: [qcAnswersIds[2]] }],
     },
     {
       course: courseIdList[0],
       user: traineeIdList[2],
       questionnaire,
       timeline: 'start_course',
-      questionnaireAnswersList: [{ card: cardList[0], answerList: ['1'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[1], answerList: ['3'] }],
+      questionnaireAnswersList: [{ card: cardList[0], answerList: ['1'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[2], answerList: ['3'] }, { card: cardList[3], answerList: [qcAnswersIds[0], qcAnswersIds[1]] }],
     },
     {
       course: courseIdList[0],
       user: traineeIdList[2],
       questionnaire,
       timeline: 'end_course',
-      questionnaireAnswersList: [{ card: cardList[0], answerList: ['3'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[1], answerList: ['3'] }],
+      questionnaireAnswersList: [{ card: cardList[0], answerList: ['3'] }, { card: cardList[1], answerList: ['2'] }, { card: cardList[2], answerList: ['3'] }, { card: cardList[3], answerList: [qcAnswersIds[0], qcAnswersIds[1]] }],
     }];
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList, ['lean']));
     findCourse.returns(SinonMongoose.stubChainedQueries([courseList[0], courseList[1], courseList[2]], ['populate', 'populate', 'populate', 'lean']));
@@ -2667,8 +2683,8 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
         '0,33',
         'Je me sens capable de faire la toilette d\'un résident seule',
         '1,50',
-        'Je me sens capable de proposer une animation adaptée a tous les residents',
-        '-0,25',
+        'Je me sens capable de cuisiner avec les residents',
+        '-0,50',
       ],
     ]);
 
