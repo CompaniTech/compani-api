@@ -31,7 +31,7 @@ describe('method', () => {
   });
 
   it('should send reminders by sms', async () => {
-    const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+    const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
     const courseSlots2W = [
       {
@@ -116,7 +116,13 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
+        course: {
+          trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }],
+          slots: [
+            { startDate: '2026-01-05T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) },
+            { startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) },
+          ],
+        },
       },
       {
         startDate: '2026-01-11T15:00:00.000Z',
@@ -126,7 +132,10 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { trainees: [{ _id: traineeIds[1] }] },
+        course: {
+          trainees: [{ _id: traineeIds[4], contact: { phone: '0987654321', countryCode: '+33' } }],
+          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
+        },
       },
       {
         startDate: '2026-01-11T15:00:00.000Z',
@@ -136,7 +145,10 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { interruptedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[2] }] },
+        course: {
+          trainees: [{ _id: traineeIds[1] }],
+          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
+        },
       },
       {
         startDate: '2026-01-11T15:00:00.000Z',
@@ -146,7 +158,25 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { archivedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[3] }] },
+        course: {
+          interruptedAt: '2026-01-01T15:00:00.000Z',
+          trainees: [{ _id: traineeIds[2] }],
+          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
+        },
+      },
+      {
+        startDate: '2026-01-11T15:00:00.000Z',
+        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        trainers: [{
+          _id: trainerId,
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          contact: { countryCode: '+33', phone: '0987654321' },
+        }],
+        course: {
+          archivedAt: '2026-01-01T15:00:00.000Z',
+          trainees: [{ _id: traineeIds[3] }],
+          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
+        },
       },
     ];
 
@@ -162,7 +192,7 @@ describe('method', () => {
       'Relance elearning avant évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
       'Veille d\'évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
       'Veille de CODEV': { sentReminders: [traineeIds[0]] },
-      '1 semaine avant 1er codev': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
+      '1 semaine avant 1er codev': { sentReminders: [traineeIds[4]], notSentReminders: [traineeIds[1]] },
     });
 
     SinonMongoose.calledWithExactly(
@@ -230,7 +260,15 @@ describe('method', () => {
           args: [{
             path: 'course',
             select: 'trainees interruptedAt archivedAt',
-            populate: { path: 'trainees', select: 'contact' },
+            populate: [
+              { path: 'trainees', select: 'contact' },
+              {
+                path: 'slots',
+                select: 'startDate',
+                match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) },
+                options: { sort: { startDate: 1 } },
+              },
+            ],
           }],
         },
         {
@@ -278,7 +316,7 @@ describe('method', () => {
         recipient: '+33987654321',
         sender: 'Compani',
         content: 'Formation VAEI :\nVotre première session d\'accompagnement collectif aura lieu le 11/01/2026 à 16:00 '
-        + 'avec l\'animateur Claire FORM. Veuillez vérifier vos mails pour vous connecter sur la visio. '
+        + 'avec l\'animateur.rice Claire FORM. Veuillez vérifier vos mails pour vous connecter sur la visio. '
         + 'Si besoin, contactez votre coach.',
         tag: 'Formation VAEI',
       }
@@ -366,7 +404,15 @@ describe('method', () => {
           args: [{
             path: 'course',
             select: 'trainees interruptedAt archivedAt',
-            populate: { path: 'trainees', select: 'contact' },
+            populate: [
+              { path: 'trainees', select: 'contact' },
+              {
+                path: 'slots',
+                select: 'startDate',
+                match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) },
+                options: { sort: { startDate: 1 } },
+              },
+            ],
           }],
         },
         {

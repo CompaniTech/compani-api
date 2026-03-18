@@ -139,16 +139,27 @@ const getCodevSlotsIn1W = async () => {
     .populate({
       path: 'course',
       select: 'trainees interruptedAt archivedAt',
-      populate: { path: 'trainees', select: 'contact' },
+      populate: [
+        { path: 'trainees', select: 'contact' },
+        {
+          path: 'slots',
+          select: 'startDate',
+          match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) },
+          options: { sort: { startDate: 1 } },
+        },
+      ],
     })
     .populate({ path: 'trainers', select: 'identity contact' })
     .lean();
+  const filteredSlots = codevSlotsIn1W.filter((s) => {
+    const isCourseStopped = s.course.interruptedAt || s.course.archivedAt;
+    return !isCourseStopped && CompaniDate(s.startDate).isSame(s.course.slots[0].startDate);
+  });
 
   const promises = [];
   const codevSlotsIn1WSentReminders = [];
   const codevSlotsIn1WNotSentReminders = [];
-  for (const slot of codevSlotsIn1W) {
-    if (slot.course.interruptedAt || slot.course.archivedAt) continue;
+  for (const slot of filteredSlots) {
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     if (get(traineeContact, 'phone')) {
@@ -159,7 +170,7 @@ const getCodevSlotsIn1W = async () => {
           content: 'Formation VAEI :\n'
             + 'Votre première session d\'accompagnement collectif aura lieu le '
             + `${CompaniDate(slot.startDate).format(`${DD_MM_YYYY} à ${HH_MM}`)}`
-            + ` avec l'animateur ${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}. `
+            + ` avec l'animateur.rice ${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}. `
             + 'Veuillez vérifier vos mails pour vous connecter sur la visio. Si besoin, contactez votre coach.',
           tag: 'Formation VAEI',
         })

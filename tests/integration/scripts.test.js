@@ -165,13 +165,14 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
             sentReminders: [userList[0]._id],
             notSentReminders: [userList[2]._id],
           },
-          'Veille de CODEV': {},
-          '1 semaine avant 1er codev': {
+          'Veille de CODEV': {
             sentReminders: [userList[0]._id],
-            notSentReminders: [userList[2]._id],
+          },
+          '1 semaine avant 1er codev': {
+            sentReminders: [userList[3]._id],
           },
         });
-      sinon.assert.callCount(smsSend, 3);
+      sinon.assert.callCount(smsSend, 4);
     });
   });
 

@@ -129,6 +129,7 @@ const programsSeed = require('./programsSeed');
 const questionnairesSeed = require('./questionnairesSeed');
 const questionnaireHistoriesSeed = require('./questionnaireHistoriesSeed');
 const rolesSeed = require('./rolesSeed');
+const scriptSeed = require('./scriptsSeed');
 const stepsSeed = require('./stepsSeed');
 const subProgramsSeed = require('./subProgramsSeed');
 const trainerMissionsSeed = require('./trainerMissionsSeed');
@@ -164,6 +165,7 @@ const seedList = [
   { label: 'QUESTIONNAIRE', value: questionnairesSeed },
   { label: 'QUESTIONNAIREHISTORY', value: questionnaireHistoriesSeed },
   { label: 'ROLE', value: rolesSeed },
+  { label: 'SCRIPT', value: scriptSeed },
   { label: 'STEP', value: stepsSeed },
   { label: 'SUBPROGRAM', value: subProgramsSeed },
   { label: 'TRAINERMISSION', value: trainerMissionsSeed },
