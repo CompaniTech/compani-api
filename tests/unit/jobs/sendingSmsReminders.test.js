@@ -197,8 +197,8 @@ describe('method', () => {
         recipient: '+33987654321',
         sender: 'Compani',
         content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous d\'accompagnement collectif avec votre '
-        + 'animateur.rice Claire FORM qui aura lieu demain à 16:00. Si besoin, contactez votre animateur de CODEV '
-        + '(+33987654321).',
+        + 'animateur.rice Claire FORM qui aura lieu demain à 16:00, en visio.'
+        + ' Si besoin, contactez votre animateur.rice de CODEV (+33987654321).',
         tag: 'Formation VAEI',
       }
     );

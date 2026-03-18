@@ -95,8 +95,8 @@ const getTraineeSlotsIn1D = async () => {
           content = 'Formation VAEI :\n'
             + 'N\'oubliez pas votre rendez-vous d\'accompagnement collectif avec votre animateur.rice '
             + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
-            + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)}.`
-            + ` Si besoin, contactez votre animateur de CODEV${trainerPhone}.`;
+            + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)}, en visio.`
+            + ` Si besoin, contactez votre animateur.rice de CODEV${trainerPhone}.`;
           break;
       }
       promises.push(
