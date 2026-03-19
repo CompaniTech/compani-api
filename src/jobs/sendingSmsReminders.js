@@ -49,7 +49,7 @@ const getEvaluationSlotsIn2W = async () => {
   return { evaluationSlotsIn2WSentReminders, evaluationSlotsIn2WNotSentReminders, promises };
 };
 
-const getTraineeSlotsIn1D = async () => {
+const getSlotsIn1D = async () => {
   const slotsIn1D = await CourseSlot
     .find({
       step: {
@@ -67,7 +67,7 @@ const getTraineeSlotsIn1D = async () => {
     .populate({
       path: 'course',
       select: 'trainees trainers interruptedAt archivedAt',
-      populate: { path: 'trainees', select: 'contact' },
+      populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
     })
     .populate({ path: 'trainers', select: 'identity contact' })
     .lean();
@@ -79,6 +79,8 @@ const getTraineeSlotsIn1D = async () => {
   const codevSlotsIn1DNotSentReminders = [];
   const traineeTripartiteSlotsIn1DSentReminders = [];
   const traineeTripartiteSlotsIn1DNotSentReminders = [];
+  const tutorTripartiteSlotsIn1DSentReminders = [];
+  const tutorTripartiteSlotsIn1DNotSentReminders = [];
   for (const slot of slotsIn1D) {
     if (slot.course.interruptedAt || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
@@ -122,6 +124,26 @@ const getTraineeSlotsIn1D = async () => {
           tag: 'Formation VAEI',
         })
       );
+      if (UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_TRIPARTITE_STEP_ID)) {
+        for (const tutor of slot.course.tutors) {
+          const tutorContact = get(tutor, 'contact');
+          if (get(tutorContact, 'phone')) {
+            content = 'Formation VAEI :\n'
+            + 'N\'oubliez pas le rendez-vous tripartite qui aura lieu demain à '
+            + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `
+            + `${UtilsHelper.formatIdentity(trainee.identity, 'FL')}. Si besoin, contactez le coach${trainerPhone}.`;
+            tutorTripartiteSlotsIn1DSentReminders.push(tutor._id);
+            promises.push(
+              SmsHelper.send({
+                recipient: `${tutorContact.countryCode}${tutorContact.phone.substring(1)}`,
+                sender: 'Compani',
+                content,
+                tag: 'Formation VAEI',
+              })
+            );
+          } else tutorTripartiteSlotsIn1DNotSentReminders.push(tutor._id);
+        }
+      }
     } else {
       switch (slot.step.toHexString()) {
         case process.env.VAEI_EVALUATION_STEP_ID:
@@ -144,6 +166,8 @@ const getTraineeSlotsIn1D = async () => {
     codevSlotsIn1DNotSentReminders,
     traineeTripartiteSlotsIn1DSentReminders,
     traineeTripartiteSlotsIn1DNotSentReminders,
+    tutorTripartiteSlotsIn1DSentReminders,
+    tutorTripartiteSlotsIn1DNotSentReminders,
     promises,
   };
 };
@@ -228,8 +252,10 @@ const sendingSmsRemindersJob = {
         codevSlotsIn1DNotSentReminders,
         traineeTripartiteSlotsIn1DSentReminders,
         traineeTripartiteSlotsIn1DNotSentReminders,
+        tutorTripartiteSlotsIn1DSentReminders,
+        tutorTripartiteSlotsIn1DNotSentReminders,
         promises: vaeiSlotsIn1DPromises,
-      } = await getTraineeSlotsIn1D();
+      } = await getSlotsIn1D();
       result['Veille d\'évaluation'] = {
         ...evaluationSlotsIn1DSentReminders.length && { sentReminders: evaluationSlotsIn1DSentReminders },
         ...evaluationSlotsIn1DNotSentReminders.length && { notSentReminders: evaluationSlotsIn1DNotSentReminders },
@@ -242,6 +268,12 @@ const sendingSmsRemindersJob = {
         ...traineeTripartiteSlotsIn1DSentReminders.length && { sentReminders: traineeTripartiteSlotsIn1DSentReminders },
         ...traineeTripartiteSlotsIn1DNotSentReminders.length && {
           notSentReminders: traineeTripartiteSlotsIn1DNotSentReminders,
+        },
+      };
+      result['Veille de tripartite (tuteur)'] = {
+        ...tutorTripartiteSlotsIn1DSentReminders.length && { sentReminders: tutorTripartiteSlotsIn1DSentReminders },
+        ...tutorTripartiteSlotsIn1DNotSentReminders.length && {
+          notSentReminders: tutorTripartiteSlotsIn1DNotSentReminders,
         },
       };
       if (vaeiSlotsIn1DPromises.length) promises.push(...vaeiSlotsIn1DPromises);
