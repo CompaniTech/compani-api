@@ -226,6 +226,12 @@ const slotList = [
     step: stepList[1]._id,
     trainers: [userList[1]._id],
   },
+  { // 8
+    _id: new ObjectId(),
+    course: courseList[3]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
 ];
 
 const attendanceList = [

@@ -144,7 +144,7 @@ const getCodevSlotsIn1W = async () => {
         {
           path: 'slots',
           select: 'startDate',
-          match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) },
+          match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID), startDate: { $exists: true } },
           options: { sort: { startDate: 1 } },
         },
       ],
