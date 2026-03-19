@@ -162,6 +162,7 @@ const UserSchema = mongoose.Schema({
   formationExpoTokenList: [{ type: String }],
   loginCode: { type: String },
   isProgramEditor: { type: Boolean, default: false },
+  calendlyLink: { type: String, default: undefined },
 }, {
   timestamps: true,
   toObject: { virtuals: true },

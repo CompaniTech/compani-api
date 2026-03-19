@@ -59,6 +59,13 @@ const userList = [
     contact: { countryCode: '+33', phone: '0987654321' },
     origin: WEBAPP,
   },
+  { // 4
+    _id: new ObjectId(),
+    identity: { firstname: 'trainee', lastname: 'lolo' },
+    local: { email: 'trainee_auth2@alenvi.io' },
+    contact: { countryCode: '+33', phone: '0987654321' },
+    origin: WEBAPP,
+  },
 ];
 
 const cardsList = [{ _id: new ObjectId(), template: 'transition', title: 'ceci est un titre' }];
@@ -89,6 +96,7 @@ const userCompanyList = [
   { _id: new ObjectId(), user: userList[0]._id, company: authCompany._id },
   { _id: new ObjectId(), user: userList[2]._id, company: otherCompany._id },
   { _id: new ObjectId(), user: userList[3]._id, company: authCompany._id },
+  { _id: new ObjectId(), user: userList[4]._id, company: authCompany._id },
 ];
 
 const subProgramList = [
@@ -147,6 +155,19 @@ const courseList = [
     type: SINGLE,
     maxTrainees: 1,
     trainees: [userList[3]._id],
+    companies: [authCompany._id],
+    trainers: [userList[1]._id],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+  },
+  { // 4 - single course
+    _id: new ObjectId(),
+    subProgram: subProgramList[0]._id,
+    type: SINGLE,
+    maxTrainees: 1,
+    trainees: [userList[4]._id],
     companies: [authCompany._id],
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
@@ -239,6 +260,30 @@ const slotList = [
     startDate: '2023-01-09T13:00:00.000Z',
     endDate: '2023-01-09T14:00:00.000Z',
     course: courseList[0]._id,
+    step: stepList[3]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 10
+    _id: new ObjectId(),
+    startDate: '2022-10-08T13:00:00.000Z',
+    endDate: '2022-10-08T14:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[3]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 11
+    _id: new ObjectId(),
+    startDate: '2022-04-08T13:00:00.000Z',
+    endDate: '2022-04-08T14:00:00.000Z',
+    course: courseList[2]._id,
+    step: stepList[3]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 11
+    _id: new ObjectId(),
+    startDate: '2021-10-08T13:00:00.000Z',
+    endDate: '2021-10-08T14:00:00.000Z',
+    course: courseList[3]._id,
     step: stepList[3]._id,
     trainers: [userList[1]._id],
   },
@@ -335,4 +380,4 @@ const populateDB = async () => {
   ]);
 };
 
-module.exports = { populateDB, courseList, userList, stepList };
+module.exports = { populateDB, courseList, userList, stepList, subProgramList };

@@ -4,7 +4,7 @@ const app = require('../../server');
 const EmailHelper = require('../../src/helpers/email');
 const SmsHelper = require('../../src/helpers/sms');
 const UtilsMock = require('../utilsMock');
-const { populateDB, courseList, userList, stepList } = require('./seed/scriptsSeed');
+const { populateDB, courseList, userList, stepList, subProgramList } = require('./seed/scriptsSeed');
 const { getToken } = require('./helpers/authentication');
 
 describe('NODE ENV', () => {
@@ -138,6 +138,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       process.env.VAEI_EVALUATION_STEP_ID = stepList[0]._id;
       process.env.VAEI_CODEV_STEP_ID = stepList[1]._id;
       process.env.VAEI_TRIPARTITE_STEP_ID = stepList[3]._id;
+      process.env.VAEI_SUBPROGRAM_IDS = subProgramList[0]._id;
     });
 
     afterEach(() => {
@@ -147,6 +148,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       process.env.VAEI_EVALUATION_STEP_ID = '';
       process.env.VAEI_CODEV_STEP_ID = '';
       process.env.VAEI_TRIPARTITE_STEP_ID = '';
+      process.env.VAEI_SUBPROGRAM_IDS = '';
     });
 
     it('should send reminders by sms', async () => {
@@ -179,8 +181,12 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
           '1 semaine avant 1er codev': {
             sentReminders: [userList[3]._id],
           },
+          'Suivi formation': {
+            sentReminders: [userList[0]._id, userList[3]._id],
+            notSentReminders: [userList[2]._id],
+          },
         });
-      sinon.assert.callCount(smsSend, 6);
+      sinon.assert.callCount(smsSend, 8);
     });
   });
 

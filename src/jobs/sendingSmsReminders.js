@@ -2,6 +2,7 @@ const { ObjectId } = require('mongodb');
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const EmailHelper = require('../helpers/email');
+const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const SmsHelper = require('../helpers/sms');
 const UtilsHelper = require('../helpers/utils');
@@ -227,6 +228,58 @@ const getCodevSlotsIn1W = async () => {
   return { codevSlotsIn1WSentReminders, codevSlotsIn1WNotSentReminders, promises };
 };
 
+const getProgressReports = async () => {
+  const courses = await Course
+    .find({
+      subProgram: new ObjectId(process.env.VAEI_SUBPROGRAM_IDS),
+      archivedAt: { $exists: false },
+      interruptedAt: { $exists: false },
+    })
+    .populate({ path: 'trainees', select: 'contact' })
+    .populate({ path: 'operationsRepresentative', select: 'calendlyLink identity' })
+    .populate({ path: 'slots', match: { startDate: { $exists: true } }, options: { sort: { startDate: 1 }, limit: 1 } })
+    .lean();
+
+  const filteredCourses = courses.filter((c) => {
+    if (!c.slots.length) return false;
+    const firstSlotDay = CompaniDate(c.slots[0].startDate).startOf(DAY);
+    const threeMonthsAgo = CompaniDate().subtract('P3M').startOf(DAY).isSame(firstSlotDay);
+    const nineMonthsAgo = CompaniDate().subtract('P9M').startOf(DAY).isSame(firstSlotDay);
+    const fifteenMonthsAgo = CompaniDate().subtract('P15M').startOf(DAY).isSame(firstSlotDay);
+
+    return threeMonthsAgo || nineMonthsAgo || fifteenMonthsAgo;
+  });
+
+  const promises = [];
+  const progressReportsSentReminders = [];
+  const progressReportsNotSentReminders = [];
+  for (const course of filteredCourses) {
+    const trainee = course.trainees[0];
+    const traineeContact = get(trainee, 'contact');
+    const { operationsRepresentative } = course;
+    const { calendlyLink } = operationsRepresentative;
+
+    if (get(traineeContact, 'phone')) {
+      promises.push(
+        SmsHelper.send({
+          recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
+          sender: 'Compani',
+          content: 'Formation VAEI :\n'
+            + 'Souhaitez-vous nous transmettre des informations ou faire le point sur votre formation ? '
+            + `${calendlyLink
+              ? `Vous pouvez prendre rendez-vous avec votre chargé de suivi Compani sur ce lien : ${calendlyLink}.`
+              : `Prenez rendez-vous avec ${UtilsHelper.formatIdentity(operationsRepresentative.identity, 'FL')} votre `
+              + 'chargé de suivi Compani.'
+            }`,
+          tag: 'Formation VAEI',
+        })
+      );
+      progressReportsSentReminders.push(trainee._id);
+    } else progressReportsNotSentReminders.push(trainee._id);
+  }
+
+  return { progressReportsSentReminders, progressReportsNotSentReminders, promises };
+};
 const sendingSmsRemindersJob = {
   async method(server) {
     try {
@@ -289,6 +342,18 @@ const sendingSmsRemindersJob = {
         ...codevSlotsIn1WNotSentReminders.length && { notSentReminders: codevSlotsIn1WNotSentReminders },
       };
       if (codevSlotsIn1WPromises.length) promises.push(...codevSlotsIn1WPromises);
+
+      // progress reports
+      const {
+        progressReportsSentReminders,
+        progressReportsNotSentReminders,
+        promises: progressReportsPromises,
+      } = await getProgressReports();
+      result['Suivi formation'] = {
+        ...progressReportsSentReminders.length && { sentReminders: progressReportsSentReminders },
+        ...progressReportsNotSentReminders.length && { notSentReminders: progressReportsNotSentReminders },
+      };
+      if (progressReportsPromises.length) promises.push(...progressReportsPromises);
 
       await Promise.all(promises);
       return result;
