@@ -730,10 +730,12 @@ describe('completionSendingSmsRemindersEmail', async () => {
 
   it('should send an email to TECH_EMAILS after script has been executed', async () => {
     const traineeIds = [new ObjectId(), new ObjectId()];
+    const operationRepresentativeId = new ObjectId();
     const res = {
       'Relance elearning avant évaluation': {
         sentReminders: [traineeIds[0]],
         notSentReminders: [traineeIds[1]],
+        missingCalendlyLinks: [operationRepresentativeId],
       },
       'Veille d\'évaluation': {},
     };
@@ -742,8 +744,11 @@ describe('completionSendingSmsRemindersEmail', async () => {
     + '<ul><p>Rappel envoyé pour les utilisateurs suivants :</p>'
     + `<li>Utilisateur: ${traineeIds[0].toHexString()}</li>`
     + '</ul>'
-    + '<ul><p>Numéro de téléphone manquant :</p>'
+    + '<ul><p>Numéros de téléphone manquants :</p>'
     + `<li>Utilisateur: ${traineeIds[1].toHexString()}</li>`
+    + '</ul><br/>'
+    + '<ul><p>Liens calendly manquants :</p>'
+    + `<li>Chargé de suivi: ${operationRepresentativeId.toHexString()}</li>`
     + '</ul><br/>';
     const sentObj = { msg: test };
 

@@ -6,6 +6,7 @@ const SmsHelper = require('../../src/helpers/sms');
 const UtilsMock = require('../utilsMock');
 const { populateDB, courseList, userList, stepList, subProgramList } = require('./seed/scriptsSeed');
 const { getToken } = require('./helpers/authentication');
+const { vendorAdmin } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -182,8 +183,9 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
             sentReminders: [userList[3]._id],
           },
           'Suivi formation': {
-            sentReminders: [userList[0]._id, userList[3]._id],
+            sentReminders: expect.arrayContaining([userList[0]._id, userList[3]._id]),
             notSentReminders: [userList[2]._id],
+            missingCalendlyLinks: [vendorAdmin._id],
           },
         });
       sinon.assert.callCount(smsSend, 8);

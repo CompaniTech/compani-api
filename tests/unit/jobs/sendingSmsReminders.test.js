@@ -42,6 +42,7 @@ describe('method', () => {
     const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const tutorIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
+    const operationRepresentativeIds = [new ObjectId(), new ObjectId()];
     const courseSlots2W = [
       {
         startDate: '2026-01-18T15:00:00.000Z',
@@ -242,27 +243,46 @@ describe('method', () => {
     const vaeiCourses = [
       {
         trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }],
-        operationsRepresentative: { identity: { firstname: 'Opa', lastname: 'Rep' }, calendlyLink: 'http://url.fr' },
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[0],
+          identity: { firstname: 'Opa', lastname: 'Rep' },
+          calendlyLink: 'http://url.fr',
+        },
         slots: [{ startDate: '2025-10-04T15:00:00.000Z' }],
       },
       {
         trainees: [{ _id: traineeIds[1] }],
-        operationsRepresentative: { identity: { firstname: 'Opa', lastname: 'Rep' }, calendlyLink: 'http://url.fr' },
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[0],
+          identity: { firstname: 'Opa', lastname: 'Rep' },
+          calendlyLink: 'http://url.fr',
+        },
         slots: [{ startDate: '2025-04-04T15:00:00.000Z' }],
       },
       {
         trainees: [{ _id: traineeIds[2] }],
-        operationsRepresentative: { identity: { firstname: 'Opa', lastname: 'Rep' }, calendlyLink: 'http://url.fr' },
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[0],
+          identity: { firstname: 'Opa', lastname: 'Rep' },
+          calendlyLink: 'http://url.fr',
+        },
         slots: [{ startDate: '2024-10-04T15:00:00.000Z' }],
       },
       {
         trainees: [{ _id: traineeIds[3], contact: { phone: '0987654321', countryCode: '+33' } }],
-        operationsRepresentative: { identity: { firstname: 'Opa', lastname: 'Rep' }, calendlyLink: 'http://url.fr' },
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[0],
+          identity: { firstname: 'Opa', lastname: 'Rep' },
+          calendlyLink: 'http://url.fr',
+        },
         slots: [{ startDate: '2025-10-08T15:00:00.000Z' }],
       },
       {
         trainees: [{ _id: traineeIds[4], contact: { phone: '0987654321', countryCode: '+33' } }],
-        operationsRepresentative: { identity: { firstname: 'Apo', lastname: 'Pre' } },
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[1],
+          identity: { firstname: 'Apo', lastname: 'Pre' },
+        },
         slots: [{ startDate: '2025-10-04T15:00:00.000Z' }],
       },
     ];
@@ -286,6 +306,7 @@ describe('method', () => {
       'Suivi formation': {
         sentReminders: [traineeIds[0], traineeIds[4]],
         notSentReminders: [traineeIds[1], traineeIds[2]],
+        missingCalendlyLinks: [operationRepresentativeIds[1]],
       },
     });
 

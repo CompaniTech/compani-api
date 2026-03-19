@@ -253,6 +253,7 @@ const getProgressReports = async () => {
   const promises = [];
   const progressReportsSentReminders = [];
   const progressReportsNotSentReminders = [];
+  const missingCalendlyLinks = [];
   for (const course of filteredCourses) {
     const trainee = course.trainees[0];
     const traineeContact = get(trainee, 'contact');
@@ -274,11 +275,17 @@ const getProgressReports = async () => {
           tag: 'Formation VAEI',
         })
       );
+      if (!calendlyLink) missingCalendlyLinks.push(operationsRepresentative._id);
       progressReportsSentReminders.push(trainee._id);
     } else progressReportsNotSentReminders.push(trainee._id);
   }
 
-  return { progressReportsSentReminders, progressReportsNotSentReminders, promises };
+  return {
+    progressReportsSentReminders,
+    progressReportsNotSentReminders,
+    missingCalendlyLinks: [...new Set(missingCalendlyLinks)],
+    promises,
+  };
 };
 const sendingSmsRemindersJob = {
   async method(server) {
@@ -347,11 +354,13 @@ const sendingSmsRemindersJob = {
       const {
         progressReportsSentReminders,
         progressReportsNotSentReminders,
+        missingCalendlyLinks,
         promises: progressReportsPromises,
       } = await getProgressReports();
       result['Suivi formation'] = {
         ...progressReportsSentReminders.length && { sentReminders: progressReportsSentReminders },
         ...progressReportsNotSentReminders.length && { notSentReminders: progressReportsNotSentReminders },
+        ...missingCalendlyLinks.length && { missingCalendlyLinks },
       };
       if (progressReportsPromises.length) promises.push(...progressReportsPromises);
 
