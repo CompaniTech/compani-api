@@ -127,6 +127,61 @@ const getTraineeSlotsIn1D = async () => {
   };
 };
 
+const getCodevSlotsIn1W = async () => {
+  const codevSlotsIn1W = await CourseSlot
+    .find({
+      step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+      startDate: {
+        $gte: CompaniDate().add('P7D').startOf(DAY).toDate(),
+        $lte: CompaniDate().add('P7D').endOf(DAY).toDate(),
+      },
+    })
+    .populate({
+      path: 'course',
+      select: 'trainees interruptedAt archivedAt',
+      populate: [
+        { path: 'trainees', select: 'contact' },
+        {
+          path: 'slots',
+          select: 'startDate',
+          match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID), startDate: { $exists: true } },
+          options: { sort: { startDate: 1 } },
+        },
+      ],
+    })
+    .populate({ path: 'trainers', select: 'identity contact' })
+    .lean();
+  const filteredSlots = codevSlotsIn1W.filter((s) => {
+    const isCourseStopped = s.course.interruptedAt || s.course.archivedAt;
+    return !isCourseStopped && CompaniDate(s.startDate).isSame(s.course.slots[0].startDate);
+  });
+
+  const promises = [];
+  const codevSlotsIn1WSentReminders = [];
+  const codevSlotsIn1WNotSentReminders = [];
+  for (const slot of filteredSlots) {
+    const trainee = slot.course.trainees[0];
+    const traineeContact = get(trainee, 'contact');
+    if (get(traineeContact, 'phone')) {
+      promises.push(
+        SmsHelper.send({
+          recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
+          sender: 'Compani',
+          content: 'Formation VAEI :\n'
+            + 'Votre première session d\'accompagnement collectif aura lieu le '
+            + `${CompaniDate(slot.startDate).format(`${DD_MM_YYYY} à ${HH_MM}`)}`
+            + ` avec l'animateur.rice ${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}. `
+            + 'Veuillez vérifier vos mails pour vous connecter sur la visio. Si besoin, contactez votre coach.',
+          tag: 'Formation VAEI',
+        })
+      );
+      codevSlotsIn1WSentReminders.push(trainee._id);
+    } else codevSlotsIn1WNotSentReminders.push(trainee._id);
+  }
+
+  return { codevSlotsIn1WSentReminders, codevSlotsIn1WNotSentReminders, promises };
+};
+
 const sendingSmsRemindersJob = {
   async method(server) {
     try {
@@ -161,6 +216,18 @@ const sendingSmsRemindersJob = {
         ...codevSlotsIn1DNotSentReminders.length && { notSentReminders: codevSlotsIn1DNotSentReminders },
       };
       if (evaluationSlotsIn1DPromises.length) promises.push(...evaluationSlotsIn1DPromises);
+
+      // 1 week before 1st codev
+      const {
+        codevSlotsIn1WSentReminders,
+        codevSlotsIn1WNotSentReminders,
+        promises: codevSlotsIn1WPromises,
+      } = await getCodevSlotsIn1W();
+      result['1 semaine avant 1er codev'] = {
+        ...codevSlotsIn1WSentReminders.length && { sentReminders: codevSlotsIn1WSentReminders },
+        ...codevSlotsIn1WNotSentReminders.length && { notSentReminders: codevSlotsIn1WNotSentReminders },
+      };
+      if (codevSlotsIn1WPromises.length) promises.push(...codevSlotsIn1WPromises);
 
       await Promise.all(promises);
       return result;

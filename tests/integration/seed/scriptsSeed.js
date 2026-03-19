@@ -52,6 +52,13 @@ const userList = [
     local: { email: 'trainee_otherCompany@alenvi.io' },
     origin: WEBAPP,
   },
+  { // 3
+    _id: new ObjectId(),
+    identity: { firstname: 'trainee', lastname: 'Comp2' },
+    local: { email: 'trainee_other2@alenvi.io' },
+    contact: { countryCode: '+33', phone: '0987654321' },
+    origin: WEBAPP,
+  },
 ];
 
 const cardsList = [{ _id: new ObjectId(), template: 'transition', title: 'ceci est un titre' }];
@@ -79,17 +86,18 @@ const stepList = [
 
 const userCompanyList = [
   { _id: new ObjectId(), user: userList[0]._id, company: authCompany._id },
-  { _id: new ObjectId(), user: userList[0]._id, company: otherCompany._id },
+  { _id: new ObjectId(), user: userList[2]._id, company: otherCompany._id },
+  { _id: new ObjectId(), user: userList[3]._id, company: otherCompany._id },
 ];
 
 const subProgramList = [
   {
     _id: new ObjectId(),
     name: 'Subprogram 2',
-    steps: [stepList[0]._id, stepList[2]._id],
+    steps: [stepList[0]._id, stepList[1]._id, stepList[2]._id],
     status: PUBLISHED,
   },
-  { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[1]._id], status: PUBLISHED },
+  { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[0]._id], status: PUBLISHED },
 ];
 
 const courseList = [
@@ -97,7 +105,7 @@ const courseList = [
     _id: new ObjectId(),
     subProgram: subProgramList[0]._id,
     type: SINGLE,
-    maxTrainees: 8,
+    maxTrainees: 1,
     trainees: [userList[0]._id],
     companies: [authCompany._id],
     trainers: [userList[1]._id],
@@ -116,6 +124,7 @@ const courseList = [
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    expectedBillsCount: 1,
   },
   { // 2 - single course
     _id: new ObjectId(),
@@ -123,6 +132,19 @@ const courseList = [
     type: SINGLE,
     maxTrainees: 8,
     trainees: [userList[2]._id],
+    companies: [otherCompany._id],
+    trainers: [userList[1]._id],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+  },
+  { // 3 - single course
+    _id: new ObjectId(),
+    subProgram: subProgramList[0]._id,
+    type: SINGLE,
+    maxTrainees: 1,
+    trainees: [userList[3]._id],
     companies: [otherCompany._id],
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
@@ -180,6 +202,36 @@ const slotList = [
     step: stepList[0]._id,
     trainers: [userList[1]._id],
   },
+  { // 6
+    _id: new ObjectId(),
+    startDate: '2023-01-15T09:00:00.000Z',
+    endDate: '2023-01-15T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 6
+    _id: new ObjectId(),
+    startDate: '2023-01-09T09:00:00.000Z',
+    endDate: '2023-01-09T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 7
+    _id: new ObjectId(),
+    startDate: '2023-01-15T09:00:00.000Z',
+    endDate: '2023-01-15T11:00:00.000Z',
+    course: courseList[3]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 8
+    _id: new ObjectId(),
+    course: courseList[3]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
 ];
 
 const attendanceList = [
@@ -208,7 +260,7 @@ const courseBillList = [
     _id: new ObjectId(),
     course: courseList[0]._id,
     companies: [authCompany._id],
-    mainFee: { price: 1200.20, count: 1, countUnit: GROUP },
+    mainFee: { price: 1200.20, count: 1, countUnit: TRAINEE },
     billedAt: '2022-03-06T00:00:00.000Z',
     number: 'FACT-00001',
     payer: { company: authCompany._id },
@@ -219,14 +271,14 @@ const courseBillList = [
     companies: [authCompany._id],
     billedAt: '2022-03-06T00:00:00.000Z',
     number: 'FACT-00002',
-    mainFee: { price: 1200, count: 1, description: 'Accompagnement Mars 2022', countUnit: TRAINEE },
+    mainFee: { price: 1200, count: 1, description: 'Accompagnement Mars 2022', countUnit: GROUP },
     payer: { company: authCompany._id },
   },
   { // 2
     _id: new ObjectId(),
     course: courseList[0]._id,
     companies: [authCompany._id],
-    mainFee: { price: 1200, count: 1, description: 'Lorem ipsum', countUnit: GROUP },
+    mainFee: { price: 1200, count: 1, description: 'Lorem ipsum', countUnit: TRAINEE },
     payer: { company: authCompany._id },
     billedAt: '2022-04-06T00:00:00.000Z',
     number: 'FACT-00003',
