@@ -293,7 +293,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees trainers interruptedAt archivedAt',
+            select: 'trainees tutors trainers interruptedAt archivedAt',
             populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
@@ -463,7 +463,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees trainers interruptedAt archivedAt',
+            select: 'trainees tutors trainers interruptedAt archivedAt',
             populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },

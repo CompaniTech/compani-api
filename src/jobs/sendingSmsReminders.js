@@ -66,7 +66,7 @@ const getSlotsIn1D = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees trainers interruptedAt archivedAt',
+      select: 'trainees tutors trainers interruptedAt archivedAt',
       populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
     })
     .populate({ path: 'trainers', select: 'identity contact' })
@@ -85,11 +85,11 @@ const getSlotsIn1D = async () => {
     if (slot.course.interruptedAt || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
+    const trainer = slot.trainers[0];
+    const trainerPhone = get(trainer, 'contact.phone')
+      ? ` (${trainer.contact.countryCode}${trainer.contact.phone.substring(1)})`
+      : '';
     if (get(traineeContact, 'phone')) {
-      const trainer = slot.trainers[0];
-      const trainerPhone = get(trainer, 'contact.phone')
-        ? ` (${trainer.contact.countryCode}${trainer.contact.phone.substring(1)})`
-        : '';
       let content = '';
       switch (slot.step.toHexString()) {
         case process.env.VAEI_EVALUATION_STEP_ID:
@@ -124,26 +124,6 @@ const getSlotsIn1D = async () => {
           tag: 'Formation VAEI',
         })
       );
-      if (UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_TRIPARTITE_STEP_ID)) {
-        for (const tutor of slot.course.tutors) {
-          const tutorContact = get(tutor, 'contact');
-          if (get(tutorContact, 'phone')) {
-            content = 'Formation VAEI :\n'
-            + 'N\'oubliez pas le rendez-vous tripartite qui aura lieu demain à '
-            + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `
-            + `${UtilsHelper.formatIdentity(trainee.identity, 'FL')}. Si besoin, contactez le coach${trainerPhone}.`;
-            tutorTripartiteSlotsIn1DSentReminders.push(tutor._id);
-            promises.push(
-              SmsHelper.send({
-                recipient: `${tutorContact.countryCode}${tutorContact.phone.substring(1)}`,
-                sender: 'Compani',
-                content,
-                tag: 'Formation VAEI',
-              })
-            );
-          } else tutorTripartiteSlotsIn1DNotSentReminders.push(tutor._id);
-        }
-      }
     } else {
       switch (slot.step.toHexString()) {
         case process.env.VAEI_EVALUATION_STEP_ID:
@@ -155,6 +135,26 @@ const getSlotsIn1D = async () => {
         case process.env.VAEI_TRIPARTITE_STEP_ID:
           traineeTripartiteSlotsIn1DNotSentReminders.push(trainee._id);
           break;
+      }
+    }
+    if (UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_TRIPARTITE_STEP_ID)) {
+      for (const tutor of slot.course.tutors) {
+        const tutorContact = get(tutor, 'contact');
+        if (get(tutorContact, 'phone')) {
+          const content = 'Formation VAEI :\n'
+            + 'N\'oubliez pas le rendez-vous tripartite qui aura lieu demain à '
+            + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `
+            + `${UtilsHelper.formatIdentity(trainee.identity, 'FL')}. Si besoin, contactez le coach${trainerPhone}.`;
+          tutorTripartiteSlotsIn1DSentReminders.push(tutor._id);
+          promises.push(
+            SmsHelper.send({
+              recipient: `${tutorContact.countryCode}${tutorContact.phone.substring(1)}`,
+              sender: 'Compani',
+              content,
+              tag: 'Formation VAEI',
+            })
+          );
+        } else tutorTripartiteSlotsIn1DNotSentReminders.push(tutor._id);
       }
     }
   }

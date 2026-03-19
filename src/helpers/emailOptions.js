@@ -97,7 +97,7 @@ const addTutorContent = (tutorIdentity, tutorEmail, learnerIdentity, courseName,
   <p>À l’issue des sessions 1 et 3, un certificat de réalisation vous sera envoyé.</p>
   <p>Nous organisons prochainement la session 1 de la formation des tuteurs.trices VAEI en visioconférence :</p>
   <p><strong>Une invitation Google vous sera envoyée sur cette adresse email. Merci de confirmer votre présence, en acceptant l'invitation.</strong></p>
-  <p>Si vous n'êtes pas disponibles, merci de nous l'indiquer par mail à ${process.env.BILLING_COMPANI_EMAIL} afin que l'on vous propose un autre créneau.</p>
+  <p>Si vous n'êtes pas disponible, merci de nous l'indiquer par mail à ${process.env.BILLING_COMPANI_EMAIL} afin que l'on vous propose un autre créneau.</p>
   <p>N’hésitez pas à nous écrire pour toute question.</p>
   <p>Bien cordialement,<br>
   L'équipe Compani</p>
