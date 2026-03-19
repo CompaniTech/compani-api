@@ -72,8 +72,8 @@ const activityList = [{
 }];
 
 const stepList = [
-  { _id: new ObjectId(), type: 'on_site', name: 'Coaching - reflexivité', status: PUBLISHED, theoreticalDuration: 60 },
-  { _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), type: 'on_site', name: 'Evaluation', status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), type: 'on_site', name: 'CODEV', status: PUBLISHED, theoreticalDuration: 60 },
   {
     _id: new ObjectId(),
     type: 'e_learning',
@@ -82,6 +82,7 @@ const stepList = [
     theoreticalDuration: 60,
     activities: [activityList[0]._id],
   },
+  { _id: new ObjectId(), type: 'on_site', name: 'tripartite', status: PUBLISHED, theoreticalDuration: 60 },
 ];
 
 const userCompanyList = [
@@ -94,7 +95,7 @@ const subProgramList = [
   {
     _id: new ObjectId(),
     name: 'Subprogram 2',
-    steps: [stepList[0]._id, stepList[1]._id, stepList[2]._id],
+    steps: [stepList[0]._id, stepList[1]._id, stepList[2]._id, stepList[3]._id],
     status: PUBLISHED,
   },
   { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[0]._id], status: PUBLISHED },
@@ -230,6 +231,14 @@ const slotList = [
     _id: new ObjectId(),
     course: courseList[3]._id,
     step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 9
+    _id: new ObjectId(),
+    startDate: '2023-01-09T13:00:00.000Z',
+    endDate: '2023-01-09T14:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[3]._id,
     trainers: [userList[1]._id],
   },
 ];
