@@ -19,6 +19,7 @@ describe('method', () => {
     process.env.TECH_EMAILS = 'tech@compani.fr';
     process.env.VAEI_EVALUATION_STEP_ID = new ObjectId();
     process.env.VAEI_CODEV_STEP_ID = new ObjectId();
+    process.env.VAEI_TRIPARTITE_STEP_ID = new ObjectId();
   });
 
   afterEach(() => {
@@ -28,6 +29,7 @@ describe('method', () => {
     process.env.TECH_EMAILS = '';
     process.env.VAEI_EVALUATION_STEP_ID = '';
     process.env.VAEI_CODEV_STEP_ID = '';
+    process.env.VAEI_TRIPARTITE_STEP_ID = '';
   });
 
   it('should send reminders by sms', async () => {
@@ -99,6 +101,16 @@ describe('method', () => {
       {
         startDate: '2026-01-05T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        trainers: [{
+          _id: trainerId,
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          contact: { countryCode: '+33', phone: '0987654321' },
+        }],
+        course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
+      },
+      {
+        startDate: '2026-01-05T15:00:00.000Z',
+        step: new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
         trainers: [{
           _id: trainerId,
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -192,6 +204,7 @@ describe('method', () => {
       'Relance elearning avant évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
       'Veille d\'évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
       'Veille de CODEV': { sentReminders: [traineeIds[0]] },
+      'Veille de tripartite (apprenant)': { sentReminders: [traineeIds[0]] },
       '1 semaine avant 1er codev': { sentReminders: [traineeIds[4]], notSentReminders: [traineeIds[1]] },
     });
 
@@ -224,7 +237,11 @@ describe('method', () => {
           query: 'find',
           args: [{
             step: {
-              $in: [new ObjectId(process.env.VAEI_EVALUATION_STEP_ID), new ObjectId(process.env.VAEI_CODEV_STEP_ID)],
+              $in: [
+                new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+                new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+                new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
+              ],
             },
             startDate: { $gte: new Date('2026-01-04T23:00:00.000Z'), $lte: new Date('2026-01-05T22:59:59.999Z') },
           }],
@@ -315,6 +332,16 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
+        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite qui aura lieu demain à 16:00, dans '
+        + 'votre structure. Si besoin, contactez votre coach (+33987654321).',
+        tag: 'Formation VAEI',
+      }
+    );
+    sinon.assert.calledWithExactly(
+      smsSend.getCall(4),
+      {
+        recipient: '+33987654321',
+        sender: 'Compani',
         content: 'Formation VAEI :\nVotre première session d\'accompagnement collectif aura lieu le 11/01/2026 à 16:00 '
         + 'avec l\'animateur.rice Claire FORM. Veuillez vérifier vos mails pour vous connecter sur la visio. '
         + 'Si besoin, contactez votre coach.',
@@ -336,6 +363,7 @@ describe('method', () => {
       'Relance elearning avant évaluation': {},
       'Veille d\'évaluation': {},
       'Veille de CODEV': {},
+      'Veille de tripartite (apprenant)': {},
       '1 semaine avant 1er codev': {},
     });
 
@@ -368,7 +396,11 @@ describe('method', () => {
           query: 'find',
           args: [{
             step: {
-              $in: [new ObjectId(process.env.VAEI_EVALUATION_STEP_ID), new ObjectId(process.env.VAEI_CODEV_STEP_ID)],
+              $in: [
+                new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+                new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+                new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
+              ],
             },
             startDate: { $gte: new Date('2026-01-04T23:00:00.000Z'), $lte: new Date('2026-01-05T22:59:59.999Z') },
           }],

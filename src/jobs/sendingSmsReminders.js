@@ -52,7 +52,13 @@ const getEvaluationSlotsIn2W = async () => {
 const getTraineeSlotsIn1D = async () => {
   const slotsIn1D = await CourseSlot
     .find({
-      step: { $in: [new ObjectId(process.env.VAEI_EVALUATION_STEP_ID), new ObjectId(process.env.VAEI_CODEV_STEP_ID)] },
+      step: {
+        $in: [
+          new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+          new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+          new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
+        ],
+      },
       startDate: {
         $gte: CompaniDate().add('P1D').startOf(DAY).toDate(),
         $lte: CompaniDate().add('P1D').endOf(DAY).toDate(),
@@ -71,6 +77,8 @@ const getTraineeSlotsIn1D = async () => {
   const evaluationSlotsIn1DNotSentReminders = [];
   const codevSlotsIn1DSentReminders = [];
   const codevSlotsIn1DNotSentReminders = [];
+  const traineeTripartiteSlotsIn1DSentReminders = [];
+  const traineeTripartiteSlotsIn1DNotSentReminders = [];
   for (const slot of slotsIn1D) {
     if (slot.course.interruptedAt || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
@@ -98,6 +106,13 @@ const getTraineeSlotsIn1D = async () => {
             + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)}, en visio.`
             + ` Si besoin, contactez votre animateur.rice de CODEV${trainerPhone}.`;
           break;
+        case process.env.VAEI_TRIPARTITE_STEP_ID:
+          traineeTripartiteSlotsIn1DSentReminders.push(trainee._id);
+          content = 'Formation VAEI :\n'
+            + 'N\'oubliez pas votre rendez-vous tripartite qui aura lieu demain à '
+            + `${CompaniDate(slot.startDate).format(HH_MM)}, dans votre structure.`
+            + ` Si besoin, contactez votre coach${trainerPhone}.`;
+          break;
       }
       promises.push(
         SmsHelper.send({
@@ -114,6 +129,10 @@ const getTraineeSlotsIn1D = async () => {
           break;
         case process.env.VAEI_CODEV_STEP_ID:
           codevSlotsIn1DNotSentReminders.push(trainee._id);
+          break;
+        case process.env.VAEI_TRIPARTITE_STEP_ID:
+          traineeTripartiteSlotsIn1DNotSentReminders.push(trainee._id);
+          break;
       }
     }
   }
@@ -123,6 +142,8 @@ const getTraineeSlotsIn1D = async () => {
     evaluationSlotsIn1DNotSentReminders,
     codevSlotsIn1DSentReminders,
     codevSlotsIn1DNotSentReminders,
+    traineeTripartiteSlotsIn1DSentReminders,
+    traineeTripartiteSlotsIn1DNotSentReminders,
     promises,
   };
 };
@@ -205,7 +226,9 @@ const sendingSmsRemindersJob = {
         evaluationSlotsIn1DNotSentReminders,
         codevSlotsIn1DSentReminders,
         codevSlotsIn1DNotSentReminders,
-        promises: evaluationSlotsIn1DPromises,
+        traineeTripartiteSlotsIn1DSentReminders,
+        traineeTripartiteSlotsIn1DNotSentReminders,
+        promises: vaeiSlotsIn1DPromises,
       } = await getTraineeSlotsIn1D();
       result['Veille d\'évaluation'] = {
         ...evaluationSlotsIn1DSentReminders.length && { sentReminders: evaluationSlotsIn1DSentReminders },
@@ -215,7 +238,13 @@ const sendingSmsRemindersJob = {
         ...codevSlotsIn1DSentReminders.length && { sentReminders: codevSlotsIn1DSentReminders },
         ...codevSlotsIn1DNotSentReminders.length && { notSentReminders: codevSlotsIn1DNotSentReminders },
       };
-      if (evaluationSlotsIn1DPromises.length) promises.push(...evaluationSlotsIn1DPromises);
+      result['Veille de tripartite (apprenant)'] = {
+        ...traineeTripartiteSlotsIn1DSentReminders.length && { sentReminders: traineeTripartiteSlotsIn1DSentReminders },
+        ...traineeTripartiteSlotsIn1DNotSentReminders.length && {
+          notSentReminders: traineeTripartiteSlotsIn1DNotSentReminders,
+        },
+      };
+      if (vaeiSlotsIn1DPromises.length) promises.push(...vaeiSlotsIn1DPromises);
 
       // 1 week before 1st codev
       const {

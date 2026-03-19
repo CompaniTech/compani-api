@@ -137,6 +137,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       process.env.TECH_EMAIL = 'tech@compani.fr';
       process.env.VAEI_EVALUATION_STEP_ID = stepList[0]._id;
       process.env.VAEI_CODEV_STEP_ID = stepList[1]._id;
+      process.env.VAEI_TRIPARTITE_STEP_ID = stepList[3]._id;
     });
 
     afterEach(() => {
@@ -145,6 +146,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       process.env.TECH_EMAIL = '';
       process.env.VAEI_EVALUATION_STEP_ID = '';
       process.env.VAEI_CODEV_STEP_ID = '';
+      process.env.VAEI_TRIPARTITE_STEP_ID = '';
     });
 
     it('should send reminders by sms', async () => {
@@ -168,11 +170,14 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
           'Veille de CODEV': {
             sentReminders: [userList[0]._id],
           },
+          'Veille de tripartite (apprenant)': {
+            sentReminders: [userList[0]._id],
+          },
           '1 semaine avant 1er codev': {
             sentReminders: [userList[3]._id],
           },
         });
-      sinon.assert.callCount(smsSend, 4);
+      sinon.assert.callCount(smsSend, 5);
     });
   });
 
