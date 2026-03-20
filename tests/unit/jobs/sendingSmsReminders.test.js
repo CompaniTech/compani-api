@@ -34,6 +34,7 @@ describe('method', () => {
 
   it('should send reminders by sms', async () => {
     const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+    const tutorIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
     const courseSlots2W = [
       {
@@ -66,7 +67,17 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
+        course: {
+          trainees: [{
+            _id: traineeIds[0],
+            contact: { phone: '0987654321', countryCode: '+33' },
+            identity: { lastname: 'App', firstname: 'Jeanne' },
+          }],
+          tutors: [
+            { _id: tutorIds[0], contact: { phone: '0987654321', countryCode: '+33' } },
+            { _id: tutorIds[1], contact: {} },
+          ],
+        },
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
@@ -76,7 +87,10 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { trainees: [{ _id: traineeIds[1] }] },
+        course: {
+          trainees: [{ _id: traineeIds[1], identity: { lastname: 'App2', firstname: 'Max' } }],
+          tutors: [],
+        },
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
@@ -86,7 +100,11 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { interruptedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[2] }] },
+        course: {
+          interruptedAt: '2026-01-01T15:00:00.000Z',
+          trainees: [{ _id: traineeIds[2], identity: { lastname: 'App3', firstname: 'Alice' } }],
+          tutors: [],
+        },
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
@@ -96,7 +114,11 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { archivedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[0] }] },
+        course: {
+          archivedAt: '2026-01-01T15:00:00.000Z',
+          trainees: [{ _id: traineeIds[3], identity: { lastname: 'App4', firstname: 'Bernard' } }],
+          tutors: [],
+        },
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
@@ -106,7 +128,17 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
+        course: {
+          trainees: [{
+            _id: traineeIds[0],
+            contact: { phone: '0987654321', countryCode: '+33' },
+            identity: { lastname: 'App', firstname: 'Jeanne' },
+          }],
+          tutors: [
+            { _id: tutorIds[0], contact: { phone: '0987654321', countryCode: '+33' } },
+            { _id: tutorIds[1], contact: {} },
+          ],
+        },
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
@@ -116,7 +148,17 @@ describe('method', () => {
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
-        course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
+        course: {
+          trainees: [{
+            _id: traineeIds[0],
+            contact: { phone: '0987654321', countryCode: '+33' },
+            identity: { lastname: 'App', firstname: 'Jeanne' },
+          }],
+          tutors: [
+            { _id: tutorIds[0], contact: { phone: '0987654321', countryCode: '+33' } },
+            { _id: tutorIds[1], contact: {} },
+          ],
+        },
       },
     ];
     const courseSlots1W = [
@@ -205,6 +247,7 @@ describe('method', () => {
       'Veille d\'évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
       'Veille de CODEV': { sentReminders: [traineeIds[0]] },
       'Veille de tripartite (apprenant)': { sentReminders: [traineeIds[0]] },
+      'Veille de tripartite (tuteur)': { sentReminders: [tutorIds[0]], notSentReminders: [tutorIds[1]] },
       '1 semaine avant 1er codev': { sentReminders: [traineeIds[4]], notSentReminders: [traineeIds[1]] },
     });
 
@@ -250,8 +293,8 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees trainers interruptedAt archivedAt',
-            populate: { path: 'trainees', select: 'contact' },
+            select: 'trainees tutors trainers interruptedAt archivedAt',
+            populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
         {
@@ -342,6 +385,16 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
+        content: 'Formation VAEI :\nN\'oubliez pas le rendez-vous tripartite qui aura lieu demain à 16:00, avec votre '
+        + 'apprenant.e Jeanne APP. Si besoin, contactez le coach (+33987654321).',
+        tag: 'Formation VAEI',
+      }
+    );
+    sinon.assert.calledWithExactly(
+      smsSend.getCall(5),
+      {
+        recipient: '+33987654321',
+        sender: 'Compani',
         content: 'Formation VAEI :\nVotre première session d\'accompagnement collectif aura lieu le 11/01/2026 à 16:00 '
         + 'avec l\'animateur.rice Claire FORM. Veuillez vérifier vos mails pour vous connecter sur la visio. '
         + 'Si besoin, contactez votre coach.',
@@ -364,6 +417,7 @@ describe('method', () => {
       'Veille d\'évaluation': {},
       'Veille de CODEV': {},
       'Veille de tripartite (apprenant)': {},
+      'Veille de tripartite (tuteur)': {},
       '1 semaine avant 1er codev': {},
     });
 
@@ -409,8 +463,8 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees trainers interruptedAt archivedAt',
-            populate: { path: 'trainees', select: 'contact' },
+            select: 'trainees tutors trainers interruptedAt archivedAt',
+            populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
         {

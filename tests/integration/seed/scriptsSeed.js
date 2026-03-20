@@ -54,8 +54,8 @@ const userList = [
   },
   { // 3
     _id: new ObjectId(),
-    identity: { firstname: 'trainee', lastname: 'Comp2' },
-    local: { email: 'trainee_other2@alenvi.io' },
+    identity: { firstname: 'trainee', lastname: 'coco' },
+    local: { email: 'trainee_auth@alenvi.io' },
     contact: { countryCode: '+33', phone: '0987654321' },
     origin: WEBAPP,
   },
@@ -88,7 +88,7 @@ const stepList = [
 const userCompanyList = [
   { _id: new ObjectId(), user: userList[0]._id, company: authCompany._id },
   { _id: new ObjectId(), user: userList[2]._id, company: otherCompany._id },
-  { _id: new ObjectId(), user: userList[3]._id, company: otherCompany._id },
+  { _id: new ObjectId(), user: userList[3]._id, company: authCompany._id },
 ];
 
 const subProgramList = [
@@ -108,6 +108,7 @@ const courseList = [
     type: SINGLE,
     maxTrainees: 1,
     trainees: [userList[0]._id],
+    tutors: [userList[3]._id],
     companies: [authCompany._id],
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
@@ -146,7 +147,7 @@ const courseList = [
     type: SINGLE,
     maxTrainees: 1,
     trainees: [userList[3]._id],
-    companies: [otherCompany._id],
+    companies: [authCompany._id],
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,

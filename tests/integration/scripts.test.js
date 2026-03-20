@@ -173,11 +173,14 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
           'Veille de tripartite (apprenant)': {
             sentReminders: [userList[0]._id],
           },
+          'Veille de tripartite (tuteur)': {
+            sentReminders: [userList[3]._id],
+          },
           '1 semaine avant 1er codev': {
             sentReminders: [userList[3]._id],
           },
         });
-      sinon.assert.callCount(smsSend, 5);
+      sinon.assert.callCount(smsSend, 6);
     });
   });
 

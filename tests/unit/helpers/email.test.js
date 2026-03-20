@@ -739,11 +739,11 @@ describe('completionSendingSmsRemindersEmail', async () => {
     };
     const test = '<p>Script exécuté. 2 rappels traités.</p>'
     + '<p>Relance elearning avant évaluation :</p>'
-    + '<ul><p>Rappel envoyé pour les apprenants suivants :</p>'
-    + `<li>Apprenant: ${traineeIds[0].toHexString()}</li>`
+    + '<ul><p>Rappel envoyé pour les utilisateurs suivants :</p>'
+    + `<li>Utilisateur: ${traineeIds[0].toHexString()}</li>`
     + '</ul>'
     + '<ul><p>Numéro de téléphone manquant :</p>'
-    + `<li>Apprenant: ${traineeIds[1].toHexString()}</li>`
+    + `<li>Utilisateur: ${traineeIds[1].toHexString()}</li>`
     + '</ul><br/>';
     const sentObj = { msg: test };
 
