@@ -3,6 +3,7 @@ const { ObjectId } = require('mongodb');
 const { expect } = require('expect');
 const SinonMongoose = require('../sinonMongoose');
 const CourseSlot = require('../../../src/models/CourseSlot');
+const Course = require('../../../src/models/Course');
 const EmailHelper = require('../../../src/helpers/email');
 const SmsHelper = require('../../../src/helpers/sms');
 const UtilsMock = require('../../utilsMock');
@@ -11,31 +12,37 @@ const { sendingSmsRemindersJob } = require('../../../src/jobs/sendingSmsReminder
 describe('method', () => {
   let findSlots;
   let smsSend;
+  let findCourses;
 
   beforeEach(() => {
     findSlots = sinon.stub(CourseSlot, 'find');
     smsSend = sinon.stub(SmsHelper, 'send');
+    findCourses = sinon.stub(Course, 'find');
     UtilsMock.mockCurrentDate('2026-01-04T15:00:00.000Z');
     process.env.TECH_EMAILS = 'tech@compani.fr';
     process.env.VAEI_EVALUATION_STEP_ID = new ObjectId();
     process.env.VAEI_CODEV_STEP_ID = new ObjectId();
     process.env.VAEI_TRIPARTITE_STEP_ID = new ObjectId();
+    process.env.VAEI_SUBPROGRAM_IDS = new ObjectId();
   });
 
   afterEach(() => {
     findSlots.restore();
     smsSend.restore();
+    findCourses.restore();
     UtilsMock.unmockCurrentDate();
     process.env.TECH_EMAILS = '';
     process.env.VAEI_EVALUATION_STEP_ID = '';
     process.env.VAEI_CODEV_STEP_ID = '';
     process.env.VAEI_TRIPARTITE_STEP_ID = '';
+    process.env.VAEI_SUBPROGRAM_IDS = '';
   });
 
   it('should send reminders by sms', async () => {
     const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const tutorIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
+    const operationRepresentativeIds = [new ObjectId(), new ObjectId()];
     const courseSlots2W = [
       {
         startDate: '2026-01-18T15:00:00.000Z',
@@ -233,10 +240,57 @@ describe('method', () => {
         },
       },
     ];
+    const vaeiCourses = [
+      {
+        trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }],
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[0],
+          identity: { firstname: 'Opa', lastname: 'Rep' },
+          calendlyLink: 'http://url.fr',
+        },
+        slots: [{ startDate: '2025-10-04T15:00:00.000Z' }],
+      },
+      {
+        trainees: [{ _id: traineeIds[1] }],
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[0],
+          identity: { firstname: 'Opa', lastname: 'Rep' },
+          calendlyLink: 'http://url.fr',
+        },
+        slots: [{ startDate: '2025-04-04T15:00:00.000Z' }],
+      },
+      {
+        trainees: [{ _id: traineeIds[2] }],
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[0],
+          identity: { firstname: 'Opa', lastname: 'Rep' },
+          calendlyLink: 'http://url.fr',
+        },
+        slots: [{ startDate: '2024-10-04T15:00:00.000Z' }],
+      },
+      {
+        trainees: [{ _id: traineeIds[3], contact: { phone: '0987654321', countryCode: '+33' } }],
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[0],
+          identity: { firstname: 'Opa', lastname: 'Rep' },
+          calendlyLink: 'http://url.fr',
+        },
+        slots: [{ startDate: '2025-10-08T15:00:00.000Z' }],
+      },
+      {
+        trainees: [{ _id: traineeIds[4], contact: { phone: '0987654321', countryCode: '+33' } }],
+        operationsRepresentative: {
+          _id: operationRepresentativeIds[1],
+          identity: { firstname: 'Apo', lastname: 'Pre' },
+        },
+        slots: [{ startDate: '2025-10-04T15:00:00.000Z' }],
+      },
+    ];
 
     findSlots.onCall(0).returns(SinonMongoose.stubChainedQueries(courseSlots2W));
     findSlots.onCall(1).returns(SinonMongoose.stubChainedQueries(courseSlots1D));
     findSlots.onCall(2).returns(SinonMongoose.stubChainedQueries(courseSlots1W));
+    findCourses.returns(SinonMongoose.stubChainedQueries(vaeiCourses));
 
     // eslint-disable-next-line no-console
     const server = { log: value => console.log(value) };
@@ -249,6 +303,11 @@ describe('method', () => {
       'Veille de tripartite (apprenant)': { sentReminders: [traineeIds[0]] },
       'Veille de tripartite (tuteur)': { sentReminders: [tutorIds[0]], notSentReminders: [tutorIds[1]] },
       '1 semaine avant 1er codev': { sentReminders: [traineeIds[4]], notSentReminders: [traineeIds[1]] },
+      'Suivi formation': {
+        sentReminders: [traineeIds[0], traineeIds[4]],
+        notSentReminders: [traineeIds[1], traineeIds[2]],
+        missingCalendlyLinks: [operationRepresentativeIds[1]],
+      },
     });
 
     SinonMongoose.calledWithExactly(
@@ -338,6 +397,30 @@ describe('method', () => {
         { query: 'lean' },
       ],
       2
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findCourses,
+      [
+        {
+          query: 'find',
+          args: [{
+            subProgram: new ObjectId(process.env.VAEI_SUBPROGRAM_IDS),
+            archivedAt: { $exists: false },
+            interruptedAt: { $exists: false },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainees', select: 'contact' }] },
+        { query: 'populate', args: [{ path: 'operationsRepresentative', select: 'calendlyLink identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            match: { startDate: { $exists: true } },
+            options: { sort: { startDate: 1 }, limit: 1 },
+          }],
+        },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.calledWithExactly(
       smsSend.getCall(0),
@@ -401,12 +484,33 @@ describe('method', () => {
         tag: 'Formation VAEI',
       }
     );
+    sinon.assert.calledWithExactly(
+      smsSend.getCall(6),
+      {
+        recipient: '+33987654321',
+        sender: 'Compani',
+        content: 'Formation VAEI :\nSouhaitez-vous nous transmettre des informations ou faire le point sur votre '
+        + 'formation ? Vous pouvez prendre rendez-vous avec votre chargé de suivi Compani sur ce lien : http://url.fr.',
+        tag: 'Formation VAEI',
+      }
+    );
+    sinon.assert.calledWithExactly(
+      smsSend.getCall(7),
+      {
+        recipient: '+33987654321',
+        sender: 'Compani',
+        content: 'Formation VAEI :\nSouhaitez-vous nous transmettre des informations ou faire le point sur votre '
+        + 'formation ? Prenez rendez-vous avec Apo PRE votre chargé de suivi Compani.',
+        tag: 'Formation VAEI',
+      }
+    );
   });
 
   it('should return empty result if no matching slot', async () => {
     findSlots.onCall(0).returns(SinonMongoose.stubChainedQueries([]));
     findSlots.onCall(1).returns(SinonMongoose.stubChainedQueries([]));
     findSlots.onCall(2).returns(SinonMongoose.stubChainedQueries([]));
+    findCourses.returns(SinonMongoose.stubChainedQueries([]));
 
     // eslint-disable-next-line no-console
     const server = { log: value => console.log(value) };
@@ -419,6 +523,7 @@ describe('method', () => {
       'Veille de tripartite (apprenant)': {},
       'Veille de tripartite (tuteur)': {},
       '1 semaine avant 1er codev': {},
+      'Suivi formation': {},
     });
 
     SinonMongoose.calledWithExactly(
@@ -508,6 +613,30 @@ describe('method', () => {
         { query: 'lean' },
       ],
       2
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findCourses,
+      [
+        {
+          query: 'find',
+          args: [{
+            subProgram: new ObjectId(process.env.VAEI_SUBPROGRAM_IDS),
+            archivedAt: { $exists: false },
+            interruptedAt: { $exists: false },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainees', select: 'contact' }] },
+        { query: 'populate', args: [{ path: 'operationsRepresentative', select: 'calendlyLink identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            match: { startDate: { $exists: true } },
+            options: { sort: { startDate: 1 }, limit: 1 },
+          }],
+        },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.notCalled(smsSend);
   });

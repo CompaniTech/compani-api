@@ -232,8 +232,7 @@ exports.completionSendingSmsRemindersEmail = (result) => {
   let body = `<p>Script exécuté. ${totalSentReminders.length + totalNotSentReminders.length} rappels traités.</p>`;
 
   Object.entries(result).forEach(([reminderName, data]) => {
-    const { sentReminders } = data;
-    const { notSentReminders } = data;
+    const { sentReminders, notSentReminders, missingCalendlyLinks } = data;
     if ((sentReminders && sentReminders.length) || (notSentReminders && notSentReminders.length)) {
       body = body.concat(`<p>${reminderName} :</p>`);
     }
@@ -246,7 +245,15 @@ exports.completionSendingSmsRemindersEmail = (result) => {
     if (notSentReminders && notSentReminders.length) {
       const htmlNotSentReminders = notSentReminders.map(r => `<li>Utilisateur: ${r.toHexString()}</li>`).join('');
       body = body.concat(
-        `<ul><p>Numéro de téléphone manquant :</p>${htmlNotSentReminders}</ul><br/>`
+        `<ul><p>Numéros de téléphone manquants :</p>${htmlNotSentReminders}</ul><br/>`
+      );
+    }
+    if (missingCalendlyLinks && missingCalendlyLinks.length) {
+      const htmlMissingCalendlyLinks = missingCalendlyLinks
+        .map(r => `<li>Chargé de suivi: ${r.toHexString()}</li>`)
+        .join('');
+      body = body.concat(
+        `<ul><p>Liens calendly manquants :</p>${htmlMissingCalendlyLinks}</ul><br/>`
       );
     }
   });
