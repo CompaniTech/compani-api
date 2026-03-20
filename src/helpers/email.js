@@ -238,13 +238,13 @@ exports.completionSendingSmsRemindersEmail = (result) => {
       body = body.concat(`<p>${reminderName} :</p>`);
     }
     if (sentReminders && sentReminders.length) {
-      const htmlSentReminders = sentReminders.map(r => `<li>Apprenant: ${r.toHexString()}</li>`).join('');
+      const htmlSentReminders = sentReminders.map(r => `<li>Utilisateur: ${r.toHexString()}</li>`).join('');
       body = body.concat(
-        `<ul><p>Rappel envoyé pour les apprenants suivants :</p>${htmlSentReminders}</ul>`
+        `<ul><p>Rappel envoyé pour les utilisateurs suivants :</p>${htmlSentReminders}</ul>`
       );
     }
     if (notSentReminders && notSentReminders.length) {
-      const htmlNotSentReminders = notSentReminders.map(r => `<li>Apprenant: ${r.toHexString()}</li>`).join('');
+      const htmlNotSentReminders = notSentReminders.map(r => `<li>Utilisateur: ${r.toHexString()}</li>`).join('');
       body = body.concat(
         `<ul><p>Numéro de téléphone manquant :</p>${htmlNotSentReminders}</ul><br/>`
       );
