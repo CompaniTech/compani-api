@@ -378,13 +378,29 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     const absencesCount = absences.length;
     const absencesDuration = NumbersHelper.multiply(absencesCount, Number(slotDuration.replace(',', '.')));
 
-    const trainersStatus = (slot.trainers || []).reduce((acc, trainer) => {
+    let trainersData;
+    if (slot.trainers.length === 1) {
       const trainerBill = (slot.trainerBills || [])
-        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainer._id));
-      const trainerIdentity = UtilsHelper.formatIdentity(trainer.identity, 'FL');
+        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, slot.trainers[0]._id));
+      trainersData = {
+        status: SLOT_STATUS[trainerBill ? PAID : NOT_PAID],
+        bills: trainerBill ? trainerBill.billNumber : '',
+      };
+    } else {
+      trainersData = (slot.trainers || []).reduce((acc, trainer) => {
+        const trainerBill = (slot.trainerBills || [])
+          .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainer._id));
 
-      return { ...acc, [trainerIdentity]: SLOT_STATUS[trainerBill ? PAID : NOT_PAID] };
-    }, {});
+        const trainerIdentity = UtilsHelper.formatIdentity(trainer.identity, 'FL');
+
+        acc.status.push(`${trainerIdentity} : ${SLOT_STATUS[trainerBill ? PAID : NOT_PAID]}`);
+        if (trainerBill) acc.bills.push(`${trainerIdentity} : ${trainerBill.billNumber}`);
+
+        return acc;
+      }, { status: [], bills: [] });
+      trainersData.status = trainersData.status.join(', ');
+      trainersData.bills = trainersData.bills.join(', ');
+    }
 
     rows.push({
       'Id Créneau': slot._id,
@@ -411,9 +427,8 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           : 0,
       }),
       Intervenants: (slot.trainers || []).map(t => UtilsHelper.formatIdentity(t.identity, 'FL')).join(', '),
-      Statut: (slot.trainers || []).length === 1
-        ? Object.values(trainersStatus)[0]
-        : Object.entries(trainersStatus).map(([name, value]) => `${name} : ${value}`).join(', '),
+      Statut: trainersData.status,
+      'Facture intervenant': trainersData.bills,
     });
   }
 
