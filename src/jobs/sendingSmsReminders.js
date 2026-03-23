@@ -2,11 +2,14 @@ const { ObjectId } = require('mongodb');
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const EmailHelper = require('../helpers/email');
+const ActivityHistory = require('../models/ActivityHistory');
+const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
+const SubProgram = require('../models/SubProgram');
 const SmsHelper = require('../helpers/sms');
 const UtilsHelper = require('../helpers/utils');
 const { CompaniDate } = require('../helpers/dates/companiDates');
-const { DAY, DD_MM_YYYY, HH_MM } = require('../helpers/constants');
+const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING } = require('../helpers/constants');
 
 const getEvaluationSlotsIn2W = async () => {
   const evaluationSlotsIn2W = await CourseSlot
@@ -227,6 +230,76 @@ const getCodevSlotsIn1W = async () => {
   return { codevSlotsIn1WSentReminders, codevSlotsIn1WNotSentReminders, promises };
 };
 
+const getPOEIFirstSingleSlot = async () => {
+  const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
+  const courses = await Course
+    .find({
+      subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
+      archivedAt: { $exists: false },
+      interruptedAt: { $exists: false },
+    })
+    .populate({ path: 'trainees', select: 'contact' })
+    .populate({
+      path: 'slots',
+      select: 'startDate step',
+      match: { step: { $nin: collectiveStepIds }, startDate: { $exists: true } },
+      options: { sort: { startDate: 1 } },
+    })
+    .lean();
+
+  const promises = [];
+  const POEISentReminders = [];
+  const POEINotSentReminders = [];
+  if (courses.length) {
+    const subProgramWithElearningSteps = await SubProgram
+      .findOne({ _id: new ObjectId(process.env.POEI_SUBPROGRAM_ID) }, { steps: 1 })
+      .populate({ path: 'steps', select: 'type activities', match: { type: E_LEARNING } })
+      .lean();
+    const activitiesIds = subProgramWithElearningSteps.steps.flatMap(s => s.activities.map(a => new ObjectId(a)));
+
+    const filteredCourses = courses.reduce((acc, c) => {
+      if (!c.slots.length) return acc;
+      const slot = CompaniDate(c.slots[0].startDate).startOf(DAY);
+      for (let i = 0; i < 8; i++) {
+        if (CompaniDate().subtract(`P${i}W`).startOf(DAY).isSame(slot)) {
+          acc.push({ ...c, week: i });
+          continue;
+        }
+      }
+      return acc;
+    }, []);
+
+    const trainees = [];
+    for (const course of filteredCourses) {
+      const traineeAH = await ActivityHistory
+        .find({ user: course.trainees[0]._id, activity: { $in: activitiesIds } })
+        .lean();
+      const ahWithoutDuplicates = [...new Set(traineeAH.map(ah => ah.activity.toHexString()))];
+      if (ahWithoutDuplicates.length / activitiesIds.length < ((1 / 8) * (course.week + 1))) {
+        trainees.push(course.trainees[0]);
+      }
+    }
+
+    for (const trainee of trainees) {
+      const traineeContact = get(trainee, 'contact');
+      if (get(traineeContact, 'phone')) {
+        promises.push(
+          SmsHelper.send({
+            recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
+            sender: 'Compani',
+            content: 'Formation POEI :\n'
+            + 'N\'oubliez pas de faire votre e-learning !',
+            tag: 'Formation POEI',
+          })
+        );
+        POEISentReminders.push(trainee._id);
+      } else POEINotSentReminders.push(trainee._id);
+    }
+  }
+
+  return { POEISentReminders, POEINotSentReminders, promises };
+};
+
 const sendingSmsRemindersJob = {
   async method(server) {
     try {
@@ -289,6 +362,18 @@ const sendingSmsRemindersJob = {
         ...codevSlotsIn1WNotSentReminders.length && { notSentReminders: codevSlotsIn1WNotSentReminders },
       };
       if (codevSlotsIn1WPromises.length) promises.push(...codevSlotsIn1WPromises);
+
+      // POEI first single slot
+      const {
+        POEISentReminders,
+        POEINotSentReminders,
+        promises: POEIPromises,
+      } = await getPOEIFirstSingleSlot();
+      result['Relance elearning POEI'] = {
+        ...POEISentReminders.length && { sentReminders: POEISentReminders },
+        ...POEINotSentReminders.length && { notSentReminders: POEINotSentReminders },
+      };
+      if (POEIPromises.length) promises.push(...POEIPromises);
 
       await Promise.all(promises);
       return result;

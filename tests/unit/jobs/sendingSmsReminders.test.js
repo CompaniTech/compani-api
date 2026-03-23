@@ -2,34 +2,51 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const { expect } = require('expect');
 const SinonMongoose = require('../sinonMongoose');
+const Course = require('../../../src/models/Course');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const EmailHelper = require('../../../src/helpers/email');
 const SmsHelper = require('../../../src/helpers/sms');
 const UtilsMock = require('../../utilsMock');
 const { sendingSmsRemindersJob } = require('../../../src/jobs/sendingSmsReminders');
+const SubProgram = require('../../../src/models/SubProgram');
+const ActivityHistory = require('../../../src/models/ActivityHistory');
+const { E_LEARNING } = require('../../../src/helpers/constants');
 
 describe('method', () => {
   let findSlots;
   let smsSend;
+  let findCourses;
+  let findOneSubProgram;
+  let findActivityHistories;
 
   beforeEach(() => {
     findSlots = sinon.stub(CourseSlot, 'find');
+    findCourses = sinon.stub(Course, 'find');
+    findOneSubProgram = sinon.stub(SubProgram, 'findOne');
+    findActivityHistories = sinon.stub(ActivityHistory, 'find');
     smsSend = sinon.stub(SmsHelper, 'send');
     UtilsMock.mockCurrentDate('2026-01-04T15:00:00.000Z');
     process.env.TECH_EMAILS = 'tech@compani.fr';
     process.env.VAEI_EVALUATION_STEP_ID = new ObjectId();
     process.env.VAEI_CODEV_STEP_ID = new ObjectId();
     process.env.VAEI_TRIPARTITE_STEP_ID = new ObjectId();
+    process.env.POEI_SUBPROGRAM_ID = new ObjectId();
+    process.env.COLLECTIVE_STEP_IDS = new ObjectId();
   });
 
   afterEach(() => {
     findSlots.restore();
+    findCourses.restore();
+    findOneSubProgram.restore();
+    findActivityHistories.restore();
     smsSend.restore();
     UtilsMock.unmockCurrentDate();
     process.env.TECH_EMAILS = '';
     process.env.VAEI_EVALUATION_STEP_ID = '';
     process.env.VAEI_CODEV_STEP_ID = '';
     process.env.VAEI_TRIPARTITE_STEP_ID = '';
+    process.env.POEI_SUBPROGRAM_ID = '';
+    process.env.COLLECTIVE_STEP_IDS = '';
   });
 
   it('should send reminders by sms', async () => {
@@ -233,10 +250,35 @@ describe('method', () => {
         },
       },
     ];
+    const poeiCourses = [
+      {
+        subProgram: process.env.POEI_SUBPROGRAM_ID,
+        trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }],
+        slots: [
+          { startDate: '2025-12-21T15:00:00.000Z' },
+        ],
+      },
+      {
+        subProgram: process.env.POEI_SUBPROGRAM_ID,
+        trainees: [{ _id: traineeIds[1] }],
+        slots: [
+          { startDate: '2025-11-09T15:00:00.000Z' },
+        ],
+      },
+    ];
+    const activitiesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const subProgram = {
+      _id: process.env.POEI_SUBPROGRAM_ID,
+      steps: [{ activities: activitiesIds, type: E_LEARNING }],
+    };
+    const activityHistories = [{ user: traineeIds[0], activity: activitiesIds[0] }];
 
     findSlots.onCall(0).returns(SinonMongoose.stubChainedQueries(courseSlots2W));
     findSlots.onCall(1).returns(SinonMongoose.stubChainedQueries(courseSlots1D));
     findSlots.onCall(2).returns(SinonMongoose.stubChainedQueries(courseSlots1W));
+    findCourses.returns(SinonMongoose.stubChainedQueries(poeiCourses));
+    findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
+    findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
 
     // eslint-disable-next-line no-console
     const server = { log: value => console.log(value) };
@@ -249,6 +291,7 @@ describe('method', () => {
       'Veille de tripartite (apprenant)': { sentReminders: [traineeIds[0]] },
       'Veille de tripartite (tuteur)': { sentReminders: [tutorIds[0]], notSentReminders: [tutorIds[1]] },
       '1 semaine avant 1er codev': { sentReminders: [traineeIds[4]], notSentReminders: [traineeIds[1]] },
+      'Relance elearning POEI': { sentReminders: [traineeIds[0]] },
     });
 
     SinonMongoose.calledWithExactly(
@@ -338,6 +381,42 @@ describe('method', () => {
         { query: 'lean' },
       ],
       2
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findCourses,
+      [
+        {
+          query: 'find',
+          args: [{
+            subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
+            archivedAt: { $exists: false },
+            interruptedAt: { $exists: false },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainees', select: 'contact' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate step',
+            match: { step: { $nin: [new ObjectId(process.env.COLLECTIVE_STEP_IDS)] }, startDate: { $exists: true } },
+            options: { sort: { startDate: 1 } },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneSubProgram,
+      [
+        { query: 'findOne', args: [{ _id: new ObjectId(process.env.POEI_SUBPROGRAM_ID) }, { steps: 1 }] },
+        { query: 'populate', args: [{ path: 'steps', select: 'type activities', match: { type: E_LEARNING } }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findActivityHistories,
+      [{ query: 'find', args: [{ user: traineeIds[0], activity: { $in: activitiesIds } }] }, { query: 'lean' }]
     );
     sinon.assert.calledWithExactly(
       smsSend.getCall(0),
@@ -401,12 +480,23 @@ describe('method', () => {
         tag: 'Formation VAEI',
       }
     );
+    sinon.assert.calledWithExactly(
+      smsSend.getCall(6),
+      {
+        recipient: '+33987654321',
+        sender: 'Compani',
+        content: 'Formation POEI :\nN\'oubliez pas de faire votre e-learning !',
+        tag: 'Formation POEI',
+      }
+    );
   });
 
   it('should return empty result if no matching slot', async () => {
     findSlots.onCall(0).returns(SinonMongoose.stubChainedQueries([]));
     findSlots.onCall(1).returns(SinonMongoose.stubChainedQueries([]));
     findSlots.onCall(2).returns(SinonMongoose.stubChainedQueries([]));
+    findCourses.returns(SinonMongoose.stubChainedQueries([]));
+    findOneSubProgram.returns(SinonMongoose.stubChainedQueries({}));
 
     // eslint-disable-next-line no-console
     const server = { log: value => console.log(value) };
@@ -419,6 +509,7 @@ describe('method', () => {
       'Veille de tripartite (apprenant)': {},
       'Veille de tripartite (tuteur)': {},
       '1 semaine avant 1er codev': {},
+      'Relance elearning POEI': {},
     });
 
     SinonMongoose.calledWithExactly(
@@ -509,6 +600,32 @@ describe('method', () => {
       ],
       2
     );
+    SinonMongoose.calledOnceWithExactly(
+      findCourses,
+      [
+        {
+          query: 'find',
+          args: [{
+            subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
+            archivedAt: { $exists: false },
+            interruptedAt: { $exists: false },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainees', select: 'contact' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate step',
+            match: { step: { $nin: [new ObjectId(process.env.COLLECTIVE_STEP_IDS)] }, startDate: { $exists: true } },
+            options: { sort: { startDate: 1 } },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(findOneSubProgram);
+    sinon.assert.notCalled(findActivityHistories);
     sinon.assert.notCalled(smsSend);
   });
 });
