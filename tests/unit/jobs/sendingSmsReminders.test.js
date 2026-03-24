@@ -120,7 +120,6 @@ describe('method', () => {
         course: {
           interruptedAt: '2026-01-01T15:00:00.000Z',
           trainees: [{ _id: traineeIds[2], identity: { lastname: 'App3', firstname: 'Alice' } }],
-          tutors: [],
         },
       },
       {
@@ -134,7 +133,6 @@ describe('method', () => {
         course: {
           archivedAt: '2026-01-01T15:00:00.000Z',
           trainees: [{ _id: traineeIds[3], identity: { lastname: 'App4', firstname: 'Bernard' } }],
-          tutors: [],
         },
       },
       {
@@ -175,6 +173,22 @@ describe('method', () => {
             { _id: tutorIds[0], contact: { phone: '0987654321', countryCode: '+33' } },
             { _id: tutorIds[1], contact: {} },
           ],
+        },
+      },
+      {
+        startDate: '2026-01-05T15:00:00.000Z',
+        step: new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
+        trainers: [{
+          _id: trainerId,
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          contact: { countryCode: '+33', phone: '0987654321' },
+        }],
+        course: {
+          trainees: [{
+            _id: traineeIds[4],
+            contact: { phone: '0987654321', countryCode: '+33' },
+            identity: { lastname: 'App4', firstname: 'Jeanne' },
+          }],
         },
       },
     ];
@@ -288,7 +302,7 @@ describe('method', () => {
       'Relance elearning avant évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
       'Veille d\'évaluation': { sentReminders: [traineeIds[0]], notSentReminders: [traineeIds[1]] },
       'Veille de CODEV': { sentReminders: [traineeIds[0]] },
-      'Veille de tripartite (apprenant)': { sentReminders: [traineeIds[0]] },
+      'Veille de tripartite (apprenant)': { sentReminders: [traineeIds[0], traineeIds[4]] },
       'Veille de tripartite (tuteur)': { sentReminders: [tutorIds[0]], notSentReminders: [tutorIds[1]] },
       '1 semaine avant 1er codev': { sentReminders: [traineeIds[4]], notSentReminders: [traineeIds[1]] },
       'Relance elearning POEI': { sentReminders: [traineeIds[0]] },
@@ -474,6 +488,16 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
+        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite qui aura lieu demain à 16:00, dans '
+        + 'votre structure. Si besoin, contactez votre coach (+33987654321).',
+        tag: 'Formation VAEI',
+      }
+    );
+    sinon.assert.calledWithExactly(
+      smsSend.getCall(6),
+      {
+        recipient: '+33987654321',
+        sender: 'Compani',
         content: 'Formation VAEI :\nVotre première session d\'accompagnement collectif aura lieu le 11/01/2026 à 16:00 '
         + 'avec l\'animateur.rice Claire FORM. Veuillez vérifier vos mails pour vous connecter sur la visio. '
         + 'Si besoin, contactez votre coach.',
@@ -481,7 +505,7 @@ describe('method', () => {
       }
     );
     sinon.assert.calledWithExactly(
-      smsSend.getCall(6),
+      smsSend.getCall(7),
       {
         recipient: '+33987654321',
         sender: 'Compani',

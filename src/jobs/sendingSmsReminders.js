@@ -140,7 +140,7 @@ const getSlotsIn1D = async () => {
           break;
       }
     }
-    if (UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_TRIPARTITE_STEP_ID)) {
+    if (UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_TRIPARTITE_STEP_ID) && slot.course.tutors) {
       for (const tutor of slot.course.tutors) {
         const tutorContact = get(tutor, 'contact');
         if (get(tutorContact, 'phone')) {
