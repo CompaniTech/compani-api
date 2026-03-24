@@ -6,6 +6,7 @@ const ActivityHistory = require('../models/ActivityHistory');
 const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const SubProgram = require('../models/SubProgram');
+const NumbersHelper = require('../helpers/numbers');
 const SmsHelper = require('../helpers/sms');
 const UtilsHelper = require('../helpers/utils');
 const { CompaniDate } = require('../helpers/dates/companiDates');
@@ -275,9 +276,9 @@ const getPOEIFirstSingleSlot = async () => {
         .find({ user: course.trainees[0]._id, activity: { $in: activitiesIds } })
         .lean();
       const ahWithoutDuplicates = [...new Set(traineeAH.map(ah => ah.activity.toHexString()))];
-      if (ahWithoutDuplicates.length / activitiesIds.length < ((1 / 8) * (course.week + 1))) {
-        trainees.push(course.trainees[0]);
-      }
+      const traineeProgress = NumbersHelper.divide(ahWithoutDuplicates.length, activitiesIds.length);
+      const expectedProgress = NumbersHelper.multiply(NumbersHelper.divide(1, 8), (course.week + 1));
+      if (traineeProgress < expectedProgress) trainees.push(course.trainees[0]);
     }
 
     for (const trainee of trainees) {
