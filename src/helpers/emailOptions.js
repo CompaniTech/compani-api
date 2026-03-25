@@ -45,17 +45,13 @@ const verificationCodeEmail = verificationCode => `<p>Bonjour,</p>
     <p>Bien cordialement,<br>
       L'équipe Compani</p>`;
 
-const welcomeTraineeContent = () => `<p>Bonjour,</p>
-  <p>Bienvenue sur Compani Formation, l'outil au service du prendre soin,
-  nous venons de vous créer votre compte apprenant.</p>
+const welcomeTraineeContent = content => `<p>Bonjour,</p>
+  <p>Bienvenue sur Compani Formation, l'outil au service du prendre soin, nous venons de vous créer votre compte apprenant.</p>
+  <p>${content}</p>
   <p>
-  Vous y trouverez de nombreuses formations ludiques pour vous accompagner dans votre quotidien : 
-  les troubles cognitifs, la communication empathique, gérer la fin de vie et le deuil, et bien d'autres encore... 
+  Nous vous invitons à télécharger l'application Compani Formation sur votre store et à cliquer sur “c’est ma première connexion” pour vous créer un mot de passe. 
   </p>
-  <p>
-  Nous vous invitons à télécharger l'application Compani Formation sur votre store et
-    à cliquer sur “c’est ma première connexion” pour vous créer un mot de passe. 
-  </p>
+  <p>Veillez à bien utiliser l'adresse email sur laquelle vous avez reçu cet email.</p>
   <p>Bien cordialement,<br>
     L'équipe Compani</p>
   <br>
@@ -93,14 +89,15 @@ const addTutorContent = (tutorIdentity, tutorEmail, learnerIdentity, courseName,
   <p>Vous y retrouverez tous les rendez-vous de la formation ainsi que les modules théoriques (e-learning) que votre apprenant va suivre et que vous pouvez faire pour l'accompagner dans l'onglet "Mes formations", section "Tutorat".</p>
   <p>Pour information, la formation dédiée aux tuteurs.trices est <strong>obligatoire</strong> et est divisée en trois sessions :</p>
   <ul>
-    <li><strong>Session 1 :</strong> Présentation de la formation VAEI (1h30)</li>
-    <li><strong>Session 2 :</strong> Rôle tuteur.trice dans l’accompagnement. (1h30)</li>
+    <li><strong>Session 1 (mois 1 ou 2) :</strong> Présentation de la formation VAEI (1h30)</li>
+    <li><strong>Session 2 (mois 3 environ) :</strong> Rôle tuteur.trice dans l’accompagnement. (1h30)</li>
     <li>Réalisation en autonomie de trois modules e-learning. (4h00)</li>
-    <li><strong>Session 3 :</strong> Accompagner la préparation au passage de la VAE Aide-Soignant (1h00)</li>
+    <li><strong>Session 3 (mois 10 environ) :</strong> Accompagner la préparation au passage de la VAE Aide-Soignant (1h00)</li>
   </ul>
   <p>À l’issue des sessions 1 et 3, un certificat de réalisation vous sera envoyé.</p>
   <p>Nous organisons prochainement la session 1 de la formation des tuteurs.trices VAEI en visioconférence :</p>
   <p><strong>Une invitation Google vous sera envoyée sur cette adresse email. Merci de confirmer votre présence, en acceptant l'invitation.</strong></p>
+  <p>Si vous n'êtes pas disponible, merci de nous l'indiquer par mail à ${process.env.BILLING_COMPANI_EMAIL} afin que l'on vous propose un autre créneau.</p>
   <p>N’hésitez pas à nous écrire pour toute question.</p>
   <p>Bien cordialement,<br>
   L'équipe Compani</p>

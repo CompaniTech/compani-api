@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
+const compact = require('lodash/compact');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
@@ -28,7 +29,7 @@ const { CompaniDate } = require('./dates/companiDates');
 
 const { language } = translate;
 
-exports.sendWelcome = async (type, email) => {
+exports.sendWelcome = async (type, email, welcomeTraineeContent = '') => {
   const passwordToken = await AuthenticationHelper.createPasswordToken(email);
 
   const subject = 'Bienvenue dans votre espace Compani';
@@ -36,11 +37,14 @@ exports.sendWelcome = async (type, email) => {
   const options = { passwordToken, companyName: 'Compani' };
 
   if (type === TRAINEE) {
+    const content = welcomeTraineeContent || 'Vous y trouverez de nombreuses formations ludiques pour vous accompagner '
+      + 'dans votre quotidien : les troubles cognitifs, la communication empathique, gérer la fin de vie et le deuil, '
+      + 'et bien d\'autres encore... ';
     const mailOptions = {
       from: `Compani <${SENDER_MAIL}>`,
       to: email,
       subject,
-      html: EmailOptionsHelper.welcomeTraineeContent(),
+      html: EmailOptionsHelper.welcomeTraineeContent(content),
     };
     try {
       return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
@@ -217,6 +221,41 @@ exports.completionSendingPendingBillsEmail = (day, emailSent, pendingCourseBillD
     to: process.env.TECH_EMAILS,
     subject: `Script envoi des factures programmé au ${CompaniDate(day).format(DD_MM_YYYY)}`,
     html: content,
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+};
+
+exports.completionSendingSmsRemindersEmail = (result) => {
+  const totalSentReminders = compact(Object.values(result).flatMap(reminder => reminder.sentReminders));
+  const totalNotSentReminders = compact(Object.values(result).flatMap(reminder => reminder.notSentReminders));
+  let body = `<p>Script exécuté. ${totalSentReminders.length + totalNotSentReminders.length} rappels traités.</p>`;
+
+  Object.entries(result).forEach(([reminderName, data]) => {
+    const { sentReminders } = data;
+    const { notSentReminders } = data;
+    if ((sentReminders && sentReminders.length) || (notSentReminders && notSentReminders.length)) {
+      body = body.concat(`<p>${reminderName} :</p>`);
+    }
+    if (sentReminders && sentReminders.length) {
+      const htmlSentReminders = sentReminders.map(r => `<li>Utilisateur: ${r.toHexString()}</li>`).join('');
+      body = body.concat(
+        `<ul><p>Rappel envoyé pour les utilisateurs suivants :</p>${htmlSentReminders}</ul>`
+      );
+    }
+    if (notSentReminders && notSentReminders.length) {
+      const htmlNotSentReminders = notSentReminders.map(r => `<li>Utilisateur: ${r.toHexString()}</li>`).join('');
+      body = body.concat(
+        `<ul><p>Numéro de téléphone manquant :</p>${htmlNotSentReminders}</ul><br/>`
+      );
+    }
+  });
+
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: process.env.TECH_EMAILS,
+    subject: 'Script envoi des rappels SMS',
+    html: body,
   };
 
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);

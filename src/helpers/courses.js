@@ -112,13 +112,12 @@ exports.createCourse = async (payload, credentials) => {
       )
       .lean();
 
+    const trainee = await User
+      .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
+      .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
+      .lean();
     const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
     if (UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)) {
-      const trainee = await User
-        .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
-        .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
-        .lean();
-
       const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
         traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
         traineeEmail: trainee.local.email,
@@ -133,6 +132,19 @@ exports.createCourse = async (payload, credentials) => {
     }
 
     coursePayload = { ...omit(coursePayload, 'trainee'), companies: [company.company] };
+    const courseContent = 'Vous y trouverez tous les rendez-vous de la formation ainsi que les modules théoriques '
+      + '(e-learning) pour vous accompagner dans cette formation.';
+    await EmailHelper.sendWelcome(TRAINEE, trainee.local.email, courseContent);
+
+    if (get(trainee, 'contact.phone')) {
+      await SmsHelper.send({
+        tag: COURSE_SMS,
+        content: 'Téléchargez et connectez vous à l\'application Compani via ce lien https://apple.co/33kKzcU (Apple) '
+          + 'ou https://bit.ly/3en5OkF (Android) et explorez vos premiers e-learnings !',
+        recipient: `${trainee.contact.countryCode}${trainee.contact.phone.substring(1)}`,
+        sender: 'Compani',
+      });
+    }
   }
 
   if (payload.prices) {
@@ -413,10 +425,10 @@ const listForPedagogy = async (query, origin, credentials) => {
   const achieved = [];
   const formattedTraineeCourses = filteredTraineeCourses
     .map((course) => {
-      let progress = 0;
       const courseWithProgress = exports.formatCourseWithProgress(course, traineeOrTutorId, shouldComputePresence);
 
       if (origin === MOBILE) {
+        let progress;
         if (courseWithProgress.format === STRICTLY_E_LEARNING) progress = courseWithProgress.progress.eLearning || 0;
         else progress = courseWithProgress.progress.blended || 0;
         if (progress < 1) onGoing.push(courseWithProgress);
@@ -715,12 +727,13 @@ exports.getCourseFollowUp = async (course, query, credentials) => {
     })
     .lean();
 
-  let filteredTrainees = [];
   if (query.trainee) {
     return {
       trainee: exports.getTraineesWithElearningProgress(courseFollowUp.trainees, courseFollowUp.subProgram.steps)[0],
     };
   }
+
+  let filteredTrainees;
   if (!companies.length) filteredTrainees = courseFollowUp.trainees;
   else if (courseWithTrainees.format === STRICTLY_E_LEARNING) {
     filteredTrainees = courseFollowUp.trainees.filter(t => UtilsHelper.doesArrayIncludeId(companies, t.company));
@@ -1309,7 +1322,7 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
 
   const attendanceDuration = UtilsHelper.getTotalDuration(traineeSlots, false);
 
-  let eLearningDuration = {};
+  let eLearningDuration;
   if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, subProgramId)) {
     const activityHistories = uniqBy(
       steps
@@ -1797,7 +1810,6 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
         credentials
       );
       userId = newUser._id;
-      await EmailHelper.sendWelcome(TRAINEE, learner['local.email']);
     } else {
       const courseAlreadyExists = await Course
         .countDocuments({ trainees: userId, type: SINGLE, subProgram: learner.subProgram });

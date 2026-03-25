@@ -102,6 +102,8 @@ describe('createCourse', () => {
   let addTrainee;
   let userFindOne;
   let createCourseFolderAndSheet;
+  let sendWelcome;
+  let smsSend;
   const credentials = { _id: new ObjectId() };
   const subProgramId = new ObjectId();
 
@@ -117,6 +119,8 @@ describe('createCourse', () => {
     addTrainee = sinon.stub(CourseHelper, 'addTrainee');
     userFindOne = sinon.stub(User, 'findOne');
     createCourseFolderAndSheet = sinon.stub(GDriveStorageHelper, 'createCourseFolderAndSheet');
+    sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
+    smsSend = sinon.stub(SmsHelper, 'send');
     UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
     process.env.VAEI_SUBPROGRAM_IDS = subProgramId.toHexString();
   });
@@ -129,6 +133,8 @@ describe('createCourse', () => {
     addTrainee.restore();
     userFindOne.restore();
     createCourseFolderAndSheet.restore();
+    sendWelcome.restore();
+    smsSend.restore();
     UtilsMock.unmockCurrentDate();
     process.env.VAEI_SUBPROGRAM_IDS = '';
   });
@@ -167,6 +173,8 @@ describe('createCourse', () => {
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
     sinon.assert.notCalled(createCourseFolderAndSheet);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(smsSend);
     sinon.assert.calledOnceWithExactly(
       create,
       {
@@ -282,6 +290,23 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.calledOnceWithExactly(
+      sendWelcome,
+      TRAINEE,
+      'toto.titi@compani.fr',
+      'Vous y trouverez tous les rendez-vous de la formation ainsi que les modules théoriques (e-learning) pour vous '
+        + 'accompagner dans cette formation.'
+    );
+    sinon.assert.calledOnceWithExactly(
+      smsSend,
+      {
+        tag: COURSE_SMS,
+        content: 'Téléchargez et connectez vous à l\'application Compani via ce lien https://apple.co/33kKzcU (Apple) '
+          + 'ou https://bit.ly/3en5OkF (Android) et explorez vos premiers e-learnings !',
+        recipient: '+33612345678',
+        sender: 'Compani',
+      }
+    );
     sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
     sinon.assert.calledOnceWithExactly(addTrainee, course._id, { trainee: traineeId }, credentials);
   });
@@ -311,6 +336,8 @@ describe('createCourse', () => {
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
     sinon.assert.notCalled(createCourseFolderAndSheet);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(smsSend);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -347,6 +374,8 @@ describe('createCourse', () => {
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
     sinon.assert.notCalled(createCourseFolderAndSheet);
+    sinon.assert.notCalled(sendWelcome);
+    sinon.assert.notCalled(smsSend);
   });
 });
 
@@ -5982,7 +6011,7 @@ describe('formatCourseForDocuments', () => {
     const subProgramId = new ObjectId();
     const traineesIds = [new ObjectId(), new ObjectId()];
     const course = {
-      trainees: traineesIds,
+      trainees: [{ _id: traineesIds[0] }, { _id: traineesIds[1] }],
       slots: [
         { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', trainees: [traineesIds[0]] },
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
@@ -6038,7 +6067,7 @@ describe('formatCourseForDocuments', () => {
     const companies = [{ _id: companyId, name: 'structure' }, { _id: otherCompanyId, name: 'other structure' }];
     const traineesIds = [new ObjectId(), new ObjectId()];
     const course = {
-      trainees: traineesIds,
+      trainees: [{ _id: traineesIds[0] }, { _id: traineesIds[1] }],
       slots: [
         { startDate: '2020-03-20T09:00:00', endDate: '2020-03-20T11:00:00', trainees: [traineesIds[0]] },
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
@@ -9063,7 +9092,6 @@ describe('uploadSingleCourseCSV', () => {
   let createUser;
   let createCourse;
   let addTrainer;
-  let sendWelcome;
 
   beforeEach(() => {
     companyFindOne = sinon.stub(Company, 'findOne');
@@ -9074,7 +9102,6 @@ describe('uploadSingleCourseCSV', () => {
     createUser = sinon.stub(UserHelper, 'createUser');
     createCourse = sinon.stub(CourseHelper, 'createCourse');
     addTrainer = sinon.stub(CourseHelper, 'addTrainer');
-    sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
   });
 
   afterEach(() => {
@@ -9086,7 +9113,6 @@ describe('uploadSingleCourseCSV', () => {
     createUserCompany.restore();
     createCourse.restore();
     addTrainer.restore();
-    sendWelcome.restore();
   });
 
   it('should create course with new trainee and new company', async () => {
@@ -9151,7 +9177,6 @@ describe('uploadSingleCourseCSV', () => {
     );
 
     sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
-    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
     sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
     sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: coach._id }, credentials);
     sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: architect._id }, credentials);
@@ -9217,7 +9242,6 @@ describe('uploadSingleCourseCSV', () => {
     sinon.assert.calledOnceWithExactly(userCompanyCountDocuments, { user: userId, company: companyId });
     sinon.assert.calledOnceWithExactly(createUserCompany, { user: userId, company: companyId });
     sinon.assert.notCalled(createUser);
-    sinon.assert.notCalled(sendWelcome);
     sinon.assert.notCalled(addTrainer);
   });
 
@@ -9275,7 +9299,6 @@ describe('uploadSingleCourseCSV', () => {
     );
 
     sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
-    sinon.assert.calledOnceWithExactly(sendWelcome, TRAINEE, 'jean.todt@suffix.fr');
     sinon.assert.notCalled(createCompany);
     sinon.assert.notCalled(courseCountDocuments);
     sinon.assert.notCalled(addTrainer);
@@ -9315,7 +9338,6 @@ describe('uploadSingleCourseCSV', () => {
 
     sinon.assert.notCalled(createCompany);
     sinon.assert.notCalled(createUser);
-    sinon.assert.notCalled(sendWelcome);
     sinon.assert.notCalled(createCourse);
     sinon.assert.notCalled(addTrainer);
     sinon.assert.notCalled(userCompanyCountDocuments);

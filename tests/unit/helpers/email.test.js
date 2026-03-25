@@ -33,6 +33,8 @@ describe('sendWelcome', () => {
   const baseWelcomeText = 'base content';
   const passwordToken = 'passwordToken';
   const sentObj = { msg: 'Message sent !' };
+  const content = 'Vous y trouverez de nombreuses formations ludiques pour vous accompagner dans votre quotidien : les '
+  + 'troubles cognitifs, la communication empathique, gérer la fin de vie et le deuil, et bien d\'autres encore... ';
 
   beforeEach(() => {
     trainerCustomContent = sinon.stub(EmailOptionsHelper, 'trainerCustomContent');
@@ -114,7 +116,7 @@ describe('sendWelcome', () => {
     sinon.assert.notCalled(welcomeTraineeContent);
   });
 
-  it('should send email to coach', async () => {
+  it('should send email to client_admin', async () => {
     createPasswordToken.returns(passwordToken);
     coachCustomContent.returns(coachWelcomeCustomText);
     baseWelcomeContent.returns(baseWelcomeText);
@@ -144,7 +146,7 @@ describe('sendWelcome', () => {
     sinon.assert.notCalled(welcomeTraineeContent);
   });
 
-  it('should send email to trainee', async () => {
+  it('should send email to trainee (without params content)', async () => {
     welcomeTraineeContent.returns('Bonjour à tous et passez une bonne journée');
     sendinBlueTransporter.returns({ sendMail });
     sendMail.returns(sentObj);
@@ -152,7 +154,30 @@ describe('sendWelcome', () => {
     const result = await EmailHelper.sendWelcome('trainee', email);
 
     expect(result).toEqual(sentObj);
-    sinon.assert.calledOnceWithExactly(welcomeTraineeContent);
+    sinon.assert.calledOnceWithExactly(welcomeTraineeContent, content);
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: email,
+        subject: 'Bienvenue dans votre espace Compani',
+        html: 'Bonjour à tous et passez une bonne journée',
+      }
+    );
+    sinon.assert.notCalled(trainerCustomContent);
+    sinon.assert.notCalled(coachCustomContent);
+  });
+
+  it('should send email to trainee (with params content)', async () => {
+    welcomeTraineeContent.returns('Bonjour à tous et passez une bonne journée');
+    sendinBlueTransporter.returns({ sendMail });
+    sendMail.returns(sentObj);
+
+    const result = await EmailHelper.sendWelcome('trainee', email, 'test');
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledOnceWithExactly(welcomeTraineeContent, 'test');
     sinon.assert.calledWithExactly(sendinBlueTransporter);
     sinon.assert.calledOnceWithExactly(
       sendMail,
@@ -175,7 +200,7 @@ describe('sendWelcome', () => {
     } catch (e) {
       expect(e).toEqual(Boom.failedDependency(translate[language].emailNotSent));
     } finally {
-      sinon.assert.calledOnceWithExactly(welcomeTraineeContent);
+      sinon.assert.calledOnceWithExactly(welcomeTraineeContent, content);
       sinon.assert.calledWithExactly(sendinBlueTransporter);
       sinon.assert.notCalled(sendMail);
       sinon.assert.notCalled(trainerCustomContent);
@@ -506,13 +531,13 @@ describe('sendBillEmail', async () => {
     const companies = [new ObjectId(), new ObjectId()];
     const courseBills = [
       {
-        _id: courseBillIds[0]._id,
+        _id: courseBillIds[0],
         companies: [{ _id: companies[0] }],
         number: 'FACT-00001',
         payer,
       },
       {
-        _id: courseBillIds[1]._id,
+        _id: courseBillIds[1],
         companies: [{ _id: companies[1] }],
         number: 'FACT-00002',
         payer,
@@ -603,14 +628,14 @@ describe('sendBillEmail', async () => {
     const companies = [new ObjectId(), new ObjectId()];
     const courseBills = [
       {
-        _id: courseBillIds[0]._id,
+        _id: courseBillIds[0],
         companies: [{ _id: companies[0] }],
         number: 'FACT-00001',
         payer,
         sendingDate: ['2025-09-09T00:00:00.000Z'],
       },
       {
-        _id: courseBillIds[1]._id,
+        _id: courseBillIds[1],
         companies: [{ _id: companies[1] }],
         number: 'FACT-00002',
         payer,
@@ -683,6 +708,59 @@ describe('completionSendingPendingBillsEmail', async () => {
         to: 'tech@compani.fr',
         subject: 'Script envoi des factures programmé au 06/01/2026',
         html: content,
+      }
+    );
+  });
+});
+
+describe('completionSendingSmsRemindersEmail', async () => {
+  let sendMail;
+  let sendinBlueTransporter;
+
+  beforeEach(() => {
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
+    sendMail = sinon.stub();
+    process.env.TECH_EMAILS = 'tech@compani.fr';
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+    process.env.TECH_EMAILS = '';
+  });
+
+  it('should send an email to TECH_EMAILS after script has been executed', async () => {
+    const traineeIds = [new ObjectId(), new ObjectId()];
+    const res = {
+      'Relance elearning avant évaluation': {
+        sentReminders: [traineeIds[0]],
+        notSentReminders: [traineeIds[1]],
+      },
+      'Veille d\'évaluation': {},
+    };
+    const test = '<p>Script exécuté. 2 rappels traités.</p>'
+    + '<p>Relance elearning avant évaluation :</p>'
+    + '<ul><p>Rappel envoyé pour les utilisateurs suivants :</p>'
+    + `<li>Utilisateur: ${traineeIds[0].toHexString()}</li>`
+    + '</ul>'
+    + '<ul><p>Numéro de téléphone manquant :</p>'
+    + `<li>Utilisateur: ${traineeIds[1].toHexString()}</li>`
+    + '</ul><br/>';
+    const sentObj = { msg: test };
+
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+
+    const result = await EmailHelper.completionSendingSmsRemindersEmail(res);
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: 'tech@compani.fr',
+        subject: 'Script envoi des rappels SMS',
+        html: test,
       }
     );
   });

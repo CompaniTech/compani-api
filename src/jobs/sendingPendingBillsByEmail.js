@@ -61,7 +61,7 @@ const sendingPendingBillsByEmailJob = {
       server.log(['cron', 'oncomplete'], 'Pending courseBills sending : email envoyé.');
     } catch (e) {
       server.log(e);
-      server.log(['cron', 'oncomplete'], 'CompletionCertificateCreation ERROR');
+      server.log(['cron', 'oncomplete'], 'sendingPendingBillsByEmail ERROR');
     }
   },
 };

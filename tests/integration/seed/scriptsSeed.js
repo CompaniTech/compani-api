@@ -36,6 +36,7 @@ const userList = [
     _id: new ObjectId(),
     identity: { firstname: 'trainee', lastname: 'toto' },
     local: { email: 'trainee@alenvi.io' },
+    contact: { countryCode: '+33', phone: '0987654321' },
     origin: WEBAPP,
   },
   { // 1
@@ -51,21 +52,40 @@ const userList = [
     local: { email: 'trainee_otherCompany@alenvi.io' },
     origin: WEBAPP,
   },
+  { // 3
+    _id: new ObjectId(),
+    identity: { firstname: 'trainee', lastname: 'coco' },
+    local: { email: 'trainee_auth@alenvi.io' },
+    contact: { countryCode: '+33', phone: '0987654321' },
+    origin: WEBAPP,
+  },
 ];
 
-const cardsList = [{ _id: new ObjectId(), template: 'transition', title: 'ceci est un titre' }];
+const cardsList = [
+  { _id: new ObjectId(), template: 'transition', title: 'ceci est un titre' },
+  { _id: new ObjectId(), template: 'transition', title: 'ceci est un texte' },
+];
 
-const activityList = [{
-  _id: new ObjectId(),
-  name: 'une super activité',
-  type: VIDEO,
-  cards: [cardsList[0]._id],
-  status: PUBLISHED,
-}];
+const activityList = [
+  {
+    _id: new ObjectId(),
+    name: 'une super activité',
+    type: VIDEO,
+    cards: [cardsList[0]._id],
+    status: PUBLISHED,
+  },
+  {
+    _id: new ObjectId(),
+    name: 'une super activité 2',
+    type: VIDEO,
+    cards: [cardsList[1]._id],
+    status: PUBLISHED,
+  },
+];
 
 const stepList = [
-  { _id: new ObjectId(), type: 'on_site', name: 'Coaching - reflexivité', status: PUBLISHED, theoreticalDuration: 60 },
-  { _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), type: 'on_site', name: 'Evaluation', status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), type: 'on_site', name: 'CODEV', status: PUBLISHED, theoreticalDuration: 60 },
   {
     _id: new ObjectId(),
     type: 'e_learning',
@@ -74,30 +94,48 @@ const stepList = [
     theoreticalDuration: 60,
     activities: [activityList[0]._id],
   },
+  { _id: new ObjectId(), type: 'on_site', name: 'tripartite', status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), type: 'on_site', name: 'poei single', status: PUBLISHED, theoreticalDuration: 60 },
+  {
+    _id: new ObjectId(),
+    type: 'e_learning',
+    name: 'Apprentissage 2',
+    status: PUBLISHED,
+    theoreticalDuration: 60,
+    activities: [activityList[1]._id],
+  },
 ];
 
 const userCompanyList = [
   { _id: new ObjectId(), user: userList[0]._id, company: authCompany._id },
-  { _id: new ObjectId(), user: userList[0]._id, company: otherCompany._id },
+  { _id: new ObjectId(), user: userList[2]._id, company: otherCompany._id },
+  { _id: new ObjectId(), user: userList[3]._id, company: authCompany._id },
 ];
 
 const subProgramList = [
   {
     _id: new ObjectId(),
     name: 'Subprogram 2',
-    steps: [stepList[0]._id, stepList[2]._id],
+    steps: [stepList[0]._id, stepList[1]._id, stepList[2]._id, stepList[3]._id],
     status: PUBLISHED,
   },
-  { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[1]._id], status: PUBLISHED },
+  { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[0]._id], status: PUBLISHED },
+  {
+    _id: new ObjectId(),
+    name: 'Subprogram 3',
+    steps: [stepList[4]._id, stepList[0]._id, stepList[2]._id, stepList[5]._id],
+    status: PUBLISHED,
+  },
 ];
 
 const courseList = [
-  { // 0 - single course
+  { // 0 - single course VAEI
     _id: new ObjectId(),
     subProgram: subProgramList[0]._id,
     type: SINGLE,
-    maxTrainees: 8,
+    maxTrainees: 1,
     trainees: [userList[0]._id],
+    tutors: [userList[3]._id],
     companies: [authCompany._id],
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
@@ -115,12 +153,54 @@ const courseList = [
     trainers: [userList[1]._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    expectedBillsCount: 1,
   },
-  { // 2 - single course
+  { // 2 - single course VAEI
     _id: new ObjectId(),
     subProgram: subProgramList[0]._id,
     type: SINGLE,
     maxTrainees: 8,
+    trainees: [userList[2]._id],
+    companies: [otherCompany._id],
+    trainers: [userList[1]._id],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+  },
+  { // 3 - single course VAEI
+    _id: new ObjectId(),
+    subProgram: subProgramList[0]._id,
+    type: SINGLE,
+    maxTrainees: 1,
+    trainees: [userList[3]._id],
+    companies: [authCompany._id],
+    trainers: [userList[1]._id],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+  },
+  { // 4 - single course POEI
+    _id: new ObjectId(),
+    subProgram: subProgramList[2]._id,
+    type: SINGLE,
+    maxTrainees: 1,
+    misc: 'POEI 1',
+    trainees: [userList[0]._id],
+    companies: [authCompany._id],
+    trainers: [userList[1]._id],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: MONTHLY,
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+  },
+  { // 5 - single course POEI
+    _id: new ObjectId(),
+    subProgram: subProgramList[2]._id,
+    type: SINGLE,
+    maxTrainees: 1,
+    misc: 'POEI 2',
     trainees: [userList[2]._id],
     companies: [otherCompany._id],
     trainers: [userList[1]._id],
@@ -145,6 +225,109 @@ const slotList = [
     endDate: '2025-02-25T11:00:00.000Z',
     course: courseList[1]._id,
     step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 2
+    _id: new ObjectId(),
+    startDate: '2023-01-22T09:00:00.000Z',
+    endDate: '2023-01-22T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 3
+    _id: new ObjectId(),
+    startDate: '2023-01-22T09:00:00.000Z',
+    endDate: '2023-01-22T11:00:00.000Z',
+    course: courseList[2]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 4
+    _id: new ObjectId(),
+    startDate: '2023-01-09T09:00:00.000Z',
+    endDate: '2023-01-09T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 5
+    _id: new ObjectId(),
+    startDate: '2023-01-09T09:00:00.000Z',
+    endDate: '2023-01-09T11:00:00.000Z',
+    course: courseList[2]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 6
+    _id: new ObjectId(),
+    startDate: '2023-01-15T09:00:00.000Z',
+    endDate: '2023-01-15T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 7
+    _id: new ObjectId(),
+    startDate: '2023-01-09T09:00:00.000Z',
+    endDate: '2023-01-09T11:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 8
+    _id: new ObjectId(),
+    startDate: '2023-01-15T09:00:00.000Z',
+    endDate: '2023-01-15T11:00:00.000Z',
+    course: courseList[3]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 9
+    _id: new ObjectId(),
+    course: courseList[3]._id,
+    step: stepList[1]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 10
+    _id: new ObjectId(),
+    startDate: '2023-01-09T13:00:00.000Z',
+    endDate: '2023-01-09T14:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[3]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 11
+    _id: new ObjectId(),
+    startDate: '2022-12-21T13:00:00.000Z',
+    endDate: '2022-12-21T14:00:00.000Z',
+    course: courseList[4]._id,
+    step: stepList[4]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 12
+    _id: new ObjectId(),
+    startDate: '2023-01-01T13:00:00.000Z',
+    endDate: '2023-01-01T14:00:00.000Z',
+    course: courseList[4]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 13
+    _id: new ObjectId(),
+    startDate: '2023-10-01T13:00:00.000Z',
+    endDate: '2023-10-01T14:00:00.000Z',
+    course: courseList[5]._id,
+    step: stepList[4]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 14
+    _id: new ObjectId(),
+    startDate: '2022-11-13T13:00:00.000Z',
+    endDate: '2022-11-13T14:00:00.000Z',
+    course: courseList[5]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
   },
 ];
 
@@ -174,7 +357,7 @@ const courseBillList = [
     _id: new ObjectId(),
     course: courseList[0]._id,
     companies: [authCompany._id],
-    mainFee: { price: 1200.20, count: 1, countUnit: GROUP },
+    mainFee: { price: 1200.20, count: 1, countUnit: TRAINEE },
     billedAt: '2022-03-06T00:00:00.000Z',
     number: 'FACT-00001',
     payer: { company: authCompany._id },
@@ -185,14 +368,14 @@ const courseBillList = [
     companies: [authCompany._id],
     billedAt: '2022-03-06T00:00:00.000Z',
     number: 'FACT-00002',
-    mainFee: { price: 1200, count: 1, description: 'Accompagnement Mars 2022', countUnit: TRAINEE },
+    mainFee: { price: 1200, count: 1, description: 'Accompagnement Mars 2022', countUnit: GROUP },
     payer: { company: authCompany._id },
   },
   { // 2
     _id: new ObjectId(),
     course: courseList[0]._id,
     companies: [authCompany._id],
-    mainFee: { price: 1200, count: 1, description: 'Lorem ipsum', countUnit: GROUP },
+    mainFee: { price: 1200, count: 1, description: 'Lorem ipsum', countUnit: TRAINEE },
     payer: { company: authCompany._id },
     billedAt: '2022-04-06T00:00:00.000Z',
     number: 'FACT-00003',
@@ -239,4 +422,4 @@ const populateDB = async () => {
   ]);
 };
 
-module.exports = { populateDB, courseList, userList };
+module.exports = { populateDB, courseList, userList, stepList, subProgramList };

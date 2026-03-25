@@ -2,8 +2,9 @@ const { expect } = require('expect');
 const sinon = require('sinon');
 const app = require('../../server');
 const EmailHelper = require('../../src/helpers/email');
+const SmsHelper = require('../../src/helpers/sms');
 const UtilsMock = require('../utilsMock');
-const { populateDB, courseList, userList } = require('./seed/scriptsSeed');
+const { populateDB, courseList, userList, stepList, subProgramList } = require('./seed/scriptsSeed');
 const { getToken } = require('./helpers/authentication');
 
 describe('NODE ENV', () => {
@@ -14,17 +15,11 @@ describe('NODE ENV', () => {
 
 describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () => {
   let authToken;
-  let completionCertificateCreationEmail;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
-      completionCertificateCreationEmail = sinon.stub(EmailHelper, 'completionCertificateCreationEmail');
-    });
-
-    afterEach(() => {
-      completionCertificateCreationEmail.restore();
     });
 
     it('should send email for completion certificates', async () => {
@@ -79,20 +74,17 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
 describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', () => {
   let authToken;
   let sendBillEmail;
-  let completionSendingPendingBillsEmail;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
       sendBillEmail = sinon.stub(EmailHelper, 'sendBillEmail');
-      completionSendingPendingBillsEmail = sinon.stub(EmailHelper, 'completionSendingPendingBillsEmail');
       UtilsMock.mockCurrentDate('2023-01-08T09:00:00.000Z');
     });
 
     afterEach(() => {
       sendBillEmail.restore();
-      completionSendingPendingBillsEmail.restore();
       UtilsMock.unmockCurrentDate('');
     });
 
@@ -106,6 +98,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', ()
       expect(response.statusCode).toBe(200);
       expect(response.result.data)
         .toEqual({ day: '2023-01-07T23:00:00.000Z', emailSent: 1, pendingCourseBillDeleted: 1 });
+      sinon.assert.calledOnce(sendBillEmail);
     });
   });
 
@@ -122,6 +115,95 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', ()
         const response = await app.inject({
           method: 'GET',
           url: '/scripts/sending-pendingcoursebills-by-email',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
+  let authToken;
+  let smsSend;
+
+  describe('VENDOR_ADMIN', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getToken('vendor_admin');
+      smsSend = sinon.stub(SmsHelper, 'send');
+      UtilsMock.mockCurrentDate('2023-01-08T09:00:00.000Z');
+      process.env.TECH_EMAIL = 'tech@compani.fr';
+      process.env.VAEI_EVALUATION_STEP_ID = stepList[0]._id;
+      process.env.VAEI_CODEV_STEP_ID = stepList[1]._id;
+      process.env.VAEI_TRIPARTITE_STEP_ID = stepList[3]._id;
+      process.env.POEI_SUBPROGRAM_ID = subProgramList[2]._id;
+      process.env.COLLECTIVE_STEP_IDS = stepList[4]._id;
+    });
+
+    afterEach(() => {
+      smsSend.restore();
+      UtilsMock.unmockCurrentDate('');
+      process.env.TECH_EMAIL = '';
+      process.env.VAEI_EVALUATION_STEP_ID = '';
+      process.env.VAEI_CODEV_STEP_ID = '';
+      process.env.VAEI_TRIPARTITE_STEP_ID = '';
+      process.env.POEI_SUBPROGRAM_ID = '';
+      process.env.COLLECTIVE_STEP_IDS = '';
+    });
+
+    it('should send reminders by sms', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/scripts/sending-sms-reminders',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data)
+        .toEqual({
+          'Relance elearning avant évaluation': {
+            sentReminders: [userList[0]._id],
+            notSentReminders: [userList[2]._id],
+          },
+          'Veille d\'évaluation': {
+            sentReminders: [userList[0]._id],
+            notSentReminders: [userList[2]._id],
+          },
+          'Veille de CODEV': {
+            sentReminders: [userList[0]._id],
+          },
+          'Veille de tripartite (apprenant)': {
+            sentReminders: [userList[0]._id],
+          },
+          'Veille de tripartite (tuteur)': {
+            sentReminders: [userList[3]._id],
+          },
+          '1 semaine avant 1er codev': {
+            sentReminders: [userList[3]._id],
+          },
+          'Relance elearning POEI': {
+            sentReminders: [userList[0]._id],
+          },
+        });
+      sinon.assert.callCount(smsSend, 7);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'GET',
+          url: '/scripts/sending-sms-reminders',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 

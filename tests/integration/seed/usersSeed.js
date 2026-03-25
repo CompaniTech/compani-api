@@ -11,7 +11,7 @@ const Contract = require('../../../src/models/Contract');
 const Establishment = require('../../../src/models/Establishment');
 const { otherCompany, authCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { vendorAdmin } = require('../../seed/authUsersSeed');
+const { vendorAdmin, trainer } = require('../../seed/authUsersSeed');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Course = require('../../../src/models/Course');
 const CompanyLinkRequest = require('../../../src/models/CompanyLinkRequest');
@@ -28,6 +28,8 @@ const {
   E_LEARNING,
   ON_SITE,
   GLOBAL,
+  SINGLE,
+  MONTHLY,
 } = require('../../../src/helpers/constants');
 const {
   helperRoleId,
@@ -398,6 +400,25 @@ const coursesList = [
     type: INTER_B2C,
     format: STRICTLY_E_LEARNING,
     trainees: [usersSeedList[12]._id],
+  },
+  { // 24 Single course
+    _id: new ObjectId(),
+    subProgram: subProgramsList[1]._id,
+    contact: trainer._id,
+    misc: 'single course',
+    type: SINGLE,
+    format: BLENDED,
+    trainees: [usersSeedList._id],
+    companies: [authCompany._id],
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    tutors: [],
+    certificateGenerationMode: MONTHLY,
+    maxTrainees: 1,
+    expectedBillsCount: 0,
+    prices: [{ global: 1600, company: authCompany._id }],
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
   },
 ];
 

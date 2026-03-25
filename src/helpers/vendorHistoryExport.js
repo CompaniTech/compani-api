@@ -730,7 +730,7 @@ exports.exportSelfPositionningQuestionnaireHistory = async (startDate, endDate, 
     }, { startSelfPositionningHistories: [], endSelfPositionningHistories: [] });
 
     const startSelfPositionningAnswers = startSelfPositionningHistories
-      .flatMap(h => h.questionnaireAnswersList.filter(a => a.card.template === SURVEY).map(q => q.answerList));
+      .flatMap(h => h.questionnaireAnswersList.filter(a => a.card.template === SURVEY).map(q => q.answerList)).flat();
 
     let startAnswersAverage;
     if (startSelfPositionningAnswers.length) {
@@ -741,7 +741,7 @@ exports.exportSelfPositionningQuestionnaireHistory = async (startDate, endDate, 
     }
 
     const endSelfPositionningAnswers = endSelfPositionningHistories
-      .flatMap(h => h.questionnaireAnswersList.filter(a => a.card.template === SURVEY).map(q => q.answerList));
+      .flatMap(h => h.questionnaireAnswersList.filter(a => a.card.template === SURVEY).map(q => q.answerList)).flat();
 
     let endAnswersAverage;
     if (endSelfPositionningAnswers.length) {
@@ -752,11 +752,17 @@ exports.exportSelfPositionningQuestionnaireHistory = async (startDate, endDate, 
     }
 
     const formattedStartAnswers = startSelfPositionningHistories
-      .flatMap(h => h.questionnaireAnswersList.map(q => pick(q, ['card', 'answerList'])));
+      .flatMap(h => h.questionnaireAnswersList
+        .filter(a => a.card.template === SURVEY)
+        .map(q => pick(q, ['card', 'answerList']))
+      );
     const startAnswersByCard = groupBy(formattedStartAnswers, 'card.question');
 
     const formattedEndAnswers = endSelfPositionningHistories
-      .flatMap(h => h.questionnaireAnswersList.map(q => pick(q, ['card', 'answerList'])));
+      .flatMap(h => h.questionnaireAnswersList
+        .filter(a => a.card.template === SURVEY)
+        .map(q => pick(q, ['card', 'answerList']))
+      );
     const endAnswersByCard = groupBy(formattedEndAnswers, 'card.question');
 
     for (const cardQuestion of Object.keys(startAnswersByCard)) {

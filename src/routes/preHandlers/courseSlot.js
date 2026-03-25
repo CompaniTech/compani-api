@@ -9,6 +9,7 @@ const Step = require('../../models/Step');
 const Attendance = require('../../models/Attendance');
 const AttendanceSheet = require('../../models/AttendanceSheet');
 const CourseHistory = require('../../models/CourseHistory');
+const User = require('../../models/User');
 const translate = require('../../helpers/translate');
 const { checkAuthorization } = require('./courses');
 const {
@@ -233,6 +234,28 @@ exports.authorizeCourseSlotEdition = async (req) => {
       return UtilsHelper.doesArrayIncludeId(trainersWithBillNumber, trainer);
     });
     if (someSlotAreAlreadyPaidForTrainer) throw Boom.forbidden();
+
+    return null;
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+exports.authorizeCourseSlotListGet = async (req) => {
+  try {
+    const { credentials } = req.auth;
+    const vendorRole = get(credentials, 'role.vendor');
+    const loggedUserIsTrainer = get(vendorRole, 'name') === TRAINER;
+    if (loggedUserIsTrainer) {
+      if (!req.query.trainerId) throw Boom.badRequest();
+
+      const loggedUserId = get(credentials, '_id');
+      if (!UtilsHelper.areObjectIdsEquals(loggedUserId, req.query.trainerId)) throw Boom.forbidden();
+    } else if (req.query.trainerId) {
+      const trainerExists = await User.countDocuments({ _id: req.query.trainerId, 'role.vendor': { $exists: true } });
+      if (!trainerExists) throw Boom.notFound();
+    }
 
     return null;
   } catch (e) {

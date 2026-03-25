@@ -200,6 +200,8 @@ const authorizeAttendanceUpdate = async (req, status, courseTrainees = []) => {
   const { course } = courseSlot;
   if (course.archivedAt) throw Boom.forbidden();
 
+  if ((courseSlot.trainerBills || []).length) throw Boom.forbidden(translate[language].slotIsLinkedToTrainerBill);
+
   const { credentials } = req.auth;
   const trainersIds = courseSlot.course.trainers;
   if (get(credentials, 'role.vendor.name') === TRAINER) {

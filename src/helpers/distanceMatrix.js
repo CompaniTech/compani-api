@@ -10,7 +10,7 @@ const isDistanceMatrixDefine = res => (res.status === 200 && get(res, 'data.rows
   get(res, 'data.rows[0].elements[0].duration'));
 
 exports.createDistanceMatrix = async (params, companyId) => {
-  let res = null;
+  let res;
   const query = { ...params, key: process.env.GOOGLE_CLOUD_PLATFORM_API_KEY };
   if (params.mode === TRANSIT) {
     const transitRes = await maps.getDistanceMatrix(query);
