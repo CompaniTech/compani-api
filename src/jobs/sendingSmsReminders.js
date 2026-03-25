@@ -260,9 +260,9 @@ const getPOEIFirstSingleSlot = async () => {
 
     const filteredCourses = courses.reduce((acc, c) => {
       if (!c.slots.length) return acc;
-      const slot = CompaniDate(c.slots[0].startDate).startOf(DAY);
+      const firstSingleSlot = CompaniDate(c.slots[0].startDate).startOf(DAY);
       for (let i = 0; i < 8; i++) {
-        if (CompaniDate().subtract(`P${i}W`).startOf(DAY).isSame(slot)) {
+        if (CompaniDate().subtract(`P${i}W`).startOf(DAY).isSame(firstSingleSlot)) {
           acc.push({ ...c, week: i });
           continue;
         }
@@ -277,7 +277,7 @@ const getPOEIFirstSingleSlot = async () => {
         .lean();
       const ahWithoutDuplicates = [...new Set(traineeAH.map(ah => ah.activity.toHexString()))];
       const traineeProgress = NumbersHelper.divide(ahWithoutDuplicates.length, activitiesIds.length);
-      const expectedProgress = NumbersHelper.multiply(NumbersHelper.divide(1, 8), (course.week + 1));
+      const expectedProgress = NumbersHelper.multiply(NumbersHelper.divide(1, 8), NumbersHelper.add(course.week, 1));
       if (traineeProgress < expectedProgress) trainees.push(course.trainees[0]);
     }
 
