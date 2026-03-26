@@ -1399,7 +1399,6 @@ describe('exportCourseSlotHistory', () => {
         attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
         trainees: [traineeList[0]._id, traineeList[1]._id],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
       },
       { // 1
         _id: new ObjectId(),
@@ -1411,7 +1410,6 @@ describe('exportCourseSlotHistory', () => {
         meetingLink: 'https://meet.google.com',
         attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
       },
       { // 2
         _id: new ObjectId(),
@@ -1423,7 +1421,6 @@ describe('exportCourseSlotHistory', () => {
         address: slotAddress,
         attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
         trainers,
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
       },
       { // 3
         _id: new ObjectId(),

@@ -379,8 +379,8 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
 
     let slotAmount = '';
-    const collectiveSlot = collectiveSlots.find(s => UtilsHelper.areObjectIdsEquals(s._id, slot._id));
     if (slot.course.type === SINGLE) {
+      const collectiveSlot = collectiveSlots.find(s => UtilsHelper.areObjectIdsEquals(s._id, slot._id));
       if (collectiveSlot) {
         const allSlotsWithSameDate = collectiveSlotsGroupByDate[collectiveSlot.date];
         const isAbsence = allSlotsWithSameDate.every(s => s.attendances[0] && s.attendances[0].status === MISSING);
