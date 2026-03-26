@@ -1150,6 +1150,10 @@ const subProgramList = [
     program: programIdList[0],
     steps: [stepList[0]._id, stepList[1]._id],
     status: PUBLISHED,
+    priceVersions: [
+      { effectiveDate: '2019-01-16T10:30:19.543Z', prices: [{ step: stepList[1]._id, hourlyAmount: 80 }] },
+      { effectiveDate: '2021-02-01T10:30:19.543Z', prices: [{ step: stepList[1]._id, hourlyAmount: 100 }] },
+    ],
   },
   {
     _id: new ObjectId(),
