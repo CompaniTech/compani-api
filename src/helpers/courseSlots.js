@@ -19,14 +19,14 @@ const { CompaniDuration } = require('./dates/companiDurations');
 
 const filterPriceVersion = date => version => CompaniDate(version.effectiveDate).isSameOrBefore(date);
 
-const getHourlyAmount = (slot) => {
+exports.getHourlyAmount = (slot) => {
   const matchingSubProgamPriceVersion = UtilsHelper.getMatchingVersion(
     slot.startDate,
-    { ...omit(slot.course.subProgram, 'priceVersions'), versions: slot.course.subProgram.priceVersions },
+    { ...omit(slot.course.subProgram, 'priceVersions'), versions: slot.course.subProgram.priceVersions || [] },
     'effectiveDate',
     filterPriceVersion
   );
-  const price = matchingSubProgamPriceVersion.prices
+  const price = matchingSubProgamPriceVersion?.prices
     .find(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
 
   return price ? price.hourlyAmount : 0;
@@ -231,7 +231,7 @@ exports.list = async (query) => {
   const filteredCourseSlots = courseSlots.reduce((acc, slot) => {
     if (!slot.attendances.length) return acc;
 
-    const hourlyAmount = getHourlyAmount(slot);
+    const hourlyAmount = exports.getHourlyAmount(slot);
     if (hourlyAmount) acc.push({ ...slot, hourlyAmount });
     return acc;
   }, []);
