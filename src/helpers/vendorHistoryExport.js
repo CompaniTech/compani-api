@@ -1,3 +1,4 @@
+const { ObjectId } = require('mongodb');
 const compact = require('lodash/compact');
 const get = require('lodash/get');
 const uniqBy = require('lodash/uniqBy');
@@ -39,13 +40,17 @@ const {
   SLOT_STATUS,
   PAID,
   NOT_PAID,
+  MISSING,
+  MINUTE,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
+const { CompaniDuration } = require('./dates/companiDurations');
 const DatesUtilsHelper = require('./dates/utils');
 const UtilsHelper = require('./utils');
 const NumbersHelper = require('./numbers');
 const CourseBillHelper = require('./courseBills');
 const CourseHelper = require('./courses');
+const CourseSlotHelper = require('./courseSlots');
 const AttendanceSheet = require('../models/AttendanceSheet');
 const CourseSmsHistory = require('../models/CourseSmsHistory');
 const CourseSlot = require('../models/CourseSlot');
@@ -348,7 +353,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'trainees', select: 'identity' },
-        { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+        { path: 'subProgram', select: 'program priceVersions', populate: [{ path: 'program', select: 'name' }] },
       ],
     })
     .populate({
@@ -361,10 +366,38 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 
+  const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
+  const collectiveSlots = filteredCourseSlots
+    .filter(s => UtilsHelper.doesArrayIncludeId(collectiveStepIds, s.step._id))
+    .map(s => ({ ...s, date: `${CompaniDate(s.startDate).toISO()}_${CompaniDate(s.endDate).toISO()}` }));
+  const collectiveSlotsGroupByDate = groupBy(collectiveSlots, 'date');
+
   const rows = [];
 
   for (const slot of filteredCourseSlots) {
+    const hourlyAmount = CourseSlotHelper.getHourlyAmount(slot);
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
+
+    let slotAmount = '';
+    if (slot.course.type === SINGLE) {
+      const collectiveSlot = collectiveSlots.find(s => UtilsHelper.areObjectIdsEquals(s._id, slot._id));
+      if (collectiveSlot) {
+        const allSlotsWithSameDate = collectiveSlotsGroupByDate[collectiveSlot.date];
+        const isAbsence = allSlotsWithSameDate.every(s => s.attendances[0] && s.attendances[0].status === MISSING);
+
+        const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
+        const durationObj = CompaniDuration(duration).asHours();
+        if (isAbsence && durationObj >= 1) slotAmount = hourlyAmount;
+        else slotAmount = NumbersHelper.multiply(durationObj, hourlyAmount);
+      } else {
+        const isAbsence = slot.attendances[0] ? slot.attendances[0].status === MISSING : false;
+        const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
+        const durationObj = CompaniDuration(duration).asHours();
+        if (isAbsence && durationObj >= 1) slotAmount = hourlyAmount;
+        else slotAmount = NumbersHelper.multiply(durationObj, hourlyAmount);
+      }
+    }
+
     const presences = [];
     const absences = [];
     const traineesIds = slot.course.trainees.map(t => t._id);
@@ -378,13 +411,29 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     const absencesCount = absences.length;
     const absencesDuration = NumbersHelper.multiply(absencesCount, Number(slotDuration.replace(',', '.')));
 
-    const trainersStatus = (slot.trainers || []).reduce((acc, trainer) => {
+    let trainersData;
+    if (slot.trainers.length === 1) {
       const trainerBill = (slot.trainerBills || [])
-        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainer._id));
-      const trainerIdentity = UtilsHelper.formatIdentity(trainer.identity, 'FL');
+        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, slot.trainers[0]._id));
+      trainersData = {
+        status: SLOT_STATUS[trainerBill ? PAID : NOT_PAID],
+        bills: trainerBill ? trainerBill.billNumber : '',
+      };
+    } else {
+      trainersData = (slot.trainers || []).reduce((acc, trainer) => {
+        const trainerBill = (slot.trainerBills || [])
+          .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainer._id));
 
-      return { ...acc, [trainerIdentity]: SLOT_STATUS[trainerBill ? PAID : NOT_PAID] };
-    }, {});
+        const trainerIdentity = UtilsHelper.formatIdentity(trainer.identity, 'FL');
+
+        acc.status.push(`${trainerIdentity} : ${SLOT_STATUS[trainerBill ? PAID : NOT_PAID]}`);
+        if (trainerBill) acc.bills.push(`${trainerIdentity} : ${trainerBill.billNumber}`);
+
+        return acc;
+      }, { status: [], bills: [] });
+      trainersData.status = trainersData.status.join(', ');
+      trainersData.bills = trainersData.bills.join(', ');
+    }
 
     rows.push({
       'Id Créneau': slot._id,
@@ -411,9 +460,11 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           : 0,
       }),
       Intervenants: (slot.trainers || []).map(t => UtilsHelper.formatIdentity(t.identity, 'FL')).join(', '),
-      Statut: (slot.trainers || []).length === 1
-        ? Object.values(trainersStatus)[0]
-        : Object.entries(trainersStatus).map(([name, value]) => `${name} : ${value}`).join(', '),
+      ...(courseTypes.includes(SINGLE) && {
+        Statut: trainersData.status,
+        'Facture intervenant': trainersData.bills,
+        Montant: UtilsHelper.formatFloatForExport(slotAmount),
+      }),
     });
   }
 
