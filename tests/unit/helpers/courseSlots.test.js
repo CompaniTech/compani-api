@@ -418,6 +418,7 @@ describe('list', () => {
           {
             _id: courseIds[0].toHexString(),
             name: 'program - indiv 1',
+            program: { name: 'program' },
             singleTraineeSlots: {
               'step 1': {
                 slots: [
@@ -477,6 +478,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '330',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[4]._id,
@@ -489,6 +491,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '330',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
               ],
               paidAmount: 0,
@@ -509,6 +512,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[6]._id,
@@ -521,6 +525,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[7]._id,
@@ -533,6 +538,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '55',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
               ],
               paidAmount: 0,
@@ -667,6 +673,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[1]._id,
@@ -679,6 +686,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
               ],
               paidAmount: 0,
@@ -815,6 +823,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[1]._id,
@@ -828,6 +837,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
+                  program: { name: 'program' },
                 },
               ],
               paidAmount: '110',

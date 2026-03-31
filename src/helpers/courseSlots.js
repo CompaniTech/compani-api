@@ -145,6 +145,7 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
       slotsByDates[dates].slotsDate.push({
         _id: slot._id,
         courseId: slot.course._id,
+        program: slot.course.subProgram.program,
         traineeName: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL'),
         startDate: startISO,
         endDate: endISO,
@@ -281,6 +282,7 @@ exports.list = async (query) => {
         paidSingleSlotsAbsenceDuration: courseTotals.paidSingleSlotsAbsenceDuration.toISO(),
         notPaidSingleSlotsDuration: courseTotals.notPaidSingleSlotsDuration.toISO(),
         notPaidSingleSlotsAbsenceDuration: courseTotals.notPaidSingleSlotsAbsenceDuration.toISO(),
+        program: currentCourseSlots[0].course.subProgram.program,
       });
 
       totalPaidSingleSlotsDuration = totalPaidSingleSlotsDuration.add(courseTotals.paidSingleSlotsDuration);
