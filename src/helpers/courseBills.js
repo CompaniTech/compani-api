@@ -385,27 +385,32 @@ exports.updateBillList = async (payload) => {
               number: `FACT-${(lastBillNumber.seq + i + 1).toString().padStart(5, '0')}`,
             },
             $unset: { maturityDate: '' },
-          }
+          },
+          { new: true }
         )
           .populate({ path: 'course', select: 'type' })
           .lean()
       );
     }
-    const result = await Promise.all(promises);
+    const result = await Promise.allSettled(promises);
+    const fulfilledResults = result.filter(r => r.status === 'fulfilled');
 
-    await CourseBillsNumber
-      .updateOne({}, { $inc: { seq: result.length } }, { new: true, upsert: true, setDefaultsOnInsert: true });
+    await CourseBillsNumber.updateOne(
+      {},
+      { $inc: { seq: fulfilledResults.length } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
 
     const lastPaymentNumber = await CoursePaymentNumber
       .findOneAndUpdate(
         { nature: PAYMENT },
-        { $inc: { seq: result.length } },
+        { $inc: { seq: fulfilledResults.length } },
         { new: true, upsert: true, setDefaultsOnInsert: true }
       )
       .lean();
     const paymentsPromises = [];
-    result.forEach((courseBill, index) => {
-      const paymentPayload = formatPaymentPayload(courseBill, lastPaymentNumber.seq - result.length + 1 + index);
+    fulfilledResults.forEach((courseBill, index) => {
+      const paymentPayload = formatPaymentPayload(courseBill.value, lastPaymentNumber.seq - result.length + 1 + index);
       paymentsPromises.push(CoursePayment.create(paymentPayload));
     });
     await Promise.all(paymentsPromises);
