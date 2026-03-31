@@ -152,7 +152,7 @@ exports.list = async (query, credentials) => {
       ...(query.startDate && query.endDate
         ? [{
           path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt misc',
           populate: [
             { path: 'companies', select: 'name' },
             { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
