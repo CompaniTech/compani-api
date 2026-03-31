@@ -418,7 +418,6 @@ describe('list', () => {
           {
             _id: courseIds[0].toHexString(),
             name: 'program - indiv 1',
-            program: { name: 'program' },
             singleTraineeSlots: {
               'step 1': {
                 slots: [
@@ -431,6 +430,7 @@ describe('list', () => {
                     status: PAID,
                     amount: '50',
                     trainerBillNumber: 'FACT_0001',
+                    program: { name: 'program' },
                   },
                   {
                     _id: slots[8]._id,
@@ -440,6 +440,7 @@ describe('list', () => {
                     isAbsence: true,
                     status: NOT_PAID,
                     amount: '30',
+                    program: { name: 'program' },
                   },
                   {
                     _id: slots[9]._id,
@@ -449,6 +450,7 @@ describe('list', () => {
                     isAbsence: true,
                     status: NOT_PAID,
                     amount: '60',
+                    program: { name: 'program' },
                   },
                 ],
                 toPayDuration: 'PT150M',

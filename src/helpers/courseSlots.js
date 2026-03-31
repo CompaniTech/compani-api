@@ -80,6 +80,7 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
         isAbsence,
         status: slotStatus,
         amount,
+        program: slot.course.subProgram.program,
         ...(trainerBill && trainerBill.billNumber && { trainerBillNumber: trainerBill.billNumber }),
       };
     });
@@ -282,7 +283,6 @@ exports.list = async (query) => {
         paidSingleSlotsAbsenceDuration: courseTotals.paidSingleSlotsAbsenceDuration.toISO(),
         notPaidSingleSlotsDuration: courseTotals.notPaidSingleSlotsDuration.toISO(),
         notPaidSingleSlotsAbsenceDuration: courseTotals.notPaidSingleSlotsAbsenceDuration.toISO(),
-        program: currentCourseSlots[0].course.subProgram.program,
       });
 
       totalPaidSingleSlotsDuration = totalPaidSingleSlotsDuration.add(courseTotals.paidSingleSlotsDuration);
