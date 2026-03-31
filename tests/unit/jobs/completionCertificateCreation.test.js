@@ -6,7 +6,7 @@ const Course = require('../../../src/models/Course');
 const Attendance = require('../../../src/models/Attendance');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
-const { INTER_B2B, MONTHLY, MM_YYYY, BLENDED, PRESENT } = require('../../../src/helpers/constants');
+const { INTER_B2B, MONTHLY, MM_YYYY, BLENDED, PRESENT, GENERATION } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const EmailHelper = require('../../../src/helpers/email');
 const { completionCertificateCreationJob } = require('../../../src/jobs/completionCertificateCreation');
@@ -17,6 +17,7 @@ describe('method', () => {
   let findActivityHistory;
   let countDocumentsCompletionCertificate;
   let createManyCompletionCertificate;
+  let injectStub;
 
   beforeEach(() => {
     findCourse = sinon.stub(Course, 'find');
@@ -24,6 +25,7 @@ describe('method', () => {
     findActivityHistory = sinon.stub(ActivityHistory, 'find');
     countDocumentsCompletionCertificate = sinon.stub(CompletionCertificate, 'countDocuments');
     createManyCompletionCertificate = sinon.stub(CompletionCertificate, 'insertMany');
+    injectStub = sinon.stub();
   });
 
   afterEach(() => {
@@ -44,7 +46,7 @@ describe('method', () => {
     const startOfMonth = CompaniDate(month, MM_YYYY).startOf('month').toISO();
     const endOfMonth = CompaniDate(month, MM_YYYY).endOf('month').toISO();
     const subProgramIds = [new ObjectId(), new ObjectId()];
-
+    const completionCertificateIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const courses = [
       {
         _id: courseIds[0],
@@ -167,16 +169,20 @@ describe('method', () => {
     countDocumentsCompletionCertificate.onCall(0).returns(0);
     countDocumentsCompletionCertificate.onCall(1).returns(0);
     createManyCompletionCertificate.returns([
-      { course: courseIds[0], trainee: traineeIds[0], month },
-      { course: courseIds[0], trainee: traineeIds[2], month },
-      { course: courseIds[1], trainee: traineeIds[1], month },
+      { _id: completionCertificateIds[0], course: courseIds[0], trainee: traineeIds[0], month },
+      { _id: completionCertificateIds[1], course: courseIds[0], trainee: traineeIds[2], month },
+      { _id: completionCertificateIds[2], course: courseIds[1], trainee: traineeIds[1], month },
     ]);
+    injectStub.onCall(0).resolves({ statusCode: 200 });
+    injectStub.onCall(1).resolves({ statusCode: 200 });
+    injectStub.onCall(2).resolves({ statusCode: 403 });
 
     // eslint-disable-next-line no-console
-    const server = { query: { month }, log: value => console.log(value) };
+    const server = { server: { inject: injectStub }, query: { month }, log: value => console.log(value) };
     const res = await completionCertificateCreationJob.method(server);
 
     expect(res.certificateCreated.length).toBe(3);
+    expect(res.errors.length).toBe(1);
     SinonMongoose.calledWithExactly(
       findCourse,
       [
@@ -311,6 +317,33 @@ describe('method', () => {
         { course: courseIds[0], trainee: traineeIds[0], month },
         { course: courseIds[1], trainee: traineeIds[1], month },
       ]
+    );
+    sinon.assert.calledWithExactly(
+      injectStub.getCall(0),
+      {
+        method: 'PUT',
+        url: `/completioncertificates/${completionCertificateIds[0]}`,
+        auth: { credentials: { scope: ['completioncertificates:edit'] }, strategy: 'jwt' },
+        payload: { action: GENERATION },
+      }
+    );
+    sinon.assert.calledWithExactly(
+      injectStub.getCall(1),
+      {
+        method: 'PUT',
+        url: `/completioncertificates/${completionCertificateIds[1]}`,
+        auth: { credentials: { scope: ['completioncertificates:edit'] }, strategy: 'jwt' },
+        payload: { action: GENERATION },
+      }
+    );
+    sinon.assert.calledWithExactly(
+      injectStub.getCall(2),
+      {
+        method: 'PUT',
+        url: `/completioncertificates/${completionCertificateIds[2]}`,
+        auth: { credentials: { scope: ['completioncertificates:edit'] }, strategy: 'jwt' },
+        payload: { action: GENERATION },
+      }
     );
   });
 });
