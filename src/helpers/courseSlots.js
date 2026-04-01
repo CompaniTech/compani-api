@@ -204,7 +204,6 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
 };
 
 exports.list = async (query) => {
-  throw new Error('Test sentry');
   const singleCourses = await Course.find({ type: SINGLE }, { _id: 1 }).lean();
   const singleCourseIds = singleCourses.map(course => new ObjectId(course._id));
   const findQuery = {
