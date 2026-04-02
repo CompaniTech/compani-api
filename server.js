@@ -1,9 +1,12 @@
 'use strict';
 
+require('./instrument');
+
 /* eslint-disable no-console */
 require('dotenv').config();
 const Hapi = require('@hapi/hapi');
 const Boom = require('@hapi/boom');
+const Sentry = require('@sentry/node');
 
 const { mongooseConnection } = require('./src/config/mongoose');
 const { routes } = require('./src/routes/index');
@@ -34,6 +37,7 @@ const server = Hapi.server({
 const init = async () => {
   await server.register([...plugins]);
   await server.register([...routes]);
+  await Sentry.setupHapiErrorHandler(server);
 
   const isDevelopment = process.env.NODE_ENV === DEVELOPMENT;
   if (isDevelopment) {
