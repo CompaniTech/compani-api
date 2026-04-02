@@ -173,9 +173,9 @@ describe('method', () => {
       { _id: completionCertificateIds[1], course: courseIds[0], trainee: traineeIds[2], month },
       { _id: completionCertificateIds[2], course: courseIds[1], trainee: traineeIds[1], month },
     ]);
-    injectStub.onCall(0).resolves({ statusCode: 200 });
-    injectStub.onCall(1).resolves({ statusCode: 200 });
-    injectStub.onCall(2).resolves({ statusCode: 403 });
+    injectStub.onCall(0).returns({ statusCode: 200 });
+    injectStub.onCall(1).returns({ statusCode: 200 });
+    injectStub.onCall(2).returns({ statusCode: 403 });
 
     // eslint-disable-next-line no-console
     const server = { server: { inject: injectStub }, query: { month }, log: value => console.log(value) };
