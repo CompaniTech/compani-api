@@ -37,8 +37,10 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
 
   const formattedSingleTraineeSlots = {};
   let paidDuration = CompaniDuration('PT0S');
+  let paidAmount = 0;
   let paidAbsenceDuration = CompaniDuration('PT0S');
   let notPaidDuration = CompaniDuration('PT0S');
+  let notPaidAmount = 0;
   let notPaidAbsenceDuration = CompaniDuration('PT0S');
 
   Object.values(singleTraineeSlotsGroupByStep).forEach((slots) => {
@@ -92,14 +94,19 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
       toPayAmount: stepToPayAmount,
       paidAmount: stepPaidAmount,
     };
+
+    paidAmount = NumbersHelper.add(paidAmount, stepPaidAmount);
+    notPaidAmount = NumbersHelper.add(notPaidAmount, stepToPayAmount);
   });
 
   return {
     slots: formattedSingleTraineeSlots,
     totals: {
       paidSingleSlotsDuration: paidDuration,
+      paidSingleSlotsAmount: paidAmount,
       paidSingleSlotsAbsenceDuration: paidAbsenceDuration,
       notPaidSingleSlotsDuration: notPaidDuration,
+      notPaidSingleSlotsAmount: notPaidAmount,
       notPaidSingleSlotsAbsenceDuration: notPaidAbsenceDuration,
     },
   };
@@ -112,7 +119,9 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
 
   let totalPaidDuration = CompaniDuration('PT0S');
   let totalPaidAbsenceDuration = CompaniDuration('PT0S');
+  let totalPaidAmount = 0;
   let totalNotPaidDuration = CompaniDuration('PT0S');
+  let totalNotPaidAmount = 0;
   let totalNotPaidAbsenceDuration = CompaniDuration('PT0S');
 
   Object.entries(slotsGroupByDay).forEach(([day, slots]) => {
@@ -192,6 +201,9 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
       toPayAmount: dayToPayAmount,
       paidAmount: dayPaidAmount,
     };
+
+    totalPaidAmount = NumbersHelper.add(totalPaidAmount, dayPaidAmount);
+    totalNotPaidAmount = NumbersHelper.add(totalNotPaidAmount, dayToPayAmount);
   });
 
   return {
@@ -199,8 +211,10 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
     totals: {
       paidCollectiveSlotsDuration: totalPaidDuration,
       paidCollectiveSlotsAbsenceDuration: totalPaidAbsenceDuration,
+      paidCollectiveSlotsAmount: totalPaidAmount,
       notPaidCollectiveSlotsDuration: totalNotPaidDuration,
       notPaidCollectiveSlotsAbsenceDuration: totalNotPaidAbsenceDuration,
+      notPaidCollectiveSlotsAmount: totalNotPaidAmount,
     },
   };
 };
@@ -258,8 +272,10 @@ exports.list = async (query) => {
     const collectiveSlots = [];
 
     let totalPaidSingleSlotsDuration = CompaniDuration('PT0S');
+    let totalPaidSingleSlotsAmount = 0;
     let totalPaidSingleSlotsAbsenceDuration = CompaniDuration('PT0S');
     let totalNotPaidSingleSlotsDuration = CompaniDuration('PT0S');
+    let totalNotPaidSingleSlotsAmount = 0;
     let totalNotPaidSingleSlotsAbsenceDuration = CompaniDuration('PT0S');
     for (const courseId of Object.keys(slotsByCourse)) {
       const currentCourseSlots = slotsByCourse[courseId];
@@ -280,8 +296,10 @@ exports.list = async (query) => {
         name: CourseHelper.composeCourseName(currentCourseSlots[0].course),
         singleTraineeSlots: formattedSingleSlots,
         paidSingleSlotsDuration: courseTotals.paidSingleSlotsDuration.toISO(),
+        paidSingleSlotsAmount: courseTotals.paidSingleSlotsAmount,
         paidSingleSlotsAbsenceDuration: courseTotals.paidSingleSlotsAbsenceDuration.toISO(),
         notPaidSingleSlotsDuration: courseTotals.notPaidSingleSlotsDuration.toISO(),
+        notPaidSingleSlotsAmount: courseTotals.notPaidSingleSlotsAmount,
         notPaidSingleSlotsAbsenceDuration: courseTotals.notPaidSingleSlotsAbsenceDuration.toISO(),
       });
 
@@ -291,6 +309,9 @@ exports.list = async (query) => {
       totalNotPaidSingleSlotsDuration = totalNotPaidSingleSlotsDuration.add(courseTotals.notPaidSingleSlotsDuration);
       totalNotPaidSingleSlotsAbsenceDuration = totalNotPaidSingleSlotsAbsenceDuration
         .add(courseTotals.notPaidSingleSlotsAbsenceDuration);
+      totalPaidSingleSlotsAmount = NumbersHelper.add(totalPaidSingleSlotsAmount, courseTotals.paidSingleSlotsAmount);
+      totalNotPaidSingleSlotsAmount = NumbersHelper
+        .add(totalNotPaidSingleSlotsAmount, courseTotals.notPaidSingleSlotsAmount);
     }
 
     const { slots: formattedCollectiveSlots, totals } = formatCollectiveSlots(collectiveSlots, trainer._id);
@@ -299,6 +320,8 @@ exports.list = async (query) => {
       paidCollectiveSlotsAbsenceDuration,
       notPaidCollectiveSlotsDuration,
       notPaidCollectiveSlotsAbsenceDuration,
+      paidCollectiveSlotsAmount,
+      notPaidCollectiveSlotsAmount,
     } = totals;
 
     formattedSlotsGroupByTrainer[trainer._id] = {
@@ -311,16 +334,20 @@ exports.list = async (query) => {
           paidCollectiveSlotsAbsenceDuration: CompaniDuration(paidCollectiveSlotsAbsenceDuration).toISO(),
           notPaidCollectiveSlotsDuration: CompaniDuration(notPaidCollectiveSlotsDuration).toISO(),
           notPaidCollectiveSlotsAbsenceDuration: CompaniDuration(notPaidCollectiveSlotsAbsenceDuration).toISO(),
+          paidCollectiveSlotsAmount,
+          notPaidCollectiveSlotsAmount,
         },
       },
       totalPaidSlotsDuration: totalPaidSingleSlotsDuration.add(paidCollectiveSlotsDuration).toISO(),
       totalPaidSlotsAbsenceDuration: totalPaidSingleSlotsAbsenceDuration
         .add(paidCollectiveSlotsAbsenceDuration)
         .toISO(),
+      totalPaidSlotsAmount: NumbersHelper.add(totalPaidSingleSlotsAmount, paidCollectiveSlotsAmount),
       totalNotPaidSlotsDuration: totalNotPaidSingleSlotsDuration.add(notPaidCollectiveSlotsDuration).toISO(),
       totalNotPaidSlotsAbsenceDuration: totalNotPaidSingleSlotsAbsenceDuration
         .add(notPaidCollectiveSlotsAbsenceDuration)
         .toISO(),
+      totalNotPaidSlotsAmount: NumbersHelper.add(totalNotPaidSingleSlotsAmount, notPaidCollectiveSlotsAmount),
     };
   }
 
