@@ -80,6 +80,7 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
         isAbsence,
         status: slotStatus,
         amount,
+        program: slot.course.subProgram.program,
         ...(trainerBill && trainerBill.billNumber && { trainerBillNumber: trainerBill.billNumber }),
       };
     });
@@ -145,6 +146,7 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
       slotsByDates[dates].slotsDate.push({
         _id: slot._id,
         courseId: slot.course._id,
+        program: slot.course.subProgram.program,
         traineeName: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL'),
         startDate: startISO,
         endDate: endISO,

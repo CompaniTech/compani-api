@@ -430,6 +430,7 @@ describe('list', () => {
                     status: PAID,
                     amount: '50',
                     trainerBillNumber: 'FACT_0001',
+                    program: { name: 'program' },
                   },
                   {
                     _id: slots[8]._id,
@@ -439,6 +440,7 @@ describe('list', () => {
                     isAbsence: true,
                     status: NOT_PAID,
                     amount: '30',
+                    program: { name: 'program' },
                   },
                   {
                     _id: slots[9]._id,
@@ -448,6 +450,7 @@ describe('list', () => {
                     isAbsence: true,
                     status: NOT_PAID,
                     amount: '60',
+                    program: { name: 'program' },
                   },
                 ],
                 toPayDuration: 'PT150M',
@@ -477,6 +480,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '330',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[4]._id,
@@ -489,6 +493,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '330',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
               ],
               paidAmount: 0,
@@ -509,6 +514,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[6]._id,
@@ -521,6 +527,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[7]._id,
@@ -533,6 +540,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '55',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
               ],
               paidAmount: 0,
@@ -667,6 +675,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[1]._id,
@@ -679,6 +688,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
+                  program: { name: 'program' },
                 },
               ],
               paidAmount: 0,
@@ -815,6 +825,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
+                  program: { name: 'program' },
                 },
                 {
                   _id: slots[1]._id,
@@ -828,6 +839,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
+                  program: { name: 'program' },
                 },
               ],
               paidAmount: '110',
