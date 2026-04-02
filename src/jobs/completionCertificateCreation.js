@@ -7,7 +7,7 @@ const Course = require('../models/Course');
 const Attendance = require('../models/Attendance');
 const ActivityHistory = require('../models/ActivityHistory');
 const CompletionCertificate = require('../models/CompletionCertificate');
-const { MONTHLY, MM_YYYY, MONTH, PRESENT } = require('../helpers/constants');
+const { MONTHLY, MM_YYYY, MONTH, PRESENT, GENERATION } = require('../helpers/constants');
 const { CompaniDate } = require('../helpers/dates/companiDates');
 const CoursesHelper = require('../helpers/courses');
 const EmailHelper = require('../helpers/email');
@@ -16,6 +16,7 @@ const UtilsHelper = require('../helpers/utils');
 const completionCertificateCreationJob = {
   async method(server) {
     try {
+      const app = server.server;
       const { month } = server.query;
 
       const courses = await Course
@@ -117,6 +118,22 @@ const completionCertificateCreationJob = {
         const res = await CompletionCertificate.insertMany(traineeCoursesWithAHOrAttendancesOnMonth);
 
         certificateCreated.push(...res);
+
+        const generationPromises = [];
+        res.forEach((certificate) => {
+          generationPromises.push(
+            app.inject({
+              method: 'PUT',
+              url: `/completioncertificates/${certificate._id}`,
+              auth: { credentials: { scope: ['completioncertificates:edit'] }, strategy: 'jwt' },
+              payload: { action: GENERATION },
+            })
+          );
+        });
+        const generationRes = await Promise.allSettled(generationPromises);
+        generationRes.forEach(r => (
+          get(r, 'value.statusCode') !== 200 && errors.push({ trainee: 'unknown', course: 'unknown', month })
+        ));
       } catch (e) {
         const { writeErrors } = e;
         server.log('completionCertificateCreation', e);
