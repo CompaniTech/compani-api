@@ -461,8 +461,10 @@ describe('list', () => {
             },
             paidSingleSlotsDuration: 'PT60M',
             paidSingleSlotsAbsenceDuration: 'PT0S',
+            paidSingleSlotsAmount: '50',
             notPaidSingleSlotsDuration: 'PT150M',
             notPaidSingleSlotsAbsenceDuration: 'PT150M',
+            notPaidSingleSlotsAmount: '90',
           },
         ],
         collectiveSlots: {
@@ -552,14 +554,18 @@ describe('list', () => {
           totals: {
             paidCollectiveSlotsDuration: 'PT0S',
             paidCollectiveSlotsAbsenceDuration: 'PT0S',
+            paidCollectiveSlotsAmount: '0',
             notPaidCollectiveSlotsDuration: 'PT330M',
             notPaidCollectiveSlotsAbsenceDuration: 'PT150M',
+            notPaidCollectiveSlotsAmount: '495',
           },
         },
         totalPaidSlotsDuration: 'PT60M',
         totalPaidSlotsAbsenceDuration: 'PT0S',
+        totalPaidSlotsAmount: '50',
         totalNotPaidSlotsDuration: 'PT480M',
         totalNotPaidSlotsAbsenceDuration: 'PT300M',
+        totalNotPaidSlotsAmount: '585',
       },
     });
 
@@ -700,14 +706,18 @@ describe('list', () => {
           totals: {
             paidCollectiveSlotsDuration: 'PT0S',
             paidCollectiveSlotsAbsenceDuration: 'PT0S',
+            paidCollectiveSlotsAmount: '0',
             notPaidCollectiveSlotsDuration: 'PT60M',
             notPaidCollectiveSlotsAbsenceDuration: 'PT60M',
+            notPaidCollectiveSlotsAmount: '110',
           },
         },
         totalPaidSlotsDuration: 'PT0S',
         totalPaidSlotsAbsenceDuration: 'PT0S',
+        totalPaidSlotsAmount: '0',
         totalNotPaidSlotsDuration: 'PT60M',
         totalNotPaidSlotsAbsenceDuration: 'PT60M',
+        totalNotPaidSlotsAmount: '110',
       },
     });
 
@@ -851,14 +861,18 @@ describe('list', () => {
           totals: {
             paidCollectiveSlotsDuration: 'PT60M',
             paidCollectiveSlotsAbsenceDuration: 'PT60M',
+            paidCollectiveSlotsAmount: '110',
             notPaidCollectiveSlotsDuration: 'PT0S',
             notPaidCollectiveSlotsAbsenceDuration: 'PT0S',
+            notPaidCollectiveSlotsAmount: '0',
           },
         },
         totalPaidSlotsDuration: 'PT60M',
         totalPaidSlotsAbsenceDuration: 'PT60M',
+        totalPaidSlotsAmount: '110',
         totalNotPaidSlotsDuration: 'PT0S',
         totalNotPaidSlotsAbsenceDuration: 'PT0S',
+        totalNotPaidSlotsAmount: '0',
       },
     });
 
