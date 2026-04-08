@@ -223,7 +223,7 @@ describe('list', () => {
           args: [{
             path: 'company',
             select: 'name',
-            populate: { path: 'billingRepresentative', select: '_id picture contact identity local' },
+            populate: { path: 'billingRepresentatives', select: '_id picture contact identity local' },
           }],
         },
         { query: 'lean', args: [] },
@@ -246,12 +246,12 @@ describe('getCompany', () => {
     const company = {
       _id: new ObjectId(),
       name: 'test',
-      billingRepresentative: {
+      billingRepresentatives: [{
         _id: new ObjectId(),
         identity: { firstname: 'nono', lastname: 'toto' },
         contact: {},
         local: { email: 'nono@struc.fr' },
-      },
+      }],
     };
     findOne.returns(SinonMongoose.stubChainedQueries(company));
 
@@ -262,7 +262,7 @@ describe('getCompany', () => {
       findOne,
       [
         { query: 'findOne', args: [{ _id: company._id }] },
-        { query: 'populate', args: [{ path: 'billingRepresentative', select: '_id picture contact identity local' }] },
+        { query: 'populate', args: [{ path: 'billingRepresentatives', select: '_id picture contact identity local' }] },
         { query: 'populate', args: [{ path: 'salesRepresentative', select: '_id picture contact identity local' }] },
         { query: 'lean', args: [] },
       ]
@@ -623,6 +623,57 @@ describe('uploadMandate', () => {
           'debitMandates.$.file.link': 'lienVersMandatSigne',
         },
       }
+    );
+  });
+});
+
+describe('addBillingRepresentative', () => {
+  let companyUpdateOne;
+
+  beforeEach(() => {
+    companyUpdateOne = sinon.stub(Company, 'updateOne');
+  });
+
+  afterEach(() => {
+    companyUpdateOne.restore();
+  });
+
+  it('should add billing representative to company', async () => {
+    const billingRepresentativeId = new ObjectId();
+    const companyId = new ObjectId();
+    const payload = { billingRepresentative: billingRepresentativeId };
+
+    await CompanyHelper.addBillingRepresentative(companyId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      companyUpdateOne,
+      { _id: companyId },
+      { $addToSet: { billingRepresentatives: payload.billingRepresentative } }
+    );
+  });
+});
+
+describe('removeBillingRepresentative', () => {
+  let updateOne;
+
+  beforeEach(() => {
+    updateOne = sinon.stub(Company, 'updateOne');
+  });
+
+  afterEach(() => {
+    updateOne.restore();
+  });
+
+  it('should remove billing representative from company', async () => {
+    const billingRepresentativeId = new ObjectId();
+    const companyId = new ObjectId();
+
+    await CompanyHelper.removeBillingRepresentative(companyId, billingRepresentativeId);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: companyId },
+      { $pull: { billingRepresentatives: billingRepresentativeId } }
     );
   });
 });

@@ -59,17 +59,6 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       expect(companyUpdated).toMatchObject(payload);
     });
 
-    it('should update billingRepresentative with holding admin from another company', async () => {
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/companies/${companyWithoutSubscription._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { billingRepresentative: holdingAdminFromOtherCompany._id },
-      });
-
-      expect(response.statusCode).toBe(200);
-    });
-
     it('should update name even if only case or diacritics have changed', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -163,42 +152,6 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 404 if billingRepresentative is from other company', async () => {
-      const payload = { name: 'Alenvi Alenvi', billingRepresentative: usersList[1]._id };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(404);
-    });
-
-    it('should return 404 if billingRepresentative is from other company and other holding', async () => {
-      const payload = { name: 'Alenvi Alenvi', billingRepresentative: usersList[1]._id };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/companies/${authCompany._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(404);
-    });
-
-    it('should return 404 if billingRepresentative is not client_admin or holding_admin', async () => {
-      const payload = { name: 'Alenvi Alenvi', billingRepresentative: coach._id };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(404);
-    });
-
     it('should return 404 if salesRepresentative has wrong role', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -242,30 +195,6 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 404 if billingRepresentative is from other company', async () => {
-      const payload = { name: 'Alenvi Alenvi', billingRepresentative: usersList[1]._id };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(404);
-    });
-
-    it('should return 404 if billingRepresentative is not client_admin or holding_admin', async () => {
-      const payload = { name: 'Alenvi Alenvi', billingRepresentative: coach._id };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/companies/${companies[0]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(404);
-    });
-
     const falsyAssertions = [
       { payload: { address: { street: '38 rue de ponthieu' } }, case: 'wrong address' },
     ];
@@ -280,24 +209,6 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
 
         expect(response.statusCode).toBe(400);
       });
-    });
-  });
-
-  describe('CLIENT_ADMIN from third company', () => {
-    beforeEach(populateDB);
-    beforeEach(async () => {
-      authToken = await getTokenByCredentials(authUsersList[9].local);
-    });
-
-    it('should update billingRepresentative with holding admin from another company', async () => {
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/companies/${companyWithoutSubscription._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { billingRepresentative: holdingAdminFromOtherCompany._id },
-      });
-
-      expect(response.statusCode).toBe(200);
     });
   });
 
@@ -330,18 +241,6 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       });
 
       expect(response.statusCode).toBe(403);
-    });
-
-    it('should return 404 if billingRepresentative is from other company not in holding', async () => {
-      const payload = { name: 'Alenvi Alenvi', billingRepresentative: usersList[0]._id };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/companies/${companyWithoutSubscription._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(404);
     });
   });
 
@@ -971,6 +870,288 @@ describe('COMPANIES ROUTES - POST /companies/{_id}/mandates/{mandateId}/upload-s
       expect(response.statusCode).toBe(400);
       sinon.assert.notCalled(add);
       sinon.assert.notCalled(getFileById);
+    });
+  });
+});
+
+describe('COMPANIES ROUTES - PUT /companies/{_id}/billing-representatives', () => {
+  let authToken;
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should update billingRepresentative with holding admin from another company', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { billingRepresentative: holdingAdminFromOtherCompany._id },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 404 if company is not found', async () => {
+      const payload = { billingRepresentative: holdingAdminFromOtherCompany._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${new ObjectId()}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if billingRepresentative is from other company', async () => {
+      const payload = { billingRepresentative: usersList[1]._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if billingRepresentative is from other company and other holding', async () => {
+      const payload = { billingRepresentative: usersList[1]._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${authCompany._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if billingRepresentative is not client_admin or holding_admin', async () => {
+      const payload = { billingRepresentative: coach._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('CLIENT_ADMIN', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(authUsersList[9].local);
+    });
+
+    it('should update billingRepresentative with holding admin from another company', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { billingRepresentative: holdingAdminFromOtherCompany._id },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 404 if not its company', async () => {
+      const payload = { billingRepresentative: holdingAdminFromOtherCompany._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${authCompany._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 404 if billingRepresentative is from other company', async () => {
+      const payload = { billingRepresentative: usersList[1]._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if billingRepresentative is not client_admin or holding_admin', async () => {
+      const payload = { billingRepresentative: usersList[2]._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('HOLDING_ADMIN', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
+    });
+
+    it('should return 404 if billingRepresentative is from other company not in holding', async () => {
+      const payload = { billingRepresentative: usersList[0]._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'coach', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const payload = { name: 'SuperTest' };
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/companies/${companies[0]._id}/billing-representatives`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload,
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('COMPANIES ROUTES - DELETE /companies/{_id}/billing-representative/{billingRepresentativeId}', () => {
+  let authToken;
+
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    before(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should remove billing representative from company', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/companies/${companies[0]._id}/billing-representatives/${usersList[3]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 404 if company doesn\'t exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/companies/${new ObjectId()}/billing-representatives/${usersList[3]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if user is not company billing representative', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/companies/${companies[0]._id}/billing-representatives/${usersList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('CLIENT_ADMIN', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(usersList[0].local);
+    });
+
+    it('should remove billingRepresentative from company', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/companies/${companies[0]._id}/billing-representatives/${usersList[3]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 404 if not its company', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/companies/${companies[1]._id}/billing-representatives/${usersList[4]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('HOLDING_ADMIN', () => {
+    beforeEach(populateDB);
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
+    });
+
+    it('should remove billingRepresentative from company in holding', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/companies/${companies[0]._id}/billing-representatives/${usersList[3]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 404 if not its holding', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/companies/${companies[1]._id}/billing-representatives/${usersList[4]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('OTHER ROLE', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'coach', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'DELETE',
+          url: `/companies/${companies[0]._id}/billing-representatives/${usersList[3]._id}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
     });
   });
 });
