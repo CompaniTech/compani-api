@@ -162,6 +162,12 @@ exports.authorizeBillingRepresentativeAddition = async (req) => {
 
   if (!billingRepresentative) throw Boom.notFound();
 
+  const userIsAlreadyCompanyBillingRepresentative = UtilsHelper
+    .doesArrayIncludeId(get(company, 'billingRepresentatives', []), payload.billingRepresentative);
+  if (userIsAlreadyCompanyBillingRepresentative) {
+    throw Boom.conflict(translate[language].billingRepresentativeAlreadyAdded);
+  }
+
   const isClientAdminOfUpdatedCompany = get(billingRepresentative, 'role.client.name') === CLIENT_ADMIN &&
       UtilsHelper.areObjectIdsEquals(billingRepresentative.company, params._id);
 

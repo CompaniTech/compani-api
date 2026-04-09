@@ -22,7 +22,6 @@ const {
   coach,
   holdingAdminFromOtherCompany,
   vendorAdmin,
-  userList: authUsersList,
 } = require('../seed/authUsersSeed');
 const { generateFormData, getStream } = require('./utils');
 
@@ -885,7 +884,7 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/billing-representatives', () =
     it('should update billingRepresentative with holding admin from another company', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        url: `/companies/${companies[0]._id}/billing-representatives`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { billingRepresentative: holdingAdminFromOtherCompany._id },
       });
@@ -940,18 +939,29 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/billing-representatives', () =
 
       expect(response.statusCode).toBe(404);
     });
+
+    it('should return 409 if user is already billing representative', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { billingRepresentative: usersList[3]._id },
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
   });
 
   describe('CLIENT_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
-      authToken = await getTokenByCredentials(authUsersList[9].local);
+      authToken = await getTokenByCredentials(usersList[0].local);
     });
 
     it('should update billingRepresentative with holding admin from another company', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        url: `/companies/${companies[0]._id}/billing-representatives`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { billingRepresentative: holdingAdminFromOtherCompany._id },
       });
@@ -975,7 +985,7 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/billing-representatives', () =
       const payload = { billingRepresentative: usersList[1]._id };
       const response = await app.inject({
         method: 'PUT',
-        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        url: `/companies/${companies[0]._id}/billing-representatives`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });
@@ -987,7 +997,7 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/billing-representatives', () =
       const payload = { billingRepresentative: usersList[2]._id };
       const response = await app.inject({
         method: 'PUT',
-        url: `/companies/${companyWithoutSubscription._id}/billing-representatives`,
+        url: `/companies/${companies[0]._id}/billing-representatives`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });

@@ -135,7 +135,7 @@ const userCompanies = [
   },
   { _id: new ObjectId(), user: usersList[0]._id, company: companies[0]._id },
   { _id: new ObjectId(), user: usersList[1]._id, company: otherCompany._id },
-  { _id: new ObjectId(), user: usersList[2]._id, company: otherCompany._id },
+  { _id: new ObjectId(), user: usersList[2]._id, company: companies[0]._id },
   { _id: new ObjectId(), user: usersList[3]._id, company: companies[0]._id },
   { _id: new ObjectId(), user: usersList[4]._id, company: companies[1]._id },
 ];
