@@ -904,6 +904,18 @@ describe('COMPANIES ROUTES - PUT /companies/{_id}/billing-representatives', () =
       expect(response.statusCode).toBe(404);
     });
 
+    it('should return 404 if billingRepresentative is not found', async () => {
+      const payload = { billingRepresentative: new ObjectId() };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}/billing-representatives`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
     it('should return 404 if billingRepresentative is from other company', async () => {
       const payload = { billingRepresentative: usersList[1]._id };
       const response = await app.inject({

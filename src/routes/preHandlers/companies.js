@@ -37,27 +37,6 @@ exports.authorizeCompanyUpdate = async (req) => {
     .collation({ locale: 'fr', strength: 1 });
   if (nameAlreadyExists) throw Boom.conflict(translate[language].companyExists);
 
-  if (payload.billingRepresentative) {
-    const billingRepresentative = await User
-      .findOne({ _id: payload.billingRepresentative }, { role: 1 })
-      .populate({ path: 'company' })
-      .populate({ path: 'holding' })
-      .lean({ autopopulate: true });
-
-    if (!billingRepresentative) throw Boom.notFound();
-
-    const isClientAdminOfUpdatedCompany = get(billingRepresentative, 'role.client.name') === CLIENT_ADMIN &&
-      UtilsHelper.areObjectIdsEquals(billingRepresentative.company, updatedCompanyId);
-
-    if (!isClientAdminOfUpdatedCompany) {
-      const companyHoldingExists = await CompanyHolding
-        .countDocuments({ company: updatedCompanyId, holding: billingRepresentative.holding });
-      const isHoldingAdminOfUpdatedCompanyHolding = get(billingRepresentative, 'role.holding.name') === HOLDING_ADMIN &&
-        companyHoldingExists;
-      if (!isHoldingAdminOfUpdatedCompanyHolding) throw Boom.notFound();
-    }
-  }
-
   if (payload.salesRepresentative) {
     await checkVendorUserExistsAndHasRightRole(payload.salesRepresentative, true);
   }
