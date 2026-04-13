@@ -91,3 +91,34 @@ describe('exportToCsv', () => {
     fakeDate.restore();
   });
 });
+
+describe('downloadPdfs', () => {
+  let get;
+
+  beforeEach(() => {
+    get = sinon.stub(axios, 'get');
+  });
+
+  afterEach(() => {
+    get.restore();
+  });
+
+  it('should download list of pdfs', async () => {
+    const fileList = [
+      { link: 'https://test/compani/pdf-1.pdf', name: 'name/test' },
+      { link: 'https://test/compani/pdf-2.pdf' },
+    ];
+
+    get.onCall(0).returns({ data: { buffer: '1' } });
+    get.onCall(1).returns({ data: { buffer: '2' } });
+
+    const result = await FileHelper.downloadPdfs(fileList);
+    expect(result).toEqual([
+      { name: 'name_test.pdf', file: { buffer: '1' } },
+      { name: 'document-2.pdf', file: { buffer: '2' } },
+    ]);
+
+    sinon.assert.calledWithExactly(get.getCall(0), fileList[0].link, { responseType: 'arraybuffer' });
+    sinon.assert.calledWithExactly(get.getCall(1), fileList[1].link, { responseType: 'arraybuffer' });
+  });
+});

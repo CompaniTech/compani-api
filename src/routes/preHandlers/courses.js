@@ -1317,3 +1317,20 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
 
   return formattedLearnerList;
 };
+
+exports.authorizeGetAllDocuments = async (req) => {
+  const { credentials } = req.auth;
+  const loggedUserVendorRole = get(credentials, 'role.vendor.name');
+  if (!loggedUserVendorRole && !req.query.isClientInterface) throw Boom.forbidden();
+
+  const course = await Course.findOne({ _id: req.params._id }, { companies: 1 }).lean();
+  if (!course) throw Boom.notFound();
+
+  if (req.query.isClientInterface) {
+    if (!has(credentials, 'role.client')) throw Boom.badRequest();
+    const hasAccessToCompany = course.companies
+      .some(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
+    if (!hasAccessToCompany) throw Boom.forbidden();
+  }
+  return null;
+};

@@ -31,6 +31,7 @@ const {
   removeTutor,
   uploadTraineeCSV,
   uploadSingleCourseCSV,
+  downloadAllDocuments,
 } = require('../controllers/courseController');
 const { MESSAGE_TYPE } = require('../models/CourseSmsHistory');
 const { COURSE_TYPES, COURSE_FORMATS, CERTIFICATE_GENERATION_MODE } = require('../models/Course');
@@ -62,6 +63,7 @@ const {
   authorizeTutorDeletion,
   authorizeUploadTraineeCSV,
   authorizeUploadSingleCourseCSV,
+  authorizeGetAllDocuments,
 } = require('./preHandlers/courses');
 const {
   INTRA,
@@ -543,6 +545,20 @@ exports.plugin = {
         pre: [{ method: authorizeTutorDeletion }],
       },
       handler: removeTutor,
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/{_id}/all-documents',
+      options: {
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          query: Joi.object({ isClientInterface: Joi.boolean().default(false) }),
+        },
+        auth: { scope: 'coursebills:read' },
+        pre: [{ method: authorizeGetAllDocuments }],
+      },
+      handler: downloadAllDocuments,
     });
   },
 };
