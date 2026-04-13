@@ -11,6 +11,8 @@ const {
   generateDocxMandate,
   updateMandate,
   uploadSignedMandate,
+  addBillingRepresentative,
+  removeBillingRepresentative,
 } = require('../controllers/companyController');
 const {
   authorizeCompanyUpdate,
@@ -21,6 +23,8 @@ const {
   authorizeGetMandate,
   authorizeMandateUpdate,
   authorizeSignedMandateUpload,
+  authorizeBillingRepresentativeAddition,
+  authorizeBillingRepresentativeDeletion,
 } = require('./preHandlers/companies');
 const {
   addressValidation,
@@ -46,7 +50,6 @@ exports.plugin = {
             address: addressValidation,
             iban: ibanValidation,
             bic: bicValidation,
-            billingRepresentative: Joi.objectId(),
             salesRepresentative: Joi.objectId(),
           }),
         },
@@ -146,6 +149,33 @@ exports.plugin = {
         pre: [{ method: authorizeMandateUpdate }, { method: authorizeSignedMandateUpload }],
       },
       handler: uploadSignedMandate,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/{_id}/billing-representatives',
+      options: {
+        auth: { scope: ['companies:edit', 'company-{params._id}'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          payload: Joi.object({ billingRepresentative: Joi.objectId().required() }),
+        },
+        pre: [{ method: authorizeBillingRepresentativeAddition }],
+      },
+      handler: addBillingRepresentative,
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/{_id}/billing-representatives/{billingRepresentativeId}',
+      options: {
+        auth: { scope: ['companies:edit', 'company-{params._id}'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), billingRepresentativeId: Joi.objectId().required() }),
+        },
+        pre: [{ method: authorizeBillingRepresentativeDeletion }],
+      },
+      handler: removeBillingRepresentative,
     });
   },
 };
