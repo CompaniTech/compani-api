@@ -55,9 +55,7 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
       const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
       const durationObj = CompaniDuration(duration);
       const isAbsence = slot.attendances[0].status === MISSING;
-      const amount = isAbsence && durationObj.asHours() >= 1
-        ? NumbersHelper.toString(slot.hourlyAmount)
-        : NumbersHelper.multiply(slot.hourlyAmount, durationObj.asHours());
+      const amount = NumbersHelper.multiply(slot.hourlyAmount, durationObj.asHours());
       const trainerBill = (slot.trainerBills || [])
         .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainerId));
       const slotStatus = trainerBill ? PAID : NOT_PAID;
@@ -175,9 +173,7 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
     Object.values(slotsByDates).forEach((slotsGroup) => {
       const { durationObj, hourlyAmount, status, allAbsent, slotsDate } = slotsGroup;
 
-      const amount = allAbsent && durationObj.asHours() >= 1
-        ? NumbersHelper.toString(hourlyAmount)
-        : NumbersHelper.multiply(hourlyAmount, durationObj.asHours());
+      const amount = NumbersHelper.multiply(hourlyAmount, durationObj.asHours());
       if (status === NOT_PAID) {
         dayToPayDuration = dayToPayDuration.add(durationObj);
         dayToPayAmount = NumbersHelper.add(dayToPayAmount, amount);
