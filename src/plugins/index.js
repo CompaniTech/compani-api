@@ -53,17 +53,4 @@ const plugins = [
   },
 ];
 
-if (['production', 'staging'].includes(process.env.NODE_ENV)) {
-  plugins.push({
-    plugin: require('hapi-sentry'),
-    options: {
-      client: {
-        dsn: process.env.SENTRY_DSN,
-        environment: process.env.NODE_ENV,
-      },
-      trackUser: false,
-    },
-  });
-}
-
 exports.plugins = plugins;

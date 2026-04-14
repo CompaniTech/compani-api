@@ -680,7 +680,7 @@ describe('SEEDS VERIFICATION', () => {
           companyList = await Company
             .find()
             .populate({
-              path: 'billingRepresentative',
+              path: 'billingRepresentatives',
               populate: [{ path: 'role.client', select: 'name' }, { path: 'role.holding', select: 'name' }],
             })
             .lean();
@@ -693,9 +693,12 @@ describe('SEEDS VERIFICATION', () => {
 
         it('should pass if every billingRepresentative exists and has good role', () => {
           const doesEveryUserExistAndHasGoodRole = companyList
-            .every(company => !has(company, 'billingRepresentative') ||
-              (get(company.billingRepresentative, 'role.client.name') === CLIENT_ADMIN ||
-                get(company.billingRepresentative, 'role.holding.name') === HOLDING_ADMIN)
+            .every(company =>
+              !get(company, 'billingRepresentatives.length') ||
+              company.billingRepresentatives
+                .every(br =>
+                  (get(br, 'role.client.name') === CLIENT_ADMIN || get(br, 'role.holding.name') === HOLDING_ADMIN)
+                )
             );
           expect(doesEveryUserExistAndHasGoodRole).toBeTruthy();
         });

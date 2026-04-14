@@ -37,27 +37,6 @@ exports.authorizeCompanyUpdate = async (req) => {
     .collation({ locale: 'fr', strength: 1 });
   if (nameAlreadyExists) throw Boom.conflict(translate[language].companyExists);
 
-  if (payload.billingRepresentative) {
-    const billingRepresentative = await User
-      .findOne({ _id: payload.billingRepresentative }, { role: 1 })
-      .populate({ path: 'company' })
-      .populate({ path: 'holding' })
-      .lean({ autopopulate: true });
-
-    if (!billingRepresentative) throw Boom.notFound();
-
-    const isClientAdminOfUpdatedCompany = get(billingRepresentative, 'role.client.name') === CLIENT_ADMIN &&
-      UtilsHelper.areObjectIdsEquals(billingRepresentative.company, updatedCompanyId);
-
-    if (!isClientAdminOfUpdatedCompany) {
-      const companyHoldingExists = await CompanyHolding
-        .countDocuments({ company: updatedCompanyId, holding: billingRepresentative.holding });
-      const isHoldingAdminOfUpdatedCompanyHolding = get(billingRepresentative, 'role.holding.name') === HOLDING_ADMIN &&
-        companyHoldingExists;
-      if (!isHoldingAdminOfUpdatedCompanyHolding) throw Boom.notFound();
-    }
-  }
-
   if (payload.salesRepresentative) {
     await checkVendorUserExistsAndHasRightRole(payload.salesRepresentative, true);
   }
@@ -139,6 +118,63 @@ exports.authorizeSignedMandateUpload = async (req) => {
   const company = await Company.findOne({ _id: req.params._id }, { debitMandates: 1 }).lean();
   const mandate = company.debitMandates.find(dm => UtilsHelper.areObjectIdsEquals(dm._id, req.params.mandateId));
   if (mandate.file) throw Boom.badRequest();
+
+  return null;
+};
+
+exports.authorizeBillingRepresentativeAddition = async (req) => {
+  const { params, payload } = req;
+  const { credentials } = req.auth;
+  const vendorRole = get(req, 'auth.credentials.role.vendor.name');
+
+  const isVendorAdmin = !!vendorRole && [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(vendorRole);
+  if (!isVendorAdmin && !UtilsHelper.hasUserAccessToCompany(credentials, params._id)) throw Boom.forbidden();
+
+  const company = await Company.findOne({ _id: params._id }, { billingRepresentatives: 1 }).lean();
+  if (!company) throw Boom.notFound();
+
+  const billingRepresentative = await User
+    .findOne({ _id: payload.billingRepresentative }, { role: 1 })
+    .populate({ path: 'company' })
+    .populate({ path: 'holding' })
+    .lean({ autopopulate: true });
+
+  if (!billingRepresentative) throw Boom.notFound();
+
+  const userIsAlreadyCompanyBillingRepresentative = UtilsHelper
+    .doesArrayIncludeId(get(company, 'billingRepresentatives', []), payload.billingRepresentative);
+  if (userIsAlreadyCompanyBillingRepresentative) {
+    throw Boom.conflict(translate[language].billingRepresentativeAlreadyAdded);
+  }
+
+  const isClientAdminOfUpdatedCompany = get(billingRepresentative, 'role.client.name') === CLIENT_ADMIN &&
+      UtilsHelper.areObjectIdsEquals(billingRepresentative.company, params._id);
+
+  if (!isClientAdminOfUpdatedCompany) {
+    const companyHoldingExists = await CompanyHolding
+      .countDocuments({ company: params._id, holding: billingRepresentative.holding });
+    const isHoldingAdminOfUpdatedCompanyHolding = get(billingRepresentative, 'role.holding.name') === HOLDING_ADMIN &&
+        companyHoldingExists;
+    if (!isHoldingAdminOfUpdatedCompanyHolding) throw Boom.notFound();
+  }
+  return null;
+};
+
+exports.authorizeBillingRepresentativeDeletion = async (req) => {
+  const { params } = req;
+
+  const { credentials } = req.auth;
+  const vendorRole = get(req, 'auth.credentials.role.vendor.name');
+
+  const isVendorAdmin = !!vendorRole && [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(vendorRole);
+  if (!isVendorAdmin && !UtilsHelper.hasUserAccessToCompany(credentials, params._id)) throw Boom.forbidden();
+
+  const company = await Company.findOne({ _id: params._id }, { billingRepresentatives: 1 }).lean();
+  if (!company) throw Boom.notFound();
+
+  const userIsCompanyBillingRepresentative = UtilsHelper
+    .doesArrayIncludeId(company.billingRepresentatives, params.billingRepresentativeId);
+  if (!userIsCompanyBillingRepresentative) throw Boom.forbidden();
 
   return null;
 };

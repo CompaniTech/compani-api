@@ -8,6 +8,8 @@ const NumbersHelper = require('./numbers');
 const Course = require('../models/Course');
 const CourseBill = require('../models/CourseBill');
 const CourseBillsNumber = require('../models/CourseBillsNumber');
+const CoursePaymentNumber = require('../models/CoursePaymentNumber');
+const CoursePayment = require('../models/CoursePayment');
 const BalanceHelper = require('./balances');
 const UtilsHelper = require('./utils');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -24,6 +26,10 @@ const {
   SINGLE,
   MONTH_YEAR,
   RECEIVED,
+  PENDING,
+  PAYMENT,
+  BANK_TRANSFER,
+  DIRECT_DEBIT,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -146,7 +152,7 @@ exports.list = async (query, credentials) => {
       ...(query.startDate && query.endDate
         ? [{
           path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt misc',
           populate: [
             { path: 'companies', select: 'name' },
             { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
@@ -265,6 +271,27 @@ exports.createBillList = async (payload) => {
   }
 };
 
+const formatPaymentPayload = (courseBill, seq) => {
+  const paymentPayload = {
+    companies: courseBill.companies,
+    number: `REG-${seq.toString().padStart(5, '0')}`,
+    status: PENDING,
+    netInclTaxes: exports.getNetInclTaxes(courseBill),
+    nature: PAYMENT,
+    courseBill: courseBill._id,
+    date: courseBill.billedAt,
+  };
+
+  if (courseBill.course.type === SINGLE) {
+    paymentPayload.type = courseBill.billingPurchaseList
+      .find(p => UtilsHelper.areObjectIdsEquals(p.billingItem, process.env.MANAGEMENT_FEES_BILLING_ITEM))
+      ? BANK_TRANSFER
+      : DIRECT_DEBIT;
+  } else paymentPayload.type = BANK_TRANSFER;
+
+  return paymentPayload;
+};
+
 exports.updateCourseBill = async (courseBillId, payload) => {
   let formattedPayload;
 
@@ -296,7 +323,7 @@ exports.updateCourseBill = async (courseBillId, payload) => {
 
   const courseBill = await CourseBill
     .findOneAndUpdate({ _id: courseBillId }, formattedPayload, { new: true })
-    .populate({ path: 'course', select: 'prices' })
+    .populate({ path: 'course', select: 'prices type' })
     .lean();
   if (get(payload, 'mainFee.percentage')) {
     const billingPurchase = courseBill.billingPurchaseList.find(bp =>
@@ -319,6 +346,18 @@ exports.updateCourseBill = async (courseBillId, payload) => {
 
       await exports.updateBillingPurchase(courseBill._id, billingPurchase._id, billingPurchasePayload);
     }
+  } else if (payload.billedAt) {
+    const lastPaymentNumber = await CoursePaymentNumber
+      .findOneAndUpdate(
+        { nature: PAYMENT },
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      )
+      .lean();
+
+    const paymentPayload = formatPaymentPayload(courseBill, lastPaymentNumber.seq);
+
+    await CoursePayment.create(paymentPayload);
   }
 };
 
@@ -338,7 +377,7 @@ exports.updateBillList = async (payload) => {
     const promises = [];
     for (let i = 0; i < payload._ids.length; i++) {
       promises.push(
-        CourseBill.updateOne(
+        CourseBill.findOneAndUpdate(
           { _id: payload._ids[i] },
           {
             $set: {
@@ -346,15 +385,35 @@ exports.updateBillList = async (payload) => {
               number: `FACT-${(lastBillNumber.seq + i + 1).toString().padStart(5, '0')}`,
             },
             $unset: { maturityDate: '' },
-          }
+          },
+          { new: true }
         )
+          .populate({ path: 'course', select: 'type' })
+          .lean()
       );
     }
-    const result = await Promise.all(promises);
-    const modifiedCount = result.reduce((acc, r) => acc + r.modifiedCount, 0);
+    const result = await Promise.allSettled(promises);
+    const fulfilledResults = result.filter(r => r.status === 'fulfilled');
 
-    await CourseBillsNumber
-      .updateOne({}, { $inc: { seq: modifiedCount } }, { new: true, upsert: true, setDefaultsOnInsert: true });
+    await CourseBillsNumber.updateOne(
+      {},
+      { $inc: { seq: fulfilledResults.length } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+
+    const lastPaymentNumber = await CoursePaymentNumber
+      .findOneAndUpdate(
+        { nature: PAYMENT },
+        { $inc: { seq: fulfilledResults.length } },
+        { new: true, upsert: true, setDefaultsOnInsert: true }
+      )
+      .lean();
+    const paymentsPromises = [];
+    fulfilledResults.forEach((courseBill, index) => {
+      const paymentPayload = formatPaymentPayload(courseBill.value, lastPaymentNumber.seq - result.length + 1 + index);
+      paymentsPromises.push(CoursePayment.create(paymentPayload));
+    });
+    await Promise.all(paymentsPromises);
   } else {
     const courseBill = await CourseBill
       .findOne({ _id: { $in: payload._ids[0] } }, { course: 1, maturityDate: 1 })

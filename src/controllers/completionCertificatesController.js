@@ -26,9 +26,9 @@ const update = async (req) => {
 
 const create = async (req) => {
   try {
-    await CompletionCertificatesHelper.create(req.payload);
+    const completionCertificate = await CompletionCertificatesHelper.create(req.payload);
 
-    return { message: translate[language].completionCertificatesCreated };
+    return { message: translate[language].completionCertificatesCreated, data: { completionCertificate } };
   } catch (e) {
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
   }

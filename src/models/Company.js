@@ -32,7 +32,7 @@ const CompanySchema = mongoose.Schema({
     firstname: { type: String },
     position: { type: String },
   },
-  billingRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  billingRepresentatives: { type: [mongoose.Schema.Types.ObjectId], ref: 'User' },
   type: { type: String, enum: COMPANY_TYPES },
   folderId: { type: String, required: true },
   directDebitsFolderId: { type: String, required: true },

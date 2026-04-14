@@ -1299,6 +1299,17 @@ describe('exportCourseSlotHistory', () => {
     { _id: new ObjectId(), identity: { firstname: 'Cole', lastname: 'Palmer' } },
   ];
 
+  const trainers = [
+    { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } },
+    { _id: new ObjectId(), identity: { firstname: 'Autre', lastname: 'FORMATEUR' } },
+  ];
+
+  const stepList = [
+    { _id: new ObjectId(), name: 'étape 1', type: ON_SITE },
+    { _id: new ObjectId(), name: 'étape 2', type: REMOTE },
+    { _id: new ObjectId(), name: 'étape 3', type: E_LEARNING },
+  ];
+
   const courseList = [
     {
       _id: courseIdList[0],
@@ -1307,6 +1318,7 @@ describe('exportCourseSlotHistory', () => {
       companies: [{ _id: new ObjectId(), name: 'Enbonne Company' }],
       subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Program 1' } },
       misc: 'group 1',
+      trainers: [trainers[0]._id],
     },
     {
       _id: courseIdList[1],
@@ -1315,21 +1327,8 @@ describe('exportCourseSlotHistory', () => {
       subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Program 2' } },
       companies: [],
       misc: 'group 2',
+      trainers: [trainers[0]._id],
     },
-    {
-      _id: courseIdList[2],
-      trainees: [traineeList[3]],
-      type: SINGLE,
-      subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Program 3' } },
-      companies: [],
-      misc: 'Archie Pelle',
-    },
-  ];
-
-  const stepList = [
-    { _id: new ObjectId(), name: 'étape 1', type: ON_SITE },
-    { _id: new ObjectId(), name: 'étape 2', type: REMOTE },
-    { _id: new ObjectId(), name: 'étape 3', type: E_LEARNING },
   ];
 
   const slotAddress = {
@@ -1340,77 +1339,16 @@ describe('exportCourseSlotHistory', () => {
     location: { type: 'Point', coordinates: [2.37345, 48.848024] },
   };
 
-  const trainer = { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } };
-
-  const courseSlotList = [
-    { // 0
-      _id: new ObjectId(),
-      course: courseList[0],
-      startDate: '2021-05-01T08:00:00.000Z',
-      endDate: '2021-05-01T10:00:00.000Z',
-      createdAt: '2020-12-12T10:00:00.000Z',
-      step: stepList[0],
-      address: slotAddress,
-      attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
-      trainees: [traineeList[0]._id, traineeList[1]._id],
-      trainers: [trainer],
-      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
-    },
-    { // 1
-      _id: new ObjectId(),
-      course: courseList[0],
-      startDate: '2021-05-01T14:00:00.000Z',
-      endDate: '2021-05-01T16:00:00.000Z',
-      createdAt: '2020-12-12T10:00:01.000Z',
-      step: stepList[1],
-      meetingLink: 'https://meet.google.com',
-      attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: PRESENT }],
-      trainers: [trainer],
-      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
-    },
-    { // 2
-      _id: new ObjectId(),
-      course: courseList[1],
-      startDate: '2021-02-01T08:00:00.000Z',
-      endDate: '2021-02-01T10:00:00.000Z',
-      createdAt: '2020-12-12T10:00:02.000Z',
-      step: stepList[0],
-      address: slotAddress,
-      attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [trainer],
-      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
-    },
-    { // 3
-      _id: new ObjectId(),
-      course: courseList[1],
-      startDate: '2021-02-02T08:00:00.000Z',
-      endDate: '2021-02-02T10:00:00.000Z',
-      createdAt: '2020-12-12T10:00:03.000Z',
-      step: stepList[2],
-      attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [trainer],
-    },
-    { // 4
-      _id: new ObjectId(),
-      course: courseList[2],
-      startDate: '2022-02-02T08:00:00.000Z',
-      endDate: '2022-02-02T10:00:00.000Z',
-      createdAt: '2020-12-12T10:00:03.000Z',
-      step: stepList[0],
-      attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
-      trainers: [trainer],
-      trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
-    },
-  ];
-
   let findCourseSlot;
 
   beforeEach(() => {
     findCourseSlot = sinon.stub(CourseSlot, 'find');
+    process.env.COLLECTIVE_STEP_IDS = new ObjectId();
   });
 
   afterEach(() => {
     findCourseSlot.restore();
+    process.env.COLLECTIVE_STEP_IDS = '';
   });
 
   it('should return an empty array if no course slots', async () => {
@@ -1437,7 +1375,7 @@ describe('exportCourseSlotHistory', () => {
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+              { path: 'subProgram', select: 'program priceVersions', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
         },
@@ -1449,7 +1387,53 @@ describe('exportCourseSlotHistory', () => {
   });
 
   it('should return an array with the header and 4 rows (NOT SINGLE COURSES)', async () => {
-    findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList.slice(0, 4)));
+    const courseSlotList = [
+      { // 0
+        _id: new ObjectId(),
+        course: courseList[0],
+        startDate: '2021-05-01T08:00:00.000Z',
+        endDate: '2021-05-01T10:00:00.000Z',
+        createdAt: '2020-12-12T10:00:00.000Z',
+        step: stepList[0],
+        address: slotAddress,
+        attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: MISSING }],
+        trainees: [traineeList[0]._id, traineeList[1]._id],
+        trainers: [trainers[0]],
+      },
+      { // 1
+        _id: new ObjectId(),
+        course: courseList[0],
+        startDate: '2021-05-01T14:00:00.000Z',
+        endDate: '2021-05-01T16:00:00.000Z',
+        createdAt: '2020-12-12T10:00:01.000Z',
+        step: stepList[1],
+        meetingLink: 'https://meet.google.com',
+        attendances: [{ trainee: traineeList[0]._id, status: PRESENT }, { trainee: traineeList[1]._id, status: PRESENT }],
+        trainers: [trainers[0]],
+      },
+      { // 2
+        _id: new ObjectId(),
+        course: courseList[1],
+        startDate: '2021-02-01T08:00:00.000Z',
+        endDate: '2021-02-01T10:00:00.000Z',
+        createdAt: '2020-12-12T10:00:02.000Z',
+        step: stepList[0],
+        address: slotAddress,
+        attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
+        trainers,
+      },
+      { // 3
+        _id: new ObjectId(),
+        course: courseList[1],
+        startDate: '2021-02-02T08:00:00.000Z',
+        endDate: '2021-02-02T10:00:00.000Z',
+        createdAt: '2020-12-12T10:00:03.000Z',
+        step: stepList[2],
+        attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
+        trainers: [trainers[0]],
+      },
+    ];
+    findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList));
 
     const result = await ExportHelper
       .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
@@ -1473,7 +1457,6 @@ describe('exportCourseSlotHistory', () => {
         'Nombre d\'émargements non remplis',
         'Nombre d\'apprenants non concernés',
         'Intervenants',
-        'Statut',
       ],
       [
         courseSlotList[0]._id,
@@ -1493,7 +1476,6 @@ describe('exportCourseSlotHistory', () => {
         0,
         1,
         'Gilles FORMATEUR',
-        'Réglé',
       ],
       [
         courseSlotList[1]._id,
@@ -1513,7 +1495,6 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
-        'Réglé',
       ],
       [
         courseSlotList[2]._id,
@@ -1532,8 +1513,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         1,
         0,
-        'Gilles FORMATEUR',
-        'Réglé',
+        'Gilles FORMATEUR, Autre FORMATEUR',
       ],
       [
         courseSlotList[3]._id,
@@ -1553,7 +1533,6 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
-        'Non réglé',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1573,7 +1552,7 @@ describe('exportCourseSlotHistory', () => {
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+              { path: 'subProgram', select: 'program priceVersions', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
         },
@@ -1585,7 +1564,128 @@ describe('exportCourseSlotHistory', () => {
   });
 
   it('should return an array with the header and 4 rows (SINGLE COURSES)', async () => {
-    findCourseSlot.returns(SinonMongoose.stubChainedQueries([courseSlotList[4]]));
+    const collectiveStepId = new ObjectId(process.env.COLLECTIVE_STEP_IDS);
+    const collectiveStep = { _id: collectiveStepId, name: 'collectif', type: ON_SITE };
+
+    const slots = [
+      { // individual slot (PRESENT)
+        _id: new ObjectId(),
+        course: {
+          _id: courseIdList[2],
+          trainees: [traineeList[3]],
+          type: SINGLE,
+          subProgram: {
+            _id: new ObjectId(),
+            program: { _id: new ObjectId(), name: 'Program 3' },
+            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+          },
+          companies: [],
+          trainers: [trainers[0]._id],
+          misc: 'Archie Pelle',
+        },
+        startDate: '2022-02-02T08:00:00.000Z',
+        endDate: '2022-02-02T10:00:00.000Z',
+        createdAt: '2020-12-12T10:00:03.000Z',
+        step: stepList[0],
+        attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
+        trainers: [trainers[0]],
+        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
+      },
+      { // individual slot (MISSING)
+        _id: new ObjectId(),
+        course: {
+          _id: courseIdList[2],
+          trainees: [traineeList[3]],
+          type: SINGLE,
+          subProgram: {
+            _id: new ObjectId(),
+            program: { _id: new ObjectId(), name: 'Program 3' },
+            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+          },
+          companies: [],
+          trainers: [trainers[0]._id],
+          misc: 'Archie Pelle',
+        },
+        startDate: '2022-03-02T08:00:00.000Z',
+        endDate: '2022-03-02T10:00:00.000Z',
+        createdAt: '2020-12-12T10:00:03.000Z',
+        step: stepList[0],
+        attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
+        trainers: [trainers[0]],
+        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
+      },
+      { // collective slot (MISSING)
+        _id: new ObjectId(),
+        course: { // Single
+          _id: courseIdList[2],
+          trainees: [traineeList[3]],
+          type: SINGLE,
+          subProgram: {
+            _id: new ObjectId(),
+            program: { _id: new ObjectId(), name: 'Program 3' },
+            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+          },
+          companies: [],
+          trainers: [trainers[0]._id],
+          misc: 'Archie Pelle',
+        },
+        startDate: '2022-04-02T08:30:00.000Z',
+        endDate: '2022-04-02T09:00:00.000Z',
+        createdAt: '2020-12-12T10:00:03.000Z',
+        step: collectiveStep,
+        attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
+        trainers: [trainers[0]],
+        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0002' }],
+      },
+      { // collective slot (MISSING)
+        _id: new ObjectId(),
+        course: { // Single
+          _id: courseIdList[2],
+          trainees: [traineeList[3]],
+          type: SINGLE,
+          subProgram: {
+            _id: new ObjectId(),
+            program: { _id: new ObjectId(), name: 'Program 3' },
+            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+          },
+          companies: [],
+          trainers: [trainers[0]._id],
+          misc: 'Archie Pelle',
+        },
+        startDate: '2022-04-02T12:00:00.000Z',
+        endDate: '2022-04-02T14:00:00.000Z',
+        createdAt: '2020-12-12T10:00:03.000Z',
+        step: collectiveStep,
+        attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
+        trainers: [trainers[0]],
+        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0002' }],
+      },
+      { // collective slot (PRESENT)
+        _id: new ObjectId(),
+        course: { // Single
+          _id: courseIdList[2],
+          trainees: [traineeList[3]],
+          type: SINGLE,
+          subProgram: {
+            _id: new ObjectId(),
+            program: { _id: new ObjectId(), name: 'Program 3' },
+            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+          },
+          companies: [],
+          trainers: [trainers[0]._id],
+          misc: 'Archie Pelle',
+        },
+        startDate: '2022-05-02T08:00:00.000Z',
+        endDate: '2022-05-02T10:00:00.000Z',
+        createdAt: '2020-12-12T10:00:03.000Z',
+        step: collectiveStep,
+        attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
+        trainers: [trainers[0]],
+        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0003' }],
+      },
+    ];
+
+    findCourseSlot.returns(SinonMongoose.stubChainedQueries(slots));
 
     const result = await ExportHelper
       .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [SINGLE]);
@@ -1610,9 +1710,11 @@ describe('exportCourseSlotHistory', () => {
         'Nombre d\'émargements non remplis',
         'Intervenants',
         'Statut',
+        'Facture intervenant',
+        'Montant',
       ],
       [
-        courseSlotList[4]._id,
+        slots[0]._id,
         courseIdList[2],
         'Program 3 - Archie Pelle',
         'étape 1',
@@ -1630,6 +1732,96 @@ describe('exportCourseSlotHistory', () => {
         0,
         'Gilles FORMATEUR',
         'Réglé',
+        'FACT_0001',
+        '24,00',
+      ],
+      [
+        slots[1]._id,
+        courseIdList[2],
+        'Program 3 - Archie Pelle',
+        'étape 1',
+        'présentiel',
+        'Emma STONE',
+        '12/12/2020 11:00:03',
+        '02/03/2022 09:00:00',
+        '02/03/2022 11:00:00',
+        '2,00',
+        '',
+        0,
+        1,
+        '2,00',
+        0,
+        0,
+        'Gilles FORMATEUR',
+        'Réglé',
+        'FACT_0001',
+        '12,00',
+      ],
+      [
+        slots[2]._id,
+        courseIdList[2],
+        'Program 3 - Archie Pelle',
+        'collectif',
+        'présentiel',
+        'Emma STONE',
+        '12/12/2020 11:00:03',
+        '02/04/2022 10:30:00',
+        '02/04/2022 11:00:00',
+        '0,50',
+        '',
+        0,
+        1,
+        '0,50',
+        0,
+        0,
+        'Gilles FORMATEUR',
+        'Réglé',
+        'FACT_0002',
+        '10,00',
+      ],
+      [
+        slots[3]._id,
+        courseIdList[2],
+        'Program 3 - Archie Pelle',
+        'collectif',
+        'présentiel',
+        'Emma STONE',
+        '12/12/2020 11:00:03',
+        '02/04/2022 14:00:00',
+        '02/04/2022 16:00:00',
+        '2,00',
+        '',
+        0,
+        1,
+        '2,00',
+        0,
+        0,
+        'Gilles FORMATEUR',
+        'Réglé',
+        'FACT_0002',
+        '20,00',
+      ],
+      [
+        slots[4]._id,
+        courseIdList[2],
+        'Program 3 - Archie Pelle',
+        'collectif',
+        'présentiel',
+        'Emma STONE',
+        '12/12/2020 11:00:03',
+        '02/05/2022 10:00:00',
+        '02/05/2022 12:00:00',
+        '2,00',
+        '',
+        1,
+        0,
+        '0,00',
+        0,
+        0,
+        'Gilles FORMATEUR',
+        'Réglé',
+        'FACT_0003',
+        '40,00',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1649,7 +1841,7 @@ describe('exportCourseSlotHistory', () => {
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
+              { path: 'subProgram', select: 'program priceVersions', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
         },

@@ -52,7 +52,7 @@ exports.list = async (query) => {
       .populate({
         path: 'company',
         select: 'name',
-        populate: { path: 'billingRepresentative', select: '_id picture contact identity local' },
+        populate: { path: 'billingRepresentatives', select: '_id picture contact identity local' },
       })
       .lean();
 
@@ -105,7 +105,7 @@ exports.updateCompany = async (companyId, payload) => {
 
 exports.getCompany = async companyId => Company
   .findOne({ _id: companyId })
-  .populate({ path: 'billingRepresentative', select: '_id picture contact identity local' })
+  .populate({ path: 'billingRepresentatives', select: '_id picture contact identity local' })
   .populate({ path: 'salesRepresentative', select: '_id picture contact identity local' })
   .lean();
 
@@ -155,4 +155,11 @@ exports.uploadMandate = async (companyId, mandateId, payload) => {
     { _id: companyId, 'debitMandates._id': mandateId },
     { $set: UtilsHelper.flatQuery({ 'debitMandates.$': { _id: mandateId, file } }, { safe: true }) }
   );
+};
+
+exports.addBillingRepresentative = async (companyId, payload) => Company
+  .updateOne({ _id: companyId }, { $addToSet: { billingRepresentatives: payload.billingRepresentative } });
+
+exports.removeBillingRepresentative = async (companyId, billingRepresentativeId) => {
+  await Company.updateOne({ _id: companyId }, { $pull: { billingRepresentatives: billingRepresentativeId } });
 };

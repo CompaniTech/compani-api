@@ -96,6 +96,28 @@ const uploadSignedMandate = async (req) => {
   }
 };
 
+const addBillingRepresentative = async (req) => {
+  try {
+    await CompanyHelper.addBillingRepresentative(req.params._id, req.payload);
+
+    return { message: translate[language].billingRepresentativeAdded };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const removeBillingRepresentative = async (req) => {
+  try {
+    await CompanyHelper.removeBillingRepresentative(req.params._id, req.params.billingRepresentativeId);
+
+    return { message: translate[language].billingRepresentativeRemoved };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   update,
   create,
@@ -104,4 +126,6 @@ module.exports = {
   generateDocxMandate,
   updateMandate,
   uploadSignedMandate,
+  addBillingRepresentative,
+  removeBillingRepresentative,
 };

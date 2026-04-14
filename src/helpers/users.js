@@ -216,7 +216,7 @@ exports.getUser = async (userId, credentials) => {
   const user = await User.findOne({ _id: userId })
     .populate({
       path: 'company',
-      populate: { path: 'company', populate: { path: 'billingRepresentative salesRepresentative' } },
+      populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
       select: '-__v -createdAt -updatedAt',
     })
     .populate({

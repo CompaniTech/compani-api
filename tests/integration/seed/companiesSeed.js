@@ -29,40 +29,6 @@ const vendorCompany = {
   debitMandateTemplate: { driveId: '123456789', link: 'unlienversledoc' },
 };
 
-const companies = [
-  {
-    _id: new ObjectId(),
-    name: 'Test',
-    prefixNumber: 104,
-    folderId: '0987654321',
-    directDebitsFolderId: '1234567890',
-    customersFolderId: 'mnbvcxz',
-    auxiliariesFolderId: 'kjhgf',
-    debitMandates: [
-      { _id: new ObjectId(), rum: 'R-10425060000188CF46476EE0F6F9B702', createdAt: '2025-06-03T14:00:00.000Z' },
-      {
-        _id: new ObjectId(),
-        rum: 'R-10425060000288CF46476EE0F6F9B702',
-        createdAt: '2025-06-13T14:00:00.000Z',
-        file: { driveId: '12345674578', link: 'https://unlien' },
-      },
-
-    ],
-  },
-  {
-    _id: new ObjectId(),
-    name: 'Test 2',
-    prefixNumber: 105,
-    folderId: '0987654321',
-    directDebitsFolderId: '1234567890',
-    customersFolderId: 'mnbvcxz',
-    auxiliariesFolderId: 'kjhgf',
-    debitMandates: [
-      { _id: new ObjectId(), rum: 'R-1052507000011E5B79EB6E993416B4EA', createdAt: '2025-07-03T14:00:00.000Z' },
-    ],
-  },
-];
-
 const event = {
   startDate: '2019-12-11',
   endDate: '2019-12-11',
@@ -97,6 +63,65 @@ const usersList = [
     role: { client: clientAdminRoleId },
     origin: WEBAPP,
   },
+  {
+    _id: new ObjectId(),
+    identity: { firstname: 'Sans role', lastname: 'Other' },
+    local: { email: 'sr.other@tt.com', password: '123456!eR' },
+    refreshToken: uuidv4(),
+    origin: WEBAPP,
+  },
+  {
+    _id: new ObjectId(),
+    identity: { firstname: 'Billing Rep', lastname: 'First Company' },
+    local: { email: 'br.1@tt.com', password: '123456!eR' },
+    refreshToken: uuidv4(),
+    role: { client: clientAdminRoleId },
+    origin: WEBAPP,
+  },
+  {
+    _id: new ObjectId(),
+    identity: { firstname: 'Billing Rep', lastname: 'Second Company' },
+    local: { email: 'br.2@tt.com', password: '123456!eR' },
+    refreshToken: uuidv4(),
+    role: { client: clientAdminRoleId },
+    origin: WEBAPP,
+  },
+];
+
+const companies = [
+  {
+    _id: new ObjectId(),
+    name: 'Test',
+    prefixNumber: 104,
+    folderId: '0987654321',
+    directDebitsFolderId: '1234567890',
+    customersFolderId: 'mnbvcxz',
+    auxiliariesFolderId: 'kjhgf',
+    billingRepresentatives: [usersList[3]._id],
+    debitMandates: [
+      { _id: new ObjectId(), rum: 'R-10425060000188CF46476EE0F6F9B702', createdAt: '2025-06-03T14:00:00.000Z' },
+      {
+        _id: new ObjectId(),
+        rum: 'R-10425060000288CF46476EE0F6F9B702',
+        createdAt: '2025-06-13T14:00:00.000Z',
+        file: { driveId: '12345674578', link: 'https://unlien' },
+      },
+
+    ],
+  },
+  {
+    _id: new ObjectId(),
+    name: 'Test 2',
+    prefixNumber: 105,
+    folderId: '0987654321',
+    directDebitsFolderId: '1234567890',
+    customersFolderId: 'mnbvcxz',
+    auxiliariesFolderId: 'kjhgf',
+    billingRepresentatives: [usersList[4]._id],
+    debitMandates: [
+      { _id: new ObjectId(), rum: 'R-1052507000011E5B79EB6E993416B4EA', createdAt: '2025-07-03T14:00:00.000Z' },
+    ],
+  },
 ];
 
 const userCompanies = [
@@ -110,6 +135,9 @@ const userCompanies = [
   },
   { _id: new ObjectId(), user: usersList[0]._id, company: companies[0]._id },
   { _id: new ObjectId(), user: usersList[1]._id, company: otherCompany._id },
+  { _id: new ObjectId(), user: usersList[2]._id, company: companies[0]._id },
+  { _id: new ObjectId(), user: usersList[3]._id, company: companies[0]._id },
+  { _id: new ObjectId(), user: usersList[4]._id, company: companies[1]._id },
 ];
 
 const companyHoldings = [
