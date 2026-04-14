@@ -1,4 +1,3 @@
-const { ObjectId } = require('mongodb');
 const compact = require('lodash/compact');
 const get = require('lodash/get');
 const uniqBy = require('lodash/uniqBy');
@@ -40,7 +39,6 @@ const {
   SLOT_STATUS,
   PAID,
   NOT_PAID,
-  MISSING,
   MINUTE,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
@@ -366,36 +364,16 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 
-  const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
-  const collectiveSlots = filteredCourseSlots
-    .filter(s => UtilsHelper.doesArrayIncludeId(collectiveStepIds, s.step._id))
-    .map(s => ({ ...s, date: `${CompaniDate(s.startDate).toISO()}_${CompaniDate(s.endDate).toISO()}` }));
-  const collectiveSlotsGroupByDate = groupBy(collectiveSlots, 'date');
-
   const rows = [];
-
   for (const slot of filteredCourseSlots) {
     const hourlyAmount = CourseSlotHelper.getHourlyAmount(slot);
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
 
     let slotAmount = '';
     if (slot.course.type === SINGLE) {
-      const collectiveSlot = collectiveSlots.find(s => UtilsHelper.areObjectIdsEquals(s._id, slot._id));
-      if (collectiveSlot) {
-        const allSlotsWithSameDate = collectiveSlotsGroupByDate[collectiveSlot.date];
-        const isAbsence = allSlotsWithSameDate.every(s => s.attendances[0] && s.attendances[0].status === MISSING);
-
-        const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
-        const durationObj = CompaniDuration(duration).asHours();
-        if (isAbsence && durationObj >= 1) slotAmount = hourlyAmount;
-        else slotAmount = NumbersHelper.multiply(durationObj, hourlyAmount);
-      } else {
-        const isAbsence = slot.attendances[0] ? slot.attendances[0].status === MISSING : false;
-        const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
-        const durationObj = CompaniDuration(duration).asHours();
-        if (isAbsence && durationObj >= 1) slotAmount = hourlyAmount;
-        else slotAmount = NumbersHelper.multiply(durationObj, hourlyAmount);
-      }
+      const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
+      const durationObj = CompaniDuration(duration).asHours();
+      slotAmount = NumbersHelper.multiply(durationObj, hourlyAmount);
     }
 
     const presences = [];

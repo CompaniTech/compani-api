@@ -1755,7 +1755,7 @@ describe('exportCourseSlotHistory', () => {
         'Gilles FORMATEUR',
         'Réglé',
         'FACT_0001',
-        '12,00',
+        '24,00',
       ],
       [
         slots[2]._id,
@@ -1799,7 +1799,7 @@ describe('exportCourseSlotHistory', () => {
         'Gilles FORMATEUR',
         'Réglé',
         'FACT_0002',
-        '20,00',
+        '40,00',
       ],
       [
         slots[4]._id,
