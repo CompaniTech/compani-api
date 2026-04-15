@@ -14,8 +14,17 @@ const compat = new FlatCompat({
   allConfig: js.configs.all,
 });
 
+const airbnbConfigs = compat.extends('airbnb-base', 'eslint:recommended').map((config) => {
+  const { plugins, ...rest } = config;
+  if (plugins && plugins.import) {
+    const { ...otherPlugins } = plugins;
+    return { ...rest, plugins: otherPlugins };
+  }
+  return config;
+});
+
 export default [
-  ...compat.extends('airbnb-base', 'eslint:recommended'),
+  ...airbnbConfigs,
   {
     plugins: { _import, mocha },
     languageOptions: {
