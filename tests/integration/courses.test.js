@@ -8103,6 +8103,16 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should return 400 if isClientInterface query but no client role', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/all-documents?isClientInterface=true`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 404 if course does not exist', async () => {
       const response = await app.inject({
         method: 'GET',

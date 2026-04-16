@@ -1919,7 +1919,7 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
   const certificatesPromises = traineeList
     .map(t => exports.generateOfficialCompletionCertificatePdf(courseData, allAttendances, t));
 
-  const zip = ZipHelper.generateZip(
+  return ZipHelper.generateZip(
     'documents',
     [
       ...attendanceSheetFilesList,
@@ -1927,5 +1927,4 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
       ...await Promise.all(certificatesPromises),
     ]
   );
-  return zip;
 };
