@@ -218,8 +218,9 @@ exports.list = async (query, credentials) => {
         ...bill,
         ...(query.startDate && query.endDate && {
           course: await formatCourse(bill.course),
-          ...!query.isValidated && bill.course.type === SINGLE && {
-            hasCourseAction: bill.course.trainees.some(t => activityHistoriesByTrainee[t]) ||
+          ...!query.isValidated && {
+            hasCourseAction: bill.course.type !== SINGLE ||
+              bill.course.trainees.some(t => activityHistoriesByTrainee[t]) ||
               bill.course.slots
                 .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
                 .some(s => s.attendances.length),

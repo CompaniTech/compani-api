@@ -525,6 +525,7 @@ describe('list', () => {
           prices: [{ company: companies[0]._id, global: 200 }, { company: companies[1]._id, global: '' }],
         },
         netInclTaxes: 240,
+        hasCourseAction: true,
       },
       {
         companies: [companies[1]],
