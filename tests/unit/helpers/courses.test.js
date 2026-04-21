@@ -9360,7 +9360,7 @@ describe('uploadSingleCourseCSV', () => {
 
 describe('downloadAllDocuments', () => {
   let courseFindOne;
-  let downloadPdfs;
+  let downloadFiles;
   let generateOfficialCompletionCertificatePdf;
   let generateBillPdf;
   let formatCourseForDocuments;
@@ -9370,7 +9370,7 @@ describe('downloadAllDocuments', () => {
 
   beforeEach(() => {
     courseFindOne = sinon.stub(Course, 'findOne');
-    downloadPdfs = sinon.stub(FileHelper, 'downloadPdfs');
+    downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
     generateOfficialCompletionCertificatePdf = sinon.stub(CourseHelper, 'generateOfficialCompletionCertificatePdf');
     generateBillPdf = sinon.stub(CourseBillHelper, 'generateBillPdf');
     generateZip = sinon.stub(ZipHelper, 'generateZip');
@@ -9380,7 +9380,7 @@ describe('downloadAllDocuments', () => {
   });
   afterEach(() => {
     courseFindOne.restore();
-    downloadPdfs.restore();
+    downloadFiles.restore();
     generateOfficialCompletionCertificatePdf.restore();
     generateBillPdf.restore();
     generateZip.restore();
@@ -9412,7 +9412,7 @@ describe('downloadAllDocuments', () => {
 
     courseFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(courseTrainees, ['lean']));
     courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
-    downloadPdfs.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
+    downloadFiles.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
     generateBillPdf.onCall(0).returns({ pdf: 'pdf_bill_1', billNumber: 'bill_1' });
     generateBillPdf.onCall(1).returns({ pdf: 'pdf_bill_2', billNumber: 'bill_2' });
     getCompanyAtCourseRegistrationList.returns([
@@ -9498,7 +9498,7 @@ describe('downloadAllDocuments', () => {
       1
     );
     sinon.assert.calledOnceWithExactly(
-      downloadPdfs,
+      downloadFiles,
       [{ link: '123', name: '21/12/2022' }, { link: '124', name: '22/12/2022' }]
     );
     sinon.assert.calledWithExactly(generateBillPdf.getCall(0), billIds[0], [companyId], credentials);
@@ -9553,7 +9553,7 @@ describe('downloadAllDocuments', () => {
 
     courseFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(courseTrainees, ['lean']));
     courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
-    downloadPdfs.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
+    downloadFiles.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
     generateBillPdf.onCall(0).returns({ pdf: 'pdf_bill_1', billNumber: 'bill_1' });
     generateBillPdf.onCall(1).returns({ pdf: 'pdf_bill_2', billNumber: 'bill_2' });
     getCompanyAtCourseRegistrationList.returns([
@@ -9641,7 +9641,7 @@ describe('downloadAllDocuments', () => {
       1
     );
     sinon.assert.calledOnceWithExactly(
-      downloadPdfs,
+      downloadFiles,
       [{ link: '123', name: '21/12/2022' }, { link: '124', name: '22/12/2022' }]
     );
     sinon.assert.calledWithExactly(generateBillPdf.getCall(0), billIds[0], [companyId], credentials);
@@ -9702,7 +9702,7 @@ describe('downloadAllDocuments', () => {
 
     courseFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(courseTrainees, ['lean']));
     courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
-    downloadPdfs.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
+    downloadFiles.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
     generateBillPdf.onCall(0).returns({ pdf: 'pdf_bill_1', billNumber: 'bill_1' });
     generateBillPdf.onCall(1).returns({ pdf: 'pdf_bill_2', billNumber: 'bill_2' });
     getCompanyAtCourseRegistrationList.returns([
@@ -9793,7 +9793,7 @@ describe('downloadAllDocuments', () => {
       1
     );
     sinon.assert.calledOnceWithExactly(
-      downloadPdfs,
+      downloadFiles,
       [{ link: '123', name: '21/12/2022' }, { link: '124', name: '22/12/2022' }]
     );
     sinon.assert.calledWithExactly(generateBillPdf.getCall(0), billIds[0], [companyId], credentials);

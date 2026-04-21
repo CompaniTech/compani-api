@@ -8072,13 +8072,13 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
 
     let downloadFileByIdStub;
     let createDocxStub;
-    let downloadPdfs;
+    let downloadFiles;
     beforeEach(async () => {
       downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
-      downloadPdfs = sinon.stub(FileHelper, 'downloadPdfs');
+      downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
-      downloadPdfs.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
+      downloadFiles.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
       UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
 
@@ -8088,7 +8088,7 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
     afterEach(() => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
-      downloadPdfs.restore();
+      downloadFiles.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
       UtilsMock.unmockCurrentDate('');
     });
@@ -8129,13 +8129,13 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
 
     let downloadFileByIdStub;
     let createDocxStub;
-    let downloadPdfs;
+    let downloadFiles;
     beforeEach(async () => {
       downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
-      downloadPdfs = sinon.stub(FileHelper, 'downloadPdfs');
+      downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
-      downloadPdfs.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
+      downloadFiles.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
 
       authToken = await getToken('client_admin');
@@ -8144,7 +8144,7 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
     afterEach(() => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
-      downloadPdfs.restore();
+      downloadFiles.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
     });
 
@@ -8184,13 +8184,13 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
 
     let downloadFileByIdStub;
     let createDocxStub;
-    let downloadPdfs;
+    let downloadFiles;
     beforeEach(async () => {
       downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
-      downloadPdfs = sinon.stub(FileHelper, 'downloadPdfs');
+      downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
-      downloadPdfs.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
+      downloadFiles.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
 
       authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
@@ -8199,7 +8199,7 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
     afterEach(() => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
-      downloadPdfs.restore();
+      downloadFiles.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
     });
 

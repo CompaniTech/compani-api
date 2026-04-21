@@ -1904,7 +1904,7 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
         : CompaniDate(as.date).format(DD_MM_YYYY),
     }));
 
-  const attendanceSheetFilesList = await FileHelper.downloadPdfs(formattedAttendanceSheets);
+  const attendanceSheetFilesList = await FileHelper.downloadFiles(formattedAttendanceSheets);
 
   const courseBillsPromises = [];
   course.bills.forEach((bill) => {

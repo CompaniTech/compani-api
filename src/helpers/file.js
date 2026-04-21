@@ -3,6 +3,7 @@ const os = require('os');
 const path = require('path');
 const axios = require('axios');
 const randomize = require('randomatic');
+const get = require('lodash/get');
 
 const fsPromises = fs.promises;
 const TMP_FILES_PATH = `${path.resolve(__dirname, '../data/pdf/tmp')}/`;
@@ -64,10 +65,13 @@ exports.exportToTxt = async (data) => {
   return tmpOutputPath;
 };
 
-exports.downloadPdfs = async fileList => Promise.all(
+exports.downloadFiles = async fileList => Promise.all(
   fileList.map(async (file, index) => {
-    const { data } = await axios.get(file.link, { responseType: 'arraybuffer' });
-    const fileName = (file.name ? `${file.name}.pdf` : `document-${index + 1}.pdf`).replace(/[/\\]/g, '_');
-    return { name: fileName, file: data };
+    const response = await axios.get(file.link, { responseType: 'arraybuffer' });
+    const extension = get(response, 'headers.content-type', '').split('/')[1] || 'pdf';
+    const fileName = (file.name ? `${file.name}.${extension}` : `document-${index + 1}.${extension}`)
+      .replace(/[/\\]/g, '_');
+
+    return { name: fileName, file: response.data };
   })
 );

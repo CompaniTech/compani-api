@@ -92,7 +92,7 @@ describe('exportToCsv', () => {
   });
 });
 
-describe('downloadPdfs', () => {
+describe('downloadFiles', () => {
   let get;
 
   beforeEach(() => {
@@ -107,18 +107,22 @@ describe('downloadPdfs', () => {
     const fileList = [
       { link: 'https://test/compani/pdf-1.pdf', name: 'name/test' },
       { link: 'https://test/compani/pdf-2.pdf' },
+      { link: 'https://test/compani/png-1.png' },
     ];
 
-    get.onCall(0).returns({ data: { buffer: '1' } });
-    get.onCall(1).returns({ data: { buffer: '2' } });
+    get.onCall(0).returns({ data: { buffer: '1' }, headers: { 'content-type': 'application/pdf' } });
+    get.onCall(1).returns({ data: { buffer: '2' }, headers: { 'content-type': 'application/pdf' } });
+    get.onCall(2).returns({ data: { buffer: '3' }, headers: { 'content-type': 'image/png' } });
 
-    const result = await FileHelper.downloadPdfs(fileList);
+    const result = await FileHelper.downloadFiles(fileList);
     expect(result).toEqual([
       { name: 'name_test.pdf', file: { buffer: '1' } },
       { name: 'document-2.pdf', file: { buffer: '2' } },
+      { name: 'document-3.png', file: { buffer: '3' } },
     ]);
 
     sinon.assert.calledWithExactly(get.getCall(0), fileList[0].link, { responseType: 'arraybuffer' });
     sinon.assert.calledWithExactly(get.getCall(1), fileList[1].link, { responseType: 'arraybuffer' });
+    sinon.assert.calledWithExactly(get.getCall(2), fileList[2].link, { responseType: 'arraybuffer' });
   });
 });
