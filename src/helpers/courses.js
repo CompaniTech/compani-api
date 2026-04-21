@@ -32,7 +32,9 @@ const UtilsHelper = require('./utils');
 const DatesUtilsHelper = require('./dates/utils');
 const ZipHelper = require('./zip');
 const SmsHelper = require('./sms');
+const CourseBillsHelper = require('./courseBills');
 const DocxHelper = require('./docx');
+const FileHelper = require('./file');
 const GCloudStorageHelper = require('./gCloudStorage');
 const StepsHelper = require('./steps');
 const TrainingContractsHelper = require('./trainingContracts');
@@ -1370,7 +1372,7 @@ const generateCompletionCertificatePdf = async (courseData, courseAttendances, t
   return { file: pdf, name: `Attestation - ${identity}.pdf` };
 };
 
-const generateOfficialCompletionCertificatePdf = async (courseData, courseAttendances, trainee) => {
+exports.generateOfficialCompletionCertificatePdf = async (courseData, courseAttendances, trainee) => {
   const {
     _id,
     identity,
@@ -1497,6 +1499,26 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
   return unsubscribedAttendances.flat(2);
 };
 
+exports.getAllAttendances = async (course, courseTrainees, isVendorUser) => {
+  const attendances = await Attendance
+    .find({ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT })
+    .populate({ path: 'courseSlot', select: 'startDate endDate' })
+    .setOptions({ isVendorUser })
+    .lean();
+
+  const unsubscribedAttendances = await exports.getUnsubscribedAttendances(
+    {
+      _id: course._id,
+      companies: course.companies.map(c => c._id),
+      trainees: courseTrainees.trainees,
+      subPrograms: get(course, 'subProgram.program.subPrograms'),
+    },
+    isVendorUser
+  );
+
+  return [...attendances, ...unsubscribedAttendances];
+};
+
 exports.generateCompletionCertificates = async (courseId, credentials, query) => {
   const { format, type, isClientInterface } = query;
   const isVendorUser = VENDOR_ROLES.includes(get(credentials, 'role.vendor.name'));
@@ -1526,23 +1548,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
     .populate({ path: 'companies', select: 'name' })
     .lean();
 
-  const attendances = await Attendance
-    .find({ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT })
-    .populate({ path: 'courseSlot', select: 'startDate endDate' })
-    .setOptions({ isVendorUser })
-    .lean();
-
-  const unsubscribedAttendances = await exports.getUnsubscribedAttendances(
-    {
-      _id: courseId,
-      companies: course.companies.map(c => c._id),
-      trainees: courseTrainees.trainees,
-      subPrograms: get(course, 'subProgram.program.subPrograms'),
-    },
-    isVendorUser
-  );
-
-  const allAttendances = [...attendances, ...unsubscribedAttendances];
+  const allAttendances = await exports.getAllAttendances(course, courseTrainees, isVendorUser);
 
   const courseData = exports.formatCourseForDocuments(course, type);
   if (format === PDF) {
@@ -1557,7 +1563,8 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
   }
 
   if (type === OFFICIAL) {
-    const promises = traineeList.map(t => generateOfficialCompletionCertificatePdf(courseData, allAttendances, t));
+    const promises = traineeList
+      .map(t => exports.generateOfficialCompletionCertificatePdf(courseData, allAttendances, t));
     return ZipHelper.generateZip('certificats_pdf.zip', await Promise.all(promises));
   }
 
@@ -1840,4 +1847,84 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
     if (coach) await exports.addTrainer(course._id, { trainer: coach._id }, credentials);
     if (architect) await exports.addTrainer(course._id, { trainer: architect._id }, credentials);
   }
+};
+
+exports.downloadAllDocuments = async (courseId, credentials, query) => {
+  const isVendorUser = !!get(credentials, 'role.vendor');
+  const companies = [];
+  if (query.isClientInterface) {
+    if (get(credentials, 'role.holding')) companies.push(...credentials.holding.companies);
+    else companies.push(get(credentials, 'company._id'));
+  }
+
+  const courseTrainees = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
+
+  const course = await Course
+    .findOne({ _id: courseId })
+    .populate({ path: 'slots', select: 'startDate endDate trainees' })
+    .populate({ path: 'trainees', select: 'identity' })
+    .populate(
+      {
+        path: 'subProgram',
+        select: 'program steps',
+        populate: [
+          { path: 'program', select: 'name learningGoals subPrograms' },
+          {
+            path: 'steps',
+            select: 'type theoreticalDuration',
+            match: { type: E_LEARNING },
+            populate: {
+              path: 'activities',
+              populate: { path: 'activityHistories', match: { user: { $in: courseTrainees.trainees } } },
+            },
+          },
+        ],
+      }
+    )
+    .populate({ path: 'companies', select: 'name', ...(companies.length && { match: { _id: { $in: companies } } }) })
+    .populate({
+      path: 'attendanceSheets',
+      match: { 'file.link': { $exists: true }, ...(companies.length && { companies: { $in: companies } }) },
+      options: { isVendorUser, requestingOwnInfos: !!(query.isClientInterface && companies.length) },
+      populate: { path: 'trainee', select: 'identity' },
+    })
+    .populate({
+      path: 'bills',
+      match: { billedAt: { $exists: true }, ...(companies.length && { companies: { $in: companies } }) },
+      options: { isVendorUser, requestingOwnInfos: !!(query.isClientInterface && companies.length) },
+      populate: { path: 'companies', select: 'name address' },
+    })
+    .lean();
+
+  const formattedAttendanceSheets = course.attendanceSheets
+    .map(as => ({
+      link: as.file.link,
+      name: as.trainee
+        ? UtilsHelper.formatIdentity(as.trainee.identity, 'FL')
+        : CompaniDate(as.date).format(DD_MM_YYYY),
+    }));
+
+  const attendanceSheetFilesList = await FileHelper.downloadFiles(formattedAttendanceSheets);
+
+  const courseBillsPromises = [];
+  course.bills.forEach((bill) => {
+    courseBillsPromises.push(CourseBillsHelper.generateBillPdf(bill._id, bill.companies.map(c => c._id), credentials));
+  });
+  const courseBillFilesList = await Promise.all(courseBillsPromises);
+  const traineeList = await getTraineeList(course, credentials, query.isClientInterface);
+  const courseData = exports.formatCourseForDocuments(course, OFFICIAL);
+
+  const allAttendances = await exports.getAllAttendances(course, courseTrainees, isVendorUser);
+
+  const certificatesPromises = traineeList
+    .map(t => exports.generateOfficialCompletionCertificatePdf(courseData, allAttendances, t));
+
+  return ZipHelper.generateZip(
+    'documents',
+    [
+      ...attendanceSheetFilesList,
+      ...courseBillFilesList.map(f => ({ file: f.pdf, name: `${f.billNumber}.pdf` })),
+      ...await Promise.all(certificatesPromises),
+    ]
+  );
 };

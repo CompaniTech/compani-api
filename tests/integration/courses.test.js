@@ -86,6 +86,7 @@ const GDriveStorageHelper = require('../../src/helpers/gDriveStorage');
 const NodemailerHelper = require('../../src/helpers/nodemailer');
 const SmsHelper = require('../../src/helpers/sms');
 const DocxHelper = require('../../src/helpers/docx');
+const FileHelper = require('../../src/helpers/file');
 const NotificationHelper = require('../../src/helpers/notifications');
 const UtilsHelper = require('../../src/helpers/utils');
 const translate = require('../../src/helpers/translate');
@@ -8052,6 +8053,191 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           url: '/courses/single-courses-csv',
           headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: getStream(form),
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
+  let authToken;
+  const courseIdFromAuthCompany = coursesList[2]._id;
+  const courseIdFromOtherCompany = coursesList[1]._id;
+  const courseIdFromThirdCompany = coursesList[5]._id;
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(populateDB);
+
+    let downloadFileByIdStub;
+    let createDocxStub;
+    let downloadFiles;
+    beforeEach(async () => {
+      downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
+      createDocxStub = sinon.stub(DocxHelper, 'createDocx');
+      downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
+      createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
+      downloadFiles.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
+      process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+      UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
+
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    afterEach(() => {
+      downloadFileByIdStub.restore();
+      createDocxStub.restore();
+      downloadFiles.restore();
+      process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+      UtilsMock.unmockCurrentDate('');
+    });
+
+    it('should download all course documents', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/all-documents`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 400 if isClientInterface query but no client role', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/all-documents?isClientInterface=true`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if course does not exist', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${new ObjectId()}/all-documents`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('CLIENT_ADMIN', () => {
+    beforeEach(populateDB);
+
+    let downloadFileByIdStub;
+    let createDocxStub;
+    let downloadFiles;
+    beforeEach(async () => {
+      downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
+      createDocxStub = sinon.stub(DocxHelper, 'createDocx');
+      downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
+      createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
+      downloadFiles.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
+      process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+
+      authToken = await getToken('client_admin');
+    });
+
+    afterEach(() => {
+      downloadFileByIdStub.restore();
+      createDocxStub.restore();
+      downloadFiles.restore();
+      process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+    });
+
+    it('should return 200 as user is course company client admin', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/all-documents?isClientInterface=true`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 403 as user is client admin but isClientInterface not in query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromOtherCompany}/all-documents`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 as user is not in course company', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromOtherCompany}/all-documents?isClientInterface=true`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('HOLDING_ADMIN', () => {
+    beforeEach(populateDB);
+
+    let downloadFileByIdStub;
+    let createDocxStub;
+    let downloadFiles;
+    beforeEach(async () => {
+      downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
+      createDocxStub = sinon.stub(DocxHelper, 'createDocx');
+      downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
+      createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
+      downloadFiles.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
+      process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
+
+      authToken = await getTokenByCredentials(holdingAdminFromOtherCompany.local);
+    });
+
+    afterEach(() => {
+      downloadFileByIdStub.restore();
+      createDocxStub.restore();
+      downloadFiles.restore();
+      process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
+    });
+
+    it('should return 200 as user is holding_admin of course company holding (not in course company)', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromThirdCompany}/all-documents?isClientInterface=true`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 403 as user is not in course company holding', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${courseIdFromAuthCompany}/all-documents?isClientInterface=true`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'coach', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'GET',
+          url: `/courses/${courseIdFromAuthCompany}/all-documents`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);
