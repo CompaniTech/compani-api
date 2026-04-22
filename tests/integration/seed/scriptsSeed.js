@@ -45,6 +45,7 @@ const userList = [
     local: { email: 'trainerFromOtherCompany@compani.fr' },
     role: { vendor: trainerRoleId },
     origin: WEBAPP,
+    formationExpoTokenList: ['ExponentPushToken[jeSuisUnNouveauTokenExpo]'],
   },
   { // 2
     _id: new ObjectId(),
@@ -325,6 +326,14 @@ const slotList = [
     _id: new ObjectId(),
     startDate: '2022-11-13T13:00:00.000Z',
     endDate: '2022-11-13T14:00:00.000Z',
+    course: courseList[5]._id,
+    step: stepList[0]._id,
+    trainers: [userList[1]._id],
+  },
+  { // 14
+    _id: new ObjectId(),
+    startDate: '2023-01-07T13:00:00.000Z',
+    endDate: '2023-01-07T14:00:00.000Z',
     course: courseList[5]._id,
     step: stepList[0]._id,
     trainers: [userList[1]._id],

@@ -548,6 +548,7 @@ module.exports = {
   BLENDED_COURSE_REGISTRATION: 'blended_course_registration',
   NEW_ELEARNING_COURSE: 'new_elearning_course',
   ATTENDANCE_SHEET_SIGNATURE_REQUEST: 'attendance_sheet_signature_request',
+  TRAINER_ATTENDANCE_REMINDER: 'trainer_attendance_reminder',
   // TIMESTAMP
   MANUAL_TIME_STAMPING: 'manual_time_stamping',
   QR_CODE_TIME_STAMPING: 'qr_code_time_stamping',

@@ -5,6 +5,7 @@ const {
   BLENDED_COURSE_REGISTRATION,
   NEW_ELEARNING_COURSE,
   ATTENDANCE_SHEET_SIGNATURE_REQUEST,
+  TRAINER_ATTENDANCE_REMINDER,
 } = require('../../../src/helpers/constants');
 const NotificationHelper = require('../../../src/helpers/notifications');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
@@ -355,6 +356,81 @@ describe('sendAttendanceSheetSignatureRequestNotification', () => {
     const attendanceSheetId = new ObjectId();
 
     await NotificationHelper.sendAttendanceSheetSignatureRequestNotification(attendanceSheetId, new ObjectId(), []);
+
+    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(sendNotificationToUser);
+  });
+});
+
+describe('sendAttendanceReminder', () => {
+  let sendNotificationToUser;
+  let findOne;
+  beforeEach(() => {
+    sendNotificationToUser = sinon.stub(NotificationHelper, 'sendNotificationToUser');
+    findOne = sinon.stub(Course, 'findOne');
+  });
+  afterEach(() => {
+    sendNotificationToUser.restore();
+    findOne.restore();
+  });
+
+  it('should format payload and call sendNotificationToUser', async () => {
+    const formationExpoTokenList = [
+      'ExponentPushToken[jeSuisUnTokenExpo]',
+      'ExponentPushToken[jeSuisUnAutreTokenExpo]',
+    ];
+    const trainerId = new ObjectId();
+    const courseId = new ObjectId();
+    const course = {
+      _id: courseId,
+      misc: 'skusku',
+      subProgram: { program: { name: 'La communication avec Patrick' } },
+      trainers: [
+        { _id: new ObjectId(), identity: { firstname: 'Paul', lastname: 'Accompagné' } },
+        { _id: trainerId, identity: { firstname: 'Paul', lastname: 'Seul' } },
+      ],
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(course));
+
+    await NotificationHelper
+      .sendAttendanceReminder(courseId, trainerId, formationExpoTokenList);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: courseId }, { subProgram: 1, misc: 1 }] },
+        {
+          query: 'populate',
+          args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      sendNotificationToUser.getCall(0),
+      {
+        title: 'Vous avez des créneaux à émarger',
+        body: 'N\'oubliez pas d\'émarger les créneaux effectués pour la formation La communication avec Patrick - '
+          + 'skusku.',
+        data: { courseId, type: TRAINER_ATTENDANCE_REMINDER },
+        expoToken: 'ExponentPushToken[jeSuisUnTokenExpo]',
+      }
+    );
+    sinon.assert.calledWithExactly(
+      sendNotificationToUser.getCall(1),
+      {
+        title: 'Vous avez des créneaux à émarger',
+        body: 'N\'oubliez pas d\'émarger les créneaux effectués pour la formation La communication avec Patrick - '
+          + 'skusku.',
+        data: { courseId, type: TRAINER_ATTENDANCE_REMINDER },
+        expoToken: 'ExponentPushToken[jeSuisUnAutreTokenExpo]',
+      }
+    );
+  });
+
+  it('should do nothing if trainee has no formationExpoTokenList', async () => {
+    await NotificationHelper.sendAttendanceReminder(new ObjectId(), new ObjectId(), []);
 
     sinon.assert.notCalled(findOne);
     sinon.assert.notCalled(sendNotificationToUser);
