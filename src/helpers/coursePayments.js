@@ -29,7 +29,7 @@ exports.updateCoursePayment = async (coursePaymentId, payload) => {
 };
 
 exports.list = async query => CoursePayment
-  .find({ status: query.status, nature: PAYMENT })
+  .find({ status: { $in: Array.isArray(query.status) ? query.status : [query.status] }, nature: PAYMENT })
   .populate({
     path: 'courseBill',
     select: 'number payer course',
