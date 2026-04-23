@@ -393,8 +393,7 @@ describe('sendAttendanceReminder', () => {
 
     findOne.returns(SinonMongoose.stubChainedQueries(course));
 
-    await NotificationHelper
-      .sendAttendanceReminder(courseId, trainerId, formationExpoTokenList);
+    await NotificationHelper.sendAttendanceReminder(courseId, formationExpoTokenList);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -430,7 +429,7 @@ describe('sendAttendanceReminder', () => {
   });
 
   it('should do nothing if trainee has no formationExpoTokenList', async () => {
-    await NotificationHelper.sendAttendanceReminder(new ObjectId(), new ObjectId(), []);
+    await NotificationHelper.sendAttendanceReminder(new ObjectId(), []);
 
     sinon.assert.notCalled(findOne);
     sinon.assert.notCalled(sendNotificationToUser);

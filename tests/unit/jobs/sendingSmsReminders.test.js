@@ -349,7 +349,7 @@ describe('method', () => {
       'Veille de tripartite (tuteur)': { sentReminders: [tutorIds[0]], notSentReminders: [tutorIds[1]] },
       '1 semaine avant 1er codev': { sentReminders: [traineeIds[4]], notSentReminders: [traineeIds[1]] },
       'Relance elearning POEI': { sentReminders: [traineeIds[0]] },
-      'Relance émargement': { sentReminders: [trainerIds[0]], notSentReminders: [trainerIds[1]] },
+      'Relance émargement intervenants': { sentReminders: [trainerIds[0]], notSentReminders: [trainerIds[1]] },
     });
 
     SinonMongoose.calledWithExactly(
@@ -581,12 +581,7 @@ describe('method', () => {
         tag: 'Formation POEI',
       }
     );
-    sinon.assert.calledOnceWithExactly(
-      sendAttendanceReminder,
-      courseIds[0].toHexString(),
-      trainerIds[0].toHexString(),
-      ['token1']
-    );
+    sinon.assert.calledOnceWithExactly(sendAttendanceReminder, courseIds[0].toHexString(), ['token1']);
   });
 
   it('should return empty result if no matching slot', async () => {
@@ -611,7 +606,7 @@ describe('method', () => {
       'Veille de tripartite (tuteur)': {},
       '1 semaine avant 1er codev': {},
       'Relance elearning POEI': {},
-      'Relance émargement': {},
+      'Relance émargement intervenants': {},
     });
 
     SinonMongoose.calledWithExactly(

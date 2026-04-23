@@ -195,7 +195,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
           'Relance elearning POEI': {
             sentReminders: [userList[0]._id],
           },
-          'Relance émargement': {
+          'Relance émargement intervenants': {
             sentReminders: [userList[1]._id],
           },
         });

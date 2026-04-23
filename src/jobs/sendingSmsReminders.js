@@ -330,16 +330,15 @@ const getYesterdaySlotsWithoutAttendance = async () => {
   const trainersWithEmptyAttendanceNotSentReminders = [];
   for (const trainerId of Object.keys(slotsGroupedByTrainer)) {
     const slots = slotsGroupedByTrainer[trainerId];
-    const formationExpoTokenList = slots.length
-      ? slots[0].trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerId)).formationExpoTokenList || []
-      : [];
+    const formationExpoTokenList = slots[0].trainers
+      .find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerId)).formationExpoTokenList || [];
 
     const slotsGroupedByCourse = groupBy(slots, 'course');
     for (const courseId of Object.keys(slotsGroupedByCourse)) {
       const slotsWithoutAttendance = slotsGroupedByCourse[courseId].filter(s => !s.attendances.length);
       if (!slotsWithoutAttendance.length) continue;
       if (formationExpoTokenList.length) {
-        promises.push(NotificationsHelper.sendAttendanceReminder(courseId, trainerId, formationExpoTokenList));
+        promises.push(NotificationsHelper.sendAttendanceReminder(courseId, formationExpoTokenList));
         trainersWithEmptyAttendanceSentReminders.push(trainerId);
       } else trainersWithEmptyAttendanceNotSentReminders.push(trainerId);
     }
@@ -436,7 +435,7 @@ const sendingSmsRemindersJob = {
         promises: attendanceReminderPromises,
       } = await getYesterdaySlotsWithoutAttendance();
 
-      result['Relance émargement'] = {
+      result['Relance émargement intervenants'] = {
         ...trainersWithEmptyAttendanceSentReminders.length && {
           sentReminders: trainersWithEmptyAttendanceSentReminders,
         },
