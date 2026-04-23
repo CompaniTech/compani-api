@@ -246,7 +246,7 @@ exports.completionSendingSmsRemindersEmail = (result) => {
     if (notSentReminders && notSentReminders.length) {
       const htmlNotSentReminders = notSentReminders.map(r => `<li>Utilisateur: ${r.toHexString()}</li>`).join('');
       body = body.concat(
-        `<ul><p>Numéro de téléphone manquant :</p>${htmlNotSentReminders}</ul><br/>`
+        `<ul><p>Numéro de téléphone/token manquant :</p>${htmlNotSentReminders}</ul><br/>`
       );
     }
   });

@@ -1,16 +1,18 @@
 const { ObjectId } = require('mongodb');
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
+const groupBy = require('lodash/groupBy');
 const EmailHelper = require('../helpers/email');
 const ActivityHistory = require('../models/ActivityHistory');
 const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const SubProgram = require('../models/SubProgram');
 const NumbersHelper = require('../helpers/numbers');
+const NotificationsHelper = require('../helpers/notifications');
 const SmsHelper = require('../helpers/sms');
 const UtilsHelper = require('../helpers/utils');
 const { CompaniDate } = require('../helpers/dates/companiDates');
-const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING } = require('../helpers/constants');
+const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING, SINGLE } = require('../helpers/constants');
 
 const getEvaluationSlotsIn2W = async () => {
   const evaluationSlotsIn2W = await CourseSlot
@@ -301,6 +303,56 @@ const getPOEIFirstSingleSlot = async () => {
   return { POEISentReminders, POEINotSentReminders, promises };
 };
 
+const getYesterdaySlotsWithoutAttendance = async () => {
+  const singleCourses = await Course.find({ type: SINGLE }).lean();
+  const yesterdaySlots = await CourseSlot
+    .find({
+      course: { $in: singleCourses.map(c => c._id) },
+      startDate: {
+        $gte: CompaniDate().subtract('P1D').startOf(DAY).toDate(),
+        $lte: CompaniDate().subtract('P1D').endOf(DAY).toDate(),
+      },
+    })
+    .populate({ path: 'trainers', select: 'formationExpoTokenList' })
+    .populate({ path: 'attendances', options: { isVendorUser: true } })
+    .lean();
+
+  const slotsGroupedByTrainer = {};
+  yesterdaySlots.forEach((slot) => {
+    slot.trainers.forEach((trainer) => {
+      if (!slotsGroupedByTrainer[trainer._id]) slotsGroupedByTrainer[trainer._id] = [];
+      slotsGroupedByTrainer[trainer._id].push(slot);
+    });
+  });
+
+  const promises = [];
+  const trainersWithEmptyAttendanceSentReminders = [];
+  const trainersWithEmptyAttendanceNotSentReminders = [];
+  for (const trainerId of Object.keys(slotsGroupedByTrainer)) {
+    const slots = slotsGroupedByTrainer[trainerId];
+    const formationExpoTokenList = slots[0].trainers
+      .find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerId)).formationExpoTokenList || [];
+
+    const slotsGroupedByCourse = groupBy(slots, 'course');
+    for (const courseId of Object.keys(slotsGroupedByCourse)) {
+      const slotsWithoutAttendance = slotsGroupedByCourse[courseId].filter(s => !s.attendances.length);
+      if (!slotsWithoutAttendance.length) continue;
+      if (formationExpoTokenList.length) {
+        promises.push(NotificationsHelper.sendAttendanceReminder(courseId, formationExpoTokenList));
+        trainersWithEmptyAttendanceSentReminders.push(trainerId);
+      } else trainersWithEmptyAttendanceNotSentReminders.push(trainerId);
+    }
+  }
+
+  return {
+    trainersWithEmptyAttendanceSentReminders: [...new Set(trainersWithEmptyAttendanceSentReminders)]
+      .map(id => new ObjectId(id)),
+    trainersWithEmptyAttendanceNotSentReminders: [...new Set(trainersWithEmptyAttendanceNotSentReminders)]
+      .map(id => new ObjectId(id)),
+    promises,
+  };
+};
+
 const sendingSmsRemindersJob = {
   async method(server) {
     try {
@@ -375,6 +427,23 @@ const sendingSmsRemindersJob = {
         ...POEINotSentReminders.length && { notSentReminders: POEINotSentReminders },
       };
       if (POEIPromises.length) promises.push(...POEIPromises);
+
+      // Yesterday slots without attendance
+      const {
+        trainersWithEmptyAttendanceSentReminders,
+        trainersWithEmptyAttendanceNotSentReminders,
+        promises: attendanceReminderPromises,
+      } = await getYesterdaySlotsWithoutAttendance();
+
+      result['Relance émargement intervenants'] = {
+        ...trainersWithEmptyAttendanceSentReminders.length && {
+          sentReminders: trainersWithEmptyAttendanceSentReminders,
+        },
+        ...trainersWithEmptyAttendanceNotSentReminders.length && {
+          notSentReminders: trainersWithEmptyAttendanceNotSentReminders,
+        },
+      };
+      if (attendanceReminderPromises.length) promises.push(...attendanceReminderPromises);
 
       await Promise.all(promises);
       return result;
