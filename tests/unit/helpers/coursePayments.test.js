@@ -11,6 +11,8 @@ const {
   CHECK,
   CASH,
   XML_GENERATED,
+  INTRA,
+  SINGLE,
 } = require('../../../src/helpers/constants');
 const CourseBill = require('../../../src/models/CourseBill');
 const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
@@ -214,13 +216,18 @@ describe('list', () => {
     find.restore();
   });
 
-  it('should list payments', async () => {
+  it('should list received and xml_generated payments', async () => {
     const paymentList = [
       {
         _id: new ObjectId(),
         status: RECEIVED,
         nature: PAYMENT,
-        courseBill: { number: 'FACT_00001', payer: { company: { name: 'Structure' } }, isPayerCompany: true },
+        courseBill: {
+          number: 'FACT_00001',
+          payer: { company: { name: 'Structure' } },
+          isPayerCompany: true,
+          course: { type: INTRA },
+        },
       },
       {
         _id: new ObjectId(),
@@ -230,35 +237,116 @@ describe('list', () => {
           number: 'FACT_00002',
           payer: { company: { fundingOrganisation: 'Financeur' } },
           isPayerCompany: false,
+          course: { type: INTRA },
         },
       },
       {
         _id: new ObjectId(),
         status: XML_GENERATED,
         nature: PAYMENT,
-        courseBill: { number: 'FACT_00001', payer: { company: { name: 'Structure' } }, isPayerCompany: true },
+        courseBill: {
+          number: 'FACT_00001',
+          payer: { company: { name: 'Structure' } },
+          isPayerCompany: true,
+          course: { type: SINGLE },
+        },
         xmlSEPAFileInfos: { name: 'lot de prelevements 1' },
       },
     ];
     find.returns(SinonMongoose.stubChainedQueries(paymentList, ['populate', 'setOptions', 'sort', 'lean']));
 
-    const result = await CoursePaymentsHelper.list({ status: RECEIVED });
+    const result = await CoursePaymentsHelper.list({ status: [RECEIVED, XML_GENERATED] });
 
     expect(result).toEqual(paymentList);
 
     SinonMongoose.calledOnceWithExactly(
       find,
       [
-        { query: 'find', args: [{ status: RECEIVED, nature: PAYMENT }] },
+        { query: 'find', args: [{ status: { $in: [RECEIVED, XML_GENERATED] }, nature: PAYMENT }] },
         {
           query: 'populate',
           args: [
             {
               path: 'courseBill',
-              select: 'number payer',
+              select: 'number payer course',
               populate: [
                 { path: 'payer.company', select: 'name bic iban debitMandates' },
                 { path: 'payer.fundingOrganisation', select: 'name' },
+                { path: 'course', select: 'type' },
+              ],
+            },
+          ],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'sort', args: [{ updatedAt: -1 }] },
+        { query: 'lean', args: [] },
+      ]
+    );
+  });
+
+  it('should list received payments', async () => {
+    const paymentList = [
+      {
+        _id: new ObjectId(),
+        status: RECEIVED,
+        nature: PAYMENT,
+        courseBill: {
+          number: 'FACT_00001',
+          payer: { company: { name: 'Structure' } },
+          isPayerCompany: true,
+          course: { type: INTRA },
+        },
+      },
+      {
+        _id: new ObjectId(),
+        status: RECEIVED,
+        nature: PAYMENT,
+        courseBill: {
+          number: 'FACT_00002',
+          payer: { company: { fundingOrganisation: 'Financeur' } },
+          isPayerCompany: false,
+          course: { type: INTRA },
+        },
+      },
+      {
+        _id: new ObjectId(),
+        status: XML_GENERATED,
+        nature: PAYMENT,
+        courseBill: {
+          number: 'FACT_00001',
+          payer: { company: { name: 'Structure' } },
+          isPayerCompany: true,
+          course: { type: SINGLE },
+        },
+        xmlSEPAFileInfos: { name: 'lot de prelevements 1' },
+      },
+    ];
+    find.returns(
+      SinonMongoose.stubChainedQueries([paymentList[0], paymentList[1]], ['populate', 'setOptions', 'sort', 'lean'])
+    );
+
+    const result = await CoursePaymentsHelper.list({ status: RECEIVED });
+
+    expect(result).toEqual([paymentList[0], paymentList[1]]);
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        { query: 'find', args: [{ status: { $in: [RECEIVED] }, nature: PAYMENT }] },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'courseBill',
+              select: 'number payer course',
+              populate: [
+                { path: 'payer.company', select: 'name bic iban debitMandates' },
+                { path: 'payer.fundingOrganisation', select: 'name' },
+                { path: 'course', select: 'type' },
               ],
             },
           ],
