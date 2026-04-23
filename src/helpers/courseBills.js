@@ -3,13 +3,16 @@ const has = require('lodash/has');
 const omit = require('lodash/omit');
 const mapValues = require('lodash/mapValues');
 const keyBy = require('lodash/keyBy');
+const groupBy = require('lodash/groupBy');
 const { ObjectId } = require('mongodb');
 const NumbersHelper = require('./numbers');
+const ActivityHistory = require('../models/ActivityHistory');
 const Course = require('../models/Course');
 const CourseBill = require('../models/CourseBill');
 const CourseBillsNumber = require('../models/CourseBillsNumber');
 const CoursePaymentNumber = require('../models/CoursePaymentNumber');
 const CoursePayment = require('../models/CoursePayment');
+const SubProgram = require('../models/SubProgram');
 const BalanceHelper = require('./balances');
 const UtilsHelper = require('./utils');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -30,6 +33,7 @@ const {
   PAYMENT,
   BANK_TRANSFER,
   DIRECT_DEBIT,
+  PRESENT,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -152,11 +156,22 @@ exports.list = async (query, credentials) => {
       ...(query.startDate && query.endDate
         ? [{
           path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt misc',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt misc type',
           populate: [
             { path: 'companies', select: 'name' },
             { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
-            { path: 'slots', select: 'startDate endDate' },
+            {
+              path: 'slots',
+              select: 'startDate endDate',
+              ...!query.isValidated && {
+                populate: {
+                  path: 'attendances',
+                  select: '_id',
+                  match: { status: PRESENT },
+                  options: { isVendorUser: true },
+                },
+              },
+            },
             { path: 'slotsToPlan', select: '_id' },
           ],
         },
@@ -175,12 +190,42 @@ exports.list = async (query, credentials) => {
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
     .lean();
 
+  let activityHistoriesByTrainee = {};
+  if (!query.isValidated) {
+    const singleCourseBills = courseBills.filter(bill => bill.course.type === SINGLE && !bill.course.interruptedAt);
+    const singleSubProgramIds = [...new Set(singleCourseBills.map(b => b.course.subProgram._id.toHexString()))];
+    const subPrograms = await SubProgram
+      .find({ _id: { $in: singleSubProgramIds } })
+      .populate({ path: 'steps', select: 'activities' })
+      .lean();
+
+    const activityIds = subPrograms.flatMap(sp => sp.steps.flatMap(s => s.activities));
+    const trainees = singleCourseBills.flatMap(bill => bill.course.trainees);
+    const activityHistories = await ActivityHistory
+      .find({
+        activity: { $in: activityIds },
+        user: { $in: trainees },
+        date: { $gte: query.startDate, $lte: query.endDate },
+      })
+      .lean();
+    activityHistoriesByTrainee = groupBy(activityHistories, 'user');
+  }
+
   return Promise.all(
     courseBills
       .filter(bill => query.isValidated || !get(bill, 'course.interruptedAt'))
       .map(async bill => ({
         ...bill,
-        ...(query.startDate && query.endDate && { course: await formatCourse(bill.course) }),
+        ...(query.startDate && query.endDate && {
+          course: await formatCourse(bill.course),
+          ...!query.isValidated && {
+            hasCourseAction: bill.course.type !== SINGLE ||
+              bill.course.trainees.some(t => activityHistoriesByTrainee[t]) ||
+              bill.course.slots
+                .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
+                .some(s => s.attendances.length),
+          },
+        }),
         netInclTaxes: exports.getNetInclTaxes(bill),
       }))
   );
