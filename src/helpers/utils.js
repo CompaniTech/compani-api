@@ -344,3 +344,5 @@ exports.sanitizeFileName = (name) => {
     .replace(WINDOWS_RESERVED_REGEX, replacement);
   return sanitized;
 };
+
+exports.isCourseInterrupted = (interruptionDates = []) => interruptionDates.some(d => !d.endDate);

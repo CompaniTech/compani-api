@@ -897,3 +897,28 @@ describe('sanitizeFileName', () => {
     expect(result).toBe('_');
   });
 });
+
+describe('isCourseInterrupted', () => {
+  it('should return true if one element of interruptionDates has no endDate', () => {
+    const interruptionDates = [{ startDate: '2022-05-31T08:00:00.000Z' }];
+    const result = UtilsHelper.isCourseInterrupted(interruptionDates);
+
+    expect(result).toBe(true);
+  });
+
+  it('should return true if every interruptionDate has endDate', () => {
+    const interruptionDates = [
+      { startDate: '2022-05-31T08:00:00.000Z', endDate: '2022-06-26T08:00:00.000Z' },
+      { startDate: '2023-01-31T08:00:00.000Z', endDate: '2023-02-23T08:00:00.000Z' },
+    ];
+    const result = UtilsHelper.isCourseInterrupted(interruptionDates);
+
+    expect(result).toBe(false);
+  });
+
+  it('should return true if no interruptionDates', () => {
+    const result = UtilsHelper.isCourseInterrupted([]);
+
+    expect(result).toBe(false);
+  });
+});
