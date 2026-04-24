@@ -279,6 +279,8 @@ exports.authorizeCourseEdit = async (req) => {
     const unarchiveCourse = has(payload, 'archivedAt') && payload.archivedAt === '';
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
 
+    if (has(payload, 'interruptionDate') && !isRofOrAdmin) throw Boom.forbidden();
+
     const courseTrainerIds = get(course, 'trainers', []);
     const companies = [INTRA, INTRA_HOLDING, SINGLE].includes(course.type) ? course.companies : [];
     const holding = course.type === INTRA_HOLDING ? course.holding : null;
