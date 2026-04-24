@@ -4916,20 +4916,27 @@ describe('updateCourse', () => {
 
   it('should interrupt the course', async () => {
     const courseId = new ObjectId();
-    const payload = { interruptedAt: '2025-01-06T10:20:00.000Z' };
+    const payload = { interruptionDate: '2025-01-06T10:20:00.000Z' };
     const courseFromDb = { _id: courseId };
 
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
     courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ _id: courseId }, { interruptionDates: 1 }] },
+        { query: 'lean' },
+      ]);
+    SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
         {
           query: 'findOneAndUpdate',
-          args: [{ _id: courseId }, { $set: { interruptedAt: '2025-01-06T10:20:00.000Z' } }],
+          args: [{ _id: courseId }, { $set: { interruptionDates: [{ startDate: '2025-01-06T10:20:00.000Z' }] } }],
         },
         { query: 'lean' },
       ]
@@ -4943,18 +4950,44 @@ describe('updateCourse', () => {
 
   it('should restart an interrupted course', async () => {
     const courseId = new ObjectId();
-    const payload = { interruptedAt: '' };
-    const courseFromDb = { _id: courseId, interruptedAt: '2025-01-06T10:20:00.000Z' };
+    const payload = { interruptionDate: '2025-04-22T10:20:00.000Z' };
+    const courseFromDb = {
+      _id: courseId,
+      interruptionDates: [
+        { startDate: '2024-01-06T10:20:00.000Z', endDate: '2024-01-12T10:20:00.000Z' },
+        { startDate: '2025-03-22T10:20:00.000Z' },
+      ],
+    };
 
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
     courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ _id: courseId }, { interruptionDates: 1 }] },
+        { query: 'lean' },
+      ]);
+    SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
-        { query: 'findOneAndUpdate', args: [{ _id: courseId }, { $unset: { interruptedAt: '' } }] },
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: courseId },
+            {
+              $set: {
+                interruptionDates: [
+                  { startDate: '2024-01-06T10:20:00.000Z', endDate: '2024-01-12T10:20:00.000Z' },
+                  { startDate: '2025-03-22T10:20:00.000Z', endDate: '2025-04-22T10:20:00.000Z' },
+                ],
+              },
+            },
+          ],
+        },
         { query: 'lean' },
       ]
     );

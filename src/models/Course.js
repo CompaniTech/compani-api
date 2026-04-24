@@ -81,7 +81,12 @@ const CourseSchema = mongoose.Schema({
     _id: false,
     id: false,
   },
-  interruptedAt: { type: Date },
+  interruptionDates: {
+    type: [{ startDate: { type: Date }, endDate: { type: Date } }],
+    _id: false,
+    id: false,
+    default: undefined,
+  },
   folderId: {
     type: String,
     validate: {
