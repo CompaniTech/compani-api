@@ -72,7 +72,7 @@ describe('method', () => {
       {
         startDate: '2026-01-18T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
-        course: { interruptedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[2] }] },
+        course: { interruptionDates: [{ startDate: '2026-01-01T15:00:00.000Z' }], trainees: [{ _id: traineeIds[2] }] },
       },
       {
         startDate: '2026-01-18T15:00:00.000Z',
@@ -123,7 +123,7 @@ describe('method', () => {
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
         course: {
-          interruptedAt: '2026-01-01T15:00:00.000Z',
+          interruptionDates: [{ startDate: '2026-01-01T15:00:00.000Z' }],
           trainees: [{ _id: traineeIds[2], identity: { lastname: 'App3', firstname: 'Alice' } }],
         },
       },
@@ -249,7 +249,7 @@ describe('method', () => {
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
         course: {
-          interruptedAt: '2026-01-01T15:00:00.000Z',
+          interruptionDates: [{ startDate: '2026-01-01T15:00:00.000Z' }],
           trainees: [{ _id: traineeIds[2] }],
           slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
         },
@@ -366,7 +366,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt archivedAt',
+            select: 'trainees interruptionDates archivedAt',
             populate: { path: 'trainees', select: 'contact' },
           }],
         },
@@ -394,7 +394,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees tutors trainers interruptedAt archivedAt',
+            select: 'trainees tutors trainers interruptionDates archivedAt',
             populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
@@ -420,7 +420,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt archivedAt',
+            select: 'trainees interruptionDates archivedAt',
             populate: [
               { path: 'trainees', select: 'contact' },
               {
@@ -470,7 +470,10 @@ describe('method', () => {
           args: [{
             subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
             archivedAt: { $exists: false },
-            interruptedAt: { $exists: false },
+            $or: [
+              { interruptionDates: { $exists: false } },
+              { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'contact' }] },
@@ -623,7 +626,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt archivedAt',
+            select: 'trainees interruptionDates archivedAt',
             populate: { path: 'trainees', select: 'contact' },
           }],
         },
@@ -651,7 +654,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees tutors trainers interruptedAt archivedAt',
+            select: 'trainees tutors trainers interruptionDates archivedAt',
             populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
@@ -677,7 +680,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt archivedAt',
+            select: 'trainees interruptionDates archivedAt',
             populate: [
               { path: 'trainees', select: 'contact' },
               {
@@ -727,7 +730,10 @@ describe('method', () => {
           args: [{
             subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
             archivedAt: { $exists: false },
-            interruptedAt: { $exists: false },
+            $or: [
+              { interruptionDates: { $exists: false } },
+              { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'contact' }] },

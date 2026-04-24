@@ -25,7 +25,7 @@ const getEvaluationSlotsIn2W = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees interruptedAt archivedAt',
+      select: 'trainees interruptionDates archivedAt',
       populate: { path: 'trainees', select: 'contact' },
     })
     .lean();
@@ -34,7 +34,8 @@ const getEvaluationSlotsIn2W = async () => {
   const evaluationSlotsIn2WSentReminders = [];
   const evaluationSlotsIn2WNotSentReminders = [];
   for (const slot of evaluationSlotsIn2W) {
-    if (slot.course.interruptedAt || slot.course.archivedAt) continue;
+    const isCourseInterrupted = UtilsHelper.isCourseInterrupted(slot.course.interruptionDates);
+    if (isCourseInterrupted || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     if (get(traineeContact, 'phone')) {
@@ -72,7 +73,7 @@ const getSlotsIn1D = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees tutors trainers interruptedAt archivedAt',
+      select: 'trainees tutors trainers interruptionDates archivedAt',
       populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
     })
     .populate({ path: 'trainers', select: 'identity contact' })
@@ -88,7 +89,8 @@ const getSlotsIn1D = async () => {
   const tutorTripartiteSlotsIn1DSentReminders = [];
   const tutorTripartiteSlotsIn1DNotSentReminders = [];
   for (const slot of slotsIn1D) {
-    if (slot.course.interruptedAt || slot.course.archivedAt) continue;
+    const isCourseInterrupted = UtilsHelper.isCourseInterrupted(slot.course.interruptionDates);
+    if (isCourseInterrupted || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     const trainer = slot.trainers[0];
@@ -189,7 +191,7 @@ const getCodevSlotsIn1W = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees interruptedAt archivedAt',
+      select: 'trainees interruptionDates archivedAt',
       populate: [
         { path: 'trainees', select: 'contact' },
         {
@@ -203,7 +205,8 @@ const getCodevSlotsIn1W = async () => {
     .populate({ path: 'trainers', select: 'identity contact' })
     .lean();
   const filteredSlots = codevSlotsIn1W.filter((s) => {
-    const isCourseStopped = s.course.interruptedAt || s.course.archivedAt;
+    const isCourseInterrupted = UtilsHelper.isCourseInterrupted(s.course.interruptionDates);
+    const isCourseStopped = isCourseInterrupted || s.course.archivedAt;
     return !isCourseStopped && CompaniDate(s.startDate).isSame(s.course.slots[0].startDate);
   });
 
@@ -239,7 +242,10 @@ const getPOEIFirstSingleSlot = async () => {
     .find({
       subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
       archivedAt: { $exists: false },
-      interruptedAt: { $exists: false },
+      $or: [
+        { interruptionDates: { $exists: false } },
+        { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+      ],
     })
     .populate({ path: 'trainees', select: 'contact' })
     .populate({
