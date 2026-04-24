@@ -83,6 +83,7 @@ const {
   MONTHLY,
   PRESENT,
   MISSING,
+  SECOND,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -957,13 +958,14 @@ exports.updateCourse = async (courseId, payload, credentials) => {
   }
 
   let historyAction;
+  let isCourseInterrupted = false;
   if (payload.interruptionDate) {
     setFields = omit(setFields, 'interruptionDate');
 
     const course = await Course.findOne({ _id: courseId }, { interruptionDates: 1 }).lean();
     const interruptionDates = course.interruptionDates || [];
 
-    const isCourseInterrupted = interruptionDates.some(d => !d.endDate);
+    isCourseInterrupted = interruptionDates.some(d => !d.endDate);
 
     const updatedInterruptionDates = isCourseInterrupted
       ? interruptionDates.map(d => (!d.endDate ? { ...d, endDate: payload.interruptionDate } : d))
@@ -995,6 +997,26 @@ exports.updateCourse = async (courseId, payload, credentials) => {
   if (has(payload, 'interruptionDate')) {
     await CourseHistoriesHelper
       .createHistoryOnCourseInterruptionOrRestart({ courseId, action: historyAction }, credentials._id);
+
+    if (isCourseInterrupted) {
+      const interruptionStartDate = courseFromDb.interruptionDates.find(d => !d.endDate).startDate;
+      const interruptionEndDate = payload.interruptionDate;
+
+      const courseBillsOnLastInterruptionPeriod = await CourseBill
+        .find({ course: courseId, maturityDate: { $gte: interruptionStartDate, $lte: interruptionEndDate } })
+        .setOptions({ isVendorUser: true })
+        .lean();
+      if (courseBillsOnLastInterruptionPeriod.length) {
+        const interruptionDuration = CompaniDate(interruptionEndDate).diff(interruptionStartDate, SECOND);
+        const promises = [];
+        for (const bill of courseBillsOnLastInterruptionPeriod) {
+          const maturityDate = CompaniDate(bill.maturityDate).add(interruptionDuration).toISO();
+          promises.push(CourseBill.updateOne({ _id: bill._id }, { maturityDate }));
+        }
+
+        await Promise.all(promises);
+      }
+    }
   }
 
   return courseFromDb;
