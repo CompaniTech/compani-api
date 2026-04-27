@@ -500,7 +500,7 @@ module.exports = {
     /* Course payments */
     coursePaymentsUpdated: 'Paiements mis à jour.',
     coursePaymentStatusError: 'Impossible : un paiement est associé à un fichier XML et ne peut être passé en'
-      + ' statut "En attente" ou "Annulé.',
+      + ' statut "En attente" ou "Annulé".',
     coursePaymentNotLinkedToXml: 'Impossible de passer le statut en "Fichier XML associé" car un paiement n\'est pas'
       + ' associé à un fichier XML.',
     /* Course slots */

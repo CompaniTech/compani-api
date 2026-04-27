@@ -11,7 +11,7 @@ const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const { PENDING, CANCELLED } = require('../../../src/helpers/constants');
 
-describe('createCourseCreditNote #tag', () => {
+describe('createCourseCreditNote', () => {
   let create;
   let findOneCourseBill;
   let findOneAndUpdateCourseCreditNoteNumber;
