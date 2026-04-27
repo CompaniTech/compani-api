@@ -421,7 +421,7 @@ describe('list', () => {
     sinon.assert.notCalled(activityHistoryFind);
   });
 
-  it('should return all draft course bills between two dates #tag', async () => {
+  it('should return all draft course bills between two dates', async () => {
     const courseIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const companies = [{ _id: new ObjectId(), name: 'Company 1' }, { _id: new ObjectId(), name: 'Company 2' }];
