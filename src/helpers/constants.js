@@ -220,6 +220,7 @@ module.exports = {
   PENDING: 'pending',
   RECEIVED: 'received',
   XML_GENERATED: 'xml_generated',
+  CANCELLED: 'cancelled',
   get PAYMENT_STATUS_LIST() {
     return {
       [this.PENDING]: 'En attente',

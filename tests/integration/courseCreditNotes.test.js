@@ -6,7 +6,9 @@ const { courseBillsList, courseCreditNote, populateDB } = require('./seed/course
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const CourseCreditNote = require('../../src/models/CourseCreditNote');
 const CourseCourseCreditNoteNumber = require('../../src/models/CourseCreditNoteNumber');
+const CoursePayment = require('../../src/models/CoursePayment');
 const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
+const { CANCELLED } = require('../../src/helpers/constants');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -53,6 +55,19 @@ describe('COURSE CREDIT NOTES ROUTES - POST /coursecreditnotes', () => {
       });
 
       expect(response.statusCode).toBe(200);
+    });
+
+    it('should create a credit note with payment link to courseBill', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursecreditnotes',
+        payload: { ...payload, courseBill: courseBillsList[6]._id },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const cancelledCoursePaymentsAfter = await CoursePayment.countDocuments({ status: CANCELLED });
+      expect(cancelledCoursePaymentsAfter).toBe(1);
     });
 
     const missingParams = ['date', 'courseBill'];

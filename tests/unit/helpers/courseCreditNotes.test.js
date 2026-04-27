@@ -8,22 +8,27 @@ const CourseCreditNote = require('../../../src/models/CourseCreditNote');
 const CourseCreditNoteNumber = require('../../../src/models/CourseCreditNoteNumber');
 const CourseCreditNotePdf = require('../../../src/data/pdf/courseBilling/courseCreditNote');
 const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
+const CoursePayment = require('../../../src/models/CoursePayment');
+const { PENDING, CANCELLED } = require('../../../src/helpers/constants');
 
-describe('createCourseCreditNote', () => {
+describe('createCourseCreditNote #tag', () => {
   let create;
   let findOneCourseBill;
   let findOneAndUpdateCourseCreditNoteNumber;
+  let updateManyCoursePayment;
 
   beforeEach(() => {
     create = sinon.stub(CourseCreditNote, 'create');
     findOneCourseBill = sinon.stub(CourseBill, 'findOne');
     findOneAndUpdateCourseCreditNoteNumber = sinon.stub(CourseCreditNoteNumber, 'findOneAndUpdate');
+    updateManyCoursePayment = sinon.stub(CoursePayment, 'updateMany');
   });
 
   afterEach(() => {
     create.restore();
     findOneCourseBill.restore();
     findOneAndUpdateCourseCreditNoteNumber.restore();
+    updateManyCoursePayment.restore();
   });
 
   it('should create a credit note', async () => {
@@ -55,6 +60,11 @@ describe('createCourseCreditNote', () => {
         },
         { query: 'lean' },
       ]);
+    sinon.assert.calledOnceWithExactly(
+      updateManyCoursePayment,
+      { courseBill: courseBillId, status: PENDING },
+      { status: CANCELLED }
+    );
   });
 });
 

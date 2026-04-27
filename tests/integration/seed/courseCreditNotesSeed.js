@@ -1,5 +1,17 @@
 const { ObjectId } = require('mongodb');
-const { INTRA, INTER_B2B, PUBLISHED, TRAINEE, GROUP, GLOBAL } = require('../../../src/helpers/constants');
+const {
+  INTRA,
+  INTER_B2B,
+  PUBLISHED,
+  TRAINEE,
+  GROUP,
+  GLOBAL,
+  PAYMENT,
+  RECEIVED,
+  XML_GENERATED,
+  PENDING,
+  DIRECT_DEBIT,
+} = require('../../../src/helpers/constants');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
 const Course = require('../../../src/models/Course');
@@ -12,6 +24,7 @@ const Program = require('../../../src/models/Program');
 const { authCompany, otherCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
 const { trainer, vendorAdmin, auxiliary } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
+const CoursePayment = require('../../../src/models/CoursePayment');
 
 const steps = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 }];
 
@@ -120,9 +133,51 @@ const courseBillsList = [
     billedAt: '2022-05-30T10:00:00.000Z',
     number: 'FACT-00005',
   },
+  { // 6 valid bill link to payments
+    _id: new ObjectId(),
+    course: coursesList[1]._id,
+    companies: [authCompany._id],
+    payer: { company: authCompany._id },
+    mainFee: { price: 44.88, count: 2, countUnit: GROUP },
+    billedAt: '2022-04-07T00:00:00.000Z',
+    number: 'FACT-00006',
+  },
 ];
 
 const courseBillNumber = { _id: new ObjectId(), seq: 5 };
+
+const coursePaymentsList = [
+  {
+    _id: new ObjectId(),
+    nature: PAYMENT,
+    number: 'REG-1',
+    date: '2022-01-22T23:00:00.000Z',
+    courseBill: courseBillsList[6]._id,
+    type: DIRECT_DEBIT,
+    netInclTaxes: 22,
+    status: RECEIVED,
+  },
+  {
+    _id: new ObjectId(),
+    nature: PAYMENT,
+    number: 'REG-2',
+    date: '2022-01-22T23:00:00.000Z',
+    courseBill: courseBillsList[6]._id,
+    type: DIRECT_DEBIT,
+    netInclTaxes: 22,
+    status: XML_GENERATED,
+  },
+  {
+    _id: new ObjectId(),
+    nature: PAYMENT,
+    number: 'REG-3',
+    date: '2022-01-22T23:00:00.000Z',
+    courseBill: courseBillsList[6]._id,
+    type: DIRECT_DEBIT,
+    netInclTaxes: 22,
+    status: PENDING,
+  },
+];
 
 const courseCreditNote = [
   {
@@ -170,6 +225,7 @@ const populateDB = async () => {
     Course.create(coursesList),
     CourseCreditNote.create(courseCreditNote),
     CourseCreditNoteNumber.create(courseCreditNoteNumber),
+    CoursePayment.create(coursePaymentsList),
     Program.create(programList),
     Step.create(steps),
     SubProgram.create(subProgramList),
