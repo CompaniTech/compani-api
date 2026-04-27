@@ -25,6 +25,8 @@ const { authCompany, otherCompany, companyWithoutSubscription } = require('../..
 const { trainer, vendorAdmin, auxiliary } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const CoursePayment = require('../../../src/models/CoursePayment');
+const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
+const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 
 const steps = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 }];
 
@@ -75,7 +77,7 @@ const coursesList = [
     contact: vendorAdmin._id,
     trainees: [auxiliary._id],
     companies: [authCompany._id],
-    expectedBillsCount: 2,
+    expectedBillsCount: 3,
     certificateGenerationMode: GLOBAL,
   },
 ];
@@ -144,40 +146,47 @@ const courseBillsList = [
   },
 ];
 
-const courseBillNumber = { _id: new ObjectId(), seq: 5 };
+const courseBillNumber = { _id: new ObjectId(), seq: 6 };
 
 const coursePaymentsList = [
   {
     _id: new ObjectId(),
     nature: PAYMENT,
-    number: 'REG-1',
-    date: '2022-01-22T23:00:00.000Z',
+    number: 'REG-00001',
+    date: '2022-04-22T23:00:00.000Z',
     courseBill: courseBillsList[6]._id,
     type: DIRECT_DEBIT,
     netInclTaxes: 22,
     status: RECEIVED,
+    companies: [authCompany._id],
   },
   {
     _id: new ObjectId(),
     nature: PAYMENT,
-    number: 'REG-2',
-    date: '2022-01-22T23:00:00.000Z',
+    number: 'REG-00002',
+    date: '2022-04-22T23:00:00.000Z',
     courseBill: courseBillsList[6]._id,
     type: DIRECT_DEBIT,
     netInclTaxes: 22,
     status: XML_GENERATED,
+    companies: [authCompany._id],
   },
   {
     _id: new ObjectId(),
     nature: PAYMENT,
-    number: 'REG-3',
-    date: '2022-01-22T23:00:00.000Z',
+    number: 'REG-00003',
+    date: '2022-04-22T23:00:00.000Z',
     courseBill: courseBillsList[6]._id,
     type: DIRECT_DEBIT,
     netInclTaxes: 22,
     status: PENDING,
+    companies: [authCompany._id],
   },
 ];
+
+const coursePaymentNumber = { _id: new ObjectId(), seq: 3, nature: PAYMENT };
+
+const xmlSEPAFileInfos = { coursePayments: [coursePaymentsList[1]._id], name: 'test' };
 
 const courseCreditNote = [
   {
@@ -226,10 +235,12 @@ const populateDB = async () => {
     CourseCreditNote.create(courseCreditNote),
     CourseCreditNoteNumber.create(courseCreditNoteNumber),
     CoursePayment.create(coursePaymentsList),
+    CoursePaymentNumber.create(coursePaymentNumber),
     Program.create(programList),
     Step.create(steps),
     SubProgram.create(subProgramList),
     VendorCompany.create(vendorCompany),
+    XmlSEPAFileInfos.create(xmlSEPAFileInfos),
   ]);
 };
 
