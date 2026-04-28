@@ -313,7 +313,7 @@ const coursesList = [
     maxTrainees: 8,
     expectedBillsCount: 3,
     operationsRepresentative: vendorAdmin._id,
-    interruptedAt: '2021-01-01T00:00:00.000Z',
+    interruptionDates: [{ startDate: '2021-01-01T00:00:00.000Z' }],
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     certificateGenerationMode: GLOBAL,
     prices: [

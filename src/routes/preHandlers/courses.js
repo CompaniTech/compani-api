@@ -279,13 +279,7 @@ exports.authorizeCourseEdit = async (req) => {
     const unarchiveCourse = has(payload, 'archivedAt') && payload.archivedAt === '';
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
 
-    if (has(payload, 'interruptedAt')) {
-      if (!isRofOrAdmin) throw Boom.forbidden();
-
-      const interruptAnInterruptedCourse = course.interruptedAt && payload.interruptedAt;
-      const restartACourseInProgress = !course.interruptedAt && payload.interruptedAt === '';
-      if (interruptAnInterruptedCourse || restartACourseInProgress) throw Boom.conflict();
-    }
+    if (has(payload, 'interruptionDate') && !isRofOrAdmin) throw Boom.forbidden();
 
     const courseTrainerIds = get(course, 'trainers', []);
     const companies = [INTRA, INTRA_HOLDING, SINGLE].includes(course.type) ? course.companies : [];

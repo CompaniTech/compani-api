@@ -2190,7 +2190,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should interrupt a blended course', async () => {
-      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const payload = { interruptionDate: '2020-03-25T09:00:00.000Z' };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[0]._id}`,
@@ -2200,13 +2200,14 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const course = await Course.countDocuments({ _id: coursesList[0]._id, interruptedAt: { $exists: true } });
+      const course = await Course
+        .countDocuments({ _id: coursesList[0]._id, 'interruptionDates.startDate': '2020-03-25T09:00:00.000Z' });
 
       expect(course).toBeTruthy();
     });
 
     it('should restart an interrupted blended course', async () => {
-      const payload = { interruptedAt: '' };
+      const payload = { interruptionDate: '2021-06-01T00:00:00.000Z' };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[26]._id}`,
@@ -2216,7 +2217,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const course = await Course.countDocuments({ _id: coursesList[26]._id, interruptedAt: { $exists: false } });
+      const course = await Course
+        .countDocuments({ _id: coursesList[26]._id, 'interruptionDates.endDate': '2021-06-01T00:00:00.000Z' });
       expect(course).toBeTruthy();
     });
 
@@ -2330,7 +2332,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       { maxTrainees: 15 },
       { expectedBillsCount: 10 },
       { archivedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() },
-      { interruptedAt: CompaniDate('2025-06-01T09:00:00.000Z').toDate() },
+      { interruptionDate: '2025-06-01T09:00:00.000Z' },
     ];
     payloads.forEach((payload) => {
       it(`should return 403 if course is archived (update ${Object.keys(payload)})`, async () => {
@@ -2632,30 +2634,6 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(response.statusCode).toBe(409);
     });
 
-    it('should return 409 if trying to interrupt a course already interrupted', async () => {
-      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/courses/${coursesList[26]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(409);
-    });
-
-    it('should return 409 if trying to restart a course in progress', async () => {
-      const payload = { interruptedAt: '' };
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/courses/${coursesList[0]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(409);
-    });
-
     it('should return 404 if invalid salesRepresentative', async () => {
       const payload = { salesRepresentative: coachFromOtherCompany._id };
       const response = await app.inject({
@@ -2813,7 +2791,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should return 403 if try to interrupt course', async () => {
-      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const payload = { interruptionDate: '2020-03-25T09:00:00.000Z' };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[0]._id}`,
@@ -2914,7 +2892,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should return 403 if try to interrupt course', async () => {
-      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const payload = { interruptionDate: '2020-03-25T09:00:00.000Z' };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[22]._id}`,
@@ -3054,7 +3032,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should return 403 if try to interrupt course', async () => {
-      const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const payload = { interruptionDate: '2020-03-25T09:00:00.000Z' };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[0]._id}`,
@@ -3113,7 +3091,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       });
 
       it('should return 403 if try to interrupt course', async () => {
-        const payload = { interruptedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+        const payload = { interruptionDate: '2020-03-25T09:00:00.000Z' };
         const response = await app.inject({
           method: 'PUT',
           url: `/courses/${coursesList[0]._id}`,

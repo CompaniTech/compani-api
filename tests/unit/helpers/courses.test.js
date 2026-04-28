@@ -4669,6 +4669,8 @@ describe('updateCourse', () => {
   let createHistoryOnEstimatedStartDateEdition;
   let courseFindOne;
   let createHistoryOnCourseInterruptionOrRestart;
+  let courseBillFind;
+  let courseBillUpdateOne;
   const credentials = { _id: new ObjectId() };
   beforeEach(() => {
     courseFindOneAndUpdate = sinon.stub(Course, 'findOneAndUpdate');
@@ -4679,12 +4681,16 @@ describe('updateCourse', () => {
     courseFindOne = sinon.stub(Course, 'findOne');
     createHistoryOnCourseInterruptionOrRestart = sinon
       .stub(CourseHistoriesHelper, 'createHistoryOnCourseInterruptionOrRestart');
+    courseBillFind = sinon.stub(CourseBill, 'find');
+    courseBillUpdateOne = sinon.stub(CourseBill, 'updateOne');
   });
   afterEach(() => {
     courseFindOneAndUpdate.restore();
     createHistoryOnEstimatedStartDateEdition.restore();
     courseFindOne.restore();
     createHistoryOnCourseInterruptionOrRestart.restore();
+    courseBillFind.restore();
+    courseBillUpdateOne.restore();
   });
 
   it('should update a field in intra course', async () => {
@@ -4705,6 +4711,8 @@ describe('updateCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should remove contact field in intra course', async () => {
@@ -4729,6 +4737,8 @@ describe('updateCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should remove certified trainees', async () => {
@@ -4752,6 +4762,8 @@ describe('updateCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should unarchive course', async () => {
@@ -4775,6 +4787,8 @@ describe('updateCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should update estimatedStartDate and create history', async () => {
@@ -4804,6 +4818,8 @@ describe('updateCourse', () => {
       '2022-11-18T10:20:00.000Z',
       '2022-11-02T18:00:43.000Z'
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should update estimatedStartDate with same value and NOT create history', async () => {
@@ -4827,6 +4843,8 @@ describe('updateCourse', () => {
       ]
     );
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should remove salesRepresentative field', async () => {
@@ -4850,6 +4868,8 @@ describe('updateCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should push new price for company', async () => {
@@ -4880,6 +4900,8 @@ describe('updateCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should update price for company', async () => {
@@ -4912,24 +4934,33 @@ describe('updateCourse', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
   it('should interrupt the course', async () => {
     const courseId = new ObjectId();
-    const payload = { interruptedAt: '2025-01-06T10:20:00.000Z' };
+    const payload = { interruptionDate: '2025-01-06T10:20:00.000Z' };
     const courseFromDb = { _id: courseId };
 
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
     courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ _id: courseId }, { interruptionDates: 1 }] },
+        { query: 'lean' },
+      ]);
+    SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
         {
           query: 'findOneAndUpdate',
-          args: [{ _id: courseId }, { $set: { interruptedAt: '2025-01-06T10:20:00.000Z' } }],
+          args: [{ _id: courseId }, { $set: { interruptionDates: [{ startDate: '2025-01-06T10:20:00.000Z' }] } }],
         },
         { query: 'lean' },
       ]
@@ -4939,22 +4970,51 @@ describe('updateCourse', () => {
       { courseId, action: COURSE_INTERRUPTION },
       credentials._id
     );
+    sinon.assert.notCalled(courseBillFind);
+    sinon.assert.notCalled(courseBillUpdateOne);
   });
 
-  it('should restart an interrupted course', async () => {
+  it('should restart an interrupted course (without bills on interruption period)', async () => {
     const courseId = new ObjectId();
-    const payload = { interruptedAt: '' };
-    const courseFromDb = { _id: courseId, interruptedAt: '2025-01-06T10:20:00.000Z' };
+    const payload = { interruptionDate: '2025-04-22T10:20:00.000Z' };
+    const courseFromDb = {
+      _id: courseId,
+      interruptionDates: [
+        { startDate: '2024-01-06T10:20:00.000Z', endDate: '2024-01-12T10:20:00.000Z' },
+        { startDate: '2025-03-22T10:20:00.000Z' },
+      ],
+    };
 
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+    courseBillFind.returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
     courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
 
     await CourseHelper.updateCourse(courseId, payload, credentials);
 
     sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
     SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ _id: courseId }, { interruptionDates: 1 }] },
+        { query: 'lean' },
+      ]);
+    SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,
       [
-        { query: 'findOneAndUpdate', args: [{ _id: courseId }, { $unset: { interruptedAt: '' } }] },
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: courseId },
+            {
+              $set: {
+                interruptionDates: [
+                  { startDate: '2024-01-06T10:20:00.000Z', endDate: '2024-01-12T10:20:00.000Z' },
+                  { startDate: '2025-03-22T10:20:00.000Z', endDate: '2025-04-22T10:20:00.000Z' },
+                ],
+              },
+            },
+          ],
+        },
         { query: 'lean' },
       ]
     );
@@ -4963,6 +5023,89 @@ describe('updateCourse', () => {
       { courseId, action: COURSE_RESTART },
       credentials._id
     );
+    SinonMongoose.calledOnceWithExactly(
+      courseBillFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            course: courseId,
+            maturityDate: { $gte: '2025-03-22T10:20:00.000Z', $lte: '2025-04-22T10:20:00.000Z' },
+          }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(courseBillUpdateOne);
+  });
+
+  it('should restart an interrupted course (with bills on interruption period)', async () => {
+    const courseId = new ObjectId();
+    const payload = { interruptionDate: '2025-04-22T10:20:00.000Z' };
+    const courseFromDb = {
+      _id: courseId,
+      interruptionDates: [
+        { startDate: '2024-01-06T10:20:00.000Z', endDate: '2024-01-12T10:20:00.000Z' },
+        { startDate: '2025-03-22T10:20:00.000Z' },
+      ],
+    };
+    const billId = new ObjectId();
+    const bills = [{ _id: billId, course: courseId, maturityDate: '2025-04-01T10:20:00.000Z' }];
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+    courseBillFind.returns(SinonMongoose.stubChainedQueries(bills, ['setOptions', 'lean']));
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ _id: courseId }, { interruptionDates: 1 }] },
+        { query: 'lean' },
+      ]);
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: courseId },
+            {
+              $set: {
+                interruptionDates: [
+                  { startDate: '2024-01-06T10:20:00.000Z', endDate: '2024-01-12T10:20:00.000Z' },
+                  { startDate: '2025-03-22T10:20:00.000Z', endDate: '2025-04-22T10:20:00.000Z' },
+                ],
+              },
+            },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnCourseInterruptionOrRestart,
+      { courseId, action: COURSE_RESTART },
+      credentials._id
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseBillFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            course: courseId,
+            maturityDate: { $gte: '2025-03-22T10:20:00.000Z', $lte: '2025-04-22T10:20:00.000Z' },
+          }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledWithExactly(courseBillUpdateOne, { _id: billId }, { maturityDate: '2025-05-02T10:20:00.000Z' });
   });
 });
 
