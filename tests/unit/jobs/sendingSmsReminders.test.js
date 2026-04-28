@@ -539,8 +539,8 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite qui aura lieu demain à 16:00, dans '
-        + 'votre structure. Si besoin, contactez votre coach (+33987654321).',
+        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur·ice'
+        + ' qui aura lieu demain à 16:00. Si besoin, contactez votre coach (+33987654321).',
         tag: 'Formation VAEI',
       }
     );
@@ -559,8 +559,8 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite qui aura lieu demain à 16:00, dans '
-        + 'votre structure. Si besoin, contactez votre coach (+33987654321).',
+        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur·ice'
+        + ' qui aura lieu demain à 16:00. Si besoin, contactez votre coach (+33987654321).',
         tag: 'Formation VAEI',
       }
     );
