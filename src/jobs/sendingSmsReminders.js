@@ -119,7 +119,7 @@ const getSlotsIn1D = async () => {
         case process.env.VAEI_TRIPARTITE_STEP_ID:
           traineeTripartiteSlotsIn1DSentReminders.push(trainee._id);
           content = 'Formation VAEI :\n'
-            + 'N\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur·ice qui aura lieu demain à '
+            + 'N\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice qui aura lieu demain à '
             + `${CompaniDate(slot.startDate).format(HH_MM)}. Si besoin, contactez votre coach${trainerPhone}.`;
           break;
       }
