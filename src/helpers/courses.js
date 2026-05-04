@@ -999,17 +999,19 @@ exports.updateCourse = async (courseId, payload, credentials) => {
       .createHistoryOnCourseInterruptionOrRestart({ courseId, action: historyAction }, credentials._id);
 
     if (isCourseInterrupted) {
-      const interruptionStartDate = courseFromDb.interruptionDates.find(d => !d.endDate).startDate;
+      const interruptionStartDate = CompaniDate(courseFromDb.interruptionDates.find(d => !d.endDate).startDate)
+        .startOf(DAY)
+        .toISO();
       const interruptionEndDate = payload.interruptionDate;
 
-      const courseBillsOnLastInterruptionPeriod = await CourseBill
-        .find({ course: courseId, maturityDate: { $gte: interruptionStartDate, $lte: interruptionEndDate } })
+      const courseBillsAfterLastInterruptionStartDate = await CourseBill
+        .find({ course: courseId, maturityDate: { $gte: interruptionStartDate } })
         .setOptions({ isVendorUser: true })
         .lean();
-      if (courseBillsOnLastInterruptionPeriod.length) {
+      if (courseBillsAfterLastInterruptionStartDate.length) {
         const interruptionDuration = CompaniDate(interruptionEndDate).diff(interruptionStartDate, SECOND);
         const promises = [];
-        for (const bill of courseBillsOnLastInterruptionPeriod) {
+        for (const bill of courseBillsAfterLastInterruptionStartDate) {
           const maturityDate = CompaniDate(bill.maturityDate).add(interruptionDuration).toISO();
           promises.push(CourseBill.updateOne({ _id: bill._id }, { maturityDate }));
         }

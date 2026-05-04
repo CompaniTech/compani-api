@@ -5028,10 +5028,7 @@ describe('updateCourse', () => {
       [
         {
           query: 'find',
-          args: [{
-            course: courseId,
-            maturityDate: { $gte: '2025-03-22T10:20:00.000Z', $lte: '2025-04-22T10:20:00.000Z' },
-          }],
+          args: [{ course: courseId, maturityDate: { $gte: '2025-03-21T23:00:00.000Z' } }],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
@@ -5050,8 +5047,11 @@ describe('updateCourse', () => {
         { startDate: '2025-03-22T10:20:00.000Z' },
       ],
     };
-    const billId = new ObjectId();
-    const bills = [{ _id: billId, course: courseId, maturityDate: '2025-04-01T10:20:00.000Z' }];
+    const billIds = [new ObjectId(), new ObjectId()];
+    const bills = [
+      { _id: billIds[0], course: courseId, maturityDate: '2025-04-01T10:20:00.000Z' },
+      { _id: billIds[1], course: courseId, maturityDate: '2025-05-03T10:20:00.000Z' },
+    ];
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
     courseBillFind.returns(SinonMongoose.stubChainedQueries(bills, ['setOptions', 'lean']));
@@ -5096,16 +5096,22 @@ describe('updateCourse', () => {
       [
         {
           query: 'find',
-          args: [{
-            course: courseId,
-            maturityDate: { $gte: '2025-03-22T10:20:00.000Z', $lte: '2025-04-22T10:20:00.000Z' },
-          }],
+          args: [{ course: courseId, maturityDate: { $gte: '2025-03-21T23:00:00.000Z' } }],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledWithExactly(courseBillUpdateOne, { _id: billId }, { maturityDate: '2025-05-02T10:20:00.000Z' });
+    sinon.assert.calledWithExactly(
+      courseBillUpdateOne.getCall(0),
+      { _id: billIds[0] },
+      { maturityDate: '2025-05-02T21:40:00.000Z' }
+    );
+    sinon.assert.calledWithExactly(
+      courseBillUpdateOne.getCall(1),
+      { _id: billIds[1] },
+      { maturityDate: '2025-06-03T21:40:00.000Z' }
+    );
   });
 });
 
