@@ -26,14 +26,18 @@ exports.getPdfContent = async (bill) => {
 
   const footer = [
     { text: 'Modes de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
-    { text: '- Prélèvement ou virement bancaire', fontSize: 8 },
+    {
+      text: '- Prélèvement ou virement bancaire, conformément aux CGP Compani s’appliquant à la prestation objet de la '
+        + 'présente facture',
+      fontSize: 8,
+    },
     { text: `- Pour les virements : IBAN : ${bill.vendorCompany.iban} / BIC : ${bill.vendorCompany.bic}`, fontSize: 8 },
     { text: 'Conditions de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
-    { text: '- 1er paiement à réception, le solde selon l’échéancier contractuel', fontSize: 8 },
-    { text: '- Escompte en cas de paiement anticipé : aucun', fontSize: 8 },
+    { text: '- Paiement à réception', fontSize: 8 },
+    { text: '- Conditions d’escompte : non applicable', fontSize: 8 },
     {
-      text: '- Pénalité en cas de retard de paiement : trois fois le taux de l’intérêt légal, conformément aux '
-      + 'dispositions légales en vigueur, majoré d’une indemnité  forfaitaire de 40€ pour frais de recouvrement',
+      text: '- Taux des pénalités de retard : trois fois le taux de l’intérêt légal, majoré d’une indemnité forfaitaire'
+      + ' pour frais de recouvrement de 40 €',
       fontSize: 8,
     },
     {
