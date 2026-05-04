@@ -479,3 +479,25 @@ describe('removeTester', () => {
     sinon.assert.calledOnceWithExactly(updateOne, { _id: programId }, { $pull: { testers: testerId } });
   });
 });
+
+describe('addTradeName', () => {
+  let updateOne;
+  beforeEach(() => {
+    updateOne = sinon.stub(Program, 'updateOne');
+  });
+  afterEach(() => {
+    updateOne.restore();
+  });
+
+  it('should add trade name', async () => {
+    const programId = new ObjectId();
+    const payload = { tradeName: 'ma marque' };
+    await ProgramHelper.addTradeName(programId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: programId },
+      { $push: { tradeNames: { name: payload.tradeName } } }
+    );
+  });
+});

@@ -51,3 +51,11 @@ exports.checkTesterInProgram = async (req) => {
 
   return null;
 };
+
+exports.checkTradeNameExists = async (req) => {
+  const tradeNameExists = await Program
+    .countDocuments({ _id: req.params._id, 'tradeNames.name': req.payload.tradeName });
+  if (tradeNameExists) throw Boom.conflict(translate[language].tradeNameExists);
+
+  return null;
+};
