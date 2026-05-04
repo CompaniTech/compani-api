@@ -453,7 +453,7 @@ describe('list', () => {
           subProgram: { _id: singleSubProgramId, program: { name: 'program 2' } },
           trainees: [traineesIds[0]],
           prices: [{ company: companies[0]._id, global: 400 }],
-          interruptedAt: '2025-01-01T00:00:00.000Z',
+          interruptionDates: [{ startDate: '2025-01-01T00:00:00.000Z' }],
         },
         companies: [companies[0]],
         mainFee: { price: 320, count: 1 },
@@ -614,7 +614,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt misc type',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
@@ -758,7 +758,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt misc type',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },

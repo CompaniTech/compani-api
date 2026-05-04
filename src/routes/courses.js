@@ -275,7 +275,7 @@ exports.plugin = {
                 }
                 return value;
               }),
-            interruptedAt: Joi.date().allow(''),
+            interruptionDate: Joi.date(),
           }),
         },
         pre: [{ method: authorizeCourseEdit }],

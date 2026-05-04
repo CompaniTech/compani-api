@@ -156,7 +156,7 @@ exports.list = async (query, credentials) => {
       ...(query.startDate && query.endDate
         ? [{
           path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptedAt misc type',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type',
           populate: [
             { path: 'companies', select: 'name' },
             { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
@@ -192,7 +192,10 @@ exports.list = async (query, credentials) => {
 
   let activityHistoriesByTrainee = {};
   if (!query.isValidated) {
-    const singleCourseBills = courseBills.filter(bill => bill.course.type === SINGLE && !bill.course.interruptedAt);
+    const singleCourseBills = courseBills.filter((bill) => {
+      const isCourseInterrupted = UtilsHelper.isCourseInterrupted(bill.course.interruptionDates);
+      return bill.course.type === SINGLE && !isCourseInterrupted;
+    });
     const singleSubProgramIds = [...new Set(singleCourseBills.map(b => b.course.subProgram._id.toHexString()))];
     const subPrograms = await SubProgram
       .find({ _id: { $in: singleSubProgramIds } })
@@ -213,7 +216,10 @@ exports.list = async (query, credentials) => {
 
   return Promise.all(
     courseBills
-      .filter(bill => query.isValidated || !get(bill, 'course.interruptedAt'))
+      .filter((bill) => {
+        const isCourseInterrupted = UtilsHelper.isCourseInterrupted(bill.course.interruptionDates);
+        return query.isValidated || !isCourseInterrupted;
+      })
       .map(async bill => ({
         ...bill,
         ...(query.startDate && query.endDate && {
