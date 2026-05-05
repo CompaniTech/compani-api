@@ -8,7 +8,7 @@ const {
   checkCategoryExists,
   authorizeTesterAddition,
   checkTesterInProgram,
-  checkTradeNameExists,
+  authorizeTradeNameAddition,
 } = require('./preHandlers/programs');
 const {
   list,
@@ -191,14 +191,14 @@ exports.plugin = {
 
     server.route({
       method: 'POST',
-      path: '/{_id}/tradeNames',
+      path: '/{_id}/trade-names',
       options: {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
           payload: Joi.object({ tradeName: Joi.string().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }, { method: checkTradeNameExists }],
+        pre: [{ method: checkProgramExists }, { method: authorizeTradeNameAddition }],
       },
       handler: addTradeName,
     });

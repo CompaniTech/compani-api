@@ -4,6 +4,7 @@ const Program = require('../../models/Program');
 const Category = require('../../models/Category');
 const User = require('../../models/User');
 const translate = require('../../helpers/translate');
+const { TRAINER } = require('../../helpers/constants');
 
 const { language } = translate;
 
@@ -52,7 +53,11 @@ exports.checkTesterInProgram = async (req) => {
   return null;
 };
 
-exports.checkTradeNameExists = async (req) => {
+exports.authorizeTradeNameAddition = async (req) => {
+  const { credentials } = req.auth;
+  const vendorRole = get(req, 'auth.credentials.role.vendor.name');
+  if (vendorRole === TRAINER && !credentials.isProgramEditor) throw Boom.forbidden();
+
   const tradeNameExists = await Program
     .countDocuments({ _id: req.params._id, 'tradeNames.name': req.payload.tradeName });
   if (tradeNameExists) throw Boom.conflict(translate[language].tradeNameExists);
