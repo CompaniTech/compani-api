@@ -6,7 +6,15 @@ const { courseBillsList, coursePaymentsList, populateDB } = require('./seed/cour
 
 const { getToken } = require('./helpers/authentication');
 const { authCompany } = require('../seed/authCompaniesSeed');
-const { PAYMENT, DIRECT_DEBIT, REFUND, PENDING, RECEIVED, XML_GENERATED } = require('../../src/helpers/constants');
+const {
+  PAYMENT,
+  DIRECT_DEBIT,
+  REFUND,
+  PENDING,
+  RECEIVED,
+  XML_GENERATED,
+  CANCELLED,
+} = require('../../src/helpers/constants');
 const CoursePayment = require('../../src/models/CoursePayment');
 const CoursePaymentNumber = require('../../src/models/CoursePaymentNumber');
 
@@ -208,6 +216,17 @@ describe('COURSE PAYMENTS ROUTES - PUT /coursepayments/{_id}', () => {
         method: 'PUT',
         url: `/coursepayments/${coursePaymentsList[3]._id}`,
         payload: { status: PENDING },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(paymentResponse.statusCode).toBe(400);
+    });
+
+    it('should return 400 if payment is linked to a XML file and CANCELLED is in payload', async () => {
+      const paymentResponse = await app.inject({
+        method: 'PUT',
+        url: `/coursepayments/${coursePaymentsList[3]._id}`,
+        payload: { status: CANCELLED },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 

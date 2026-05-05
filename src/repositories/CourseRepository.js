@@ -7,7 +7,7 @@ exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Cour
   .find(
     query,
     origin === WEBAPP
-      ? 'misc type archivedAt estimatedStartDate createdAt maxTrainees trainees hasCertifyingTest interruptedAt'
+      ? 'misc type archivedAt estimatedStartDate createdAt maxTrainees trainees hasCertifyingTest interruptionDates'
       : 'misc'
   )
   .populate([

@@ -5,7 +5,8 @@ const CourseCreditNoteNumber = require('../models/CourseCreditNoteNumber');
 const VendorCompaniesHelper = require('./vendorCompanies');
 const { CompaniDate } = require('./dates/companiDates');
 const CourseCreditNotePdf = require('../data/pdf/courseBilling/courseCreditNote');
-const { DD_MM_YYYY } = require('./constants');
+const { DD_MM_YYYY, PENDING, CANCELLED } = require('./constants');
+const CoursePayment = require('../models/CoursePayment');
 
 exports.createCourseCreditNote = async (payload) => {
   const lastCreditNoteNumber = await CourseCreditNoteNumber
@@ -21,6 +22,8 @@ exports.createCourseCreditNote = async (payload) => {
   };
 
   await CourseCreditNote.create(formattedPayload);
+
+  await CoursePayment.updateMany({ courseBill: payload.courseBill, status: PENDING }, { status: CANCELLED });
 };
 
 exports.generateCreditNotePdf = async (creditNoteId) => {

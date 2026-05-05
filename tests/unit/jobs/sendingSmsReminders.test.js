@@ -6,15 +6,17 @@ const Course = require('../../../src/models/Course');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const EmailHelper = require('../../../src/helpers/email');
 const SmsHelper = require('../../../src/helpers/sms');
+const NotificationHelper = require('../../../src/helpers/notifications');
 const UtilsMock = require('../../utilsMock');
 const { sendingSmsRemindersJob } = require('../../../src/jobs/sendingSmsReminders');
 const SubProgram = require('../../../src/models/SubProgram');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
-const { E_LEARNING } = require('../../../src/helpers/constants');
+const { E_LEARNING, PRESENT, SINGLE } = require('../../../src/helpers/constants');
 
 describe('method', () => {
   let findSlots;
   let smsSend;
+  let sendAttendanceReminder;
   let findCourses;
   let findOneSubProgram;
   let findActivityHistories;
@@ -25,6 +27,7 @@ describe('method', () => {
     findOneSubProgram = sinon.stub(SubProgram, 'findOne');
     findActivityHistories = sinon.stub(ActivityHistory, 'find');
     smsSend = sinon.stub(SmsHelper, 'send');
+    sendAttendanceReminder = sinon.stub(NotificationHelper, 'sendAttendanceReminder');
     UtilsMock.mockCurrentDate('2026-01-04T15:00:00.000Z');
     process.env.TECH_EMAILS = 'tech@compani.fr';
     process.env.VAEI_EVALUATION_STEP_ID = new ObjectId();
@@ -40,6 +43,7 @@ describe('method', () => {
     findOneSubProgram.restore();
     findActivityHistories.restore();
     smsSend.restore();
+    sendAttendanceReminder.restore();
     UtilsMock.unmockCurrentDate();
     process.env.TECH_EMAILS = '';
     process.env.VAEI_EVALUATION_STEP_ID = '';
@@ -52,7 +56,8 @@ describe('method', () => {
   it('should send reminders by sms', async () => {
     const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const tutorIds = [new ObjectId(), new ObjectId()];
-    const trainerId = new ObjectId();
+    const trainerIds = [new ObjectId(), new ObjectId()];
+    const courseIds = [new ObjectId(), new ObjectId()];
     const courseSlots2W = [
       {
         startDate: '2026-01-18T15:00:00.000Z',
@@ -67,7 +72,7 @@ describe('method', () => {
       {
         startDate: '2026-01-18T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
-        course: { interruptedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[2] }] },
+        course: { interruptionDates: [{ startDate: '2026-01-01T15:00:00.000Z' }], trainees: [{ _id: traineeIds[2] }] },
       },
       {
         startDate: '2026-01-18T15:00:00.000Z',
@@ -80,7 +85,7 @@ describe('method', () => {
         startDate: '2026-01-05T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -100,7 +105,7 @@ describe('method', () => {
         startDate: '2026-01-05T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -113,12 +118,12 @@ describe('method', () => {
         startDate: '2026-01-05T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
         course: {
-          interruptedAt: '2026-01-01T15:00:00.000Z',
+          interruptionDates: [{ startDate: '2026-01-01T15:00:00.000Z' }],
           trainees: [{ _id: traineeIds[2], identity: { lastname: 'App3', firstname: 'Alice' } }],
         },
       },
@@ -126,7 +131,7 @@ describe('method', () => {
         startDate: '2026-01-05T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -139,7 +144,7 @@ describe('method', () => {
         startDate: '2026-01-05T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -159,7 +164,7 @@ describe('method', () => {
         startDate: '2026-01-05T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -179,7 +184,7 @@ describe('method', () => {
         startDate: '2026-01-05T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -197,7 +202,7 @@ describe('method', () => {
         startDate: '2026-01-11T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -213,7 +218,7 @@ describe('method', () => {
         startDate: '2026-01-11T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -226,7 +231,7 @@ describe('method', () => {
         startDate: '2026-01-11T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -239,12 +244,12 @@ describe('method', () => {
         startDate: '2026-01-11T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
         course: {
-          interruptedAt: '2026-01-01T15:00:00.000Z',
+          interruptionDates: [{ startDate: '2026-01-01T15:00:00.000Z' }],
           trainees: [{ _id: traineeIds[2] }],
           slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
         },
@@ -253,7 +258,7 @@ describe('method', () => {
         startDate: '2026-01-11T15:00:00.000Z',
         step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
         trainers: [{
-          _id: trainerId,
+          _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
           contact: { countryCode: '+33', phone: '0987654321' },
         }],
@@ -280,6 +285,42 @@ describe('method', () => {
         ],
       },
     ];
+
+    const yesterdayCourseSlots = [
+      {
+        startDate: '2026-01-03T15:00:00.000Z',
+        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        trainers: [{
+          _id: trainerIds[0],
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          formationExpoTokenList: ['token1'],
+        }],
+        attendances: [],
+        course: courseIds[0],
+      },
+      {
+        startDate: '2026-01-03T14:00:00.000Z',
+        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        trainers: [{
+          _id: trainerIds[0],
+          identity: { lastname: 'Form', firstname: 'Claire' },
+          formationExpoTokenList: ['token1'],
+        }],
+        attendances: [{ status: PRESENT }],
+        course: courseIds[0],
+      },
+      {
+        startDate: '2026-01-03T12:00:00.000Z',
+        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        trainers: [{
+          _id: trainerIds[1],
+          identity: { lastname: 'Form2', firstname: 'Marie' },
+          formationExpoTokenList: [],
+        }],
+        attendances: [],
+        course: courseIds[1],
+      },
+    ];
     const activitiesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const subProgram = {
       _id: process.env.POEI_SUBPROGRAM_ID,
@@ -290,7 +331,9 @@ describe('method', () => {
     findSlots.onCall(0).returns(SinonMongoose.stubChainedQueries(courseSlots2W));
     findSlots.onCall(1).returns(SinonMongoose.stubChainedQueries(courseSlots1D));
     findSlots.onCall(2).returns(SinonMongoose.stubChainedQueries(courseSlots1W));
-    findCourses.returns(SinonMongoose.stubChainedQueries(poeiCourses));
+    findSlots.onCall(3).returns(SinonMongoose.stubChainedQueries(yesterdayCourseSlots));
+    findCourses.onCall(0).returns(SinonMongoose.stubChainedQueries(poeiCourses));
+    findCourses.onCall(1).returns(SinonMongoose.stubChainedQueries(courseIds.map(id => ({ _id: id })), ['lean']));
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
 
@@ -306,6 +349,7 @@ describe('method', () => {
       'Veille de tripartite (tuteur)': { sentReminders: [tutorIds[0]], notSentReminders: [tutorIds[1]] },
       '1 semaine avant 1er codev': { sentReminders: [traineeIds[4]], notSentReminders: [traineeIds[1]] },
       'Relance elearning POEI': { sentReminders: [traineeIds[0]] },
+      'Relance émargement intervenants': { sentReminders: [trainerIds[0]], notSentReminders: [trainerIds[1]] },
     });
 
     SinonMongoose.calledWithExactly(
@@ -322,7 +366,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt archivedAt',
+            select: 'trainees interruptionDates archivedAt',
             populate: { path: 'trainees', select: 'contact' },
           }],
         },
@@ -350,7 +394,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees tutors trainers interruptedAt archivedAt',
+            select: 'trainees tutors trainers interruptionDates archivedAt',
             populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
@@ -376,7 +420,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt archivedAt',
+            select: 'trainees interruptionDates archivedAt',
             populate: [
               { path: 'trainees', select: 'contact' },
               {
@@ -396,7 +440,29 @@ describe('method', () => {
       ],
       2
     );
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
+      findSlots,
+      [
+        {
+          query: 'find',
+          args: [{
+            course: { $in: courseIds },
+            startDate: { $gte: new Date('2026-01-02T23:00:00.000Z'), $lte: new Date('2026-01-03T22:59:59.999Z') },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'trainers', select: 'formationExpoTokenList' }],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'attendances', options: { isVendorUser: true } }],
+        },
+        { query: 'lean' },
+      ],
+      3
+    );
+    SinonMongoose.calledWithExactly(
       findCourses,
       [
         {
@@ -404,7 +470,10 @@ describe('method', () => {
           args: [{
             subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
             archivedAt: { $exists: false },
-            interruptedAt: { $exists: false },
+            $or: [
+              { interruptionDates: { $exists: false } },
+              { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'contact' }] },
@@ -418,8 +487,10 @@ describe('method', () => {
           }],
         },
         { query: 'lean' },
-      ]
+      ],
+      0
     );
+    SinonMongoose.calledWithExactly(findCourses, [{ query: 'find', args: [{ type: SINGLE }] }, { query: 'lean' }], 1);
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
@@ -468,8 +539,8 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite qui aura lieu demain à 16:00, dans '
-        + 'votre structure. Si besoin, contactez votre coach (+33987654321).',
+        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice'
+        + ' qui aura lieu demain à 16:00. Si besoin, contactez votre coach (+33987654321).',
         tag: 'Formation VAEI',
       }
     );
@@ -488,8 +559,8 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite qui aura lieu demain à 16:00, dans '
-        + 'votre structure. Si besoin, contactez votre coach (+33987654321).',
+        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice'
+        + ' qui aura lieu demain à 16:00. Si besoin, contactez votre coach (+33987654321).',
         tag: 'Formation VAEI',
       }
     );
@@ -513,13 +584,17 @@ describe('method', () => {
         tag: 'Formation POEI',
       }
     );
+    sinon.assert.calledOnceWithExactly(sendAttendanceReminder, courseIds[0].toHexString(), ['token1']);
   });
 
   it('should return empty result if no matching slot', async () => {
+    const courseIds = [new ObjectId(), new ObjectId()];
     findSlots.onCall(0).returns(SinonMongoose.stubChainedQueries([]));
     findSlots.onCall(1).returns(SinonMongoose.stubChainedQueries([]));
     findSlots.onCall(2).returns(SinonMongoose.stubChainedQueries([]));
-    findCourses.returns(SinonMongoose.stubChainedQueries([]));
+    findSlots.onCall(3).returns(SinonMongoose.stubChainedQueries([]));
+    findCourses.onCall(0).returns(SinonMongoose.stubChainedQueries([]));
+    findCourses.onCall(1).returns(SinonMongoose.stubChainedQueries(courseIds.map(id => ({ _id: id })), ['lean']));
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries({}));
 
     // eslint-disable-next-line no-console
@@ -534,6 +609,7 @@ describe('method', () => {
       'Veille de tripartite (tuteur)': {},
       '1 semaine avant 1er codev': {},
       'Relance elearning POEI': {},
+      'Relance émargement intervenants': {},
     });
 
     SinonMongoose.calledWithExactly(
@@ -550,7 +626,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt archivedAt',
+            select: 'trainees interruptionDates archivedAt',
             populate: { path: 'trainees', select: 'contact' },
           }],
         },
@@ -578,7 +654,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees tutors trainers interruptedAt archivedAt',
+            select: 'trainees tutors trainers interruptionDates archivedAt',
             populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
@@ -604,7 +680,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptedAt archivedAt',
+            select: 'trainees interruptionDates archivedAt',
             populate: [
               { path: 'trainees', select: 'contact' },
               {
@@ -624,7 +700,29 @@ describe('method', () => {
       ],
       2
     );
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
+      findSlots,
+      [
+        {
+          query: 'find',
+          args: [{
+            course: { $in: courseIds },
+            startDate: { $gte: new Date('2026-01-02T23:00:00.000Z'), $lte: new Date('2026-01-03T22:59:59.999Z') },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'trainers', select: 'formationExpoTokenList' }],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'attendances', options: { isVendorUser: true } }],
+        },
+        { query: 'lean' },
+      ],
+      3
+    );
+    SinonMongoose.calledWithExactly(
       findCourses,
       [
         {
@@ -632,7 +730,10 @@ describe('method', () => {
           args: [{
             subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
             archivedAt: { $exists: false },
-            interruptedAt: { $exists: false },
+            $or: [
+              { interruptionDates: { $exists: false } },
+              { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'contact' }] },
@@ -646,8 +747,10 @@ describe('method', () => {
           }],
         },
         { query: 'lean' },
-      ]
+      ],
+      0
     );
+    SinonMongoose.calledWithExactly(findCourses, [{ query: 'find', args: [{ type: SINGLE }] }, { query: 'lean' }], 1);
     sinon.assert.notCalled(findOneSubProgram);
     sinon.assert.notCalled(findActivityHistories);
     sinon.assert.notCalled(smsSend);

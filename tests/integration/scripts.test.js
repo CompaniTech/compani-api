@@ -1,8 +1,10 @@
 const { expect } = require('expect');
 const sinon = require('sinon');
 const app = require('../../server');
+const CompletionCertificateHelper = require('../../src/helpers/completionCertificates');
 const EmailHelper = require('../../src/helpers/email');
 const SmsHelper = require('../../src/helpers/sms');
+const NotificationHelper = require('../../src/helpers/notifications');
 const UtilsMock = require('../utilsMock');
 const { populateDB, courseList, userList, stepList, subProgramList } = require('./seed/scriptsSeed');
 const { getToken } = require('./helpers/authentication');
@@ -15,11 +17,16 @@ describe('NODE ENV', () => {
 
 describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () => {
   let authToken;
+  let generate;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
+      generate = sinon.stub(CompletionCertificateHelper, 'generate');
+    });
+    afterEach(() => {
+      generate.restore();
     });
 
     it('should send email for completion certificates', async () => {
@@ -38,8 +45,7 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
         ]));
       expect(response.result.data.errors)
         .toEqual(expect.arrayContaining([
-          expect.objectContaining({ course: 'unknown', trainee: 'unknown', month }),
-          expect.objectContaining({ course: 'unknown', trainee: 'unknown', month }),
+          expect.objectContaining({ course: courseList[0]._id, trainee: userList[0]._id, month }),
         ]));
     });
 
@@ -132,12 +138,14 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-pendingcoursebills-by-email', ()
 describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
   let authToken;
   let smsSend;
+  let sendAttendanceReminder;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
       smsSend = sinon.stub(SmsHelper, 'send');
+      sendAttendanceReminder = sinon.stub(NotificationHelper, 'sendAttendanceReminder');
       UtilsMock.mockCurrentDate('2023-01-08T09:00:00.000Z');
       process.env.TECH_EMAIL = 'tech@compani.fr';
       process.env.VAEI_EVALUATION_STEP_ID = stepList[0]._id;
@@ -149,6 +157,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
 
     afterEach(() => {
       smsSend.restore();
+      sendAttendanceReminder.restore();
       UtilsMock.unmockCurrentDate('');
       process.env.TECH_EMAIL = '';
       process.env.VAEI_EVALUATION_STEP_ID = '';
@@ -191,8 +200,12 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
           'Relance elearning POEI': {
             sentReminders: [userList[0]._id],
           },
+          'Relance émargement intervenants': {
+            sentReminders: [userList[1]._id],
+          },
         });
       sinon.assert.callCount(smsSend, 7);
+      sinon.assert.callCount(sendAttendanceReminder, 1);
     });
   });
 

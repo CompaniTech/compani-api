@@ -8,6 +8,7 @@ const {
   BLENDED_COURSE_REGISTRATION,
   NEW_ELEARNING_COURSE,
   ATTENDANCE_SHEET_SIGNATURE_REQUEST,
+  TRAINER_ATTENDANCE_REMINDER,
 } = require('./constants');
 
 const EXPO_NOTIFICATION_API_URL = 'https://exp.host/--/api/v2/push/send/';
@@ -107,3 +108,29 @@ exports.sendAttendanceSheetSignatureRequestNotification =
 
     await Promise.all(notifications);
   };
+
+exports.sendAttendanceReminder = async (courseId, formationExpoTokenList) => {
+  if (!formationExpoTokenList.length) return;
+
+  const course = await Course.findOne({ _id: courseId }, { subProgram: 1, misc: 1 })
+    .populate({ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] })
+    .lean();
+  const courseName = getCourseName(course);
+
+  const notifications = [];
+  for (const expoToken of formationExpoTokenList) {
+    notifications.push(
+      this.sendNotificationToUser({
+        title: 'Vous avez des créneaux à émarger',
+        body: `N'oubliez pas d'émarger les créneaux effectués pour la formation ${courseName}.`,
+        data: {
+          courseId,
+          type: TRAINER_ATTENDANCE_REMINDER,
+        },
+        expoToken,
+      })
+    );
+  }
+
+  await Promise.all(notifications);
+};

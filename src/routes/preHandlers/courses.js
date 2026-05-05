@@ -279,13 +279,7 @@ exports.authorizeCourseEdit = async (req) => {
     const unarchiveCourse = has(payload, 'archivedAt') && payload.archivedAt === '';
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
 
-    if (has(payload, 'interruptedAt')) {
-      if (!isRofOrAdmin) throw Boom.forbidden();
-
-      const interruptAnInterruptedCourse = course.interruptedAt && payload.interruptedAt;
-      const restartACourseInProgress = !course.interruptedAt && payload.interruptedAt === '';
-      if (interruptAnInterruptedCourse || restartACourseInProgress) throw Boom.conflict();
-    }
+    if (has(payload, 'interruptionDate') && !isRofOrAdmin) throw Boom.forbidden();
 
     const courseTrainerIds = get(course, 'trainers', []);
     const companies = [INTRA, INTRA_HOLDING, SINGLE].includes(course.type) ? course.companies : [];
@@ -1316,4 +1310,21 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
   }
 
   return formattedLearnerList;
+};
+
+exports.authorizeGetAllDocuments = async (req) => {
+  const { credentials } = req.auth;
+  const loggedUserVendorRole = get(credentials, 'role.vendor.name');
+  if (!loggedUserVendorRole && !req.query.isClientInterface) throw Boom.forbidden();
+
+  const course = await Course.findOne({ _id: req.params._id }, { companies: 1 }).lean();
+  if (!course) throw Boom.notFound();
+
+  if (req.query.isClientInterface) {
+    if (!has(credentials, 'role.client')) throw Boom.badRequest();
+    const hasAccessToCompany = course.companies
+      .some(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
+    if (!hasAccessToCompany) throw Boom.forbidden();
+  }
+  return null;
 };

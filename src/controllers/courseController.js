@@ -354,6 +354,18 @@ const uploadSingleCourseCSV = async (req) => {
   }
 };
 
+const downloadAllDocuments = async (req, h) => {
+  try {
+    const data = await CoursesHelper.downloadAllDocuments(req.params._id, req.auth.credentials, req.query);
+    return h.file(data.zipPath, { confine: false })
+      .header('content-disposition', `attachment; filename=${data.zipName}`)
+      .type('application/zip');
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   list,
   create,
@@ -382,4 +394,5 @@ module.exports = {
   removeTutor,
   uploadTraineeCSV,
   uploadSingleCourseCSV,
+  downloadAllDocuments,
 };

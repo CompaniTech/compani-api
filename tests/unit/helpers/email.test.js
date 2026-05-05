@@ -742,7 +742,7 @@ describe('completionSendingSmsRemindersEmail', async () => {
     + '<ul><p>Rappel envoyé pour les utilisateurs suivants :</p>'
     + `<li>Utilisateur: ${traineeIds[0].toHexString()}</li>`
     + '</ul>'
-    + '<ul><p>Numéro de téléphone manquant :</p>'
+    + '<ul><p>Numéro de téléphone/token manquant :</p>'
     + `<li>Utilisateur: ${traineeIds[1].toHexString()}</li>`
     + '</ul><br/>';
     const sentObj = { msg: test };

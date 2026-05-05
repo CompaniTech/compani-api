@@ -1,16 +1,18 @@
 const { ObjectId } = require('mongodb');
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
+const groupBy = require('lodash/groupBy');
 const EmailHelper = require('../helpers/email');
 const ActivityHistory = require('../models/ActivityHistory');
 const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const SubProgram = require('../models/SubProgram');
 const NumbersHelper = require('../helpers/numbers');
+const NotificationsHelper = require('../helpers/notifications');
 const SmsHelper = require('../helpers/sms');
 const UtilsHelper = require('../helpers/utils');
 const { CompaniDate } = require('../helpers/dates/companiDates');
-const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING } = require('../helpers/constants');
+const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING, SINGLE } = require('../helpers/constants');
 
 const getEvaluationSlotsIn2W = async () => {
   const evaluationSlotsIn2W = await CourseSlot
@@ -23,7 +25,7 @@ const getEvaluationSlotsIn2W = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees interruptedAt archivedAt',
+      select: 'trainees interruptionDates archivedAt',
       populate: { path: 'trainees', select: 'contact' },
     })
     .lean();
@@ -32,7 +34,8 @@ const getEvaluationSlotsIn2W = async () => {
   const evaluationSlotsIn2WSentReminders = [];
   const evaluationSlotsIn2WNotSentReminders = [];
   for (const slot of evaluationSlotsIn2W) {
-    if (slot.course.interruptedAt || slot.course.archivedAt) continue;
+    const isCourseInterrupted = UtilsHelper.isCourseInterrupted(slot.course.interruptionDates);
+    if (isCourseInterrupted || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     if (get(traineeContact, 'phone')) {
@@ -70,7 +73,7 @@ const getSlotsIn1D = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees tutors trainers interruptedAt archivedAt',
+      select: 'trainees tutors trainers interruptionDates archivedAt',
       populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
     })
     .populate({ path: 'trainers', select: 'identity contact' })
@@ -86,7 +89,8 @@ const getSlotsIn1D = async () => {
   const tutorTripartiteSlotsIn1DSentReminders = [];
   const tutorTripartiteSlotsIn1DNotSentReminders = [];
   for (const slot of slotsIn1D) {
-    if (slot.course.interruptedAt || slot.course.archivedAt) continue;
+    const isCourseInterrupted = UtilsHelper.isCourseInterrupted(slot.course.interruptionDates);
+    if (isCourseInterrupted || slot.course.archivedAt) continue;
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     const trainer = slot.trainers[0];
@@ -115,9 +119,8 @@ const getSlotsIn1D = async () => {
         case process.env.VAEI_TRIPARTITE_STEP_ID:
           traineeTripartiteSlotsIn1DSentReminders.push(trainee._id);
           content = 'Formation VAEI :\n'
-            + 'N\'oubliez pas votre rendez-vous tripartite qui aura lieu demain à '
-            + `${CompaniDate(slot.startDate).format(HH_MM)}, dans votre structure.`
-            + ` Si besoin, contactez votre coach${trainerPhone}.`;
+            + 'N\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice qui aura lieu demain à '
+            + `${CompaniDate(slot.startDate).format(HH_MM)}. Si besoin, contactez votre coach${trainerPhone}.`;
           break;
       }
       promises.push(
@@ -187,7 +190,7 @@ const getCodevSlotsIn1W = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees interruptedAt archivedAt',
+      select: 'trainees interruptionDates archivedAt',
       populate: [
         { path: 'trainees', select: 'contact' },
         {
@@ -201,7 +204,8 @@ const getCodevSlotsIn1W = async () => {
     .populate({ path: 'trainers', select: 'identity contact' })
     .lean();
   const filteredSlots = codevSlotsIn1W.filter((s) => {
-    const isCourseStopped = s.course.interruptedAt || s.course.archivedAt;
+    const isCourseInterrupted = UtilsHelper.isCourseInterrupted(s.course.interruptionDates);
+    const isCourseStopped = isCourseInterrupted || s.course.archivedAt;
     return !isCourseStopped && CompaniDate(s.startDate).isSame(s.course.slots[0].startDate);
   });
 
@@ -237,7 +241,10 @@ const getPOEIFirstSingleSlot = async () => {
     .find({
       subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
       archivedAt: { $exists: false },
-      interruptedAt: { $exists: false },
+      $or: [
+        { interruptionDates: { $exists: false } },
+        { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+      ],
     })
     .populate({ path: 'trainees', select: 'contact' })
     .populate({
@@ -299,6 +306,56 @@ const getPOEIFirstSingleSlot = async () => {
   }
 
   return { POEISentReminders, POEINotSentReminders, promises };
+};
+
+const getYesterdaySlotsWithoutAttendance = async () => {
+  const singleCourses = await Course.find({ type: SINGLE }).lean();
+  const yesterdaySlots = await CourseSlot
+    .find({
+      course: { $in: singleCourses.map(c => c._id) },
+      startDate: {
+        $gte: CompaniDate().subtract('P1D').startOf(DAY).toDate(),
+        $lte: CompaniDate().subtract('P1D').endOf(DAY).toDate(),
+      },
+    })
+    .populate({ path: 'trainers', select: 'formationExpoTokenList' })
+    .populate({ path: 'attendances', options: { isVendorUser: true } })
+    .lean();
+
+  const slotsGroupedByTrainer = {};
+  yesterdaySlots.forEach((slot) => {
+    slot.trainers.forEach((trainer) => {
+      if (!slotsGroupedByTrainer[trainer._id]) slotsGroupedByTrainer[trainer._id] = [];
+      slotsGroupedByTrainer[trainer._id].push(slot);
+    });
+  });
+
+  const promises = [];
+  const trainersWithEmptyAttendanceSentReminders = [];
+  const trainersWithEmptyAttendanceNotSentReminders = [];
+  for (const trainerId of Object.keys(slotsGroupedByTrainer)) {
+    const slots = slotsGroupedByTrainer[trainerId];
+    const formationExpoTokenList = slots[0].trainers
+      .find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerId)).formationExpoTokenList || [];
+
+    const slotsGroupedByCourse = groupBy(slots, 'course');
+    for (const courseId of Object.keys(slotsGroupedByCourse)) {
+      const slotsWithoutAttendance = slotsGroupedByCourse[courseId].filter(s => !s.attendances.length);
+      if (!slotsWithoutAttendance.length) continue;
+      if (formationExpoTokenList.length) {
+        promises.push(NotificationsHelper.sendAttendanceReminder(courseId, formationExpoTokenList));
+        trainersWithEmptyAttendanceSentReminders.push(trainerId);
+      } else trainersWithEmptyAttendanceNotSentReminders.push(trainerId);
+    }
+  }
+
+  return {
+    trainersWithEmptyAttendanceSentReminders: [...new Set(trainersWithEmptyAttendanceSentReminders)]
+      .map(id => new ObjectId(id)),
+    trainersWithEmptyAttendanceNotSentReminders: [...new Set(trainersWithEmptyAttendanceNotSentReminders)]
+      .map(id => new ObjectId(id)),
+    promises,
+  };
 };
 
 const sendingSmsRemindersJob = {
@@ -375,6 +432,23 @@ const sendingSmsRemindersJob = {
         ...POEINotSentReminders.length && { notSentReminders: POEINotSentReminders },
       };
       if (POEIPromises.length) promises.push(...POEIPromises);
+
+      // Yesterday slots without attendance
+      const {
+        trainersWithEmptyAttendanceSentReminders,
+        trainersWithEmptyAttendanceNotSentReminders,
+        promises: attendanceReminderPromises,
+      } = await getYesterdaySlotsWithoutAttendance();
+
+      result['Relance émargement intervenants'] = {
+        ...trainersWithEmptyAttendanceSentReminders.length && {
+          sentReminders: trainersWithEmptyAttendanceSentReminders,
+        },
+        ...trainersWithEmptyAttendanceNotSentReminders.length && {
+          notSentReminders: trainersWithEmptyAttendanceNotSentReminders,
+        },
+      };
+      if (attendanceReminderPromises.length) promises.push(...attendanceReminderPromises);
 
       await Promise.all(promises);
       return result;
