@@ -119,9 +119,10 @@ const completionCertificateCreationJob = {
 
         certificateCreated.push(...res);
 
-        const generationPromises = [];
-        res.forEach((certificate) => {
-          generationPromises.push(
+        const BATCH_SIZE = 5;
+        for (let i = 0; i < res.length; i += BATCH_SIZE) {
+          const batch = res.slice(i, i + BATCH_SIZE);
+          const generationPromises = batch.map(certificate =>
             app.inject({
               method: 'PUT',
               url: `/completioncertificates/${certificate._id}`,
@@ -129,11 +130,14 @@ const completionCertificateCreationJob = {
               payload: { action: GENERATION },
             })
           );
-        });
-        const generationRes = await Promise.allSettled(generationPromises);
-        generationRes.forEach(r => (
-          get(r, 'value.statusCode') !== 200 && errors.push({ trainee: 'unknown', course: 'unknown', month })
-        ));
+          const generationRes = await Promise.allSettled(generationPromises);
+          generationRes.forEach((r, idx) => {
+            if (get(r, 'value.statusCode') !== 200) {
+              const cert = batch[idx];
+              errors.push({ trainee: cert.trainee, course: cert.course, month });
+            }
+          });
+        }
       } catch (e) {
         const { writeErrors } = e;
         server.log('completionCertificateCreation', e);

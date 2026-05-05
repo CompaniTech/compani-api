@@ -1,6 +1,7 @@
 const { expect } = require('expect');
 const sinon = require('sinon');
 const app = require('../../server');
+const CompletionCertificateHelper = require('../../src/helpers/completionCertificates');
 const EmailHelper = require('../../src/helpers/email');
 const SmsHelper = require('../../src/helpers/sms');
 const NotificationHelper = require('../../src/helpers/notifications');
@@ -16,11 +17,16 @@ describe('NODE ENV', () => {
 
 describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () => {
   let authToken;
+  let generate;
 
   describe('VENDOR_ADMIN', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('vendor_admin');
+      generate = sinon.stub(CompletionCertificateHelper, 'generate');
+    });
+    afterEach(() => {
+      generate.restore();
     });
 
     it('should send email for completion certificates', async () => {
@@ -39,8 +45,7 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
         ]));
       expect(response.result.data.errors)
         .toEqual(expect.arrayContaining([
-          expect.objectContaining({ course: 'unknown', trainee: 'unknown', month }),
-          expect.objectContaining({ course: 'unknown', trainee: 'unknown', month }),
+          expect.objectContaining({ course: courseList[0]._id, trainee: userList[0]._id, month }),
         ]));
     });
 
