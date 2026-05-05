@@ -48,13 +48,16 @@ exports.getProgram = async (programId) => {
   const program = await Program.findOne({ _id: programId })
     .populate({
       path: 'subPrograms',
-      populate: {
-        path: 'steps',
-        populate: [
-          { path: 'activities', populate: 'cards' },
-          { path: 'subPrograms', select: 'name -steps', populate: { path: 'program', select: 'name -subPrograms' } },
-        ],
-      },
+      populate: [
+        {
+          path: 'steps',
+          populate: [
+            { path: 'activities', populate: 'cards' },
+            { path: 'subPrograms', select: 'name -steps', populate: { path: 'program', select: 'name -subPrograms' } },
+          ],
+        },
+        { path: 'courses', select: 'tradeName' },
+      ],
     })
     .populate({ path: 'testers', select: 'identity.firstname identity.lastname local.email contact' })
     .populate('categories')
@@ -106,3 +109,6 @@ exports.removeTester = async (programId, testerId) =>
 
 exports.addTradeName = async (programId, payload) =>
   Program.updateOne({ _id: programId }, { $push: { tradeNames: { name: payload.tradeName } } });
+
+exports.removeTradeName = async (programId, tradeNameId) =>
+  Program.updateOne({ _id: programId }, { $pull: { tradeNames: { _id: tradeNameId } } });

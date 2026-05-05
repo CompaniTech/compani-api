@@ -243,17 +243,20 @@ describe('getProgram', () => {
           query: 'populate',
           args: [{
             path: 'subPrograms',
-            populate: {
-              path: 'steps',
-              populate: [
-                { path: 'activities', populate: 'cards' },
-                {
-                  path: 'subPrograms',
-                  select: 'name -steps',
-                  populate: { path: 'program', select: 'name -subPrograms' },
-                },
-              ],
-            },
+            populate: [
+              {
+                path: 'steps',
+                populate: [
+                  { path: 'activities', populate: 'cards' },
+                  {
+                    path: 'subPrograms',
+                    select: 'name -steps',
+                    populate: { path: 'program', select: 'name -subPrograms' },
+                  },
+                ],
+              },
+              { path: 'courses', select: 'tradeName' },
+            ],
           }],
         },
         {
@@ -499,5 +502,23 @@ describe('addTradeName', () => {
       { _id: programId },
       { $push: { tradeNames: { name: payload.tradeName } } }
     );
+  });
+});
+
+describe('removeTradeName', () => {
+  let updateOne;
+  beforeEach(() => {
+    updateOne = sinon.stub(Program, 'updateOne');
+  });
+  afterEach(() => {
+    updateOne.restore();
+  });
+
+  it('should remove trade name', async () => {
+    const programId = new ObjectId();
+    const tradeNameId = new ObjectId();
+    await ProgramHelper.removeTradeName(programId, tradeNameId);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: programId }, { $pull: { tradeNames: { _id: tradeNameId } } });
   });
 });

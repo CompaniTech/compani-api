@@ -68,3 +68,16 @@ exports.authorizeTradeNameAddition = async (req) => {
 
   return null;
 };
+
+exports.authorizeTradeNameDeletion = async (req) => {
+  const { credentials } = req.auth;
+  const { _id: programId, tradeNameId } = req.params;
+
+  const vendorRole = get(req, 'auth.credentials.role.vendor.name');
+  if (vendorRole === TRAINER && !credentials.isProgramEditor) throw Boom.forbidden();
+
+  const program = await Program.countDocuments({ _id: programId, 'tradeNames._id': tradeNameId });
+  if (!program) throw Boom.notFound();
+
+  return null;
+};
