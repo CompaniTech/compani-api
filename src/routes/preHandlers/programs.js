@@ -4,6 +4,7 @@ const Program = require('../../models/Program');
 const Category = require('../../models/Category');
 const User = require('../../models/User');
 const translate = require('../../helpers/translate');
+const UtilsHelper = require('../../helpers/utils');
 const { TRAINER } = require('../../helpers/constants');
 
 const { language } = translate;
@@ -59,7 +60,10 @@ exports.authorizeTradeNameAddition = async (req) => {
   if (vendorRole === TRAINER && !credentials.isProgramEditor) throw Boom.forbidden();
 
   const tradeNameExists = await Program
-    .countDocuments({ _id: req.params._id, 'tradeNames.name': req.payload.tradeName });
+    .countDocuments({
+      _id: req.params._id,
+      'tradeNames.name': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(req.payload.tradeName)}$`, 'i') },
+    });
   if (tradeNameExists) throw Boom.conflict(translate[language].tradeNameExists);
 
   return null;

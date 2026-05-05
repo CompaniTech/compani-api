@@ -1022,7 +1022,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/trade-names', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[0]._id}/trade-names`,
-        payload: { tradeName: 'ma marque' },
+        payload: { tradeName: 'Ma marque' },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -1056,7 +1056,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/trade-names', () => {
     ];
 
     roles.forEach((role) => {
-      it(`should return ${role.expectedCode} as user is ${role.name} #tag`, async () => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
         authToken = await getToken(role.name);
         const response = await app.inject({
           method: 'POST',
