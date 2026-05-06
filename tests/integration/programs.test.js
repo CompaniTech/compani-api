@@ -1088,11 +1088,10 @@ describe('PROGRAMS ROUTES - DELETE /programs/{_id}/trade-names/{tradeNameId}', (
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
-      const programUpdated = await Program
-        .countDocuments({ _id: programsList[0]._id, 'tradeNames._id': tradeNameId }).lean();
+      const programUpdated = await Program.countDocuments({ _id: programsList[0]._id, 'tradeNames._id': tradeNameId });
 
       expect(response.statusCode).toBe(200);
-      expect(programUpdated).toBeFalsy();
+      expect(programUpdated).toEqual(0);
     });
 
     it('should return 404 if program does not exist', async () => {
