@@ -153,6 +153,7 @@ const coursesList = [{
   operationsRepresentative: vendorAdmin._id,
   certificateGenerationMode: GLOBAL,
   trainers: [trainer._id],
+  tradeName: 'nom',
 }];
 
 const courseSlotsList = [

@@ -43,6 +43,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
   const subProgram = await SubProgram
     .findOneAndUpdate({ _id: subProgramId }, { $set: { status: payload.status } })
     .populate({ path: 'steps', select: 'activities type' })
+    .populate({ path: 'program', select: 'name' })
     .lean({ virtuals: true });
 
   if (subProgram.isStrictlyELearning) {
@@ -51,6 +52,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       type: INTER_B2C,
       format: STRICTLY_E_LEARNING,
       accessRules: payload.accessCompanies || [],
+      tradeName: subProgram.program.name,
     });
     const query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
     if (payload.accessCompanies) {
