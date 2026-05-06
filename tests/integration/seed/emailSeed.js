@@ -155,6 +155,7 @@ const coursesList = [
     expectedBillsCount: 3,
     maxTrainees: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // VAEI course
     _id: new ObjectId(),
@@ -172,6 +173,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
 ];
 

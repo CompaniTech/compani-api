@@ -99,6 +99,7 @@ const course = {
   type: INTER_B2C,
   format: 'strictly_e_learning',
   trainees: [userList[0]._id, vendorAdmin._id],
+  tradeName: 'nom',
 };
 
 const populateDB = async () => {

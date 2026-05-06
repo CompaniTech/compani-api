@@ -109,6 +109,7 @@ const coursesList = [
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
     certificateGenerationMode: MONTHLY,
+    tradeName: 'nom',
   },
   { // 1
     _id: new ObjectId(),
@@ -119,6 +120,7 @@ const coursesList = [
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id, trainerAndCoach._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 2
     _id: new ObjectId(),
@@ -130,6 +132,7 @@ const coursesList = [
     trainers: [userList[3]._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 3 - archived
     _id: new ObjectId(),
@@ -141,6 +144,7 @@ const coursesList = [
     operationsRepresentative: userList[0]._id,
     trainers: [trainer._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 4
     _id: new ObjectId(),
@@ -152,6 +156,7 @@ const coursesList = [
     trainers: [userList[3]._id],
     operationsRepresentative: userList[0]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 5
     _id: new ObjectId(),
@@ -164,6 +169,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: userList[0]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 6
     _id: new ObjectId(),
@@ -176,6 +182,7 @@ const coursesList = [
     holding: otherHolding._id,
     operationsRepresentative: userList[0]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 7 Single course
     _id: new ObjectId(),
@@ -188,6 +195,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 8 Single course
     _id: new ObjectId(),
@@ -200,6 +208,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
 ];
 

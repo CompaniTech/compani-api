@@ -34,6 +34,7 @@ const courseList = [
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 1
     _id: new ObjectId(),
@@ -47,6 +48,7 @@ const courseList = [
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 2
     _id: new ObjectId(),
@@ -60,6 +62,7 @@ const courseList = [
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 3
     _id: new ObjectId(),
@@ -71,6 +74,7 @@ const courseList = [
     type: INTER_B2B,
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 

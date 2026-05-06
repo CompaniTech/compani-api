@@ -125,6 +125,7 @@ const coursesList = [
     trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 1
     _id: new ObjectId(),
@@ -140,6 +141,7 @@ const coursesList = [
     expectedBills: 0,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 2
     _id: new ObjectId(),
@@ -153,6 +155,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2021-11-15T09:00:00',
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 3
     _id: new ObjectId(),
@@ -165,6 +168,7 @@ const coursesList = [
     trainers: [trainerAndCoach._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 4
     _id: new ObjectId(),
@@ -178,6 +182,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 5 without companies
     _id: new ObjectId(),
@@ -191,6 +196,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 6 month intra course with attendance sheets and completion certificates
     _id: new ObjectId(),
@@ -204,6 +210,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     maxTrainees: 3,
     expectedBills: 0,
+    tradeName: 'nom',
   },
 ];
 

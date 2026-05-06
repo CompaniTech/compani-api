@@ -63,6 +63,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: userList[1]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -75,6 +76,7 @@ const coursesList = [
     companies: [companyWithoutSubscription._id],
     operationsRepresentative: userList[1]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -87,6 +89,7 @@ const coursesList = [
     companies: [],
     operationsRepresentative: userList[1]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -101,6 +104,7 @@ const coursesList = [
     maxTrainees: 8,
     operationsRepresentative: userList[1]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -114,6 +118,7 @@ const coursesList = [
     certificateGenerationMode: GLOBAL,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
 ];
 

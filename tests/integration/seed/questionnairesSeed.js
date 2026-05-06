@@ -161,6 +161,7 @@ const coursesList = [
     trainees: [traineeList[0]._id],
     companies: [authCompany._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -168,6 +169,7 @@ const coursesList = [
     subProgram: subProgramsList[1]._id,
     type: INTER_B2C,
     trainees: [],
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -179,6 +181,7 @@ const coursesList = [
     trainees: [traineeList[0]._id],
     companies: [companyWithoutSubscription._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -191,6 +194,7 @@ const coursesList = [
     trainees: [traineeList[0]._id],
     companies: [authCompany._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 

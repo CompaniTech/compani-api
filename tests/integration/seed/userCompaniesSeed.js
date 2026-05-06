@@ -264,6 +264,7 @@ const coursesList = [
     contact: trainer._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 
