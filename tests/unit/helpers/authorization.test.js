@@ -38,12 +38,13 @@ describe('validate', () => {
         role: {},
         company: null,
         holding: null,
+        isProgramEditor: false,
       },
     });
     SinonMongoose.calledOnceWithExactly(
       findById,
       [
-        { query: 'findById', args: [userId, '_id identity role local'] },
+        { query: 'findById', args: [userId, '_id identity role local isProgramEditor'] },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company' } }] },
         {
           query: 'populate',
@@ -84,6 +85,7 @@ describe('validate', () => {
         email: 'email@email.com',
         company: { _id: companyId, subscriptions: { erp: false } },
         holding,
+        isProgramEditor: false,
         scope: [
           `user:read-${userId}`,
           `user:edit-${userId}`,
@@ -141,7 +143,7 @@ describe('validate', () => {
     SinonMongoose.calledOnceWithExactly(
       findById,
       [
-        { query: 'findById', args: [userId, '_id identity role local'] },
+        { query: 'findById', args: [userId, '_id identity role local isProgramEditor'] },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company' } }] },
         {
           query: 'populate',
@@ -173,6 +175,7 @@ describe('validate', () => {
         identity: { lastname: 'lastname' },
         email: 'email@email.com',
         company: { _id: 'company', subscriptions: { erp: true } },
+        isProgramEditor: false,
         scope: [
           `user:read-${userId}`,
           `user:edit-${userId}`,
@@ -204,7 +207,7 @@ describe('validate', () => {
     SinonMongoose.calledOnceWithExactly(
       findById,
       [
-        { query: 'findById', args: [userId, '_id identity role local'] },
+        { query: 'findById', args: [userId, '_id identity role local isProgramEditor'] },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company' } }] },
         {
           query: 'populate',
@@ -240,12 +243,13 @@ describe('validate', () => {
         scope: [`user:read-${userId}`, `user:edit-${userId}`, 'auxiliary_without_company'],
         role: { client: { name: AUXILIARY_WITHOUT_COMPANY } },
         holding: null,
+        isProgramEditor: false,
       },
     });
     SinonMongoose.calledOnceWithExactly(
       findById,
       [
-        { query: 'findById', args: [userId, '_id identity role local'] },
+        { query: 'findById', args: [userId, '_id identity role local isProgramEditor'] },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company' } }] },
         {
           query: 'populate',
@@ -264,6 +268,7 @@ describe('validate', () => {
       role: { client: { name: 'coach', interface: 'client' }, vendor: { name: 'trainer' } },
       company: { _id: 'company', subscriptions: { erp: true } },
       local: { email: 'email@email.com' },
+      isProgramEditor: true,
     };
 
     findById.returns(SinonMongoose.stubChainedQueries(user, ['populate', 'lean']));
@@ -277,6 +282,7 @@ describe('validate', () => {
         identity: { lastname: 'lastname' },
         email: 'email@email.com',
         company: { _id: 'company', subscriptions: { erp: true } },
+        isProgramEditor: true,
         scope: [
           `user:read-${userId}`,
           `user:edit-${userId}`,
@@ -314,7 +320,7 @@ describe('validate', () => {
     SinonMongoose.calledOnceWithExactly(
       findById,
       [
-        { query: 'findById', args: [userId, '_id identity role local'] },
+        { query: 'findById', args: [userId, '_id identity role local isProgramEditor'] },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company' } }] },
         {
           query: 'populate',

@@ -26,7 +26,7 @@ const validate = async (decoded) => {
   try {
     if (!decoded._id) throw new Error('No id present in token');
 
-    const user = await User.findById(decoded._id, '_id identity role local')
+    const user = await User.findById(decoded._id, '_id identity role local isProgramEditor')
       .populate({ path: 'company', populate: { path: 'company' } })
       .populate({ path: 'holding', populate: { path: 'holding', select: '_id', populate: { path: 'companies' } } })
       .lean({ autopopulate: true });
@@ -57,6 +57,7 @@ const validate = async (decoded) => {
       company: user.company || null,
       holding: user.holding || null,
       role: pick(user.role, ['client.name', 'vendor.name', 'holding.name']),
+      isProgramEditor: !!user.isProgramEditor,
       scope,
     };
 

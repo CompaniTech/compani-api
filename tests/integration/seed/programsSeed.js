@@ -76,6 +76,7 @@ const programsList = [
     subPrograms: [subProgramsList[0]._id],
     image: { link: 'bonjour', publicId: 'au revoir' },
     categories: [categoriesList[0]._id],
+    tradeNames: [{ _id: new ObjectId(), name: 'ma marque' }],
   },
   {
     _id: new ObjectId(),

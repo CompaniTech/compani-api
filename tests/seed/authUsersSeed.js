@@ -97,6 +97,7 @@ const userList = [
     local: { email: 'trainer@alenvi.io', password: '123456!eR' },
     role: { vendor: trainerRoleId },
     origin: WEBAPP,
+    isProgramEditor: true,
   },
   { // 9
     _id: new ObjectId(),

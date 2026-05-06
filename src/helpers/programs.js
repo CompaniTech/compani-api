@@ -103,3 +103,6 @@ exports.addTester = async (programId, payload) => {
 
 exports.removeTester = async (programId, testerId) =>
   Program.updateOne({ _id: programId }, { $pull: { testers: testerId } });
+
+exports.addTradeName = async (programId, payload) =>
+  Program.updateOne({ _id: programId }, { $push: { tradeNames: { name: payload.tradeName } } });

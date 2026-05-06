@@ -12,6 +12,7 @@ const ProgramSchema = mongoose.Schema({
     link: { type: String, trim: true, required() { return !!this.image.publicId; } },
   },
   testers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+  tradeNames: [{ name: { type: String, required: true } }],
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => ProgramSchema.pre(middleware, formatQuery));
