@@ -1001,10 +1001,10 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/trade-names', () => {
       });
 
       const programUpdated = await Program
-        .countDocuments({ _id: programsList[0]._id, 'tradeNames.name': 'nouvelle marque' }).lean();
+        .countDocuments({ _id: programsList[0]._id, 'tradeNames.name': 'nouvelle marque' });
 
       expect(response.statusCode).toBe(200);
-      expect(programUpdated).toBeTruthy();
+      expect(programUpdated).toEqual(1);
     });
 
     it('should return 404 if program does not exist', async () => {
