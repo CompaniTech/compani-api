@@ -310,6 +310,7 @@ module.exports = {
     unknownCoach: 'coach doesn\'t exist',
     unknownArchitect: 'architect doesn\'t exist',
     incorrectDate: 'date is incorrect',
+    missingTradeName: 'trade name is missing',
     fileIsToBig: 'File is too big.',
   },
   'fr-FR': {
@@ -632,6 +633,7 @@ module.exports = {
     unknownCoach: 'le coach n\'existe pas',
     unknownArchitect: 'l\'architecte n\'existe pas',
     incorrectDate: 'le format de la date est incorrect',
+    missingTradeName: 'le nom commercial est manquant',
     fileIsToBig: `Le fichier contient trop de stagiaires (${process.env.MAX_CSV_COURSE_SIZE} maximum).`,
   },
 };

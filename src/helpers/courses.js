@@ -1849,7 +1849,11 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
     }
     if (!userId) {
       const newUser = await UsersHelper.createUser(
-        { ...omit(learner, ['operationsRepresentative', 'subProgram', 'coach', 'architect']), company, origin: WEBAPP },
+        {
+          ...omit(learner, ['operationsRepresentative', 'subProgram', 'coach', 'architect', 'tradeName']),
+          company,
+          origin: WEBAPP,
+        },
         credentials
       );
       userId = newUser._id;
@@ -1863,7 +1867,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       if (!userCompany) await UserCompaniesHelper.create({ user: userId, company });
     }
 
-    const { subProgram, operationsRepresentative, estimatedStartDate, coach, architect } = learner;
+    const { subProgram, operationsRepresentative, estimatedStartDate, coach, architect, tradeName } = learner;
     const identity = { firstname: learner['identity.firstname'], lastname: learner['identity.lastname'] };
     const payload = {
       subProgram,
@@ -1878,6 +1882,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       estimatedStartDate,
       coach,
       architect,
+      tradeName,
     };
     const course = await exports.createCourse(payload, credentials);
     if (coach) await exports.addTrainer(course._id, { trainer: coach._id }, credentials);

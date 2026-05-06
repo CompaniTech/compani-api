@@ -161,6 +161,7 @@ exports.plugin = {
                 trainerFees: Joi.number().positive(),
               })
               .when('type', { is: [INTER_B2B, INTRA_HOLDING], then: Joi.forbidden() }),
+            tradeName: Joi.string().required(),
           }),
         },
         auth: { scope: ['courses:create'] },

@@ -147,6 +147,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         hasCertifyingTest: true,
         salesRepresentative: trainerOrganisationManager._id,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -187,6 +188,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
         prices: { global: 1200 },
+        tradeName: 'nom',
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -215,6 +217,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
       const coursesCountBefore = await Course.countDocuments();
 
@@ -246,6 +249,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         trainee: traineeFromOtherCompany._id,
         certificateGenerationMode: MONTHLY,
         prices: { global: 1000, trainerFees: 200 },
+        tradeName: 'nom',
       };
       const coursesCountBefore = await Course.countDocuments();
       createFolder.returns({ id: 'folderId' });
@@ -285,6 +289,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: clientAdmin._id,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
       const response = await app.inject({
         method: 'POST',
@@ -307,6 +312,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         expectedBillsCount: 0,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
       const response = await app.inject({
         method: 'POST',
@@ -329,6 +335,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         expectedBillsCount: 0,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
       const response = await app.inject({
         method: 'POST',
@@ -351,6 +358,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         maxTrainees: 2,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -374,6 +382,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         hasCertifyingTest: false,
         trainee: new ObjectId(),
         certificateGenerationMode: MONTHLY,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -396,6 +405,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         hasCertifyingTest: false,
         trainee: userList[8]._id,
         certificateGenerationMode: MONTHLY,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -417,6 +427,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         salesRepresentative: clientAdmin._id,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -438,6 +449,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         salesRepresentative: new ObjectId(),
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -461,6 +473,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         expectedBillsCount: 0,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
       const response = await app.inject({
         method: 'POST',
@@ -483,6 +496,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         expectedBillsCount: 0,
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
+        tradeName: 'nom',
       };
       const response = await app.inject({
         method: 'POST',
@@ -501,6 +515,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         subProgram: subProgramsList[0]._id,
         operationsRepresentative: vendorAdmin._id,
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -522,6 +537,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         estimatedStartDate: '2022-05-31T08:00:00.000Z',
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -543,6 +559,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         estimatedStartDate: '2022-05-31T08:00:00.000Z',
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -566,6 +583,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         holding: authHolding._id,
         maxTrainees: 2,
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -587,6 +605,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         estimatedStartDate: '2022-05-31T08:00:00.000Z',
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -610,6 +629,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         holding: authHolding._id,
         maxTrainees: 2,
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -634,6 +654,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         maxTrainees: 2,
         expectedBillsCount: 2,
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -655,6 +676,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         estimatedStartDate: '2022-05-31T08:00:00.000Z',
         holding: authHolding._id,
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -676,6 +698,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         estimatedStartDate: '2022-05-31T08:00:00.000Z',
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -697,6 +720,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         operationsRepresentative: vendorAdmin._id,
         estimatedStartDate: '2022-05-31T08:00:00.000Z',
         hasCertifyingTest: false,
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -718,6 +742,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       operationsRepresentative: vendorAdmin._id,
       expectedBillsCount: 0,
       hasCertifyingTest: false,
+      tradeName: 'nom',
     };
     ['company', 'subProgram', 'maxTrainees', 'expectedBillsCount'].forEach((param) => {
       it(`should return a 400 error if course is intra and '${param}' parameter is missing`, async () => {
@@ -740,6 +765,7 @@ describe('COURSES ROUTES - POST /courses', () => {
       operationsRepresentative: vendorAdmin._id,
       holding: authHolding._id,
       hasCertifyingTest: false,
+      tradeName: 'nom',
     };
 
     ['holding', 'subProgram', 'maxTrainees'].forEach((param) => {
@@ -793,6 +819,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         hasCertifyingTest: false,
         certificateGenerationMode: GLOBAL,
         prices: { trainerFees: 200 },
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -816,6 +843,7 @@ describe('COURSES ROUTES - POST /courses', () => {
         salesRepresentative: trainerOrganisationManager._id,
         certificateGenerationMode: GLOBAL,
         prices: { global: 200 },
+        tradeName: 'nom',
       };
 
       const response = await app.inject({
@@ -847,6 +875,8 @@ describe('COURSES ROUTES - POST /courses', () => {
           operationsRepresentative: vendorAdmin._id,
           expectedBillsCount: 2,
           hasCertifyingTest: false,
+          tradeName: 'nom',
+
         };
         authToken = await getToken(role.name);
         const response = await app.inject({
@@ -6999,6 +7029,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Salut',
@@ -7013,6 +7044,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Auxiliary',
@@ -7027,6 +7059,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: '',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'trainee',
@@ -7041,6 +7074,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: '',
           architect: '',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7086,6 +7120,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Auxiliary',
@@ -7099,6 +7134,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Trainee',
@@ -7112,6 +7148,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7144,6 +7181,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
           other: '',
+          tradeName: 'nom',
         },
         {
           firstname: 'Auxiliary',
@@ -7159,6 +7197,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
           other: '',
+          tradeName: 'nom',
         },
         {
           firstname: 'Trainee',
@@ -7174,6 +7213,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
           other: '',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7213,6 +7253,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         };
 
         parseCSV.returns([
@@ -7231,6 +7272,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
             coach: 'trainer@alenvi.io',
             architect: 'trainercoach@alenvi.io',
             estimatedStartDate: '2025-11-01',
+            tradeName: 'nom',
           },
           {
             firstname: 'Trainee',
@@ -7245,6 +7287,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
             coach: 'trainer@alenvi.io',
             architect: 'trainercoach@alenvi.io',
             estimatedStartDate: '2025-11-01',
+            tradeName: 'nom',
           },
         ]);
 
@@ -7278,6 +7321,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Auxiliary',
@@ -7292,6 +7336,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Trainee',
@@ -7306,6 +7351,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7338,6 +7384,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Tom',
@@ -7352,6 +7399,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Auxiliary',
@@ -7366,6 +7414,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
         {
           firstname: 'Coach',
@@ -7380,6 +7429,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7412,6 +7462,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7445,6 +7496,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7478,6 +7530,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7510,6 +7563,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7542,6 +7596,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7574,6 +7629,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7607,6 +7663,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7640,6 +7697,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7673,6 +7731,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7706,6 +7765,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7738,6 +7798,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7770,6 +7831,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7802,6 +7864,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7835,6 +7898,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'vendor-admin@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7867,6 +7931,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'training-organisation-manageralenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7900,6 +7965,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'vendor-admin@alenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7932,6 +7998,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'training-organisation-manageralenvi.io',
           estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7965,6 +8032,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-15-01',
+          tradeName: 'nom',
         },
       ]);
 
@@ -7998,6 +8066,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
           coach: 'trainer@alenvi.io',
           architect: 'trainercoach@alenvi.io',
           estimatedStartDate: '2025-12-01',
+          tradeName: 'nom',
         });
       }
 
