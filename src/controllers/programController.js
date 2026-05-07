@@ -161,6 +161,17 @@ const addTradeName = async (req) => {
   }
 };
 
+const removeTradeName = async (req) => {
+  try {
+    await ProgramHelper.removeTradeName(req.params._id, req.params.tradeNameId);
+
+    return { message: translate[language].tradeNameRemoved };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   list,
   listELearning,
@@ -175,4 +186,5 @@ module.exports = {
   addTester,
   removeTester,
   addTradeName,
+  removeTradeName,
 };

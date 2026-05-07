@@ -81,6 +81,7 @@ module.exports = {
     testerNotFound: 'Tester not found in program.',
     testerConflict: 'Tester already added to program.',
     tradeNameAdded: 'Trade name added to program.',
+    tradeNameRemoved: 'Trade name removed from program.',
     tradeNameExists: 'Trade name already added to program.',
     /* Categories */
     categoriesFound: 'Categories found.',
@@ -392,6 +393,7 @@ module.exports = {
     testerNotFound: 'Testeur(euse) non trouvé(e) dans le programme.',
     testerConflict: 'Testeur(euse) déjà ajouté(e) au programme.',
     tradeNameAdded: 'Nom commercial ajouté au programme.',
+    tradeNameRemoved: 'Nom commercial retiré du programme.',
     tradeNameExists: 'Nom commercial déjà ajouté au programme.',
     /* Categories */
     categoriesFound: 'Catégories trouvées.',
