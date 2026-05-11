@@ -1287,7 +1287,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
     }
 
     if (!learner.tradeName) {
-      if (errorsByTrainee[learnerName])errorsByTrainee[learnerName].push(translate[language].missingTradeName);
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingTradeName);
       else errorsByTrainee[learnerName] = [translate[language].missingTradeName];
     }
 
