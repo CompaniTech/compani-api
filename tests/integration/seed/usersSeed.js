@@ -382,6 +382,7 @@ const coursesList = [
     companies: [otherCompany._id, authCompany._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -393,6 +394,7 @@ const coursesList = [
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -400,6 +402,7 @@ const coursesList = [
     type: INTER_B2C,
     format: STRICTLY_E_LEARNING,
     trainees: [usersSeedList[12]._id],
+    tradeName: 'nom',
   },
   { // 24 Single course
     _id: new ObjectId(),
@@ -419,6 +422,7 @@ const coursesList = [
     prices: [{ global: 1600, company: authCompany._id }],
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
 ];
 

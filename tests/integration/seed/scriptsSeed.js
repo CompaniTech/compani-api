@@ -143,6 +143,7 @@ const courseList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 1
     _id: new ObjectId(),
@@ -155,6 +156,7 @@ const courseList = [
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
     expectedBillsCount: 1,
+    tradeName: 'nom',
   },
   { // 2 - single course VAEI
     _id: new ObjectId(),
@@ -168,6 +170,7 @@ const courseList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 3 - single course VAEI
     _id: new ObjectId(),
@@ -181,6 +184,7 @@ const courseList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 4 - single course POEI
     _id: new ObjectId(),
@@ -195,6 +199,7 @@ const courseList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 5 - single course POEI
     _id: new ObjectId(),
@@ -209,6 +214,7 @@ const courseList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
 ];
 

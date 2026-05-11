@@ -40,6 +40,7 @@ const coursesList = [
     expectedBillsCount: 2,
     maxTrainees: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 

@@ -109,6 +109,7 @@ const coursesList = [
     trainees: [questionnaireHistoriesUsersList[0], questionnaireHistoriesUsersList[2]],
     companies: [authCompany._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -120,6 +121,7 @@ const coursesList = [
     trainees: [questionnaireHistoriesUsersList[1]],
     companies: [authCompany._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 

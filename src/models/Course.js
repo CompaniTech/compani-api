@@ -107,6 +107,7 @@ const CourseSchema = mongoose.Schema({
       message: 'gSheetId is only allowed when type is SINGLE',
     },
   },
+  tradeName: { type: String, required: true },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {

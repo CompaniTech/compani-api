@@ -74,6 +74,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       const countCourse = await Course.countDocuments({
         subProgram: blendedSubProgramId,
         format: 'strictly_e_learning',
+        tradeName: 'program 1',
       });
       expect(countCourse).toBe(0);
     });

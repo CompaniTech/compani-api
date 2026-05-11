@@ -39,6 +39,7 @@ const coursesList = [
     companies: [authCompany._id],
     expectedBillsCount: 1,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 

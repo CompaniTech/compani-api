@@ -2053,6 +2053,14 @@ describe('SEEDS VERIFICATION', () => {
 
           expect(someTestersAreRofOrVendorAdmin).toBeFalsy();
         });
+
+        it('should pass if none trade name is duplicated', () => {
+          const someTradeNameAreDuplicates = programList.some((p) => {
+            const formattedNames = p.tradeNames.map(n => n.name.toLowerCase().trim());
+            return [...new Set(formattedNames)].length !== p.tradeNames.length;
+          });
+          expect(someTradeNameAreDuplicates).toBeFalsy();
+        });
       });
 
       describe('Collection Questionnaire', () => {

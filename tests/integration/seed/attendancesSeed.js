@@ -151,6 +151,7 @@ const coursesList = [
     trainers: [userList[0]._id, trainerAndCoach._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 1
     _id: new ObjectId(),
@@ -164,6 +165,7 @@ const coursesList = [
     certificateGenerationMode: GLOBAL,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 2
     _id: new ObjectId(),
@@ -175,6 +177,7 @@ const coursesList = [
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 3 interb2b
     _id: new ObjectId(),
@@ -185,6 +188,7 @@ const coursesList = [
     trainers: [userList[0]._id, trainerAndCoach._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 4 interb2b with only trainees from otherCompany
     _id: new ObjectId(),
@@ -195,6 +199,7 @@ const coursesList = [
     trainers: [userList[0]._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 5 archived
     _id: new ObjectId(),
@@ -207,6 +212,7 @@ const coursesList = [
     operationsRepresentative: userList[2]._id,
     archivedAt: '2021-11-17T23:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 6 trainer is authTrainer
     _id: new ObjectId(),
@@ -217,6 +223,7 @@ const coursesList = [
     trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 7 no company linked
     _id: new ObjectId(),
@@ -227,6 +234,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 8 intra_holding no company
     _id: new ObjectId(),
@@ -239,6 +247,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 9 intra_holding with companies
     _id: new ObjectId(),
@@ -251,6 +260,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: userList[2]._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 10 single course
     _id: new ObjectId(),
@@ -264,6 +274,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
 ];
 

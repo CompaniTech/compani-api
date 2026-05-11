@@ -65,6 +65,7 @@ const coursesList = [
     trainees: [auxiliary._id],
     companies: [authCompany._id, companyWithoutSubscription._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 1 - linked to bill 0 1
     _id: new ObjectId(),
@@ -79,6 +80,7 @@ const coursesList = [
     companies: [authCompany._id],
     expectedBillsCount: 3,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 

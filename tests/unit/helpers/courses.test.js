@@ -157,6 +157,7 @@ describe('createCourse', () => {
       maxTrainees: 12,
       operationsRepresentative: new ObjectId(),
       prices: { global: 1200, trainerFees: 200 },
+      tradeName: 'nom',
     };
 
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
@@ -222,6 +223,7 @@ describe('createCourse', () => {
       prices: { global: 1200 },
       coach,
       architect,
+      tradeName: 'nom',
     };
     const course = {
       _id: new ObjectId(),
@@ -321,6 +323,7 @@ describe('createCourse', () => {
       subProgram: subProgram._id,
       type: INTER_B2B,
       operationsRepresentative: new ObjectId(),
+      tradeName: 'nom',
     };
 
     findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
@@ -360,6 +363,7 @@ describe('createCourse', () => {
       type: INTRA,
       operationsRepresentative: new ObjectId(),
       estimatedStartDate: '2022-12-10T12:00:00.000Z',
+      tradeName: 'nom',
     };
     const createdCourse = { ...payload, _id: new ObjectId(), format: 'blended', companies: [] };
 
@@ -9293,6 +9297,7 @@ describe('uploadSingleCourseCSV', () => {
         coach,
         architect,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
+        tradeName: 'nom',
       },
     ];
     const payload = {
@@ -9308,6 +9313,7 @@ describe('uploadSingleCourseCSV', () => {
       estimatedStartDate: '2025-03-03T15:00:00.000Z',
       coach,
       architect,
+      tradeName: 'nom',
     };
 
     companyFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
@@ -9362,6 +9368,7 @@ describe('uploadSingleCourseCSV', () => {
         coach: null,
         architect: null,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
+        tradeName: 'nom',
       },
     ];
     const payload = {
@@ -9377,6 +9384,7 @@ describe('uploadSingleCourseCSV', () => {
       coach: null,
       architect: null,
       estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      tradeName: 'nom',
     };
 
     courseCountDocuments.returns(0);
@@ -9421,6 +9429,7 @@ describe('uploadSingleCourseCSV', () => {
         coach: null,
         architect: null,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
+        tradeName: 'nom',
       },
     ];
     const payload = {
@@ -9436,6 +9445,7 @@ describe('uploadSingleCourseCSV', () => {
       coach: null,
       architect: null,
       estimatedStartDate: '2025-03-03T15:00:00.000Z',
+      tradeName: 'nom',
     };
 
     companyFindOne.returns(SinonMongoose.stubChainedQueries({ _id: companyId }, ['lean']));
@@ -9482,6 +9492,7 @@ describe('uploadSingleCourseCSV', () => {
         coach: null,
         architect: null,
         estimatedStartDate: '2025-03-03T15:00:00.000Z',
+        tradeName: 'nom',
       },
     ];
 

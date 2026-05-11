@@ -41,7 +41,7 @@ describe('addSubProgram', () => {
   });
 });
 
-describe('updatedSubProgram', () => {
+describe('updateSubProgram', () => {
   let updateOne;
   let findOneAndUpdate;
   let stepUpdateManyStub;
@@ -92,6 +92,7 @@ describe('updatedSubProgram', () => {
     sinon.assert.notCalled(sendNewElearningCourseNotification);
     sinon.assert.notCalled(getLastVersion);
     sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(findOneAndUpdate);
   });
 
   describe('update status', () => {
@@ -112,6 +113,7 @@ describe('updatedSubProgram', () => {
           { _id: subProgram.steps[0], activities, type: 'e_learning' },
           { _id: subProgram.steps[1], activities: [], type: 'on_site' },
         ],
+        program: { name: 'nom' },
       };
 
       findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedSubProgram));
@@ -130,6 +132,7 @@ describe('updatedSubProgram', () => {
         [
           { query: 'findOneAndUpdate', args: [{ _id: subProgram._id }, { $set: payload }] },
           { query: 'populate', args: [{ path: 'steps', select: 'activities type' }] },
+          { query: 'populate', args: [{ path: 'program', select: 'name' }] },
           { query: 'lean', args: [{ virtuals: true }] },
         ]
       );
@@ -157,6 +160,7 @@ describe('updatedSubProgram', () => {
           { _id: subProgram.steps[0], activities, type: 'e_learning' },
           { _id: subProgram.steps[1], activities: [], type: 'e_learning' },
         ],
+        program: { name: 'nom' },
       };
       const course = {
         _id: new ObjectId(),
@@ -183,12 +187,19 @@ describe('updatedSubProgram', () => {
         [
           { query: 'findOneAndUpdate', args: [{ _id: subProgram._id }, { $set: { status: payload.status } }] },
           { query: 'populate', args: [{ path: 'steps', select: 'activities type' }] },
+          { query: 'populate', args: [{ path: 'program', select: 'name' }] },
           { query: 'lean', args: [{ virtuals: true }] },
         ]
       );
       sinon.assert.calledWithExactly(
         courseCreateStub,
-        { subProgram: subProgram._id, type: 'inter_b2c', format: 'strictly_e_learning', accessRules: [] }
+        {
+          subProgram: subProgram._id,
+          type: 'inter_b2c',
+          format: 'strictly_e_learning',
+          accessRules: [],
+          tradeName: 'nom',
+        }
       );
       sinon.assert.calledWithExactly(
         sendNewElearningCourseNotification,
@@ -218,6 +229,7 @@ describe('updatedSubProgram', () => {
             { _id: subProgram.steps[0], activities, type: 'e_learning' },
             { _id: subProgram.steps[1], activities: [], type: 'e_learning' },
           ],
+          program: { name: 'nom' },
         };
         const course = {
           _id: new ObjectId(),
@@ -252,6 +264,7 @@ describe('updatedSubProgram', () => {
           [
             { query: 'findOneAndUpdate', args: [{ _id: subProgram._id }, { $set: { status: payload.status } }] },
             { query: 'populate', args: [{ path: 'steps', select: 'activities type' }] },
+            { query: 'populate', args: [{ path: 'program', select: 'name' }] },
             { query: 'lean', args: [{ virtuals: true }] },
           ]
         );
@@ -262,6 +275,7 @@ describe('updatedSubProgram', () => {
             type: 'inter_b2c',
             format: 'strictly_e_learning',
             accessRules: payload.accessCompanies,
+            tradeName: 'nom',
           }
         );
         SinonMongoose.calledOnceWithExactly(
@@ -326,6 +340,7 @@ describe('updatedSubProgram', () => {
         }
       );
       sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOneAndUpdate);
     });
 
     it('should create a new price version if payload.prices is different from last version', async () => {
@@ -378,6 +393,7 @@ describe('updatedSubProgram', () => {
           },
         }
       );
+      sinon.assert.notCalled(findOneAndUpdate);
     });
 
     it('should not create a new price version if payload.prices is identical to last version', async () => {
@@ -419,6 +435,7 @@ describe('updatedSubProgram', () => {
         'effectiveDate'
       );
       sinon.assert.notCalled(updateOne);
+      sinon.assert.notCalled(findOneAndUpdate);
     });
   });
 });
