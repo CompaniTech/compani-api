@@ -32,7 +32,7 @@ exports.list = async (query, credentials) => {
       ...(months
         ? [{
           path: 'course',
-          select: 'companies subProgram misc',
+          select: 'companies subProgram misc tradeName',
           populate: [
             {
               path: 'companies',
@@ -75,14 +75,14 @@ exports.generate = async (completionCertificateId) => {
     .populate([
       {
         path: 'course',
-        select: 'subProgram slots companies trainees',
+        select: 'subProgram slots companies trainees tradeName',
         populate: [
           { path: 'slots', select: 'startDate endDate' },
           {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name subPrograms' },
+              { path: 'program', select: 'subPrograms' },
               {
                 path: 'steps',
                 select: 'activities type theoreticalDuration',
@@ -168,7 +168,7 @@ exports.generate = async (completionCertificateId) => {
     date: CompaniDate().format(DD_MM_YYYY),
     isVAEISubProgram: UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, course.subProgram._id),
     certificateGenerationModeIsMonthly: true,
-    programName: get(course, 'subProgram.program.name').toUpperCase() || '',
+    programName: (course.tradeName || '').toUpperCase(),
   };
 
   const pdf = await CompletionCertificatePdf.getPdf(data, OFFICIAL);

@@ -68,7 +68,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies subProgram misc',
+              select: 'companies subProgram misc tradeName',
               populate: [
                 {
                   path: 'companies',
@@ -125,7 +125,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies subProgram misc',
+              select: 'companies subProgram misc tradeName',
               populate: [
                 {
                   path: 'companies',
@@ -248,7 +248,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies subProgram misc',
+              select: 'companies subProgram misc tradeName',
               populate: [
                 {
                   path: 'companies',
@@ -321,7 +321,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies subProgram misc',
+              select: 'companies subProgram misc tradeName',
               populate: [
                 {
                   path: 'companies',
@@ -508,9 +508,10 @@ describe('generate', () => {
       course: {
         _id: courseId,
         slots: slotList,
+        tradeName: 'program',
         subProgram: {
           _id: subProgramIds[0],
-          program: { name: 'program', subPrograms: subProgramIds },
+          program: { subPrograms: subProgramIds },
           steps: [
             {
               type: E_LEARNING,
@@ -557,7 +558,7 @@ describe('generate', () => {
       format: BLENDED,
       subProgram: {
         _id: subProgramIds[1],
-        program: { name: 'nom du programme', subPrograms: subProgramIds },
+        program: { subPrograms: subProgramIds },
       },
       trainees: [new ObjectId()],
       companies: [companyId],
@@ -587,14 +588,14 @@ describe('generate', () => {
           args: [[
             {
               path: 'course',
-              select: 'subProgram slots companies trainees',
+              select: 'subProgram slots companies trainees tradeName',
               populate: [
                 { path: 'slots', select: 'startDate endDate' },
                 {
                   path: 'subProgram',
                   select: 'program steps',
                   populate: [
-                    { path: 'program', select: 'name subPrograms' },
+                    { path: 'program', select: 'subPrograms' },
                     {
                       path: 'steps',
                       select: 'activities type theoreticalDuration',
@@ -731,9 +732,10 @@ describe('generate', () => {
       course: {
         _id: courseId,
         slots: slotList,
+        tradeName: 'program',
         subProgram: {
           _id: subProgramIds[0],
-          program: { name: 'program', subPrograms: subProgramIds },
+          program: { subPrograms: subProgramIds },
           steps: [
             {
               type: E_LEARNING,
@@ -780,7 +782,7 @@ describe('generate', () => {
       format: BLENDED,
       subProgram: {
         _id: subProgramIds[1],
-        program: { name: 'nom du programme', subPrograms: subProgramIds },
+        program: { subPrograms: subProgramIds },
       },
       trainees: [new ObjectId()],
       companies: [companyId],
@@ -810,14 +812,14 @@ describe('generate', () => {
           args: [[
             {
               path: 'course',
-              select: 'subProgram slots companies trainees',
+              select: 'subProgram slots companies trainees tradeName',
               populate: [
                 { path: 'slots', select: 'startDate endDate' },
                 {
                   path: 'subProgram',
                   select: 'program steps',
                   populate: [
-                    { path: 'program', select: 'name subPrograms' },
+                    { path: 'program', select: 'subPrograms' },
                     {
                       path: 'steps',
                       select: 'activities type theoreticalDuration',
