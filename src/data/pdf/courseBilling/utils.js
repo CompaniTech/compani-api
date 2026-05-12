@@ -129,7 +129,7 @@ exports.getFeeTable = (data) => {
       { text: 1, alignment: 'left', marginTop: 8 },
       {
         stack: [
-          { text: data.course.subProgram.program.name, alignment: 'left', marginTop: 8 },
+          { text: data.course.tradeName, alignment: 'left', marginTop: 8 },
           { text: data.mainFee.description || '', style: 'description', marginBottom: 8 },
         ],
       },
