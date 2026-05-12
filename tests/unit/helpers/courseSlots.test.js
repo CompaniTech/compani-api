@@ -41,9 +41,9 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -79,9 +79,9 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -116,9 +116,9 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -153,9 +153,9 @@ describe('list', () => {
         course: {
           _id: courseIds[1],
           misc: 'indiv 2',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -190,9 +190,9 @@ describe('list', () => {
         course: {
           _id: courseIds[1],
           misc: 'indiv 2',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -227,9 +227,9 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -264,9 +264,9 @@ describe('list', () => {
         course: {
           _id: courseIds[1],
           misc: 'indiv 2',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -301,9 +301,9 @@ describe('list', () => {
         course: {
           _id: courseIds[1],
           misc: 'indiv 2',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -338,9 +338,9 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -375,9 +375,9 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
@@ -430,7 +430,7 @@ describe('list', () => {
                     status: PAID,
                     amount: '50',
                     trainerBillNumber: 'FACT_0001',
-                    program: { name: 'program' },
+                    tradeName: 'program',
                   },
                   {
                     _id: slots[8]._id,
@@ -440,7 +440,7 @@ describe('list', () => {
                     isAbsence: true,
                     status: NOT_PAID,
                     amount: '30',
-                    program: { name: 'program' },
+                    tradeName: 'program',
                   },
                   {
                     _id: slots[9]._id,
@@ -450,7 +450,7 @@ describe('list', () => {
                     isAbsence: true,
                     status: NOT_PAID,
                     amount: '120',
-                    program: { name: 'program' },
+                    tradeName: 'program',
                   },
                 ],
                 toPayDuration: 'PT150M',
@@ -482,7 +482,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '330',
                   stepName: 'step collective',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
                 {
                   _id: slots[4]._id,
@@ -495,7 +495,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '330',
                   stepName: 'step collective',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
               ],
               paidAmount: 0,
@@ -516,7 +516,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '220',
                   stepName: 'step collective',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
                 {
                   _id: slots[6]._id,
@@ -529,7 +529,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '220',
                   stepName: 'step collective',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
                 {
                   _id: slots[7]._id,
@@ -542,7 +542,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '55',
                   stepName: 'step collective',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
               ],
               paidAmount: 0,
@@ -591,10 +591,10 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees',
+            select: '_id misc subProgram trainees tradeName',
             populate: [
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program priceVersions', populate: { path: 'program', select: 'name' } },
+              { path: 'subProgram', select: 'priceVersions' },
             ],
           }],
         },
@@ -621,9 +621,9 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
               { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
@@ -642,9 +642,9 @@ describe('list', () => {
         course: {
           _id: courseIds[1],
           misc: 'indiv 2',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
               { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
@@ -681,7 +681,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
                 {
                   _id: slots[1]._id,
@@ -694,7 +694,7 @@ describe('list', () => {
                   status: NOT_PAID,
                   amount: '110',
                   stepName: 'step collective',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
               ],
               paidAmount: 0,
@@ -742,10 +742,10 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees',
+            select: '_id misc subProgram trainees tradeName',
             populate: [
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program priceVersions', populate: { path: 'program', select: 'name' } },
+              { path: 'subProgram', select: 'priceVersions' },
             ],
           }],
         },
@@ -772,9 +772,9 @@ describe('list', () => {
         course: {
           _id: courseIds[0],
           misc: 'indiv 1',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
               { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
@@ -794,9 +794,9 @@ describe('list', () => {
         course: {
           _id: courseIds[1],
           misc: 'indiv 2',
+          tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            program: { name: 'program' },
             priceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
               { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
@@ -835,7 +835,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
                 {
                   _id: slots[1]._id,
@@ -849,7 +849,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  program: { name: 'program' },
+                  tradeName: 'program',
                 },
               ],
               paidAmount: '110',
@@ -897,10 +897,10 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees',
+            select: '_id misc subProgram trainees tradeName',
             populate: [
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program priceVersions', populate: { path: 'program', select: 'name' } },
+              { path: 'subProgram', select: 'priceVersions' },
             ],
           }],
         },
