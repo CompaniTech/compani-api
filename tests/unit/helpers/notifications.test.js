@@ -98,6 +98,7 @@ describe('sendBlendedCourseRegistrationNotification', () => {
     const courseId = new ObjectId();
     const course = {
       _id: courseId,
+      tradeName: 'La communication avec Patrick',
       subProgram: { program: { name: 'La communication avec Patrick' } },
       misc: 'skusku',
       slots: [{ startDate: '2020-01-02' }],
@@ -175,6 +176,7 @@ describe('sendNewElearningCourseNotification', () => {
     const courseId = new ObjectId();
     const course = {
       _id: courseId,
+      tradeName: 'La communication avec Patrick',
       subProgram: { program: { _id: new ObjectId(), name: 'La communication avec Patrick' } },
       misc: 'skusku',
       slots: [{ startDate: '2020-01-02' }],
@@ -299,7 +301,7 @@ describe('sendAttendanceSheetSignatureRequestNotification', () => {
       course: {
         _id: courseId,
         misc: 'skusku',
-        subProgram: { program: { name: 'La communication avec Patrick' } },
+        tradeName: 'La communication avec Patrick',
         trainers: [
           { _id: new ObjectId(), identity: { firstname: 'Paul', lastname: 'Accompagné' } },
           { _id: trainerId, identity: { firstname: 'Paul', lastname: 'Seul' } },
@@ -320,10 +322,9 @@ describe('sendAttendanceSheetSignatureRequestNotification', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram misc trainers',
+            select: 'tradeName misc trainers',
             populate: [
               { path: 'trainers', select: 'identity' },
-              { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
         },
@@ -384,6 +385,7 @@ describe('sendAttendanceReminder', () => {
     const course = {
       _id: courseId,
       misc: 'skusku',
+      tradeName: 'La communication avec Patrick',
       subProgram: { program: { name: 'La communication avec Patrick' } },
       trainers: [
         { _id: new ObjectId(), identity: { firstname: 'Paul', lastname: 'Accompagné' } },
