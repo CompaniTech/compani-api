@@ -28,6 +28,7 @@ describe('getPdfContent', () => {
 
     const data = {
       misc: 'groupe 3',
+      tradeName: 'test',
       subProgram: { program: { name: 'test', description: 'on va apprendre' } },
       slots: [
         { date: '23/12/2020', hours: '12h - 14h', address: '' },
@@ -189,6 +190,7 @@ describe('getPdfContent', () => {
     downloadImages.returns(paths);
 
     const data = {
+      tradeName: 'test',
       subProgram: { program: { name: 'test' } },
       slots: [
         { date: '23/12/2020', hours: '12h - 14h' },
@@ -351,6 +353,7 @@ describe('getPdf', () => {
   it('should get pdf', async () => {
     const data = {
       misc: 'groupe 3',
+      tradeName: 'test',
       subProgram: { program: { name: 'test', description: 'on va apprendre' } },
       slots: [
         { date: '23/12/2020', hours: '12h - 14h', address: '' },
