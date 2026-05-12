@@ -15,14 +15,13 @@ const CourseHistoriesHelper = require('./courseHistories');
 
 exports.create = async (payload) => {
   const course = await Course
-    .findOne({ _id: payload.course }, { companies: 1, subProgram: 1 })
+    .findOne({ _id: payload.course }, { companies: 1, tradeName: 1 })
     .populate([
       { path: 'companies', select: 'name' },
-      { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
     ])
     .lean();
 
-  const programName = course.subProgram.program.name;
+  const programName = course.tradeName;
   const companyName = course.companies.find(c => UtilsHelper.areObjectIdsEquals(c._id, payload.company)).name;
 
   const fileName = `convention_${programName}_${companyName}`;
@@ -85,7 +84,7 @@ exports.formatCourseForTrainingContract = async (course, vendorCompany, payloadP
     type: course.type,
     vendorCompany,
     company: { name: companies[0].name, address: companies[0].address.fullAddress },
-    programName: subProgram.program.name,
+    programName: course.tradeName,
     learningGoals: subProgram.program.learningGoals,
     slotsCount: slots.length + slotsToPlan.length,
     liveDuration: StepsHelper.computeLiveDuration(slots, slotsToPlan, subProgram.steps),

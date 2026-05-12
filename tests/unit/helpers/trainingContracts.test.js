@@ -31,7 +31,7 @@ describe('create', () => {
     const course = {
       _id: courseId,
       companies: [{ _id: companyId, name: 'Alenvi' }],
-      subProgram: { program: { name: 'program' } },
+      tradeName: 'program',
     };
     const payload = { course: courseId, company: companyId, file: 'test.pdf' };
 
@@ -48,12 +48,11 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, subProgram: 1 }] },
+        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, tradeName: 1 }] },
         {
           query: 'populate',
           args: [[
             { path: 'companies', select: 'name' },
-            { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
           ]],
         },
         { query: 'lean' },
@@ -67,7 +66,7 @@ describe('create', () => {
     const course = {
       _id: courseId,
       companies: [{ _id: new ObjectId(), name: 'Alenvi Fontainebleau' }, { _id: companyId, name: 'Alenvi' }],
-      subProgram: { program: { name: 'program' } },
+      tradeName: 'program',
     };
     const payload = { course: courseId, company: companyId, file: 'test.pdf' };
 
@@ -84,12 +83,11 @@ describe('create', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, subProgram: 1 }] },
+        { query: 'findOne', args: [{ _id: courseId }, { companies: 1, tradeName: 1 }] },
         {
           query: 'populate',
           args: [[
             { path: 'companies', select: 'name' },
-            { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
           ]],
         },
         { query: 'lean' },
