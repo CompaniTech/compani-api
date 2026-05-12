@@ -786,7 +786,8 @@ describe('getTraineeUnsubscribedAttendances', () => {
               { _id: new ObjectId(), identity: { firstname: 'Thierry', lastname: 'Henry' } },
             ],
             misc: 'équipe 1',
-            subProgram: { _id: new ObjectId(), program: { _id: programAId, name: '1000 pompes' } },
+            subProgram: { _id: new ObjectId(), program: { _id: programAId } },
+            tradeName: '1000 pompes',
           },
           endDate: '2021-11-10T11:30:00.000Z',
           startDate: '2021-11-10T08:00:00.000Z',
@@ -800,7 +801,8 @@ describe('getTraineeUnsubscribedAttendances', () => {
           course: {
             trainers: [{ _id: new ObjectId(), identity: { firstname: 'Zinedine', lastname: 'Zidane' } }],
             misc: 'équipe 1',
-            subProgram: { _id: new ObjectId(), program: { _id: programAId, name: '1000 pompes' } },
+            subProgram: { _id: new ObjectId(), program: { _id: programAId } },
+            tradeName: '1000 pompes',
           },
           endDate: '2021-12-24T11:30:00.000Z',
           startDate: '2021-12-24T08:00:00.000Z',
@@ -814,7 +816,8 @@ describe('getTraineeUnsubscribedAttendances', () => {
           course: {
             trainers: [{ _id: new ObjectId(), identity: { firstname: 'Didier', lastname: 'Deschamps' } }],
             misc: 'équipe 2',
-            subProgram: { _id: new ObjectId(), program: { _id: programBId, name: '2 tractions' } },
+            subProgram: { _id: new ObjectId(), program: { _id: programBId } },
+            tradeName: '2 tractions',
           },
           endDate: '2022-01-27T11:30:00.000Z',
           startDate: '2022-01-27T08:00:00.000Z',
@@ -892,9 +895,9 @@ describe('getTraineeUnsubscribedAttendances', () => {
               {
                 path: 'course',
                 match: { trainees: { $ne: traineeId } },
-                select: 'trainers misc subProgram',
+                select: 'trainers misc subProgram tradeName',
                 populate: [
-                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                   { path: 'trainers', select: 'identity' },
                 ],
               },
