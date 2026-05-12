@@ -7,8 +7,9 @@ exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Cour
   .find(
     query,
     origin === WEBAPP
-      ? 'misc type archivedAt estimatedStartDate createdAt maxTrainees trainees hasCertifyingTest interruptionDates'
-      : 'misc'
+      ? 'misc type archivedAt estimatedStartDate createdAt maxTrainees trainees hasCertifyingTest interruptionDates '
+        + 'tradeName'
+      : 'misc tradeName'
   )
   .populate([
     {
@@ -64,7 +65,7 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
         type: { $in: courseTypes },
       }
     )
-    .select('_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices')
+    .select('_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName')
     .populate({
       path: 'companies',
       select: 'name',

@@ -5979,7 +5979,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
           'Auxiliary OLAIT',
           'auxiliary@alenvi.io',
           'Trainee WITHEXPOTOKEN (TUTOR)',
-          'program',
+          'nom',
           'gSheetId'
         );
       sinon.assert.calledOnceWithExactly(

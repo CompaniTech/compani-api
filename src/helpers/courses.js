@@ -265,7 +265,7 @@ const formatQuery = (query, credentials) => {
 const formatCourseStepsList = (course, trainerIdRequestingOperations = null) => {
   if (course.subProgram.isStrictlyELearning) return [];
 
-  const courseName = get(course, 'subProgram.program.name');
+  const courseName = course.tradeName;
   const courseMisc = course.misc || '';
   const courseSteps = get(course, 'subProgram.steps');
   const stepSlotsList = groupBy(
@@ -361,7 +361,7 @@ const listForPedagogy = async (query, origin, credentials) => {
 
   if (traineeCourseIds.length) {
     traineeCourses = await Course
-      .find({ _id: { $in: traineeCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1 })
+      .find({ _id: { $in: traineeCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tradeName: 1 })
       .populate({
         path: 'subProgram',
         select: 'program steps',
@@ -399,7 +399,7 @@ const listForPedagogy = async (query, origin, credentials) => {
 
   if (tutorCourseIds.length) {
     tutorCourses = await Course
-      .find({ _id: { $in: tutorCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tutors: 1 })
+      .find({ _id: { $in: tutorCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tutors: 1, tradeName: 1 })
       .populate({
         path: 'subProgram',
         select: 'program steps',
@@ -649,7 +649,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
 };
 
 const getCourseForQuestionnaire = async courseId => Course
-  .findOne({ _id: courseId }, { subProgram: 1, type: 1, trainers: 1, trainees: 1, misc: 1 })
+  .findOne({ _id: courseId }, { subProgram: 1, type: 1, trainers: 1, trainees: 1, misc: 1, tradeName: 1 })
   .populate({ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] })
   .populate({ path: 'trainers', select: 'identity.firstname identity.lastname' })
   .populate({ path: 'trainees', select: 'identity.firstname identity.lastname local.email' })
@@ -1175,7 +1175,7 @@ const getLiveDuration = (steps) => {
 
 exports.formatIntraCourseForPdf = async (course) => {
   const possibleMisc = course.misc ? ` - ${course.misc}` : '';
-  const name = course.subProgram.program.name + possibleMisc;
+  const name = course.tradeName + possibleMisc;
   const courseData = {
     name,
     duration: getLiveDuration(course.subProgram.steps),
@@ -1219,7 +1219,7 @@ exports.formatIntraCourseForPdf = async (course) => {
 
 exports.formatInterCourseForPdf = async (course) => {
   const possibleMisc = course.misc ? ` - ${course.misc}` : '';
-  const name = course.subProgram.program.name + possibleMisc;
+  const name = course.tradeName + possibleMisc;
   const sortedSlots = course.slots ? course.slots.sort(DatesUtilsHelper.ascendingSortBy('startDate')) : [];
 
   const courseData = {
@@ -1255,15 +1255,15 @@ exports.formatInterCourseForPdf = async (course) => {
 
 exports.generateAttendanceSheets = async (courseId, query) => {
   const course = await Course
-    .findOne({ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 })
+    .findOne({ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1, tradeName: 1 })
     .populate({ path: 'companies', select: 'name' })
     .populate({ path: 'slots', select: 'startDate endDate address trainees' })
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
       path: 'subProgram',
-      select: 'steps program',
-      populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+      select: 'steps',
+      populate: { path: 'steps', select: 'type theoreticalDuration' },
     })
     .lean();
 
@@ -1300,7 +1300,7 @@ exports.formatCourseForDocuments = (course, type) => {
     duration: { ...durationsByTrainee, eLearning: theoreticalDuration.format(SHORT_DURATION_H_MM) },
     learningGoals: get(course, 'subProgram.program.learningGoals') || '',
     subProgramId: course.subProgram._id,
-    programName: get(course, 'subProgram.program.name').toUpperCase() || '',
+    programName: (course.tradeName || '').toUpperCase(),
     startDate: CompaniDate(sortedCourseSlots[0].startDate).format(DD_MM_YYYY),
     endDate: CompaniDate(sortedCourseSlots[sortedCourseSlots.length - 1].endDate).format(DD_MM_YYYY),
     ...(type === OFFICIAL && { companyNamesById: mapValues(keyBy(course.companies, '_id'), 'name') }),
@@ -1663,11 +1663,11 @@ exports.formatCourseForConvocationPdf = (course) => {
 };
 
 exports.generateConvocationPdf = async (courseId) => {
-  const course = await Course.findOne({ _id: courseId }, { misc: 1 })
+  const course = await Course.findOne({ _id: courseId }, { misc: 1, tradeName: 1 })
     .populate({
       path: 'subProgram',
       select: 'program',
-      populate: { path: 'program', select: 'name description' },
+      populate: { path: 'program', select: 'description' },
     })
     .populate({ path: 'slots', select: 'startDate endDate address meetingLink' })
     .populate({ path: 'slotsToPlan', select: '_id' })
@@ -1675,7 +1675,7 @@ exports.generateConvocationPdf = async (courseId) => {
     .populate({ path: 'trainers', select: 'identity.firstname identity.lastname biography' })
     .lean();
 
-  const courseName = get(course, 'subProgram.program.name', '').split(' ').join('-') || 'Formation';
+  const courseName = (course.tradeName || '').split(' ').join('-') || 'Formation';
 
   const pdf = await CourseConvocation.getPdf(exports.formatCourseForConvocationPdf(course));
 
@@ -1723,7 +1723,7 @@ exports.removeCourseCompany = async (courseId, companyId, credentials) => {
 
 exports.generateTrainingContract = async (courseId, payload) => {
   const course = await Course
-    .findOne({ _id: courseId }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 })
+    .findOne({ _id: courseId }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1, tradeName: 1 })
     .populate([
       { path: 'companies', select: 'name address', match: { _id: payload.company } },
       {
@@ -1754,7 +1754,7 @@ exports.composeCourseName = (course) => {
   const companyName = course.type === INTRA ? `${course.companies[0].name} - ` : '';
   const misc = course.misc ? ` - ${course.misc}` : '';
 
-  return companyName + course.subProgram.program.name + misc;
+  return companyName + course.tradeName + misc;
 };
 
 exports.addTrainer = async (courseId, payload, credentials) => {

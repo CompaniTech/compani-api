@@ -544,6 +544,7 @@ describe('list', () => {
           type: INTRA,
           misc: 'name',
           companies: [new ObjectId()],
+          tradeName: 'Formation',
           subProgram: {
             program: { name: 'Formation' },
             steps: [{
@@ -586,6 +587,7 @@ describe('list', () => {
           type: INTRA,
           misc: 'program',
           companies: [new ObjectId()],
+          tradeName: 'Super formation',
           subProgram: {
             program: { name: 'Super formation' },
             steps: [{
@@ -1126,7 +1128,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1, tradeName: 1 }],
           },
           {
             query: 'populate',
@@ -1399,7 +1401,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1, tradeName: 1 }],
           },
           {
             query: 'populate',
@@ -1681,7 +1683,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1, tradeName: 1 }],
           },
           {
             query: 'populate',
@@ -1791,6 +1793,7 @@ describe('list', () => {
           misc: 'program',
           _id: courseIds[1]._id,
           format: BLENDED,
+          tradeName: 'program 1',
           subProgram: {
             steps: [{
               _id: new ObjectId(),
@@ -1975,7 +1978,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: courseIds.map(c => c._id) } }, { _id: 1, misc: 1, type: 1, format: 1, tradeName: 1 }],
           },
           {
             query: 'populate',
@@ -2165,7 +2168,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: traineeCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1 }],
+            args: [{ _id: { $in: traineeCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tradeName: 1 }],
           },
           {
             query: 'populate',
@@ -2210,7 +2213,7 @@ describe('list', () => {
         [
           {
             query: 'find',
-            args: [{ _id: { $in: tutorCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tutors: 1 }],
+            args: [{ _id: { $in: tutorCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tutors: 1, tradeName: 1 }],
           },
           {
             query: 'populate',
@@ -3872,7 +3875,7 @@ describe('getCourse', () => {
         [
           {
             query: 'findOne',
-            args: [{ _id: course._id }, { subProgram: 1, type: 1, trainers: 1, trainees: 1, misc: 1 }],
+            args: [{ _id: course._id }, { subProgram: 1, type: 1, trainers: 1, trainees: 1, misc: 1, tradeName: 1 }],
           },
           {
             query: 'populate',
@@ -5614,12 +5617,12 @@ describe('formatIntraCourseForPdf', () => {
   it('should format course for pdf (intra)', async () => {
     const course = {
       misc: 'des infos en plus',
+      tradeName: 'programme',
       trainers: [
         { identity: { lastname: 'MasterClass' } },
         { identity: { lastname: 'MasterCompani' } },
       ],
       subProgram: {
-        program: { name: 'programme' },
         steps: [
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
           { type: 'on_site', theoreticalDuration: 'PT9000S' },
@@ -5731,9 +5734,9 @@ describe('formatIntraCourseForPdf', () => {
     const companyIds = [new ObjectId(), new ObjectId()];
     const course = {
       misc: 'des infos en plus',
+      tradeName: 'programme',
       trainers: [{ identity: { lastname: 'MasterClass' } }],
       subProgram: {
-        program: { name: 'programme' },
         steps: [
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
           { type: 'on_site', theoreticalDuration: 'PT9000S' },
@@ -5878,6 +5881,7 @@ describe('formatInterCourseForPdf', () => {
         { startDate: '2020-04-15T09:00:00', endDate: '2020-04-15T11:30:00', trainees: [traineeIds[1]] },
       ],
       misc: 'des infos en plus',
+      tradeName: 'programme de formation',
       trainers: [
         { identity: { lastname: 'MasterClass' } },
         { identity: { lastname: 'MasterCompani' } },
@@ -5887,7 +5891,6 @@ describe('formatInterCourseForPdf', () => {
         { _id: traineeIds[1], identity: { lastname: 'trainee 2' } },
       ],
       subProgram: {
-        program: { name: 'programme de formation' },
         steps: [
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
           { type: 'on_site', theoreticalDuration: 'PT9000S' },
@@ -5963,10 +5966,10 @@ describe('formatInterCourseForPdf', () => {
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
       ],
       misc: 'des infos en plus',
+      tradeName: 'programme de formation',
       trainers: [{ identity: { lastname: 'MasterClass' } }],
       trainees: [],
       subProgram: {
-        program: { name: 'programme de formation' },
         steps: [
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
           { type: 'on_site', theoreticalDuration: 'PT9000S' },
@@ -6052,7 +6055,7 @@ describe('generateAttendanceSheets', () => {
     await CourseHelper.generateAttendanceSheets(courseId, {});
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
-      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
+      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1, tradeName: 1 }] },
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
@@ -6064,8 +6067,8 @@ describe('generateAttendanceSheets', () => {
         query: 'populate',
         args: [{
           path: 'subProgram',
-          select: 'steps program',
-          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+          select: 'steps',
+          populate: { path: 'steps', select: 'type theoreticalDuration' },
         }],
       },
       { query: 'lean' },
@@ -6088,7 +6091,7 @@ describe('generateAttendanceSheets', () => {
     await CourseHelper.generateAttendanceSheets(courseId, { isPreFilled: true });
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
-      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
+      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1, tradeName: 1 }] },
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
@@ -6100,8 +6103,8 @@ describe('generateAttendanceSheets', () => {
         query: 'populate',
         args: [{
           path: 'subProgram',
-          select: 'steps program',
-          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+          select: 'steps',
+          populate: { path: 'steps', select: 'type theoreticalDuration' },
         }],
       },
       { query: 'lean' },
@@ -6127,7 +6130,7 @@ describe('generateAttendanceSheets', () => {
     await CourseHelper.generateAttendanceSheets(courseId, { isPreFilled: false });
 
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
-      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 }] },
+      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1, tradeName: 1 }] },
       { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
       {
         query: 'populate',
@@ -6139,8 +6142,8 @@ describe('generateAttendanceSheets', () => {
         query: 'populate',
         args: [{
           path: 'subProgram',
-          select: 'steps program',
-          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+          select: 'steps',
+          populate: { path: 'steps', select: 'type theoreticalDuration' },
         }],
       },
       { query: 'lean' },
@@ -6173,9 +6176,10 @@ describe('formatCourseForDocuments', () => {
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
         { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00' },
       ],
+      tradeName: 'nom du programme',
       subProgram: {
         _id: subProgramId,
-        program: { learningGoals: 'Apprendre', name: 'nom du programme' },
+        program: { learningGoals: 'Apprendre' },
         steps: [{ type: E_LEARNING, theoreticalDuration: 'PT3600S' }],
       },
     };
@@ -6229,9 +6233,10 @@ describe('formatCourseForDocuments', () => {
         { startDate: '2020-04-12T09:00:00', endDate: '2020-04-12T11:30:00' },
         { startDate: '2020-04-21T09:00:00', endDate: '2020-04-21T11:30:00' },
       ],
+      tradeName: 'nom du programme',
       subProgram: {
         _id: subProgramId,
-        program: { learningGoals: 'Apprendre', name: 'nom du programme' },
+        program: { learningGoals: 'Apprendre' },
         steps: [],
       },
       companies,
@@ -8428,7 +8433,7 @@ describe('generateConvocationPdf', () => {
     courseFindOne.returns(SinonMongoose.stubChainedQueries(
       {
         _id: courseId,
-        subProgram: { program: { name: 'Comment attraper des Pokemons' } },
+        tradeName: 'Comment attraper des Pokemons',
         trainers: [
           { identity: { firstname: 'Ash', lastname: 'Ketchum' }, biography: 'Bio' },
           { identity: { firstname: 'Toto', lastname: 'Tata' } },
@@ -8444,7 +8449,7 @@ describe('generateConvocationPdf', () => {
 
     formatCourseForConvocationPdf.returns({
       _id: courseId,
-      subProgram: { program: { name: 'Comment attraper des Pokemons' } },
+      tradeName: 'Comment attraper des Pokemons',
       trainers: [
         { identity: { firstname: 'Ash', lastname: 'Ketchum' }, formattedIdentity: 'Ash KETCHUM', biography: 'Bio' },
         { identity: { firstname: 'Toto', lastname: 'Tata' }, formattedIdentity: 'Toto TATA' },
@@ -8465,13 +8470,13 @@ describe('generateConvocationPdf', () => {
 
     expect(result).toEqual({ pdf: 'pdf', courseName: 'Comment-attraper-des-Pokemons' });
     SinonMongoose.calledOnceWithExactly(courseFindOne, [
-      { query: 'findOne', args: [{ _id: courseId }, { misc: 1 }] },
+      { query: 'findOne', args: [{ _id: courseId }, { misc: 1, tradeName: 1 }] },
       {
         query: 'populate',
         args: [{
           path: 'subProgram',
           select: 'program',
-          populate: { path: 'program', select: 'name description' },
+          populate: { path: 'program', select: 'description' },
         }],
       },
       { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate address meetingLink' }] },
@@ -8487,7 +8492,7 @@ describe('generateConvocationPdf', () => {
       formatCourseForConvocationPdf,
       {
         _id: courseId,
-        subProgram: { program: { name: 'Comment attraper des Pokemons' } },
+        tradeName: 'Comment attraper des Pokemons',
         trainers: [
           { identity: { firstname: 'Ash', lastname: 'Ketchum' }, biography: 'Bio' },
           { identity: { firstname: 'Toto', lastname: 'Tata' } },
@@ -8504,7 +8509,7 @@ describe('generateConvocationPdf', () => {
       getPdf,
       {
         _id: courseId,
-        subProgram: { program: { name: 'Comment attraper des Pokemons' } },
+        tradeName: 'Comment attraper des Pokemons',
         trainers: [
           { identity: { firstname: 'Ash', lastname: 'Ketchum' }, formattedIdentity: 'Ash KETCHUM', biography: 'Bio' },
           { identity: { firstname: 'Toto', lastname: 'Tata' }, formattedIdentity: 'Toto TATA' },
@@ -8681,6 +8686,7 @@ describe('generateTrainingContract', () => {
     const course = {
       _id: new ObjectId(),
       misc: 'Test',
+      tradeName: 'trade Name',
       maxTrainees: 5,
       type: INTRA,
       trainees: [
@@ -8726,7 +8732,7 @@ describe('generateTrainingContract', () => {
       type: INTRA,
       vendorCompany,
       company: { name: 'Alenvi', address: '12 rue de ponthieu 75008 Paris' },
-      programName: 'Programme',
+      programName: 'trade Name',
       learningGoals: 'bien apprendre',
       slotsCount: 2,
       liveDuration: '0h40',
@@ -8757,7 +8763,10 @@ describe('generateTrainingContract', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 }] },
+        {
+          query: 'findOne',
+          args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1, tradeName: 1 }],
+        },
         {
           query: 'populate',
           args: [[
@@ -8792,6 +8801,7 @@ describe('generateTrainingContract', () => {
     const course = {
       _id: new ObjectId(),
       misc: 'Test',
+      tradeName: 'trade Name',
       type: INTER_B2B,
       trainees: [
         { _id: new ObjectId(), identity: { lastname: 'Leclerc', firstname: 'Charles' } },
@@ -8842,7 +8852,7 @@ describe('generateTrainingContract', () => {
       type: INTER_B2B,
       vendorCompany,
       company: { name: 'Alenvi', address: '12 rue de ponthieu 75008 Paris' },
-      programName: 'Programme',
+      programName: 'trade Name',
       learningGoals: 'bien apprendre',
       slotsCount: 3,
       liveDuration: '6h',
@@ -8873,7 +8883,10 @@ describe('generateTrainingContract', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 }] },
+        {
+          query: 'findOne',
+          args: [{ _id: course._id }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1, tradeName: 1 }],
+        },
         {
           query: 'populate',
           args: [[
