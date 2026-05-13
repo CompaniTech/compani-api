@@ -1136,7 +1136,7 @@ describe('list', () => {
               path: 'subProgram',
               select: 'program steps',
               populate: [
-                { path: 'program', select: 'name image description' },
+                { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
                   select: 'name type activities theoreticalDuration',
@@ -1409,7 +1409,7 @@ describe('list', () => {
               path: 'subProgram',
               select: 'program steps',
               populate: [
-                { path: 'program', select: 'name image description' },
+                { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
                   select: 'name type activities theoreticalDuration',
@@ -1691,7 +1691,7 @@ describe('list', () => {
               path: 'subProgram',
               select: 'program steps',
               populate: [
-                { path: 'program', select: 'name image description' },
+                { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
                   select: 'name type activities theoreticalDuration',
@@ -1986,7 +1986,7 @@ describe('list', () => {
               path: 'subProgram',
               select: 'program steps',
               populate: [
-                { path: 'program', select: 'name image description' },
+                { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
                   select: 'name type activities theoreticalDuration',
@@ -2176,7 +2176,7 @@ describe('list', () => {
               path: 'subProgram',
               select: 'program steps',
               populate: [
-                { path: 'program', select: 'name image description' },
+                { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
                   select: 'name type activities theoreticalDuration',
@@ -2221,7 +2221,7 @@ describe('list', () => {
               path: 'subProgram',
               select: 'program steps',
               populate: [
-                { path: 'program', select: 'name image description' },
+                { path: 'program', select: 'image description' },
                 { path: 'steps', select: 'type theoreticalDuration' },
               ],
             }],
@@ -2668,7 +2668,7 @@ describe('getCourse', () => {
                 path: 'subProgram',
                 select: 'program steps',
                 populate: [
-                  { path: 'program', select: 'name learningGoals' },
+                  { path: 'program', select: 'learningGoals' },
                   {
                     path: 'steps',
                     select: 'name type theoreticalDuration',
@@ -2778,7 +2778,7 @@ describe('getCourse', () => {
                   path: 'subProgram',
                   select: 'program steps',
                   populate: [
-                    { path: 'program', select: 'name learningGoals' },
+                    { path: 'program', select: 'learningGoals' },
                     {
                       path: 'steps',
                       select: 'name type theoreticalDuration',
@@ -2881,7 +2881,7 @@ describe('getCourse', () => {
                   path: 'subProgram',
                   select: 'program steps',
                   populate: [
-                    { path: 'program', select: 'name learningGoals' },
+                    { path: 'program', select: 'learningGoals' },
                     {
                       path: 'steps',
                       select: 'name type theoreticalDuration',
@@ -2978,7 +2978,7 @@ describe('getCourse', () => {
                 path: 'subProgram',
                 select: 'program steps',
                 populate: [
-                  { path: 'program', select: 'name learningGoals' },
+                  { path: 'program', select: 'learningGoals' },
                   { path: 'steps', select: 'name' },
                 ],
               },
@@ -3058,7 +3058,7 @@ describe('getCourse', () => {
                 path: 'subProgram',
                 select: 'program steps',
                 populate: [
-                  { path: 'program', select: 'name learningGoals' },
+                  { path: 'program', select: 'learningGoals' },
                   {
                     path: 'steps',
                     select: 'name type theoreticalDuration',
@@ -3215,7 +3215,7 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3381,7 +3381,7 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3555,7 +3555,7 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3699,7 +3699,7 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3842,7 +3842,7 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode'] },
+          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3856,7 +3856,7 @@ describe('getCourse', () => {
     it('should return blended course', async () => {
       const course = {
         _id: new ObjectId(),
-        subProgram: { program: { name: 'Savoir évoluer en équipe autonome' } },
+        tradeName: 'Savoir évoluer en équipe autonome',
         trainers: [{ identity: { firstname: 'super', lastname: 'formateur' } }],
         trainees: [
           { identity: { firstname: 'titi', lastname: 'grosminet' }, local: { email: 'titi@compa.fr' } },
@@ -3876,10 +3876,6 @@ describe('getCourse', () => {
           {
             query: 'findOne',
             args: [{ _id: course._id }, { subProgram: 1, type: 1, trainers: 1, trainees: 1, misc: 1, tradeName: 1 }],
-          },
-          {
-            query: 'populate',
-            args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
           },
           {
             query: 'populate',
@@ -4113,9 +4109,8 @@ describe('getCourseFollowUp', () => {
           query: 'populate',
           args: [{
             path: 'subProgram',
-            select: 'name steps program',
-            populate: [
-              { path: 'program', select: 'name' },
+            select: 'name steps',
+            populate:
               {
                 path: 'steps',
                 select: 'name activities type',
@@ -4125,7 +4120,6 @@ describe('getCourseFollowUp', () => {
                   populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
                 },
               },
-            ],
           }],
         },
         {
@@ -4187,19 +4181,16 @@ describe('getCourseFollowUp', () => {
           query: 'populate',
           args: [{
             path: 'subProgram',
-            select: 'name steps program',
-            populate: [
-              { path: 'program', select: 'name' },
-              {
-                path: 'steps',
-                select: 'name activities type',
-                populate: {
-                  path: 'activities',
-                  select: 'name type',
-                  populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
-                },
+            select: 'name steps',
+            populate: {
+              path: 'steps',
+              select: 'name activities type',
+              populate: {
+                path: 'activities',
+                select: 'name type',
+                populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
               },
-            ],
+            },
           }],
         },
         {
@@ -4279,19 +4270,16 @@ describe('getCourseFollowUp', () => {
           query: 'populate',
           args: [{
             path: 'subProgram',
-            select: 'name steps program',
-            populate: [
-              { path: 'program', select: 'name' },
-              {
-                path: 'steps',
-                select: 'name activities type',
-                populate: {
-                  path: 'activities',
-                  select: 'name type',
-                  populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
-                },
+            select: 'name steps',
+            populate: {
+              path: 'steps',
+              select: 'name activities type',
+              populate: {
+                path: 'activities',
+                select: 'name type',
+                populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
               },
-            ],
+            },
           }],
         },
         {
@@ -4356,19 +4344,16 @@ describe('getCourseFollowUp', () => {
           query: 'populate',
           args: [{
             path: 'subProgram',
-            select: 'name steps program',
-            populate: [
-              { path: 'program', select: 'name' },
-              {
-                path: 'steps',
-                select: 'name activities type',
-                populate: {
-                  path: 'activities',
-                  select: 'name type',
-                  populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
-                },
+            select: 'name steps',
+            populate: {
+              path: 'steps',
+              select: 'name activities type',
+              populate: {
+                path: 'activities',
+                select: 'name type',
+                populate: { path: 'activityHistories', match: { user: { $in: trainees } } },
               },
-            ],
+            },
           }],
         },
         {
@@ -4417,19 +4402,16 @@ describe('getCourseFollowUp', () => {
           query: 'populate',
           args: [{
             path: 'subProgram',
-            select: 'name steps program',
-            populate: [
-              { path: 'program', select: 'name' },
-              {
-                path: 'steps',
-                select: 'name activities type',
-                populate: {
-                  path: 'activities',
-                  select: 'name type',
-                  populate: { path: 'activityHistories', match: { user: { $in: [traineeId] } } },
-                },
+            select: 'name steps',
+            populate: {
+              path: 'steps',
+              select: 'name activities type',
+              populate: {
+                path: 'activities',
+                select: 'name type',
+                populate: { path: 'activityHistories', match: { user: { $in: [traineeId] } } },
               },
-            ],
+            },
           }],
         },
         {
@@ -6362,7 +6344,6 @@ describe('generateCompletionCertificates', () => {
         _id: subProgramIds[0],
         program: {
           learningGoals: 'Apprendre',
-          name: 'nom du programme',
           subPrograms: [subProgramIds[0], subProgramIds[1]],
         },
         steps: [
@@ -6406,7 +6387,6 @@ describe('generateCompletionCertificates', () => {
         _id: subProgramIds[1],
         program: {
           learningGoals: 'Apprendre',
-          name: 'nom du programme',
           subPrograms: [subProgramIds[0], subProgramIds[1]],
         },
       },
@@ -6565,7 +6545,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -6667,7 +6647,7 @@ describe('generateCompletionCertificates', () => {
       companies: [{ _id: companyId }, { _id: otherCompanyId }],
       subProgram: {
         _id: subProgramIds[0],
-        program: { learningGoals: 'Apprendre', name: 'nom du programme', subPrograms: subProgramIds },
+        program: { learningGoals: 'Apprendre', subPrograms: subProgramIds },
         steps: [],
       },
       slots: [
@@ -6822,7 +6802,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -6925,7 +6905,7 @@ describe('generateCompletionCertificates', () => {
       companies,
       subProgram: {
         _id: subProgramIds[0],
-        program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
+        program: { learningGoals: 'Objectifs', subPrograms: subProgramIds },
         steps: [
           {
             type: E_LEARNING,
@@ -7116,7 +7096,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -7219,7 +7199,7 @@ describe('generateCompletionCertificates', () => {
       companies,
       subProgram: {
         _id: subProgramIds[0],
-        program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
+        program: { learningGoals: 'Objectifs', subPrograms: subProgramIds },
         steps: [],
       },
       slots: [
@@ -7393,7 +7373,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -7491,7 +7471,7 @@ describe('generateCompletionCertificates', () => {
       companies: [{ _id: companyId }, { _id: new ObjectId() }, { _id: otherCompanyId }],
       subProgram: {
         _id: subProgramIds[0],
-        program: { learningGoals: 'Apprendre plein de trucs cool', name: 'un programme', subPrograms: subProgramIds },
+        program: { learningGoals: 'Apprendre plein de trucs cool', subPrograms: subProgramIds },
         steps: [{
           type: E_LEARNING,
           theoreticalDuration: 'PT3600S',
@@ -7638,7 +7618,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -7726,7 +7706,7 @@ describe('generateCompletionCertificates', () => {
       companies: [{ _id: companyId }],
       subProgram: {
         _id: subProgramIds[0],
-        program: { learningGoals: 'Apprendre', name: 'nom du programme', subPrograms: subProgramIds },
+        program: { learningGoals: 'Apprendre', subPrograms: subProgramIds },
         steps: [{
           type: E_LEARNING,
           theoreticalDuration: 'PT7200S',
@@ -7830,7 +7810,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -7925,7 +7905,7 @@ describe('generateCompletionCertificates', () => {
       companies,
       subProgram: {
         _id: subProgramIds[0],
-        program: { learningGoals: 'Objectifs', name: 'nom du programme', subPrograms: subProgramIds },
+        program: { learningGoals: 'Objectifs', subPrograms: subProgramIds },
         steps: [
           {
             type: E_LEARNING,
@@ -8141,7 +8121,7 @@ describe('generateCompletionCertificates', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -8775,7 +8755,7 @@ describe('generateTrainingContract', () => {
               path: 'subProgram',
               select: 'program steps',
               populate: [
-                { path: 'program', select: 'name learningGoals' },
+                { path: 'program', select: 'learningGoals' },
                 { path: 'steps', select: 'theoreticalDuration type' },
               ],
             },
@@ -8895,7 +8875,7 @@ describe('generateTrainingContract', () => {
               path: 'subProgram',
               select: 'program steps',
               populate: [
-                { path: 'program', select: 'name learningGoals' },
+                { path: 'program', select: 'learningGoals' },
                 { path: 'steps', select: 'theoreticalDuration type' },
               ],
             },
@@ -9634,7 +9614,7 @@ describe('downloadAllDocuments', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -9777,7 +9757,7 @@ describe('downloadAllDocuments', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',
@@ -9926,7 +9906,7 @@ describe('downloadAllDocuments', () => {
             path: 'subProgram',
             select: 'program steps',
             populate: [
-              { path: 'program', select: 'name learningGoals subPrograms' },
+              { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
                 select: 'type theoreticalDuration',

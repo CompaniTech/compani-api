@@ -366,7 +366,7 @@ const listForPedagogy = async (query, origin, credentials) => {
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name image description' },
+          { path: 'program', select: 'image description' },
           {
             path: 'steps',
             select: 'name type activities theoreticalDuration',
@@ -404,7 +404,7 @@ const listForPedagogy = async (query, origin, credentials) => {
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name image description' },
+          { path: 'program', select: 'image description' },
           { path: 'steps', select: 'type theoreticalDuration' },
         ],
       })
@@ -546,7 +546,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals' },
+          { path: 'program', select: 'learningGoals' },
           ...(origin === WEBAPP
             ? [{
               path: 'steps',
@@ -650,7 +650,6 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
 
 const getCourseForQuestionnaire = async courseId => Course
   .findOne({ _id: courseId }, { subProgram: 1, type: 1, trainers: 1, trainees: 1, misc: 1, tradeName: 1 })
-  .populate({ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] })
   .populate({ path: 'trainers', select: 'identity.firstname identity.lastname' })
   .populate({ path: 'trainees', select: 'identity.firstname identity.lastname local.email' })
   .lean({ virtuals: true });
@@ -709,19 +708,16 @@ exports.getCourseFollowUp = async (course, query, credentials) => {
   const courseFollowUp = await Course.findOne({ _id: course }, { subProgram: 1 })
     .populate({
       path: 'subProgram',
-      select: 'name steps program',
-      populate: [
-        { path: 'program', select: 'name' },
-        {
-          path: 'steps',
-          select: 'name activities type',
-          populate: {
-            path: 'activities',
-            select: 'name type',
-            populate: { path: 'activityHistories', match: { user: { $in: courseWithTrainees.trainees } } },
-          },
+      select: 'name steps',
+      populate: {
+        path: 'steps',
+        select: 'name activities type',
+        populate: {
+          path: 'activities',
+          select: 'name type',
+          populate: { path: 'activityHistories', match: { user: { $in: courseWithTrainees.trainees } } },
         },
-      ],
+      },
     })
     .populate({
       path: 'trainees',
@@ -851,7 +847,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
     .populate({ path: 'questionnaires' })
-    .select('_id misc format type trainees gSheetId certificateGenerationMode')
+    .select('_id misc format type trainees gSheetId certificateGenerationMode tradeName')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
@@ -1569,7 +1565,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals subPrograms' },
+          { path: 'program', select: 'learningGoals subPrograms' },
           {
             path: 'steps',
             select: 'type theoreticalDuration',
@@ -1730,7 +1726,7 @@ exports.generateTrainingContract = async (courseId, payload) => {
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals' },
+          { path: 'program', select: 'learningGoals' },
           { path: 'steps', select: 'theoreticalDuration type' },
         ],
       },
@@ -1909,7 +1905,7 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals subPrograms' },
+          { path: 'program', select: 'learningGoals subPrograms' },
           {
             path: 'steps',
             select: 'type theoreticalDuration',
