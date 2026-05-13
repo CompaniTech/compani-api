@@ -157,7 +157,7 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'courses',
-            select: 'misc type companies subProgram',
+            select: 'misc type companies subProgram tradeName',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               { path: 'companies', select: 'name' },
@@ -202,6 +202,7 @@ describe('generate', () => {
       hasCertifyingTest: false,
       companies: [{ name: 'Alenvi' }],
       trainers: [{ _id: trainerId, identity: { lastname: 'For', firstname: 'Matrice' } }],
+      tradeName: 'program 1',
       subProgram: {
         program: { name: 'program' },
         steps: [
@@ -267,7 +268,10 @@ describe('generate', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFind,
       [
-        { query: 'find', args: [{ _id: { $in: [courseId] } }, { hasCertifyingTest: 1, misc: 1, type: 1 }] },
+        {
+          query: 'find',
+          args: [{ _id: { $in: [courseId] } }, { hasCertifyingTest: 1, misc: 1, type: 1, tradeName: 1 }],
+        },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
         {
@@ -299,6 +303,7 @@ describe('generate', () => {
         hasCertifyingTest: false,
         companies: [{ name: 'Alenvi' }],
         trainers: [{ _id: trainerId, identity: { lastname: 'For', firstname: 'Matrice' } }],
+        tradeName: 'program 1',
         subProgram: {
           program: { name: 'program' },
           steps: [
@@ -328,6 +333,7 @@ describe('generate', () => {
         hasCertifyingTest: true,
         companies: [{ name: 'ASAPAD' }],
         trainer: { _id: trainerId, identity: { lastname: 'For', firstname: 'Matrice' } },
+        tradeName: 'program 2',
         subProgram: {
           program: { name: 'program' },
           steps: [
@@ -399,7 +405,10 @@ describe('generate', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFind,
       [
-        { query: 'find', args: [{ _id: { $in: courseIds } }, { hasCertifyingTest: 1, misc: 1, type: 1 }] },
+        {
+          query: 'find',
+          args: [{ _id: { $in: courseIds } }, { hasCertifyingTest: 1, misc: 1, type: 1, tradeName: 1 }],
+        },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
         {

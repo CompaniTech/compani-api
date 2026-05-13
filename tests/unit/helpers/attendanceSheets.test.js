@@ -1496,8 +1496,8 @@ describe('generate', () => {
         misc: 'misc',
         companies: [{ name: 'Alenvi' }],
         trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
+        tradeName: 'Program 1',
         subProgram: {
-          program: { name: 'Program 1' },
           steps: [
             { type: 'on_site', theoreticalDuration: 'PT7200S' },
             { type: 'on_site', theoreticalDuration: 'PT7200S' },
@@ -1530,8 +1530,8 @@ describe('generate', () => {
       }],
       trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
+      tradeName: 'Program 1',
       subProgram: {
-        program: { name: 'Program 1' },
         steps: [
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
@@ -1562,14 +1562,14 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type misc companies subProgram slots trainees',
+            select: 'type misc companies subProgram slots trainees tradeName',
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
               {
                 path: 'subProgram',
-                select: 'steps program',
-                populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+                select: 'steps',
+                populate: { path: 'steps', select: 'type theoreticalDuration' },
               },
               { path: 'slots', select: 'startDate endDate address trainees' },
             ],
@@ -1632,8 +1632,8 @@ describe('generate', () => {
           { _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } },
           { _id: new ObjectId(), identity: { lastname: 'Leclerc', firstname: 'Charles' } },
         ],
+        tradeName: 'Program 1',
         subProgram: {
-          program: { name: 'Program 1' },
           steps: [
             { type: 'on_site', theoreticalDuration: 'PT7200S' },
             { type: 'on_site', theoreticalDuration: 'PT7200S' },
@@ -1673,8 +1673,8 @@ describe('generate', () => {
       ],
       trainees: [{ _id: traineeId, identity: { lastname: 'Sainz', firstname: 'Carlos' } }],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
+      tradeName: 'Program 1',
       subProgram: {
-        program: { name: 'Program 1' },
         steps: [
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
@@ -1705,15 +1705,11 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type misc companies subProgram slots trainees',
+            select: 'type misc companies subProgram slots trainees tradeName',
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              {
-                path: 'subProgram',
-                select: 'steps program',
-                populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
-              },
+              { path: 'subProgram', select: 'steps', populate: { path: 'steps', select: 'type theoreticalDuration' } },
               { path: 'slots', select: 'startDate endDate address trainees' },
             ],
           }],
@@ -1790,8 +1786,8 @@ describe('generate', () => {
           { _id: traineeIds[0], identity: { lastname: 'Sainz', firstname: 'Carlos' } },
           { _id: traineeIds[1], identity: { lastname: 'Leclerc', firstname: 'Charles' } },
         ],
+        tradeName: 'Program 1',
         subProgram: {
-          program: { name: 'Program 1' },
           steps: [
             { type: 'on_site', theoreticalDuration: 'PT7200S' },
             { type: 'on_site', theoreticalDuration: 'PT7200S' },
@@ -1834,8 +1830,8 @@ describe('generate', () => {
         },
       ],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
+      tradeName: 'Program 1',
       subProgram: {
-        program: { name: 'Program 1' },
         steps: [
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
@@ -1873,15 +1869,11 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type misc companies subProgram slots trainees',
+            select: 'type misc companies subProgram slots trainees tradeName',
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              {
-                path: 'subProgram',
-                select: 'steps program',
-                populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
-              },
+              { path: 'subProgram', select: 'steps', populate: { path: 'steps', select: 'type theoreticalDuration' } },
               { path: 'slots', select: 'startDate endDate address trainees' },
             ],
           }],
@@ -1990,8 +1982,8 @@ describe('generate', () => {
             company: { _id: companyIds[1], name: 'Biens Communs' },
           },
         ],
+        tradeName: 'Program 1',
         subProgram: {
-          program: { name: 'Program 1' },
           steps: [
             { type: 'on_site', theoreticalDuration: 'PT7200S' },
             { type: 'on_site', theoreticalDuration: 'PT7200S' },
@@ -2042,8 +2034,8 @@ describe('generate', () => {
         },
       ],
       trainers: [{ identity: { lastname: 'Hamilton', firstname: 'Lewis' } }],
+      tradeName: 'Program 1',
       subProgram: {
-        program: { name: 'Program 1' },
         steps: [
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
           { type: 'on_site', theoreticalDuration: 'PT7200S' },
@@ -2081,15 +2073,11 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type misc companies subProgram slots trainees',
+            select: 'type misc companies subProgram slots trainees tradeName',
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              {
-                path: 'subProgram',
-                select: 'steps program',
-                populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
-              },
+              { path: 'subProgram', select: 'steps', populate: { path: 'steps', select: 'type theoreticalDuration' } },
               { path: 'slots', select: 'startDate endDate address trainees' },
             ],
           }],

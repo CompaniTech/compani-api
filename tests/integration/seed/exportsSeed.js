@@ -1259,7 +1259,7 @@ const coursesList = [
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
     prices: [{ global: 3000, company: authCompany._id }],
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
   { // 1 with 2 bills
     _id: new ObjectId(),
@@ -1277,7 +1277,7 @@ const coursesList = [
       { global: 2500, trainerFees: 250, company: authCompany._id },
       { global: 2500, company: otherCompany._id },
     ],
-    tradeName: 'nom',
+    tradeName: 'Nom 2',
   },
   { // 2 without bills
     _id: new ObjectId(),
@@ -1293,7 +1293,7 @@ const coursesList = [
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
     prices: [{ global: 3000, company: authCompany._id }],
-    tradeName: 'nom',
+    tradeName: 'Nom 2',
   },
   { // 3 with 1 bill
     _id: new ObjectId(),
@@ -1309,7 +1309,7 @@ const coursesList = [
     expectedBillsCount: 1,
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
   { // 4 with 1 bill
     _id: new ObjectId(),
@@ -1325,7 +1325,7 @@ const coursesList = [
     expectedBillsCount: 1,
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
   { // 5 with 3 bills and 1 creditNote
     _id: new ObjectId(),
@@ -1341,7 +1341,7 @@ const coursesList = [
     expectedBillsCount: 3,
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
   { // 6 without bills
     _id: new ObjectId(),
@@ -1357,7 +1357,7 @@ const coursesList = [
     expectedBillsCount: 0,
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
   { // 7 without trainee
     _id: new ObjectId(),
@@ -1373,7 +1373,7 @@ const coursesList = [
     createdAt: '2018-01-07T22:00:00.000Z',
     maxTrainees: 8,
     certificateGenerationMode: GLOBAL,
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
   { // 8 intra with other Company
     _id: new ObjectId(),
@@ -1389,7 +1389,7 @@ const coursesList = [
     companies: [otherCompany._id],
     createdAt: '2018-01-07T22:00:00.000Z',
     certificateGenerationMode: GLOBAL,
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
   { // 9 single
     _id: new ObjectId(),
@@ -1407,7 +1407,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
   { // 10 single
     _id: new ObjectId(),
@@ -1425,7 +1425,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
-    tradeName: 'nom',
+    tradeName: 'Nom 1',
   },
 ];
 

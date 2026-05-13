@@ -14,8 +14,8 @@ const getImages = async () => {
   return FileHelper.downloadImages(imageList);
 };
 
-const getHeader = (image, misc, subProgram) => {
-  const title = `${get(subProgram, 'program.name') || ''}${misc ? ` - ${misc}` : ''}`;
+const getHeader = (image, misc, tradeName) => {
+  const title = `${tradeName || ''}${misc ? ` - ${misc}` : ''}`;
 
   return [
     {
@@ -134,7 +134,7 @@ const getContactInfo = (contactImg, contact) => ({
 exports.getPdfContent = async (data) => {
   const [thumb, explanation, quizz, confused] = await getImages();
 
-  const header = getHeader(thumb, data.misc, data.subProgram);
+  const header = getHeader(thumb, data.misc, data.tradeName);
   const table = getTable(data.slots, data.slotsToPlan);
   const programInfo = getProgramInfo(explanation, data.subProgram.program);
   const contactInfo = getContactInfo(confused, data.contact);

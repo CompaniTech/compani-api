@@ -46,7 +46,7 @@ exports.list = async (query) => {
     .find({ trainer })
     .populate({
       path: 'courses',
-      select: 'misc type companies subProgram',
+      select: 'misc type companies subProgram tradeName',
       populate: [
         { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
         { path: 'companies', select: 'name' },
@@ -78,7 +78,7 @@ const formatData = (courses, fee, credentials, trainerIdentity) => {
 exports.generate = async (payload, credentials) => {
   const courseIds = Array.isArray(payload.courses) ? payload.courses : [payload.courses];
   const courses = await Course
-    .find({ _id: { $in: courseIds } }, { hasCertifyingTest: 1, misc: 1, type: 1 })
+    .find({ _id: { $in: courseIds } }, { hasCertifyingTest: 1, misc: 1, type: 1, tradeName: 1 })
     .populate({ path: 'companies', select: 'name' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({

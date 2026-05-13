@@ -199,15 +199,14 @@ exports.getUserQuestionnaires = async (courseId, credentials) => {
 
 const formatQuestionnaireAnswersWithCourse = async (courseId, questionnaireAnswers) => {
   const course = await Course.findOne({ _id: courseId })
-    .select('subProgram companies misc type')
-    .populate({ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] })
+    .select('tradeName companies misc type')
     .populate({ path: 'companies', select: 'name' })
     .lean();
 
   return {
     ...questionnaireAnswers,
     course: {
-      programName: course.subProgram.program.name,
+      programName: course.tradeName,
       companyName: course.type === INTRA ? course.companies[0].name : '',
       misc: course.misc,
     },
@@ -219,8 +218,7 @@ const getFollowUpForReview = async (questionnaire, courseId) => {
   const followUp = questionnaire.histories.map(h => pick(h, fieldsToPick));
 
   const course = await Course.findOne({ _id: courseId })
-    .select('subProgram companies misc type holding trainees')
-    .populate({ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] })
+    .select('tradeName companies misc type holding trainees')
     .populate({ path: 'companies', select: 'name' })
     .populate({ path: 'holding', select: 'name' })
     .populate({ path: 'trainees', select: 'identity' })
@@ -275,9 +273,9 @@ exports.getFollowUp = async (questionnaireId, query, credentials) => {
         { path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' },
         {
           path: 'course',
-          select: 'trainers subProgram misc companies type',
+          select: 'trainers subProgram misc companies type tradeName',
           populate: [
-            { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id name' } },
+            { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
             { path: 'companies', select: 'name' },
           ],
         },

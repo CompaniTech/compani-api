@@ -283,14 +283,14 @@ exports.generate = async (attendanceSheetId) => {
     .populate({ path: 'trainer', select: 'identity' })
     .populate({
       path: 'course',
-      select: 'type misc companies subProgram slots trainees',
+      select: 'type misc companies subProgram slots trainees tradeName',
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'trainees', select: 'identity' },
         {
           path: 'subProgram',
-          select: 'steps program',
-          populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+          select: 'steps',
+          populate: { path: 'steps', select: 'type theoreticalDuration' },
         },
         { path: 'slots', select: 'startDate endDate address trainees' },
       ],

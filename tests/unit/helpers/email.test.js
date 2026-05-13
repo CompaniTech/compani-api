@@ -244,7 +244,7 @@ describe('addTutor', () => {
     };
     const course = {
       _id: new ObjectId(),
-      subProgram: { program: { name: 'Program 1' } },
+      tradeName: 'Program 1',
       trainees: [{ _id: new ObjectId(), identity: { firstname: 'Robyn', lastname: 'FENTY' } }],
       gSheetId: '12345',
     };
@@ -269,11 +269,7 @@ describe('addTutor', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1, gSheetId: 1 }] },
-        {
-          query: 'populate',
-          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
-        },
+        { query: 'findOne', args: [{ _id: course._id }, { tradeName: 1, trainees: 1, gSheetId: 1 }] },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'lean' },
       ]
@@ -308,7 +304,7 @@ describe('addTutor', () => {
     };
     const course = {
       _id: new ObjectId(),
-      subProgram: { program: { name: 'Program 1' } },
+      tradeName: 'Program 1',
       trainees: [
         { _id: new ObjectId(), identity: { firstname: 'Robyn', lastname: 'FENTY' } },
         { _id: new ObjectId(), identity: { firstname: 'Robin', lastname: 'Hood' } },
@@ -335,11 +331,7 @@ describe('addTutor', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { subProgram: 1, trainees: 1, gSheetId: 1 }] },
-        {
-          query: 'populate',
-          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
-        },
+        { query: 'findOne', args: [{ _id: course._id }, { tradeName: 1, trainees: 1, gSheetId: 1 }] },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'lean' },
       ]
