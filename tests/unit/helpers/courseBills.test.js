@@ -177,7 +177,7 @@ describe('list', () => {
     const course = {
       _id: courseId,
       misc: 'group 1',
-      subProgram: { program: { name: 'program 1' } },
+      tradeName: 'program 1',
       slots: [{ startDate: '2021-11-11T08:00:00.000Z', endDate: '2021-11-11T14:00:00.000Z' }],
       slotsToPlan: [],
     };
@@ -209,11 +209,7 @@ describe('list', () => {
     const result = await CourseBillHelper.list({ company: companyId, action: BALANCE }, credentials);
 
     expect(result).toEqual([{
-      course: {
-        _id: courseId,
-        misc: 'group 1',
-        subProgram: { program: { name: 'program 1' } },
-      },
+      course: { _id: courseId, misc: 'group 1', tradeName: 'program 1' },
       company: companyId,
       mainFee: { price: 120, count: 2 },
       payer: { company: companyId },
@@ -248,12 +244,8 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'misc slots slotsToPlan subProgram companies',
-              populate: [
-                { path: 'slots' },
-                { path: 'slotsToPlan' },
-                { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-              ],
+              select: 'misc slots slotsToPlan companies tradeName',
+              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }],
             },
             { path: 'companies', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -302,7 +294,7 @@ describe('list', () => {
     const course = {
       _id: courseId,
       misc: 'group 1',
-      subProgram: { program: { name: 'program 1' } },
+      tradeName: 'program 1',
       slots: [{ startDate: '2021-11-11T08:00:00.000Z', endDate: '2021-11-11T14:00:00.000Z' }],
       slotsToPlan: [],
     };
@@ -344,7 +336,7 @@ describe('list', () => {
       course: {
         _id: courseId,
         misc: 'group 1',
-        subProgram: { program: { name: 'program 1' } },
+        tradeName: 'program 1',
       },
       company: otherCompanyId,
       mainFee: { price: 120, count: 2 },
@@ -380,12 +372,8 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'misc slots slotsToPlan subProgram companies',
-              populate: [
-                { path: 'slots' },
-                { path: 'slotsToPlan' },
-                { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-              ],
+              select: 'misc slots slotsToPlan companies tradeName',
+              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }],
             },
             { path: 'companies', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -427,6 +415,7 @@ describe('list', () => {
     const companies = [{ _id: new ObjectId(), name: 'Company 1' }, { _id: new ObjectId(), name: 'Company 2' }];
     const credentials = { role: { vendor: new ObjectId() } };
     const singleSubProgramId = new ObjectId();
+    const interSubProgramId = new ObjectId();
     const activitiesIds = [new ObjectId(), new ObjectId()];
     const courseBills = [
       {
@@ -435,7 +424,8 @@ describe('list', () => {
           companies,
           type: INTER_B2B,
           expectedBillscount: 2,
-          subProgram: { program: { name: 'program' } },
+          tradeName: 'program',
+          subProgram: interSubProgramId,
           trainees: traineesIds,
           prices: [{ company: companies[0]._id, global: 200 }],
         },
@@ -450,7 +440,8 @@ describe('list', () => {
           companies,
           type: SINGLE,
           expectedBillscount: 4,
-          subProgram: { _id: singleSubProgramId, program: { name: 'program 2' } },
+          tradeName: 'program 2',
+          subProgram: singleSubProgramId,
           trainees: [traineesIds[0]],
           prices: [{ company: companies[0]._id, global: 400 }],
           interruptionDates: [{ startDate: '2025-01-01T00:00:00.000Z' }],
@@ -466,7 +457,8 @@ describe('list', () => {
           companies: [companies[1]],
           type: SINGLE,
           expectedBillscount: 4,
-          subProgram: { _id: singleSubProgramId, program: { name: 'program 2' } },
+          tradeName: 'program 2',
+          subProgram: singleSubProgramId,
           trainees: [traineesIds[1]],
           prices: [{ company: companies[1]._id, global: 400 }],
           slots: [],
@@ -482,7 +474,8 @@ describe('list', () => {
           companies: [companies[1]],
           type: SINGLE,
           expectedBillscount: 4,
-          subProgram: { _id: singleSubProgramId, program: { name: 'program 2' } },
+          tradeName: 'program 2',
+          subProgram: singleSubProgramId,
           trainees: [traineesIds[2]],
           prices: [{ company: companies[1]._id, global: 400 }],
           slots: [
@@ -543,7 +536,8 @@ describe('list', () => {
           companies,
           type: INTER_B2B,
           expectedBillscount: 2,
-          subProgram: { program: { name: 'program' } },
+          tradeName: 'program',
+          subProgram: interSubProgramId,
           trainees: [
             { _id: traineesIds[0], registrationCompany: companies[0]._id },
             { _id: traineesIds[1], registrationCompany: companies[1]._id },
@@ -564,7 +558,8 @@ describe('list', () => {
           companies: [companies[1]],
           type: SINGLE,
           expectedBillscount: 4,
-          subProgram: { _id: singleSubProgramId, program: { name: 'program 2' } },
+          tradeName: 'program 2',
+          subProgram: singleSubProgramId,
           trainees: [
             { _id: traineesIds[1], registrationCompany: companies[1]._id },
           ],
@@ -584,7 +579,8 @@ describe('list', () => {
           companies: [companies[1]],
           type: SINGLE,
           expectedBillscount: 4,
-          subProgram: { _id: singleSubProgramId, program: { name: 'program 2' } },
+          tradeName: 'program 2',
+          subProgram: singleSubProgramId,
           trainees: [
             { _id: traineesIds[2], registrationCompany: companies[1]._id },
           ],
@@ -614,10 +610,10 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type '
+                + 'tradeName',
               populate: [
                 { path: 'companies', select: 'name' },
-                { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
                 {
                   path: 'slots',
                   select: 'startDate endDate',
@@ -689,6 +685,7 @@ describe('list', () => {
     const traineesIds = [new ObjectId(), new ObjectId()];
     const companies = [{ _id: new ObjectId(), name: 'Company 1' }, { _id: new ObjectId(), name: 'Company 2' }];
     const credentials = { role: { vendor: new ObjectId() } };
+    const subProgramId = new ObjectId();
     const courseBills = [
       {
         course: {
@@ -696,7 +693,8 @@ describe('list', () => {
           companies,
           type: INTRA,
           expectedBillscount: 2,
-          subProgram: { program: { name: 'program' } },
+          tradeName: 'program',
+          subProgram: subProgramId,
           trainees: traineesIds,
           prices: [{ company: companies[0]._id, global: 200, trainerFees: 20 }],
         },
@@ -733,7 +731,8 @@ describe('list', () => {
         companies,
         type: INTRA,
         expectedBillscount: 2,
-        subProgram: { program: { name: 'program' } },
+        tradeName: 'program',
+        subProgram: subProgramId,
         trainees: [
           { _id: traineesIds[0], registrationCompany: companies[0]._id },
           { _id: traineesIds[1], registrationCompany: companies[1]._id },
@@ -758,10 +757,10 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type '
+                + 'tradeName',
               populate: [
                 { path: 'companies', select: 'name' },
-                { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
                 { path: 'slots', select: 'startDate endDate' },
                 { path: 'slotsToPlan', select: '_id' },
               ],
@@ -2081,10 +2080,7 @@ describe('generateBillPdf', () => {
 
     const bill = {
       _id: new ObjectId(),
-      course: {
-        _id: new ObjectId(),
-        subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Test' } },
-      },
+      course: { _id: new ObjectId(), tradeName: 'Test' },
       mainFee: { price: 1000, count: 1 },
       billingPurchaseList: [
         { billingItem: { _id: new ObjectId(), name: 'article 1' }, price: 10, count: 10 },
@@ -2149,14 +2145,7 @@ describe('generateBillPdf', () => {
             { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 },
           ],
         },
-        {
-          query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'subProgram prices',
-            populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
-          }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'tradeName prices' }] },
         {
           query: 'populate',
           args: [{

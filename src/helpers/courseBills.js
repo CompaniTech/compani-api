@@ -87,12 +87,8 @@ const balance = async (company, credentials) => {
     .populate([
       {
         path: 'course',
-        select: 'misc slots slotsToPlan subProgram companies',
-        populate: [
-          { path: 'slots' },
-          { path: 'slotsToPlan' },
-          { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-        ],
+        select: 'misc slots slotsToPlan companies tradeName',
+        populate: [{ path: 'slots' }, { path: 'slotsToPlan' }],
       },
       { path: 'companies', select: 'name' },
       { path: 'payer.company', select: 'name' },
@@ -156,10 +152,9 @@ exports.list = async (query, credentials) => {
       ...(query.startDate && query.endDate
         ? [{
           path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type tradeName',
           populate: [
             { path: 'companies', select: 'name' },
-            { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
             {
               path: 'slots',
               select: 'startDate endDate',
@@ -575,11 +570,7 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
 
   const bill = await CourseBill
     .findOne({ _id: billId }, { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 })
-    .populate({
-      path: 'course',
-      select: 'subProgram prices',
-      populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
-    })
+    .populate({ path: 'course', select: 'tradeName prices' })
     .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } })
     .populate({ path: 'companies', select: 'name address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'name address' })
