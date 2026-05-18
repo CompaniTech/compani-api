@@ -88,7 +88,7 @@ describe('list', () => {
     const credentials = { role: { vendor: new ObjectId() } };
     const courseBills = [
       {
-        course: courseId,
+        course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
         company: { name: 'Company' },
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
@@ -99,7 +99,7 @@ describe('list', () => {
     const result = await CourseBillHelper.list({ course: courseId, action: LIST }, credentials);
 
     expect(result).toEqual([{
-      course: courseId,
+      course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
       company: { name: 'Company' },
       mainFee: { price: 120, count: 2 },
       payer: { name: 'Funder' },
@@ -109,6 +109,10 @@ describe('list', () => {
       find,
       [
         { query: 'find', args: [{ course: courseId }] },
+        {
+          query: 'populate',
+          args: [{ path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } }],
+        },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
         { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
@@ -129,7 +133,7 @@ describe('list', () => {
     const billingItemList = [{ _id: new ObjectId(), name: 'article 1' }, { _id: new ObjectId(), name: 'article 2' }];
     const courseBills = [
       {
-        course: courseId,
+        course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
         company: { name: 'Company' },
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
@@ -144,7 +148,7 @@ describe('list', () => {
     const result = await CourseBillHelper.list({ course: courseId, action: LIST }, credentials);
 
     expect(result).toEqual([{
-      course: courseId,
+      course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
       company: { name: 'Company' },
       mainFee: { price: 120, count: 2 },
       payer: { name: 'Funder' },
@@ -158,6 +162,10 @@ describe('list', () => {
       find,
       [
         { query: 'find', args: [{ course: courseId }] },
+        {
+          query: 'populate',
+          args: [{ path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } }],
+        },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
         { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
@@ -174,12 +182,14 @@ describe('list', () => {
   it('should return all company bills (with credit note) (vendor role)', async () => {
     const companyId = new ObjectId();
     const courseId = new ObjectId();
+    const traineeId = new ObjectId();
     const course = {
       _id: courseId,
       misc: 'group 1',
       tradeName: 'program 1',
       slots: [{ startDate: '2021-11-11T08:00:00.000Z', endDate: '2021-11-11T14:00:00.000Z' }],
       slotsToPlan: [],
+      trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'name' } }],
     };
 
     const credentials = { role: { vendor: { name: 'training_organisation_manager' } }, company: { _id: companyId } };
@@ -209,7 +219,12 @@ describe('list', () => {
     const result = await CourseBillHelper.list({ company: companyId, action: BALANCE }, credentials);
 
     expect(result).toEqual([{
-      course: { _id: courseId, misc: 'group 1', tradeName: 'program 1' },
+      course: {
+        _id: courseId,
+        misc: 'group 1',
+        tradeName: 'program 1',
+        trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'name' } }],
+      },
       company: companyId,
       mainFee: { price: 120, count: 2 },
       payer: { company: companyId },
@@ -244,8 +259,8 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'misc slots slotsToPlan companies tradeName',
-              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }],
+              select: 'misc slots slotsToPlan companies tradeName trainees type',
+              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }, { path: 'trainees', select: 'identity' }],
             },
             { path: 'companies', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -291,12 +306,14 @@ describe('list', () => {
     const companyId = new ObjectId();
     const otherCompanyId = new ObjectId();
     const courseId = new ObjectId();
+    const traineeId = new ObjectId();
     const course = {
       _id: courseId,
       misc: 'group 1',
       tradeName: 'program 1',
       slots: [{ startDate: '2021-11-11T08:00:00.000Z', endDate: '2021-11-11T14:00:00.000Z' }],
       slotsToPlan: [],
+      trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'name' } }],
     };
 
     const credentials = {
@@ -337,6 +354,7 @@ describe('list', () => {
         _id: courseId,
         misc: 'group 1',
         tradeName: 'program 1',
+        trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'name' } }],
       },
       company: otherCompanyId,
       mainFee: { price: 120, count: 2 },
@@ -372,8 +390,8 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'misc slots slotsToPlan companies tradeName',
-              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }],
+              select: 'misc slots slotsToPlan companies tradeName trainees type',
+              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }, { path: 'trainees', select: 'identity' }],
             },
             { path: 'companies', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -426,7 +444,7 @@ describe('list', () => {
           expectedBillscount: 2,
           tradeName: 'program',
           subProgram: interSubProgramId,
-          trainees: traineesIds,
+          trainees: traineesIds.map((t, i) => ({ _id: t, identity: { lastname: 'trainee', firstname: String(i) } })),
           prices: [{ company: companies[0]._id, global: 200 }],
         },
         companies: [companies[0]],
@@ -442,7 +460,7 @@ describe('list', () => {
           expectedBillscount: 4,
           tradeName: 'program 2',
           subProgram: singleSubProgramId,
-          trainees: [traineesIds[0]],
+          trainees: [{ _id: traineesIds[0], identity: { lastname: 'trainee', firstname: '0' } }],
           prices: [{ company: companies[0]._id, global: 400 }],
           interruptionDates: [{ startDate: '2025-01-01T00:00:00.000Z' }],
         },
@@ -459,7 +477,7 @@ describe('list', () => {
           expectedBillscount: 4,
           tradeName: 'program 2',
           subProgram: singleSubProgramId,
-          trainees: [traineesIds[1]],
+          trainees: [{ _id: traineesIds[1], identity: { lastname: 'trainee', firstname: '1' } }],
           prices: [{ company: companies[1]._id, global: 400 }],
           slots: [],
         },
@@ -476,7 +494,7 @@ describe('list', () => {
           expectedBillscount: 4,
           tradeName: 'program 2',
           subProgram: singleSubProgramId,
-          trainees: [traineesIds[2]],
+          trainees: [{ _id: traineesIds[2], identity: { lastname: 'trainee', firstname: '2' } }],
           prices: [{ company: companies[1]._id, global: 400 }],
           slots: [
             {
@@ -539,9 +557,21 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: interSubProgramId,
           trainees: [
-            { _id: traineesIds[0], registrationCompany: companies[0]._id },
-            { _id: traineesIds[1], registrationCompany: companies[1]._id },
-            { _id: traineesIds[2], registrationCompany: companies[1]._id },
+            {
+              _id: traineesIds[0],
+              registrationCompany: companies[0]._id,
+              identity: { lastname: 'trainee', firstname: '0' },
+            },
+            {
+              _id: traineesIds[1],
+              registrationCompany: companies[1]._id,
+              identity: { lastname: 'trainee', firstname: '1' },
+            },
+            {
+              _id: traineesIds[2],
+              registrationCompany: companies[1]._id,
+              identity: { lastname: 'trainee', firstname: '2' },
+            },
           ],
           prices: [{ company: companies[0]._id, global: 200 }, { company: companies[1]._id, global: '' }],
         },
@@ -561,7 +591,11 @@ describe('list', () => {
           tradeName: 'program 2',
           subProgram: singleSubProgramId,
           trainees: [
-            { _id: traineesIds[1], registrationCompany: companies[1]._id },
+            {
+              _id: traineesIds[1],
+              registrationCompany: companies[1]._id,
+              identity: { lastname: 'trainee', firstname: '1' },
+            },
           ],
           prices: [{ company: companies[1]._id, global: 400 }],
           slots: [],
@@ -582,7 +616,11 @@ describe('list', () => {
           tradeName: 'program 2',
           subProgram: singleSubProgramId,
           trainees: [
-            { _id: traineesIds[2], registrationCompany: companies[1]._id },
+            {
+              _id: traineesIds[2],
+              registrationCompany: companies[1]._id,
+              identity: { lastname: 'trainee', firstname: '2' },
+            },
           ],
           prices: [{ company: companies[1]._id, global: 400 }],
           slots: [
@@ -625,6 +663,7 @@ describe('list', () => {
                   },
                 },
                 { path: 'slotsToPlan', select: '_id' },
+                { path: 'trainees', select: 'identity' },
               ],
             },
             {
@@ -634,6 +673,7 @@ describe('list', () => {
             },
             { path: 'payer.fundingOrganisation', select: 'name' },
             { path: 'payer.company', select: 'name' },
+            { path: 'companies', select: 'name' },
             { path: 'courseCreditNote', options: { isVendorUser: true } },
           ]],
         },
@@ -695,7 +735,7 @@ describe('list', () => {
           expectedBillscount: 2,
           tradeName: 'program',
           subProgram: subProgramId,
-          trainees: traineesIds,
+          trainees: traineesIds.map((t, i) => ({ _id: t, identity: { lastname: 'trainee', firstname: String(i) } })),
           prices: [{ company: companies[0]._id, global: 200, trainerFees: 20 }],
         },
         companies: [companies[0]],
@@ -734,8 +774,16 @@ describe('list', () => {
         tradeName: 'program',
         subProgram: subProgramId,
         trainees: [
-          { _id: traineesIds[0], registrationCompany: companies[0]._id },
-          { _id: traineesIds[1], registrationCompany: companies[1]._id },
+          {
+            _id: traineesIds[0],
+            registrationCompany: companies[0]._id,
+            identity: { lastname: 'trainee', firstname: '0' },
+          },
+          {
+            _id: traineesIds[1],
+            registrationCompany: companies[1]._id,
+            identity: { lastname: 'trainee', firstname: '1' },
+          },
         ],
         prices: [
           { company: companies[0]._id, global: 200, trainerFees: 20 },
@@ -763,6 +811,7 @@ describe('list', () => {
                 { path: 'companies', select: 'name' },
                 { path: 'slots', select: 'startDate endDate' },
                 { path: 'slotsToPlan', select: '_id' },
+                { path: 'trainees', select: 'identity' },
               ],
             },
             {
@@ -772,6 +821,7 @@ describe('list', () => {
             },
             { path: 'payer.fundingOrganisation', select: 'name' },
             { path: 'payer.company', select: 'name' },
+            { path: 'companies', select: 'name' },
             { path: 'courseCreditNote', options: { isVendorUser: true } },
           ]],
         },
@@ -790,12 +840,13 @@ describe('list', () => {
 
   it('should return all validated course bills', async () => {
     const courseId = new ObjectId();
-    const companyId = new ObjectId();
+    const company = { _id: new ObjectId(), name: 'Company' };
+    const traineeId = new ObjectId();
     const credentials = { role: { vendor: new ObjectId() } };
     const courseBills = [
       {
-        course: courseId,
-        companies: [companyId],
+        course: { _id: courseId, trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'nom' } }] },
+        companies: [company],
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
         billedAt: '2025-06-10T22:00:00.000Z',
@@ -807,11 +858,11 @@ describe('list', () => {
     const result = await CourseBillHelper.list({ action: DASHBOARD, isValidated: true }, credentials);
 
     expect(result).toEqual([{
-      companies: [companyId],
+      companies: [company],
       mainFee: { price: 120, count: 2 },
       payer: { name: 'Funder' },
       billedAt: '2025-06-10T22:00:00.000Z',
-      course: courseId,
+      course: { _id: courseId, trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'nom' } }] },
       netInclTaxes: 240,
     }]);
 
@@ -825,8 +876,10 @@ describe('list', () => {
         {
           query: 'populate',
           args: [[
+            { path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } },
             { path: 'payer.fundingOrganisation', select: 'name' },
             { path: 'payer.company', select: 'name' },
+            { path: 'companies', select: 'name' },
             { path: 'courseCreditNote', options: { isVendorUser: true } },
           ]],
         },
