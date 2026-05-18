@@ -16,8 +16,8 @@ const { authCompany, otherCompany, companyWithoutSubscription } = require('../se
 
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { CompaniDate } = require('../../src/helpers/dates/companiDates');
-const { GROUP, TRAINEE } = require('../../src/helpers/constants');
-const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
+const { GROUP, TRAINEE, INTRA } = require('../../src/helpers/constants');
+const { holdingAdminFromOtherCompany, auxiliary } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -45,7 +45,11 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       expect(response.result.data.courseBills.length).toEqual(3);
       expect(response.result.data.courseBills).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          course: coursesList[0]._id,
+          course: {
+            _id: coursesList[0]._id,
+            type: INTRA,
+            trainees: [{ _id: auxiliary._id, identity: auxiliary.identity }],
+          },
           companies: [pick(authCompany, ['_id', 'name'])],
           payer: pick(authCompany, ['_id', 'name']),
           mainFee: { price: 120, count: 1, countUnit: GROUP },
@@ -56,7 +60,11 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
           netInclTaxes: 610,
         }),
         expect.objectContaining({
-          course: coursesList[0]._id,
+          course: {
+            _id: coursesList[0]._id,
+            type: INTRA,
+            trainees: [{ _id: auxiliary._id, identity: auxiliary.identity }],
+          },
           companies: [pick(authCompany, ['_id', 'name'])],
           payer: pick(authCompany, ['_id', 'name']),
           mainFee: { price: 200, count: 2, description: 'yoyo', countUnit: GROUP },
@@ -79,14 +87,22 @@ describe('COURSE BILL ROUTES - GET /coursebills', () => {
       expect(response.result.data.courseBills.length).toEqual(2);
       expect(response.result.data.courseBills).toEqual(expect.arrayContaining([
         expect.objectContaining({
-          course: coursesList[1]._id,
+          course: {
+            _id: coursesList[1]._id,
+            type: INTRA,
+            trainees: [{ _id: auxiliary._id, identity: auxiliary.identity }],
+          },
           companies: [pick(authCompany, ['_id', 'name'])],
           mainFee: { price: 120, count: 1, description: 'Lorem ipsum', countUnit: GROUP },
           netInclTaxes: 120,
           payer: pick(courseFundingOrganisationList[0], ['_id', 'name']),
         }),
         expect.objectContaining({
-          course: coursesList[1]._id,
+          course: {
+            _id: coursesList[1]._id,
+            type: INTRA,
+            trainees: [{ _id: auxiliary._id, identity: auxiliary.identity }],
+          },
           companies: [pick(authCompany, ['_id', 'name'])],
           mainFee: { price: 200, count: 2, description: 'yoyo', countUnit: GROUP },
           netInclTaxes: 409,
