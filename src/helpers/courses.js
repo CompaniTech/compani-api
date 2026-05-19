@@ -33,6 +33,7 @@ const DatesUtilsHelper = require('./dates/utils');
 const ZipHelper = require('./zip');
 const SmsHelper = require('./sms');
 const CourseBillsHelper = require('./courseBills');
+const CourseCreditNotesHelper = require('./courseCreditNotes');
 const DocxHelper = require('./docx');
 const FileHelper = require('./file');
 const GCloudStorageHelper = require('./gCloudStorage');
@@ -1929,7 +1930,13 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
       path: 'bills',
       match: { billedAt: { $exists: true }, ...(companies.length && { companies: { $in: companies } }) },
       options: { isVendorUser, requestingOwnInfos: !!(query.isClientInterface && companies.length) },
-      populate: { path: 'companies', select: 'name address' },
+      populate: [
+        { path: 'companies', select: 'name address' },
+        {
+          path: 'courseCreditNote',
+          options: { isVendorUser, requestingOwnInfos: !!(query.isClientInterface && companies.length) },
+        },
+      ],
     })
     .lean();
 
@@ -1944,10 +1951,15 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
   const attendanceSheetFilesList = await FileHelper.downloadFiles(formattedAttendanceSheets);
 
   const courseBillsPromises = [];
+  const courseCreditNotesPromises = [];
   course.bills.forEach((bill) => {
     courseBillsPromises.push(CourseBillsHelper.generateBillPdf(bill._id, bill.companies.map(c => c._id), credentials));
+    if (bill.courseCreditNote) {
+      courseCreditNotesPromises.push(CourseCreditNotesHelper.generateCreditNotePdf(bill.courseCreditNote._id));
+    }
   });
   const courseBillFilesList = await Promise.all(courseBillsPromises);
+  const courseCreditNoteFilesList = await Promise.all(courseCreditNotesPromises);
   const traineeList = await getTraineeList(course, credentials, query.isClientInterface);
   const courseData = exports.formatCourseForDocuments(course, OFFICIAL);
 
@@ -1961,6 +1973,7 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
     [
       ...attendanceSheetFilesList,
       ...courseBillFilesList.map(f => ({ file: f.pdf, name: `${f.billNumber}.pdf` })),
+      ...courseCreditNoteFilesList.map(f => ({ file: f.pdf, name: `${f.creditNoteNumber}.pdf` })),
       ...await Promise.all(certificatesPromises),
     ]
   );

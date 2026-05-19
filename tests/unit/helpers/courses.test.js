@@ -24,6 +24,7 @@ const TrainingContract = require('../../../src/models/TrainingContract');
 const CompanyHelper = require('../../../src/helpers/companies');
 const CourseHelper = require('../../../src/helpers/courses');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
+const CourseCreditNoteHelper = require('../../../src/helpers/courseCreditNotes');
 const EmailHelper = require('../../../src/helpers/email');
 const FileHelper = require('../../../src/helpers/file');
 const SmsHelper = require('../../../src/helpers/sms');
@@ -9516,6 +9517,7 @@ describe('downloadAllDocuments', () => {
   let downloadFiles;
   let generateOfficialCompletionCertificatePdf;
   let generateBillPdf;
+  let generateCreditNotePdf;
   let formatCourseForDocuments;
   let getAllAttendances;
   let generateZip;
@@ -9526,6 +9528,7 @@ describe('downloadAllDocuments', () => {
     downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
     generateOfficialCompletionCertificatePdf = sinon.stub(CourseHelper, 'generateOfficialCompletionCertificatePdf');
     generateBillPdf = sinon.stub(CourseBillHelper, 'generateBillPdf');
+    generateCreditNotePdf = sinon.stub(CourseCreditNoteHelper, 'generateCreditNotePdf');
     generateZip = sinon.stub(ZipHelper, 'generateZip');
     formatCourseForDocuments = sinon.stub(CourseHelper, 'formatCourseForDocuments');
     getAllAttendances = sinon.stub(CourseHelper, 'getAllAttendances');
@@ -9536,6 +9539,7 @@ describe('downloadAllDocuments', () => {
     downloadFiles.restore();
     generateOfficialCompletionCertificatePdf.restore();
     generateBillPdf.restore();
+    generateCreditNotePdf.restore();
     generateZip.restore();
     formatCourseForDocuments.restore();
     getAllAttendances.restore();
@@ -9547,6 +9551,7 @@ describe('downloadAllDocuments', () => {
     const courseId = new ObjectId();
     const companyId = new ObjectId();
     const billIds = [new ObjectId(), new ObjectId()];
+    const courseCreditNoteId = new ObjectId();
     const traineesIds = [new ObjectId(), new ObjectId()];
     const courseTrainees = { _id: courseId, trainees: traineesIds };
     const course = {
@@ -9557,7 +9562,7 @@ describe('downloadAllDocuments', () => {
         { file: { link: '124' }, date: '2022-12-22T16:00:00.000Z' },
       ],
       bills: [
-        { _id: billIds[0], companies: [{ _id: companyId }] },
+        { _id: billIds[0], companies: [{ _id: companyId }], courseCreditNote: { _id: courseCreditNoteId } },
         { _id: billIds[1], companies: [{ _id: companyId }] },
       ],
     };
@@ -9568,6 +9573,7 @@ describe('downloadAllDocuments', () => {
     downloadFiles.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
     generateBillPdf.onCall(0).returns({ pdf: 'pdf_bill_1', billNumber: 'bill_1' });
     generateBillPdf.onCall(1).returns({ pdf: 'pdf_bill_2', billNumber: 'bill_2' });
+    generateCreditNotePdf.returns({ pdf: 'pdf_credit_note_1', creditNoteNumber: 'credit_note_1' });
     getCompanyAtCourseRegistrationList.returns([
       { trainee: traineesIds[0], company: companyId },
       { trainee: traineesIds[1], company: companyId },
@@ -9581,6 +9587,7 @@ describe('downloadAllDocuments', () => {
       { file: 'pdf_as_2', name: 'as_2' },
       { file: 'pdf_bill_1', name: 'bill_1' },
       { file: 'pdf_bill_2', name: 'bill_2' },
+      { file: 'pdf_credit_note_1', name: 'credit_note_1' },
       { file: 'pdf_certif_1', name: 'certif_1' },
       { file: 'pdf_certif_2', name: 'certif_2' },
     ]);
@@ -9592,6 +9599,7 @@ describe('downloadAllDocuments', () => {
         { file: 'pdf_as_2', name: 'as_2' },
         { file: 'pdf_bill_1', name: 'bill_1' },
         { file: 'pdf_bill_2', name: 'bill_2' },
+        { file: 'pdf_credit_note_1', name: 'credit_note_1' },
         { file: 'pdf_certif_1', name: 'certif_1' },
         { file: 'pdf_certif_2', name: 'certif_2' },
       ]
@@ -9643,7 +9651,10 @@ describe('downloadAllDocuments', () => {
             path: 'bills',
             match: { billedAt: { $exists: true } },
             options: { isVendorUser: true, requestingOwnInfos: false },
-            populate: { path: 'companies', select: 'name address' },
+            populate: [
+              { path: 'companies', select: 'name address' },
+              { path: 'courseCreditNote', options: { isVendorUser: true, requestingOwnInfos: false } },
+            ],
           }],
         },
         { query: 'lean' },
@@ -9656,6 +9667,7 @@ describe('downloadAllDocuments', () => {
     );
     sinon.assert.calledWithExactly(generateBillPdf.getCall(0), billIds[0], [companyId], credentials);
     sinon.assert.calledWithExactly(generateBillPdf.getCall(1), billIds[1], [companyId], credentials);
+    sinon.assert.calledWithExactly(generateCreditNotePdf, courseCreditNoteId);
     sinon.assert.calledOnceWithExactly(formatCourseForDocuments, course, OFFICIAL);
     sinon.assert.calledWithExactly(
       generateOfficialCompletionCertificatePdf.getCall(0),
@@ -9677,6 +9689,7 @@ describe('downloadAllDocuments', () => {
         { file: 'pdf_as_2', name: 'as_2' },
         { file: 'pdf_bill_1', name: 'bill_1.pdf' },
         { file: 'pdf_bill_2', name: 'bill_2.pdf' },
+        { file: 'pdf_credit_note_1', name: 'credit_note_1.pdf' },
         { file: 'pdf_certif_1', name: 'certif_1' },
         { file: 'pdf_certif_2', name: 'certif_2' },
       ]
@@ -9688,6 +9701,7 @@ describe('downloadAllDocuments', () => {
     const credentials = { _id: new ObjectId(), role: { client: { name: CLIENT_ADMIN } }, company: { _id: companyId } };
     const courseId = new ObjectId();
     const billIds = [new ObjectId(), new ObjectId()];
+    const courseCreditNoteId = new ObjectId();
     const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const courseTrainees = { _id: courseId, trainees: traineesIds };
     const course = {
@@ -9698,7 +9712,7 @@ describe('downloadAllDocuments', () => {
         { file: { link: '124' }, date: '2022-12-22T16:00:00.000Z' },
       ],
       bills: [
-        { _id: billIds[0], companies: [{ _id: companyId }] },
+        { _id: billIds[0], companies: [{ _id: companyId }], courseCreditNote: { _id: courseCreditNoteId } },
         { _id: billIds[1], companies: [{ _id: companyId }] },
       ],
     };
@@ -9709,6 +9723,7 @@ describe('downloadAllDocuments', () => {
     downloadFiles.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
     generateBillPdf.onCall(0).returns({ pdf: 'pdf_bill_1', billNumber: 'bill_1' });
     generateBillPdf.onCall(1).returns({ pdf: 'pdf_bill_2', billNumber: 'bill_2' });
+    generateCreditNotePdf.returns({ pdf: 'pdf_credit_note_1', creditNoteNumber: 'credit_note_1' });
     getCompanyAtCourseRegistrationList.returns([
       { trainee: traineesIds[0], company: companyId },
       { trainee: traineesIds[1], company: companyId },
@@ -9723,6 +9738,7 @@ describe('downloadAllDocuments', () => {
       { file: 'pdf_as_2', name: 'as_2' },
       { file: 'pdf_bill_1', name: 'bill_1' },
       { file: 'pdf_bill_2', name: 'bill_2' },
+      { file: 'pdf_credit_note_1', name: 'credit_note_1' },
       { file: 'pdf_certif_1', name: 'certif_1' },
       { file: 'pdf_certif_2', name: 'certif_2' },
     ]);
@@ -9734,6 +9750,7 @@ describe('downloadAllDocuments', () => {
         { file: 'pdf_as_2', name: 'as_2' },
         { file: 'pdf_bill_1', name: 'bill_1' },
         { file: 'pdf_bill_2', name: 'bill_2' },
+        { file: 'pdf_credit_note_1', name: 'credit_note_1' },
         { file: 'pdf_certif_1', name: 'certif_1' },
         { file: 'pdf_certif_2', name: 'certif_2' },
       ]
@@ -9786,7 +9803,10 @@ describe('downloadAllDocuments', () => {
             path: 'bills',
             match: { billedAt: { $exists: true }, companies: { $in: [companyId] } },
             options: { isVendorUser: false, requestingOwnInfos: true },
-            populate: { path: 'companies', select: 'name address' },
+            populate: [
+              { path: 'companies', select: 'name address' },
+              { path: 'courseCreditNote', options: { isVendorUser: false, requestingOwnInfos: true } },
+            ],
           }],
         },
         { query: 'lean' },
@@ -9799,6 +9819,7 @@ describe('downloadAllDocuments', () => {
     );
     sinon.assert.calledWithExactly(generateBillPdf.getCall(0), billIds[0], [companyId], credentials);
     sinon.assert.calledWithExactly(generateBillPdf.getCall(1), billIds[1], [companyId], credentials);
+    sinon.assert.calledWithExactly(generateCreditNotePdf, courseCreditNoteId);
     sinon.assert.calledOnceWithExactly(formatCourseForDocuments, course, OFFICIAL);
     sinon.assert.calledWithExactly(
       generateOfficialCompletionCertificatePdf.getCall(0),
@@ -9820,6 +9841,7 @@ describe('downloadAllDocuments', () => {
         { file: 'pdf_as_2', name: 'as_2' },
         { file: 'pdf_bill_1', name: 'bill_1.pdf' },
         { file: 'pdf_bill_2', name: 'bill_2.pdf' },
+        { file: 'pdf_credit_note_1', name: 'credit_note_1.pdf' },
         { file: 'pdf_certif_1', name: 'certif_1' },
         { file: 'pdf_certif_2', name: 'certif_2' },
       ]
@@ -9837,6 +9859,7 @@ describe('downloadAllDocuments', () => {
     };
     const courseId = new ObjectId();
     const billIds = [new ObjectId(), new ObjectId()];
+    const courseCreditNoteId = new ObjectId();
     const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const courseTrainees = { _id: courseId, trainees: traineesIds };
     const course = {
@@ -9847,7 +9870,7 @@ describe('downloadAllDocuments', () => {
         { file: { link: '124' }, date: '2022-12-22T16:00:00.000Z' },
       ],
       bills: [
-        { _id: billIds[0], companies: [{ _id: companyId }] },
+        { _id: billIds[0], companies: [{ _id: companyId }], courseCreditNote: { _id: courseCreditNoteId } },
         { _id: billIds[1], companies: [{ _id: companyId }] },
       ],
     };
@@ -9858,6 +9881,7 @@ describe('downloadAllDocuments', () => {
     downloadFiles.returns([{ file: 'pdf_as_1', name: 'as_1' }, { file: 'pdf_as_2', name: 'as_2' }]);
     generateBillPdf.onCall(0).returns({ pdf: 'pdf_bill_1', billNumber: 'bill_1' });
     generateBillPdf.onCall(1).returns({ pdf: 'pdf_bill_2', billNumber: 'bill_2' });
+    generateCreditNotePdf.returns({ pdf: 'pdf_credit_note_1', creditNoteNumber: 'credit_note_1' });
     getCompanyAtCourseRegistrationList.returns([
       { trainee: traineesIds[0], company: companyId },
       { trainee: traineesIds[1], company: otherCompanyId },
@@ -9872,6 +9896,7 @@ describe('downloadAllDocuments', () => {
       { file: 'pdf_as_2', name: 'as_2' },
       { file: 'pdf_bill_1', name: 'bill_1' },
       { file: 'pdf_bill_2', name: 'bill_2' },
+      { file: 'pdf_credit_note_1', name: 'credit_note_1' },
       { file: 'pdf_certif_1', name: 'certif_1' },
       { file: 'pdf_certif_2', name: 'certif_2' },
     ]);
@@ -9883,6 +9908,7 @@ describe('downloadAllDocuments', () => {
         { file: 'pdf_as_2', name: 'as_2' },
         { file: 'pdf_bill_1', name: 'bill_1' },
         { file: 'pdf_bill_2', name: 'bill_2' },
+        { file: 'pdf_credit_note_1', name: 'credit_note_1' },
         { file: 'pdf_certif_1', name: 'certif_1' },
         { file: 'pdf_certif_2', name: 'certif_2' },
       ]
@@ -9938,7 +9964,10 @@ describe('downloadAllDocuments', () => {
             path: 'bills',
             match: { billedAt: { $exists: true }, companies: { $in: [otherCompanyId, companyId] } },
             options: { isVendorUser: false, requestingOwnInfos: true },
-            populate: { path: 'companies', select: 'name address' },
+            populate: [
+              { path: 'companies', select: 'name address' },
+              { path: 'courseCreditNote', options: { isVendorUser: false, requestingOwnInfos: true } },
+            ],
           }],
         },
         { query: 'lean' },
@@ -9951,6 +9980,7 @@ describe('downloadAllDocuments', () => {
     );
     sinon.assert.calledWithExactly(generateBillPdf.getCall(0), billIds[0], [companyId], credentials);
     sinon.assert.calledWithExactly(generateBillPdf.getCall(1), billIds[1], [companyId], credentials);
+    sinon.assert.calledWithExactly(generateCreditNotePdf, courseCreditNoteId);
     sinon.assert.calledOnceWithExactly(formatCourseForDocuments, course, OFFICIAL);
     sinon.assert.calledWithExactly(
       generateOfficialCompletionCertificatePdf.getCall(0),
@@ -9972,6 +10002,7 @@ describe('downloadAllDocuments', () => {
         { file: 'pdf_as_2', name: 'as_2' },
         { file: 'pdf_bill_1', name: 'bill_1.pdf' },
         { file: 'pdf_bill_2', name: 'bill_2.pdf' },
+        { file: 'pdf_credit_note_1', name: 'credit_note_1.pdf' },
         { file: 'pdf_certif_1', name: 'certif_1' },
         { file: 'pdf_certif_2', name: 'certif_2' },
       ]

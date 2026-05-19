@@ -88,6 +88,8 @@ const SmsHelper = require('../../src/helpers/sms');
 const DocxHelper = require('../../src/helpers/docx');
 const FileHelper = require('../../src/helpers/file');
 const NotificationHelper = require('../../src/helpers/notifications');
+const CourseBillHelper = require('../../src/helpers/courseBills');
+const CourseCreditNoteHelper = require('../../src/helpers/courseCreditNotes');
 const UtilsHelper = require('../../src/helpers/utils');
 const translate = require('../../src/helpers/translate');
 const UtilsMock = require('../utilsMock');
@@ -8110,7 +8112,7 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
 
 describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
   let authToken;
-  const courseIdFromAuthCompany = coursesList[2]._id;
+  const courseIdFromAuthCompany = coursesList[0]._id;
   const courseIdFromOtherCompany = coursesList[1]._id;
   const courseIdFromThirdCompany = coursesList[5]._id;
 
@@ -8120,12 +8122,28 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
     let downloadFileByIdStub;
     let createDocxStub;
     let downloadFiles;
+    let generateBillPdf;
+    let generateCreditNotePdf;
     beforeEach(async () => {
       downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
       downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
+      generateBillPdf = sinon.stub(CourseBillHelper, 'generateBillPdf');
+      generateCreditNotePdf = sinon.stub(CourseCreditNoteHelper, 'generateCreditNotePdf');
+
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
-      downloadFiles.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
+      downloadFiles.returns([{ file: '123', name: 'certif 1' }, { file: '456', name: 'certif 2' }]);
+      generateBillPdf.returns([
+        { pdf: '1', billNumber: 'FACT-00002' },
+        { pdf: '2', billNumber: 'FACT-00003' },
+        { pdf: '3', billNumber: 'FACT-00004' },
+        { pdf: '4', billNumber: 'FACT-00005' },
+        { pdf: '5', billNumber: 'FACT-00006' },
+      ]);
+      generateCreditNotePdf.returns([
+        { pdf: 'a', creditNoteNumber: 'AV-00001' },
+        { pdf: 'b', creditNoteNumber: 'AV-00002' },
+      ]);
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
       UtilsMock.mockCurrentDate('2025-01-24T15:00:00.000Z');
 
@@ -8136,6 +8154,8 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
       downloadFiles.restore();
+      generateBillPdf.restore();
+      generateCreditNotePdf.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
       UtilsMock.unmockCurrentDate('');
     });
@@ -8177,12 +8197,28 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
     let downloadFileByIdStub;
     let createDocxStub;
     let downloadFiles;
+    let generateBillPdf;
+    let generateCreditNotePdf;
     beforeEach(async () => {
       downloadFileByIdStub = sinon.stub(drive, 'downloadFileById');
       createDocxStub = sinon.stub(DocxHelper, 'createDocx');
       downloadFiles = sinon.stub(FileHelper, 'downloadFiles');
+      generateBillPdf = sinon.stub(CourseBillHelper, 'generateBillPdf');
+      generateCreditNotePdf = sinon.stub(CourseCreditNoteHelper, 'generateCreditNotePdf');
+
       createDocxStub.returns(path.join(__dirname, 'assets/certificate_template.docx'));
-      downloadFiles.returns([{ file: '123', name: 'bill 1' }, { file: '456', name: 'bill 2' }]);
+      downloadFiles.returns([{ file: '123', name: 'certif 1' }, { file: '456', name: 'certif 2' }]);
+      generateBillPdf.returns([
+        { pdf: '1', billNumber: 'FACT-00002' },
+        { pdf: '2', billNumber: 'FACT-00003' },
+        { pdf: '3', billNumber: 'FACT-00004' },
+        { pdf: '4', billNumber: 'FACT-00005' },
+        { pdf: '5', billNumber: 'FACT-00006' },
+      ]);
+      generateCreditNotePdf.returns([
+        { pdf: 'a', creditNoteNumber: 'AV-00001' },
+        { pdf: 'b', creditNoteNumber: 'AV-00002' },
+      ]);
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '1234';
 
       authToken = await getToken('client_admin');
@@ -8192,6 +8228,8 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
       downloadFileByIdStub.restore();
       createDocxStub.restore();
       downloadFiles.restore();
+      generateBillPdf.restore();
+      generateCreditNotePdf.restore();
       process.env.GOOGLE_DRIVE_TRAINING_CERTIFICATE_TEMPLATE_ID = '';
     });
 
