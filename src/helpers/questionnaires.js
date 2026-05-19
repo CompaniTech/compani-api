@@ -216,7 +216,6 @@ const formatQuestionnaireAnswersWithCourse = async (courseId, questionnaireAnswe
 
 const getFollowUpForReview = async (questionnaire, courseId) => {
   const fieldsToPick = ['user', 'timeline', '_id', 'isValidated', 'trainerComment'];
-  // const followUp = questionnaire.histories.map(h => pick(h, fieldsToPick));
   const followUp = questionnaire.histories.map(h => ({
     ...pick(h, fieldsToPick),
     questionnaireAnswersList: h.questionnaireAnswersList.filter(qa => qa.card.template === SURVEY),
