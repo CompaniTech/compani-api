@@ -4,7 +4,7 @@ const Questionnaire = require('../../models/Questionnaire');
 const User = require('../../models/User');
 const Course = require('../../models/Course');
 const QuestionnaireHistory = require('../../models/QuestionnaireHistory');
-const { END_COURSE } = require('../../helpers/constants');
+const { END_COURSE, SURVEY } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const { checkAnswersList } = require('./utils');
 
@@ -33,6 +33,7 @@ exports.authorizeQuestionnaireHistoryUpdate = async (req) => {
       { questionnaire: 1, questionnaireAnswersList: 1, course: 1 }
     )
     .populate({ path: 'course', select: 'trainers' })
+    .populate({ path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' })
     .lean();
   if (!questionnaireHistory) throw Boom.notFound();
 
@@ -45,7 +46,8 @@ exports.authorizeQuestionnaireHistoryUpdate = async (req) => {
     .countDocuments({ _id: questionnaireHistory.questionnaire, cards: { $in: cardIds } });
   if (!questionnaire) throw Boom.notFound();
 
-  const answersHasGoodLength = trainerAnswers.length === questionnaireHistory.questionnaireAnswersList.length;
+  const surveyQAnswersList = questionnaireHistory.questionnaireAnswersList.filter(qa => qa.card.template === SURVEY);
+  const answersHasGoodLength = trainerAnswers.length === surveyQAnswersList.length;
   if (!answersHasGoodLength) throw Boom.badRequest();
 
   const everyAnswerIsAuthorized = trainerAnswers.every(a => !a.answer || ['1', '2', '3', '4', '5'].includes(a.answer));

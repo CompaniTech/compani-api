@@ -2367,7 +2367,8 @@ describe('SEEDS VERIFICATION', () => {
         it('should pass if every trainee\'s answer is authorized (SELF POSITIONNING QUESTIONNAIRE)', () => {
           const everySelfPositionningHistoryHasAuthorizedTraineeAnswer = questionnaireHistoryList
             .filter(qh => qh.questionnaire.type === SELF_POSITIONNING)
-            .every(qh => qh.questionnaireAnswersList.every(a => ['1', '2', '3', '4', '5'].includes(a.answerList[0])));
+            .every(qh => qh.questionnaireAnswersList.filter(a => a.card.template === SURVEY)
+              .every(a => ['1', '2', '3', '4', '5'].includes(a.answerList[0])));
 
           expect(everySelfPositionningHistoryHasAuthorizedTraineeAnswer).toBeTruthy();
         });

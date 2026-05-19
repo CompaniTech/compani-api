@@ -74,7 +74,7 @@ exports.updateQuestionnaireHistory = async (questionnaireHistoryId, payload) => 
     for (const bddAnswer of questionnaireHistory.questionnaireAnswersList) {
       const trainerAnswer = trainerAnswersByCard[bddAnswer.card];
 
-      if (!trainerAnswer.answer) {
+      if (!trainerAnswer || !trainerAnswer.answer) {
         questionnaireAnswersList.push(bddAnswer);
         continue;
       }

@@ -23,6 +23,7 @@ const {
   REVIEW,
   LIST,
   ARCHIVED,
+  QUESTION_ANSWER,
 } = require('../../../src/helpers/constants');
 const SinonMongoose = require('../sinonMongoose');
 const UtilsMock = require('../../utilsMock');
@@ -1320,8 +1321,9 @@ describe('getFollowUp', () => {
           { identity: { firstname: 'eleve', lastname: 'Ducobu' } },
         ],
       };
-      const cardsIds = [new ObjectId(), new ObjectId()];
+      const cardsIds = [new ObjectId(), new ObjectId(), new ObjectId()];
       const historiesIds = [new ObjectId(), new ObjectId()];
+      const answerIds = [new ObjectId(), new ObjectId()];
       const questionnaire = {
         _id: questionnaireId,
         type: SELF_POSITIONNING,
@@ -1336,6 +1338,16 @@ describe('getFollowUp', () => {
               {
                 card: {
                   _id: cardsIds[0],
+                  template: QUESTION_ANSWER,
+                  isMandatory: true,
+                  question: 'quel est votre chiffre préféré ?',
+                  qcAnswers: [{ _id: answerIds[0], text: '1' }, { _id: answerIds[0], text: '2' }],
+                },
+                answerList: [answerIds[0]],
+              },
+              {
+                card: {
+                  _id: cardsIds[1],
                   template: SURVEY,
                   isMandatory: true,
                   question: 'savez-vous cuisiner ?',
@@ -1345,7 +1357,7 @@ describe('getFollowUp', () => {
               },
               {
                 card: {
-                  _id: cardsIds[1],
+                  _id: cardsIds[2],
                   template: SURVEY,
                   isMandatory: true,
                   question: 'aimez vous ce test ?',
@@ -1365,6 +1377,16 @@ describe('getFollowUp', () => {
               {
                 card: {
                   _id: cardsIds[0],
+                  template: QUESTION_ANSWER,
+                  isMandatory: true,
+                  question: 'quel est votre chiffre préféré ?',
+                  qcAnswers: [{ _id: answerIds[0], text: '1' }, { _id: answerIds[0], text: '2' }],
+                },
+                answerList: [answerIds[1]],
+              },
+              {
+                card: {
+                  _id: cardsIds[1],
                   template: SURVEY,
                   isMandatory: true,
                   question: 'savez-vous cuisiner ?',
@@ -1374,7 +1396,7 @@ describe('getFollowUp', () => {
               },
               {
                 card: {
-                  _id: cardsIds[1],
+                  _id: cardsIds[2],
                   template: SURVEY,
                   isMandatory: true,
                   question: 'aimez vous ce test ?',
@@ -1417,7 +1439,7 @@ describe('getFollowUp', () => {
             questionnaireAnswersList: [
               {
                 card: {
-                  _id: cardsIds[0],
+                  _id: cardsIds[1],
                   template: SURVEY,
                   isMandatory: true,
                   question: 'savez-vous cuisiner ?',
@@ -1427,7 +1449,7 @@ describe('getFollowUp', () => {
               },
               {
                 card: {
-                  _id: cardsIds[1],
+                  _id: cardsIds[2],
                   template: SURVEY,
                   isMandatory: true,
                   question: 'aimez vous ce test ?',
@@ -1446,7 +1468,7 @@ describe('getFollowUp', () => {
             questionnaireAnswersList: [
               {
                 card: {
-                  _id: cardsIds[0],
+                  _id: cardsIds[1],
                   template: SURVEY,
                   isMandatory: true,
                   question: 'savez-vous cuisiner ?',
@@ -1456,7 +1478,7 @@ describe('getFollowUp', () => {
               },
               {
                 card: {
-                  _id: cardsIds[1],
+                  _id: cardsIds[2],
                   template: SURVEY,
                   isMandatory: true,
                   question: 'aimez vous ce test ?',
