@@ -62,7 +62,9 @@ exports.authorizeTradeNameAddition = async (req) => {
   const tradeNameExists = await Program
     .countDocuments({
       _id: req.params._id,
-      'tradeNames.name': { $regex: new RegExp(`^${UtilsHelper.escapeRegex(req.payload.tradeName)}$`, 'i') },
+      'tradeNames.name': {
+        $regex: new RegExp(`^${UtilsHelper.escapeRegex(req.payload.tradeName.replace(/\s\s+/g, ' '))}$`, 'i'),
+      },
     });
   if (tradeNameExists) throw Boom.conflict(translate[language].tradeNameExists);
 

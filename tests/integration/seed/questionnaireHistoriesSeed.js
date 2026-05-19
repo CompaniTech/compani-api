@@ -141,7 +141,10 @@ const questionnaireHistoriesList = [
     questionnaire: questionnairesList[2]._id,
     company: authCompany._id,
     timeline: END_COURSE,
-    questionnaireAnswersList: [{ card: cardsList[1]._id, answerList: ['2'] }],
+    questionnaireAnswersList: [
+      { card: cardsList[1]._id, answerList: ['2'] },
+      { card: cardsList[3]._id, answerList: ['answer'] },
+    ],
   },
   {
     _id: new ObjectId(),
