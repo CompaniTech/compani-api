@@ -387,6 +387,7 @@ const coursesList = [
     expectedBillsCount: 3,
     hasCertifyingTest: true,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 1
     _id: new ObjectId(),
@@ -403,6 +404,7 @@ const coursesList = [
     expectedBillsCount: 2,
     salesRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 2
     _id: new ObjectId(),
@@ -418,6 +420,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
     prices: [{ company: authCompany._id, global: 200 }],
+    tradeName: 'nom',
   },
   { // 3
     _id: new ObjectId(),
@@ -432,6 +435,7 @@ const coursesList = [
     trainers: [trainerAndCoach._id],
     certificateGenerationMode: GLOBAL,
     prices: [{ company: otherCompany._id, global: 200, trainerFees: 10 }],
+    tradeName: 'nom',
   },
   { // 4 course without slots
     _id: new ObjectId(),
@@ -446,6 +450,7 @@ const coursesList = [
     hasCertifyingTest: true,
     certifiedTrainees: [traineeFromOtherCompany._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 5 course with slots
     _id: new ObjectId(),
@@ -457,6 +462,7 @@ const coursesList = [
     companies: [thirdCompany._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 6 course without trainees and slots
     _id: new ObjectId(),
@@ -464,6 +470,7 @@ const coursesList = [
     type: INTER_B2C,
     trainees: [],
     format: STRICTLY_E_LEARNING,
+    tradeName: 'nom',
   },
   { // 7 course with slots to plan
     _id: new ObjectId(),
@@ -478,6 +485,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
     prices: [{ company: thirdCompany._id, global: 1200 }],
+    tradeName: 'nom',
   },
   { // 8 eLearning course with access rules
     _id: new ObjectId(),
@@ -486,6 +494,7 @@ const coursesList = [
     format: STRICTLY_E_LEARNING,
     trainees: [traineeFromAuthFormerlyInOther._id],
     accessRules: [authCompany._id],
+    tradeName: 'nom',
   },
   { // 9 course with access rules and trainee that can't have access to the course but has already suscribed
     _id: new ObjectId(),
@@ -494,6 +503,7 @@ const coursesList = [
     format: STRICTLY_E_LEARNING,
     trainees: [coach._id],
     accessRules: [authCompany._id],
+    tradeName: 'nom',
   },
   { // 10 course with contact
     _id: new ObjectId(),
@@ -507,6 +517,7 @@ const coursesList = [
     contact: vendorAdmin._id,
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 11 course without authCompany in access rules (11ème position)
     _id: new ObjectId(),
@@ -515,6 +526,7 @@ const coursesList = [
     format: STRICTLY_E_LEARNING,
     trainees: [traineeFromOtherCompany._id, traineeFromAuthFormerlyInOther._id, noRole._id],
     accessRules: [otherCompany._id, thirdCompany._id],
+    tradeName: 'nom',
   },
   { // 12 course with no on-site slot
     _id: new ObjectId(),
@@ -527,6 +539,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     trainers: [trainer._id],
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 13 course without trainee
     _id: new ObjectId(),
@@ -539,6 +552,7 @@ const coursesList = [
     companies: [],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 14 archived course
     _id: new ObjectId(),
@@ -557,6 +571,7 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 15 course billed INTRA without trainees and slots
     _id: new ObjectId(),
@@ -570,6 +585,7 @@ const coursesList = [
     companies: [authCompany._id],
     expectedBillsCount: 1,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 16 course without trainee and with slots to plan
     _id: new ObjectId(),
@@ -582,6 +598,7 @@ const coursesList = [
     companies: [],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 17 Intra course without slots
     _id: new ObjectId(),
@@ -604,6 +621,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 18 archived inter b2b course
     _id: new ObjectId(),
@@ -618,6 +636,7 @@ const coursesList = [
     archivedAt: '2021-01-01T00:00:00.000Z',
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 19 course with billed and attended companies
     _id: new ObjectId(),
@@ -631,6 +650,7 @@ const coursesList = [
     trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 20 third company course
     _id: new ObjectId(),
@@ -647,6 +667,7 @@ const coursesList = [
     companyRepresentative: coachFromThirdCompany._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 21 intra_holding course with companies, without trainees
     _id: new ObjectId(),
@@ -662,6 +683,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     holding: authHolding._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 22 intra_holding course without companies
     _id: new ObjectId(),
@@ -678,6 +700,7 @@ const coursesList = [
     holding: otherHolding._id,
     companyRepresentative: holdingAdminFromOtherCompany._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 23 intra_holding course with companies and trainees
     _id: new ObjectId(),
@@ -694,6 +717,7 @@ const coursesList = [
     holding: otherHolding._id,
     companyRepresentative: holdingAdminFromOtherCompany._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 24 Single course
     _id: new ObjectId(),
@@ -713,6 +737,7 @@ const coursesList = [
     prices: [{ global: 1600, company: authCompany._id }],
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 25 Single course with tutor already in course
     _id: new ObjectId(),
@@ -731,6 +756,7 @@ const coursesList = [
     expectedBillsCount: 0,
     folderId: 'folderId',
     gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
   { // 26 interrupted course
     _id: new ObjectId(),
@@ -747,6 +773,7 @@ const coursesList = [
     interruptionDates: [{ startDate: '2021-01-01T00:00:00.000Z' }],
     estimatedStartDate: '2020-11-03T10:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 27 course without trainee, without slot but with trainer mission
     _id: new ObjectId(),
@@ -759,6 +786,7 @@ const coursesList = [
     companies: [],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 

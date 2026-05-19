@@ -8,6 +8,8 @@ const {
   checkCategoryExists,
   authorizeTesterAddition,
   checkTesterInProgram,
+  authorizeTradeNameAddition,
+  authorizeTradeNameDeletion,
 } = require('./preHandlers/programs');
 const {
   list,
@@ -22,6 +24,8 @@ const {
   removeCategory,
   addTester,
   removeTester,
+  addTradeName,
+  removeTradeName,
 } = require('../controllers/programController');
 const { formDataPayload, phoneNumberValidation, countryCodeValidation } = require('./validations/utils');
 
@@ -185,6 +189,33 @@ exports.plugin = {
         pre: [{ method: checkProgramExists }, { method: authorizeTesterAddition }],
       },
       handler: addTester,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/{_id}/trade-names',
+      options: {
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          payload: Joi.object({ tradeName: Joi.string().required() }),
+        },
+        auth: { scope: ['programs:edit'] },
+        pre: [{ method: checkProgramExists }, { method: authorizeTradeNameAddition }],
+      },
+      handler: addTradeName,
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/{_id}/trade-names/{tradeNameId}',
+      options: {
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), tradeNameId: Joi.objectId().required() }),
+        },
+        auth: { scope: ['programs:edit'] },
+        pre: [{ method: checkProgramExists }, { method: authorizeTradeNameDeletion }],
+      },
+      handler: removeTradeName,
     });
 
     server.route({

@@ -43,6 +43,7 @@ describe('getPdfContent', () => {
           misc: 'Groupe 1',
           type: INTRA,
           companies: [{ name: 'ASAPAD' }],
+          tradeName: 'Bien manger',
           subProgram: { program: { name: 'Bien manger' } },
         },
       ],

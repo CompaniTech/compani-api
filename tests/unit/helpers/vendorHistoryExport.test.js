@@ -160,6 +160,7 @@ describe('exportCourseHistory', () => {
       type: INTRA,
       companies: [company],
       subProgram: subProgramList[0],
+      tradeName: 'Program 1',
       misc: 'group 1',
       trainers: [trainersList[0]],
       operationsRepresentative,
@@ -200,6 +201,7 @@ describe('exportCourseHistory', () => {
       type: INTER_B2B,
       companies: [company, otherCompany],
       subProgram: subProgramList[1],
+      tradeName: 'Program 2',
       misc: 'group 2',
       estimatedStartDate: '2019-01-01T08:00:00',
       trainers: [trainersList[0], trainersList[1]],
@@ -250,6 +252,7 @@ describe('exportCourseHistory', () => {
       holding,
       companies: [],
       subProgram: subProgramList[1],
+      tradeName: 'Program 2',
       misc: 'group 3',
       estimatedStartDate: '2022-01-01T08:00:00',
       trainers: [trainersList[0]],
@@ -267,6 +270,7 @@ describe('exportCourseHistory', () => {
       type: INTRA,
       companies: [company],
       subProgram: subProgramList[0],
+      tradeName: 'Program 1',
       misc: 'group 1',
       trainers: [trainersList[0]],
       operationsRepresentative,
@@ -333,6 +337,7 @@ describe('exportCourseHistory', () => {
       type: INTER_B2B,
       companies: [otherCompany],
       subProgram: subProgramList[0],
+      tradeName: 'Program 1',
       misc: 'group 1',
       createdAt: '2018-01-07T17:33:55.000Z',
       trainers: [trainersList[0]],
@@ -363,6 +368,7 @@ describe('exportCourseHistory', () => {
       type: SINGLE,
       companies: [company],
       subProgram: subProgramList[0],
+      tradeName: 'Program 1',
       misc: 'Trainee 1',
       trainers: [trainersList[0]],
       operationsRepresentative,
@@ -512,7 +518,7 @@ describe('exportCourseHistory', () => {
             type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] },
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
+        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName'] },
         {
           query: 'populate',
           args: [{
@@ -626,6 +632,7 @@ describe('exportCourseHistory', () => {
         'Payeur',
         'Structure',
         'Société mère',
+        'Nom commercial',
         'Programme',
         'Id programme',
         'Sous-Programme',
@@ -671,6 +678,7 @@ describe('exportCourseHistory', () => {
         'Test SAS',
         'Société mère',
         'Program 1',
+        'Program 1',
         programIdList[0],
         'subProgram 1',
         'group 1',
@@ -714,6 +722,7 @@ describe('exportCourseHistory', () => {
         'APA Paris',
         'Autre structure,Test SAS',
         'Société mère',
+        'Program 2',
         'Program 2',
         programIdList[1],
         'subProgram 2',
@@ -759,6 +768,7 @@ describe('exportCourseHistory', () => {
         '',
         'Société mère',
         'Program 2',
+        'Program 2',
         programIdList[1],
         'subProgram 2',
         'group 3',
@@ -803,6 +813,7 @@ describe('exportCourseHistory', () => {
         'Test SAS',
         'Société mère',
         'Program 1',
+        'Program 1',
         programIdList[0],
         'subProgram 1',
         'group 1',
@@ -846,6 +857,7 @@ describe('exportCourseHistory', () => {
         'APA Paris',
         'Autre structure',
         '',
+        'Program 1',
         'Program 1',
         programIdList[0],
         'subProgram 1',
@@ -911,7 +923,7 @@ describe('exportCourseHistory', () => {
             type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] },
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
+        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName'] },
         {
           query: 'populate',
           args: [{
@@ -1068,6 +1080,7 @@ describe('exportCourseHistory', () => {
         'Payeur',
         'Structure',
         'Société mère',
+        'Nom commercial',
         'Programme',
         'Id programme',
         'Sous-Programme',
@@ -1112,6 +1125,7 @@ describe('exportCourseHistory', () => {
         'APA Paris,Compani Test',
         'Test SAS',
         'Société mère',
+        'Program 1',
         'Program 1',
         programIdList[0],
         'subProgram 1',
@@ -1177,7 +1191,7 @@ describe('exportCourseHistory', () => {
             type: { $in: [SINGLE] },
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices'] },
+        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName'] },
         {
           query: 'populate',
           args: [{
@@ -1319,6 +1333,7 @@ describe('exportCourseSlotHistory', () => {
       subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Program 1' } },
       misc: 'group 1',
       trainers: [trainers[0]._id],
+      tradeName: 'Program 1',
     },
     {
       _id: courseIdList[1],
@@ -1328,6 +1343,7 @@ describe('exportCourseSlotHistory', () => {
       companies: [],
       misc: 'group 2',
       trainers: [trainers[0]._id],
+      tradeName: 'Program 2',
     },
   ];
 
@@ -1370,7 +1386,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies',
+            select: 'type trainees misc subProgram companies tradeName',
             match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1547,7 +1563,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies',
+            select: 'type trainees misc subProgram companies tradeName',
             match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1582,6 +1598,7 @@ describe('exportCourseSlotHistory', () => {
           companies: [],
           trainers: [trainers[0]._id],
           misc: 'Archie Pelle',
+          tradeName: 'Program 3',
         },
         startDate: '2022-02-02T08:00:00.000Z',
         endDate: '2022-02-02T10:00:00.000Z',
@@ -1605,6 +1622,7 @@ describe('exportCourseSlotHistory', () => {
           companies: [],
           trainers: [trainers[0]._id],
           misc: 'Archie Pelle',
+          tradeName: 'Program 3',
         },
         startDate: '2022-03-02T08:00:00.000Z',
         endDate: '2022-03-02T10:00:00.000Z',
@@ -1628,6 +1646,7 @@ describe('exportCourseSlotHistory', () => {
           companies: [],
           trainers: [trainers[0]._id],
           misc: 'Archie Pelle',
+          tradeName: 'Program 3',
         },
         startDate: '2022-04-02T08:30:00.000Z',
         endDate: '2022-04-02T09:00:00.000Z',
@@ -1651,6 +1670,7 @@ describe('exportCourseSlotHistory', () => {
           companies: [],
           trainers: [trainers[0]._id],
           misc: 'Archie Pelle',
+          tradeName: 'Program 3',
         },
         startDate: '2022-04-02T12:00:00.000Z',
         endDate: '2022-04-02T14:00:00.000Z',
@@ -1674,6 +1694,7 @@ describe('exportCourseSlotHistory', () => {
           companies: [],
           trainers: [trainers[0]._id],
           misc: 'Archie Pelle',
+          tradeName: 'Program 3',
         },
         startDate: '2022-05-02T08:00:00.000Z',
         endDate: '2022-05-02T10:00:00.000Z',
@@ -1836,7 +1857,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies',
+            select: 'type trainees misc subProgram companies tradeName',
             match: { type: { $in: [SINGLE] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1883,6 +1904,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           _id: new ObjectId(),
           course: {
             _id: new ObjectId(),
+            tradeName: 'Programme files',
             subProgram: { name: 'Je suis Présentiel', program: { name: 'Programme files' } },
             trainers: [{ identity: { firstname: 'Didier', lastname: 'Deschamps' } }],
           },
@@ -1914,6 +1936,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           _id: new ObjectId(),
           course: {
             _id: new ObjectId(),
+            tradeName: 'DO IT !',
             subProgram: { name: 'JUST', program: { name: 'DO IT !' } },
             trainers: [
               { identity: { firstname: 'Shia', lastname: 'labeouf' } },
@@ -1955,6 +1978,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
           _id: new ObjectId(),
           course: {
             _id: new ObjectId(),
+            tradeName: 'Programme files',
             subProgram: { name: 'Je suis Présentiel', program: { name: 'Programme files' } },
             trainers: [{ identity: { firstname: 'Didier', lastname: 'Deschamps' } }],
           },
@@ -2012,6 +2036,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
     expect(exportArray).toEqual([
       [
         'Id formation',
+        'Nom commercial',
         'Programme',
         'Sous-programme',
         'Prénom Nom intervenant·e',
@@ -2029,6 +2054,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
       [
         questionnaires[0].histories[0].course._id,
         'Programme files',
+        'Programme files',
         'Je suis Présentiel',
         'Didier DESCHAMPS',
         'créole',
@@ -2045,6 +2071,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
       [
         questionnaires[0].histories[1].course._id,
         'DO IT !',
+        'DO IT !',
         'JUST',
         'Shia LABEOUF, Rihanna FENTY',
         'Reggae Music',
@@ -2060,6 +2087,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
       ],
       [
         questionnaires[1].histories[0].course._id,
+        'Programme files',
         'Programme files',
         'Je suis Présentiel',
         'Didier DESCHAMPS',
@@ -2092,7 +2120,7 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
             populate: [
               {
                 path: 'course',
-                select: 'subProgram',
+                select: 'subProgram tradeName',
                 populate: [
                   { path: 'subProgram', select: 'name program', populate: { path: 'program', select: 'name' } },
                   { path: 'trainers', select: 'identity' },
@@ -2117,6 +2145,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
     {
       _id: new ObjectId(),
       subProgram,
+      tradeName: 'Program 1',
       misc: 'Archie Pelle',
       slots: [{ startDate: '2021-01-13T12:00:00.000Z' }, { startDate: '2021-03-13T12:00:00.000Z' }],
       slotsToPlan: [],
@@ -2126,6 +2155,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
     {
       _id: new ObjectId(),
       subProgram,
+      tradeName: 'Program 1',
       misc: 'group 2',
       slots: [],
       slotsToPlan: [],
@@ -2138,6 +2168,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
     {
       _id: new ObjectId(),
       subProgram,
+      tradeName: 'Program 1',
       misc: 'group 3',
       slots: [
         { startDate: '2021-02-10T12:00:00.000Z' },
@@ -2152,6 +2183,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
     {
       _id: new ObjectId(),
       subProgram,
+      tradeName: 'Program 1',
       misc: 'group 4',
       slots: [
         { startDate: '2021-01-12T16:00:00.000Z' },
@@ -2268,7 +2300,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram misc type trainees',
+            select: 'subProgram misc type trainees tradeName',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               { path: 'slots', select: 'startDate' },
@@ -2307,7 +2339,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
               { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
               {
                 path: 'course',
-                select: 'subProgram misc type trainees',
+                select: 'subProgram misc type trainees tradeName',
                 populate: [
                   { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
                   { path: 'trainees', select: 'identity' },
@@ -2474,7 +2506,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram misc type trainees',
+            select: 'subProgram misc type trainees tradeName',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               { path: 'slots', select: 'startDate' },
@@ -2513,7 +2545,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
               { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
               {
                 path: 'course',
-                select: 'subProgram misc type trainees',
+                select: 'subProgram misc type trainees tradeName',
                 populate: [
                   { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
                   { path: 'trainees', select: 'identity' },
@@ -2704,7 +2736,7 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
     SinonMongoose.calledOnceWithExactly(
       findCourse,
       [
-        { query: 'find', args: [{ _id: { $in: [] } }, { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1 }] },
+        { query: 'find', args: [{ _id: { $in: [] } }, { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1, tradeName: 1 }] },
         { query: 'populate', args: [{ path: 'slotsToPlan' }] },
         { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate' }] },
         { query: 'populate', args: [{ path: 'subProgram', select: 'program name', populate: [{ path: 'program', select: 'name' }] }] },
@@ -2734,6 +2766,7 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
       {
         _id: courseIdList[0],
         misc: 'Groupe 1',
+        tradeName: 'Programme 1',
         slots: [{ _id: courseSlotIdList[0], startDate: '2021-01-03T08:00:00.000Z', endDate: '2021-01-03T10:00:00.000Z' }, { _id: courseSlotIdList[1], startDate: '2020-02-01T10:00:00.000Z', endDate: '2021-02-01T16:00:00.000Z' }],
         slotsToPlan: [],
         subProgram: { _id: new ObjectId(), name: 'Sous-programme 1', program: { _id: new ObjectId(), name: 'Programme 1' } },
@@ -2743,6 +2776,7 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
       {
         _id: courseIdList[1],
         misc: 'Groupe 2',
+        tradeName: 'Programme 2',
         slots: [{ _id: courseSlotIdList[2], startDate: '2021-02-01T08:00:00.000Z', endDate: '2021-02-01T10:00:00.000Z' }, { _id: courseSlotIdList[3], startDate: '2021-04-02T08:00:00.000Z', endDate: '2021-04-02T10:00:00.000Z' }],
         slotsToPlan: [],
         subProgram: { _id: new ObjectId(), name: 'Sous-programme 1', program: { _id: programIdList[0], name: 'Programme 2' } },
@@ -2751,6 +2785,7 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
       {
         _id: courseIdList[2],
         misc: 'Groupe 3',
+        tradeName: 'Programme 3',
         slots: [{ _id: courseSlotIdList[4], startDate: '2021-04-02T08:00:00.000Z', endDate: '2021-04-02T10:00:00.000Z' }],
         slotsToPlan: [{ _id: courseSlotIdList[5] }],
         subProgram: { _id: new ObjectId(), name: 'Sous-programme 1', program: { _id: programIdList[1], name: 'Programme 3' } },
@@ -2846,6 +2881,7 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
     expect(result).toEqual([
       [
         'Id formation',
+        'Nom commercial',
         'Programme',
         'Infos complémentaires',
         'Sous-programme',
@@ -2863,6 +2899,7 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
       ],
       [
         courseIdList[0],
+        'Programme 1',
         'Programme 1',
         'Groupe 1',
         'Sous-programme 1',
@@ -2890,7 +2927,7 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
     SinonMongoose.calledOnceWithExactly(
       findCourse,
       [
-        { query: 'find', args: [{ _id: { $in: [courseList[0]._id, courseList[1]._id, courseList[2]._id] } }, { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1 }] },
+        { query: 'find', args: [{ _id: { $in: [courseList[0]._id, courseList[1]._id, courseList[2]._id] } }, { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1, tradeName: 1 }] },
         { query: 'populate', args: [{ path: 'slotsToPlan' }] },
         { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate' }] },
         { query: 'populate', args: [{ path: 'subProgram', select: 'program name', populate: [{ path: 'program', select: 'name' }] }] },

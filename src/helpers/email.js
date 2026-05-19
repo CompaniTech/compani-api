@@ -104,8 +104,7 @@ exports.addTutor = async (courseId, tutorId) => {
 
     const tutorIdentity = UtilsHelper.formatIdentity(tutor.identity, 'FL');
 
-    const course = await Course.findOne({ _id: courseId }, { subProgram: 1, trainees: 1, gSheetId: 1 })
-      .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
+    const course = await Course.findOne({ _id: courseId }, { tradeName: 1, trainees: 1, gSheetId: 1 })
       .populate({ path: 'trainees', select: 'identity' })
       .lean();
 
@@ -113,7 +112,7 @@ exports.addTutor = async (courseId, tutorId) => {
       ? UtilsHelper.formatIdentity(course.trainees[0].identity, 'FL')
       : '';
 
-    const courseName = course.subProgram.program.name;
+    const courseName = course.tradeName;
 
     const mailOptions = {
       from: `Compani <${SENDER_MAIL}>`,

@@ -47,7 +47,7 @@ describe('getPdfContent', () => {
         address: '24 Avenue Daumesnil 75012 Paris',
       },
       isPayerCompany: false,
-      course: { subProgram: { program: { name: 'Test' } } },
+      course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
       billingPurchaseList: [
         { billingItem: { name: 'article 1' }, price: 10, count: 10 },
@@ -277,7 +277,7 @@ describe('getPdfContent', () => {
         address: '24 Avenue Daumesnil 75012 Paris',
       },
       isPayerCompany: true,
-      course: { subProgram: { program: { name: 'Test' } } },
+      course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: TRAINEE },
       courseCreditNote: { number: 'AV-00001' },
       coursePayments: [],
@@ -470,7 +470,7 @@ describe('getPdfContent', () => {
       },
       isPayerCompany: false,
       course: {
-        subProgram: { program: { name: 'Test' } },
+        tradeName: 'Test',
         prices: [{ company: companyId, global: 2000, trainerFees: 200 }],
       },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP, percentage: 50 },
@@ -706,7 +706,7 @@ describe('getPdf', () => {
       number: 'FACT-000045',
       date: '18/08/1998',
       companies: [{ name: 'Test structure' }],
-      course: { subProgram: { program: { name: 'Test' } } },
+      course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
     };
 

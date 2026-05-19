@@ -87,12 +87,8 @@ const balance = async (company, credentials) => {
     .populate([
       {
         path: 'course',
-        select: 'misc slots slotsToPlan subProgram companies',
-        populate: [
-          { path: 'slots' },
-          { path: 'slotsToPlan' },
-          { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-        ],
+        select: 'misc slots slotsToPlan companies tradeName trainees type',
+        populate: [{ path: 'slots' }, { path: 'slotsToPlan' }, { path: 'trainees', select: 'identity' }],
       },
       { path: 'companies', select: 'name' },
       { path: 'payer.company', select: 'name' },
@@ -118,8 +114,11 @@ const formatCourse = async (course) => {
   const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
     .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
   const traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
-  const courseTrainees = course.trainees
-    .map(traineeId => ({ _id: traineeId, registrationCompany: traineesCompany[traineeId] }));
+  const courseTrainees = course.trainees.map(trainee => ({
+    _id: trainee._id,
+    registrationCompany: traineesCompany[trainee._id],
+    identity: trainee.identity,
+  }));
   const coursePrices = course.companies.map((c) => {
     const companyPrice = (course.prices || []).find(p => UtilsHelper.areObjectIdsEquals(p.company, c._id)) ||
       { company: c._id, global: '' };
@@ -132,6 +131,7 @@ exports.list = async (query, credentials) => {
   if (query.action === LIST) {
     const courseBills = await CourseBill
       .find({ course: query.course })
+      .populate({ path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } })
       .populate({ path: 'companies', select: 'name' })
       .populate({ path: 'payer.fundingOrganisation', select: 'name' })
       .populate({ path: 'payer.company', select: 'name' })
@@ -156,10 +156,9 @@ exports.list = async (query, credentials) => {
       ...(query.startDate && query.endDate
         ? [{
           path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type tradeName',
           populate: [
             { path: 'companies', select: 'name' },
-            { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
             {
               path: 'slots',
               select: 'startDate endDate',
@@ -173,6 +172,7 @@ exports.list = async (query, credentials) => {
               },
             },
             { path: 'slotsToPlan', select: '_id' },
+            { path: 'trainees', select: 'identity' },
           ],
         },
         {
@@ -181,10 +181,11 @@ exports.list = async (query, credentials) => {
           populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
         },
         ]
-        : []
+        : [{ path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } }]
       ),
       { path: 'payer.fundingOrganisation', select: 'name' },
       { path: 'payer.company', select: 'name' },
+      { path: 'companies', select: 'name' },
       { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
     ])
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
@@ -203,7 +204,7 @@ exports.list = async (query, credentials) => {
       .lean();
 
     const activityIds = subPrograms.flatMap(sp => sp.steps.flatMap(s => s.activities));
-    const trainees = singleCourseBills.flatMap(bill => bill.course.trainees);
+    const trainees = singleCourseBills.flatMap(bill => bill.course.trainees.map(t => t._id));
     const activityHistories = await ActivityHistory
       .find({
         activity: { $in: activityIds },
@@ -222,16 +223,19 @@ exports.list = async (query, credentials) => {
       })
       .map(async bill => ({
         ...bill,
-        ...(query.startDate && query.endDate && {
-          course: await formatCourse(bill.course),
-          ...!query.isValidated && {
-            hasCourseAction: bill.course.type !== SINGLE ||
-              bill.course.trainees.some(t => activityHistoriesByTrainee[t]) ||
-              bill.course.slots
-                .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
-                .some(s => s.attendances.length),
-          },
-        }),
+        ...(query.startDate && query.endDate
+          ? {
+            course: await formatCourse(bill.course),
+            ...!query.isValidated && {
+              hasCourseAction: bill.course.type !== SINGLE ||
+                bill.course.trainees.some(t => activityHistoriesByTrainee[t._id]) ||
+                bill.course.slots
+                  .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
+                  .some(s => s.attendances.length),
+            },
+          }
+          : { course: bill.course }
+        ),
         netInclTaxes: exports.getNetInclTaxes(bill),
       }))
   );
@@ -575,11 +579,7 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
 
   const bill = await CourseBill
     .findOne({ _id: billId }, { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 })
-    .populate({
-      path: 'course',
-      select: 'subProgram prices',
-      populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
-    })
+    .populate({ path: 'course', select: 'tradeName prices' })
     .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } })
     .populate({ path: 'companies', select: 'name address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'name address' })

@@ -14,7 +14,7 @@ const {
 } = require('./seed/programsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
-const { coach, noRoleNoCompany } = require('../seed/authUsersSeed');
+const { coach, noRoleNoCompany, trainerAndCoach } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -974,6 +974,177 @@ describe('PROGRAMS ROUTES - DELETE /{_id}/testers/{testerId}', () => {
         const response = await app.inject({
           method: 'DELETE',
           url: `/programs/${programsList[1]._id}/testers/${coach._id}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('PROGRAMS ROUTES - POST /programs/{_id}/trade-names', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should add trade name to program', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/programs/${programsList[0]._id}/trade-names`,
+        payload: { tradeName: 'nouvelle marque' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      const programUpdated = await Program
+        .countDocuments({ _id: programsList[0]._id, 'tradeNames.name': 'nouvelle marque' });
+
+      expect(response.statusCode).toBe(200);
+      expect(programUpdated).toEqual(1);
+    });
+
+    it('should return 404 if program does not exist', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/programs/${new ObjectId()}/trade-names`,
+        payload: { tradeName: 'nouvelle marque' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 409 if trade name already exists', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/programs/${programsList[0]._id}/trade-names`,
+        payload: { tradeName: 'Ma marque' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+  });
+
+  describe('TRAINER (not program editor)', () => {
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(trainerAndCoach.local);
+    });
+
+    it('should return 403 if trainer is not program editor', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/programs/${programsList[0]._id}/trade-names`,
+        payload: { tradeName: 'nouvelle marque' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'POST',
+          url: `/programs/${programsList[0]._id}/trade-names`,
+          payload: { tradeName: 'nouvelle marque' },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('PROGRAMS ROUTES - DELETE /programs/{_id}/trade-names/{tradeNameId}', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should delete trade name from program', async () => {
+      const tradeNameId = programsList[0].tradeNames[0]._id;
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/programs/${programsList[0]._id}/trade-names/${tradeNameId}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      const programUpdated = await Program.countDocuments({ _id: programsList[0]._id, 'tradeNames._id': tradeNameId });
+
+      expect(response.statusCode).toBe(200);
+      expect(programUpdated).toEqual(0);
+    });
+
+    it('should return 404 if program does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/programs/${new ObjectId()}/trade-names/${programsList[0].tradeNames[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 404 if trade name does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/programs/${programsList[0]._id}/trade-names/${new ObjectId()}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('TRAINER (not program editor)', () => {
+    beforeEach(async () => {
+      authToken = await getTokenByCredentials(trainerAndCoach.local);
+    });
+
+    it('should return 403 if trainer is not program editor', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/programs/${programsList[0]._id}/trade-names/${programsList[0].tradeNames[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'DELETE',
+          url: `/programs/${programsList[0]._id}/trade-names/${programsList[0].tradeNames[0]._id}`,
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 

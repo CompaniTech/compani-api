@@ -265,7 +265,7 @@ const formatQuery = (query, credentials) => {
 const formatCourseStepsList = (course, trainerIdRequestingOperations = null) => {
   if (course.subProgram.isStrictlyELearning) return [];
 
-  const courseName = get(course, 'subProgram.program.name');
+  const courseName = course.tradeName;
   const courseMisc = course.misc || '';
   const courseSteps = get(course, 'subProgram.steps');
   const stepSlotsList = groupBy(
@@ -361,12 +361,12 @@ const listForPedagogy = async (query, origin, credentials) => {
 
   if (traineeCourseIds.length) {
     traineeCourses = await Course
-      .find({ _id: { $in: traineeCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1 })
+      .find({ _id: { $in: traineeCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tradeName: 1 })
       .populate({
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name image description' },
+          { path: 'program', select: 'image description' },
           {
             path: 'steps',
             select: 'name type activities theoreticalDuration',
@@ -399,12 +399,12 @@ const listForPedagogy = async (query, origin, credentials) => {
 
   if (tutorCourseIds.length) {
     tutorCourses = await Course
-      .find({ _id: { $in: tutorCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tutors: 1 })
+      .find({ _id: { $in: tutorCourseIds } }, { _id: 1, misc: 1, type: 1, format: 1, tutors: 1, tradeName: 1 })
       .populate({
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name image description' },
+          { path: 'program', select: 'image description' },
           { path: 'steps', select: 'type theoreticalDuration' },
         ],
       })
@@ -546,7 +546,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals' },
+          { path: 'program', select: 'learningGoals' },
           ...(origin === WEBAPP
             ? [{
               path: 'steps',
@@ -649,8 +649,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
 };
 
 const getCourseForQuestionnaire = async courseId => Course
-  .findOne({ _id: courseId }, { subProgram: 1, type: 1, trainers: 1, trainees: 1, misc: 1 })
-  .populate({ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] })
+  .findOne({ _id: courseId }, { subProgram: 1, type: 1, trainers: 1, trainees: 1, misc: 1, tradeName: 1 })
   .populate({ path: 'trainers', select: 'identity.firstname identity.lastname' })
   .populate({ path: 'trainees', select: 'identity.firstname identity.lastname local.email' })
   .lean({ virtuals: true });
@@ -709,19 +708,16 @@ exports.getCourseFollowUp = async (course, query, credentials) => {
   const courseFollowUp = await Course.findOne({ _id: course }, { subProgram: 1 })
     .populate({
       path: 'subProgram',
-      select: 'name steps program',
-      populate: [
-        { path: 'program', select: 'name' },
-        {
-          path: 'steps',
-          select: 'name activities type',
-          populate: {
-            path: 'activities',
-            select: 'name type',
-            populate: { path: 'activityHistories', match: { user: { $in: courseWithTrainees.trainees } } },
-          },
+      select: 'name steps',
+      populate: {
+        path: 'steps',
+        select: 'name activities type',
+        populate: {
+          path: 'activities',
+          select: 'name type',
+          populate: { path: 'activityHistories', match: { user: { $in: courseWithTrainees.trainees } } },
         },
-      ],
+      },
     })
     .populate({
       path: 'trainees',
@@ -851,7 +847,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
     .populate({ path: 'questionnaires' })
-    .select('_id misc format type trainees gSheetId certificateGenerationMode')
+    .select('_id misc format type trainees gSheetId certificateGenerationMode tradeName')
     .lean({ autopopulate: true, virtuals: true });
 
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
@@ -1175,7 +1171,7 @@ const getLiveDuration = (steps) => {
 
 exports.formatIntraCourseForPdf = async (course) => {
   const possibleMisc = course.misc ? ` - ${course.misc}` : '';
-  const name = course.subProgram.program.name + possibleMisc;
+  const name = course.tradeName + possibleMisc;
   const courseData = {
     name,
     duration: getLiveDuration(course.subProgram.steps),
@@ -1219,7 +1215,7 @@ exports.formatIntraCourseForPdf = async (course) => {
 
 exports.formatInterCourseForPdf = async (course) => {
   const possibleMisc = course.misc ? ` - ${course.misc}` : '';
-  const name = course.subProgram.program.name + possibleMisc;
+  const name = course.tradeName + possibleMisc;
   const sortedSlots = course.slots ? course.slots.sort(DatesUtilsHelper.ascendingSortBy('startDate')) : [];
 
   const courseData = {
@@ -1255,15 +1251,15 @@ exports.formatInterCourseForPdf = async (course) => {
 
 exports.generateAttendanceSheets = async (courseId, query) => {
   const course = await Course
-    .findOne({ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1 })
+    .findOne({ _id: courseId }, { misc: 1, type: 1, maxTrainees: 1, tradeName: 1 })
     .populate({ path: 'companies', select: 'name' })
     .populate({ path: 'slots', select: 'startDate endDate address trainees' })
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
       path: 'subProgram',
-      select: 'steps program',
-      populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type theoreticalDuration' }],
+      select: 'steps',
+      populate: { path: 'steps', select: 'type theoreticalDuration' },
     })
     .lean();
 
@@ -1300,7 +1296,7 @@ exports.formatCourseForDocuments = (course, type) => {
     duration: { ...durationsByTrainee, eLearning: theoreticalDuration.format(SHORT_DURATION_H_MM) },
     learningGoals: get(course, 'subProgram.program.learningGoals') || '',
     subProgramId: course.subProgram._id,
-    programName: get(course, 'subProgram.program.name').toUpperCase() || '',
+    programName: (course.tradeName || '').toUpperCase(),
     startDate: CompaniDate(sortedCourseSlots[0].startDate).format(DD_MM_YYYY),
     endDate: CompaniDate(sortedCourseSlots[sortedCourseSlots.length - 1].endDate).format(DD_MM_YYYY),
     ...(type === OFFICIAL && { companyNamesById: mapValues(keyBy(course.companies, '_id'), 'name') }),
@@ -1569,7 +1565,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals subPrograms' },
+          { path: 'program', select: 'learningGoals subPrograms' },
           {
             path: 'steps',
             select: 'type theoreticalDuration',
@@ -1663,11 +1659,11 @@ exports.formatCourseForConvocationPdf = (course) => {
 };
 
 exports.generateConvocationPdf = async (courseId) => {
-  const course = await Course.findOne({ _id: courseId }, { misc: 1 })
+  const course = await Course.findOne({ _id: courseId }, { misc: 1, tradeName: 1 })
     .populate({
       path: 'subProgram',
       select: 'program',
-      populate: { path: 'program', select: 'name description' },
+      populate: { path: 'program', select: 'description' },
     })
     .populate({ path: 'slots', select: 'startDate endDate address meetingLink' })
     .populate({ path: 'slotsToPlan', select: '_id' })
@@ -1675,7 +1671,7 @@ exports.generateConvocationPdf = async (courseId) => {
     .populate({ path: 'trainers', select: 'identity.firstname identity.lastname biography' })
     .lean();
 
-  const courseName = get(course, 'subProgram.program.name', '').split(' ').join('-') || 'Formation';
+  const courseName = (course.tradeName || '').split(' ').join('-') || 'Formation';
 
   const pdf = await CourseConvocation.getPdf(exports.formatCourseForConvocationPdf(course));
 
@@ -1723,14 +1719,14 @@ exports.removeCourseCompany = async (courseId, companyId, credentials) => {
 
 exports.generateTrainingContract = async (courseId, payload) => {
   const course = await Course
-    .findOne({ _id: courseId }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1 })
+    .findOne({ _id: courseId }, { maxTrainees: 1, misc: 1, type: 1, trainees: 1, prices: 1, tradeName: 1 })
     .populate([
       { path: 'companies', select: 'name address', match: { _id: payload.company } },
       {
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals' },
+          { path: 'program', select: 'learningGoals' },
           { path: 'steps', select: 'theoreticalDuration type' },
         ],
       },
@@ -1754,7 +1750,7 @@ exports.composeCourseName = (course) => {
   const companyName = course.type === INTRA ? `${course.companies[0].name} - ` : '';
   const misc = course.misc ? ` - ${course.misc}` : '';
 
-  return companyName + course.subProgram.program.name + misc;
+  return companyName + course.tradeName + misc;
 };
 
 exports.addTrainer = async (courseId, payload, credentials) => {
@@ -1849,7 +1845,11 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
     }
     if (!userId) {
       const newUser = await UsersHelper.createUser(
-        { ...omit(learner, ['operationsRepresentative', 'subProgram', 'coach', 'architect']), company, origin: WEBAPP },
+        {
+          ...omit(learner, ['operationsRepresentative', 'subProgram', 'coach', 'architect', 'tradeName']),
+          company,
+          origin: WEBAPP,
+        },
         credentials
       );
       userId = newUser._id;
@@ -1863,7 +1863,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       if (!userCompany) await UserCompaniesHelper.create({ user: userId, company });
     }
 
-    const { subProgram, operationsRepresentative, estimatedStartDate, coach, architect } = learner;
+    const { subProgram, operationsRepresentative, estimatedStartDate, coach, architect, tradeName } = learner;
     const identity = { firstname: learner['identity.firstname'], lastname: learner['identity.lastname'] };
     const payload = {
       subProgram,
@@ -1878,6 +1878,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       estimatedStartDate,
       coach,
       architect,
+      tradeName,
     };
     const course = await exports.createCourse(payload, credentials);
     if (coach) await exports.addTrainer(course._id, { trainer: coach._id }, credentials);
@@ -1904,7 +1905,7 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
         path: 'subProgram',
         select: 'program steps',
         populate: [
-          { path: 'program', select: 'name learningGoals subPrograms' },
+          { path: 'program', select: 'learningGoals subPrograms' },
           {
             path: 'steps',
             select: 'type theoreticalDuration',

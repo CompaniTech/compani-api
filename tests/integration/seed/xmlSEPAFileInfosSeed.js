@@ -58,6 +58,7 @@ const course = {
   createdAt: '2018-01-07T22:00:00.000Z',
   certificateGenerationMode: GLOBAL,
   prices: [{ global: 3000, company: authCompany._id }],
+  tradeName: 'nom',
 };
 
 const courseFundingOrganisation = {

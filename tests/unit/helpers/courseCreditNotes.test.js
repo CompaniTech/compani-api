@@ -109,10 +109,7 @@ describe('generateCreditNotePdf', () => {
       companies: [companyId],
       courseBill: {
         _id: new ObjectId(),
-        course: {
-          _id: new ObjectId(),
-          subProgram: { _id: new ObjectId(), program: { _id: new ObjectId(), name: 'Test' } },
-        },
+        course: { _id: new ObjectId(), tradeName: 'Test' },
         mainFee: { price: 1000, count: 1 },
         billingPurchaseList: [
           { billingItem: { _id: new ObjectId(), name: 'article 1' }, price: 10, count: 10 },
@@ -164,11 +161,7 @@ describe('generateCreditNotePdf', () => {
               path: 'courseBill',
               select: 'course number date payer billingPurchaseList mainFee billedAt',
               populate: [
-                {
-                  path: 'course',
-                  select: 'subProgram prices',
-                  populate: { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
-                },
+                { path: 'course', select: 'tradeName prices' },
                 { path: 'payer.fundingOrganisation', select: 'name address' },
                 { path: 'payer.company', select: 'name address' },
                 {

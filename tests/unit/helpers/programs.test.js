@@ -243,17 +243,20 @@ describe('getProgram', () => {
           query: 'populate',
           args: [{
             path: 'subPrograms',
-            populate: {
-              path: 'steps',
-              populate: [
-                { path: 'activities', populate: 'cards' },
-                {
-                  path: 'subPrograms',
-                  select: 'name -steps',
-                  populate: { path: 'program', select: 'name -subPrograms' },
-                },
-              ],
-            },
+            populate: [
+              {
+                path: 'steps',
+                populate: [
+                  { path: 'activities', populate: 'cards' },
+                  {
+                    path: 'subPrograms',
+                    select: 'name -steps',
+                    populate: { path: 'program', select: 'name -subPrograms' },
+                  },
+                ],
+              },
+              { path: 'courses', select: 'tradeName' },
+            ],
           }],
         },
         {
@@ -477,5 +480,45 @@ describe('removeTester', () => {
     await ProgramHelper.removeTester(programId, testerId);
 
     sinon.assert.calledOnceWithExactly(updateOne, { _id: programId }, { $pull: { testers: testerId } });
+  });
+});
+
+describe('addTradeName', () => {
+  let updateOne;
+  beforeEach(() => {
+    updateOne = sinon.stub(Program, 'updateOne');
+  });
+  afterEach(() => {
+    updateOne.restore();
+  });
+
+  it('should add trade name', async () => {
+    const programId = new ObjectId();
+    const payload = { tradeName: 'ma marque' };
+    await ProgramHelper.addTradeName(programId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: programId },
+      { $push: { tradeNames: { name: payload.tradeName } } }
+    );
+  });
+});
+
+describe('removeTradeName', () => {
+  let updateOne;
+  beforeEach(() => {
+    updateOne = sinon.stub(Program, 'updateOne');
+  });
+  afterEach(() => {
+    updateOne.restore();
+  });
+
+  it('should remove trade name', async () => {
+    const programId = new ObjectId();
+    const tradeNameId = new ObjectId();
+    await ProgramHelper.removeTradeName(programId, tradeNameId);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: programId }, { $pull: { tradeNames: { _id: tradeNameId } } });
   });
 });

@@ -108,6 +108,7 @@ const courseList = [
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id, trainerAndCoach._id],
     certificateGenerationMode: MONTHLY,
+    tradeName: 'nom',
   },
   { // 1 Course with monthly certificateGenerationMode
     _id: new ObjectId(),
@@ -118,6 +119,7 @@ const courseList = [
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
+    tradeName: 'nom',
   },
   { // 2 Course with monthly certificateGenerationMode and same subProgram as courseList[0]
     _id: new ObjectId(),
@@ -128,6 +130,7 @@ const courseList = [
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
+    tradeName: 'nom',
   },
   { // 3 Archived course with monthly certificateGenerationMode
     _id: new ObjectId(),
@@ -139,6 +142,7 @@ const courseList = [
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
     archivedAt: '2025-04-06T00:00:00.000Z',
+    tradeName: 'nom',
   },
   { // 4 Inter course with monthly certificateGenerationMode and with otherCompany and companyWithoutSubscription
     _id: new ObjectId(),
@@ -149,6 +153,7 @@ const courseList = [
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
+    tradeName: 'nom',
   },
 ];
 

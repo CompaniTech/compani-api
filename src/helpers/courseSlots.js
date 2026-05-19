@@ -80,7 +80,7 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
         isAbsence,
         status: slotStatus,
         amount,
-        program: slot.course.subProgram.program,
+        tradeName: slot.course.tradeName,
         ...(trainerBill && trainerBill.billNumber && { trainerBillNumber: trainerBill.billNumber }),
       };
     });
@@ -153,7 +153,7 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
       slotsByDates[dates].slotsDate.push({
         _id: slot._id,
         courseId: slot.course._id,
-        program: slot.course.subProgram.program,
+        tradeName: slot.course.tradeName,
         traineeName: UtilsHelper.formatIdentity(slot.course.trainees[0].identity, 'FL'),
         startDate: startISO,
         endDate: endISO,
@@ -231,10 +231,10 @@ exports.list = async (query) => {
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
       path: 'course',
-      select: '_id misc subProgram trainees',
+      select: '_id misc subProgram trainees tradeName',
       populate: [
         { path: 'trainees', select: 'identity' },
-        { path: 'subProgram', select: 'program priceVersions', populate: { path: 'program', select: 'name' } },
+        { path: 'subProgram', select: 'priceVersions' },
       ],
     })
     .populate({ path: 'attendances', select: 'status', options: { isVendorUser: true } })

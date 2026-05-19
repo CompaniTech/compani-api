@@ -1312,7 +1312,7 @@ describe('getFollowUp', () => {
         _id: courseId,
         companies: [{ name: 'company' }],
         holding: [{ name: 'société mère' }],
-        subProgram: { program: { name: 'test' } },
+        tradeName: 'test',
         misc: 'infos',
         type: INTRA,
         trainees: [
@@ -1399,7 +1399,7 @@ describe('getFollowUp', () => {
       expect(result).toEqual({
         course: {
           _id: courseId,
-          subProgram: { program: { name: 'test' } },
+          tradeName: 'test',
           type: INTRA,
           companies: [{ name: 'company' }],
           holding: [{ name: 'société mère' }],
@@ -1485,9 +1485,9 @@ describe('getFollowUp', () => {
                 { path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' },
                 {
                   path: 'course',
-                  select: 'trainers subProgram misc companies type',
+                  select: 'trainers subProgram misc companies type tradeName',
                   populate: [
-                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id name' } },
+                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                     { path: 'companies', select: 'name' },
                   ],
                 },
@@ -1501,11 +1501,7 @@ describe('getFollowUp', () => {
         courseFindOne,
         [
           { query: 'findOne', args: [{ _id: courseId }] },
-          { query: 'select', args: ['subProgram companies misc type holding trainees'] },
-          {
-            query: 'populate',
-            args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
-          },
+          { query: 'select', args: ['tradeName companies misc type holding trainees'] },
           { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
           { query: 'populate', args: [{ path: 'holding', select: 'name' }] },
           { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -1575,9 +1571,9 @@ describe('getFollowUp', () => {
                 { path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' },
                 {
                   path: 'course',
-                  select: 'trainers subProgram misc companies type',
+                  select: 'trainers subProgram misc companies type tradeName',
                   populate: [
-                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id name' } },
+                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                     { path: 'companies', select: 'name' },
                   ],
                 },
@@ -1591,11 +1587,7 @@ describe('getFollowUp', () => {
         courseFindOne,
         [
           { query: 'findOne', args: [{ _id: courseId }] },
-          { query: 'select', args: ['subProgram companies misc type holding trainees'] },
-          {
-            query: 'populate',
-            args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
-          },
+          { query: 'select', args: ['tradeName companies misc type holding trainees'] },
           { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
           { query: 'populate', args: [{ path: 'holding', select: 'name' }] },
           { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -1613,7 +1605,7 @@ describe('getFollowUp', () => {
       const course = {
         _id: courseId,
         companies: [{ name: 'company' }],
-        subProgram: { program: { name: 'test' } },
+        tradeName: 'test',
         misc: 'infos',
         type: INTRA,
       };
@@ -1750,11 +1742,7 @@ describe('getFollowUp', () => {
         courseFindOne,
         [
           { query: 'findOne', args: [{ _id: courseId }] },
-          { query: 'select', args: ['subProgram companies misc type'] },
-          {
-            query: 'populate',
-            args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
-          },
+          { query: 'select', args: ['tradeName companies misc type'] },
           { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
           { query: 'lean' },
         ]
@@ -1775,9 +1763,9 @@ describe('getFollowUp', () => {
                 { path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' },
                 {
                   path: 'course',
-                  select: 'trainers subProgram misc companies type',
+                  select: 'trainers subProgram misc companies type tradeName',
                   populate: [
-                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id name' } },
+                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                     { path: 'companies', select: 'name' },
                   ],
                 },
@@ -1929,9 +1917,9 @@ describe('getFollowUp', () => {
                 { path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' },
                 {
                   path: 'course',
-                  select: 'trainers subProgram misc companies type',
+                  select: 'trainers subProgram misc companies type tradeName',
                   populate: [
-                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id name' } },
+                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                     { path: 'companies', select: 'name' },
                   ],
                 },
@@ -1950,7 +1938,7 @@ describe('getFollowUp', () => {
       const course = {
         _id: courseId,
         companies: [{ name: 'company' }],
-        subProgram: { program: { name: 'test' } },
+        tradeName: 'test',
         misc: 'infos',
         type: INTRA,
       };
@@ -1988,11 +1976,7 @@ describe('getFollowUp', () => {
         courseFindOne,
         [
           { query: 'findOne', args: [{ _id: courseId }] },
-          { query: 'select', args: ['subProgram companies misc type'] },
-          {
-            query: 'populate',
-            args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
-          },
+          { query: 'select', args: ['tradeName companies misc type'] },
           { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
           { query: 'lean' },
         ]
@@ -2013,9 +1997,9 @@ describe('getFollowUp', () => {
                 { path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' },
                 {
                   path: 'course',
-                  select: 'trainers subProgram misc companies type',
+                  select: 'trainers subProgram misc companies type tradeName',
                   populate: [
-                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id name' } },
+                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                     { path: 'companies', select: 'name' },
                   ],
                 },
@@ -2033,7 +2017,7 @@ describe('getFollowUp', () => {
       const course = {
         _id: courseId,
         companies: [{ name: 'company' }],
-        subProgram: { program: { name: 'test' } },
+        tradeName: 'test',
         misc: 'infos',
         type: INTRA,
       };
@@ -2063,11 +2047,7 @@ describe('getFollowUp', () => {
         courseFindOne,
         [
           { query: 'findOne', args: [{ _id: courseId }] },
-          { query: 'select', args: ['subProgram companies misc type'] },
-          {
-            query: 'populate',
-            args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
-          },
+          { query: 'select', args: ['tradeName companies misc type'] },
           { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
           { query: 'lean' },
         ]
@@ -2088,9 +2068,9 @@ describe('getFollowUp', () => {
                 { path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' },
                 {
                   path: 'course',
-                  select: 'trainers subProgram misc companies type',
+                  select: 'trainers subProgram misc companies type tradeName',
                   populate: [
-                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id name' } },
+                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                     { path: 'companies', select: 'name' },
                   ],
                 },
@@ -2109,7 +2089,7 @@ describe('getFollowUp', () => {
       const course = {
         _id: courseId,
         companies: [{ name: 'company' }],
-        subProgram: { program: { name: 'test' } },
+        tradeName: 'test',
         misc: 'infos',
         type: INTRA,
       };
@@ -2144,11 +2124,7 @@ describe('getFollowUp', () => {
         courseFindOne,
         [
           { query: 'findOne', args: [{ _id: courseId }] },
-          { query: 'select', args: ['subProgram companies misc type'] },
-          {
-            query: 'populate',
-            args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] }],
-          },
+          { query: 'select', args: ['tradeName companies misc type'] },
           { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
           { query: 'lean' },
         ]
@@ -2169,9 +2145,9 @@ describe('getFollowUp', () => {
                 { path: 'questionnaireAnswersList.card', select: '-__v -createdAt -updatedAt' },
                 {
                   path: 'course',
-                  select: 'trainers subProgram misc companies type',
+                  select: 'trainers subProgram misc companies type tradeName',
                   populate: [
-                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id name' } },
+                    { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                     { path: 'companies', select: 'name' },
                   ],
                 },

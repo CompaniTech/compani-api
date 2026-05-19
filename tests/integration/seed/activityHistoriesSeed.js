@@ -168,6 +168,7 @@ const coursesList = [
     type: INTER_B2C,
     trainees: [userList[1]._id],
     format: STRICTLY_E_LEARNING,
+    tradeName: 'nom',
   },
   {
     _id: new ObjectId(),
@@ -178,6 +179,7 @@ const coursesList = [
     trainees: [],
     certificateGenerationMode: GLOBAL,
     operationsRepresentative: userList[0]._id,
+    tradeName: 'nom',
   },
 ];
 

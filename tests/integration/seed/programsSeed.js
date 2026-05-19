@@ -76,6 +76,7 @@ const programsList = [
     subPrograms: [subProgramsList[0]._id],
     image: { link: 'bonjour', publicId: 'au revoir' },
     categories: [categoriesList[0]._id],
+    tradeNames: [{ _id: new ObjectId(), name: 'ma marque' }],
   },
   {
     _id: new ObjectId(),
@@ -98,6 +99,7 @@ const course = {
   type: INTER_B2C,
   format: 'strictly_e_learning',
   trainees: [userList[0]._id, vendorAdmin._id],
+  tradeName: 'nom',
 };
 
 const populateDB = async () => {

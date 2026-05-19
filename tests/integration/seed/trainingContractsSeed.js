@@ -36,6 +36,7 @@ const courseList = [
     contact: trainerAndCoach._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 1
     _id: new ObjectId(),
@@ -51,6 +52,7 @@ const courseList = [
     contact: trainerAndCoach._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 2
     _id: new ObjectId(),
@@ -64,6 +66,7 @@ const courseList = [
     operationsRepresentative: vendorAdmin._id,
     expectedBillsCount: 2,
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 3 archived course
     _id: new ObjectId(),
@@ -76,6 +79,7 @@ const courseList = [
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2023-01-03T14:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
   { // 4 intra_holding course
     _id: new ObjectId(),
@@ -90,6 +94,7 @@ const courseList = [
     operationsRepresentative: vendorAdmin._id,
     archivedAt: '2023-01-03T14:00:00.000Z',
     certificateGenerationMode: GLOBAL,
+    tradeName: 'nom',
   },
 ];
 

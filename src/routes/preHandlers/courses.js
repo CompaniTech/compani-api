@@ -1069,6 +1069,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
     'coach',
     'architect',
     'estimatedStartDate',
+    'tradeName',
   ].sort();
   if (!isEqual(Object.keys(learnerList[0]).sort(), allowedKeys)) {
     throw Boom.badRequest(translate[language].wrongColumnsInCsv);
@@ -1285,6 +1286,11 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
       else errorsByTrainee[learnerName] = [translate[language].incorrectDate];
     }
 
+    if (!learner.tradeName) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].missingTradeName);
+      else errorsByTrainee[learnerName] = [translate[language].missingTradeName];
+    }
+
     if (!errorsByTrainee[learnerName]) {
       formattedLearnerList.push({
         ...identityUser && sameEmail && { _id: identityUser._id },
@@ -1299,6 +1305,7 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
         architect: formattedArchitect,
         subProgram: learner.subProgram,
         ...formattedDate && { estimatedStartDate: formattedDate },
+        tradeName: learner.tradeName,
       });
     }
     i += 1;

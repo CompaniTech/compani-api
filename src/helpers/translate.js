@@ -80,6 +80,9 @@ module.exports = {
     testerRemoved: 'Tester removed from program.',
     testerNotFound: 'Tester not found in program.',
     testerConflict: 'Tester already added to program.',
+    tradeNameAdded: 'Trade name added to program.',
+    tradeNameRemoved: 'Trade name removed from program.',
+    tradeNameExists: 'Trade name already added to program.',
     /* Categories */
     categoriesFound: 'Categories found.',
     categoriesNotFound: 'Categories not found.',
@@ -307,6 +310,7 @@ module.exports = {
     unknownCoach: 'coach doesn\'t exist',
     unknownArchitect: 'architect doesn\'t exist',
     incorrectDate: 'date is incorrect',
+    missingTradeName: 'trade name is missing',
     fileIsToBig: 'File is too big.',
   },
   'fr-FR': {
@@ -389,6 +393,9 @@ module.exports = {
     testerRemoved: 'Testeur(euse) supprimé(e) du programme.',
     testerNotFound: 'Testeur(euse) non trouvé(e) dans le programme.',
     testerConflict: 'Testeur(euse) déjà ajouté(e) au programme.',
+    tradeNameAdded: 'Nom commercial ajouté au programme.',
+    tradeNameRemoved: 'Nom commercial retiré du programme.',
+    tradeNameExists: 'Nom commercial déjà ajouté au programme.',
     /* Categories */
     categoriesFound: 'Catégories trouvées.',
     categoriesNotFound: 'Catégories non trouvées.',
@@ -626,6 +633,7 @@ module.exports = {
     unknownCoach: 'le coach n\'existe pas',
     unknownArchitect: 'l\'architecte n\'existe pas',
     incorrectDate: 'le format de la date est incorrect',
+    missingTradeName: 'le nom commercial est manquant',
     fileIsToBig: `Le fichier contient trop de stagiaires (${process.env.MAX_CSV_COURSE_SIZE} maximum).`,
   },
 };

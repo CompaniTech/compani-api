@@ -150,6 +150,28 @@ const removeTester = async (req) => {
   }
 };
 
+const addTradeName = async (req) => {
+  try {
+    await ProgramHelper.addTradeName(req.params._id, req.payload);
+
+    return { message: translate[language].tradeNameAdded };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const removeTradeName = async (req) => {
+  try {
+    await ProgramHelper.removeTradeName(req.params._id, req.params.tradeNameId);
+
+    return { message: translate[language].tradeNameRemoved };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 module.exports = {
   list,
   listELearning,
@@ -163,4 +185,6 @@ module.exports = {
   removeCategory,
   addTester,
   removeTester,
+  addTradeName,
+  removeTradeName,
 };

@@ -242,6 +242,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     Payeur: payerList || '',
     Structure: companiesName || '',
     'Société mère': companiesHolding.length ? companiesHolding.join(', ') : get(course, 'holding.name', ''),
+    'Nom commercial': course.tradeName || '',
     Programme: get(course, 'subProgram.program.name') || '',
     'Id programme': get(course, 'subProgram.program._id') || '',
     'Sous-Programme': get(course, 'subProgram.name') || '',
@@ -346,7 +347,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
-      select: 'type trainees misc subProgram companies',
+      select: 'type trainees misc subProgram companies tradeName',
       match: { type: { $in: courseTypes } },
       populate: [
         { path: 'companies', select: 'name' },
@@ -480,7 +481,7 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
       populate: [
         {
           path: 'course',
-          select: 'subProgram',
+          select: 'subProgram tradeName',
           populate: [
             { path: 'subProgram', select: 'name program', populate: { path: 'program', select: 'name' } },
             { path: 'trainers', select: 'identity' },
@@ -508,6 +509,7 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
 
     const row = {
       'Id formation': get(qHistory, 'course._id') || '',
+      'Nom commercial': get(qHistory, 'course.tradeName') || '',
       Programme: get(qHistory, 'course.subProgram.program.name') || '',
       'Sous-programme': get(qHistory, 'course.subProgram.name') || '',
       'Prénom Nom intervenant·e': formatTrainersName(get(qHistory, 'course.trainers', [])),
@@ -531,7 +533,7 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
 const formatCommonInfos = (bill, netInclTaxes) => {
   const companyName = bill.course.type === INTRA ? `${bill.companies[0].name} - ` : '';
   const misc = bill.course.misc ? ` - ${bill.course.misc}` : '';
-  const courseName = `${companyName}${bill.course.subProgram.program.name}${misc}`;
+  const courseName = `${companyName}${bill.course.tradeName}${misc}`;
 
   return {
     'Id formation': bill.course._id,
@@ -552,7 +554,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
     .populate(
       {
         path: 'course',
-        select: 'subProgram misc type trainees',
+        select: 'subProgram misc type trainees tradeName',
         populate: [
           { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
           { path: 'slots', select: 'startDate' },
@@ -580,7 +582,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
         { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
         {
           path: 'course',
-          select: 'subProgram misc type trainees',
+          select: 'subProgram misc type trainees tradeName',
           populate: [
             { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
             { path: 'trainees', select: 'identity' },
@@ -714,7 +716,7 @@ exports.exportSelfPositionningQuestionnaireHistory = async (startDate, endDate, 
   const courses = await Course
     .find(
       { _id: { $in: [...new Set(slots.map(s => s.course))] } },
-      { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1 }
+      { slots: 1, slotsToPlan: 1, type: 1, subProgram: 1, trainees: 1, trainers: 1, misc: 1, tradeName: 1 }
     )
     .populate({ path: 'slotsToPlan' })
     .populate({ path: 'slots', select: 'startDate endDate' })
@@ -830,6 +832,7 @@ exports.exportSelfPositionningQuestionnaireHistory = async (startDate, endDate, 
 
     rows.push({
       'Id formation': course._id,
+      'Nom commercial': course.tradeName || '',
       Programme: course.subProgram.program.name || '',
       'Infos complémentaires': course.misc,
       'Sous-programme': course.subProgram.name || '',

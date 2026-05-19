@@ -20,7 +20,7 @@ exports.sendNotificationToUser = async (payload) => {
   await this.sendNotificationToAPI(expoPayload);
 };
 
-const getCourseName = course => `${get(course, 'subProgram.program.name')}${course.misc ? ` - ${course.misc}` : ''}`;
+const getCourseName = course => `${course.tradeName || ''}${course.misc ? ` - ${course.misc}` : ''}`;
 
 exports.sendBlendedCourseRegistrationNotification = async (trainee, courseId) => {
   if (!get(trainee, 'formationExpoTokenList.length')) return;
@@ -78,10 +78,9 @@ exports.sendAttendanceSheetSignatureRequestNotification =
     const attendanceSheet = await AttendanceSheet.findOne({ _id: attendanceSheetId }, { course: 1 })
       .populate({
         path: 'course',
-        select: 'subProgram misc trainers',
+        select: 'tradeName misc trainers',
         populate: [
           { path: 'trainers', select: 'identity' },
-          { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
         ],
       })
       .lean();
