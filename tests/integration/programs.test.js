@@ -1022,7 +1022,7 @@ describe('PROGRAMS ROUTES - POST /programs/{_id}/trade-names', () => {
       const response = await app.inject({
         method: 'POST',
         url: `/programs/${programsList[0]._id}/trade-names`,
-        payload: { tradeName: 'Ma marque' },
+        payload: { tradeName: 'Ma   marque' },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 

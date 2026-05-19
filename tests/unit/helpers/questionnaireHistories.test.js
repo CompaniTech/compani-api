@@ -433,23 +433,25 @@ describe('updateQuestionnaireHistory', () => {
   });
 
   it('should update questionnaireHistory with trainer answers', async () => {
-    const cardIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const cardIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const payload = {
       trainerAnswers: [
-        { card: cardIds[0], answer: '4' },
-        { card: cardIds[1] },
-        { card: cardIds[2], answer: '5' },
+        { card: cardIds[1], answer: '4' },
+        { card: cardIds[2] },
+        { card: cardIds[3], answer: '5' },
       ],
     };
+    const answerId = new ObjectId();
     const questionnaireHistory = {
       _id: questionnaireHistoryId,
       questionnaire: new ObjectId(),
       user: new ObjectId(),
       timeline: END_COURSE,
       questionnaireAnswersList: [
-        { card: cardIds[0], answerList: ['3'] },
-        { card: cardIds[1], answerList: ['4'] },
+        { card: cardIds[0], answerList: [answerId] },
+        { card: cardIds[1], answerList: ['3'] },
         { card: cardIds[2], answerList: ['4'] },
+        { card: cardIds[3], answerList: ['4'] },
       ],
     };
     findOne.returns(SinonMongoose.stubChainedQueries(questionnaireHistory, ['lean']));
@@ -470,9 +472,10 @@ describe('updateQuestionnaireHistory', () => {
         $set: {
           isValidated: true,
           questionnaireAnswersList: [
-            { card: cardIds[0], answerList: ['3'], trainerAnswerList: ['4'] },
-            { card: cardIds[1], answerList: ['4'] },
-            { card: cardIds[2], answerList: ['4'], trainerAnswerList: ['5'] },
+            { card: cardIds[0], answerList: [answerId] },
+            { card: cardIds[1], answerList: ['3'], trainerAnswerList: ['4'] },
+            { card: cardIds[2], answerList: ['4'] },
+            { card: cardIds[3], answerList: ['4'], trainerAnswerList: ['5'] },
           ],
         },
       }

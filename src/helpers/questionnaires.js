@@ -21,6 +21,7 @@ const {
   ENDED,
   REVIEW,
   ARCHIVED,
+  SURVEY,
 } = require('./constants');
 const DatesUtilsHelper = require('./dates/utils');
 const UtilsHelper = require('./utils');
@@ -214,8 +215,12 @@ const formatQuestionnaireAnswersWithCourse = async (courseId, questionnaireAnswe
 };
 
 const getFollowUpForReview = async (questionnaire, courseId) => {
-  const fieldsToPick = ['user', 'questionnaireAnswersList', 'timeline', '_id', 'isValidated', 'trainerComment'];
-  const followUp = questionnaire.histories.map(h => pick(h, fieldsToPick));
+  const fieldsToPick = ['user', 'timeline', '_id', 'isValidated', 'trainerComment'];
+  // const followUp = questionnaire.histories.map(h => pick(h, fieldsToPick));
+  const followUp = questionnaire.histories.map(h => ({
+    ...pick(h, fieldsToPick),
+    questionnaireAnswersList: h.questionnaireAnswersList.filter(qa => qa.card.template === SURVEY),
+  }));
 
   const course = await Course.findOne({ _id: courseId })
     .select('tradeName companies misc type holding trainees')
