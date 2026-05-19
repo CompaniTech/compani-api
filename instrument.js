@@ -6,8 +6,8 @@ if (['staging', 'production'].includes(process.env.NODE_ENV)) {
     dsn: process.env.SENTRY_DSN,
     sendDefaultPii: true,
     integrations: [nodeProfilingIntegration()],
-    tracesSampleRate: 1.0,
-    profileSessionSampleRate: 1.0,
+    tracesSampleRate: 0.1,
+    profileSessionSampleRate: 0.1,
     enableLogs: true,
   });
 }
