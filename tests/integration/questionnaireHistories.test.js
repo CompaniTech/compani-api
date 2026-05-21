@@ -395,24 +395,6 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
 
       expect(response.statusCode).toBe(422);
     });
-
-    it('should return 422 if is a q/a and items in answerList are not ObjectId', async () => {
-      const payload = {
-        course: coursesList[0]._id,
-        user: questionnaireHistoriesUsersList[0],
-        questionnaire: questionnairesList[0]._id,
-        questionnaireAnswersList: [{ card: cardsList[4]._id, answerList: ['blabla'] }],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/questionnairehistories',
-        payload,
-        headers: { 'x-access-token': authToken },
-      });
-
-      expect(response.statusCode).toBe(422);
-    });
   });
 
   describe('NOT LOGGED', () => {
