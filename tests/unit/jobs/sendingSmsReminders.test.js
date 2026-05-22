@@ -18,13 +18,13 @@ describe('method', () => {
   let smsSend;
   let sendAttendanceReminder;
   let findCourses;
-  let findOneSubProgram;
+  let findSubProgram;
   let findActivityHistories;
 
   beforeEach(() => {
     findSlots = sinon.stub(CourseSlot, 'find');
     findCourses = sinon.stub(Course, 'find');
-    findOneSubProgram = sinon.stub(SubProgram, 'findOne');
+    findSubProgram = sinon.stub(SubProgram, 'find');
     findActivityHistories = sinon.stub(ActivityHistory, 'find');
     smsSend = sinon.stub(SmsHelper, 'send');
     sendAttendanceReminder = sinon.stub(NotificationHelper, 'sendAttendanceReminder');
@@ -40,7 +40,7 @@ describe('method', () => {
   afterEach(() => {
     findSlots.restore();
     findCourses.restore();
-    findOneSubProgram.restore();
+    findSubProgram.restore();
     findActivityHistories.restore();
     smsSend.restore();
     sendAttendanceReminder.restore();
@@ -334,7 +334,7 @@ describe('method', () => {
     findSlots.onCall(3).returns(SinonMongoose.stubChainedQueries(yesterdayCourseSlots));
     findCourses.onCall(0).returns(SinonMongoose.stubChainedQueries(poeiCourses));
     findCourses.onCall(1).returns(SinonMongoose.stubChainedQueries(courseIds.map(id => ({ _id: id })), ['lean']));
-    findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
+    findSubProgram.returns(SinonMongoose.stubChainedQueries([subProgram]));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
 
     // eslint-disable-next-line no-console
@@ -468,7 +468,7 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
+            subProgram: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_ID)] },
             archivedAt: { $exists: false },
             $or: [
               { interruptionDates: { $exists: false } },
@@ -492,9 +492,9 @@ describe('method', () => {
     );
     SinonMongoose.calledWithExactly(findCourses, [{ query: 'find', args: [{ type: SINGLE }] }, { query: 'lean' }], 1);
     SinonMongoose.calledOnceWithExactly(
-      findOneSubProgram,
+      findSubProgram,
       [
-        { query: 'findOne', args: [{ _id: new ObjectId(process.env.POEI_SUBPROGRAM_ID) }, { steps: 1 }] },
+        { query: 'find', args: [{ _id: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_ID)] } }, { steps: 1 }] },
         { query: 'populate', args: [{ path: 'steps', select: 'type activities', match: { type: E_LEARNING } }] },
         { query: 'lean' },
       ]
@@ -595,7 +595,7 @@ describe('method', () => {
     findSlots.onCall(3).returns(SinonMongoose.stubChainedQueries([]));
     findCourses.onCall(0).returns(SinonMongoose.stubChainedQueries([]));
     findCourses.onCall(1).returns(SinonMongoose.stubChainedQueries(courseIds.map(id => ({ _id: id })), ['lean']));
-    findOneSubProgram.returns(SinonMongoose.stubChainedQueries({}));
+    findSubProgram.returns(SinonMongoose.stubChainedQueries([]));
 
     // eslint-disable-next-line no-console
     const server = { log: value => console.log(value) };
@@ -728,7 +728,7 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
+            subProgram: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_ID)] },
             archivedAt: { $exists: false },
             $or: [
               { interruptionDates: { $exists: false } },
@@ -751,7 +751,7 @@ describe('method', () => {
       0
     );
     SinonMongoose.calledWithExactly(findCourses, [{ query: 'find', args: [{ type: SINGLE }] }, { query: 'lean' }], 1);
-    sinon.assert.notCalled(findOneSubProgram);
+    sinon.assert.notCalled(findSubProgram);
     sinon.assert.notCalled(findActivityHistories);
     sinon.assert.notCalled(smsSend);
   });

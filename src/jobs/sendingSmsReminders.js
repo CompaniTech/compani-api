@@ -237,9 +237,10 @@ const getCodevSlotsIn1W = async () => {
 
 const getPOEIFirstSingleSlot = async () => {
   const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
+  const POEISubProgramIds = process.env.POEI_SUBPROGRAM_ID.split(',').map(id => new ObjectId(id));
   const courses = await Course
     .find({
-      subProgram: new ObjectId(process.env.POEI_SUBPROGRAM_ID),
+      subProgram: { $in: POEISubProgramIds },
       archivedAt: { $exists: false },
       $or: [
         { interruptionDates: { $exists: false } },
@@ -259,11 +260,12 @@ const getPOEIFirstSingleSlot = async () => {
   const POEISentReminders = [];
   const POEINotSentReminders = [];
   if (courses.length) {
-    const subProgramWithElearningSteps = await SubProgram
-      .findOne({ _id: new ObjectId(process.env.POEI_SUBPROGRAM_ID) }, { steps: 1 })
+    const subProgramsWithElearningSteps = await SubProgram
+      .find({ _id: { $in: POEISubProgramIds } }, { steps: 1 })
       .populate({ path: 'steps', select: 'type activities', match: { type: E_LEARNING } })
       .lean();
-    const activitiesIds = subProgramWithElearningSteps.steps.flatMap(s => s.activities.map(a => new ObjectId(a)));
+    const activitiesIds = subProgramsWithElearningSteps
+      .flatMap(sp => sp.steps.flatMap(s => s.activities.map(a => new ObjectId(a))));
 
     const filteredCourses = courses.reduce((acc, c) => {
       if (!c.slots.length) return acc;
