@@ -93,6 +93,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
           isQuestionAnswerMultipleChoiced: true,
           question: 'Que faire dans cette situation ?',
           isMandatory: true,
+          allowOtherAnswer: true,
         },
         id: questionAnswerId,
       },
@@ -152,6 +153,17 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
         method: 'PUT',
         url: `/cards/${transitionId}`,
         payload: { isChronological: false },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 403 if allowOtherAnswer in payload but card template is not QUESTION_ANSWER', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/cards/${transitionId}`,
+        payload: { allowOtherAnswer: true },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 

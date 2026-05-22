@@ -52,6 +52,7 @@ exports.plugin = {
             canSwitchAnswers: Joi.boolean(),
             isMandatory: Joi.boolean(),
             isChronological: Joi.boolean(),
+            allowOtherAnswer: Joi.boolean(),
           }),
         },
         auth: { scope: ['programs:edit'] },
