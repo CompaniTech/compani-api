@@ -828,7 +828,7 @@ exports.exportSelfPositionningQuestionnaireHistory = async (startDate, endDate, 
         maxProgress: NumbersHelper.isGreaterThan(value, acc.maxProgress) ? value : acc.maxProgress,
         minProgressQuestion: NumbersHelper.isLessThan(value, acc.minProgress) ? question : acc.minProgressQuestion,
         minProgress: NumbersHelper.isLessThan(value, acc.minProgress) ? value : acc.minProgress,
-      }), { maxProgressQuestion: '', maxProgress: -5, minProgressQuestion: '', minProgress: 5 });
+      }), { maxProgressQuestion: '', maxProgress: -10, minProgressQuestion: '', minProgress: 10 });
 
     rows.push({
       'Id formation': course._id,

@@ -49,11 +49,26 @@ const checkFillTheGap = async (dbCard, payload) => {
   return null;
 };
 
-const checkSurvey = (labels) => {
-  const someSubKeysAreMissing = labels && Object.values(labels).includes(null) &&
-    !(['2', '3', '4'].every(key => Object.keys(labels).includes(key)));
-
-  if (someSubKeysAreMissing) throw Boom.badRequest();
+const checkSurvey = (dbLabels, labels) => {
+  if (labels) {
+    const dbLabelKeys = Object.keys(dbLabels);
+    const [firstLabel, lastLabel] = [Number(dbLabelKeys[0]), Math.max(...dbLabelKeys.map(Number))];
+    if (Object.values(labels).some(l => l === null)) {
+      if (Object.values(labels).every(l => l === null)) {
+        const inBetweenKeys = Array.from({ length: lastLabel - firstLabel - 1 }, (_, i) => String(firstLabel + i + 1));
+        const someSubKeysAreMissing = !(inBetweenKeys.every(key => Object.keys(labels).includes(key)));
+        const someSubKeyAreNotAllowed = Object.keys(labels)
+          .some(l => [String(firstLabel), String(lastLabel)].includes(l));
+        if (someSubKeysAreMissing || someSubKeyAreNotAllowed) throw Boom.badRequest();
+      } else {
+        if (Object.keys(labels).length !== 3) throw Boom.badRequest();
+        const newLastLabel = Object.keys(labels).find(label => !['1', String(lastLabel)].includes(label));
+        const nullLabel = Object.entries(labels).find(([, value]) => value === null)[0];
+        const isNullLabelLastLabel = nullLabel === String(lastLabel);
+        if (!isNullLabelLastLabel || newLastLabel < 5 || newLastLabel > 10) throw Boom.badRequest();
+      }
+    }
+  }
 
   return null;
 };
@@ -81,7 +96,7 @@ exports.authorizeCardUpdate = async (req) => {
     case FLASHCARD:
       return checkFlashCard(req.payload);
     case SURVEY:
-      return checkSurvey(get(req.payload, 'labels'));
+      return checkSurvey(card.labels, get(req.payload, 'labels'));
     default:
       return null;
   }

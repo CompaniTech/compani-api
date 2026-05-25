@@ -1,7 +1,9 @@
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
+const keyBy = require('lodash/keyBy');
 const Questionnaire = require('../../models/Questionnaire');
 const User = require('../../models/User');
+const Card = require('../../models/Card');
 const Course = require('../../models/Course');
 const QuestionnaireHistory = require('../../models/QuestionnaireHistory');
 const { END_COURSE, SURVEY } = require('../../helpers/constants');
@@ -50,7 +52,16 @@ exports.authorizeQuestionnaireHistoryUpdate = async (req) => {
   const answersHasGoodLength = trainerAnswers.length === surveyQAnswersList.length;
   if (!answersHasGoodLength) throw Boom.badRequest();
 
-  const everyAnswerIsAuthorized = trainerAnswers.every(a => !a.answer || ['1', '2', '3', '4', '5'].includes(a.answer));
+  const cards = await Card.find({ _id: { $in: cardIds } }).lean();
+  const cardById = keyBy(cards, '_id');
+  const formattedTrainerAnswers = trainerAnswers.map((a) => {
+    const cardLabels = cardById[a.card].labels;
+    const maxLabel = Math.max(...Object.keys(cardLabels).map(Number));
+    const labels = Array.from({ length: Number(maxLabel) }, (_, i) => String(i + 1));
+    return { ...a, labels };
+  });
+
+  const everyAnswerIsAuthorized = formattedTrainerAnswers.every(a => !a.answer || a.labels.includes(a.answer));
   if (!everyAnswerIsAuthorized) throw Boom.badRequest();
 
   return null;

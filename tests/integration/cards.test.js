@@ -79,7 +79,7 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
       },
       {
         template: 'survey',
-        payload: { question: 'Sur une échelle de 1 à 10 ?', labels: { 1: '1', 5: '10' }, isMandatory: true },
+        payload: { question: 'Sur une échelle de 1 à 6 ?', labels: { 1: '1', 6: '6' }, isMandatory: true },
         id: surveyId,
       },
       {
@@ -224,12 +224,32 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
         { msg: 'Unset last label', payload: { labels: { 5: '' } }, code: 200 },
         { msg: 'Set some labels and unset others', payload: { labels: { 1: '', 4: '4eme niveau' } }, code: 200 },
         { msg: 'Set labels with empty string', payload: { labels: { 2: '', 3: '', 4: '' } }, code: 200 },
-        { msg: 'Unset labels', payload: { labels: { 2: null, 3: null, 4: null } }, code: 200 },
-        { msg: 'Set null to first label', payload: { labels: { 1: null } }, code: 400 },
-        { msg: 'Set null to fifth label', payload: { labels: { 5: null } }, code: 400 },
-        { msg: 'Second key is missing', payload: { labels: { 3: null, 4: null } }, code: 400 },
-        { msg: 'Third key is missing', payload: { labels: { 2: null, 4: null } }, code: 400 },
-        { msg: 'Fourth key is missing', payload: { labels: { 2: null, 3: null } }, code: 400 },
+        { msg: 'Unset labels', payload: { labels: { 2: null, 3: null, 4: null, 5: null } }, code: 200 },
+        { msg: 'Change labels count', payload: { labels: { 1: 'first', 6: null, 5: 'last' } }, code: 200 },
+        {
+          msg: 'Set null to first label',
+          payload: { labels: { 1: null, 2: null, 3: null, 4: null, 5: null } },
+          code: 400,
+        },
+        {
+          msg: 'Set null to last label',
+          payload: { labels: { 2: null, 3: null, 4: null, 5: null, 6: null } },
+          code: 400,
+        },
+        { msg: 'Second key is missing', payload: { labels: { 3: null, 4: null, 5: null } }, code: 400 },
+        { msg: 'Third key is missing', payload: { labels: { 2: null, 4: null, 5: null } }, code: 400 },
+        { msg: 'Fourth key is missing', payload: { labels: { 2: null, 3: null, 5: null } }, code: 400 },
+        { msg: 'Fifth key is missing', payload: { labels: { 2: null, 3: null, 4: null } }, code: 400 },
+        {
+          msg: 'Change label count with bad request',
+          payload: { labels: { 1: 'first', 4: null, 6: null, 5: 'last' } },
+          code: 400,
+        },
+        {
+          msg: 'Change label count with bad end label',
+          payload: { labels: { 1: 'first', 4: null, 5: 'last' } },
+          code: 400,
+        },
       ];
 
       requests.forEach((request) => {
