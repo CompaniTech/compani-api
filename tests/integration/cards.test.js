@@ -250,6 +250,11 @@ describe('CARDS ROUTES - PUT /cards/{_id}', () => {
           payload: { labels: { 1: 'first', 4: null, 5: 'last' } },
           code: 400,
         },
+        {
+          msg: 'Two null end labels',
+          payload: { labels: { 1: 'first', 6: null, 5: null } },
+          code: 400,
+        },
       ];
 
       requests.forEach((request) => {

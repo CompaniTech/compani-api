@@ -61,9 +61,10 @@ const checkSurvey = (dbLabels, labels) => {
           .some(l => [String(firstLabel), String(lastLabel)].includes(l));
         if (someSubKeysAreMissing || someSubKeyAreNotAllowed) throw Boom.badRequest();
       } else {
-        if (Object.keys(labels).length !== 3) throw Boom.badRequest();
+        const nullLabelList = Object.entries(labels).filter(([, value]) => value === null);
+        if (Object.keys(labels).length !== 3 || nullLabelList.length > 1) throw Boom.badRequest();
         const newLastLabel = Object.keys(labels).find(label => !['1', String(lastLabel)].includes(label));
-        const nullLabel = Object.entries(labels).find(([, value]) => value === null)[0];
+        const nullLabel = nullLabelList[0][0];
         const isNullLabelLastLabel = nullLabel === String(lastLabel);
         if (!isNullLabelLastLabel || newLastLabel < 5 || newLastLabel > 10) throw Boom.badRequest();
       }
