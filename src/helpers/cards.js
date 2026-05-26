@@ -13,13 +13,24 @@ const {
 exports.createCard = async payload => Card.create(payload);
 
 exports.updateCard = async (cardId, payload) => {
+  const unsetQuery = {};
+  let setQuery = {};
   const hasNullLabels = has(payload, 'labels') && Object.values(payload.labels).includes(null);
 
-  const formattedPayload = hasNullLabels
-    ? { $unset: { 'labels.2': '', 'labels.3': '', 'labels.4': '' } }
-    : { $set: flat(payload, { safe: true }) };
+  if (hasNullLabels) {
+    Object.entries(payload.labels).forEach(([key, value]) => {
+      if (value === null) unsetQuery[`labels.${key}`] = '';
+      else setQuery[`labels.${key}`] = value;
+    });
+  } else setQuery = payload;
 
-  return Card.updateOne({ _id: cardId }, formattedPayload);
+  return Card.updateOne(
+    { _id: cardId },
+    {
+      ...Object.keys(unsetQuery).length && { $unset: unsetQuery },
+      ...Object.keys(setQuery).length && { $set: flat(setQuery, { safe: true }) },
+    }
+  );
 };
 
 exports.addCardAnswer = async (card) => {

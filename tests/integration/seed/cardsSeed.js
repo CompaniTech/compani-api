@@ -74,7 +74,7 @@ const cardsList = [
     ],
   },
   // 9
-  { _id: new ObjectId(), template: SURVEY, labels: { 1: 'first', 5: 'last' }, question: 'question ?' },
+  { _id: new ObjectId(), template: SURVEY, labels: { 1: 'first', 6: 'last' }, question: 'question ?' },
   // 10
   { _id: new ObjectId(), template: OPEN_QUESTION },
   { // 11

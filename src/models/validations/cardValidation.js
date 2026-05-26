@@ -30,7 +30,10 @@ const labelsValidation = (labels) => {
   let validation;
 
   if (labels && Object.keys(labels).length === 2) {
-    validation = Joi.object().keys({ 1: Joi.string().required(), 5: Joi.string().required() });
+    validation = Joi.object().keys({
+      [Object.keys(labels)[0]]: Joi.string().required(),
+      [Object.keys(labels)[1]]: Joi.string().required(),
+    });
   } else {
     validation = Joi.object().keys({
       1: Joi.string().required(),
@@ -38,6 +41,11 @@ const labelsValidation = (labels) => {
       3: Joi.string().required(),
       4: Joi.string().required(),
       5: Joi.string().required(),
+      6: Joi.string(),
+      7: Joi.string(),
+      8: Joi.string(),
+      9: Joi.string(),
+      10: Joi.string(),
     });
   }
 
