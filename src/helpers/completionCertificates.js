@@ -66,6 +66,7 @@ exports.list = async (query, credentials) => {
 
 exports.generate = async (completionCertificateId) => {
   const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+  const PRI_SUBPROGRAM_IDS = process.env.PRI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
   const REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS
     .split(',')
     .map(id => new ObjectId(id));
@@ -167,6 +168,7 @@ exports.generate = async (completionCertificateId) => {
     endDate: CompaniDate(endOfMonth).format(DD_MM_YYYY),
     date: CompaniDate().format(DD_MM_YYYY),
     isVAEISubProgram: UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, course.subProgram._id),
+    isPRISubProgram: UtilsHelper.doesArrayIncludeId(PRI_SUBPROGRAM_IDS, course.subProgram._id),
     certificateGenerationModeIsMonthly: true,
     programName: (course.tradeName || '').toUpperCase(),
   };

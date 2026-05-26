@@ -880,7 +880,10 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
 
   if (!course.subProgram.isStrictlyELearning) {
     let areLastSlotAttendancesValidated = false;
-    if (!isTutor && !get(course, 'slotsToPlan.length') && course.certificateGenerationMode !== MONTHLY) {
+    const TUTOR_SUBPROGRAM_IDS = process.env.TUTOR_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+    const isTutorCourse = UtilsHelper.doesArrayIncludeId(TUTOR_SUBPROGRAM_IDS, course.subProgram._id);
+    if (!isTutor && !isTutorCourse && !get(course, 'slotsToPlan.length') &&
+      course.certificateGenerationMode !== MONTHLY) {
       const slots = course.slots
         .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, credentials._id));
       const attendances = await Attendance
