@@ -426,6 +426,7 @@ describe('generate', () => {
   let getELearningDuration;
   let getRealELearningDuration;
   const VAEI_SUBPROGRAM_IDS = new ObjectId();
+  const PRI_SUBPROGRAM_IDS = new ObjectId();
   const REAL_ELEARNING_DURATION_SUBPROGRAM_ID = new ObjectId();
 
   beforeEach(() => {
@@ -442,6 +443,7 @@ describe('generate', () => {
     getELearningDuration = sinon.stub(CoursesHelper, 'getELearningDuration');
     getRealELearningDuration = sinon.stub(CoursesHelper, 'getRealELearningDuration');
     process.env.VAEI_SUBPROGRAM_IDS = VAEI_SUBPROGRAM_IDS;
+    process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS;
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
   });
 
@@ -459,6 +461,7 @@ describe('generate', () => {
     getELearningDuration.restore();
     getRealELearningDuration.restore();
     process.env.VAEI_SUBPROGRAM_IDS = '';
+    process.env.PRI_SUBPROGRAM_IDS = '';
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = '';
   });
 
@@ -681,6 +684,7 @@ describe('generate', () => {
         endDate: endOfMonth,
         date: '24/03/2025',
         isVAEISubProgram: false,
+        isPRISubProgram: false,
         certificateGenerationModeIsMonthly: true,
         programName: 'PROGRAM',
       },
@@ -900,6 +904,7 @@ describe('generate', () => {
         endDate: endOfMonth,
         date: '24/03/2025',
         isVAEISubProgram: false,
+        isPRISubProgram: false,
         certificateGenerationModeIsMonthly: true,
         programName: 'PROGRAM',
       },

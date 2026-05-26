@@ -185,6 +185,7 @@ exports.getOfficialPdfContent = async (data) => {
     date,
     duration = { eLearning: '0h', total: '0h' },
     isVAEISubProgram = false,
+    isPRISubProgram = false,
     certificateGenerationModeIsMonthly = false,
   } = data;
   const traineeDuration = duration[trainee._id] || {};
@@ -236,11 +237,12 @@ exports.getOfficialPdfContent = async (data) => {
       marginLeft: 4,
       marginBottom: 4,
     },
-    ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, !isVAEISubProgram),
+    ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, !(isVAEISubProgram || isPRISubProgram)),
     ...defineCheckbox(59, 324, ' bilan de compétences', isLargeProgramName),
     ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName),
     ...defineCheckbox(59, 361, ' action de formation par apprentissage', isLargeProgramName),
     ...defineCheckbox(59, 380, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
+    ...defineCheckbox(59, 398, ' action de Période de Reconversion Interne', isLargeProgramName, isPRISubProgram),
     {
       text: [
         { text: 'qui s\'est déroulée du ', bold: true },
@@ -261,7 +263,9 @@ exports.getOfficialPdfContent = async (data) => {
               ? [{
                 text: `${trainee.attendanceDuration} d’accompagnement à distance et en présentiel, et `
                  + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
-                + `${isVAEISubProgram ? 'Ce certificat est lié à une facture de frais pédagogiques.' : ''}`,
+                + `${isVAEISubProgram || isPRISubProgram
+                  ? 'Ce certificat est lié à une facture de frais pédagogiques.'
+                  : ''}`,
                 italic: true,
               }]
               : []),
@@ -300,19 +304,19 @@ exports.getOfficialPdfContent = async (data) => {
         [
           {
             text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-            absolutePosition: { x: 35, y: 550 },
+            absolutePosition: { x: 35, y: 568 },
             marginLeft: 46,
           },
           {
             text: [{ text: 'Le : ', bold: true }, { text: `${date}`, italics: true }],
-            absolutePosition: { x: 35, y: 570 },
+            absolutePosition: { x: 35, y: 588 },
             marginLeft: 46,
           },
         ],
         [
           {
             canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
-            absolutePosition: { y: 555 },
+            absolutePosition: { y: 573 },
             alignment: 'right',
           },
           {
@@ -328,12 +332,12 @@ exports.getOfficialPdfContent = async (data) => {
             alignment: 'center',
             fontSize: 10,
           },
-          { image: signature, width: 125, absolutePosition: { x: 380, y: 618 } },
+          { image: signature, width: 125, absolutePosition: { x: 380, y: 636 } },
         ],
       ],
       marginLeft: 40,
       marginRight: 40,
-      absolutePosition: { x: 37, y: 565 },
+      absolutePosition: { x: 37, y: 583 },
     },
     {
       text: [
