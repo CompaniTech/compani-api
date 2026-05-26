@@ -2587,15 +2587,19 @@ describe('getCourse', () => {
   let findOne;
   let formatCourseWithProgress;
   let attendanceCountDocuments;
+  const TUTOR_SUBPROGRAM_IDS = new ObjectId();
+
   beforeEach(() => {
     findOne = sinon.stub(Course, 'findOne');
     formatCourseWithProgress = sinon.stub(CourseHelper, 'formatCourseWithProgress');
     attendanceCountDocuments = sinon.stub(Attendance, 'countDocuments');
+    process.env.TUTOR_SUBPROGRAM_IDS = TUTOR_SUBPROGRAM_IDS;
   });
   afterEach(() => {
     findOne.restore();
     formatCourseWithProgress.restore();
     attendanceCountDocuments.restore();
+    process.env.TUTOR_SUBPROGRAM_IDS = '';
   });
 
   describe('OPERATIONS', () => {
