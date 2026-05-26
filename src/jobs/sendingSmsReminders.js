@@ -237,7 +237,7 @@ const getCodevSlotsIn1W = async () => {
 
 const getPOEIFirstSingleSlot = async () => {
   const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
-  const POEISubProgramIds = process.env.POEI_SUBPROGRAM_ID.split(',').map(id => new ObjectId(id));
+  const POEISubProgramIds = process.env.POEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
   const courses = await Course
     .find({
       subProgram: { $in: POEISubProgramIds },

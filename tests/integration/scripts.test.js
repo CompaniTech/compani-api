@@ -151,7 +151,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       process.env.VAEI_EVALUATION_STEP_ID = stepList[0]._id;
       process.env.VAEI_CODEV_STEP_ID = stepList[1]._id;
       process.env.VAEI_TRIPARTITE_STEP_ID = stepList[3]._id;
-      process.env.POEI_SUBPROGRAM_ID = subProgramList[2]._id;
+      process.env.POEI_SUBPROGRAM_IDS = subProgramList[2]._id;
       process.env.COLLECTIVE_STEP_IDS = stepList[4]._id;
     });
 
@@ -163,7 +163,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       process.env.VAEI_EVALUATION_STEP_ID = '';
       process.env.VAEI_CODEV_STEP_ID = '';
       process.env.VAEI_TRIPARTITE_STEP_ID = '';
-      process.env.POEI_SUBPROGRAM_ID = '';
+      process.env.POEI_SUBPROGRAM_IDS = '';
       process.env.COLLECTIVE_STEP_IDS = '';
     });
 

@@ -33,7 +33,7 @@ describe('method', () => {
     process.env.VAEI_EVALUATION_STEP_ID = new ObjectId();
     process.env.VAEI_CODEV_STEP_ID = new ObjectId();
     process.env.VAEI_TRIPARTITE_STEP_ID = new ObjectId();
-    process.env.POEI_SUBPROGRAM_ID = new ObjectId();
+    process.env.POEI_SUBPROGRAM_IDS = new ObjectId();
     process.env.COLLECTIVE_STEP_IDS = new ObjectId();
   });
 
@@ -49,7 +49,7 @@ describe('method', () => {
     process.env.VAEI_EVALUATION_STEP_ID = '';
     process.env.VAEI_CODEV_STEP_ID = '';
     process.env.VAEI_TRIPARTITE_STEP_ID = '';
-    process.env.POEI_SUBPROGRAM_ID = '';
+    process.env.POEI_SUBPROGRAM_IDS = '';
     process.env.COLLECTIVE_STEP_IDS = '';
   });
 
@@ -271,14 +271,14 @@ describe('method', () => {
     ];
     const poeiCourses = [
       {
-        subProgram: process.env.POEI_SUBPROGRAM_ID,
+        subProgram: process.env.POEI_SUBPROGRAM_IDS,
         trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }],
         slots: [
           { startDate: '2025-12-21T15:00:00.000Z' },
         ],
       },
       {
-        subProgram: process.env.POEI_SUBPROGRAM_ID,
+        subProgram: process.env.POEI_SUBPROGRAM_IDS,
         trainees: [{ _id: traineeIds[1] }],
         slots: [
           { startDate: '2025-11-09T15:00:00.000Z' },
@@ -323,7 +323,7 @@ describe('method', () => {
     ];
     const activitiesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const subProgram = {
-      _id: process.env.POEI_SUBPROGRAM_ID,
+      _id: process.env.POEI_SUBPROGRAM_IDS,
       steps: [{ activities: activitiesIds, type: E_LEARNING }],
     };
     const activityHistories = [{ user: traineeIds[0], activity: activitiesIds[0] }];
@@ -468,7 +468,7 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            subProgram: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_ID)] },
+            subProgram: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_IDS)] },
             archivedAt: { $exists: false },
             $or: [
               { interruptionDates: { $exists: false } },
@@ -494,7 +494,7 @@ describe('method', () => {
     SinonMongoose.calledOnceWithExactly(
       findSubProgram,
       [
-        { query: 'find', args: [{ _id: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_ID)] } }, { steps: 1 }] },
+        { query: 'find', args: [{ _id: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_IDS)] } }, { steps: 1 }] },
         { query: 'populate', args: [{ path: 'steps', select: 'type activities', match: { type: E_LEARNING } }] },
         { query: 'lean' },
       ]
@@ -728,7 +728,7 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            subProgram: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_ID)] },
+            subProgram: { $in: [new ObjectId(process.env.POEI_SUBPROGRAM_IDS)] },
             archivedAt: { $exists: false },
             $or: [
               { interruptionDates: { $exists: false } },
