@@ -148,11 +148,12 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       sendAttendanceReminder = sinon.stub(NotificationHelper, 'sendAttendanceReminder');
       UtilsMock.mockCurrentDate('2023-01-08T09:00:00.000Z');
       process.env.TECH_EMAIL = 'tech@compani.fr';
-      process.env.VAEI_EVALUATION_STEP_ID = stepList[0]._id;
-      process.env.VAEI_CODEV_STEP_ID = stepList[1]._id;
-      process.env.VAEI_TRIPARTITE_STEP_ID = stepList[3]._id;
+      process.env.EVALUATION_STEP_IDS = stepList[0]._id;
+      process.env.CODEV_STEP_IDS = stepList[1]._id;
+      process.env.TRIPARTITE_STEP_IDS = stepList[3]._id;
       process.env.POEI_SUBPROGRAM_IDS = subProgramList[2]._id;
       process.env.COLLECTIVE_STEP_IDS = stepList[4]._id;
+      process.env.VAE_SUBPROGRAM_IDS = subProgramList[1]._id;
     });
 
     afterEach(() => {
@@ -160,11 +161,12 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       sendAttendanceReminder.restore();
       UtilsMock.unmockCurrentDate('');
       process.env.TECH_EMAIL = '';
-      process.env.VAEI_EVALUATION_STEP_ID = '';
-      process.env.VAEI_CODEV_STEP_ID = '';
-      process.env.VAEI_TRIPARTITE_STEP_ID = '';
+      process.env.EVALUATION_STEP_IDS = '';
+      process.env.CODEV_STEP_IDS = '';
+      process.env.TRIPARTITE_STEP_IDS = '';
       process.env.POEI_SUBPROGRAM_IDS = '';
       process.env.COLLECTIVE_STEP_IDS = '';
+      process.env.VAE_SUBPROGRAM_IDS = '';
     });
 
     it('should send reminders by sms', async () => {
