@@ -3,6 +3,7 @@ const { MM_YYYY } = require('../helpers/constants');
 const { completionCertificateCreationJob } = require('../jobs/completionCertificateCreation');
 const { sendingPendingBillsByEmailJob } = require('../jobs/sendingPendingBillsByEmail');
 const { sendingSmsRemindersJob } = require('../jobs/sendingSmsReminders');
+const { notionCoursesUpdateJob } = require('../jobs/notionCoursesUpdate');
 const good = require('./good');
 const hapiAuthJwt2 = require('./hapiAuthJwt2');
 const cron = require('./cron');
@@ -20,7 +21,7 @@ const plugins = [
           time: '0 0 5 5 * *',
           request: {
             method: 'GET',
-            url: `/scripts/completioncertificates-generation?month=${CompaniDate().subtract('P1M').format(MM_YYYY)}`,
+            url: `/scripts/completioncertificates-generation?month=${CompaniDate().format(MM_YYYY)}`,
             auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
           },
           onComplete: completionCertificateCreationJob.onComplete,
@@ -46,6 +47,17 @@ const plugins = [
             auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
           },
           onComplete: sendingSmsRemindersJob.onComplete,
+          env: 'production',
+        },
+        {
+          name: 'notionCoursesUpdate',
+          time: '0 0 3 5 * *',
+          request: {
+            method: 'GET',
+            url: '/scripts/notion-courses-update',
+            auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
+          },
+          onComplete: notionCoursesUpdateJob.onComplete,
           env: 'production',
         },
       ],
