@@ -43,6 +43,7 @@ const {
   PDF,
   OFFICIAL,
   MONTHLY,
+  GLOBAL,
   SINGLE,
 } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
@@ -1317,6 +1318,211 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
   }
 
   return formattedLearnerList;
+};
+
+exports.authorizeUploadCollectiveCourseCSV = async (req) => {
+  const { payload } = req;
+
+  const courseList = await UtilsHelper.parseCsv(payload.file);
+  if (courseList.length > process.env.MAX_CSV_COURSE_SIZE) throw Boom.forbidden(translate[language].fileIsToBig);
+
+  const allowedKeys = [
+    'certificateGenerationMode',
+    'companies',
+    'estimatedStartDate',
+    'hasCertifyingTest',
+    'holding',
+    'maxTrainees',
+    'operationsRepresentative',
+    'salesRepresentative',
+    'subProgram',
+    'tradeName',
+    'type',
+  ].sort();
+  if (!isEqual(Object.keys(courseList[0]).sort(), allowedKeys)) {
+    throw Boom.badRequest(translate[language].wrongColumnsInCsv);
+  }
+
+  const formattedCourseList = [];
+  const errorsByCourse = {};
+  let i = 1;
+
+  for (const course of courseList) {
+    const courseName = `Formation ${i}`;
+
+    if (!course.type) {
+      errorsByCourse[courseName] = [translate[language].missingType];
+    } else if (![INTRA, INTRA_HOLDING].includes(course.type)) {
+      errorsByCourse[courseName] = [translate[language].invalidCourseType];
+    }
+
+    if (!course.subProgram) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingSubProgram);
+      else errorsByCourse[courseName] = [translate[language].missingSubProgram];
+    } else if (!isObjectIdOrHexString(course.subProgram)) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownSubProgram);
+      else errorsByCourse[courseName] = [translate[language].unknownSubProgram];
+    } else {
+      const subProgram = await SubProgram.findOne({ _id: course.subProgram }, { _id: 1 }).lean();
+      if (!subProgram) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownSubProgram);
+        else errorsByCourse[courseName] = [translate[language].unknownSubProgram];
+      }
+    }
+
+    let companyId = null;
+    let holdingId = null;
+
+    if (course.type === INTRA) {
+      if (!course.companies) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingCompany);
+        else errorsByCourse[courseName] = [translate[language].missingCompany];
+      } else if (!isObjectIdOrHexString(course.companies)) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownCompany);
+        else errorsByCourse[courseName] = [translate[language].unknownCompany];
+      } else {
+        const company = await Company.findOne({ _id: course.companies }, { _id: 1 }).lean();
+        if (!company) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownCompany);
+          else errorsByCourse[courseName] = [translate[language].unknownCompany];
+        } else {
+          companyId = company._id;
+        }
+      }
+    } else if (course.type === INTRA_HOLDING) {
+      if (!course.holding) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingHolding);
+        else errorsByCourse[courseName] = [translate[language].missingHolding];
+      } else if (!isObjectIdOrHexString(course.holding)) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownHolding);
+        else errorsByCourse[courseName] = [translate[language].unknownHolding];
+      } else {
+        const holdingExists = await Holding.countDocuments({ _id: course.holding });
+        if (!holdingExists) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownHolding);
+          else errorsByCourse[courseName] = [translate[language].unknownHolding];
+        } else {
+          holdingId = course.holding;
+        }
+      }
+    }
+
+    let operationsRepresentativeId = null;
+    if (!course.operationsRepresentative) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].missingOperationsRepresentative);
+      } else errorsByCourse[courseName] = [translate[language].missingOperationsRepresentative];
+    } else if (!isObjectIdOrHexString(course.operationsRepresentative)) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].unknownOperationsRepresentative);
+      } else errorsByCourse[courseName] = [translate[language].unknownOperationsRepresentative];
+    } else {
+      const operationsRepresentative = await User
+        .findOne({ _id: course.operationsRepresentative }, { role: 1 })
+        .lean({ autopopulate: true });
+      if (!operationsRepresentative ||
+        ![VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(operationsRepresentative, 'role.vendor.name'))) {
+        if (errorsByCourse[courseName]) {
+          errorsByCourse[courseName].push(translate[language].unknownOperationsRepresentative);
+        } else errorsByCourse[courseName] = [translate[language].unknownOperationsRepresentative];
+      } else {
+        operationsRepresentativeId = operationsRepresentative._id;
+      }
+    }
+
+    let salesRepresentativeId = null;
+    if (!course.salesRepresentative) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].missingSalesRepresentative);
+      } else errorsByCourse[courseName] = [translate[language].missingSalesRepresentative];
+    } else if (!isObjectIdOrHexString(course.salesRepresentative)) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].unknownSalesRepresentative);
+      } else errorsByCourse[courseName] = [translate[language].unknownSalesRepresentative];
+    } else {
+      const salesRepresentative = await User
+        .findOne({ _id: course.salesRepresentative }, { role: 1 })
+        .lean({ autopopulate: true });
+      if (!salesRepresentative ||
+        ![VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(salesRepresentative, 'role.vendor.name'))) {
+        if (errorsByCourse[courseName]) {
+          errorsByCourse[courseName].push(translate[language].unknownSalesRepresentative);
+        } else errorsByCourse[courseName] = [translate[language].unknownSalesRepresentative];
+      } else {
+        salesRepresentativeId = salesRepresentative._id;
+      }
+    }
+
+    let formattedDate = '';
+    if (course.estimatedStartDate) {
+      const date = new Date(course.estimatedStartDate);
+      const isValid = !Number.isNaN(date.getTime());
+      if (isValid) {
+        formattedDate = CompaniDate(date).toISO();
+      } else if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].incorrectDate);
+      else errorsByCourse[courseName] = [translate[language].incorrectDate];
+    }
+
+    let maxTrainees = null;
+    if ([INTRA, INTRA_HOLDING].includes(course.type)) {
+      if (!course.maxTrainees) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingMaxTrainees);
+        else errorsByCourse[courseName] = [translate[language].missingMaxTrainees];
+      } else {
+        const parsedMaxTrainees = Number(course.maxTrainees);
+        if (!Number.isInteger(parsedMaxTrainees) || parsedMaxTrainees <= 0) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].invalidMaxTrainees);
+          else errorsByCourse[courseName] = [translate[language].invalidMaxTrainees];
+        } else {
+          maxTrainees = parsedMaxTrainees;
+        }
+      }
+    }
+
+    let hasCertifyingTest = null;
+    if (!['true', 'false'].includes(course.hasCertifyingTest)) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].invalidHasCertifyingTest);
+      else errorsByCourse[courseName] = [translate[language].invalidHasCertifyingTest];
+    } else {
+      hasCertifyingTest = course.hasCertifyingTest === 'true';
+    }
+
+    if (![GLOBAL, MONTHLY].includes(course.certificateGenerationMode)) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].invalidCertificateGenerationMode);
+      } else errorsByCourse[courseName] = [translate[language].invalidCertificateGenerationMode];
+    }
+
+    if (!course.tradeName) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingTradeName);
+      else errorsByCourse[courseName] = [translate[language].missingTradeName];
+    }
+
+    if (!errorsByCourse[courseName]) {
+      formattedCourseList.push({
+        subProgram: course.subProgram,
+        type: course.type,
+        ...(course.type === INTRA ? { company: companyId } : { holding: holdingId }),
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        ...(formattedDate && { estimatedStartDate: formattedDate }),
+        maxTrainees,
+        hasCertifyingTest,
+        certificateGenerationMode: course.certificateGenerationMode,
+        tradeName: course.tradeName,
+      });
+    }
+
+    i += 1;
+  }
+
+  if (Object.keys(errorsByCourse).length) {
+    const error = Boom.badData();
+    error.output.payload.errorsByTrainee = errorsByCourse;
+    throw error;
+  }
+
+  return formattedCourseList;
 };
 
 exports.authorizeGetAllDocuments = async (req) => {

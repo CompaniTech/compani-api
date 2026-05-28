@@ -1890,6 +1890,12 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
   }
 };
 
+exports.uploadCollectiveCourseCSV = async (courseList, credentials) => {
+  for (const course of courseList) {
+    await exports.createCourse(course, credentials);
+  }
+};
+
 exports.downloadAllDocuments = async (courseId, credentials, query) => {
   const isVendorUser = !!get(credentials, 'role.vendor');
   const companies = [];

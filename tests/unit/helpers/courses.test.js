@@ -9516,6 +9516,119 @@ describe('uploadSingleCourseCSV', () => {
   });
 });
 
+describe('uploadCollectiveCourseCSV', () => {
+  let createCourse;
+
+  beforeEach(() => {
+    createCourse = sinon.stub(CourseHelper, 'createCourse');
+  });
+
+  afterEach(() => {
+    createCourse.restore();
+  });
+
+  it('should create INTRA course', async () => {
+    const credentials = { _id: new ObjectId() };
+    const companyId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const salesRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+
+    const courseList = [
+      {
+        subProgram: subProgramId,
+        type: INTRA,
+        company: companyId,
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        estimatedStartDate: '2025-11-01T00:00:00.000Z',
+        maxTrainees: 8,
+        hasCertifyingTest: false,
+        certificateGenerationMode: MONTHLY,
+        tradeName: 'nom',
+      },
+    ];
+
+    createCourse.returns({ _id: courseId });
+
+    await CourseHelper.uploadCollectiveCourseCSV(courseList, credentials);
+
+    sinon.assert.calledOnceWithExactly(createCourse, courseList[0], credentials);
+  });
+
+  it('should create INTRA_HOLDING course', async () => {
+    const credentials = { _id: new ObjectId() };
+    const holdingId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const salesRepresentativeId = new ObjectId();
+    const courseId = new ObjectId();
+
+    const courseList = [
+      {
+        subProgram: subProgramId,
+        type: INTRA_HOLDING,
+        holding: holdingId,
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        maxTrainees: 12,
+        hasCertifyingTest: true,
+        certificateGenerationMode: GLOBAL,
+        tradeName: 'autre nom',
+      },
+    ];
+
+    createCourse.returns({ _id: courseId });
+
+    await CourseHelper.uploadCollectiveCourseCSV(courseList, credentials);
+
+    sinon.assert.calledOnceWithExactly(createCourse, courseList[0], credentials);
+  });
+
+  it('should create multiple courses', async () => {
+    const credentials = { _id: new ObjectId() };
+    const companyId = new ObjectId();
+    const holdingId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const salesRepresentativeId = new ObjectId();
+
+    const courseList = [
+      {
+        subProgram: subProgramId,
+        type: INTRA,
+        company: companyId,
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        maxTrainees: 8,
+        hasCertifyingTest: false,
+        certificateGenerationMode: MONTHLY,
+        tradeName: 'nom',
+      },
+      {
+        subProgram: subProgramId,
+        type: INTRA_HOLDING,
+        holding: holdingId,
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        maxTrainees: 10,
+        hasCertifyingTest: true,
+        certificateGenerationMode: GLOBAL,
+        tradeName: 'autre nom',
+      },
+    ];
+
+    createCourse.returns({ _id: new ObjectId() });
+
+    await CourseHelper.uploadCollectiveCourseCSV(courseList, credentials);
+
+    sinon.assert.calledTwice(createCourse);
+    sinon.assert.calledWithExactly(createCourse.getCall(0), courseList[0], credentials);
+    sinon.assert.calledWithExactly(createCourse.getCall(1), courseList[1], credentials);
+  });
+});
+
 describe('downloadAllDocuments', () => {
   let courseFindOne;
   let downloadFiles;
