@@ -5,7 +5,7 @@ const {
   completionCertificateCreation,
   sendingPendingBillsByEmail,
   sendingSmsReminders,
-  notionCoursesUpdate,
+  notionCourseSlotsUpdate,
 } = require('../controllers/scriptController');
 const { monthValidation } = require('./validations/utils');
 
@@ -40,9 +40,9 @@ exports.plugin = {
 
     server.route({
       method: 'GET',
-      path: '/notion-courses-update',
+      path: '/notion-course-slots-update',
       options: { auth: { scope: ['scripts:run'] } },
-      handler: notionCoursesUpdate,
+      handler: notionCourseSlotsUpdate,
     });
   },
 };

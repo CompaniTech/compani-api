@@ -2,7 +2,7 @@ const Boom = require('@hapi/boom');
 const { completionCertificateCreationJob } = require('../jobs/completionCertificateCreation');
 const { sendingPendingBillsByEmailJob } = require('../jobs/sendingPendingBillsByEmail');
 const { sendingSmsRemindersJob } = require('../jobs/sendingSmsReminders');
-const { notionCoursesUpdateJob } = require('../jobs/notionCoursesUpdate');
+const { notionCourseSlotsUpdateJob } = require('../jobs/notionCourseSlotsUpdate');
 
 const completionCertificateCreation = async (req) => {
   try {
@@ -41,9 +41,9 @@ const sendingSmsReminders = async (req) => {
   }
 };
 
-const notionCoursesUpdate = async (req) => {
+const notionCourseSlotsUpdate = async (req) => {
   try {
-    const result = await notionCoursesUpdateJob.method(req);
+    const result = await notionCourseSlotsUpdateJob.method(req);
 
     return { data: result };
   } catch (e) {
@@ -56,5 +56,5 @@ module.exports = {
   completionCertificateCreation,
   sendingPendingBillsByEmail,
   sendingSmsReminders,
-  notionCoursesUpdate,
+  notionCourseSlotsUpdate,
 };

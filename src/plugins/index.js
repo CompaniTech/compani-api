@@ -3,7 +3,7 @@ const { MM_YYYY } = require('../helpers/constants');
 const { completionCertificateCreationJob } = require('../jobs/completionCertificateCreation');
 const { sendingPendingBillsByEmailJob } = require('../jobs/sendingPendingBillsByEmail');
 const { sendingSmsRemindersJob } = require('../jobs/sendingSmsReminders');
-const { notionCoursesUpdateJob } = require('../jobs/notionCoursesUpdate');
+const { notionCourseSlotsUpdateJob } = require('../jobs/notionCourseSlotsUpdate');
 const good = require('./good');
 const hapiAuthJwt2 = require('./hapiAuthJwt2');
 const cron = require('./cron');
@@ -50,14 +50,14 @@ const plugins = [
           env: 'production',
         },
         {
-          name: 'notionCoursesUpdate',
+          name: 'notionCourseSlotsUpdate',
           time: '0 0 3 5 * *',
           request: {
             method: 'GET',
-            url: '/scripts/notion-courses-update',
+            url: '/scripts/notion-course-slots-update',
             auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
           },
-          onComplete: notionCoursesUpdateJob.onComplete,
+          onComplete: notionCourseSlotsUpdateJob.onComplete,
           env: 'production',
         },
       ],
