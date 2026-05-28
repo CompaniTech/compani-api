@@ -5,6 +5,7 @@ const {
   completionCertificateCreation,
   sendingPendingBillsByEmail,
   sendingSmsReminders,
+  notionCourseSlotsUpdate,
 } = require('../controllers/scriptController');
 const { monthValidation } = require('./validations/utils');
 
@@ -35,6 +36,13 @@ exports.plugin = {
       path: '/sending-sms-reminders',
       options: { auth: { scope: ['scripts:run'] } },
       handler: sendingSmsReminders,
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/notion-course-slots-update',
+      options: { auth: { scope: ['scripts:run'] } },
+      handler: notionCourseSlotsUpdate,
     });
   },
 };

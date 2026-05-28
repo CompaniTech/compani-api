@@ -20,6 +20,13 @@ describe('method', () => {
   let findCourses;
   let findSubProgram;
   let findActivityHistories;
+  const TECH_EMAILS = 'tech@compani.fr';
+  const EVALUATION_STEP_IDS = new ObjectId();
+  const CODEV_STEP_IDS = new ObjectId();
+  const TRIPARTITE_STEP_IDS = new ObjectId();
+  const POEI_SUBPROGRAM_IDS = new ObjectId();
+  const VAE_SUBPROGRAM_IDS = new ObjectId();
+  const COLLECTIVE_STEP_IDS = new ObjectId();
 
   beforeEach(() => {
     findSlots = sinon.stub(CourseSlot, 'find');
@@ -29,12 +36,13 @@ describe('method', () => {
     smsSend = sinon.stub(SmsHelper, 'send');
     sendAttendanceReminder = sinon.stub(NotificationHelper, 'sendAttendanceReminder');
     UtilsMock.mockCurrentDate('2026-01-04T15:00:00.000Z');
-    process.env.TECH_EMAILS = 'tech@compani.fr';
-    process.env.VAEI_EVALUATION_STEP_ID = new ObjectId();
-    process.env.VAEI_CODEV_STEP_ID = new ObjectId();
-    process.env.VAEI_TRIPARTITE_STEP_ID = new ObjectId();
-    process.env.POEI_SUBPROGRAM_IDS = new ObjectId();
-    process.env.COLLECTIVE_STEP_IDS = new ObjectId();
+    process.env.TECH_EMAILS = TECH_EMAILS;
+    process.env.EVALUATION_STEP_IDS = EVALUATION_STEP_IDS;
+    process.env.CODEV_STEP_IDS = CODEV_STEP_IDS;
+    process.env.TRIPARTITE_STEP_IDS = TRIPARTITE_STEP_IDS;
+    process.env.POEI_SUBPROGRAM_IDS = POEI_SUBPROGRAM_IDS;
+    process.env.VAE_SUBPROGRAM_IDS = VAE_SUBPROGRAM_IDS;
+    process.env.COLLECTIVE_STEP_IDS = COLLECTIVE_STEP_IDS;
   });
 
   afterEach(() => {
@@ -46,10 +54,11 @@ describe('method', () => {
     sendAttendanceReminder.restore();
     UtilsMock.unmockCurrentDate();
     process.env.TECH_EMAILS = '';
-    process.env.VAEI_EVALUATION_STEP_ID = '';
-    process.env.VAEI_CODEV_STEP_ID = '';
-    process.env.VAEI_TRIPARTITE_STEP_ID = '';
+    process.env.EVALUATION_STEP_IDS = '';
+    process.env.CODEV_STEP_IDS = '';
+    process.env.TRIPARTITE_STEP_IDS = '';
     process.env.POEI_SUBPROGRAM_IDS = '';
+    process.env.VAE_SUBPROGRAM_IDS = '';
     process.env.COLLECTIVE_STEP_IDS = '';
   });
 
@@ -61,29 +70,37 @@ describe('method', () => {
     const courseSlots2W = [
       {
         startDate: '2026-01-18T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
         course: { trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }] },
       },
       {
         startDate: '2026-01-18T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
         course: { trainees: [{ _id: traineeIds[1] }] },
       },
       {
         startDate: '2026-01-18T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
         course: { interruptionDates: [{ startDate: '2026-01-01T15:00:00.000Z' }], trainees: [{ _id: traineeIds[2] }] },
       },
       {
         startDate: '2026-01-18T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
         course: { archivedAt: '2026-01-01T15:00:00.000Z', trainees: [{ _id: traineeIds[3] }] },
+      },
+      {
+        startDate: '2026-01-18T15:00:00.000Z',
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
+        course: {
+          trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }],
+          subProgram: VAE_SUBPROGRAM_IDS,
+        },
       },
     ];
     const courseSlots1D = [
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -103,7 +120,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -116,7 +133,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -129,7 +146,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+        step: new ObjectId(process.env.EVALUATION_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -142,7 +159,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -162,7 +179,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
+        step: new ObjectId(process.env.TRIPARTITE_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -182,7 +199,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-05T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
+        step: new ObjectId(process.env.TRIPARTITE_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -200,7 +217,7 @@ describe('method', () => {
     const courseSlots1W = [
       {
         startDate: '2026-01-11T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -209,14 +226,14 @@ describe('method', () => {
         course: {
           trainees: [{ _id: traineeIds[0], contact: { phone: '0987654321', countryCode: '+33' } }],
           slots: [
-            { startDate: '2026-01-05T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) },
-            { startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) },
+            { startDate: '2026-01-05T15:00:00.000Z', step: new ObjectId(process.env.CODEV_STEP_IDS) },
+            { startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.CODEV_STEP_IDS) },
           ],
         },
       },
       {
         startDate: '2026-01-11T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -224,12 +241,12 @@ describe('method', () => {
         }],
         course: {
           trainees: [{ _id: traineeIds[4], contact: { phone: '0987654321', countryCode: '+33' } }],
-          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
+          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.CODEV_STEP_IDS) }],
         },
       },
       {
         startDate: '2026-01-11T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -237,12 +254,12 @@ describe('method', () => {
         }],
         course: {
           trainees: [{ _id: traineeIds[1] }],
-          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
+          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.CODEV_STEP_IDS) }],
         },
       },
       {
         startDate: '2026-01-11T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -251,12 +268,12 @@ describe('method', () => {
         course: {
           interruptionDates: [{ startDate: '2026-01-01T15:00:00.000Z' }],
           trainees: [{ _id: traineeIds[2] }],
-          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
+          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.CODEV_STEP_IDS) }],
         },
       },
       {
         startDate: '2026-01-11T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -265,7 +282,7 @@ describe('method', () => {
         course: {
           archivedAt: '2026-01-01T15:00:00.000Z',
           trainees: [{ _id: traineeIds[3] }],
-          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.VAEI_CODEV_STEP_ID) }],
+          slots: [{ startDate: '2026-01-11T15:00:00.000Z', step: new ObjectId(process.env.CODEV_STEP_IDS) }],
         },
       },
     ];
@@ -289,7 +306,7 @@ describe('method', () => {
     const yesterdayCourseSlots = [
       {
         startDate: '2026-01-03T15:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -300,7 +317,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-03T14:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[0],
           identity: { lastname: 'Form', firstname: 'Claire' },
@@ -311,7 +328,7 @@ describe('method', () => {
       },
       {
         startDate: '2026-01-03T12:00:00.000Z',
-        step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+        step: new ObjectId(process.env.CODEV_STEP_IDS),
         trainers: [{
           _id: trainerIds[1],
           identity: { lastname: 'Form2', firstname: 'Marie' },
@@ -358,7 +375,7 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+            step: { $in: [new ObjectId(process.env.EVALUATION_STEP_IDS)] },
             startDate: { $gte: new Date('2026-01-17T23:00:00.000Z'), $lte: new Date('2026-01-18T22:59:59.999Z') },
           }],
         },
@@ -366,7 +383,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptionDates archivedAt',
+            select: 'trainees interruptionDates archivedAt subProgram',
             populate: { path: 'trainees', select: 'contact' },
           }],
         },
@@ -382,9 +399,9 @@ describe('method', () => {
           args: [{
             step: {
               $in: [
-                new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
-                new ObjectId(process.env.VAEI_CODEV_STEP_ID),
-                new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
+                new ObjectId(process.env.EVALUATION_STEP_IDS),
+                new ObjectId(process.env.CODEV_STEP_IDS),
+                new ObjectId(process.env.TRIPARTITE_STEP_IDS),
               ],
             },
             startDate: { $gte: new Date('2026-01-04T23:00:00.000Z'), $lte: new Date('2026-01-05T22:59:59.999Z') },
@@ -394,7 +411,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees tutors trainers interruptionDates archivedAt',
+            select: 'trainees tutors trainers interruptionDates archivedAt subProgram',
             populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
@@ -412,7 +429,7 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+            step: { $in: [new ObjectId(process.env.CODEV_STEP_IDS)] },
             startDate: { $gte: new Date('2026-01-10T23:00:00.000Z'), $lte: new Date('2026-01-11T22:59:59.999Z') },
           }],
         },
@@ -420,13 +437,13 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptionDates archivedAt',
+            select: 'trainees interruptionDates archivedAt subProgram',
             populate: [
               { path: 'trainees', select: 'contact' },
               {
                 path: 'slots',
                 select: 'startDate',
-                match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID), startDate: { $exists: true } },
+                match: { step: { $in: [new ObjectId(process.env.CODEV_STEP_IDS)] }, startDate: { $exists: true } },
                 options: { sort: { startDate: 1 } },
               },
             ],
@@ -508,9 +525,9 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nPrenez quelques minutes pour avancer sur vos e-learnings : préparez vous pour '
+        content: 'Formation :\nPrenez quelques minutes pour avancer sur vos e-learnings : préparez vous pour '
         + 'votre évaluation du 18/01/2026 à 16:00 !',
-        tag: 'Formation VAEI',
+        tag: 'Formation',
       }
     );
     sinon.assert.calledWithExactly(
@@ -518,9 +535,9 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas votre évaluation avec votre architecte de parcours Claire FORM qui '
+        content: 'Formation :\nN\'oubliez pas votre évaluation avec votre architecte de parcours Claire FORM qui '
         + 'aura lieu demain à 16:00, en visio. Si besoin, contactez votre architecte de parcours (+33987654321).',
-        tag: 'Formation VAEI',
+        tag: 'Formation',
       }
     );
     sinon.assert.calledWithExactly(
@@ -528,10 +545,10 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous d\'accompagnement collectif avec votre '
+        content: 'Formation :\nN\'oubliez pas votre rendez-vous d\'accompagnement collectif avec votre '
         + 'animateur.rice Claire FORM qui aura lieu demain à 16:00, en visio.'
         + ' Si besoin, contactez votre animateur.rice de CODEV (+33987654321).',
-        tag: 'Formation VAEI',
+        tag: 'Formation',
       }
     );
     sinon.assert.calledWithExactly(
@@ -539,9 +556,9 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice'
+        content: 'Formation :\nN\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice'
         + ' qui aura lieu demain à 16:00. Si besoin, contactez votre coach (+33987654321).',
-        tag: 'Formation VAEI',
+        tag: 'Formation',
       }
     );
     sinon.assert.calledWithExactly(
@@ -549,9 +566,9 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas le rendez-vous tripartite qui aura lieu demain à 16:00, avec votre '
+        content: 'Formation :\nN\'oubliez pas le rendez-vous tripartite qui aura lieu demain à 16:00, avec votre '
         + 'apprenant.e Jeanne APP. Si besoin, contactez le coach (+33987654321).',
-        tag: 'Formation VAEI',
+        tag: 'Formation',
       }
     );
     sinon.assert.calledWithExactly(
@@ -559,9 +576,9 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nN\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice'
+        content: 'Formation :\nN\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice'
         + ' qui aura lieu demain à 16:00. Si besoin, contactez votre coach (+33987654321).',
-        tag: 'Formation VAEI',
+        tag: 'Formation',
       }
     );
     sinon.assert.calledWithExactly(
@@ -569,10 +586,10 @@ describe('method', () => {
       {
         recipient: '+33987654321',
         sender: 'Compani',
-        content: 'Formation VAEI :\nVotre première session d\'accompagnement collectif aura lieu le 11/01/2026 à 16:00 '
+        content: 'Formation :\nVotre première session d\'accompagnement collectif aura lieu le 11/01/2026 à 16:00 '
         + 'avec l\'animateur.rice Claire FORM. Veuillez vérifier vos mails pour vous connecter sur la visio. '
         + 'Si besoin, contactez votre coach.',
-        tag: 'Formation VAEI',
+        tag: 'Formation',
       }
     );
     sinon.assert.calledWithExactly(
@@ -618,7 +635,7 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+            step: { $in: [new ObjectId(process.env.EVALUATION_STEP_IDS)] },
             startDate: { $gte: new Date('2026-01-17T23:00:00.000Z'), $lte: new Date('2026-01-18T22:59:59.999Z') },
           }],
         },
@@ -626,7 +643,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptionDates archivedAt',
+            select: 'trainees interruptionDates archivedAt subProgram',
             populate: { path: 'trainees', select: 'contact' },
           }],
         },
@@ -642,9 +659,9 @@ describe('method', () => {
           args: [{
             step: {
               $in: [
-                new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
-                new ObjectId(process.env.VAEI_CODEV_STEP_ID),
-                new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
+                new ObjectId(process.env.EVALUATION_STEP_IDS),
+                new ObjectId(process.env.CODEV_STEP_IDS),
+                new ObjectId(process.env.TRIPARTITE_STEP_IDS),
               ],
             },
             startDate: { $gte: new Date('2026-01-04T23:00:00.000Z'), $lte: new Date('2026-01-05T22:59:59.999Z') },
@@ -654,7 +671,7 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees tutors trainers interruptionDates archivedAt',
+            select: 'trainees tutors trainers interruptionDates archivedAt subProgram',
             populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
           }],
         },
@@ -672,7 +689,7 @@ describe('method', () => {
         {
           query: 'find',
           args: [{
-            step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+            step: { $in: [new ObjectId(process.env.CODEV_STEP_IDS)] },
             startDate: { $gte: new Date('2026-01-10T23:00:00.000Z'), $lte: new Date('2026-01-11T22:59:59.999Z') },
           }],
         },
@@ -680,13 +697,13 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'trainees interruptionDates archivedAt',
+            select: 'trainees interruptionDates archivedAt subProgram',
             populate: [
               { path: 'trainees', select: 'contact' },
               {
                 path: 'slots',
                 select: 'startDate',
-                match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID), startDate: { $exists: true } },
+                match: { step: { $in: [new ObjectId(process.env.CODEV_STEP_IDS)] }, startDate: { $exists: true } },
                 options: { sort: { startDate: 1 } },
               },
             ],
