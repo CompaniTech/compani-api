@@ -8110,6 +8110,612 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
   });
 });
 
+describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
+  let authToken;
+  let parseCSV;
+
+  beforeEach(populateDB);
+  beforeEach(() => {
+    parseCSV = sinon.stub(UtilsHelper, 'parseCsv');
+    process.env.MAX_CSV_COURSE_SIZE = 30;
+  });
+  afterEach(() => {
+    parseCSV.restore();
+    process.env.MAX_CSV_COURSE_SIZE = 0;
+  });
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    before(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should create INTRA and INTRA_HOLDING courses', async () => {
+      const courseBefore = await Course.countDocuments();
+
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA_HOLDING,
+          companies: '',
+          holding: authHolding._id,
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-12-01',
+          maxTrainees: '10',
+          hasCertifyingTest: 'true',
+          certificateGenerationMode: GLOBAL,
+          tradeName: 'autre nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(200);
+      const courseAfter = await Course.countDocuments();
+      expect(courseAfter).toEqual(courseBefore + 2);
+    });
+
+    it('should return 400 if a required field is missing in CSV columns', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if unexpected field in CSV columns', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+          other: '',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    const missingParams = [
+      { key: 'subProgram', errorMessage: 'le sous-programme est manquant' },
+      { key: 'operationsRepresentative', errorMessage: 'le chargé des opérations est manquant' },
+      { key: 'salesRepresentative', errorMessage: 'le commercial est manquant' },
+      { key: 'maxTrainees', errorMessage: 'le nombre maximum de stagiaires est manquant' },
+      { key: 'tradeName', errorMessage: 'le nom commercial est manquant' },
+    ];
+
+    missingParams.forEach((missingParam) => {
+      it(`should return 422 if ${missingParam.key} is empty`, async () => {
+        const formData = { file: 'test' };
+        const form = generateFormData(formData);
+
+        parseCSV.returns([
+          {
+            subProgram: subProgramsList[0]._id,
+            type: INTRA,
+            companies: authCompany._id,
+            holding: '',
+            operationsRepresentative: trainerOrganisationManager._id,
+            salesRepresentative: trainerOrganisationManager._id,
+            estimatedStartDate: '2025-11-01',
+            maxTrainees: '8',
+            hasCertifyingTest: 'false',
+            certificateGenerationMode: MONTHLY,
+            tradeName: 'nom',
+            [missingParam.key]: '',
+          },
+        ]);
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/courses/collective-courses-csv',
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: getStream(form),
+        });
+
+        expect(response.statusCode).toBe(422);
+        expect(Object.values(response.result.errorsByTrainee)[0]).toContain(missingParam.errorMessage);
+      });
+    });
+
+    it('should return 422 if type is empty', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: '',
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le type est manquant');
+    });
+
+    it('should return 422 if type is invalid', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: 'inter_b2b',
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le type de formation est invalide');
+    });
+
+    it('should return 422 if subProgram does not exist', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: new ObjectId(),
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le sous-programme n\'existe pas');
+    });
+
+    it('should return 422 if company is missing for INTRA type', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: '',
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('la structure est manquante');
+    });
+
+    it('should return 422 if company does not exist for INTRA type', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: new ObjectId(),
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('la structure n\'existe pas');
+    });
+
+    it('should return 422 if holding is missing for INTRA_HOLDING type', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA_HOLDING,
+          companies: '',
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('la société mère est manquante');
+    });
+
+    it('should return 422 if holding does not exist for INTRA_HOLDING type', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA_HOLDING,
+          companies: '',
+          holding: new ObjectId(),
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('la société mère n\'existe pas');
+    });
+
+    it('should return 422 if operationsRepresentative does not exist', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: new ObjectId(),
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le chargé des opérations n\'existe pas');
+    });
+
+    it('should return 422 if salesRepresentative does not exist', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: new ObjectId(),
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le commercial n\'existe pas');
+    });
+
+    it('should return 422 if estimatedStartDate is invalid', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: 'invalid-date',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le format de la date est incorrect');
+    });
+
+    it('should return 422 if maxTrainees is invalid', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: 'not-a-number',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toContain('le nombre maximum de stagiaires est invalide');
+    });
+
+    it('should return 422 if hasCertifyingTest is invalid', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'yes',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toContain('la valeur de hasCertifyingTest est invalide');
+    });
+
+    it('should return 422 if certificateGenerationMode is invalid', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          companies: authCompany._id,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager._id,
+          salesRepresentative: trainerOrganisationManager._id,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: 'yearly',
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toContain('le mode de génération des attestations est invalide');
+    });
+  });
+
+  describe('VENDOR_ADMIN', () => {
+    before(async () => {
+      authToken = await getToken('vendor_admin');
+    });
+  });
+
+  describe('OTHER ROLE', () => {
+    const roles = [
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const formData = { file: 'test' };
+        const form = generateFormData(formData);
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/courses/collective-courses-csv',
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: getStream(form),
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
 describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
   let authToken;
   const courseIdFromAuthCompany = coursesList[0]._id;
