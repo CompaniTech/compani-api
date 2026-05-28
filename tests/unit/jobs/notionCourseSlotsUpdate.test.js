@@ -6,6 +6,7 @@ const SinonMongoose = require('../sinonMongoose');
 const Course = require('../../../src/models/Course');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const UtilsHelper = require('../../../src/helpers/utils');
+const UtilsMock = require('../../utilsMock');
 const { notionCourseSlotsUpdateJob } = require('../../../src/jobs/notionCourseSlotsUpdate');
 
 describe('method', () => {
@@ -37,6 +38,8 @@ describe('method', () => {
       get: () => function MockClient() { return notionMock; },
     });
 
+    UtilsMock.mockCurrentDate('2026-02-05T10:00:00.000Z');
+
     process.env.VAEI_SUBPROGRAM_IDS = VAEI_SUBPROGRAM_IDS.toHexString();
     process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS.toHexString();
     process.env.VAE_SUBPROGRAM_IDS = VAE_SUBPROGRAM_IDS.toHexString();
@@ -52,6 +55,8 @@ describe('method', () => {
     findCourses.restore();
     findActivityHistories.restore();
     Object.defineProperty(notionSdk, 'Client', originalClientDescriptor);
+    UtilsMock.unmockCurrentDate();
+
     process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.PRI_SUBPROGRAM_IDS = '';
     process.env.VAE_SUBPROGRAM_IDS = '';
@@ -77,7 +82,7 @@ describe('method', () => {
         subProgram: { steps: [] },
         slots: [],
       },
-      // updated: found in Notion, eval 2h + codev 2h, no e-learning
+      // updated: found in Notion — eval 2h (present) + codev 2h (present), all slots in Jan = past month
       {
         _id: new ObjectId(),
         trainees: [traineeIds[0]],
@@ -88,8 +93,18 @@ describe('method', () => {
           ],
         },
         slots: [
-          { startDate: '2026-01-05T08:00:00.000Z', endDate: '2026-01-05T10:00:00.000Z', step: evalStepId },
-          { startDate: '2026-01-06T08:00:00.000Z', endDate: '2026-01-06T10:00:00.000Z', step: codevStepId },
+          {
+            startDate: '2026-01-05T08:00:00.000Z',
+            endDate: '2026-01-05T10:00:00.000Z',
+            step: evalStepId,
+            attendances: [{ status: 'present' }],
+          },
+          {
+            startDate: '2026-01-06T08:00:00.000Z',
+            endDate: '2026-01-06T10:00:00.000Z',
+            step: codevStepId,
+            attendances: [{ status: 'present' }],
+          },
         ],
       },
       // not updated: not found in Notion
@@ -97,7 +112,12 @@ describe('method', () => {
         _id: new ObjectId(),
         trainees: [traineeIds[1]],
         subProgram: { steps: [{ _id: codevStepId, activities: [activityIds[1]] }] },
-        slots: [{ startDate: '2026-01-07T08:00:00.000Z', endDate: '2026-01-07T09:00:00.000Z', step: codevStepId }],
+        slots: [{
+          startDate: '2026-01-07T08:00:00.000Z',
+          endDate: '2026-01-07T09:00:00.000Z',
+          step: codevStepId,
+          attendances: [{ status: 'present' }],
+        }],
       },
       // not updated: Notion API throws
       {
@@ -106,26 +126,45 @@ describe('method', () => {
         subProgram: { steps: [] },
         slots: [],
       },
-      // updated: multiple slots on same step (1h + 1.5h eval) + e-learning 0.75h
+      // updated: eval 1h + 1.5h (present, past month) + codev 0.5h (missing) + e-learning 0.75h (past month)
       {
         _id: new ObjectId(),
         trainees: [traineeIds[3]],
         subProgram: { steps: [{ _id: evalStepId, activities: [activityIds[0]] }] },
         slots: [
-          { startDate: '2026-01-08T08:00:00.000Z', endDate: '2026-01-08T09:00:00.000Z', step: evalStepId },
-          { startDate: '2026-01-09T08:00:00.000Z', endDate: '2026-01-09T09:30:00.000Z', step: evalStepId },
+          {
+            startDate: '2026-01-08T08:00:00.000Z',
+            endDate: '2026-01-08T09:00:00.000Z',
+            step: evalStepId,
+            attendances: [{ status: 'present' }],
+          },
+          {
+            startDate: '2026-01-09T08:00:00.000Z',
+            endDate: '2026-01-09T09:30:00.000Z',
+            step: evalStepId,
+            attendances: [{ status: 'present' }],
+          },
+          {
+            startDate: '2026-01-10T08:00:00.000Z',
+            endDate: '2026-01-10T08:30:00.000Z',
+            step: codevStepId,
+            attendances: [{ status: 'missing' }],
+          },
         ],
       },
     ];
 
     findCourses.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'populate', 'lean']));
-    // ActivityHistory.find is called once per course with trainees (4 times, course 0 is skipped)
     findActivityHistories.onCall(0).returns(SinonMongoose.stubChainedQueries([], ['lean']));
     findActivityHistories.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['lean']));
     findActivityHistories.onCall(2).returns(SinonMongoose.stubChainedQueries([], ['lean']));
-    findActivityHistories.onCall(3).returns(
-      SinonMongoose.stubChainedQueries([{ duration: 'PT1800S' }, { duration: 'PT900S' }], ['lean'])
-    );
+    findActivityHistories.onCall(3).returns(SinonMongoose.stubChainedQueries(
+      [
+        { duration: 'PT1800S', createdAt: '2026-01-15T10:00:00.000Z' },
+        { duration: 'PT900S', createdAt: '2026-01-15T10:00:00.000Z' },
+      ],
+      ['lean']
+    ));
 
     notionMock.dataSources.query.callsFake(async ({ filter }) => {
       const id = filter.rich_text.equals;
@@ -147,20 +186,32 @@ describe('method', () => {
       page_id: `page-${traineeIds[0].toHexString()}`,
       properties: {
         'Total h diag&eval': { number: 2 },
-        'Total h codev': { number: 2 },
+        'Tot Nb codev': { number: 2 },
         'Total h tripartite': { number: 0 },
         'Total h coaching': { number: 0 },
+        'Total h diag&eval du mois dernier': { number: 2 },
+        'Nb codev du mois dernier': { number: 2 },
+        'Total h tripartite du mois dernier': { number: 0 },
+        'Total h coaching du mois dernier': { number: 0 },
         'Total h e-learning': { number: 0 },
+        'Total h e-learning mois passé': { number: 0 },
+        'Total h absences parcours': { number: 0 },
       },
     });
     sinon.assert.calledWithExactly(notionMock.pages.update, {
       page_id: `page-${traineeIds[3].toHexString()}`,
       properties: {
         'Total h diag&eval': { number: 2.5 },
-        'Total h codev': { number: 0 },
+        'Tot Nb codev': { number: 0 },
         'Total h tripartite': { number: 0 },
         'Total h coaching': { number: 0 },
+        'Total h diag&eval du mois dernier': { number: 2.5 },
+        'Nb codev du mois dernier': { number: 0 },
+        'Total h tripartite du mois dernier': { number: 0 },
+        'Total h coaching du mois dernier': { number: 0 },
         'Total h e-learning': { number: 0.75 },
+        'Total h e-learning mois passé': { number: 0.75 },
+        'Total h absences parcours': { number: 0.5 },
       },
     });
     sinon.assert.callCount(notionMock.pages.update, 2);
@@ -173,7 +224,14 @@ describe('method', () => {
           archivedAt: { $exists: false },
         }],
       },
-      { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate step' }] },
+      {
+        query: 'populate',
+        args: [{
+          path: 'slots',
+          select: 'startDate endDate step attendances',
+          populate: { path: 'attendances', options: { isVendorUser: true } },
+        }],
+      },
       {
         query: 'populate',
         args: [{

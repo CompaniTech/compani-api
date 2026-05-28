@@ -270,8 +270,8 @@ describe('SCRIPTS ROUTES - GET /scripts/notion-course-slots-update', () => {
     afterEach(() => {
       Object.defineProperty(notionSdk, 'Client', notionClientDescriptor);
       process.env.VAEI_SUBPROGRAM_IDS = '';
-      // process.env.PRI_SUBPROGRAM_IDS = '';
-      // process.env.VAE_SUBPROGRAM_IDS = '';
+      process.env.PRI_SUBPROGRAM_IDS = '';
+      process.env.VAE_SUBPROGRAM_IDS = '';
       process.env.EVALUATION_STEP_IDS = '';
       process.env.CODEV_STEP_IDS = '';
       process.env.TRIPARTITE_STEP_IDS = '';
@@ -291,35 +291,6 @@ describe('SCRIPTS ROUTES - GET /scripts/notion-course-slots-update', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.updatedTraineeIds).toHaveLength(3);
-      // expect(response.result.data.notUpdatedTraineeIds).toHaveLength(1);
-
-      // sinon.assert.callCount(notionMock.dataSources.query, 3);
-      // sinon.assert.calledWithMatch(notionMock.dataSources.query, {
-      //   data_source_id: 'notion-db-id',
-      //   filter: { property: 'ID_VAEI_Apprenant', rich_text: { equals: userList[0]._id.toHexString() } },
-      // });
-
-      // sinon.assert.callCount(notionMock.pages.update, 2);
-      // sinon.assert.calledWithMatch(notionMock.pages.update, {
-      //   page_id: `page-id-${userList[0]._id.toHexString()}`,
-      //   properties: {
-      //     'Total h diag&eval': { number: 8 },
-      //     'Total h codev': { number: 4 },
-      //     'Total h tripartite': { number: 1 },
-      //     'Total h coaching': { number: 0 },
-      //     'Total h e-learning': { number: 0 },
-      //   },
-      // });
-      // sinon.assert.calledWithMatch(notionMock.pages.update, {
-      //   page_id: `page-id-${userList[3]._id.toHexString()}`,
-      //   properties: {
-      //     'Total h diag&eval': { number: 0 },
-      //     'Total h codev': { number: 2 },
-      //     'Total h tripartite': { number: 0 },
-      //     'Total h coaching': { number: 0 },
-      //     'Total h e-learning': { number: 0 },
-      //   },
-      // });
     });
   });
 
