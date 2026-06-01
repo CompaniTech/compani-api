@@ -11,12 +11,6 @@ const UtilsHelper = require('../helpers/utils');
 const NumbersHelper = require('../helpers/numbers');
 const { MINUTE, MONTH, PRESENT, MISSING } = require('../helpers/constants');
 
-const getSubProgramIds = () => [
-  ...process.env.VAEI_SUBPROGRAM_IDS.split(','),
-  ...process.env.PRI_SUBPROGRAM_IDS.split(','),
-  ...process.env.VAE_SUBPROGRAM_IDS.split(','),
-].map(id => new ObjectId(id.trim()));
-
 const computeSlotDurationPerStep = (slots, stepIds) => {
   const stepDurations = stepIds.reduce((acc, stepId) => {
     acc[stepId] = CompaniDuration('PT0S');
@@ -61,10 +55,10 @@ const updateNotionPage = async (notion, traineeId, properties) => {
 const notionCourseSlotsUpdateJob = {
   async method(server) {
     try {
-      const evaluationStepIds = process.env.EVALUATION_STEP_IDS.split(',').map(id => new ObjectId(id));
-      const codevStepIds = process.env.CODEV_STEP_IDS.split(',').map(id => new ObjectId(id));
-      const tripartiteStepIds = process.env.TRIPARTITE_STEP_IDS.split(',').map(id => new ObjectId(id));
-      const coachingStepIds = process.env.COACHING_STEP_IDS.split(',').map(id => new ObjectId(id));
+      const evaluationStepIds = UtilsHelper.getEnvObjectIds('EVALUATION_STEP_IDS');
+      const codevStepIds = UtilsHelper.getEnvObjectIds('CODEV_STEP_IDS');
+      const tripartiteStepIds = UtilsHelper.getEnvObjectIds('TRIPARTITE_STEP_IDS');
+      const coachingStepIds = UtilsHelper.getEnvObjectIds('COACHING_STEP_IDS');
       const allStepIds = [...evaluationStepIds, ...codevStepIds, ...tripartiteStepIds, ...coachingStepIds];
 
       const notion = new notionSdk.Client({ auth: process.env.NOTION_TOKEN });
@@ -83,8 +77,13 @@ const notionCourseSlotsUpdateJob = {
 
       const pastMonthStart = CompaniDate().startOf(MONTH).subtract('P1M');
 
+      const subProgramIds = [
+        ...UtilsHelper.getEnvObjectIds('VAEI_SUBPROGRAM_IDS'),
+        ...UtilsHelper.getEnvObjectIds('PRI_SUBPROGRAM_IDS'),
+        ...UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS'),
+      ];
       const courses = await Course
-        .find({ subProgram: { $in: getSubProgramIds() }, archivedAt: { $exists: false } })
+        .find({ subProgram: { $in: subProgramIds }, archivedAt: { $exists: false } })
         .populate({
           path: 'slots',
           select: 'startDate endDate step attendances',

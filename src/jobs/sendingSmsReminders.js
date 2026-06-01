@@ -14,11 +14,9 @@ const UtilsHelper = require('../helpers/utils');
 const { CompaniDate } = require('../helpers/dates/companiDates');
 const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING, SINGLE } = require('../helpers/constants');
 
-const getEnvObjectIds = key => (process.env[key] || '').split(',').filter(Boolean).map(id => new ObjectId(id));
-
 const getEvaluationSlotsIn2W = async () => {
-  const evaluationStepIds = getEnvObjectIds('EVALUATION_STEP_IDS');
-  const VAESubProgramIds = getEnvObjectIds('VAE_SUBPROGRAM_IDS');
+  const evaluationStepIds = UtilsHelper.getEnvObjectIds('EVALUATION_STEP_IDS');
+  const VAESubProgramIds = UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS');
 
   const evaluationSlotsIn2W = await CourseSlot
     .find({
@@ -63,10 +61,10 @@ const getEvaluationSlotsIn2W = async () => {
 };
 
 const getSlotsIn1D = async () => {
-  const evaluationStepIds = getEnvObjectIds('EVALUATION_STEP_IDS');
-  const codevStepIds = getEnvObjectIds('CODEV_STEP_IDS');
-  const tripartiteStepIds = getEnvObjectIds('TRIPARTITE_STEP_IDS');
-  const VAESubProgramIds = getEnvObjectIds('VAE_SUBPROGRAM_IDS');
+  const evaluationStepIds = UtilsHelper.getEnvObjectIds('EVALUATION_STEP_IDS');
+  const codevStepIds = UtilsHelper.getEnvObjectIds('CODEV_STEP_IDS');
+  const tripartiteStepIds = UtilsHelper.getEnvObjectIds('TRIPARTITE_STEP_IDS');
+  const VAESubProgramIds = UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS');
 
   const slotsIn1D = await CourseSlot
     .find({
@@ -188,8 +186,8 @@ const getSlotsIn1D = async () => {
 };
 
 const getCodevSlotsIn1W = async () => {
-  const codevStepIds = getEnvObjectIds('CODEV_STEP_IDS');
-  const VAESubProgramIds = getEnvObjectIds('VAE_SUBPROGRAM_IDS');
+  const codevStepIds = UtilsHelper.getEnvObjectIds('CODEV_STEP_IDS');
+  const VAESubProgramIds = UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS');
 
   const codevSlotsIn1W = await CourseSlot
     .find({
@@ -248,8 +246,8 @@ const getCodevSlotsIn1W = async () => {
 };
 
 const getPOEIFirstSingleSlot = async () => {
-  const POEISubProgramIds = getEnvObjectIds('POEI_SUBPROGRAM_IDS');
-  const collectiveStepIds = getEnvObjectIds('COLLECTIVE_STEP_IDS');
+  const POEISubProgramIds = UtilsHelper.getEnvObjectIds('POEI_SUBPROGRAM_IDS');
+  const collectiveStepIds = UtilsHelper.getEnvObjectIds('COLLECTIVE_STEP_IDS');
 
   const courses = await Course
     .find({
