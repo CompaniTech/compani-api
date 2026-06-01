@@ -259,3 +259,22 @@ exports.completionSendingSmsRemindersEmail = (result) => {
 
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
+
+exports.completionNotionCourseSlotsUpdate = (updatedTraineeIds, notUpdatedTraineeIds) => {
+  let body = `<p>Script exécuté. ${updatedTraineeIds.length + notUpdatedTraineeIds.length} apprenants traités.</p>`;
+
+  // eslint-disable-next-line max-len
+  if (updatedTraineeIds.length) body = body.concat(`<p>Données mises à jour pour les apprenants suivants :<br/> ${updatedTraineeIds.map(t => `${t}<br/>`).join('\r\n')}</p>`);
+
+  // eslint-disable-next-line max-len
+  if (notUpdatedTraineeIds.length) body = body.concat(`<p>Données non mises à jour pour les apprenants suivants :<br/> ${notUpdatedTraineeIds.map(t => `${t}<br/>`).join('\r\n')}</p>`);
+
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: process.env.TECH_EMAILS,
+    subject: 'Script de mise à jour des actions de formations individuelles dans Notion',
+    html: body,
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+};

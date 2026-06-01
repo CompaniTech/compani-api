@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const { completionCertificateCreationJob } = require('../jobs/completionCertificateCreation');
 const { sendingPendingBillsByEmailJob } = require('../jobs/sendingPendingBillsByEmail');
 const { sendingSmsRemindersJob } = require('../jobs/sendingSmsReminders');
+const { notionCourseSlotsUpdateJob } = require('../jobs/notionCourseSlotsUpdate');
 
 const completionCertificateCreation = async (req) => {
   try {
@@ -40,4 +41,20 @@ const sendingSmsReminders = async (req) => {
   }
 };
 
-module.exports = { completionCertificateCreation, sendingPendingBillsByEmail, sendingSmsReminders };
+const notionCourseSlotsUpdate = async (req) => {
+  try {
+    const result = await notionCourseSlotsUpdateJob.method(req);
+
+    return { data: result };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = {
+  completionCertificateCreation,
+  sendingPendingBillsByEmail,
+  sendingSmsReminders,
+  notionCourseSlotsUpdate,
+};

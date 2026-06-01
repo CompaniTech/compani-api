@@ -15,9 +15,12 @@ const { CompaniDate } = require('../helpers/dates/companiDates');
 const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING, SINGLE } = require('../helpers/constants');
 
 const getEvaluationSlotsIn2W = async () => {
+  const evaluationStepIds = UtilsHelper.getEnvObjectIds('EVALUATION_STEP_IDS');
+  const VAESubProgramIds = UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS');
+
   const evaluationSlotsIn2W = await CourseSlot
     .find({
-      step: new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
+      step: { $in: evaluationStepIds },
       startDate: {
         $gte: CompaniDate().add('P14D').startOf(DAY).toDate(),
         $lte: CompaniDate().add('P14D').endOf(DAY).toDate(),
@@ -25,7 +28,7 @@ const getEvaluationSlotsIn2W = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees interruptionDates archivedAt',
+      select: 'trainees interruptionDates archivedAt subProgram',
       populate: { path: 'trainees', select: 'contact' },
     })
     .lean();
@@ -35,7 +38,8 @@ const getEvaluationSlotsIn2W = async () => {
   const evaluationSlotsIn2WNotSentReminders = [];
   for (const slot of evaluationSlotsIn2W) {
     const isCourseInterrupted = UtilsHelper.isCourseInterrupted(slot.course.interruptionDates);
-    if (isCourseInterrupted || slot.course.archivedAt) continue;
+    const isCourseSubProgramVAE = UtilsHelper.doesArrayIncludeId(VAESubProgramIds, slot.course.subProgram);
+    if (isCourseInterrupted || slot.course.archivedAt || isCourseSubProgramVAE) continue;
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     if (get(traineeContact, 'phone')) {
@@ -43,10 +47,10 @@ const getEvaluationSlotsIn2W = async () => {
         SmsHelper.send({
           recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
           sender: 'Compani',
-          content: 'Formation VAEI :\n'
+          content: 'Formation :\n'
             + 'Prenez quelques minutes pour avancer sur vos e-learnings : préparez vous pour votre évaluation '
             + `du ${CompaniDate(slot.startDate).format(`${DD_MM_YYYY} à ${HH_MM}`)} !`,
-          tag: 'Formation VAEI',
+          tag: 'Formation',
         })
       );
       evaluationSlotsIn2WSentReminders.push(trainee._id);
@@ -57,14 +61,15 @@ const getEvaluationSlotsIn2W = async () => {
 };
 
 const getSlotsIn1D = async () => {
+  const evaluationStepIds = UtilsHelper.getEnvObjectIds('EVALUATION_STEP_IDS');
+  const codevStepIds = UtilsHelper.getEnvObjectIds('CODEV_STEP_IDS');
+  const tripartiteStepIds = UtilsHelper.getEnvObjectIds('TRIPARTITE_STEP_IDS');
+  const VAESubProgramIds = UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS');
+
   const slotsIn1D = await CourseSlot
     .find({
       step: {
-        $in: [
-          new ObjectId(process.env.VAEI_EVALUATION_STEP_ID),
-          new ObjectId(process.env.VAEI_CODEV_STEP_ID),
-          new ObjectId(process.env.VAEI_TRIPARTITE_STEP_ID),
-        ],
+        $in: [...evaluationStepIds, ...codevStepIds, ...tripartiteStepIds],
       },
       startDate: {
         $gte: CompaniDate().add('P1D').startOf(DAY).toDate(),
@@ -73,7 +78,7 @@ const getSlotsIn1D = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees tutors trainers interruptionDates archivedAt',
+      select: 'trainees tutors trainers interruptionDates archivedAt subProgram',
       populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
     })
     .populate({ path: 'trainers', select: 'identity contact' })
@@ -90,7 +95,8 @@ const getSlotsIn1D = async () => {
   const tutorTripartiteSlotsIn1DNotSentReminders = [];
   for (const slot of slotsIn1D) {
     const isCourseInterrupted = UtilsHelper.isCourseInterrupted(slot.course.interruptionDates);
-    if (isCourseInterrupted || slot.course.archivedAt) continue;
+    const isCourseSubProgramVAE = UtilsHelper.doesArrayIncludeId(VAESubProgramIds, slot.course.subProgram);
+    if (isCourseInterrupted || slot.course.archivedAt || isCourseSubProgramVAE) continue;
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     const trainer = slot.trainers[0];
@@ -99,26 +105,26 @@ const getSlotsIn1D = async () => {
       : '';
     if (get(traineeContact, 'phone')) {
       let content = '';
-      switch (slot.step.toHexString()) {
-        case process.env.VAEI_EVALUATION_STEP_ID:
+      switch (true) {
+        case UtilsHelper.doesArrayIncludeId(evaluationStepIds, slot.step):
           evaluationSlotsIn1DSentReminders.push(trainee._id);
-          content = 'Formation VAEI :\n'
+          content = 'Formation :\n'
             + 'N\'oubliez pas votre évaluation avec votre architecte de parcours '
             + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
             + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)},`
             + ` en visio. Si besoin, contactez votre architecte de parcours${trainerPhone}.`;
           break;
-        case process.env.VAEI_CODEV_STEP_ID:
+        case UtilsHelper.doesArrayIncludeId(codevStepIds, slot.step):
           codevSlotsIn1DSentReminders.push(trainee._id);
-          content = 'Formation VAEI :\n'
+          content = 'Formation :\n'
             + 'N\'oubliez pas votre rendez-vous d\'accompagnement collectif avec votre animateur.rice '
             + `${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}`
             + ` qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)}, en visio.`
             + ` Si besoin, contactez votre animateur.rice de CODEV${trainerPhone}.`;
           break;
-        case process.env.VAEI_TRIPARTITE_STEP_ID:
+        case UtilsHelper.doesArrayIncludeId(tripartiteStepIds, slot.step):
           traineeTripartiteSlotsIn1DSentReminders.push(trainee._id);
-          content = 'Formation VAEI :\n'
+          content = 'Formation :\n'
             + 'N\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice qui aura lieu demain à '
             + `${CompaniDate(slot.startDate).format(HH_MM)}. Si besoin, contactez votre coach${trainerPhone}.`;
           break;
@@ -128,27 +134,27 @@ const getSlotsIn1D = async () => {
           recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
           sender: 'Compani',
           content,
-          tag: 'Formation VAEI',
+          tag: 'Formation',
         })
       );
     } else {
-      switch (slot.step.toHexString()) {
-        case process.env.VAEI_EVALUATION_STEP_ID:
+      switch (true) {
+        case UtilsHelper.doesArrayIncludeId(evaluationStepIds, slot.step):
           evaluationSlotsIn1DNotSentReminders.push(trainee._id);
           break;
-        case process.env.VAEI_CODEV_STEP_ID:
+        case UtilsHelper.doesArrayIncludeId(codevStepIds, slot.step):
           codevSlotsIn1DNotSentReminders.push(trainee._id);
           break;
-        case process.env.VAEI_TRIPARTITE_STEP_ID:
+        case UtilsHelper.doesArrayIncludeId(tripartiteStepIds, slot.step):
           traineeTripartiteSlotsIn1DNotSentReminders.push(trainee._id);
           break;
       }
     }
-    if (UtilsHelper.areObjectIdsEquals(slot.step, process.env.VAEI_TRIPARTITE_STEP_ID) && slot.course.tutors) {
+    if (UtilsHelper.doesArrayIncludeId(tripartiteStepIds, slot.step) && slot.course.tutors) {
       for (const tutor of slot.course.tutors) {
         const tutorContact = get(tutor, 'contact');
         if (get(tutorContact, 'phone')) {
-          const content = 'Formation VAEI :\n'
+          const content = 'Formation :\n'
             + 'N\'oubliez pas le rendez-vous tripartite qui aura lieu demain à '
             + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `
             + `${UtilsHelper.formatIdentity(trainee.identity, 'FL')}. Si besoin, contactez le coach${trainerPhone}.`;
@@ -158,7 +164,7 @@ const getSlotsIn1D = async () => {
               recipient: `${tutorContact.countryCode}${tutorContact.phone.substring(1)}`,
               sender: 'Compani',
               content,
-              tag: 'Formation VAEI',
+              tag: 'Formation',
             })
           );
         } else tutorTripartiteSlotsIn1DNotSentReminders.push(tutor._id);
@@ -180,9 +186,12 @@ const getSlotsIn1D = async () => {
 };
 
 const getCodevSlotsIn1W = async () => {
+  const codevStepIds = UtilsHelper.getEnvObjectIds('CODEV_STEP_IDS');
+  const VAESubProgramIds = UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS');
+
   const codevSlotsIn1W = await CourseSlot
     .find({
-      step: new ObjectId(process.env.VAEI_CODEV_STEP_ID),
+      step: { $in: codevStepIds },
       startDate: {
         $gte: CompaniDate().add('P7D').startOf(DAY).toDate(),
         $lte: CompaniDate().add('P7D').endOf(DAY).toDate(),
@@ -190,13 +199,13 @@ const getCodevSlotsIn1W = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees interruptionDates archivedAt',
+      select: 'trainees interruptionDates archivedAt subProgram',
       populate: [
         { path: 'trainees', select: 'contact' },
         {
           path: 'slots',
           select: 'startDate',
-          match: { step: new ObjectId(process.env.VAEI_CODEV_STEP_ID), startDate: { $exists: true } },
+          match: { step: { $in: codevStepIds }, startDate: { $exists: true } },
           options: { sort: { startDate: 1 } },
         },
       ],
@@ -206,7 +215,8 @@ const getCodevSlotsIn1W = async () => {
   const filteredSlots = codevSlotsIn1W.filter((s) => {
     const isCourseInterrupted = UtilsHelper.isCourseInterrupted(s.course.interruptionDates);
     const isCourseStopped = isCourseInterrupted || s.course.archivedAt;
-    return !isCourseStopped && CompaniDate(s.startDate).isSame(s.course.slots[0].startDate);
+    const isCourseSubProgramVAE = UtilsHelper.doesArrayIncludeId(VAESubProgramIds, s.course.subProgram);
+    return !isCourseStopped && !isCourseSubProgramVAE && CompaniDate(s.startDate).isSame(s.course.slots[0].startDate);
   });
 
   const promises = [];
@@ -220,12 +230,12 @@ const getCodevSlotsIn1W = async () => {
         SmsHelper.send({
           recipient: `${traineeContact.countryCode}${traineeContact.phone.substring(1)}`,
           sender: 'Compani',
-          content: 'Formation VAEI :\n'
+          content: 'Formation :\n'
             + 'Votre première session d\'accompagnement collectif aura lieu le '
             + `${CompaniDate(slot.startDate).format(`${DD_MM_YYYY} à ${HH_MM}`)}`
             + ` avec l'animateur.rice ${UtilsHelper.formatIdentity(slot.trainers[0].identity, 'FL')}. `
             + 'Veuillez vérifier vos mails pour vous connecter sur la visio. Si besoin, contactez votre coach.',
-          tag: 'Formation VAEI',
+          tag: 'Formation',
         })
       );
       codevSlotsIn1WSentReminders.push(trainee._id);
@@ -236,8 +246,9 @@ const getCodevSlotsIn1W = async () => {
 };
 
 const getPOEIFirstSingleSlot = async () => {
-  const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
-  const POEISubProgramIds = process.env.POEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+  const POEISubProgramIds = UtilsHelper.getEnvObjectIds('POEI_SUBPROGRAM_IDS');
+  const collectiveStepIds = UtilsHelper.getEnvObjectIds('COLLECTIVE_STEP_IDS');
+
   const courses = await Course
     .find({
       subProgram: { $in: POEISubProgramIds },
@@ -365,7 +376,7 @@ const sendingSmsRemindersJob = {
     try {
       const result = {};
       const promises = [];
-      // 2 weeks before VAEI evaluation
+      // 2 weeks before evaluation
       const {
         evaluationSlotsIn2WSentReminders,
         evaluationSlotsIn2WNotSentReminders,
@@ -377,7 +388,7 @@ const sendingSmsRemindersJob = {
       };
       if (evaluationSlotsIn2WPromises.length) promises.push(...evaluationSlotsIn2WPromises);
 
-      // 1 day before VAEI slot
+      // 1 day before slot
       const {
         evaluationSlotsIn1DSentReminders,
         evaluationSlotsIn1DNotSentReminders,

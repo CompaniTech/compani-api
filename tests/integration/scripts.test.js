@@ -1,5 +1,7 @@
 const { expect } = require('expect');
 const sinon = require('sinon');
+const { ObjectId } = require('mongodb');
+const notionSdk = require('@notionhq/client');
 const app = require('../../server');
 const CompletionCertificateHelper = require('../../src/helpers/completionCertificates');
 const EmailHelper = require('../../src/helpers/email');
@@ -148,11 +150,12 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       sendAttendanceReminder = sinon.stub(NotificationHelper, 'sendAttendanceReminder');
       UtilsMock.mockCurrentDate('2023-01-08T09:00:00.000Z');
       process.env.TECH_EMAIL = 'tech@compani.fr';
-      process.env.VAEI_EVALUATION_STEP_ID = stepList[0]._id;
-      process.env.VAEI_CODEV_STEP_ID = stepList[1]._id;
-      process.env.VAEI_TRIPARTITE_STEP_ID = stepList[3]._id;
+      process.env.EVALUATION_STEP_IDS = stepList[0]._id;
+      process.env.CODEV_STEP_IDS = stepList[1]._id;
+      process.env.TRIPARTITE_STEP_IDS = stepList[3]._id;
       process.env.POEI_SUBPROGRAM_IDS = subProgramList[2]._id;
       process.env.COLLECTIVE_STEP_IDS = stepList[4]._id;
+      process.env.VAE_SUBPROGRAM_IDS = subProgramList[1]._id;
     });
 
     afterEach(() => {
@@ -160,11 +163,12 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       sendAttendanceReminder.restore();
       UtilsMock.unmockCurrentDate('');
       process.env.TECH_EMAIL = '';
-      process.env.VAEI_EVALUATION_STEP_ID = '';
-      process.env.VAEI_CODEV_STEP_ID = '';
-      process.env.VAEI_TRIPARTITE_STEP_ID = '';
+      process.env.EVALUATION_STEP_IDS = '';
+      process.env.CODEV_STEP_IDS = '';
+      process.env.TRIPARTITE_STEP_IDS = '';
       process.env.POEI_SUBPROGRAM_IDS = '';
       process.env.COLLECTIVE_STEP_IDS = '';
+      process.env.VAE_SUBPROGRAM_IDS = '';
     });
 
     it('should send reminders by sms', async () => {
@@ -222,6 +226,87 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
         const response = await app.inject({
           method: 'GET',
           url: '/scripts/sending-sms-reminders',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('SCRIPTS ROUTES - GET /scripts/notion-course-slots-update', () => {
+  let authToken;
+  let notionClientDescriptor;
+  let notionMock;
+  const priSubProgramId = new ObjectId();
+  const vaeSubProgramId = new ObjectId();
+  const coachingStepId = new ObjectId();
+
+  describe('VENDOR_ADMIN', () => {
+    beforeEach(populateDB);
+
+    beforeEach(async () => {
+      authToken = await getToken('vendor_admin');
+      notionMock = { dataSources: { query: sinon.stub() }, pages: { update: sinon.stub().resolves({}) } };
+      notionClientDescriptor = Object.getOwnPropertyDescriptor(notionSdk, 'Client');
+      Object.defineProperty(notionSdk, 'Client', {
+        configurable: true,
+        enumerable: true,
+        get: () => function MockClient() { return notionMock; },
+      });
+
+      process.env.VAEI_SUBPROGRAM_IDS = subProgramList[0]._id.toHexString();
+      process.env.PRI_SUBPROGRAM_IDS = priSubProgramId.toHexString();
+      process.env.VAE_SUBPROGRAM_IDS = vaeSubProgramId.toHexString();
+      process.env.EVALUATION_STEP_IDS = stepList[0]._id.toHexString();
+      process.env.CODEV_STEP_IDS = stepList[1]._id.toHexString();
+      process.env.TRIPARTITE_STEP_IDS = stepList[3]._id.toHexString();
+      process.env.COACHING_STEP_IDS = coachingStepId.toHexString();
+      process.env.NOTION_TOKEN = 'notion-token';
+      process.env.NOTION_TRAINEES_DATABASE = 'notion-db-id';
+    });
+
+    afterEach(() => {
+      Object.defineProperty(notionSdk, 'Client', notionClientDescriptor);
+      process.env.VAEI_SUBPROGRAM_IDS = '';
+      process.env.PRI_SUBPROGRAM_IDS = '';
+      process.env.VAE_SUBPROGRAM_IDS = '';
+      process.env.EVALUATION_STEP_IDS = '';
+      process.env.CODEV_STEP_IDS = '';
+      process.env.TRIPARTITE_STEP_IDS = '';
+      process.env.COACHING_STEP_IDS = '';
+      process.env.NOTION_TOKEN = '';
+      process.env.NOTION_TRAINEES_DATABASE = '';
+    });
+
+    it('should update Notion for trainees with matching rows and skip others', async () => {
+      notionMock.dataSources.query.callsFake(async () => ({ results: [{ }] }));
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/scripts/notion-course-slots-update',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.updatedTraineeIds).toHaveLength(3);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'GET',
+          url: '/scripts/notion-course-slots-update',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
