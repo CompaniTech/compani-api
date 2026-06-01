@@ -37,8 +37,9 @@ const buildStepProperties = (stepDurations, stepToColumn) => {
   const properties = {};
   for (const [stepId, duration] of Object.entries(stepDurations)) {
     const column = Object.entries(stepToColumn).find(([, ids]) => UtilsHelper.doesArrayIncludeId(ids, stepId));
-    if (column && !get(properties[column[0]], 'number')) {
-      properties[column[0]] = { number: NumbersHelper.toFixedToFloat(duration.asHours()) };
+    if (column) {
+      const current = get(properties[column[0]], 'number') || 0;
+      properties[column[0]] = { number: NumbersHelper.toFixedToFloat(duration.asHours() + current) };
     }
   }
 
