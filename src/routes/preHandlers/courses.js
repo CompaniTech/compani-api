@@ -1328,7 +1328,7 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
 
   const allowedKeys = [
     'certificateGenerationMode',
-    'companies',
+    'company',
     'estimatedStartDate',
     'hasCertifyingTest',
     'holding',
@@ -1347,14 +1347,16 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
   const errorsByCourse = {};
   let i = 1;
 
+  const trainingOrganisationManagerRole = await Role.findOne({ name: TRAINING_ORGANISATION_MANAGER }).lean();
   for (const course of courseList) {
     const courseName = `Formation ${i}`;
 
+    let courseType = null;
     if (!course.type) {
       errorsByCourse[courseName] = [translate[language].missingType];
-    } else if (![INTRA, INTRA_HOLDING].includes(course.type)) {
+    } else if (![INTRA, INTRA_HOLDING, INTER_B2B].includes(course.type.toLowerCase())) {
       errorsByCourse[courseName] = [translate[language].invalidCourseType];
-    }
+    } else courseType = course.type.toLowerCase();
 
     if (!course.subProgram) {
       if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingSubProgram);
@@ -1372,16 +1374,22 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
 
     let companyId = null;
     let holdingId = null;
-
-    if (course.type === INTRA) {
-      if (!course.companies) {
+    if (courseType !== INTRA && course.company) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unexpectedCompany);
+      else errorsByCourse[courseName] = [translate[language].unexpectedCompany];
+    }
+    if (courseType !== INTRA_HOLDING && course.holding) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unexpectedHolding);
+      else errorsByCourse[courseName] = [translate[language].unexpectedHolding];
+    }
+    if (courseType === INTRA) {
+      if (!course.company) {
         if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingCompany);
         else errorsByCourse[courseName] = [translate[language].missingCompany];
-      } else if (!isObjectIdOrHexString(course.companies)) {
-        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownCompany);
-        else errorsByCourse[courseName] = [translate[language].unknownCompany];
       } else {
-        const company = await Company.findOne({ _id: course.companies }, { _id: 1 }).lean();
+        const company = await Company
+          .findOne({ name: { $regex: new RegExp(`^${UtilsHelper.escapeRegex(course.company)}$`, 'i') } }, { _id: 1 })
+          .lean();
         if (!company) {
           if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownCompany);
           else errorsByCourse[courseName] = [translate[language].unknownCompany];
@@ -1389,20 +1397,19 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
           companyId = company._id;
         }
       }
-    } else if (course.type === INTRA_HOLDING) {
+    } else if (courseType === INTRA_HOLDING) {
       if (!course.holding) {
         if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingHolding);
         else errorsByCourse[courseName] = [translate[language].missingHolding];
-      } else if (!isObjectIdOrHexString(course.holding)) {
-        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownHolding);
-        else errorsByCourse[courseName] = [translate[language].unknownHolding];
       } else {
-        const holdingExists = await Holding.countDocuments({ _id: course.holding });
-        if (!holdingExists) {
+        const holding = await Holding
+          .findOne({ name: { $regex: new RegExp(`^${UtilsHelper.escapeRegex(course.holding)}$`, 'i') } })
+          .lean();
+        if (!holding) {
           if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownHolding);
           else errorsByCourse[courseName] = [translate[language].unknownHolding];
         } else {
-          holdingId = course.holding;
+          holdingId = holding._id;
         }
       }
     }
@@ -1412,44 +1419,48 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
       if (errorsByCourse[courseName]) {
         errorsByCourse[courseName].push(translate[language].missingOperationsRepresentative);
       } else errorsByCourse[courseName] = [translate[language].missingOperationsRepresentative];
-    } else if (!isObjectIdOrHexString(course.operationsRepresentative)) {
+    } else if (!course.operationsRepresentative.match(EMAIL_VALIDATION)) {
       if (errorsByCourse[courseName]) {
-        errorsByCourse[courseName].push(translate[language].unknownOperationsRepresentative);
-      } else errorsByCourse[courseName] = [translate[language].unknownOperationsRepresentative];
+        errorsByCourse[courseName].push(translate[language].incorrectEmailForOperationsRepresentative);
+      } else errorsByCourse[courseName] = [translate[language].incorrectEmailForOperationsRepresentative];
     } else {
       const operationsRepresentative = await User
-        .findOne({ _id: course.operationsRepresentative }, { role: 1 })
-        .lean({ autopopulate: true });
-      if (!operationsRepresentative ||
-        ![VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(operationsRepresentative, 'role.vendor.name'))) {
+        .findOne(
+          {
+            'local.email': course.operationsRepresentative.toLowerCase(),
+            'role.vendor': trainingOrganisationManagerRole._id,
+          },
+          { _id: 1 })
+        .lean();
+      operationsRepresentativeId = get(operationsRepresentative, '_id');
+      if (!operationsRepresentative) {
         if (errorsByCourse[courseName]) {
           errorsByCourse[courseName].push(translate[language].unknownOperationsRepresentative);
         } else errorsByCourse[courseName] = [translate[language].unknownOperationsRepresentative];
-      } else {
-        operationsRepresentativeId = operationsRepresentative._id;
       }
     }
 
     let salesRepresentativeId = null;
-    if (!course.salesRepresentative) {
-      if (errorsByCourse[courseName]) {
-        errorsByCourse[courseName].push(translate[language].missingSalesRepresentative);
-      } else errorsByCourse[courseName] = [translate[language].missingSalesRepresentative];
-    } else if (!isObjectIdOrHexString(course.salesRepresentative)) {
-      if (errorsByCourse[courseName]) {
-        errorsByCourse[courseName].push(translate[language].unknownSalesRepresentative);
-      } else errorsByCourse[courseName] = [translate[language].unknownSalesRepresentative];
-    } else {
-      const salesRepresentative = await User
-        .findOne({ _id: course.salesRepresentative }, { role: 1 })
-        .lean({ autopopulate: true });
-      if (!salesRepresentative ||
-        ![VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(salesRepresentative, 'role.vendor.name'))) {
+    if (course.salesRepresentative) {
+      if (!course.salesRepresentative.match(EMAIL_VALIDATION)) {
         if (errorsByCourse[courseName]) {
-          errorsByCourse[courseName].push(translate[language].unknownSalesRepresentative);
-        } else errorsByCourse[courseName] = [translate[language].unknownSalesRepresentative];
+          errorsByCourse[courseName].push(translate[language].incorrectEmailForSalesRepresentative);
+        } else errorsByCourse[courseName] = [translate[language].incorrectEmailForSalesRepresentative];
       } else {
-        salesRepresentativeId = salesRepresentative._id;
+        const salesRepresentative = await User
+          .findOne(
+            {
+              'local.email': course.salesRepresentative.toLowerCase(),
+              'role.vendor': trainingOrganisationManagerRole._id,
+            },
+            { _id: 1 })
+          .lean();
+        salesRepresentativeId = get(salesRepresentative, '_id');
+        if (!salesRepresentative) {
+          if (errorsByCourse[courseName]) {
+            errorsByCourse[courseName].push(translate[language].unknownSalesRepresentative);
+          } else errorsByCourse[courseName] = [translate[language].unknownSalesRepresentative];
+        }
       }
     }
 
@@ -1464,7 +1475,7 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
     }
 
     let maxTrainees = null;
-    if ([INTRA, INTRA_HOLDING].includes(course.type)) {
+    if ([INTRA, INTRA_HOLDING].includes(courseType)) {
       if (!course.maxTrainees) {
         if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingMaxTrainees);
         else errorsByCourse[courseName] = [translate[language].missingMaxTrainees];
@@ -1477,17 +1488,20 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
           maxTrainees = parsedMaxTrainees;
         }
       }
+    } else if (course.maxTrainees) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unexpectedMaxTrainees);
+      else errorsByCourse[courseName] = [translate[language].unexpectedMaxTrainees];
     }
 
     let hasCertifyingTest = null;
-    if (!['true', 'false'].includes(course.hasCertifyingTest)) {
+    if (!['true', 'false'].includes(course.hasCertifyingTest.toLowerCase())) {
       if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].invalidHasCertifyingTest);
       else errorsByCourse[courseName] = [translate[language].invalidHasCertifyingTest];
     } else {
       hasCertifyingTest = course.hasCertifyingTest === 'true';
     }
 
-    if (![GLOBAL, MONTHLY].includes(course.certificateGenerationMode)) {
+    if (![GLOBAL, MONTHLY].includes(course.certificateGenerationMode.toLowerCase())) {
       if (errorsByCourse[courseName]) {
         errorsByCourse[courseName].push(translate[language].invalidCertificateGenerationMode);
       } else errorsByCourse[courseName] = [translate[language].invalidCertificateGenerationMode];
@@ -1501,14 +1515,15 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
     if (!errorsByCourse[courseName]) {
       formattedCourseList.push({
         subProgram: course.subProgram,
-        type: course.type,
-        ...(course.type === INTRA ? { company: companyId } : { holding: holdingId }),
+        type: courseType,
+        ...(courseType === INTRA && { company: companyId }),
+        ...(courseType === INTRA_HOLDING && { holding: holdingId }),
         operationsRepresentative: operationsRepresentativeId,
         salesRepresentative: salesRepresentativeId,
         ...(formattedDate && { estimatedStartDate: formattedDate }),
         maxTrainees,
         hasCertifyingTest,
-        certificateGenerationMode: course.certificateGenerationMode,
+        certificateGenerationMode: course.certificateGenerationMode.toLowerCase(),
         tradeName: course.tradeName,
       });
     }
@@ -1518,7 +1533,7 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
 
   if (Object.keys(errorsByCourse).length) {
     const error = Boom.badData();
-    error.output.payload.errorsByTrainee = errorsByCourse;
+    error.output.payload.errorsByCourse = errorsByCourse;
     throw error;
   }
 

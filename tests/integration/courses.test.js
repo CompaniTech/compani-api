@@ -39,6 +39,7 @@ const {
   MONTHLY,
   SINGLE,
   MISSING,
+  INTER_B2C,
 } = require('../../src/helpers/constants');
 const {
   populateDB,
@@ -8129,7 +8130,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should create INTRA and INTRA_HOLDING courses', async () => {
+    it('should create INTRA, INTER_B2B and INTRA_HOLDING courses', async () => {
       const courseBefore = await Course.countDocuments();
 
       const formData = { file: 'test' };
@@ -8139,10 +8140,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8151,16 +8152,29 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         },
         {
           subProgram: subProgramsList[0]._id,
+          type: INTER_B2B,
+          company: '',
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'autre nom',
+        },
+        {
+          subProgram: subProgramsList[0]._id,
           type: INTRA_HOLDING,
-          companies: '',
-          holding: authHolding._id,
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          company: '',
+          holding: authHolding.name,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-12-01',
           maxTrainees: '10',
           hasCertifyingTest: 'true',
           certificateGenerationMode: GLOBAL,
-          tradeName: 'autre nom',
+          tradeName: 'encore un autre nom',
         },
       ]);
 
@@ -8173,7 +8187,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
 
       expect(response.statusCode).toBe(200);
       const courseAfter = await Course.countDocuments();
-      expect(courseAfter).toEqual(courseBefore + 2);
+      expect(courseAfter).toEqual(courseBefore + 3);
     });
 
     it('should return 400 if a required field is missing in CSV columns', async () => {
@@ -8184,9 +8198,9 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          company: authCompany.name,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8213,10 +8227,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8239,7 +8253,6 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
     const missingParams = [
       { key: 'subProgram', errorMessage: 'le sous-programme est manquant' },
       { key: 'operationsRepresentative', errorMessage: 'le chargé des opérations est manquant' },
-      { key: 'salesRepresentative', errorMessage: 'le commercial est manquant' },
       { key: 'maxTrainees', errorMessage: 'le nombre maximum de stagiaires est manquant' },
       { key: 'tradeName', errorMessage: 'le nom commercial est manquant' },
     ];
@@ -8253,10 +8266,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           {
             subProgram: subProgramsList[0]._id,
             type: INTRA,
-            companies: authCompany._id,
+            company: authCompany.name,
             holding: '',
-            operationsRepresentative: trainerOrganisationManager._id,
-            salesRepresentative: trainerOrganisationManager._id,
+            operationsRepresentative: trainerOrganisationManager.local.email,
+            salesRepresentative: trainerOrganisationManager.local.email,
             estimatedStartDate: '2025-11-01',
             maxTrainees: '8',
             hasCertifyingTest: 'false',
@@ -8274,7 +8287,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         });
 
         expect(response.statusCode).toBe(422);
-        expect(Object.values(response.result.errorsByTrainee)[0]).toContain(missingParam.errorMessage);
+        expect(Object.values(response.result.errorsByCourse)[0]).toContain(missingParam.errorMessage);
       });
     });
 
@@ -8286,10 +8299,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: '',
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8306,7 +8319,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le type est manquant');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le type est manquant');
     });
 
     it('should return 422 if type is invalid', async () => {
@@ -8316,11 +8329,11 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       parseCSV.returns([
         {
           subProgram: subProgramsList[0]._id,
-          type: 'inter_b2b',
-          companies: authCompany._id,
+          type: INTER_B2C,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8337,7 +8350,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le type de formation est invalide');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le type de formation est invalide');
     });
 
     it('should return 422 if subProgram does not exist', async () => {
@@ -8348,10 +8361,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: new ObjectId(),
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8368,7 +8381,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le sous-programme n\'existe pas');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le sous-programme n\'existe pas');
     });
 
     it('should return 422 if company is missing for INTRA type', async () => {
@@ -8379,10 +8392,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: '',
+          company: '',
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8399,7 +8412,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('la structure est manquante');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('la structure est manquante');
     });
 
     it('should return 422 if company does not exist for INTRA type', async () => {
@@ -8410,10 +8423,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: new ObjectId(),
+          company: 'nom',
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8430,7 +8443,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('la structure n\'existe pas');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('la structure n\'existe pas');
     });
 
     it('should return 422 if holding is missing for INTRA_HOLDING type', async () => {
@@ -8441,10 +8454,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA_HOLDING,
-          companies: '',
+          company: '',
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8461,7 +8474,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('la société mère est manquante');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('la société mère est manquante');
     });
 
     it('should return 422 if holding does not exist for INTRA_HOLDING type', async () => {
@@ -8472,10 +8485,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA_HOLDING,
-          companies: '',
-          holding: new ObjectId(),
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          company: '',
+          holding: 'nom',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8492,7 +8505,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('la société mère n\'existe pas');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('la société mère n\'existe pas');
     });
 
     it('should return 422 if operationsRepresentative does not exist', async () => {
@@ -8503,10 +8516,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: new ObjectId(),
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: 'test@test.fr',
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8523,7 +8536,70 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le chargé des opérations n\'existe pas');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le chargé des opérations n\'existe pas');
+    });
+
+    it('should return 422 if operations representative is not training_organisation_manager', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: auxiliary.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0]).toEqual(['le chargé des opérations n\'existe pas']);
+    });
+
+    it('should return 422 if operations representative email is incorrect', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: 'abcde',
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0])
+        .toEqual(['le format de l\'email est incorrect pour le chargé des opérations']);
     });
 
     it('should return 422 if salesRepresentative does not exist', async () => {
@@ -8534,10 +8610,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: new ObjectId(),
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: 'test@test.fr',
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8554,7 +8630,70 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le commercial n\'existe pas');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le chargé d\'accompagnement n\'existe pas');
+    });
+
+    it('should return 422 if sales representative is not training_organisation_manager', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: auxiliary.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0]).toEqual(['le chargé d\'accompagnement n\'existe pas']);
+    });
+
+    it('should return 422 if sales representative email is incorrect', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: 'abcde',
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0])
+        .toEqual(['le format de l\'email est incorrect pour le chargé d\'accompagnement']);
     });
 
     it('should return 422 if estimatedStartDate is invalid', async () => {
@@ -8565,10 +8704,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: 'invalid-date',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8585,7 +8724,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0]).toContain('le format de la date est incorrect');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le format de la date est incorrect');
     });
 
     it('should return 422 if maxTrainees is invalid', async () => {
@@ -8596,10 +8735,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: 'not-a-number',
           hasCertifyingTest: 'false',
@@ -8616,8 +8755,41 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0])
+      expect(Object.values(response.result.errorsByCourse)[0])
         .toContain('le nombre maximum de stagiaires est invalide');
+    });
+
+    it('should return 422 if maxTrainees on not intra nor intra_holding course', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTER_B2B,
+          company: '',
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '2',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0])
+        .toContain('Un nombre d\'apprenant maximum est renseigné alors que la formation n\'est pas INTRA ou '
+        + 'INTRA SOCIÉTÉ-MÈRE');
     });
 
     it('should return 422 if hasCertifyingTest is invalid', async () => {
@@ -8628,10 +8800,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'yes',
@@ -8648,7 +8820,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0])
+      expect(Object.values(response.result.errorsByCourse)[0])
         .toContain('la valeur de hasCertifyingTest est invalide');
     });
 
@@ -8660,10 +8832,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         {
           subProgram: subProgramsList[0]._id,
           type: INTRA,
-          companies: authCompany._id,
+          company: authCompany.name,
           holding: '',
-          operationsRepresentative: trainerOrganisationManager._id,
-          salesRepresentative: trainerOrganisationManager._id,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
           estimatedStartDate: '2025-11-01',
           maxTrainees: '8',
           hasCertifyingTest: 'false',
@@ -8680,7 +8852,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByTrainee)[0])
+      expect(Object.values(response.result.errorsByCourse)[0])
         .toContain('le mode de génération des attestations est invalide');
     });
   });
