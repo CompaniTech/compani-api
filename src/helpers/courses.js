@@ -1892,7 +1892,7 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
 
 exports.uploadCollectiveCourseCSV = async (courseList, credentials) => {
   for (const course of courseList) {
-    const payload = { ...omit(course, 'company'), ...course.company && { companies: course.company } };
+    const payload = { ...omit(course, 'company'), ...course.company && { companies: [course.company] } };
     await exports.createCourse(payload, credentials);
   }
 };
