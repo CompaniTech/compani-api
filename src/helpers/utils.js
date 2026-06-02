@@ -346,3 +346,5 @@ exports.sanitizeFileName = (name) => {
 };
 
 exports.isCourseInterrupted = (interruptionDates = []) => interruptionDates.some(d => !d.endDate);
+
+exports.getEnvObjectIds = key => (process.env[key] || '').split(',').filter(Boolean).map(id => new ObjectId(id));

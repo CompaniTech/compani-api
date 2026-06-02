@@ -37,6 +37,7 @@
     "@hapi/good-squeeze": "~6.0.0",
     "@hapi/hapi": "~21.4.7",
     "@hapi/inert": "~7.1.0",
+    "@notionhq/client": "~5.22.0",
     "@sentry/node": "~10.47.0",
     "@sentry/profiling-node": "~10.47.0",
     "axios": "~1.13.6",

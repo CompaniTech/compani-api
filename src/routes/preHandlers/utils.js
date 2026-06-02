@@ -38,7 +38,7 @@ exports.checkAnswersList = async (answersList, parentId, isActivityAnswers = fal
     const shouldHaveOneAnswer = [SURVEY, OPEN_QUESTION, SINGLE_CHOICE_QUESTION].includes(card.template) ||
       ([QUESTION_ANSWER].includes(card.template) && !card.isQuestionAnswerMultipleChoiced);
     const tooManyAnswers = answer.answerList.length !== 1 && shouldHaveOneAnswer;
-    const answerIsNotObjectID = [QUESTION_ANSWER, ...QUIZZ_TEMPLATES].includes(card.template) &&
+    const answerIsNotObjectID = [...QUIZZ_TEMPLATES].includes(card.template) &&
       Joi.array().items(Joi.objectId()).validate(answer.answerList).error;
 
     if (isWrongTemplate || tooManyAnswers || answerIsNotObjectID) throw Boom.badData();

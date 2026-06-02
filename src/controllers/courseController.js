@@ -354,6 +354,17 @@ const uploadSingleCourseCSV = async (req) => {
   }
 };
 
+const uploadCollectiveCourseCSV = async (req) => {
+  try {
+    await CoursesHelper.uploadCollectiveCourseCSV(req.pre.courseList, req.auth.credentials);
+
+    return { message: translate[language].courseCreated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 const downloadAllDocuments = async (req, h) => {
   try {
     const data = await CoursesHelper.downloadAllDocuments(req.params._id, req.auth.credentials, req.query);
@@ -394,5 +405,6 @@ module.exports = {
   removeTutor,
   uploadTraineeCSV,
   uploadSingleCourseCSV,
+  uploadCollectiveCourseCSV,
   downloadAllDocuments,
 };

@@ -395,24 +395,6 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - POST /questionnairehistories', () => 
 
       expect(response.statusCode).toBe(422);
     });
-
-    it('should return 422 if is a q/a and items in answerList are not ObjectId', async () => {
-      const payload = {
-        course: coursesList[0]._id,
-        user: questionnaireHistoriesUsersList[0],
-        questionnaire: questionnairesList[0]._id,
-        questionnaireAnswersList: [{ card: cardsList[4]._id, answerList: ['blabla'] }],
-      };
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/questionnairehistories',
-        payload,
-        headers: { 'x-access-token': authToken },
-      });
-
-      expect(response.statusCode).toBe(422);
-    });
   });
 
   describe('NOT LOGGED', () => {
@@ -501,7 +483,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
 
     it('should update questionnaireHistory', async () => {
       const payload = {
-        trainerAnswers: [{ card: cardsList[1]._id, answer: '1' }],
+        trainerAnswers: [{ card: cardsList[1]._id, answer: '6' }],
         trainerComment: 'Appréciation du formateur',
       };
       const response = await app.inject({
@@ -561,7 +543,9 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
     });
 
     it('should return 400 if trainerAnswers has not good number of elements', async () => {
-      const payload = { trainerAnswers: [{ card: cardsList[1]._id }, { card: cardsList[3]._id }] };
+      const payload = {
+        trainerAnswers: [{ card: cardsList[1]._id, answer: '1' }, { card: cardsList[3]._id, answer: '2' }],
+      };
       const response = await app.inject({
         method: 'PUT',
         url: `/questionnairehistories/${endSelfPositionningQuestionnaireHistoryId}`,
@@ -574,7 +558,7 @@ describe('QUESTIONNAIRE HISTORIES ROUTES - PUT /questionnairehistories/{_id}', (
 
     it('should return 400 if a trainerAnswer is not allowed', async () => {
       const payload = {
-        trainerAnswers: [{ card: cardsList[1]._id, answer: 'mauvaiseReponse' }],
+        trainerAnswers: [{ card: cardsList[1]._id, answer: '7' }],
         trainerComment: 'Appréciation du formateur',
       };
       const response = await app.inject({

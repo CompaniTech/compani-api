@@ -922,3 +922,26 @@ describe('isCourseInterrupted', () => {
     expect(result).toBe(false);
   });
 });
+
+describe('getEnvObjectIds', () => {
+  const ENV_VAR = new ObjectId();
+  beforeEach(() => {
+    process.env.ENV_VAR = ENV_VAR.toHexString();
+  });
+
+  afterEach(() => {
+    process.env.ENV_VAR = '';
+  });
+
+  it('should return env var in array if defined', () => {
+    const result = UtilsHelper.getEnvObjectIds('ENV_VAR');
+
+    expect(result).toEqual(expect.arrayContaining([ENV_VAR]));
+  });
+
+  it('should return empty array if env var not defined', () => {
+    const result = UtilsHelper.getEnvObjectIds('ENV_VARIABLES');
+
+    expect(result).toEqual(expect.arrayContaining([]));
+  });
+});

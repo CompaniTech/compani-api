@@ -284,20 +284,6 @@ describe('ACTIVITY HISTORIES ROUTES - POST /activityhistories', () => {
       expect(response.statusCode).toBe(422);
     });
 
-    it('should return 422 if is a q/a and items in answerList are not ObjectId', async () => {
-      const response = await app.inject({
-        method: 'POST',
-        url: '/activityhistories',
-        payload: {
-          ...payload,
-          questionnaireAnswersList: [{ card: cardsList[4]._id, answerList: ['blabla'] }],
-        },
-        headers: { 'x-access-token': authToken },
-      });
-
-      expect(response.statusCode).toBe(422);
-    });
-
     it('should return 422 if is a qcm and items in answerList are not ObjectId', async () => {
       const response = await app.inject({
         method: 'POST',

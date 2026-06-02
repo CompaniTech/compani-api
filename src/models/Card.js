@@ -71,8 +71,14 @@ const CardSchema = mongoose.Schema({
     3: { type: String },
     4: { type: String },
     5: { type: String },
+    6: { type: String },
+    7: { type: String },
+    8: { type: String },
+    9: { type: String },
+    10: { type: String },
   }, { default: undefined, _id: false, id: false }),
   isChronological: { type: Boolean },
+  allowOtherAnswer: { type: Boolean },
 }, {
   timestamps: true,
   toObject: { virtuals: true },
@@ -99,6 +105,7 @@ function save() {
         if (!this.qcAnswers) this.qcAnswers = [{ text: '' }, { text: '' }];
         if (!this.isQuestionAnswerMultipleChoiced) this.isQuestionAnswerMultipleChoiced = false;
         if (!this.isMandatory) this.isMandatory = false;
+        if (!this.allowOtherAnswer) this.allowOtherAnswer = false;
         break;
       case ORDER_THE_SEQUENCE:
         if (!this.orderedAnswers) this.orderedAnswers = [{ text: '' }, { text: '' }, { text: '' }];

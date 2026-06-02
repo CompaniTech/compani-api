@@ -43,6 +43,7 @@ const {
   PDF,
   OFFICIAL,
   MONTHLY,
+  GLOBAL,
   SINGLE,
 } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
@@ -1317,6 +1318,233 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
   }
 
   return formattedLearnerList;
+};
+
+exports.authorizeUploadCollectiveCourseCSV = async (req) => {
+  const { payload } = req;
+
+  const courseList = await UtilsHelper.parseCsv(payload.file);
+  if (courseList.length > process.env.MAX_CSV_COURSE_SIZE) throw Boom.forbidden(translate[language].fileIsToBig);
+
+  const allowedKeys = [
+    'certificateGenerationMode',
+    'company',
+    'estimatedStartDate',
+    'hasCertifyingTest',
+    'holding',
+    'maxTrainees',
+    'operationsRepresentative',
+    'salesRepresentative',
+    'subProgram',
+    'tradeName',
+    'type',
+  ].sort();
+  if (!isEqual(Object.keys(courseList[0]).sort(), allowedKeys)) {
+    throw Boom.badRequest(translate[language].wrongColumnsInCsv);
+  }
+
+  const formattedCourseList = [];
+  const errorsByCourse = {};
+  let i = 1;
+
+  const trainingOrganisationManagerRole = await Role.findOne({ name: TRAINING_ORGANISATION_MANAGER }).lean();
+  for (const course of courseList) {
+    const courseName = `Formation ${i}`;
+
+    let courseType = null;
+    if (!course.type) {
+      errorsByCourse[courseName] = [translate[language].missingCourseType];
+    } else if (![INTRA, INTRA_HOLDING, INTER_B2B].includes(course.type.toLowerCase())) {
+      errorsByCourse[courseName] = [translate[language].invalidCourseType];
+    } else courseType = course.type.toLowerCase();
+
+    if (!course.subProgram) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingSubProgram);
+      else errorsByCourse[courseName] = [translate[language].missingSubProgram];
+    } else if (!isObjectIdOrHexString(course.subProgram)) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownSubProgram);
+      else errorsByCourse[courseName] = [translate[language].unknownSubProgram];
+    } else {
+      const subProgram = await SubProgram.findOne({ _id: course.subProgram }, { _id: 1 }).lean();
+      if (!subProgram) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownSubProgram);
+        else errorsByCourse[courseName] = [translate[language].unknownSubProgram];
+      }
+    }
+
+    let companyId = null;
+    let holdingId = null;
+    if (courseType !== INTRA && course.company) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unexpectedCompany);
+      else errorsByCourse[courseName] = [translate[language].unexpectedCompany];
+    }
+    if (courseType !== INTRA_HOLDING && course.holding) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unexpectedHolding);
+      else errorsByCourse[courseName] = [translate[language].unexpectedHolding];
+    }
+    if (courseType === INTRA) {
+      if (!course.company) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingCompany);
+        else errorsByCourse[courseName] = [translate[language].missingCompany];
+      } else {
+        const company = await Company
+          .findOne({ name: { $regex: new RegExp(`^${UtilsHelper.escapeRegex(course.company)}$`, 'i') } }, { _id: 1 })
+          .lean();
+        if (!company) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownCompany);
+          else errorsByCourse[courseName] = [translate[language].unknownCompany];
+        } else {
+          companyId = company._id;
+        }
+      }
+    } else if (courseType === INTRA_HOLDING) {
+      if (!course.holding) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingHolding);
+        else errorsByCourse[courseName] = [translate[language].missingHolding];
+      } else {
+        const holding = await Holding
+          .findOne({ name: { $regex: new RegExp(`^${UtilsHelper.escapeRegex(course.holding)}$`, 'i') } })
+          .lean();
+        if (!holding) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unknownHolding);
+          else errorsByCourse[courseName] = [translate[language].unknownHolding];
+        } else {
+          holdingId = holding._id;
+        }
+      }
+    }
+
+    let operationsRepresentativeId = null;
+    if (!course.operationsRepresentative) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].missingOperationsRepresentative);
+      } else errorsByCourse[courseName] = [translate[language].missingOperationsRepresentative];
+    } else if (!course.operationsRepresentative.match(EMAIL_VALIDATION)) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].incorrectEmailForOperationsRepresentative);
+      } else errorsByCourse[courseName] = [translate[language].incorrectEmailForOperationsRepresentative];
+    } else {
+      const operationsRepresentative = await User
+        .findOne(
+          {
+            'local.email': course.operationsRepresentative.toLowerCase(),
+            'role.vendor': trainingOrganisationManagerRole._id,
+          },
+          { _id: 1 })
+        .lean();
+      operationsRepresentativeId = get(operationsRepresentative, '_id');
+      if (!operationsRepresentative) {
+        if (errorsByCourse[courseName]) {
+          errorsByCourse[courseName].push(translate[language].unknownOperationsRepresentative);
+        } else errorsByCourse[courseName] = [translate[language].unknownOperationsRepresentative];
+      }
+    }
+
+    let salesRepresentativeId = null;
+    if (course.salesRepresentative) {
+      if (!course.salesRepresentative.match(EMAIL_VALIDATION)) {
+        if (errorsByCourse[courseName]) {
+          errorsByCourse[courseName].push(translate[language].incorrectEmailForSalesRepresentative);
+        } else errorsByCourse[courseName] = [translate[language].incorrectEmailForSalesRepresentative];
+      } else {
+        const salesRepresentative = await User
+          .findOne(
+            {
+              'local.email': course.salesRepresentative.toLowerCase(),
+              'role.vendor': trainingOrganisationManagerRole._id,
+            },
+            { _id: 1 })
+          .lean();
+        salesRepresentativeId = get(salesRepresentative, '_id');
+        if (!salesRepresentative) {
+          if (errorsByCourse[courseName]) {
+            errorsByCourse[courseName].push(translate[language].unknownSalesRepresentative);
+          } else errorsByCourse[courseName] = [translate[language].unknownSalesRepresentative];
+        }
+      }
+    }
+
+    let formattedDate = '';
+    if (course.estimatedStartDate) {
+      const date = new Date(course.estimatedStartDate);
+      const isValid = !Number.isNaN(date.getTime());
+      if (isValid) {
+        formattedDate = CompaniDate(date).toISO();
+      } else if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].incorrectDate);
+      else errorsByCourse[courseName] = [translate[language].incorrectDate];
+    }
+
+    let maxTrainees = null;
+    if ([INTRA, INTRA_HOLDING].includes(courseType)) {
+      if (!course.maxTrainees) {
+        if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingMaxTrainees);
+        else errorsByCourse[courseName] = [translate[language].missingMaxTrainees];
+      } else {
+        const parsedMaxTrainees = Number(course.maxTrainees);
+        if (!Number.isInteger(parsedMaxTrainees) || parsedMaxTrainees <= 0) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].invalidMaxTrainees);
+          else errorsByCourse[courseName] = [translate[language].invalidMaxTrainees];
+        } else {
+          maxTrainees = parsedMaxTrainees;
+        }
+      }
+    } else if (course.maxTrainees) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unexpectedMaxTrainees);
+      else errorsByCourse[courseName] = [translate[language].unexpectedMaxTrainees];
+    }
+
+    let hasCertifyingTest = null;
+    if (!course.hasCertifyingTest) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingHasCertifyingTest);
+      else errorsByCourse[courseName] = [translate[language].missingHasCertifyingTest];
+    } else if (!['true', 'false'].includes(course.hasCertifyingTest.toLowerCase())) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].invalidHasCertifyingTest);
+      else errorsByCourse[courseName] = [translate[language].invalidHasCertifyingTest];
+    } else {
+      hasCertifyingTest = course.hasCertifyingTest.toLowerCase() === 'true';
+    }
+
+    if (!course.certificateGenerationMode) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].missingCertificateGenerationMode);
+      } else errorsByCourse[courseName] = [translate[language].missingCertificateGenerationMode];
+    } else if (![GLOBAL, MONTHLY].includes(course.certificateGenerationMode.toLowerCase())) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].invalidCertificateGenerationMode);
+      } else errorsByCourse[courseName] = [translate[language].invalidCertificateGenerationMode];
+    }
+
+    if (!course.tradeName) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingTradeName);
+      else errorsByCourse[courseName] = [translate[language].missingTradeName];
+    }
+
+    if (!errorsByCourse[courseName]) {
+      formattedCourseList.push({
+        subProgram: course.subProgram,
+        type: courseType,
+        ...(courseType === INTRA && { company: companyId }),
+        ...(courseType === INTRA_HOLDING && { holding: holdingId }),
+        operationsRepresentative: operationsRepresentativeId,
+        ...salesRepresentativeId && { salesRepresentative: salesRepresentativeId },
+        ...(formattedDate && { estimatedStartDate: formattedDate }),
+        ...(maxTrainees && { maxTrainees }),
+        hasCertifyingTest,
+        certificateGenerationMode: course.certificateGenerationMode.toLowerCase(),
+        tradeName: course.tradeName,
+      });
+    }
+
+    i += 1;
+  }
+
+  if (Object.keys(errorsByCourse).length) {
+    const error = Boom.badData();
+    error.output.payload.errorsByCourse = errorsByCourse;
+    throw error;
+  }
+
+  return formattedCourseList;
 };
 
 exports.authorizeGetAllDocuments = async (req) => {

@@ -35,7 +35,6 @@ describe('createCard', () => {
 describe('updateCard', () => {
   let updateOne;
   const cardId = new ObjectId();
-  const payload = { title: 'transition' };
 
   beforeEach(() => {
     updateOne = sinon.stub(Card, 'updateOne');
@@ -46,8 +45,28 @@ describe('updateCard', () => {
   });
 
   it('should update card', async () => {
+    const payload = { title: 'transition' };
     await CardHelper.updateCard(cardId, payload);
     sinon.assert.calledOnceWithExactly(updateOne, { _id: cardId }, { $set: payload });
+  });
+
+  it('should remove labels card', async () => {
+    const payload = { labels: { 2: null, 3: null, 4: null, 5: null, 6: null } };
+    await CardHelper.updateCard(cardId, payload);
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: cardId },
+      { $unset: { 'labels.2': '', 'labels.3': '', 'labels.4': '', 'labels.5': '', 'labels.6': '' } }
+    );
+  });
+
+  it('should update card labels count', async () => {
+    const payload = { labels: { 1: 'test', 5: null, 7: 'test 2' } };
+    await CardHelper.updateCard(cardId, payload);
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: cardId },
+      { $unset: { 'labels.5': '' }, $set: { 'labels.1': 'test', 'labels.7': 'test 2' } });
   });
 });
 

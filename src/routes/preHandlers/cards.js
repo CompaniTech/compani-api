@@ -49,11 +49,27 @@ const checkFillTheGap = async (dbCard, payload) => {
   return null;
 };
 
-const checkSurvey = (labels) => {
-  const someSubKeysAreMissing = labels && Object.values(labels).includes(null) &&
-    !(['2', '3', '4'].every(key => Object.keys(labels).includes(key)));
-
-  if (someSubKeysAreMissing) throw Boom.badRequest();
+const checkSurvey = (dbLabels, labels) => {
+  if (labels) {
+    const dbLabelKeys = Object.keys(dbLabels);
+    const [firstLabel, lastLabel] = [Number(dbLabelKeys[0]), Math.max(...dbLabelKeys.map(Number))];
+    if (Object.values(labels).some(l => l === null)) {
+      if (Object.values(labels).every(l => l === null)) {
+        const inBetweenKeys = Array.from({ length: lastLabel - firstLabel - 1 }, (_, i) => String(firstLabel + i + 1));
+        const someSubKeysAreMissing = !(inBetweenKeys.every(key => Object.keys(labels).includes(key)));
+        const someSubKeyAreNotAllowed = Object.keys(labels)
+          .some(l => [String(firstLabel), String(lastLabel)].includes(l));
+        if (someSubKeysAreMissing || someSubKeyAreNotAllowed) throw Boom.badRequest();
+      } else {
+        const nullLabelList = Object.entries(labels).filter(([, value]) => value === null);
+        if (Object.keys(labels).length !== 3 || nullLabelList.length > 1) throw Boom.badRequest();
+        const newLastLabel = Object.keys(labels).find(label => !['1', String(lastLabel)].includes(label));
+        const nullLabel = nullLabelList[0][0];
+        const isNullLabelLastLabel = nullLabel === String(lastLabel);
+        if (!isNullLabelLastLabel || newLastLabel < 5 || newLastLabel > 10) throw Boom.badRequest();
+      }
+    }
+  }
 
   return null;
 };
@@ -73,13 +89,15 @@ exports.authorizeCardUpdate = async (req) => {
 
   if (card.template !== ORDER_THE_SEQUENCE && has(payload, 'isChronological')) throw Boom.forbidden();
 
+  if (card.template !== QUESTION_ANSWER && has(payload, 'allowOtherAnswer')) throw Boom.forbidden();
+
   switch (card.template) {
     case FILL_THE_GAPS:
       return checkFillTheGap(card, req.payload);
     case FLASHCARD:
       return checkFlashCard(req.payload);
     case SURVEY:
-      return checkSurvey(get(req.payload, 'labels'));
+      return checkSurvey(card.labels, get(req.payload, 'labels'));
     default:
       return null;
   }

@@ -576,7 +576,13 @@ describe('SEEDS VERIFICATION', () => {
           },
           {
             name: QUESTION_ANSWER,
-            allowedKeys: ['question', 'isQuestionAnswerMultipleChoiced', 'qcAnswers', 'isMandatory'],
+            allowedKeys: [
+              'question',
+              'isQuestionAnswerMultipleChoiced',
+              'qcAnswers',
+              'isMandatory',
+              'allowOtherAnswer',
+            ],
           },
           {
             name: ORDER_THE_SEQUENCE,
@@ -588,7 +594,19 @@ describe('SEEDS VERIFICATION', () => {
           },
           {
             name: SURVEY,
-            allowedKeys: ['question', 'labels.1', 'labels.2', 'labels.3', 'labels.4', 'labels.5', 'isMandatory'],
+            allowedKeys: [
+              'question',
+              'labels.1',
+              'labels.2',
+              'labels.3',
+              'labels.4',
+              'labels.5',
+              'labels.6',
+              'labels.7',
+              'labels.8',
+              'labels.9',
+              'labels.10',
+              'isMandatory'],
           },
           {
             name: TEXT_MEDIA,
@@ -663,8 +681,10 @@ describe('SEEDS VERIFICATION', () => {
             .some((card) => {
               const hasWrongKeys = has(card, 'labels') &&
                 !(
-                  (Object.keys(card.labels).length === 2 && ['1', '5'].every(item => has(card, `labels.${item}`))) ||
-                  ['1', '2', '3', '4', '5'].every(item => has(card, `labels.${item}`))
+                  (Object.keys(card.labels).length === 2 && has(card, 'labels.1') &&
+                    ['5', '6', '7', '8', '9', '10'].some(item => has(card, `labels.${item}`))) ||
+                  (['1', '2', '3', '4'].every(item => has(card, `labels.${item}`)) &&
+                    ['5', '6', '7', '8', '9', '10'].some(item => has(card, `labels.${item}`)))
                 );
 
               return hasWrongKeys;

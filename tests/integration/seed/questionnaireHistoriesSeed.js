@@ -38,7 +38,7 @@ const questionnaireHistoriesUsersList = [userList[6]._id, userList[5]._id, userL
 
 const cardsList = [
   { _id: new ObjectId(), template: SURVEY, question: 'test?', labels: { 1: 'first', 5: 'last' } },
-  { _id: new ObjectId(), template: SURVEY, question: 'test2?', labels: { 1: 'Premier niveau', 5: 'Dernier niveau' } },
+  { _id: new ObjectId(), template: SURVEY, question: 'test2?', labels: { 1: 'Premier niveau', 6: 'Dernier niveau' } },
   { _id: new ObjectId(), template: MULTIPLE_CHOICE_QUESTION, question: 'test3?' },
   { _id: new ObjectId(), template: OPEN_QUESTION, question: 'test4?' },
   { _id: new ObjectId(), template: QUESTION_ANSWER, question: 'test5?', isQuestionAnswerMultipleChoiced: true },

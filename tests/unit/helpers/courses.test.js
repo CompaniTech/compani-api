@@ -2587,15 +2587,19 @@ describe('getCourse', () => {
   let findOne;
   let formatCourseWithProgress;
   let attendanceCountDocuments;
+  const TUTOR_SUBPROGRAM_IDS = new ObjectId();
+
   beforeEach(() => {
     findOne = sinon.stub(Course, 'findOne');
     formatCourseWithProgress = sinon.stub(CourseHelper, 'formatCourseWithProgress');
     attendanceCountDocuments = sinon.stub(Attendance, 'countDocuments');
+    process.env.TUTOR_SUBPROGRAM_IDS = TUTOR_SUBPROGRAM_IDS;
   });
   afterEach(() => {
     findOne.restore();
     formatCourseWithProgress.restore();
     attendanceCountDocuments.restore();
+    process.env.TUTOR_SUBPROGRAM_IDS = '';
   });
 
   describe('OPERATIONS', () => {
@@ -9509,6 +9513,83 @@ describe('uploadSingleCourseCSV', () => {
       courseCountDocuments,
       { trainees: userId, type: SINGLE, subProgram: subProgramId }
     );
+  });
+});
+
+describe('uploadCollectiveCourseCSV', () => {
+  let createCourse;
+
+  beforeEach(() => {
+    createCourse = sinon.stub(CourseHelper, 'createCourse');
+  });
+
+  afterEach(() => {
+    createCourse.restore();
+  });
+
+  it('should create multiple courses', async () => {
+    const credentials = { _id: new ObjectId() };
+    const companyId = new ObjectId();
+    const holdingId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const operationsRepresentativeId = new ObjectId();
+    const salesRepresentativeId = new ObjectId();
+
+    const courseList = [
+      {
+        subProgram: subProgramId,
+        type: INTRA,
+        company: companyId,
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        maxTrainees: 8,
+        hasCertifyingTest: false,
+        certificateGenerationMode: MONTHLY,
+        tradeName: 'nom',
+      },
+      {
+        subProgram: subProgramId,
+        type: INTRA_HOLDING,
+        holding: holdingId,
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        maxTrainees: 10,
+        hasCertifyingTest: true,
+        certificateGenerationMode: GLOBAL,
+        tradeName: 'autre nom',
+      },
+      {
+        subProgram: subProgramId,
+        type: INTER_B2B,
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        hasCertifyingTest: true,
+        certificateGenerationMode: GLOBAL,
+        tradeName: 'encore un autre nom',
+      },
+    ];
+
+    createCourse.returns({ _id: new ObjectId() });
+
+    await CourseHelper.uploadCollectiveCourseCSV(courseList, credentials);
+
+    sinon.assert.calledWithExactly(
+      createCourse.getCall(0),
+      {
+        subProgram: subProgramId,
+        type: INTRA,
+        companies: companyId,
+        operationsRepresentative: operationsRepresentativeId,
+        salesRepresentative: salesRepresentativeId,
+        maxTrainees: 8,
+        hasCertifyingTest: false,
+        certificateGenerationMode: MONTHLY,
+        tradeName: 'nom',
+      },
+      credentials
+    );
+    sinon.assert.calledWithExactly(createCourse.getCall(1), courseList[1], credentials);
+    sinon.assert.calledWithExactly(createCourse.getCall(2), courseList[2], credentials);
   });
 });
 

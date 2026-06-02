@@ -757,3 +757,47 @@ describe('completionSendingSmsRemindersEmail', async () => {
     );
   });
 });
+
+describe('completionNotionCourseSlotsUpdate', () => {
+  let sendMail;
+  let sendinBlueTransporter;
+
+  beforeEach(() => {
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
+    sendMail = sinon.stub();
+    process.env.TECH_EMAILS = 'tech@compani.fr';
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+    process.env.TECH_EMAILS = '';
+  });
+
+  it('should send email with both updated and not-updated trainees', async () => {
+    const traineeIds = [new ObjectId(), new ObjectId()];
+    const updatedTraineeIds = [traineeIds[0]];
+    const notUpdatedTraineeIds = [traineeIds[1]];
+
+    const html = '<p>Script exécuté. 2 apprenants traités.</p>'
+      + `<p>Données mises à jour pour les apprenants suivants :<br/> ${traineeIds[0]}<br/></p>`
+      + `<p>Données non mises à jour pour les apprenants suivants :<br/> ${traineeIds[1]}<br/></p>`;
+    const sentObj = { msg: html };
+
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+
+    const result = await EmailHelper.completionNotionCourseSlotsUpdate(updatedTraineeIds, notUpdatedTraineeIds);
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: 'tech@compani.fr',
+        subject: 'Script de mise à jour des actions de formations individuelles dans Notion',
+        html,
+      }
+    );
+  });
+});
