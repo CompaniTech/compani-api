@@ -8252,8 +8252,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
 
     const missingParams = [
       { key: 'subProgram', errorMessage: 'le sous-programme est manquant' },
+      { key: 'type', errorMessage: 'le type est manquant' },
+      { key: 'hasCertifyingTest', errorMessage: 'hasCertifyingTest est manquant' },
+      { key: 'certificateGenerationMode', errorMessage: 'le mode de génération des attestations est manquant' },
       { key: 'operationsRepresentative', errorMessage: 'le chargé des opérations est manquant' },
-      { key: 'maxTrainees', errorMessage: 'le nombre maximum de stagiaires est manquant' },
       { key: 'tradeName', errorMessage: 'le nom commercial est manquant' },
     ];
 
@@ -8289,37 +8291,6 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         expect(response.statusCode).toBe(422);
         expect(Object.values(response.result.errorsByCourse)[0]).toContain(missingParam.errorMessage);
       });
-    });
-
-    it('should return 422 if type is empty', async () => {
-      const formData = { file: 'test' };
-      const form = generateFormData(formData);
-
-      parseCSV.returns([
-        {
-          subProgram: subProgramsList[0]._id,
-          type: '',
-          company: authCompany.name,
-          holding: '',
-          operationsRepresentative: trainerOrganisationManager.local.email,
-          salesRepresentative: trainerOrganisationManager.local.email,
-          estimatedStartDate: '2025-11-01',
-          maxTrainees: '8',
-          hasCertifyingTest: 'false',
-          certificateGenerationMode: MONTHLY,
-          tradeName: 'nom',
-        },
-      ]);
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/courses/collective-courses-csv',
-        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: getStream(form),
-      });
-
-      expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le type est manquant');
     });
 
     it('should return 422 if type is invalid', async () => {
@@ -8415,6 +8386,38 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       expect(Object.values(response.result.errorsByCourse)[0]).toContain('la structure est manquante');
     });
 
+    it('should return 422 if company for non INTRA course', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTER_B2B,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0])
+        .toContain('une structure est renseignée alors que la formation n\'est pas INTRA');
+    });
+
     it('should return 422 if company does not exist for INTRA type', async () => {
       const formData = { file: 'test' };
       const form = generateFormData(formData);
@@ -8475,6 +8478,38 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
 
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByCourse)[0]).toContain('la société mère est manquante');
+    });
+
+    it('should return 422 if company for non INTRA course', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTER_B2B,
+          company: '',
+          holding: authHolding.name,
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0])
+        .toContain('une société-mère est renseignée alors que la formation n\'est pas INTRA SOCIÉTÉ-MÈRE');
     });
 
     it('should return 422 if holding does not exist for INTRA_HOLDING type', async () => {
@@ -8759,6 +8794,38 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
         .toContain('le nombre maximum de stagiaires est invalide');
     });
 
+    it('should return 422 if maxTrainees is missing on INTRA or INTRA_HOLDING course', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: MONTHLY,
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0])
+        .toContain('le nombre maximum de stagiaires est manquant');
+    });
+
     it('should return 422 if maxTrainees on not intra nor intra_holding course', async () => {
       const formData = { file: 'test' };
       const form = generateFormData(formData);
@@ -8854,12 +8921,6 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByCourse)[0])
         .toContain('le mode de génération des attestations est invalide');
-    });
-  });
-
-  describe('VENDOR_ADMIN', () => {
-    before(async () => {
-      authToken = await getToken('vendor_admin');
     });
   });
 

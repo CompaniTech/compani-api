@@ -1353,7 +1353,7 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
 
     let courseType = null;
     if (!course.type) {
-      errorsByCourse[courseName] = [translate[language].missingType];
+      errorsByCourse[courseName] = [translate[language].missingCourseType];
     } else if (![INTRA, INTRA_HOLDING, INTER_B2B].includes(course.type.toLowerCase())) {
       errorsByCourse[courseName] = [translate[language].invalidCourseType];
     } else courseType = course.type.toLowerCase();
@@ -1494,14 +1494,21 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
     }
 
     let hasCertifyingTest = null;
-    if (!['true', 'false'].includes(course.hasCertifyingTest.toLowerCase())) {
+    if (!course.hasCertifyingTest) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingHasCertifyingTest);
+      else errorsByCourse[courseName] = [translate[language].missingHasCertifyingTest];
+    } else if (!['true', 'false'].includes(course.hasCertifyingTest.toLowerCase())) {
       if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].invalidHasCertifyingTest);
       else errorsByCourse[courseName] = [translate[language].invalidHasCertifyingTest];
     } else {
-      hasCertifyingTest = course.hasCertifyingTest === 'true';
+      hasCertifyingTest = course.hasCertifyingTest.toLowerCase() === 'true';
     }
 
-    if (![GLOBAL, MONTHLY].includes(course.certificateGenerationMode.toLowerCase())) {
+    if (!course.certificateGenerationMode) {
+      if (errorsByCourse[courseName]) {
+        errorsByCourse[courseName].push(translate[language].missingCertificateGenerationMode);
+      } else errorsByCourse[courseName] = [translate[language].missingCertificateGenerationMode];
+    } else if (![GLOBAL, MONTHLY].includes(course.certificateGenerationMode.toLowerCase())) {
       if (errorsByCourse[courseName]) {
         errorsByCourse[courseName].push(translate[language].invalidCertificateGenerationMode);
       } else errorsByCourse[courseName] = [translate[language].invalidCertificateGenerationMode];
@@ -1519,9 +1526,9 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
         ...(courseType === INTRA && { company: companyId }),
         ...(courseType === INTRA_HOLDING && { holding: holdingId }),
         operationsRepresentative: operationsRepresentativeId,
-        salesRepresentative: salesRepresentativeId,
+        ...salesRepresentativeId && { salesRepresentative: salesRepresentativeId },
         ...(formattedDate && { estimatedStartDate: formattedDate }),
-        maxTrainees,
+        ...(maxTrainees && { maxTrainees }),
         hasCertifyingTest,
         certificateGenerationMode: course.certificateGenerationMode.toLowerCase(),
         tradeName: course.tradeName,
