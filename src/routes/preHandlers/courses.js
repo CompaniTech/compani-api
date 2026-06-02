@@ -1338,6 +1338,10 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
     'subProgram',
     'tradeName',
     'type',
+    'misc',
+    'expectedBillsCount',
+    'globalPrice',
+    'trainerFees',
   ].sort();
   if (!isEqual(Object.keys(courseList[0]).sort(), allowedKeys)) {
     throw Boom.badRequest(translate[language].wrongColumnsInCsv);
@@ -1493,6 +1497,48 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
       else errorsByCourse[courseName] = [translate[language].unexpectedMaxTrainees];
     }
 
+    let expectedBillsCount = null;
+    if (courseType === INTRA) {
+      if (course.expectedBillsCount) {
+        const parsedExpectedBillsCount = Number(course.expectedBillsCount);
+        if (!Number.isInteger(parsedExpectedBillsCount) || parsedExpectedBillsCount < 0) {
+          if (errorsByCourse[courseName]) {
+            errorsByCourse[courseName].push(translate[language].invalidExpectedBillsCount);
+          } else errorsByCourse[courseName] = [translate[language].invalidExpectedBillsCount];
+        } else {
+          expectedBillsCount = parsedExpectedBillsCount;
+        }
+      }
+    } else if (course.expectedBillsCount) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unexpectedBillCount);
+      else errorsByCourse[courseName] = [translate[language].unexpectedBillCount];
+    }
+
+    const prices = {};
+    if (courseType === INTRA) {
+      if (course.globalPrice) {
+        const globalPrice = Number(course.globalPrice);
+        if (globalPrice <= 0) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].invalidGlobalPrice);
+          else errorsByCourse[courseName] = [translate[language].invalidGlobalPrice];
+        } else prices.global = globalPrice;
+      }
+      if (course.trainerFees) {
+        if (!course.globalPrice) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingGlobalPrice);
+          else errorsByCourse[courseName] = [translate[language].missingGlobalPrice];
+        }
+        const trainerFees = Number(course.trainerFees);
+        if (trainerFees <= 0) {
+          if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].invalidTrainerFees);
+          else errorsByCourse[courseName] = [translate[language].invalidTrainerFees];
+        } else prices.trainerFees = trainerFees;
+      }
+    } else if (course.globalPrice || course.trainerFees) {
+      if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].unexpectedPrice);
+      else errorsByCourse[courseName] = [translate[language].unexpectedPrice];
+    }
+
     let hasCertifyingTest = null;
     if (!course.hasCertifyingTest) {
       if (errorsByCourse[courseName]) errorsByCourse[courseName].push(translate[language].missingHasCertifyingTest);
@@ -1529,9 +1575,12 @@ exports.authorizeUploadCollectiveCourseCSV = async (req) => {
         ...salesRepresentativeId && { salesRepresentative: salesRepresentativeId },
         ...(formattedDate && { estimatedStartDate: formattedDate }),
         ...(maxTrainees && { maxTrainees }),
+        ...(expectedBillsCount && { expectedBillsCount }),
+        ...(course.misc && { misc: course.misc.slice(0, 100) }),
+        ...(Object.keys(prices).length && { prices }),
         hasCertifyingTest,
         certificateGenerationMode: course.certificateGenerationMode.toLowerCase(),
-        tradeName: course.tradeName,
+        tradeName: course.tradeName.slice(0, 200),
       });
     }
 
