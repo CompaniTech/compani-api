@@ -322,11 +322,17 @@ module.exports = {
     invalidCertificateGenerationMode: 'certificate generation mode is invalid',
     missingMaxTrainees: 'max trainees is missing',
     invalidMaxTrainees: 'max trainees is invalid',
+    invalidExpectedBillsCount: 'expected bill count is invalid',
     missingHasCertifyingTest: 'has certifying test is missing',
     invalidHasCertifyingTest: 'has certifying test is invalid',
     unexpectedCompany: 'course has company while type is not intra',
     unexpectedHolding: 'course has holding while type is not intra_holding',
     unexpectedMaxTrainees: 'course has max trainee while type is not intra_holding nor intra',
+    unexpectedBillCount: 'course has expected bill count while type is not intra',
+    invalidGlobalPrice: 'global price is invalid',
+    invalidTrainerFees: 'trainer fees are invalid',
+    missingGlobalPrice: 'global price is missing',
+    unexpectedPrice: 'course has price while type is not intra',
   },
   'fr-FR': {
     /* Token errors */
@@ -660,11 +666,17 @@ module.exports = {
     invalidCertificateGenerationMode: 'le mode de génération des attestations est invalide',
     missingMaxTrainees: 'le nombre maximum de stagiaires est manquant',
     invalidMaxTrainees: 'le nombre maximum de stagiaires est invalide',
+    invalidExpectedBillsCount: 'le nom de factures attendu est invalide',
     missingHasCertifyingTest: 'hasCertifyingTest est manquant',
     invalidHasCertifyingTest: 'la valeur de hasCertifyingTest est invalide',
     unexpectedCompany: 'une structure est renseignée alors que la formation n\'est pas INTRA',
     unexpectedHolding: 'une société-mère est renseignée alors que la formation n\'est pas INTRA SOCIÉTÉ-MÈRE',
-    unexpectedMaxTrainees: 'Un nombre d\'apprenant maximum est renseigné alors que la formation n\'est pas INTRA ou '
+    unexpectedMaxTrainees: 'un nombre d\'apprenant maximum est renseigné alors que la formation n\'est pas INTRA ou '
     + 'INTRA SOCIÉTÉ-MÈRE',
+    unexpectedBillCount: 'un nombre de factures attendues est renseigné alors que la formation n\'est pas INTRA',
+    invalidGlobalPrice: 'le prix global est invalide',
+    invalidTrainerFees: 'les frais de formateur sont invalides',
+    missingGlobalPrice: 'le prix global est manquant',
+    unexpectedPrice: 'un prix est renseigné alors que la formation n\'est pas INTRA',
   },
 };

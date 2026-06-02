@@ -9546,6 +9546,9 @@ describe('uploadCollectiveCourseCSV', () => {
         hasCertifyingTest: false,
         certificateGenerationMode: MONTHLY,
         tradeName: 'nom',
+        misc: 'test',
+        expectedBillsCount: 1,
+        prices: { global: 100, trainerFees: 20 },
       },
       {
         subProgram: subProgramId,
@@ -9578,13 +9581,16 @@ describe('uploadCollectiveCourseCSV', () => {
       {
         subProgram: subProgramId,
         type: INTRA,
-        companies: companyId,
+        companies: [companyId],
         operationsRepresentative: operationsRepresentativeId,
         salesRepresentative: salesRepresentativeId,
         maxTrainees: 8,
         hasCertifyingTest: false,
         certificateGenerationMode: MONTHLY,
         tradeName: 'nom',
+        misc: 'test',
+        expectedBillsCount: 1,
+        prices: { global: 100, trainerFees: 20 },
       },
       credentials
     );

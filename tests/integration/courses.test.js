@@ -8149,6 +8149,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
         {
           subProgram: subProgramsList[0]._id,
@@ -8162,6 +8166,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'autre nom',
+          globalPrice: '',
+          trainerFees: '',
+          misc: '',
+          expectedBillsCount: '',
         },
         {
           subProgram: subProgramsList[0]._id,
@@ -8175,6 +8183,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'true',
           certificateGenerationMode: GLOBAL,
           tradeName: 'encore un autre nom',
+          globalPrice: '',
+          trainerFees: '',
+          misc: '',
+          expectedBillsCount: '',
         },
       ]);
 
@@ -8206,6 +8218,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8237,6 +8253,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
           other: '',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8277,6 +8297,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
             hasCertifyingTest: 'false',
             certificateGenerationMode: MONTHLY,
             tradeName: 'nom',
+            expectedBillsCount: 1,
+            globalPrice: 123,
+            trainerFees: 23,
+            misc: 'truc',
             [missingParam.key]: '',
           },
         ]);
@@ -8310,6 +8334,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
+          expectedBillsCount: '',
         },
       ]);
 
@@ -8341,6 +8369,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8372,6 +8404,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8403,6 +8439,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          globalPrice: '',
+          trainerFees: '',
+          misc: 'truc',
+          expectedBillsCount: '',
         },
       ]);
 
@@ -8435,6 +8475,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8466,6 +8510,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          globalPrice: '',
+          trainerFees: '',
+          misc: 'truc',
+          expectedBillsCount: '',
         },
       ]);
 
@@ -8497,6 +8545,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          globalPrice: '',
+          trainerFees: '',
+          misc: 'truc',
+          expectedBillsCount: '',
         },
       ]);
 
@@ -8529,6 +8581,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          globalPrice: '',
+          trainerFees: '',
+          misc: 'truc',
+          expectedBillsCount: '',
         },
       ]);
 
@@ -8560,6 +8616,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8591,6 +8651,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8622,6 +8686,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8654,6 +8722,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8685,6 +8757,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8716,6 +8792,11 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
+
         },
       ]);
 
@@ -8748,6 +8829,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8779,6 +8864,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8811,6 +8900,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8843,6 +8936,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          globalPrice: '',
+          trainerFees: '',
+          misc: 'truc',
+          expectedBillsCount: '',
         },
       ]);
 
@@ -8855,7 +8952,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
 
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByCourse)[0])
-        .toContain('Un nombre d\'apprenant maximum est renseigné alors que la formation n\'est pas INTRA ou '
+        .toContain('un nombre d\'apprenant maximum est renseigné alors que la formation n\'est pas INTRA ou '
         + 'INTRA SOCIÉTÉ-MÈRE');
     });
 
@@ -8876,6 +8973,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'yes',
           certificateGenerationMode: MONTHLY,
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8908,6 +9009,10 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
           hasCertifyingTest: 'false',
           certificateGenerationMode: 'yearly',
           tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
         },
       ]);
 
@@ -8921,6 +9026,218 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByCourse)[0])
         .toContain('le mode de génération des attestations est invalide');
+    });
+
+    it('should return 422 if expectedBillsCount is invalid', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '8',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: 'monthly',
+          tradeName: 'nom',
+          expectedBillsCount: 'un',
+          globalPrice: 123,
+          trainerFees: 23,
+          misc: 'truc',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le nom de factures attendu est invalide');
+    });
+
+    it('should return 422 if expectedBillsCount on not intra course', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTER_B2B,
+          company: '',
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: 'monthly',
+          tradeName: 'nom',
+          expectedBillsCount: 1,
+          globalPrice: '',
+          trainerFees: '',
+          misc: 'truc',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0])
+        .toContain('un nombre de factures attendues est renseigné alors que la formation n\'est pas INTRA');
+    });
+
+    it('should return 422 if global price is invalid', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: 8,
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: 'monthly',
+          tradeName: 'nom',
+          expectedBillsCount: '1',
+          globalPrice: -100,
+          trainerFees: 50,
+          misc: 'truc',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le prix global est invalide');
+    });
+
+    it('should return 422 if trainer fees are invalid', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: 8,
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: 'monthly',
+          tradeName: 'nom',
+          expectedBillsCount: '1',
+          globalPrice: 100,
+          trainerFees: -50,
+          misc: 'truc',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('les frais de formateur sont invalides');
+    });
+
+    it('should return 422 if trainer fees but no global price', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTRA,
+          company: authCompany.name,
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: 8,
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: 'monthly',
+          tradeName: 'nom',
+          expectedBillsCount: '1',
+          globalPrice: '',
+          trainerFees: 50,
+          misc: 'truc',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('le prix global est manquant');
+    });
+
+    it('should return 422 if price but course is not intra', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          subProgram: subProgramsList[0]._id,
+          type: INTER_B2B,
+          company: '',
+          holding: '',
+          operationsRepresentative: trainerOrganisationManager.local.email,
+          salesRepresentative: trainerOrganisationManager.local.email,
+          estimatedStartDate: '2025-11-01',
+          maxTrainees: '',
+          hasCertifyingTest: 'false',
+          certificateGenerationMode: 'monthly',
+          tradeName: 'nom',
+          expectedBillsCount: '',
+          globalPrice: 100,
+          trainerFees: 50,
+          misc: 'truc',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/collective-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByCourse)[0])
+        .toContain('un prix est renseigné alors que la formation n\'est pas INTRA');
     });
   });
 
