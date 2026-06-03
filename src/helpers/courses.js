@@ -121,12 +121,19 @@ exports.createCourse = async (payload, credentials) => {
       .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
       .lean();
     const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
-    if (UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)) {
+    const PRI_SUBPROGRAM_IDS = process.env.PRI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+    if (UtilsHelper.doesArrayIncludeId([...VAEI_SUBPROGRAM_IDS, ...PRI_SUBPROGRAM_IDS], payload.subProgram)) {
       const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
         traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
         traineeCompany: trainee.company.name,
+        parentFolderId: UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)
+          ? process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID
+          : process.env.GOOGLE_DRIVE_PRI_FOLDER_ID,
+        templateId: UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)
+          ? process.env.VAEI_GOOGLE_SHEET_TEMPLATE_ID
+          : process.env.PRI_GOOGLE_SHEET_TEMPLATE_ID,
         ...payload.coach && { coach: payload.coach },
         ...payload.architect && { architect: payload.architect },
       });

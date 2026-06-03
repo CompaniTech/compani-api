@@ -109,7 +109,7 @@ describe('createCourse', () => {
   let sendWelcome;
   let smsSend;
   const credentials = { _id: new ObjectId() };
-  const subProgramId = new ObjectId();
+  const subProgramIds = [new ObjectId(), new ObjectId()];
 
   beforeEach(() => {
     create = sinon.stub(Course, 'create');
@@ -126,7 +126,12 @@ describe('createCourse', () => {
     sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
     smsSend = sinon.stub(SmsHelper, 'send');
     UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
-    process.env.VAEI_SUBPROGRAM_IDS = subProgramId.toHexString();
+    process.env.VAEI_SUBPROGRAM_IDS = subProgramIds[0].toHexString();
+    process.env.PRI_SUBPROGRAM_IDS = subProgramIds[1].toHexString();
+    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'vaei_parent_folder_id';
+    process.env.VAEI_GOOGLE_SHEET_TEMPLATE_ID = 'vaei_templateId';
+    process.env.GOOGLE_DRIVE_PRI_FOLDER_ID = 'pri_parent_folder_id';
+    process.env.PRI_GOOGLE_SHEET_TEMPLATE_ID = 'pri_templateId';
   });
   afterEach(() => {
     create.restore();
@@ -141,6 +146,7 @@ describe('createCourse', () => {
     smsSend.restore();
     UtilsMock.unmockCurrentDate();
     process.env.VAEI_SUBPROGRAM_IDS = '';
+    process.env.PRI_SUBPROGRAM_IDS = '';
   });
 
   it('should create an intra course', async () => {
@@ -199,9 +205,9 @@ describe('createCourse', () => {
     );
   });
 
-  it('should create a single course (no user with same name)', async () => {
+  it('should create a vaei single course (no user with same name)', async () => {
     const steps = [{ _id: new ObjectId(), type: ON_SITE }];
-    const subProgram = { _id: subProgramId, steps };
+    const subProgram = { _id: subProgramIds[0], steps };
     const traineeId = new ObjectId();
     const userCompany = { company: new ObjectId() };
     const coach = { _id: new ObjectId(), name: 'Jean COACH', email: 'coach@compani.fr', phone: '+33123456789' };
@@ -274,6 +280,128 @@ describe('createCourse', () => {
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact),
         traineeCompany: 'Company',
+        parentFolderId: 'vaei_parent_folder_id',
+        templateId: 'vaei_templateId',
+        coach,
+        architect,
+      }
+    );
+    sinon.assert.calledOnceWithExactly(
+      create,
+      {
+        ...omit(payload, ['trainee', 'coach', 'architect']),
+        companies: [userCompany.company],
+        prices: [{ global: 1200, company: userCompany.company }],
+        folderId: 'folderId',
+        gSheetId: 'gSheetId',
+      }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneSubProgram,
+      [
+        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1 }] },
+        { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      sendWelcome,
+      TRAINEE,
+      'toto.titi@compani.fr',
+      'Vous y trouverez tous les rendez-vous de la formation ainsi que les modules théoriques (e-learning) pour vous '
+        + 'accompagner dans cette formation.'
+    );
+    sinon.assert.calledOnceWithExactly(
+      smsSend,
+      {
+        tag: COURSE_SMS,
+        content: 'Téléchargez et connectez vous à l\'application Compani via ce lien https://apple.co/33kKzcU (Apple) '
+          + 'ou https://bit.ly/3en5OkF (Android) et explorez vos premiers e-learnings !',
+        recipient: '+33612345678',
+        sender: 'Compani',
+      }
+    );
+    sinon.assert.calledOnceWithExactly(insertManyCourseSlot, slots);
+    sinon.assert.calledOnceWithExactly(addTrainee, course._id, { trainee: traineeId }, credentials);
+  });
+
+  it('should create a pri single course (no user with same name)', async () => {
+    const steps = [{ _id: new ObjectId(), type: ON_SITE }];
+    const subProgram = { _id: subProgramIds[1], steps };
+    const traineeId = new ObjectId();
+    const userCompany = { company: new ObjectId() };
+    const coach = { _id: new ObjectId(), name: 'Jean COACH', email: 'coach@compani.fr', phone: '+33123456789' };
+    const architect = { _id: new ObjectId(), name: 'Jill ARCHI', email: 'architect@compani.fr', phone: '+33123456789' };
+    const trainee = {
+      _id: traineeId,
+      identity: { firstname: 'Toto', lastname: 'Titi' },
+      local: { email: 'toto.titi@compani.fr' },
+      contact: { phone: '0612345678', countryCode: '+33' },
+      company: { name: 'Company' },
+    };
+    const payload = {
+      misc: 'name',
+      subProgram: subProgram._id,
+      type: SINGLE,
+      operationsRepresentative: new ObjectId(),
+      expectedBillsCount: '0',
+      hasCertifyingTest: false,
+      trainee: traineeId,
+      prices: { global: 1200 },
+      coach,
+      architect,
+      tradeName: 'nom',
+    };
+    const course = {
+      _id: new ObjectId(),
+      ...omit(payload, ['trainee']),
+      companies: [userCompany.company],
+      format: 'blended',
+    };
+    const slots = [{ course: course._id, step: steps[0]._id }];
+
+    findOneUserCompany.returns(SinonMongoose.stubChainedQueries(userCompany, ['lean']));
+    userFindOne.returns(SinonMongoose.stubChainedQueries(trainee));
+    createCourseFolderAndSheet.returns({ folderId: 'folderId', gSheetId: 'gSheetId' });
+    create.returns(course);
+    findOneSubProgram.returns(SinonMongoose.stubChainedQueries(subProgram));
+
+    const result = await CourseHelper.createCourse(payload, credentials);
+
+    expect(result).toEqual(course);
+    sinon.assert.notCalled(createHistoryOnEstimatedStartDateEdition);
+    SinonMongoose.calledOnceWithExactly(
+      findOneUserCompany,
+      [
+        {
+          query: 'findOne',
+          args: [
+            {
+              user: traineeId,
+              $or: [{ endDate: { $gt: '2022-12-21T16:00:00.000Z' } }, { endDate: { $exists: false } }],
+            },
+            { company: 1 }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      userFindOne,
+      [
+        { query: 'findOne', args: [{ _id: traineeId }, { identity: 1, 'local.email': 1, contact: 1 }] },
+        { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      createCourseFolderAndSheet,
+      {
+        traineeName: 'Toto TITI',
+        traineeEmail: trainee.local.email,
+        traineePhone: UtilsHelper.formatPhone(trainee.contact),
+        traineeCompany: 'Company',
+        parentFolderId: 'pri_parent_folder_id',
+        templateId: 'pri_templateId',
         coach,
         architect,
       }

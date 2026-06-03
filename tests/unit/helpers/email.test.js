@@ -246,6 +246,7 @@ describe('addTutor', () => {
       _id: new ObjectId(),
       tradeName: 'Program 1',
       trainees: [{ _id: new ObjectId(), identity: { firstname: 'Robyn', lastname: 'FENTY' } }],
+      subProgram: new ObjectId(),
       gSheetId: '12345',
     };
     const addNewTutorContent = 'content for tutor';
@@ -269,7 +270,7 @@ describe('addTutor', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { tradeName: 1, trainees: 1, gSheetId: 1 }] },
+        { query: 'findOne', args: [{ _id: course._id }, { tradeName: 1, trainees: 1, gSheetId: 1, subProgram: 1 }] },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'lean' },
       ]
@@ -292,7 +293,8 @@ describe('addTutor', () => {
       'aude+test95@compani.fr',
       'Robyn FENTY',
       'Program 1',
-      '12345'
+      '12345',
+      course.subProgram
     );
   });
 
@@ -310,6 +312,7 @@ describe('addTutor', () => {
         { _id: new ObjectId(), identity: { firstname: 'Robin', lastname: 'Hood' } },
       ],
       gSheetId: '12345',
+      subProgram: new ObjectId(),
     };
     const addNewTutorContent = 'content for tutor';
 
@@ -331,7 +334,7 @@ describe('addTutor', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { tradeName: 1, trainees: 1, gSheetId: 1 }] },
+        { query: 'findOne', args: [{ _id: course._id }, { tradeName: 1, trainees: 1, gSheetId: 1, subProgram: 1 }] },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'lean' },
       ]
@@ -347,7 +350,15 @@ describe('addTutor', () => {
         html: addNewTutorContent,
       }
     );
-    sinon.assert.calledWithExactly(addTutorContent, 'Bat MAN', 'aude+test95@compani.fr', '', 'Program 1', '12345');
+    sinon.assert.calledWithExactly(
+      addTutorContent,
+      'Bat MAN',
+      'aude+test95@compani.fr',
+      '',
+      'Program 1',
+      '12345',
+      course.subProgram
+    );
   });
 });
 
