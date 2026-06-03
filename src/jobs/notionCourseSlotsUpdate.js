@@ -65,14 +65,14 @@ const notionCourseSlotsUpdateJob = {
       const stepToColumn = {
         'Total h diag&eval': evaluationStepIds,
         'Tot Nb codev': codevStepIds,
-        'Total h tripartite': tripartiteStepIds,
+        'Total h tripartites': tripartiteStepIds,
         'Total h coaching': coachingStepIds,
       };
       const stepToColumnPastMonth = {
-        'Total h diag&eval du mois dernier': evaluationStepIds,
+        'h diag&eval du mois dernier': evaluationStepIds,
         'Nb codev du mois dernier': codevStepIds,
-        'Total h tripartite du mois dernier': tripartiteStepIds,
-        'Total h coaching du mois dernier': coachingStepIds,
+        'h tripartites du mois dernier': tripartiteStepIds,
+        'h coaching du mois dernier': coachingStepIds,
       };
 
       const pastMonthStart = CompaniDate().startOf(MONTH).subtract('P1M');
@@ -130,7 +130,7 @@ const notionCourseSlotsUpdateJob = {
           ...buildStepProperties(computeSlotDurationPerStep(presentSlots, allStepIds), stepToColumn),
           ...buildStepProperties(computeSlotDurationPerStep(pastMonthPresentSlots, allStepIds), stepToColumnPastMonth),
           'Total h e-learning': { number: NumbersHelper.toFixedToFloat(allHistoriesDuration.asHours()) },
-          'Total h e-learning mois passé': {
+          'h e-learning du mois dernier': {
             number: NumbersHelper.toFixedToFloat(pastMonthHistoriesDuration.asHours()),
           },
           'Total h absences parcours': { number: NumbersHelper.toFixedToFloat(missingSlots.asHours()) },
