@@ -5983,7 +5983,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
           'auxiliary@alenvi.io',
           'Trainee WITHEXPOTOKEN (TUTOR)',
           'nom',
-          'gSheetId'
+          'gSheetId',
+          subProgramsList[4]._id
         );
       sinon.assert.calledOnceWithExactly(
         gsheetsWriteData,
