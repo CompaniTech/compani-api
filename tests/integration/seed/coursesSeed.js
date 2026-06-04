@@ -354,7 +354,14 @@ const subProgramsList = [
   { _id: new ObjectId(), name: 'sous-programme 2', steps: [stepList[1]._id, stepList[2]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 3', steps: [stepList[1]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 4 (non publié)', steps: [stepList[1]._id, stepList[2]._id] },
-  { _id: new ObjectId(), name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
+  {
+    _id: new ObjectId(),
+    name: 'Subprogram 5',
+    steps: [stepList[0]._id],
+    status: PUBLISHED,
+    sheetTemplateId: 'templateId',
+    folderId: 'parent_folderId',
+  },
 ];
 
 const programsList = [

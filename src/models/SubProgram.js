@@ -22,6 +22,8 @@ const SubProgramSchema = mongoose.Schema({
     }],
     default: undefined,
   },
+  sheetTemplateId: { type: String },
+  folderId: { type: String },
 }, { timestamps: true, id: false });
 
 SubProgramSchema.virtual('program', {

@@ -108,6 +108,11 @@ exports.createCourse = async (payload, credentials) => {
     ? { ...omit(payload, ['company', 'coach', 'architect']), companies: [payload.company] }
     : omit(payload, ['coach', 'architect']);
 
+  const subProgram = await SubProgram
+    .findOne({ _id: payload.subProgram }, { steps: 1, sheetTemplateId: 1, folderId: 1 })
+    .populate({ path: 'steps', select: '_id type' })
+    .lean();
+
   if (payload.type === SINGLE) {
     const company = await UserCompany
       .findOne(
@@ -120,13 +125,15 @@ exports.createCourse = async (payload, credentials) => {
       .findOne({ _id: payload.trainee }, { identity: 1, 'local.email': 1, contact: 1 })
       .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
       .lean();
-    const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
-    if (UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, payload.subProgram)) {
+
+    if (subProgram.folderId && subProgram.sheetTemplateId) {
       const { folderId, gSheetId } = await gDriveStorageHelper.createCourseFolderAndSheet({
         traineeName: UtilsHelper.formatIdentity(trainee.identity, 'FL'),
         traineeEmail: trainee.local.email,
         traineePhone: UtilsHelper.formatPhone(trainee.contact || {}),
         traineeCompany: trainee.company.name,
+        parentFolderId: subProgram.folderId,
+        templateId: subProgram.sheetTemplateId,
         ...payload.coach && { coach: payload.coach },
         ...payload.architect && { architect: payload.architect },
       });
@@ -171,11 +178,6 @@ exports.createCourse = async (payload, credentials) => {
       payload.estimatedStartDate
     );
   }
-
-  const subProgram = await SubProgram
-    .findOne({ _id: course.subProgram }, { steps: 1 })
-    .populate({ path: 'steps', select: '_id type' })
-    .lean();
 
   const slots = subProgram.steps
     .filter(step => [ON_SITE, REMOTE].includes(step.type))

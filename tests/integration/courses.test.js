@@ -124,9 +124,6 @@ describe('COURSES ROUTES - POST /courses', () => {
       sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
         .returns({ sendMail: sinon.stub().returns('emailSent') });
       smsSend = sinon.stub(SmsHelper, 'send');
-      process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
-      process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
-      process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
     });
 
     afterEach(() => {
@@ -135,9 +132,6 @@ describe('COURSES ROUTES - POST /courses', () => {
       gsheetsWriteData.restore();
       sendinBlueTransporter.restore();
       smsSend.restore();
-      process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
-      process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
-      process.env.VAEI_SUBPROGRAM_IDS = '';
     });
 
     it('should create inter_b2b course', async () => {
@@ -5983,7 +5977,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
           'auxiliary@alenvi.io',
           'Trainee WITHEXPOTOKEN (TUTOR)',
           'nom',
-          'gSheetId'
+          'gSheetId',
+          subProgramsList[4]._id
         );
       sinon.assert.calledOnceWithExactly(
         gsheetsWriteData,
@@ -6973,9 +6968,6 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     gdriveCopy = sinon.stub(Gdrive, 'copy');
     gsheetsWriteData = sinon.stub(Gsheets, 'writeData');
     smsSend = sinon.stub(SmsHelper, 'send');
-    process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
-    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
-    process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
     process.env.MAX_CSV_COURSE_SIZE = 30;
   });
   afterEach(() => {
@@ -6987,9 +6979,6 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     gdriveCopy.restore();
     gsheetsWriteData.restore();
     smsSend.restore();
-    process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
-    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
-    process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.MAX_CSV_COURSE_SIZE = 0;
   });
 

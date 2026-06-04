@@ -1,4 +1,5 @@
 /* eslint-disable max-len */
+const UtilsHelper = require('./utils');
 
 const baseWelcomeContent = (customContent, options) => {
   const link = `${process.env.WEBSITE_HOSTNAME}/reset-password/${options.passwordToken.token}`;
@@ -81,29 +82,42 @@ const GooglePlayAndAppStoreButtons = () => `
   </table>
   <p style="color: grey; font-size: 8px">Google Play et le logo Google Play sont des marques de Google LLC.</p>`;
 
-const addTutorContent = (tutorIdentity, tutorEmail, learnerIdentity, courseName, gSheetId) => `<p>Bonjour ${tutorIdentity},</p>
-  <p> Merci beaucoup d'avoir accepté d'être tuteur pour ${learnerIdentity ? `${learnerIdentity}` : 'votre apprenant'} ! Nous sommes très heureux de l'accompagner avec vous pendant cette formation "${courseName}".</p>
-  ${gSheetId ? `<p> Voici le fichier de suivi de sa formation :</p><p>https://docs.google.com/spreadsheets/d/${gSheetId}</p>` : ''}
-  <p>Nous vous avons également créé un compte sur Compani, notre application mobile, qu'il vous faut télécharger sur le magasin d'applications de votre téléphone via les boutons au bas de cet email. Vous pouvez vous y connecter avec votre email : ${tutorEmail}</p>
-  <p><strong style="color: red">Nous vous prions de vous connecter uniquement avec cet email et de ne pas créer de compte vous-même. Si vous avez des soucis de connexion, n’hésitez pas à nous écrire à l’adresse suivante : ${process.env.BILLING_COMPANI_EMAIL}</strong></p>
-  <p>Vous y retrouverez tous les rendez-vous de la formation ainsi que les modules théoriques (e-learning) que votre apprenant va suivre et que vous pouvez faire pour l'accompagner dans l'onglet "Mes formations", section "Tutorat".</p>
-  <p>Pour information, la formation dédiée aux tuteurs.trices est <strong>obligatoire</strong> et est divisée en trois sessions :</p>
-  <ul>
-    <li><strong>Session 1 (mois 1 ou 2) :</strong> Présentation de la formation VAEI (1h30)</li>
-    <li><strong>Session 2 (mois 3 environ) :</strong> Rôle tuteur.trice dans l’accompagnement. (1h30)</li>
-    <li>Réalisation en autonomie de trois modules e-learning. (4h00)</li>
-    <li><strong>Session 3 (mois 10 environ) :</strong> Accompagner la préparation au passage de la VAE Aide-Soignant (1h00)</li>
-  </ul>
-  <p>À l’issue des sessions 1 et 3, un certificat de réalisation vous sera envoyé.</p>
-  <p>Nous organisons prochainement la session 1 de la formation des tuteurs.trices VAEI en visioconférence :</p>
-  <p><strong>Une invitation Google vous sera envoyée sur cette adresse email. Merci de confirmer votre présence, en acceptant l'invitation.</strong></p>
-  <p>Si vous n'êtes pas disponible, merci de nous l'indiquer par mail à ${process.env.BILLING_COMPANI_EMAIL} afin que l'on vous propose un autre créneau.</p>
-  <p>N’hésitez pas à nous écrire pour toute question.</p>
-  <p>Bien cordialement,<br>
-  L'équipe Compani</p>
-  <br>
-  ${GooglePlayAndAppStoreButtons()}
-`;
+const addTutorContent = (tutorIdentity, tutorEmail, learnerIdentity, courseName, gSheetId, subProgram) => {
+  const VAEISubprogramIds = UtilsHelper.getEnvObjectIds('VAEI_SUBPROGRAM_IDS');
+  const PRISubprogramIds = UtilsHelper.getEnvObjectIds('PRI_SUBPROGRAM_IDS');
+  const isSubProgramVAEI = UtilsHelper.doesArrayIncludeId(VAEISubprogramIds, subProgram);
+  const isSubProgramPRI = UtilsHelper.doesArrayIncludeId(PRISubprogramIds, subProgram);
+  const lastSessionTiming = isSubProgramVAEI ? 'mois 10 environ' : 'mois 4 ou 5';
+  const courseVerbatim = isSubProgramVAEI ? 'VAEI' : 'PRI';
+
+  return `
+    <p>Bonjour ${tutorIdentity},</p>
+    <p> Merci beaucoup d'avoir accepté d'être tuteur pour ${learnerIdentity ? `${learnerIdentity}` : 'votre apprenant'} ! Nous sommes très heureux de l'accompagner avec vous pendant cette formation "${courseName}".</p>
+    ${gSheetId ? `<p> Voici le fichier de suivi de sa formation :</p><p>https://docs.google.com/spreadsheets/d/${gSheetId}</p>` : ''}
+    <p>Nous vous avons également créé un compte sur Compani, notre application mobile, qu'il vous faut télécharger sur le magasin d'applications de votre téléphone via les boutons au bas de cet email. Vous pouvez vous y connecter avec votre email : ${tutorEmail}</p>
+    <p><strong style="color: red">Nous vous prions de vous connecter uniquement avec cet email et de ne pas créer de compte vous-même. Si vous avez des soucis de connexion, n’hésitez pas à nous écrire à l’adresse suivante : ${process.env.BILLING_COMPANI_EMAIL}</strong></p>
+    <p>Vous y retrouverez tous les rendez-vous de la formation ainsi que les modules théoriques (e-learning) que votre apprenant va suivre et que vous pouvez faire pour l'accompagner dans l'onglet "Mes formations", section "Tutorat".</p>
+    ${(isSubProgramVAEI || isSubProgramPRI)
+    ? `<p>Pour information, la formation dédiée aux tuteurs.trices est <strong>obligatoire</strong> et est divisée en trois sessions :</p>
+      <ul>
+        <li><strong>Session 1 (mois 1 ou 2) :</strong> Présentation de la formation ${courseVerbatim} et des outils du tuteur (1h30)</li>
+        <li><strong>Session 2 (mois 3 environ) :</strong> Rôle tuteur.trice dans l’accompagnement${isSubProgramPRI ? ', l\'évaluation en situation' : ''} (1h30)</li>
+        <li>Réalisation en autonomie de trois modules e-learning (4h00)</li>
+        <li><strong>Session 3 (${lastSessionTiming}) :</strong> Accompagner la préparation au passage de la VAE Aide-Soignant (1h00)</li>
+      </ul>
+      <p>À l’issue des sessions 1 et 3, un certificat de réalisation vous sera envoyé.</p>
+      <p>Nous organisons prochainement la session 1 de la formation des tuteurs.trices en visioconférence :</p>
+      <p><strong>Une invitation Google vous sera envoyée sur cette adresse email. Merci de confirmer votre présence, en acceptant l'invitation.</strong></p>
+      <p>Si vous n'êtes pas disponible, merci de nous l'indiquer par mail à ${process.env.BILLING_COMPANI_EMAIL} afin que l'on vous propose un autre créneau.</p>
+      <p>Merci de communiquer à votre direction toutes les informations liées à votre formation tuteur, en particulier les créneaux qui vous seront proposés.</p>`
+    : ''}
+    <p>N’hésitez pas à nous écrire pour toute question.</p>
+    <p>Bien cordialement,<br>
+    L'équipe Compani</p>
+    <br>
+    ${GooglePlayAndAppStoreButtons()}
+  `;
+};
 
 const completionCertificateCreationContent = (certificateCreated, errors) => {
   let body = `<p>Script exécuté. ${certificateCreated.length + errors.length} certificats traités.</p>`;
