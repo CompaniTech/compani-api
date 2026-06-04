@@ -12,6 +12,7 @@ const CoursesHelper = require('../../../src/helpers/courses');
 const CompletionCertificatePdf = require('../../../src/data/pdf/completionCertificate');
 const { OFFICIAL, BLENDED, E_LEARNING, PRESENT } = require('../../../src/helpers/constants');
 const UtilsHelper = require('../../../src/helpers/utils');
+const { CompaniDuration } = require('../../../src/helpers/dates/companiDurations');
 const UtilsMock = require('../../utilsMock');
 
 describe('list', () => {
@@ -414,7 +415,7 @@ describe('list', () => {
 });
 
 describe('generate', () => {
-  let findOneCompletionCeritificate;
+  let findOneCompletionCertificate;
   let findAttendance;
   let formatIdentity;
   let getPdf;
@@ -425,12 +426,11 @@ describe('generate', () => {
   let courseFind;
   let getELearningDuration;
   let getRealELearningDuration;
-  const VAEI_SUBPROGRAM_IDS = new ObjectId();
   const PRI_SUBPROGRAM_IDS = new ObjectId();
   const REAL_ELEARNING_DURATION_SUBPROGRAM_ID = new ObjectId();
 
   beforeEach(() => {
-    findOneCompletionCeritificate = sinon.stub(CompletionCertificate, 'findOne');
+    findOneCompletionCertificate = sinon.stub(CompletionCertificate, 'findOne');
     findAttendance = sinon.stub(Attendance, 'find');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
     getPdf = sinon.stub(CompletionCertificatePdf, 'getPdf');
@@ -442,13 +442,14 @@ describe('generate', () => {
     courseFind = sinon.stub(Course, 'find');
     getELearningDuration = sinon.stub(CoursesHelper, 'getELearningDuration');
     getRealELearningDuration = sinon.stub(CoursesHelper, 'getRealELearningDuration');
-    process.env.VAEI_SUBPROGRAM_IDS = VAEI_SUBPROGRAM_IDS;
+    process.env.VAEI_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
     process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS;
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
+    process.env.VAE_PERIOD_CONFIGS = `${REAL_ELEARNING_DURATION_SUBPROGRAM_ID}:14:12`;
   });
 
   afterEach(() => {
-    findOneCompletionCeritificate.restore();
+    findOneCompletionCertificate.restore();
     findAttendance.restore();
     formatIdentity.restore();
     getPdf.restore();
@@ -463,6 +464,7 @@ describe('generate', () => {
     process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.PRI_SUBPROGRAM_IDS = '';
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = '';
+    process.env.VAE_PERIOD_CONFIGS = '';
   });
 
   it('should generate completion certificate (with theoretical elearning duration)', async () => {
@@ -568,11 +570,11 @@ describe('generate', () => {
       slots: slotsInOtherCourse,
     }];
 
-    findOneCompletionCeritificate.returns(
+    findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns('6h30');
+    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getELearningDuration.returns('PT3H30M');
@@ -583,7 +585,7 @@ describe('generate', () => {
     await CompletionCertificatesHelper.generate(completionCertificateId);
 
     SinonMongoose.calledOnceWithExactly(
-      findOneCompletionCeritificate,
+      findOneCompletionCertificate,
       [
         { query: 'findOne', args: [{ _id: completionCertificateId }] },
         {
@@ -635,7 +637,8 @@ describe('generate', () => {
     );
     sinon.assert.calledOnceWithExactly(
       getTotalDuration,
-      [slotList[1], { startDate: '2025-03-22T07:00:00.000Z', endDate: '2025-03-22T09:30:00.000Z' }]
+      [slotList[1], { startDate: '2025-03-22T07:00:00.000Z', endDate: '2025-03-22T09:30:00.000Z' }],
+      false
     );
     SinonMongoose.calledWithExactly(
       courseFind,
@@ -793,11 +796,11 @@ describe('generate', () => {
       slots: slotsInOtherCourse,
     }];
 
-    findOneCompletionCeritificate.returns(
+    findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns('6h30');
+    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getRealELearningDuration.returns('PT200S');
@@ -808,7 +811,7 @@ describe('generate', () => {
     await CompletionCertificatesHelper.generate(completionCertificateId);
 
     SinonMongoose.calledOnceWithExactly(
-      findOneCompletionCeritificate,
+      findOneCompletionCertificate,
       [
         { query: 'findOne', args: [{ _id: completionCertificateId }] },
         {
@@ -860,7 +863,8 @@ describe('generate', () => {
     );
     sinon.assert.calledOnceWithExactly(
       getTotalDuration,
-      [slotList[1], { startDate: '2025-03-22T07:00:00.000Z', endDate: '2025-03-22T09:30:00.000Z' }]
+      [slotList[1], { startDate: '2025-03-22T07:00:00.000Z', endDate: '2025-03-22T09:30:00.000Z' }],
+      false
     );
     SinonMongoose.calledWithExactly(
       courseFind,
@@ -903,7 +907,7 @@ describe('generate', () => {
         startDate: startOfMonth,
         endDate: endOfMonth,
         date: '24/03/2025',
-        isVAEISubProgram: false,
+        isVAEISubProgram: true,
         isPRISubProgram: false,
         certificateGenerationModeIsMonthly: true,
         programName: 'PROGRAM',
@@ -913,6 +917,726 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       uploadCourseFile,
       { fileName: 'certificat_realisation_Jean SAITRIEN_03-2025', file: 'pdf', contentType: 'application/pdf' }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: completionCertificateId },
+      { file: { publicId: '1234', link: 'tests/1234' } }
+    );
+    sinon.assert.notCalled(getELearningDuration);
+  });
+
+  it('should generate completion certificate in VAE period (attendance within remaining budget)', async () => {
+    const completionCertificateId = new ObjectId();
+    const traineeId = new ObjectId();
+    const companyId = new ObjectId();
+    const courseId = new ObjectId();
+    const month = '03-2026';
+    const slotList = [
+      { _id: new ObjectId(), startDate: '2025-01-20T10:00:00.000Z', endDate: '2025-01-20T14:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2026-03-14T10:00:00.000Z', endDate: '2026-03-14T14:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2026-03-20T10:00:00.000Z', endDate: '2026-03-20T14:00:00.000Z' },
+    ];
+    const activitiesIds = [new ObjectId(), new ObjectId()];
+    const activityHistories = [
+      {
+        _id: new ObjectId(),
+        activity: activitiesIds[0],
+        user: traineeId,
+        duration: 'PT100S',
+        date: '2026-03-20T10:00:00.000Z',
+      },
+      {
+        _id: new ObjectId(),
+        activity: activitiesIds[1],
+        user: traineeId,
+        duration: 'PT100S',
+        date: '2026-02-20T10:00:00.000Z',
+      },
+    ];
+    const subProgramIds = [REAL_ELEARNING_DURATION_SUBPROGRAM_ID, new ObjectId()];
+    const completionCertificate = {
+      _id: completionCertificateId,
+      course: {
+        _id: courseId,
+        slots: slotList,
+        tradeName: 'program',
+        subProgram: {
+          _id: subProgramIds[0],
+          program: { subPrograms: subProgramIds },
+          steps: [
+            {
+              type: E_LEARNING,
+              theoreticalDuration: '3h30',
+              activities: [activitiesIds[0], activitiesIds[1]],
+            },
+          ],
+        },
+        companies: [companyId],
+        trainees: [traineeId],
+      },
+      month,
+      trainee: {
+        _id: traineeId,
+        identity: { firstname: 'Jean', lastname: 'Saitrien' },
+        company: { _id: companyId, name: 'Alenvi' },
+      },
+    };
+    const startOfMonth = '01/03/2026';
+    const endOfMonth = '31/03/2026';
+
+    const courseSlotIdsOnMonth = [slotList[1]._id, slotList[2]._id];
+    const attendances = [
+      { trainee: traineeId, courseSlot: slotList[1]._id, company: companyId },
+    ];
+
+    const slotIdsInOtherCourse = [new ObjectId(), new ObjectId()];
+    const slotsInOtherCourse = [
+      {
+        _id: slotIdsInOtherCourse[0],
+        startDate: '2026-03-22T07:00:00.000Z',
+        endDate: '2026-03-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[0], company: companyId }],
+      },
+      {
+        _id: slotIdsInOtherCourse[1],
+        startDate: '2026-02-22T07:00:00.000Z',
+        endDate: '2026-02-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[1], company: companyId }],
+      },
+    ];
+    const coursesWithSameProgram = [{
+      _id: new ObjectId(),
+      format: BLENDED,
+      subProgram: {
+        _id: subProgramIds[1],
+        program: { subPrograms: subProgramIds },
+      },
+      trainees: [new ObjectId()],
+      companies: [companyId],
+      slots: slotsInOtherCourse,
+    }];
+
+    findOneCompletionCertificate.onCall(0).returns(
+      SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
+    );
+    findOneCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
+    findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
+    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
+    courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
+    findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    getRealELearningDuration.returns('PT200S');
+    formatIdentity.returns('Jean SAITRIEN');
+    getPdf.returns('pdf');
+    uploadCourseFile.returns({ publicId: '1234', link: 'tests/1234' });
+
+    await CompletionCertificatesHelper.generate(completionCertificateId);
+
+    SinonMongoose.calledWithExactly(
+      findOneCompletionCertificate,
+      [
+        { query: 'findOne', args: [{ _id: completionCertificateId }] },
+        {
+          query: 'populate',
+          args: [[
+            {
+              path: 'course',
+              select: 'subProgram slots companies trainees tradeName',
+              populate: [
+                { path: 'slots', select: 'startDate endDate' },
+                {
+                  path: 'subProgram',
+                  select: 'program steps',
+                  populate: [
+                    { path: 'program', select: 'subPrograms' },
+                    {
+                      path: 'steps',
+                      select: 'activities type theoreticalDuration',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              path: 'trainee',
+              select: 'identity',
+              populate: { path: 'company', populate: { path: 'company', select: 'name' } },
+            },
+          ]],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      findOneCompletionCertificate,
+      [
+        {
+          query: 'findOne',
+          args: [
+            { course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $exists: true } },
+            { vaeSupportRemainingMinutes: 1 },
+          ],
+        },
+        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findAttendance,
+      [
+        { query: 'find', args: [{ trainee: traineeId, courseSlot: { $in: courseSlotIdsOnMonth }, status: PRESENT }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findActivityHistories,
+      [
+        { query: 'find', args: [{ activity: { $in: activitiesIds }, user: traineeId }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getTotalDuration,
+      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }],
+      false
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: [companyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
+              options: { isVendorUser: true },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(getRealELearningDuration, [activityHistories[0]]);
+    sinon.assert.calledOnceWithExactly(formatIdentity, { firstname: 'Jean', lastname: 'Saitrien' }, 'FL');
+    sinon.assert.calledOnceWithExactly(
+      getPdf,
+      {
+        trainee: {
+          identity: 'Jean SAITRIEN',
+          attendanceDuration: '6h30',
+          eLearningDuration: '0h03',
+          companyName: 'Alenvi',
+        },
+        startDate: startOfMonth,
+        endDate: endOfMonth,
+        date: '24/03/2025',
+        isVAEISubProgram: true,
+        isPRISubProgram: false,
+        certificateGenerationModeIsMonthly: true,
+        programName: 'PROGRAM',
+        vaeSupportData: { vaeDuration: '6h30', regularDuration: null },
+      },
+      OFFICIAL
+    );
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: 'certificat_realisation_Jean SAITRIEN_03-2026', file: 'pdf', contentType: 'application/pdf' }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: completionCertificateId },
+      { file: { publicId: '1234', link: 'tests/1234' }, vaeSupportRemainingMinutes: 330 }
+    );
+    sinon.assert.notCalled(getELearningDuration);
+  });
+
+  it('should generate completion certificate in VAE period (attendance exceeds remaining budget)', async () => {
+    const completionCertificateId = new ObjectId();
+    const traineeId = new ObjectId();
+    const companyId = new ObjectId();
+    const courseId = new ObjectId();
+    const month = '03-2026';
+    const slotList = [
+      { _id: new ObjectId(), startDate: '2024-12-20T10:00:00.000Z', endDate: '2025-01-20T14:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2026-03-14T10:00:00.000Z', endDate: '2026-03-14T14:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2026-03-20T10:00:00.000Z', endDate: '2026-03-20T14:00:00.000Z' },
+    ];
+    const activitiesIds = [new ObjectId(), new ObjectId()];
+    const activityHistories = [
+      {
+        _id: new ObjectId(),
+        activity: activitiesIds[0],
+        user: traineeId,
+        duration: 'PT100S',
+        date: '2026-03-20T10:00:00.000Z',
+      },
+      {
+        _id: new ObjectId(),
+        activity: activitiesIds[1],
+        user: traineeId,
+        duration: 'PT100S',
+        date: '2026-02-20T10:00:00.000Z',
+      },
+    ];
+    const subProgramIds = [REAL_ELEARNING_DURATION_SUBPROGRAM_ID, new ObjectId()];
+    const completionCertificate = {
+      _id: completionCertificateId,
+      course: {
+        _id: courseId,
+        slots: slotList,
+        tradeName: 'program',
+        subProgram: {
+          _id: subProgramIds[0],
+          program: { subPrograms: subProgramIds },
+          steps: [
+            {
+              type: E_LEARNING,
+              theoreticalDuration: '3h30',
+              activities: [activitiesIds[0], activitiesIds[1]],
+            },
+          ],
+        },
+        companies: [companyId],
+        trainees: [traineeId],
+      },
+      month,
+      trainee: {
+        _id: traineeId,
+        identity: { firstname: 'Jean', lastname: 'Saitrien' },
+        company: { _id: companyId, name: 'Alenvi' },
+      },
+    };
+    const startOfMonth = '01/03/2026';
+    const endOfMonth = '31/03/2026';
+
+    const courseSlotIdsOnMonth = [slotList[1]._id, slotList[2]._id];
+    const attendances = [
+      { trainee: traineeId, courseSlot: slotList[1]._id, company: companyId },
+    ];
+
+    const slotIdsInOtherCourse = [new ObjectId(), new ObjectId()];
+    const slotsInOtherCourse = [
+      {
+        _id: slotIdsInOtherCourse[0],
+        startDate: '2026-03-22T07:00:00.000Z',
+        endDate: '2026-03-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[0], company: companyId }],
+      },
+      {
+        _id: slotIdsInOtherCourse[1],
+        startDate: '2026-02-22T07:00:00.000Z',
+        endDate: '2026-02-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[1], company: companyId }],
+      },
+    ];
+    const coursesWithSameProgram = [{
+      _id: new ObjectId(),
+      format: BLENDED,
+      subProgram: {
+        _id: subProgramIds[1],
+        program: { subPrograms: subProgramIds },
+      },
+      trainees: [new ObjectId()],
+      companies: [companyId],
+      slots: slotsInOtherCourse,
+    }];
+
+    findOneCompletionCertificate.onCall(0).returns(
+      SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
+    );
+    findOneCompletionCertificate.onCall(1).returns(
+      SinonMongoose.stubChainedQueries({ vaeSupportRemainingMinutes: 240 }, ['sort', 'lean'])
+    );
+    findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
+    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
+    courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
+    findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    getRealELearningDuration.returns('PT200S');
+    formatIdentity.returns('Jean SAITRIEN');
+    getPdf.returns('pdf');
+    uploadCourseFile.returns({ publicId: '1234', link: 'tests/1234' });
+
+    await CompletionCertificatesHelper.generate(completionCertificateId);
+
+    SinonMongoose.calledWithExactly(
+      findOneCompletionCertificate,
+      [
+        { query: 'findOne', args: [{ _id: completionCertificateId }] },
+        {
+          query: 'populate',
+          args: [[
+            {
+              path: 'course',
+              select: 'subProgram slots companies trainees tradeName',
+              populate: [
+                { path: 'slots', select: 'startDate endDate' },
+                {
+                  path: 'subProgram',
+                  select: 'program steps',
+                  populate: [
+                    { path: 'program', select: 'subPrograms' },
+                    {
+                      path: 'steps',
+                      select: 'activities type theoreticalDuration',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              path: 'trainee',
+              select: 'identity',
+              populate: { path: 'company', populate: { path: 'company', select: 'name' } },
+            },
+          ]],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      findOneCompletionCertificate,
+      [
+        {
+          query: 'findOne',
+          args: [
+            { course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $exists: true } },
+            { vaeSupportRemainingMinutes: 1 },
+          ],
+        },
+        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findAttendance,
+      [
+        { query: 'find', args: [{ trainee: traineeId, courseSlot: { $in: courseSlotIdsOnMonth }, status: PRESENT }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findActivityHistories,
+      [
+        { query: 'find', args: [{ activity: { $in: activitiesIds }, user: traineeId }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getTotalDuration,
+      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }],
+      false
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: [companyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
+              options: { isVendorUser: true },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(getRealELearningDuration, [activityHistories[0]]);
+    sinon.assert.calledOnceWithExactly(formatIdentity, { firstname: 'Jean', lastname: 'Saitrien' }, 'FL');
+    sinon.assert.calledOnceWithExactly(
+      getPdf,
+      {
+        trainee: {
+          identity: 'Jean SAITRIEN',
+          attendanceDuration: '6h30',
+          eLearningDuration: '0h03',
+          companyName: 'Alenvi',
+        },
+        startDate: startOfMonth,
+        endDate: endOfMonth,
+        date: '24/03/2025',
+        isVAEISubProgram: true,
+        isPRISubProgram: false,
+        certificateGenerationModeIsMonthly: true,
+        programName: 'PROGRAM',
+        vaeSupportData: { vaeDuration: '4h', regularDuration: '2h30' },
+      },
+      OFFICIAL
+    );
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: 'certificat_realisation_Jean SAITRIEN_03-2026', file: 'pdf', contentType: 'application/pdf' }
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: completionCertificateId },
+      { file: { publicId: '1234', link: 'tests/1234' }, vaeSupportRemainingMinutes: 0 }
+    );
+    sinon.assert.notCalled(getELearningDuration);
+  });
+
+  it('should generate completion certificate normally when VAE period budget is exhausted', async () => {
+    const completionCertificateId = new ObjectId();
+    const traineeId = new ObjectId();
+    const companyId = new ObjectId();
+    const courseId = new ObjectId();
+    const month = '03-2026';
+    const slotList = [
+      { _id: new ObjectId(), startDate: '2024-12-20T10:00:00.000Z', endDate: '2025-01-20T14:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2026-03-14T10:00:00.000Z', endDate: '2026-03-14T14:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2026-03-20T10:00:00.000Z', endDate: '2026-03-20T14:00:00.000Z' },
+    ];
+    const activitiesIds = [new ObjectId(), new ObjectId()];
+    const activityHistories = [
+      {
+        _id: new ObjectId(),
+        activity: activitiesIds[0],
+        user: traineeId,
+        duration: 'PT100S',
+        date: '2026-03-20T10:00:00.000Z',
+      },
+      {
+        _id: new ObjectId(),
+        activity: activitiesIds[1],
+        user: traineeId,
+        duration: 'PT100S',
+        date: '2026-02-20T10:00:00.000Z',
+      },
+    ];
+    const subProgramIds = [REAL_ELEARNING_DURATION_SUBPROGRAM_ID, new ObjectId()];
+    const completionCertificate = {
+      _id: completionCertificateId,
+      course: {
+        _id: courseId,
+        slots: slotList,
+        tradeName: 'program',
+        subProgram: {
+          _id: subProgramIds[0],
+          program: { subPrograms: subProgramIds },
+          steps: [
+            {
+              type: E_LEARNING,
+              theoreticalDuration: '3h30',
+              activities: [activitiesIds[0], activitiesIds[1]],
+            },
+          ],
+        },
+        companies: [companyId],
+        trainees: [traineeId],
+      },
+      month,
+      trainee: {
+        _id: traineeId,
+        identity: { firstname: 'Jean', lastname: 'Saitrien' },
+        company: { _id: companyId, name: 'Alenvi' },
+      },
+    };
+    const startOfMonth = '01/03/2026';
+    const endOfMonth = '31/03/2026';
+
+    const courseSlotIdsOnMonth = [slotList[1]._id, slotList[2]._id];
+    const attendances = [
+      { trainee: traineeId, courseSlot: slotList[1]._id, company: companyId },
+    ];
+
+    const slotIdsInOtherCourse = [new ObjectId(), new ObjectId()];
+    const slotsInOtherCourse = [
+      {
+        _id: slotIdsInOtherCourse[0],
+        startDate: '2026-03-22T07:00:00.000Z',
+        endDate: '2026-03-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[0], company: companyId }],
+      },
+      {
+        _id: slotIdsInOtherCourse[1],
+        startDate: '2026-02-22T07:00:00.000Z',
+        endDate: '2026-02-22T09:30:00.000Z',
+        attendances: [{ trainee: traineeId, courseSlot: slotIdsInOtherCourse[1], company: companyId }],
+      },
+    ];
+    const coursesWithSameProgram = [{
+      _id: new ObjectId(),
+      format: BLENDED,
+      subProgram: {
+        _id: subProgramIds[1],
+        program: { subPrograms: subProgramIds },
+      },
+      trainees: [new ObjectId()],
+      companies: [companyId],
+      slots: slotsInOtherCourse,
+    }];
+
+    findOneCompletionCertificate.onCall(0).returns(
+      SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
+    );
+    findOneCompletionCertificate.onCall(1).returns(
+      SinonMongoose.stubChainedQueries({ vaeSupportRemainingMinutes: 0 }, ['sort', 'lean'])
+    );
+    findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
+    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
+    courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
+    findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    getRealELearningDuration.returns('PT200S');
+    formatIdentity.returns('Jean SAITRIEN');
+    getPdf.returns('pdf');
+    uploadCourseFile.returns({ publicId: '1234', link: 'tests/1234' });
+
+    await CompletionCertificatesHelper.generate(completionCertificateId);
+
+    SinonMongoose.calledWithExactly(
+      findOneCompletionCertificate,
+      [
+        { query: 'findOne', args: [{ _id: completionCertificateId }] },
+        {
+          query: 'populate',
+          args: [[
+            {
+              path: 'course',
+              select: 'subProgram slots companies trainees tradeName',
+              populate: [
+                { path: 'slots', select: 'startDate endDate' },
+                {
+                  path: 'subProgram',
+                  select: 'program steps',
+                  populate: [
+                    { path: 'program', select: 'subPrograms' },
+                    {
+                      path: 'steps',
+                      select: 'activities type theoreticalDuration',
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              path: 'trainee',
+              select: 'identity',
+              populate: { path: 'company', populate: { path: 'company', select: 'name' } },
+            },
+          ]],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      findOneCompletionCertificate,
+      [
+        {
+          query: 'findOne',
+          args: [
+            { course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $exists: true } },
+            { vaeSupportRemainingMinutes: 1 },
+          ],
+        },
+        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findAttendance,
+      [
+        { query: 'find', args: [{ trainee: traineeId, courseSlot: { $in: courseSlotIdsOnMonth }, status: PRESENT }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findActivityHistories,
+      [
+        { query: 'find', args: [{ activity: { $in: activitiesIds }, user: traineeId }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getTotalDuration,
+      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }],
+      false
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: subProgramIds },
+            companies: { $in: [companyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
+              options: { isVendorUser: true },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(getRealELearningDuration, [activityHistories[0]]);
+    sinon.assert.calledOnceWithExactly(formatIdentity, { firstname: 'Jean', lastname: 'Saitrien' }, 'FL');
+    sinon.assert.calledOnceWithExactly(
+      getPdf,
+      {
+        trainee: {
+          identity: 'Jean SAITRIEN',
+          attendanceDuration: '6h30',
+          eLearningDuration: '0h03',
+          companyName: 'Alenvi',
+        },
+        startDate: startOfMonth,
+        endDate: endOfMonth,
+        date: '24/03/2025',
+        isVAEISubProgram: true,
+        isPRISubProgram: false,
+        certificateGenerationModeIsMonthly: true,
+        programName: 'PROGRAM',
+      },
+      OFFICIAL
+    );
+    sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: 'certificat_realisation_Jean SAITRIEN_03-2026', file: 'pdf', contentType: 'application/pdf' }
     );
     sinon.assert.calledOnceWithExactly(
       updateOne,
