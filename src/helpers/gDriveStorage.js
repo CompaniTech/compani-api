@@ -42,6 +42,7 @@ exports.createCourseFolderAndSheet = async ({
   coach = null,
   architect = null,
 }) => {
+  if (!parentFolderId) throw Boom.failedDependency('Parent folder ID missing.');
   if (!templateId) throw Boom.failedDependency('Template sheet ID missing.');
 
   const documentsName = `${traineeName} (${traineeCompany})`;
