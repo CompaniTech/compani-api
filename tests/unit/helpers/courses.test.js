@@ -109,7 +109,6 @@ describe('createCourse', () => {
   let sendWelcome;
   let smsSend;
   const credentials = { _id: new ObjectId() };
-  const subProgramIds = [new ObjectId(), new ObjectId()];
 
   beforeEach(() => {
     create = sinon.stub(Course, 'create');
@@ -126,12 +125,6 @@ describe('createCourse', () => {
     sendWelcome = sinon.stub(EmailHelper, 'sendWelcome');
     smsSend = sinon.stub(SmsHelper, 'send');
     UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
-    process.env.VAEI_SUBPROGRAM_IDS = subProgramIds[0].toHexString();
-    process.env.PRI_SUBPROGRAM_IDS = subProgramIds[1].toHexString();
-    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'vaei_parent_folder_id';
-    process.env.VAEI_GOOGLE_SHEET_TEMPLATE_ID = 'vaei_templateId';
-    process.env.GOOGLE_DRIVE_PRI_FOLDER_ID = 'pri_parent_folder_id';
-    process.env.PRI_GOOGLE_SHEET_TEMPLATE_ID = 'pri_templateId';
   });
   afterEach(() => {
     create.restore();
@@ -198,7 +191,7 @@ describe('createCourse', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
-        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1 }] },
+        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1 }] },
         { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
         { query: 'lean' },
       ]
@@ -207,7 +200,12 @@ describe('createCourse', () => {
 
   it('should create a vaei single course (no user with same name)', async () => {
     const steps = [{ _id: new ObjectId(), type: ON_SITE }];
-    const subProgram = { _id: subProgramIds[0], steps };
+    const subProgram = {
+      _id: new ObjectId(),
+      steps,
+      sheetTemplateId: 'vaei_templateId',
+      folderId: 'vaei_parent_folder_id',
+    };
     const traineeId = new ObjectId();
     const userCompany = { company: new ObjectId() };
     const coach = { _id: new ObjectId(), name: 'Jean COACH', email: 'coach@compani.fr', phone: '+33123456789' };
@@ -299,7 +297,7 @@ describe('createCourse', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
-        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1 }] },
+        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1 }] },
         { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
         { query: 'lean' },
       ]
@@ -327,7 +325,12 @@ describe('createCourse', () => {
 
   it('should create a pri single course (no user with same name)', async () => {
     const steps = [{ _id: new ObjectId(), type: ON_SITE }];
-    const subProgram = { _id: subProgramIds[1], steps };
+    const subProgram = {
+      _id: new ObjectId(),
+      steps,
+      sheetTemplateId: 'pri_templateId',
+      folderId: 'pri_parent_folder_id',
+    };
     const traineeId = new ObjectId();
     const userCompany = { company: new ObjectId() };
     const coach = { _id: new ObjectId(), name: 'Jean COACH', email: 'coach@compani.fr', phone: '+33123456789' };
@@ -419,7 +422,7 @@ describe('createCourse', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
-        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1 }] },
+        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1 }] },
         { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
         { query: 'lean' },
       ]
@@ -476,7 +479,7 @@ describe('createCourse', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneSubProgram,
       [
-        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1 }] },
+        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1 }] },
         { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
         { query: 'lean' },
       ]
@@ -506,6 +509,14 @@ describe('createCourse', () => {
       createdCourse._id,
       credentials._id,
       '2022-12-10T12:00:00.000Z'
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneSubProgram,
+      [
+        { query: 'findOne', args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1 }] },
+        { query: 'populate', args: [{ path: 'steps', select: '_id type' }] },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.notCalled(findOneUserCompany);
     sinon.assert.notCalled(userFindOne);
