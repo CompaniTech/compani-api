@@ -280,7 +280,7 @@ exports.getOfficialPdfContent = async (data) => {
     },
     ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, !(isVAEISubProgram || isPRISubProgram)),
     ...defineCheckbox(59, 324, ' bilan de compétences', isLargeProgramName),
-    ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName),
+    ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName, !!vaeSupportData),
     ...defineCheckbox(59, 361, ' action de formation par apprentissage', isLargeProgramName),
     ...defineCheckbox(59, 380, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
     ...defineCheckbox(59, 398, ' action de Période de Reconversion Interne', isLargeProgramName, isPRISubProgram),

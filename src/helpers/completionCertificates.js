@@ -90,7 +90,7 @@ exports.generate = async (completionCertificateId) => {
         path: 'course',
         select: 'subProgram slots companies trainees tradeName',
         populate: [
-          { path: 'slots', select: 'startDate endDate' },
+          { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
           {
             path: 'subProgram',
             select: 'program steps',
@@ -176,7 +176,7 @@ exports.generate = async (completionCertificateId) => {
   let newVAESupportRemainingMinutes;
 
   if (vaeSupportConfig) {
-    const firstSlotStartDate = course.slots.map(s => s.startDate).sort()[0];
+    const firstSlotStartDate = course.slots[0].startDate;
     const vaeSupportStartMonth = CompaniDate(firstSlotStartDate)
       .startOf(MONTH)
       .add(`P${vaeSupportConfig.offsetMonths}M`)
@@ -185,7 +185,12 @@ exports.generate = async (completionCertificateId) => {
     if (CompaniDate(startOfMonth).isSameOrAfter(vaeSupportStartMonth)) {
       const lastCertificateWithVAESupport = await CompletionCertificate
         .findOne(
-          { course: course._id, trainee: trainee._id, vaeSupportRemainingMinutes: { $exists: true } },
+          {
+            _id: { $ne: completionCertificate._id },
+            course: course._id,
+            trainee: trainee._id,
+            vaeSupportRemainingMinutes: { $exists: true },
+          },
           { vaeSupportRemainingMinutes: 1 }
         )
         .sort({ createdAt: -1 })
@@ -245,7 +250,10 @@ exports.create = async payload => CompletionCertificate.create(payload);
 
 exports.deleteFile = async (completionCertificateId) => {
   const completionCertificate = await CompletionCertificate.findOne({ _id: completionCertificateId }).lean();
-  await CompletionCertificate.updateOne({ _id: completionCertificateId }, { $unset: { file: '' } });
+  await CompletionCertificate.updateOne(
+    { _id: completionCertificateId },
+    { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+  );
 
   await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
 };

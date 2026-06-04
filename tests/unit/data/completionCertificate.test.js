@@ -1390,11 +1390,11 @@ describe('getOfficialPdfContent', () => {
       { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 343 } },
       {
         text: [
-          { text: '', position: { x: 59, y: 343 }, marginRight: 4 },
-          { text: [{ text: ' action de VAE' }, { text: '', fontSize: 8, bold: true }] },
+          { text: '√', position: { x: 59, y: 343 }, marginRight: 4 },
+          { text: [{ text: ' action de VAE' }, { text: ' 1', fontSize: 8, bold: true }] },
         ],
         marginBottom: 4,
-        marginLeft: 32,
+        marginLeft: 20,
       },
       // Checkbox 4
       { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 361 } },
@@ -1640,11 +1640,11 @@ describe('getOfficialPdfContent', () => {
         { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 343 } },
         {
           text: [
-            { text: '', position: { x: 59, y: 343 }, marginRight: 4 },
-            { text: [{ text: ' action de VAE' }, { text: '', fontSize: 8, bold: true }] },
+            { text: '√', position: { x: 59, y: 343 }, marginRight: 4 },
+            { text: [{ text: ' action de VAE' }, { text: ' 1', fontSize: 8, bold: true }] },
           ],
           marginBottom: 4,
-          marginLeft: 32,
+          marginLeft: 20,
         },
         // Checkbox 4
         { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 361 } },

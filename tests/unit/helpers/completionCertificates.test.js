@@ -595,7 +595,7 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate' },
+                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -821,7 +821,7 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate' },
+                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -1043,7 +1043,7 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate' },
+                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -1075,7 +1075,12 @@ describe('generate', () => {
         {
           query: 'findOne',
           args: [
-            { course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $exists: true } },
+            {
+              _id: { $ne: completionCertificateId },
+              course: courseId,
+              trainee: traineeId,
+              vaeSupportRemainingMinutes: { $exists: true },
+            },
             { vaeSupportRemainingMinutes: 1 },
           ],
         },
@@ -1284,7 +1289,7 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate' },
+                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -1316,7 +1321,12 @@ describe('generate', () => {
         {
           query: 'findOne',
           args: [
-            { course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $exists: true } },
+            {
+              _id: { $ne: completionCertificateId },
+              course: courseId,
+              trainee: traineeId,
+              vaeSupportRemainingMinutes: { $exists: true },
+            },
             { vaeSupportRemainingMinutes: 1 },
           ],
         },
@@ -1525,7 +1535,7 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate' },
+                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -1557,7 +1567,12 @@ describe('generate', () => {
         {
           query: 'findOne',
           args: [
-            { course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $exists: true } },
+            {
+              _id: { $ne: completionCertificateId },
+              course: courseId,
+              trainee: traineeId,
+              vaeSupportRemainingMinutes: { $exists: true },
+            },
             { vaeSupportRemainingMinutes: 1 },
           ],
         },
@@ -1699,7 +1714,11 @@ describe('deleteFile', () => {
       findOne,
       [{ query: 'findOne', args: [{ _id: completionCertificateId }] }, { query: 'lean' }]
     );
-    sinon.assert.calledOnceWithExactly(updateOne, { _id: completionCertificateId }, { $unset: { file: '' } });
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: completionCertificateId },
+      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+    );
     sinon.assert.calledOnceWithExactly(deleteCourseFile, 'completionCertificateTest');
   });
 });
