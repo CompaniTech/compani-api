@@ -187,6 +187,7 @@ exports.getOfficialPdfContent = async (data) => {
     isVAEISubProgram = false,
     isPRISubProgram = false,
     certificateGenerationModeIsMonthly = false,
+    vaeSupportData = null,
   } = data;
   const traineeDuration = duration[trainee._id] || {};
   const isLargeProgramName = programName.length > 60;
@@ -203,6 +204,46 @@ exports.getOfficialPdfContent = async (data) => {
     { columns: [{ image: logo, width: 60 }, {}, { image: compani, width: 130 }], marginBottom: 24 },
     { text: 'CERTIFICAT DE RÉALISATION', style: 'title', alignment: 'center', marginBottom: 24 },
   ];
+
+  const durationContent = [{ text: 'pour une durée de ', bold: true }];
+  if (certificateGenerationModeIsMonthly) {
+    if (!vaeSupportData) {
+      durationContent.push({
+        text: `${trainee.attendanceDuration} d’accompagnement à distance et en présentiel, et `
+          + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
+          + `${isVAEISubProgram || isPRISubProgram
+            ? 'Ce certificat est lié à une facture de frais pédagogiques.'
+            : ''}`,
+        italic: true,
+      });
+    } else if (vaeSupportData.regularDuration) {
+      durationContent.push({
+        text: `${vaeSupportData.regularDuration} d’accompagnement à distance et en présentiel, `
+          + `${vaeSupportData.vaeDuration} d’accompagnement VAE, et `
+          + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
+          + 'Ce certificat est lié à une facture de frais pédagogiques et d’accompagnement VAE',
+        italics: true,
+      });
+    } else {
+      durationContent.push({
+        text: `${vaeSupportData.vaeDuration} d’accompagnement VAE, et `
+          + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
+          + 'Ce certificat est lié à une facture de frais pédagogiques et d’accompagnement VAE',
+        italics: true,
+      });
+    }
+  } else if (hasELearningStep) {
+    durationContent.push({
+      text: `${trainee.totalDuration} en formation (dont ${trainee.attendanceDuration} en présentiel et `
+        + `${trainee.eLearningDuration} en e-learning) sur ${traineeDuration.total} prévues. `,
+      italics: true,
+    });
+  } else {
+    durationContent.push({
+      text: `${trainee.attendanceDuration} en formation présentielle sur ${traineeDuration.total} prévues. `,
+      italics: true,
+    });
+  }
 
   const body = [
     {
@@ -239,7 +280,7 @@ exports.getOfficialPdfContent = async (data) => {
     },
     ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, !(isVAEISubProgram || isPRISubProgram)),
     ...defineCheckbox(59, 324, ' bilan de compétences', isLargeProgramName),
-    ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName),
+    ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName, !!vaeSupportData),
     ...defineCheckbox(59, 361, ' action de formation par apprentissage', isLargeProgramName),
     ...defineCheckbox(59, 380, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
     ...defineCheckbox(59, 398, ' action de Période de Reconversion Interne', isLargeProgramName, isPRISubProgram),
@@ -254,41 +295,7 @@ exports.getOfficialPdfContent = async (data) => {
       marginBottom: 8,
       marginTop: 4,
     },
-    {
-      text: [
-        {
-          text: [
-            { text: 'pour une durée de ', bold: true },
-            ...(certificateGenerationModeIsMonthly
-              ? [{
-                text: `${trainee.attendanceDuration} d’accompagnement à distance et en présentiel, et `
-                 + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
-                + `${isVAEISubProgram || isPRISubProgram
-                  ? 'Ce certificat est lié à une facture de frais pédagogiques.'
-                  : ''}`,
-                italic: true,
-              }]
-              : []),
-            ...(!certificateGenerationModeIsMonthly && hasELearningStep
-              ? [{
-                text: `${trainee.totalDuration} en formation (dont ${trainee.attendanceDuration} en présentiel et `
-                + `${trainee.eLearningDuration} en e-learning) sur ${traineeDuration.total} prévues. `,
-                italics: true,
-              }]
-              : []),
-            ...(!certificateGenerationModeIsMonthly && !hasELearningStep
-              ? [{
-                text: `${trainee.attendanceDuration} en formation présentielle sur ${traineeDuration.total} prévues. `,
-                italics: true,
-              }]
-              : []),
-          ],
-        },
-        { text: '2', fontSize: 8, bold: true },
-      ],
-      marginBottom: 8,
-      marginLeft: 4,
-    },
+    { text: [{ text: durationContent }, { text: '2', fontSize: 8, bold: true }], marginBottom: 8, marginLeft: 4 },
     {
       text: 'Sans préjudice des délais imposés par les règles fiscales, comptables ou commerciales, je m\'engage à '
       + 'conserver l\'ensemble des pièces justificatives qui ont permis d\'établir le présent certificat pendant une '

@@ -64,6 +64,18 @@ exports.list = async (query, credentials) => {
   return completionCertificates;
 };
 
+const getVAESupportConfigs = () => (process.env.VAE_PERIOD_CONFIGS || '')
+  .split(',')
+  .filter(Boolean)
+  .map((entry) => {
+    const [subProgramId, offsetMonths, vaeDurationHours] = entry.split(':');
+    return {
+      subProgramId: new ObjectId(subProgramId),
+      offsetMonths: Number(offsetMonths),
+      vaeDurationMinutes: Number(vaeDurationHours) * 60,
+    };
+  });
+
 exports.generate = async (completionCertificateId) => {
   const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
   const PRI_SUBPROGRAM_IDS = process.env.PRI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
@@ -78,7 +90,7 @@ exports.generate = async (completionCertificateId) => {
         path: 'course',
         select: 'subProgram slots companies trainees tradeName',
         populate: [
-          { path: 'slots', select: 'startDate endDate' },
+          { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
           {
             path: 'subProgram',
             select: 'program steps',
@@ -127,7 +139,8 @@ exports.generate = async (completionCertificateId) => {
     .filter(a => CompaniDate(a.courseSlot.startDate).isSameOrBetween(startOfMonth, endOfMonth))
     .map(a => a.courseSlot);
 
-  const traineePresence = UtilsHelper.getTotalDuration([...slotsWithAttendance, ...slotsWithUnsubscribedAttendance]);
+  const allSlotsWithAttendance = [...slotsWithAttendance, ...slotsWithUnsubscribedAttendance];
+  const traineePresence = UtilsHelper.getTotalDuration(allSlotsWithAttendance, false);
 
   const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
 
@@ -156,11 +169,58 @@ exports.generate = async (completionCertificateId) => {
 
   const formattedELearningDuration = CompaniDuration(eLearningDuration).format(SHORT_DURATION_H_MM);
 
+  const vaeSupportConfig = getVAESupportConfigs()
+    .find(c => UtilsHelper.areObjectIdsEquals(c.subProgramId, course.subProgram._id));
+
+  let vaeSupportData;
+  let newVAESupportRemainingMinutes;
+
+  if (vaeSupportConfig) {
+    const firstSlotStartDate = course.slots[0].startDate;
+    const vaeSupportStartMonth = CompaniDate(firstSlotStartDate)
+      .startOf(MONTH)
+      .add(`P${vaeSupportConfig.offsetMonths}M`)
+      .toISO();
+
+    if (CompaniDate(startOfMonth).isSameOrAfter(vaeSupportStartMonth)) {
+      const lastCertificateWithVAESupport = await CompletionCertificate
+        .findOne(
+          {
+            _id: { $ne: completionCertificate._id },
+            course: course._id,
+            trainee: trainee._id,
+            vaeSupportRemainingMinutes: { $exists: true },
+          },
+          { vaeSupportRemainingMinutes: 1 }
+        )
+        .sort({ createdAt: -1 })
+        .lean();
+
+      if (!lastCertificateWithVAESupport || lastCertificateWithVAESupport.vaeSupportRemainingMinutes > 0) {
+        const remainingMinutes = lastCertificateWithVAESupport
+          ? lastCertificateWithVAESupport.vaeSupportRemainingMinutes
+          : vaeSupportConfig.vaeDurationMinutes;
+        const remainingBudget = CompaniDuration({ minutes: remainingMinutes });
+
+        const vaeSupportThisMonth = traineePresence.isLongerThan(remainingBudget)
+          ? remainingBudget
+          : traineePresence;
+        const regularThisMonth = traineePresence.subtract(vaeSupportThisMonth);
+
+        vaeSupportData = {
+          vaeDuration: vaeSupportThisMonth.format(SHORT_DURATION_H_MM),
+          regularDuration: regularThisMonth.asMinutes() > 0 ? regularThisMonth.format(SHORT_DURATION_H_MM) : null,
+        };
+        newVAESupportRemainingMinutes = Math.max(0, remainingMinutes - Math.round(traineePresence.asMinutes()));
+      }
+    }
+  }
+
   const traineeIdentity = UtilsHelper.formatIdentity(trainee.identity, 'FL');
   const data = {
     trainee: {
       identity: traineeIdentity,
-      attendanceDuration: traineePresence,
+      attendanceDuration: traineePresence.format(SHORT_DURATION_H_MM),
       eLearningDuration: formattedELearningDuration,
       companyName: trainee.company.name,
     },
@@ -171,6 +231,7 @@ exports.generate = async (completionCertificateId) => {
     isPRISubProgram: UtilsHelper.doesArrayIncludeId(PRI_SUBPROGRAM_IDS, course.subProgram._id),
     certificateGenerationModeIsMonthly: true,
     programName: (course.tradeName || '').toUpperCase(),
+    ...vaeSupportData && { vaeSupportData },
   };
 
   const pdf = await CompletionCertificatePdf.getPdf(data, OFFICIAL);
@@ -178,14 +239,21 @@ exports.generate = async (completionCertificateId) => {
   const fileUploaded = await GCloudStorageHelper
     .uploadCourseFile({ fileName, file: pdf, contentType: 'application/pdf' });
 
-  await CompletionCertificate.updateOne({ _id: completionCertificateId }, { file: fileUploaded });
+  const updatePayload = { file: fileUploaded };
+  if (newVAESupportRemainingMinutes !== undefined) {
+    updatePayload.vaeSupportRemainingMinutes = newVAESupportRemainingMinutes;
+  }
+  await CompletionCertificate.updateOne({ _id: completionCertificateId }, updatePayload);
 };
 
 exports.create = async payload => CompletionCertificate.create(payload);
 
 exports.deleteFile = async (completionCertificateId) => {
   const completionCertificate = await CompletionCertificate.findOne({ _id: completionCertificateId }).lean();
-  await CompletionCertificate.updateOne({ _id: completionCertificateId }, { $unset: { file: '' } });
+  await CompletionCertificate.updateOne(
+    { _id: completionCertificateId },
+    { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+  );
 
   await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
 };
