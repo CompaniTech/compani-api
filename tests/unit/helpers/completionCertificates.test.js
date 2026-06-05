@@ -445,7 +445,7 @@ describe('generate', () => {
     process.env.VAEI_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
     process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS;
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
-    process.env.VAE_PERIOD_CONFIGS = `${REAL_ELEARNING_DURATION_SUBPROGRAM_ID}:14:12`;
+    process.env.VAE_SUPPORT_CONFIGS = `${REAL_ELEARNING_DURATION_SUBPROGRAM_ID}:14:12`;
   });
 
   afterEach(() => {
@@ -464,7 +464,7 @@ describe('generate', () => {
     process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.PRI_SUBPROGRAM_IDS = '';
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = '';
-    process.env.VAE_PERIOD_CONFIGS = '';
+    process.env.VAE_SUPPORT_CONFIGS = '';
   });
 
   it('should generate completion certificate (with theoretical elearning duration)', async () => {

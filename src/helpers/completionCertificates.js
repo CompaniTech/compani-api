@@ -64,7 +64,7 @@ exports.list = async (query, credentials) => {
   return completionCertificates;
 };
 
-const getVAESupportConfigs = () => (process.env.VAE_PERIOD_CONFIGS || '')
+const getVAESupportConfigs = () => (process.env.VAE_SUPPORT_CONFIGS || '')
   .split(',')
   .filter(Boolean)
   .map((entry) => {
