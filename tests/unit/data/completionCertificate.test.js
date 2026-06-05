@@ -1729,7 +1729,7 @@ describe('getOfficialPdfContent', () => {
               text: [
                 { text: 'pour une durée de ', bold: true },
                 {
-                  text: '6h d’accompagnement à distance et en présentiel et 4h d’accompagnement VAE, et '
+                  text: '6h d’accompagnement à distance et en présentiel, 4h d’accompagnement VAE, et '
                 + '1h30 d’enseignement à distance sur l’application Compani. '
                 + 'Ce certificat est lié à une facture de frais pédagogiques et d’accompagnement VAE',
                   italics: true,

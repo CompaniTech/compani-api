@@ -218,7 +218,7 @@ exports.getOfficialPdfContent = async (data) => {
       });
     } else if (vaeSupportData.regularDuration) {
       durationContent.push({
-        text: `${vaeSupportData.regularDuration} d’accompagnement à distance et en présentiel et `
+        text: `${vaeSupportData.regularDuration} d’accompagnement à distance et en présentiel, `
           + `${vaeSupportData.vaeDuration} d’accompagnement VAE, et `
           + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
           + 'Ce certificat est lié à une facture de frais pédagogiques et d’accompagnement VAE',
