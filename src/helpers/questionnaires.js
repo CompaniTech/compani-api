@@ -91,7 +91,12 @@ exports.list = async (credentials, query = {}) => {
       .lean();
   }
 
-  const { isStrictlyELearning, programId, questionnaires } = await exports.getCourseInfos(courseId, credentials);
+  const {
+    isStrictlyELearning,
+    programId,
+    questionnaires,
+    courseTimeline,
+  } = await exports.getCourseInfos(courseId, credentials);
 
   if (isStrictlyELearning) return [];
 
@@ -105,7 +110,10 @@ exports.list = async (credentials, query = {}) => {
     .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
     .lean();
 
-  return getCourseQuestionnaires(questionnaireList);
+  const filteredQuestionnaires = questionnaireList
+    .filter(q => credentials || courseTimeline !== BETWEEN_MID_AND_END_COURSE || q.type !== SELF_POSITIONNING);
+
+  return getCourseQuestionnaires(filteredQuestionnaires);
 };
 
 exports.getQuestionnaire = async id => Questionnaire.findOne({ _id: id })

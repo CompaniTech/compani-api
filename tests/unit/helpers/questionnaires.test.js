@@ -181,6 +181,73 @@ describe('list', () => {
       ]
     );
   });
+
+  it('should not return self-positionning questionnaire between mid and end course (not connected)', async () => {
+    const courseId = new ObjectId();
+    const programId = new ObjectId();
+    const questionnaires = [
+      { _id: new ObjectId(), name: 'test', status: PUBLISHED, type: EXPECTATIONS },
+      {
+        _id: new ObjectId(),
+        name: 'auto-positionnement',
+        status: PUBLISHED,
+        type: SELF_POSITIONNING,
+        program: programId,
+      },
+      { _id: new ObjectId(), name: 'fin de formation', status: PUBLISHED, type: END_OF_COURSE },
+      { _id: new ObjectId(), name: 'fin de parcours', status: ARCHIVED, type: END_OF_COURSE },
+    ];
+    const course = {
+      _id: courseId,
+      slots: [
+        { startDate: '2021-04-01T09:00:00.000Z', endDate: '2021-04-01T11:00:00.000Z' },
+        { startDate: '2021-04-15T09:00:00.000Z', endDate: '2021-04-15T11:00:00.000Z' },
+      ],
+      slotsToPlan: [],
+      subProgram: { program: { _id: programId } },
+      questionnaires: [questionnaires[0], questionnaires[1], questionnaires[3]],
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+    findQuestionnaires.returns(SinonMongoose.stubChainedQueries(questionnaires));
+
+    const result = await QuestionnaireHelper.list(null, { course: courseId });
+
+    expect(result).toMatchObject([questionnaires[0], questionnaires[3]]);
+    SinonMongoose.calledOnceWithExactly(
+      findOneCourse,
+      [
+        { query: 'findOne', args: [{ _id: courseId }] },
+        { query: 'populate', args: [{ path: 'slots', select: '-__v -createdAt -updatedAt' }] },
+        { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
+        {
+          query: 'populate',
+          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } }],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'questionnaires', populate: { path: 'questionnaire', select: '_id type' } }],
+        },
+        { query: 'lean', args: [{ virtuals: true }] },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findQuestionnaires,
+      [
+        {
+          query: 'find',
+          args: [{
+            $or: [
+              { _id: { $in: [questionnaires[0], questionnaires[1], questionnaires[3]].map(q => new ObjectId(q._id)) } },
+              { $or: [{ program: { $exists: false } }, { program: programId }], status: PUBLISHED },
+            ],
+          }],
+        },
+        { query: 'populate', args: [{ path: 'cards', select: '-__v -createdAt -updatedAt' }] },
+        { query: 'lean' },
+      ]
+    );
+  });
 });
 
 describe('getQuestionnaire', () => {
