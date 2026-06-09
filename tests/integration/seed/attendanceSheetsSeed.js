@@ -528,6 +528,15 @@ const slotsList = [
     step: steps[0]._id,
     trainers: [trainerAndCoach._id],
   },
+  { // 29
+    _id: new ObjectId(),
+    startDate: '2022-06-01T09:00:00.000Z',
+    endDate: '2022-06-01T11:00:00.000Z',
+    course: coursesList[0]._id,
+    step: steps[0]._id,
+    trainers: [trainer._id],
+    trainerBills: [{ trainer: trainer._id, billNumber: 'FAC-0001' }],
+  },
 ];
 
 const attendanceSheetList = [
@@ -818,6 +827,29 @@ const attendanceSheetList = [
       },
     ],
     companies: [otherHolding._id, companyWithoutSubscription._id],
+    origin: WEBAPP,
+    trainer: trainer._id,
+  },
+  { // 15
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    date: '2022-06-01T09:00:00.000Z',
+    slots: [
+      {
+        slotId: slotsList[29]._id,
+        trainerSignature: {
+          trainerId: trainer._id,
+          signature: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png',
+        },
+        traineesSignature: [
+          {
+            traineeId: userList[1]._id,
+            signature: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png',
+          },
+        ],
+      },
+    ],
+    companies: [authCompany._id],
     origin: WEBAPP,
     trainer: trainer._id,
   },
