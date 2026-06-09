@@ -535,6 +535,9 @@ const formatCommonInfos = (bill, netInclTaxes) => {
   const misc = bill.course.misc ? ` - ${bill.course.misc}` : '';
   const courseName = `${companyName}${bill.course.tradeName}${misc}`;
 
+  const { bic, iban, debitMandates } = bill.payer;
+  const lastMandate = UtilsHelper.getLastVersion(debitMandates || [], 'createdAt');
+
   return {
     'Id formation': bill.course._id,
     Formation: courseName,
@@ -543,6 +546,10 @@ const formatCommonInfos = (bill, netInclTaxes) => {
     Structure: bill.companies.map(c => c.name).join(', '),
     'Id payeur': bill.payer._id,
     Payeur: bill.payer.name,
+    'Coordonnées bancaires du payeur renseignées': bic && iban ? 'Oui' : 'Non',
+    'Date de signature de mandat du payeur': get(lastMandate, 'signedAt') && get(lastMandate, 'file.link')
+      ? CompaniDate(lastMandate.signedAt).format(DD_MM_YYYY)
+      : '',
     'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
   };
 };
@@ -564,7 +571,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       }
     )
     .populate({ path: 'companies', select: 'name' })
-    .populate({ path: 'payer.company', select: 'name' })
+    .populate({ path: 'payer.company', select: 'name bic iban debitMandates' })
     .populate({ path: 'payer.fundingOrganisation', select: 'name' })
     .populate({ path: 'courseCreditNote', select: 'number', options: { isVendorUser } })
     .populate({ path: 'coursePayments', select: 'netInclTaxes nature status', options: { isVendorUser } })
@@ -577,7 +584,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       path: 'courseBill',
       populate: [
         { path: 'companies', select: 'name' },
-        { path: 'payer.company', select: 'name' },
+        { path: 'payer.company', select: 'name bic iban debitMandates' },
         { path: 'payer.fundingOrganisation', select: 'name' },
         { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
         {

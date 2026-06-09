@@ -2203,8 +2203,14 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
   ];
   const payerList = [
     { _id: new ObjectId(), name: 'APA Paris' },
-    { _id: new ObjectId(), name: 'ABCD' },
-    { _id: new ObjectId(), name: 'ZXCV' },
+    { _id: new ObjectId(), name: 'ABCD', bic: '123' },
+    {
+      _id: new ObjectId(),
+      name: 'ZXCV',
+      bic: '122',
+      iban: '222',
+      debitMandates: [{ file: { link: '123' }, signedAt: '2020-01-01T00:00:00.000Z' }],
+    },
   ];
   const courseBillList = [
     {
@@ -2310,7 +2316,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
+        { query: 'populate', args: [{ path: 'payer.company', select: 'name bic iban debitMandates' }] },
         { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
         { query: 'populate', args: [{ path: 'courseCreditNote', select: 'number', options: { isVendorUser } }] },
         {
@@ -2334,7 +2340,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
             path: 'courseBill',
             populate: [
               { path: 'companies', select: 'name' },
-              { path: 'payer.company', select: 'name' },
+              { path: 'payer.company', select: 'name bic iban debitMandates' },
               { path: 'payer.fundingOrganisation', select: 'name' },
               { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
               {
@@ -2373,6 +2379,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Structure',
         'Id payeur',
         'Payeur',
+        'Coordonnées bancaires du payeur renseignées',
+        'Date de signature de mandat du payeur',
         'Montant TTC',
         'Montant réglé',
         'Document lié',
@@ -2395,6 +2403,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Test SAS',
         payerList[0]._id,
         'APA Paris',
+        'Non',
+        '',
         '120,00',
         '10,00',
         'AV-00001',
@@ -2417,6 +2427,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Test SAS',
         payerList[0]._id,
         'APA Paris',
+        'Non',
+        '',
         '120,00',
         '110,00',
         '',
@@ -2439,6 +2451,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Test SAS',
         payerList[1]._id,
         'ABCD',
+        'Non',
+        '',
         '30,00',
         '32,00',
         '',
@@ -2461,6 +2475,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Test SAS',
         payerList[2]._id,
         'ZXCV',
+        'Oui',
+        '01/01/2020',
         '35,00',
         '0,00',
         '',
@@ -2483,6 +2499,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Test SAS',
         payerList[0]._id,
         'APA Paris',
+        'Non',
+        '',
         '120,00',
         '',
         'FACT-00001',
@@ -2516,7 +2534,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
-        { query: 'populate', args: [{ path: 'payer.company', select: 'name' }] },
+        { query: 'populate', args: [{ path: 'payer.company', select: 'name bic iban debitMandates' }] },
         { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
         { query: 'populate', args: [{ path: 'courseCreditNote', select: 'number', options: { isVendorUser } }] },
         {
@@ -2540,7 +2558,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
             path: 'courseBill',
             populate: [
               { path: 'companies', select: 'name' },
-              { path: 'payer.company', select: 'name' },
+              { path: 'payer.company', select: 'name bic iban debitMandates' },
               { path: 'payer.fundingOrganisation', select: 'name' },
               { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
               {
