@@ -134,17 +134,20 @@ exports.authorizeQuestionnaireQRCodeGet = async (req) => {
 };
 
 exports.authorizeGetList = async (req) => {
-  const { program: programId, course: courseId } = req.query;
+  const { program: programId, course: courseId, courseTimeline } = req.query;
   if (programId) {
     const program = await Program.countDocuments({ _id: programId });
     if (!program) throw Boom.notFound();
   }
 
+  const credentials = get(req, 'auth.credentials');
+  if (!!credentials === !!courseTimeline) throw Boom.badRequest();
+
   if (courseId) {
     const course = await Course.countDocuments({ _id: courseId });
     if (!course) throw Boom.notFound();
   } else {
-    const loggedUserVendorRole = get(req, 'auth.credentials.role.vendor.name');
+    const loggedUserVendorRole = get(credentials, 'role.vendor.name');
     if (!loggedUserVendorRole) throw Boom.forbidden();
   }
 

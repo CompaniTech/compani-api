@@ -82,7 +82,7 @@ const getCourseQuestionnaires = questionnaires => Object.values(
 
 exports.list = async (credentials, query = {}) => {
   const isVendorUser = !!get(credentials, 'role.vendor');
-  const { course: courseId } = query;
+  const { course: courseId, courseTimeline: questionnaireTimeline } = query;
 
   if (!courseId) {
     return Questionnaire
@@ -111,7 +111,8 @@ exports.list = async (credentials, query = {}) => {
     .lean();
 
   const filteredQuestionnaires = questionnaireList
-    .filter(q => credentials || courseTimeline !== BETWEEN_MID_AND_END_COURSE || q.type !== SELF_POSITIONNING);
+    .filter(q => !questionnaireTimeline || questionnaireTimeline === START_COURSE || courseTimeline === ENDED ||
+      q.type !== SELF_POSITIONNING);
 
   return getCourseQuestionnaires(filteredQuestionnaires);
 };
