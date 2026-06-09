@@ -13,6 +13,8 @@ const {
   ENDED,
   UNKNOWN,
   WEBAPP,
+  MOBILE,
+  END_OF_COURSE,
 } = require('./constants');
 const CourseHistoriesHelper = require('./courseHistories');
 const QuestionnaireHelper = require('./questionnaires');
@@ -49,7 +51,9 @@ exports.addQuestionnaireHistory = async (payload, credentials) => {
 
   const questionnaireHistoryExists = await QuestionnaireHistory
     .countDocuments({ course: courseId, user: userId, questionnaire: questionnaireId, ...(timeline && { timeline }) });
-  if (questionnaireHistoryExists) throw Boom.conflict(translate[language].questionnaireHistoryConflict);
+  if (questionnaireHistoryExists && (payload.origin === MOBILE || questionnaire.type !== END_OF_COURSE)) {
+    throw Boom.conflict(translate[language].questionnaireHistoryConflict);
+  }
 
   return QuestionnaireHistory.create(
     {

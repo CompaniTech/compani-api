@@ -60,6 +60,7 @@ exports.plugin = {
           query: Joi.object({
             course: Joi.objectId(),
             program: Joi.objectId(),
+            courseTimeline: Joi.string().valid(START_COURSE, END_COURSE),
           }).oxor('course', 'program'),
         },
         auth: { mode: 'optional' },

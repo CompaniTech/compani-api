@@ -1,5 +1,6 @@
 const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
+const { expect } = require('expect');
 const SinonMongoose = require('../sinonMongoose');
 const QuestionnaireHistory = require('../../../src/models/QuestionnaireHistory');
 const QuestionnaireHistoriesHelper = require('../../../src/helpers/questionnaireHistories');
@@ -15,6 +16,7 @@ const {
   END_COURSE,
   UNKNOWN,
   WEBAPP,
+  END_OF_COURSE,
 } = require('../../../src/helpers/constants');
 const UtilsMock = require('../../utilsMock');
 
@@ -392,6 +394,87 @@ describe('addQuestionnaireHistory', () => {
       }
     );
     sinon.assert.notCalled(findOneCourse);
+  });
+
+  it('should create a second END_OF_COURSE questionnaireHistory (not connected)', async () => {
+    const questionnaireId = new ObjectId();
+    const questionnaire = { _id: questionnaireId, type: END_OF_COURSE };
+    const company = new ObjectId();
+    const userId = new ObjectId();
+    const courseId = new ObjectId();
+    const questionnaireAnswersList = [{ card: new ObjectId(), answerList: ['blabla'] }];
+
+    getCompanyAtCourseRegistrationList.returns([{ company }, { company: new ObjectId() }]);
+    findOneQuestionnaire.returns(SinonMongoose.stubChainedQueries(questionnaire, ['lean']));
+    countDocumentsQH.returns(1);
+
+    await QuestionnaireHistoriesHelper.addQuestionnaireHistory(
+      { course: courseId, user: userId, questionnaire: questionnaireId, questionnaireAnswersList, origin: WEBAPP },
+      null
+    );
+
+    sinon.assert.calledOnceWithExactly(
+      getCompanyAtCourseRegistrationList,
+      { key: COURSE, value: courseId },
+      { key: TRAINEE, value: [userId] }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneQuestionnaire,
+      [{ query: 'findOne', args: [{ _id: questionnaireId }, { type: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      countDocumentsQH,
+      [{ query: 'countDocuments', args: [{ course: courseId, user: userId, questionnaire: questionnaireId }] }]
+    );
+    sinon.assert.calledOnceWithExactly(
+      create,
+      {
+        course: courseId,
+        user: userId,
+        questionnaire: questionnaireId,
+        questionnaireAnswersList,
+        company,
+        origin: WEBAPP,
+      }
+    );
+    sinon.assert.notCalled(findOneCourse);
+  });
+
+  it('should not create a second questionnaireHistory if not END_OF_COURSE from webapp (not connected)', async () => {
+    const questionnaireId = new ObjectId();
+    const questionnaire = { _id: questionnaireId, type: EXPECTATIONS };
+    const company = new ObjectId();
+    const userId = new ObjectId();
+    const courseId = new ObjectId();
+    const questionnaireAnswersList = [{ card: new ObjectId(), answerList: ['blabla'] }];
+
+    getCompanyAtCourseRegistrationList.returns([{ company }, { company: new ObjectId() }]);
+    findOneQuestionnaire.returns(SinonMongoose.stubChainedQueries(questionnaire, ['lean']));
+    countDocumentsQH.returns(1);
+    try {
+      await QuestionnaireHistoriesHelper.addQuestionnaireHistory(
+        { course: courseId, user: userId, questionnaire: questionnaireId, questionnaireAnswersList, origin: WEBAPP },
+        null
+      );
+    } catch (e) {
+      expect(e.output.statusCode).toEqual(409);
+    } finally {
+      sinon.assert.calledOnceWithExactly(
+        getCompanyAtCourseRegistrationList,
+        { key: COURSE, value: courseId },
+        { key: TRAINEE, value: [userId] }
+      );
+      SinonMongoose.calledOnceWithExactly(
+        findOneQuestionnaire,
+        [{ query: 'findOne', args: [{ _id: questionnaireId }, { type: 1 }] }, { query: 'lean' }]
+      );
+      SinonMongoose.calledOnceWithExactly(
+        countDocumentsQH,
+        [{ query: 'countDocuments', args: [{ course: courseId, user: userId, questionnaire: questionnaireId }] }]
+      );
+      sinon.assert.notCalled(create);
+      sinon.assert.notCalled(findOneCourse);
+    }
   });
 });
 

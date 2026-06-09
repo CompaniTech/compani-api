@@ -82,7 +82,7 @@ const getCourseQuestionnaires = questionnaires => Object.values(
 
 exports.list = async (credentials, query = {}) => {
   const isVendorUser = !!get(credentials, 'role.vendor');
-  const { course: courseId } = query;
+  const { course: courseId, courseTimeline: questionnaireTimeline } = query;
 
   if (!courseId) {
     return Questionnaire
@@ -91,7 +91,12 @@ exports.list = async (credentials, query = {}) => {
       .lean();
   }
 
-  const { isStrictlyELearning, programId, questionnaires } = await exports.getCourseInfos(courseId, credentials);
+  const {
+    isStrictlyELearning,
+    programId,
+    questionnaires,
+    courseTimeline,
+  } = await exports.getCourseInfos(courseId, credentials);
 
   if (isStrictlyELearning) return [];
 
@@ -105,7 +110,11 @@ exports.list = async (credentials, query = {}) => {
     .populate({ path: 'cards', select: '-__v -createdAt -updatedAt' })
     .lean();
 
-  return getCourseQuestionnaires(questionnaireList);
+  const filteredQuestionnaires = questionnaireList
+    .filter(q => !questionnaireTimeline || questionnaireTimeline === START_COURSE || courseTimeline === ENDED ||
+      q.type !== SELF_POSITIONNING);
+
+  return getCourseQuestionnaires(filteredQuestionnaires);
 };
 
 exports.getQuestionnaire = async id => Questionnaire.findOne({ _id: id })
