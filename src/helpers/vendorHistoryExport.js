@@ -535,6 +535,9 @@ const formatCommonInfos = (bill, netInclTaxes) => {
   const misc = bill.course.misc ? ` - ${bill.course.misc}` : '';
   const courseName = `${companyName}${bill.course.tradeName}${misc}`;
 
+  const { bic, iban, debitMandates } = bill.payer;
+  const lastMandate = UtilsHelper.getLastVersion(debitMandates || [], 'createdAt');
+
   return {
     'Id formation': bill.course._id,
     Formation: courseName,
@@ -543,67 +546,111 @@ const formatCommonInfos = (bill, netInclTaxes) => {
     Structure: bill.companies.map(c => c.name).join(', '),
     'Id payeur': bill.payer._id,
     Payeur: bill.payer.name,
+    'Coordonnées bancaires du payeur renseignées': bic && iban ? 'Oui' : 'Non',
+    'Date de signature de mandat du payeur': get(lastMandate, 'signedAt') && get(lastMandate, 'file.link')
+      ? CompaniDate(lastMandate.signedAt).format(DD_MM_YYYY)
+      : '',
     'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
+  };
+};
+
+const getCourseSlotInfo = (courseId, slotDataMap, slotsToPlanMap) => {
+  const id = courseId.toString();
+  const defaultSlots = {
+    slotsCount: 0, pastSlotsCount: 0, firstSlotDate: null, lastSlotDate: null, allSlotDates: [],
+  };
+  const slots = slotDataMap.get(id) || defaultSlots;
+  const slotsToPlanCount = slotsToPlanMap.get(id)?.slotsToPlanCount || 0;
+  const middleIndex = Math.floor((slots.slotsCount + slotsToPlanCount - 1) / 2);
+
+  return {
+    slotsCount: slots.slotsCount,
+    slotsToPlanCount,
+    pastSlots: slots.pastSlotsCount,
+    firstSlotDate: slots.firstSlotDate || null,
+    middleSlotDate: middleIndex < slots.slotsCount ? slots.allSlotDates[middleIndex] : null,
+    lastSlotDate: !slotsToPlanCount ? slots.lastSlotDate || null : null,
   };
 };
 
 exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, credentials) => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
-  const courseBills = await CourseBill
-    .find({ billedAt: { $lte: endDate, $gte: startDate } })
-    .populate(
-      {
+  const [courseBills, courseCreditNotes] = await Promise.all([
+    CourseBill
+      .find({ billedAt: { $lte: endDate, $gte: startDate } })
+      .populate({
         path: 'course',
         select: 'subProgram misc type trainees tradeName',
         populate: [
           { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-          { path: 'slots', select: 'startDate' },
-          { path: 'slotsToPlan', select: '_id' },
           { path: 'trainees', select: 'identity' },
         ],
-      }
-    )
-    .populate({ path: 'companies', select: 'name' })
-    .populate({ path: 'payer.company', select: 'name' })
-    .populate({ path: 'payer.fundingOrganisation', select: 'name' })
-    .populate({ path: 'courseCreditNote', select: 'number', options: { isVendorUser } })
-    .populate({ path: 'coursePayments', select: 'netInclTaxes nature status', options: { isVendorUser } })
-    .setOptions({ isVendorUser })
-    .lean();
+      })
+      .populate({ path: 'companies', select: 'name' })
+      .populate({ path: 'payer.company', select: 'name bic iban debitMandates' })
+      .populate({ path: 'payer.fundingOrganisation', select: 'name' })
+      .populate({ path: 'courseCreditNote', select: 'number', options: { isVendorUser } })
+      .populate({ path: 'coursePayments', select: 'netInclTaxes nature status', options: { isVendorUser } })
+      .setOptions({ isVendorUser })
+      .lean(),
+    CourseCreditNote
+      .find({ date: { $lte: endDate, $gte: startDate } })
+      .populate({
+        path: 'courseBill',
+        populate: [
+          { path: 'companies', select: 'name' },
+          { path: 'payer.company', select: 'name bic iban debitMandates' },
+          { path: 'payer.fundingOrganisation', select: 'name' },
+          { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
+          {
+            path: 'course',
+            select: 'subProgram misc type trainees tradeName',
+            populate: [
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'trainees', select: 'identity' },
+            ],
+          },
+        ],
+      })
+      .setOptions({ isVendorUser })
+      .lean(),
+  ]);
 
-  const courseCreditNotes = await CourseCreditNote
-    .find({ date: { $lte: endDate, $gte: startDate } })
-    .populate({
-      path: 'courseBill',
-      populate: [
-        { path: 'companies', select: 'name' },
-        { path: 'payer.company', select: 'name' },
-        { path: 'payer.fundingOrganisation', select: 'name' },
-        { path: 'coursePayments', select: 'netInclTaxes nature', options: { isVendorUser } },
-        {
-          path: 'course',
-          select: 'subProgram misc type trainees tradeName',
-          populate: [
-            { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-            { path: 'trainees', select: 'identity' },
-          ],
+  const courseIds = uniqBy(
+    [...courseBills.map(b => b.course._id), ...courseCreditNotes.map(cn => cn.courseBill.course._id)],
+    id => id.toHexString()
+  );
+
+  if (!courseIds.length) return [[NO_DATA]];
+
+  const [slotData, slotsToPlanData] = await Promise.all([
+    CourseSlot.aggregate([
+      { $match: { course: { $in: courseIds }, startDate: { $exists: true } } },
+      { $sort: { startDate: 1 } },
+      {
+        $group: {
+          _id: '$course',
+          slotsCount: { $sum: 1 },
+          pastSlotsCount: { $sum: { $cond: [{ $lte: ['$startDate', CompaniDate().toDate()] }, 1, 0] } },
+          firstSlotDate: { $first: '$startDate' },
+          lastSlotDate: { $last: '$startDate' },
+          allSlotDates: { $push: '$startDate' },
         },
-      ],
-    })
-    .setOptions({ isVendorUser })
-    .lean();
+      },
+    ]),
+    CourseSlot.aggregate([
+      { $match: { course: { $in: courseIds }, startDate: { $exists: false } } },
+      { $group: { _id: '$course', slotsToPlanCount: { $sum: 1 } } },
+    ]),
+  ]);
+
+  const slotDataMap = new Map(slotData.map(s => [s._id.toHexString(), s]));
+  const slotsToPlanMap = new Map(slotsToPlanData.map(s => [s._id.toHexString(), s]));
 
   const rows = [];
   for (const bill of courseBills) {
     const { netInclTaxes, paid, total } = CourseBillHelper.computeAmounts(bill);
-    const sortedCourseSlots = [...bill.course.slots].sort(DatesUtilsHelper.ascendingSortBy('startDate'));
-    const upComingSlots = sortedCourseSlots.filter(slot => CompaniDate().isBefore(slot.startDate)).length;
-    const pastSlots = sortedCourseSlots.length - upComingSlots;
-    const firstCourseSlot = sortedCourseSlots.length && sortedCourseSlots[0];
-    const middleIndex = Math.floor((sortedCourseSlots.length + bill.course.slotsToPlan.length - 1) / 2);
-    const middleCourseSlot = middleIndex < sortedCourseSlots.length && sortedCourseSlots[middleIndex];
-    const endCourseSlot = sortedCourseSlots.length && !bill.course.slotsToPlan.length &&
-      sortedCourseSlots[sortedCourseSlots.length - 1];
+    const slotInfo = getCourseSlotInfo(bill.course._id, slotDataMap, slotsToPlanMap);
     const commonInfos = formatCommonInfos(bill, netInclTaxes);
 
     const formattedBill = {
@@ -618,10 +665,11 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       'Montant soldé': bill.courseCreditNote ? UtilsHelper.formatFloatForExport(netInclTaxes) : '',
       Solde: UtilsHelper.formatFloatForExport(total),
       'Envoyé le': (bill.sendingDates || []).map(date => CompaniDate(date).format(DD_MM_YYYY)).join(', '),
-      Avancement: getProgress(pastSlots, bill.course),
-      'Début de la formation': firstCourseSlot ? CompaniDate(firstCourseSlot.startDate).format(DD_MM_YYYY) : '',
-      'Milieu de la formation': middleCourseSlot ? CompaniDate(middleCourseSlot.startDate).format(DD_MM_YYYY) : '',
-      'Fin de la formation': endCourseSlot ? CompaniDate(endCourseSlot.startDate).format(DD_MM_YYYY) : '',
+      Avancement: UtilsHelper
+        .formatFloatForExport(slotInfo.pastSlots / (slotInfo.slotsCount + slotInfo.slotsToPlanCount)),
+      'Début de la formation': slotInfo.firstSlotDate ? CompaniDate(slotInfo.firstSlotDate).format(DD_MM_YYYY) : '',
+      'Milieu de la formation': slotInfo.middleSlotDate ? CompaniDate(slotInfo.middleSlotDate).format(DD_MM_YYYY) : '',
+      'Fin de la formation': slotInfo.lastSlotDate ? CompaniDate(slotInfo.lastSlotDate).format(DD_MM_YYYY) : '',
     };
 
     rows.push(formattedBill);
