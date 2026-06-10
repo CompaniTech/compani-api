@@ -2231,6 +2231,13 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       iban: '222',
       debitMandates: [{ file: { link: '123' }, signedAt: '2020-01-01T00:00:00.000Z' }],
     },
+    {
+      _id: new ObjectId(),
+      name: 'OPCO',
+      bic: '1224',
+      iban: '2221',
+      debitMandates: [{ file: { link: '1234' } }],
+    },
   ];
   const courseBillList = [
     {
@@ -2248,7 +2255,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       course: courseList[1],
       mainFee: { price: 120, count: 1 },
       companies,
-      payer: payerList[0],
+      payer: payerList[3],
       billedAt: '2022-03-08T00:00:00.000Z',
       number: 'FACT-00002',
       courseCreditNote: null,
@@ -2451,9 +2458,9 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Program 1',
         '',
         'Test SAS',
-        payerList[0]._id,
-        'APA Paris',
-        'Non',
+        payerList[3]._id,
+        'OPCO',
+        'Oui',
         '',
         '120,00',
         '110,00',
