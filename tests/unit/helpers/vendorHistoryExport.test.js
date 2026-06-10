@@ -40,6 +40,7 @@ const {
   QUESTION_ANSWER,
   TRANSITION,
 } = require('../../../src/helpers/constants');
+const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const Course = require('../../../src/models/Course');
 const CourseSmsHistory = require('../../../src/models/CourseSmsHistory');
@@ -51,6 +52,7 @@ const CourseCreditNote = require('../../../src/models/CourseCreditNote');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const CourseHistory = require('../../../src/models/CourseHistory');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
+const UtilsMock = require('../../utilsMock');
 
 describe('exportCourseHistory', () => {
   const traineeList = [
@@ -2141,24 +2143,21 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
 describe('exportCourseBillAndCreditNoteHistory', () => {
   const subProgram = { _id: new ObjectId(), program: { name: 'Program 1' } };
   const companies = [{ _id: new ObjectId(), name: 'Test SAS' }];
+  const courseIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
   const courseList = [
     {
-      _id: new ObjectId(),
+      _id: courseIds[0],
       subProgram,
       tradeName: 'Program 1',
       misc: 'Archie Pelle',
-      slots: [{ startDate: '2021-01-13T12:00:00.000Z' }, { startDate: '2021-03-13T12:00:00.000Z' }],
-      slotsToPlan: [],
       type: SINGLE,
       trainees: [{ _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } }],
     },
     {
-      _id: new ObjectId(),
+      _id: courseIds[1],
       subProgram,
       tradeName: 'Program 1',
       misc: 'group 2',
-      slots: [],
-      slotsToPlan: [],
       type: INTER_B2B,
       trainees: [
         { _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } },
@@ -2166,14 +2165,10 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       ],
     },
     {
-      _id: new ObjectId(),
+      _id: courseIds[2],
       subProgram,
       tradeName: 'Program 1',
       misc: 'group 3',
-      slots: [
-        { startDate: '2021-02-10T12:00:00.000Z' },
-      ],
-      slotsToPlan: [],
       type: INTRA,
       trainees: [
         { _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } },
@@ -2181,19 +2176,10 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       ],
     },
     {
-      _id: new ObjectId(),
+      _id: courseIds[3],
       subProgram,
       tradeName: 'Program 1',
       misc: 'group 4',
-      slots: [
-        { startDate: '2021-01-12T16:00:00.000Z' },
-        { startDate: '2021-01-12T12:00:00.000Z' },
-        { startDate: '2021-01-13T12:00:00.000Z' },
-        { startDate: '2021-01-14T12:00:00.000Z' },
-        { startDate: '2021-01-11T12:00:00.000Z' },
-        { startDate: '2021-01-15T12:00:00.000Z' },
-      ],
-      slotsToPlan: [{ _id: new ObjectId() }],
       type: INTRA,
       trainees: [
         { _id: new ObjectId(), identity: { firstname: 'Austin', lastname: 'Butler' } },
@@ -2201,6 +2187,40 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       ],
     },
   ];
+  const slotData = [
+    {
+      _id: courseIds[0],
+      slotsCount: 2,
+      pastSlotsCount: 2,
+      firstSlotDate: '2021-01-13T12:00:00.000Z',
+      lastSlotDate: '2021-03-13T12:00:00.000Z',
+      allSlotDates: ['2021-01-13T12:00:00.000Z', '2021-03-13T12:00:00.000Z'],
+    },
+    {
+      _id: courseIds[2],
+      slotsCount: 1,
+      pastSlotsCount: 1,
+      firstSlotDate: '2021-02-10T12:00:00.000Z',
+      lastSlotDate: '2021-02-10T12:00:00.000Z',
+      allSlotDates: ['2021-02-10T12:00:00.000Z'],
+    },
+    {
+      _id: courseIds[3],
+      slotsCount: 6,
+      pastSlotsCount: 6,
+      firstSlotDate: '2021-01-11T12:00:00.000Z',
+      lastSlotDate: '2021-01-15T12:00:00.000Z',
+      allSlotDates: [
+        '2021-01-11T12:00:00.000Z',
+        '2021-01-12T12:00:00.000Z',
+        '2021-01-12T16:00:00.000Z',
+        '2021-01-13T12:00:00.000Z',
+        '2021-01-14T12:00:00.000Z',
+        '2021-01-15T12:00:00.000Z',
+      ],
+    },
+  ];
+  const slotsToPlanData = [{ _id: courseIds[3], slotsToPlanCount: 1 }];
   const payerList = [
     { _id: new ObjectId(), name: 'APA Paris' },
     { _id: new ObjectId(), name: 'ABCD', bic: '123' },
@@ -2277,15 +2297,20 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
 
   let findCourseBill;
   let findCourseCreditNote;
+  let courseSlotAggregate;
 
   beforeEach(() => {
     findCourseBill = sinon.stub(CourseBill, 'find');
     findCourseCreditNote = sinon.stub(CourseCreditNote, 'find');
+    courseSlotAggregate = sinon.stub(CourseSlot, 'aggregate');
+    UtilsMock.mockCurrentDate('2025-09-29T13:45:25.437Z');
   });
 
   afterEach(() => {
     findCourseBill.restore();
     findCourseCreditNote.restore();
+    courseSlotAggregate.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should return an empty array if no course', async () => {
@@ -2309,8 +2334,6 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
             select: 'subProgram misc type trainees tradeName',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-              { path: 'slots', select: 'startDate' },
-              { path: 'slotsToPlan', select: '_id' },
               { path: 'trainees', select: 'identity' },
             ],
           }],
@@ -2358,11 +2381,14 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(courseSlotAggregate);
   });
 
   it('should return an array with the header and 3 rows', async () => {
     findCourseBill.returns(SinonMongoose.stubChainedQueries(courseBillList, ['populate', 'setOptions', 'lean']));
     findCourseCreditNote.returns(SinonMongoose.stubChainedQueries(courseCreditNoteList, ['populate', 'setOptions', 'lean']));
+    courseSlotAggregate.onCall(0).returns(slotData);
+    courseSlotAggregate.onCall(1).returns(slotsToPlanData);
 
     const result = await ExportHelper
       .exportCourseBillAndCreditNoteHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
@@ -2396,7 +2422,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Facture',
         'FACT-00001',
         '08/03/2022',
-        courseList[0]._id,
+        courseIds[0],
         'Program 1 - Archie Pelle',
         'Program 1',
         'Austin BUTLER',
@@ -2420,7 +2446,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Facture',
         'FACT-00002',
         '08/03/2022',
-        courseList[1]._id,
+        courseIds[1],
         'Program 1 - group 2',
         'Program 1',
         '',
@@ -2444,7 +2470,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Facture',
         'FACT-00003',
         '10/03/2022',
-        courseList[2]._id,
+        courseIds[2],
         'Test SAS - Program 1 - group 3',
         'Program 1',
         '',
@@ -2468,7 +2494,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Facture',
         'FACT-00004',
         '10/01/2022',
-        courseList[3]._id,
+        courseIds[3],
         'Test SAS - Program 1 - group 4',
         'Program 1',
         '',
@@ -2492,7 +2518,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Avoir',
         'AV-00001',
         '09/03/2022',
-        courseList[0]._id,
+        courseIds[0],
         'Program 1 - Archie Pelle',
         'Program 1',
         'Austin BUTLER',
@@ -2527,8 +2553,6 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
             select: 'subProgram misc type trainees tradeName',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
-              { path: 'slots', select: 'startDate' },
-              { path: 'slotsToPlan', select: '_id' },
               { path: 'trainees', select: 'identity' },
             ],
           }],
@@ -2575,6 +2599,28 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         { query: 'setOptions', args: [{ isVendorUser }] },
         { query: 'lean' },
       ]
+    );
+
+    sinon.assert.calledWithExactly(
+      courseSlotAggregate.getCall(0),
+      [
+        { $match: { course: { $in: courseIds }, startDate: { $exists: true } } },
+        { $sort: { startDate: 1 } },
+        {
+          $group: {
+            _id: '$course',
+            slotsCount: { $sum: 1 },
+            pastSlotsCount: { $sum: { $cond: [{ $lte: ['$startDate', CompaniDate('2025-09-29T13:45:25.437Z').toDate()] }, 1, 0] } },
+            firstSlotDate: { $first: '$startDate' },
+            lastSlotDate: { $last: '$startDate' },
+            allSlotDates: { $push: '$startDate' },
+          },
+        },
+      ]
+    );
+    sinon.assert.calledWithExactly(
+      courseSlotAggregate.getCall(1),
+      [{ $match: { course: { $in: courseIds }, startDate: { $exists: false } } }, sinon.match.object]
     );
   });
 });
