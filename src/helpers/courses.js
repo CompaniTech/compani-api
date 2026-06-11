@@ -85,6 +85,7 @@ const {
   PRESENT,
   MISSING,
   SECOND,
+  MONTH,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -96,11 +97,12 @@ const VendorCompaniesHelper = require('./vendorCompanies');
 const InterAttendanceSheet = require('../data/pdf/attendanceSheet/interAttendanceSheet');
 const IntraAttendanceSheet = require('../data/pdf/attendanceSheet/intraAttendanceSheet');
 const CourseConvocation = require('../data/pdf/courseConvocation');
-const CompletionCertificate = require('../data/pdf/completionCertificate');
+const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const TrainingContractPdf = require('../data/pdf/trainingContract');
 const CourseBill = require('../models/CourseBill');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHistory = require('../models/CourseHistory');
+const CompletionCertificate = require('../models/CompletionCertificate');
 const { CompaniDuration } = require('./dates/companiDurations');
 
 exports.createCourse = async (payload, credentials) => {
@@ -1281,6 +1283,7 @@ exports.formatCourseForDocuments = (course, type) => {
   const sortedCourseSlots = course.slots.sort(DatesUtilsHelper.ascendingSortBy('startDate'));
 
   const theoreticalDuration = course.subProgram.steps
+    .filter(step => step.type === E_LEARNING)
     .reduce((acc, step) => acc.add(step.theoreticalDuration), CompaniDuration());
 
   const durationsByTrainee = {};
@@ -1362,10 +1365,12 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
 
   const attendanceDuration = UtilsHelper.getTotalDuration(traineeSlots, false);
 
+  const eLearningSteps = steps.filter(s => s.type === E_LEARNING);
+
   let eLearningDuration;
   if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, subProgramId)) {
     const activityHistories = uniqBy(
-      steps
+      eLearningSteps
         .flatMap(s => s.activities
           .flatMap(a => a.activityHistories
             .filter(aH => UtilsHelper.areObjectIdsEquals(aH.user, trainee._id))
@@ -1375,7 +1380,7 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
     );
     eLearningDuration = exports.getRealELearningDuration(activityHistories);
   } else {
-    eLearningDuration = exports.getELearningDuration(steps, trainee._id);
+    eLearningDuration = exports.getELearningDuration(eLearningSteps, trainee._id);
   }
 
   const totalDuration = CompaniDuration(attendanceDuration)
@@ -1392,6 +1397,69 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
   };
 };
 
+const computeAttendancesByStep = (traineeId, allAttendances, course) => {
+  const { slots: courseSlots, subProgram } = course;
+  const { steps } = subProgram;
+  const slotStepMap = new Map(courseSlots.filter(slot => slot.step).map(slot => [slot._id.toHexString(), slot.step]));
+
+  const durationByStepId = new Map();
+  for (const attendance of allAttendances.filter(a => UtilsHelper.areObjectIdsEquals(a.trainee, traineeId))) {
+    const { courseSlot } = attendance;
+    const step = courseSlot._id ? slotStepMap.get(courseSlot._id.toHexString()) : courseSlot.step;
+    if (!step) continue;
+
+    if (!durationByStepId.has(step._id)) durationByStepId.set(step._id, { step, duration: CompaniDuration() });
+    const entry = durationByStepId.get(step._id);
+    entry.duration = entry.duration
+      .add(CompaniDuration(CompaniDate(courseSlot.endDate).diff(courseSlot.startDate, 'minutes')));
+  }
+
+  const result = [];
+  const processedStepIds = new Set();
+
+  for (const step of steps) {
+    processedStepIds.add(step._id);
+
+    const data = durationByStepId.get(step._id);
+    if (data) result.push({ stepName: step.name, duration: data.duration.format(SHORT_DURATION_H_MM) });
+  }
+
+  for (const [stepId, data] of durationByStepId) {
+    if (!processedStepIds.has(stepId)) {
+      result.push({ stepName: data.step.name, duration: data.duration.format(SHORT_DURATION_H_MM) });
+    }
+  }
+
+  return result;
+};
+
+const computeVAESupportDuration = async (course, traineeId, credentials) => {
+  const { _id: courseId, subProgram, isAbandoned } = course;
+  const { _id: subProgramId } = subProgram;
+  const vaeSupportConfig = UtilsHelper.getVAESupportConfigs(subProgramId);
+  if (!vaeSupportConfig) return 0;
+
+  const vaeSupportStartMonth = CompaniDate(course.slots[0].startDate)
+    .startOf(MONTH)
+    .add(`P${vaeSupportConfig.offsetMonths}M`)
+    .toISO();
+
+  if (CompaniDate().isBefore(vaeSupportStartMonth) || !!isAbandoned) return 0;
+
+  const ccsWithVAE = await CompletionCertificate
+    .find(
+      { course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $exists: true } },
+      { vaeSupportRemainingMinutes: 1 }
+    )
+    .setOptions({ isVendorUser: has(credentials, 'role.vendor.name') })
+    .lean();
+
+  if (!ccsWithVAE.length) return vaeSupportConfig.vaeDurationMinutes;
+
+  const minRemaining = Math.min(...ccsWithVAE.map(cc => cc.vaeSupportRemainingMinutes));
+  return vaeSupportConfig.vaeDurationMinutes - minRemaining;
+};
+
 const generateCompletionCertificatePdf = async (courseData, courseAttendances, trainee) => {
   const {
     _id,
@@ -1401,7 +1469,7 @@ const generateCompletionCertificatePdf = async (courseData, courseAttendances, t
     totalDuration,
   } = getTraineeInformations(trainee, courseAttendances, courseData.steps, courseData.subProgramId);
 
-  const pdf = await CompletionCertificate.getPdf({
+  const pdf = await CompletionCertificatePdf.getPdf({
     ...omit(courseData, ['companyNamesById', 'steps']),
     trainee: { _id, identity, attendanceDuration, eLearningDuration, totalDuration },
     date: CompaniDate().format(DD_MM_YYYY),
@@ -1426,11 +1494,20 @@ exports.generateOfficialCompletionCertificatePdf = async (courseData, courseAtte
     courseData.companyNamesById
   );
 
-  const pdf = await CompletionCertificate.getPdf(
+  const monthlyGlobalCertificateData = courseData.isMonthlyCertificateMode
+    ? courseData.monthlyGlobalCertificateData[_id]
+    : null;
+  const pdf = await CompletionCertificatePdf.getPdf(
     {
-      ...omit(courseData, ['companyNamesById', 'steps']),
+      ...omit(courseData, ['companyNamesById', 'steps', 'monthlyGlobalCertificateData']),
       trainee: { _id, identity, attendanceDuration, companyName, eLearningDuration, totalDuration },
       date: CompaniDate().format(DD_MM_YYYY),
+      ...(monthlyGlobalCertificateData && {
+        attendancesByStep: monthlyGlobalCertificateData.attendancesByStep,
+        vaeSupportDuration: monthlyGlobalCertificateData.vaeSupportDuration
+          ? CompaniDuration({ minutes: monthlyGlobalCertificateData.vaeSupportDuration }).format(SHORT_DURATION_H_MM)
+          : null,
+      }),
     },
     OFFICIAL
   );
@@ -1531,7 +1608,7 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
       return attendanceList
         .filter(a => UtilsHelper.doesArrayIncludeId(course.trainees, a.trainee) &&
           !UtilsHelper.doesArrayIncludeId(c.trainees, a.trainee))
-        .map(a => ({ ...pick(a, ['trainee', 'company']), courseSlot: pick(slot, ['startDate', 'endDate']) }));
+        .map(a => ({ ...pick(a, ['trainee', 'company']), courseSlot: pick(slot, ['startDate', 'endDate', 'step']) }));
     }));
 
   return unsubscribedAttendances.flat(2);
@@ -1564,7 +1641,11 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
   const courseTrainees = await Course.findOne({ _id: courseId }, { trainees: 1 }).lean();
 
   const course = await Course.findOne({ _id: courseId })
-    .populate({ path: 'slots', select: 'startDate endDate trainees' })
+    .populate({
+      path: 'slots',
+      select: 'startDate endDate trainees step',
+      populate: { path: 'step', select: 'name' },
+    })
     .populate({ path: 'trainees', select: 'identity' })
     .populate(
       {
@@ -1574,8 +1655,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
           { path: 'program', select: 'learningGoals subPrograms' },
           {
             path: 'steps',
-            select: 'type theoreticalDuration',
-            match: { type: E_LEARNING },
+            select: 'type theoreticalDuration name',
             populate: {
               path: 'activities',
               populate: { path: 'activityHistories', match: { user: { $in: courseTrainees.trainees } } },
@@ -1601,6 +1681,25 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
   }
 
   if (type === OFFICIAL) {
+    if (course.certificateGenerationMode === MONTHLY) {
+      courseData.isMonthlyCertificateMode = true;
+      courseData.isAbandoned = !!course.isAbandoned;
+
+      const monthlyGlobalCertificateData = await Promise.all(
+        traineeList.map(async (trainee) => {
+          const attendancesByStep = computeAttendancesByStep(trainee._id, allAttendances, course);
+          const vaeSupportDuration = await computeVAESupportDuration(course, trainee._id, credentials);
+          return { traineeId: trainee._id, attendancesByStep, vaeSupportDuration };
+        })
+      );
+
+      courseData.monthlyGlobalCertificateData = Object.fromEntries(
+        monthlyGlobalCertificateData.map(d => [
+          d.traineeId,
+          { attendancesByStep: d.attendancesByStep, vaeSupportDuration: d.vaeSupportDuration },
+        ])
+      );
+    }
     const promises = traineeList
       .map(t => exports.generateOfficialCompletionCertificatePdf(courseData, allAttendances, t));
     return ZipHelper.generateZip('certificats_pdf.zip', await Promise.all(promises));
