@@ -2151,6 +2151,27 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if isAbandoned in payload but not archivedAt', async () => {
+      const payload = {
+        misc: ' new single course',
+        contact: trainer._id,
+        estimatedStartDate: '2024-11-12T10:00:00.000Z',
+        hasCertifyingTest: true,
+        expectedBillsCount: 3,
+        isAbandoned: false,
+        certifiedTrainees: [traineeFromAuthFormerlyInOther._id],
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[25]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 404 if course doesn\'t exist', async () => {
       const payload = { maxTrainees: 12 };
       const response = await app.inject({
@@ -2186,7 +2207,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should archive a blended course', async () => {
-      const payload = { archivedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const payload = { archivedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate(), isAbandoned: true };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[0]._id}`,
@@ -2196,7 +2217,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const course = await Course.countDocuments({ _id: coursesList[0]._id, archivedAt: { $exists: true } });
+      const course = await Course
+        .countDocuments({ _id: coursesList[0]._id, archivedAt: { $exists: true }, isAbandoned: true });
 
       expect(course).toBeTruthy();
     });

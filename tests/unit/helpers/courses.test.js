@@ -4915,7 +4915,7 @@ describe('updateCourse', () => {
       [
         {
           query: 'findOneAndUpdate',
-          args: [{ _id: courseId }, { $unset: { archivedAt: '' } }],
+          args: [{ _id: courseId }, { $unset: { archivedAt: '', isAbandoned: '' } }],
         },
         { query: 'lean' },
       ]

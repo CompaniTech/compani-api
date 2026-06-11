@@ -920,7 +920,7 @@ exports.updateCourse = async (courseId, payload, credentials) => {
 
   if (payload.archivedAt === '') {
     setFields = omit(setFields, 'archivedAt');
-    unsetFields = { ...unsetFields, archivedAt: '' };
+    unsetFields = { ...unsetFields, archivedAt: '', isAbandoned: '' };
   }
 
   if (payload.salesRepresentative === '') {
