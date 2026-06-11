@@ -64,18 +64,6 @@ exports.list = async (query, credentials) => {
   return completionCertificates;
 };
 
-const getVAESupportConfigs = () => (process.env.VAE_SUPPORT_CONFIGS || '')
-  .split(',')
-  .filter(Boolean)
-  .map((entry) => {
-    const [subProgramId, offsetMonths, vaeDurationHours] = entry.split(':');
-    return {
-      subProgramId: new ObjectId(subProgramId),
-      offsetMonths: Number(offsetMonths),
-      vaeDurationMinutes: Number(vaeDurationHours) * 60,
-    };
-  });
-
 exports.generate = async (completionCertificateId) => {
   const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
   const PRI_SUBPROGRAM_IDS = process.env.PRI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
@@ -169,8 +157,7 @@ exports.generate = async (completionCertificateId) => {
 
   const formattedELearningDuration = CompaniDuration(eLearningDuration).format(SHORT_DURATION_H_MM);
 
-  const vaeSupportConfig = getVAESupportConfigs()
-    .find(c => UtilsHelper.areObjectIdsEquals(c.subProgramId, course.subProgram._id));
+  const vaeSupportConfig = UtilsHelper.getVAESupportConfigs(course.subProgram._id);
 
   let vaeSupportData;
   let newVAESupportRemainingMinutes;

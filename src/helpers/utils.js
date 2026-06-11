@@ -348,3 +348,16 @@ exports.sanitizeFileName = (name) => {
 exports.isCourseInterrupted = (interruptionDates = []) => interruptionDates.some(d => !d.endDate);
 
 exports.getEnvObjectIds = key => (process.env[key] || '').split(',').filter(Boolean).map(id => new ObjectId(id));
+
+exports.getVAESupportConfigs = subProgramId => (process.env.VAE_SUPPORT_CONFIGS || '')
+  .split(',')
+  .filter(Boolean)
+  .map((entry) => {
+    const [subProgram, offsetMonths, vaeDurationHours] = entry.split(':');
+    return {
+      subProgramId: new ObjectId(subProgram),
+      offsetMonths: Number(offsetMonths),
+      vaeDurationMinutes: Number(vaeDurationHours) * 60,
+    };
+  })
+  .find(config => exports.areObjectIdsEquals(subProgramId, config.subProgramId));
