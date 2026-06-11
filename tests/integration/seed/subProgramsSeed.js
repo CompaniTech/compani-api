@@ -163,6 +163,7 @@ const courseSlotsList = [
     endDate: '2020-03-10T12:00:00.000Z',
     course: coursesList[0]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   {
     _id: new ObjectId(),

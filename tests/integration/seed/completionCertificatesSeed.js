@@ -164,6 +164,7 @@ const slotsList = [
     endDate: '2024-04-20T14:00:00.000Z',
     course: courseList[0],
     step: stepList[1]._id,
+    trainers: [trainer._id],
   },
   { // 1
     _id: new ObjectId(),
@@ -171,6 +172,7 @@ const slotsList = [
     endDate: '2020-01-21T14:00:00.000Z',
     course: courseList[2],
     step: stepList[1]._id,
+    trainers: [trainer._id],
   },
   { // 2
     _id: new ObjectId(),
@@ -178,6 +180,7 @@ const slotsList = [
     endDate: '2025-03-20T14:00:00.000Z',
     course: courseList[1]._id,
     step: stepList[2]._id,
+    trainers: [trainer._id],
   },
   { // 3
     _id: new ObjectId(),
@@ -185,6 +188,7 @@ const slotsList = [
     endDate: '2025-03-21T14:00:00.000Z',
     course: courseList[1]._id,
     step: stepList[2]._id,
+    trainers: [trainer._id],
   },
   { // 4
     _id: new ObjectId(),
@@ -192,6 +196,7 @@ const slotsList = [
     endDate: '2025-02-21T14:00:00.000Z',
     course: courseList[1]._id,
     step: stepList[2]._id,
+    trainers: [trainer._id],
   },
   { // 5 without attendance
     _id: new ObjectId(),
@@ -199,6 +204,7 @@ const slotsList = [
     endDate: '2024-12-21T14:00:00.000Z',
     course: courseList[1]._id,
     step: stepList[2]._id,
+    trainers: [trainer._id],
   },
   { // 6
     _id: new ObjectId(),
@@ -206,6 +212,7 @@ const slotsList = [
     endDate: '2025-04-03T14:00:00.000Z',
     course: courseList[3]._id,
     step: stepList[2]._id,
+    trainers: [trainer._id],
   },
 ];
 

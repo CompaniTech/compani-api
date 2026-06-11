@@ -1711,10 +1711,7 @@ const courseSlotList = [
     _id: new ObjectId(),
     course: coursesList[1]._id,
     step: stepList[3]._id,
-    address: slotAddress,
     createdAt: '2020-12-12T10:00:04.000Z',
-    trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0003' }],
   },
   { // 5
     _id: new ObjectId(),
@@ -1747,6 +1744,7 @@ const courseSlotList = [
     createdAt: '2020-12-12T10:00:04.000Z',
     startDate: '2021-01-16T10:00:00.000Z',
     endDate: '2021-01-16T12:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 8
     _id: new ObjectId(),

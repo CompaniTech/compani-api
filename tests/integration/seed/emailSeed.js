@@ -255,6 +255,7 @@ const courseSlotList = [
     endDate: '2021-05-01T10:00:00.000Z',
     address: slotAddress,
     createdAt: '2020-12-12T10:00:00.000Z',
+    trainers: [trainer._id],
   },
   { // 1
     _id: new ObjectId(),
@@ -263,6 +264,7 @@ const courseSlotList = [
     startDate: '2021-05-01T14:00:00.000Z',
     endDate: '2021-05-01T16:00:00.000Z',
     createdAt: '2020-12-12T10:00:01.000Z',
+    trainers: [trainer._id],
   },
 ];
 

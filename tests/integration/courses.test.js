@@ -1170,6 +1170,7 @@ describe('COURSES ROUTES - GET /courses', () => {
             course: coursesList[2]._id,
             step: { _id: expect.any(Object), type: ON_SITE },
             _id: expect.any(Object),
+            trainers: [trainer._id],
           },
           {
             startDate: CompaniDate('2025-03-04T08:00:00.000Z').toDate(),
@@ -1177,6 +1178,7 @@ describe('COURSES ROUTES - GET /courses', () => {
             course: coursesList[2]._id,
             step: { _id: expect.any(Object), type: ON_SITE },
             _id: expect.any(Object),
+            trainers: [trainer._id],
           },
         ],
         slotsToPlan: [
@@ -4758,6 +4760,18 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/courses/${courseIdFromAuthCompany}/completion-certificates?format=${ALL_WORD}&type=${OFFICIAL}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 200 if certificate is global certificate for monthly mode course', async () => {
+      authToken = await getTokenByCredentials(ROFAndCoach.local);
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${coursesList[14]._id}/completion-certificates?format=${ALL_PDF}&type=${OFFICIAL}`
+        + `&isClientInterface=${true}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 

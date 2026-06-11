@@ -225,6 +225,7 @@ const slotList = [
     endDate: '2025-02-23T11:00:00.000Z',
     course: courseList[0]._id,
     step: stepList[0]._id,
+    trainers: [userList[1]._id],
   },
   { // 1
     _id: new ObjectId(),
@@ -294,7 +295,6 @@ const slotList = [
     _id: new ObjectId(),
     course: courseList[3]._id,
     step: stepList[1]._id,
-    trainers: [userList[1]._id],
   },
   { // 10
     _id: new ObjectId(),
@@ -350,6 +350,7 @@ const slotList = [
     endDate: '2025-02-13T11:00:00.000Z',
     course: courseList[0]._id,
     step: stepList[0]._id,
+    trainers: [userList[1]._id],
   },
 ];
 
