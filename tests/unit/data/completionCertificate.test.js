@@ -122,12 +122,12 @@ describe('getCustomPdfContent', () => {
               ],
             }],
             [{ text: '- but', color: COPPER_500 }],
-            [{ text: 'Résultats de l’évaluation des acquis :', style: 'subTitle' }],
+            [{ text: 'Résultats de l\'évaluation des acquis :', style: 'subTitle' }],
             [{
               text: [
                 'Les compétences et connaissances partagées lors de la formation ont été acquises par ',
                 { text: 'Jean ALAIN', italics: true },
-                { text: ' et validées par un quiz d’acquisition de connaissances.' },
+                { text: ' et validées par un quiz d\'acquisition de connaissances.' },
               ],
               marginBottom: 32,
             }],
@@ -157,7 +157,7 @@ describe('getCustomPdfContent', () => {
             { image: paths[4], width: 120, marginBottom: 24 },
             { text: 'Compani', style },
             { text: '24 avenue Daumesnil, 75012 Paris', style },
-            { text: 'Numéro SIRET : 90512399800015 | Numéro de déclaration d’activité : 11756363475', style },
+            { text: 'Numéro SIRET : 90512399800015 | Numéro de déclaration d\'activité : 11756363475', style },
             { text: `PAGE ${currentPage.toString()} / ${pageCount}`, style, alignment: 'right' },
           ],
           marginLeft: 40,
@@ -279,12 +279,12 @@ describe('getCustomPdfContent', () => {
               ],
             }],
             [{ text: '- but', color: COPPER_500 }],
-            [{ text: 'Résultats de l’évaluation des acquis :', style: 'subTitle' }],
+            [{ text: 'Résultats de l\'évaluation des acquis :', style: 'subTitle' }],
             [{
               text: [
                 'Les compétences et connaissances partagées lors de la formation ont été acquises par ',
                 { text: 'Jean ALAIN', italics: true },
-                { text: ' et validées par un quiz d’acquisition de connaissances.' },
+                { text: ' et validées par un quiz d\'acquisition de connaissances.' },
               ],
               marginBottom: 32,
             }],
@@ -314,7 +314,7 @@ describe('getCustomPdfContent', () => {
             { image: paths[4], width: 120, marginBottom: 24 },
             { text: 'Compani', style },
             { text: '24 avenue Daumesnil, 75012 Paris', style },
-            { text: 'Numéro SIRET : 90512399800015 | Numéro de déclaration d’activité : 11756363475', style },
+            { text: 'Numéro SIRET : 90512399800015 | Numéro de déclaration d\'activité : 11756363475', style },
             { text: `PAGE ${currentPage.toString()} / ${pageCount}`, style, alignment: 'right' },
           ],
           marginLeft: 40,
@@ -983,10 +983,10 @@ describe('getOfficialPdfContent', () => {
             text: [
               { text: 'pour une durée de ', bold: true },
               {
-                text: '4h30 d’accompagnement à distance et en présentiel, et '
-                + '1h30 d’enseignement à distance sur l’application Compani. '
+                text: '4h30 d\'accompagnement à distance et en présentiel, et '
+                + '1h30 d\'enseignement à distance sur l\'application Compani. '
                 + 'Ce certificat est lié à une facture de frais pédagogiques.',
-                italic: true,
+                italics: true,
               },
             ],
           },
@@ -1231,10 +1231,10 @@ describe('getOfficialPdfContent', () => {
             text: [
               { text: 'pour une durée de ', bold: true },
               {
-                text: '4h30 d’accompagnement à distance et en présentiel, et '
-                + '1h30 d’enseignement à distance sur l’application Compani. '
+                text: '4h30 d\'accompagnement à distance et en présentiel, et '
+                + '1h30 d\'enseignement à distance sur l\'application Compani. '
                 + 'Ce certificat est lié à une facture de frais pédagogiques.',
-                italic: true,
+                italics: true,
               },
             ],
           },
@@ -1479,8 +1479,8 @@ describe('getOfficialPdfContent', () => {
             text: [
               { text: 'pour une durée de ', bold: true },
               {
-                text: '4h30 d’accompagnement VAE, et 1h30 d’enseignement à distance sur l’application Compani. '
-                + 'Ce certificat est lié à une facture de frais pédagogiques et d’accompagnement VAE',
+                text: '4h30 d\'accompagnement VAE, et 1h30 d\'enseignement à distance sur l\'application Compani. '
+                + 'Ce certificat est lié à une facture de frais pédagogiques et d\'accompagnement VAE',
                 italics: true,
               },
             ],
@@ -1729,9 +1729,9 @@ describe('getOfficialPdfContent', () => {
               text: [
                 { text: 'pour une durée de ', bold: true },
                 {
-                  text: '6h d’accompagnement à distance et en présentiel, 4h d’accompagnement VAE, et '
-                + '1h30 d’enseignement à distance sur l’application Compani. '
-                + 'Ce certificat est lié à une facture de frais pédagogiques et d’accompagnement VAE',
+                  text: '6h d\'accompagnement à distance et en présentiel, 4h d\'accompagnement VAE, et '
+                + '1h30 d\'enseignement à distance sur l\'application Compani. '
+                + 'Ce certificat est lié à une facture de frais pédagogiques et d\'accompagnement VAE',
                   italics: true,
                 },
               ],
@@ -1809,6 +1809,198 @@ describe('getOfficialPdfContent', () => {
           marginRight: 40,
           marginTop: 8,
           fontSize: 11,
+        },
+      ];
+
+      const pdf = {
+        content: [header, body, footer].flat(),
+        defaultStyle: { font: 'Calibri', fontSize: 14 },
+        pageMargins: [40, 40, 40, 40],
+        styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      };
+      expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
+      expect(result.images).toEqual(paths);
+      sinon.assert.calledOnceWithExactly(downloadImages, imageList);
+    });
+
+  it('should format and return global completion certificate pdf content for VAEI courses',
+    async () => {
+      const data = {
+        programName: 'Programme',
+        startDate: '01/02/2025',
+        endDate: '28/02/2025',
+        trainee: {
+          identity: 'Jean SAITRIEN',
+          attendanceDuration: '10h',
+          companyName: 'structure',
+          eLearningDuration: '1h30',
+        },
+        date: '26/03/2025',
+        isVAEISubProgram: true,
+        isPRISubProgram: false,
+        isAbandoned: false,
+        monthlyGlobalCertificateData: {
+          attendancesByStep: [
+            { stepName: 'Coaching individuel', duration: '3h' },
+            { stepName: 'Réunions tripartites', duration: '3h' },
+          ],
+          vaeSupportDuration: 110,
+        },
+      };
+
+      const imageList = [
+        { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
+        { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
+        {
+          url: 'https://storage.googleapis.com/compani-main/logo_ministere_travail.png',
+          name: 'ministere_travail.png',
+        },
+      ];
+
+      const paths = [
+        'src/data/pdf/tmp/signature.png',
+        'src/data/pdf/tmp/compani.png',
+        'src/data/pdf/tmp/ministere_travail.png',
+      ];
+      downloadImages.returns(paths);
+
+      const result = await CompletionCertificate.getOfficialPdfContent(data);
+
+      const header = [
+        { columns: [{ image: paths[2], width: 60 }, {}, { image: paths[1], width: 130 }], marginBottom: 24 },
+        { text: 'CERTIFICAT DE RÉALISATION FINAL', style: 'title', alignment: 'center', marginBottom: 24 },
+      ];
+
+      const checkBoxSection = [
+      // Checkbox 1
+        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 354 } },
+        {
+          text: [
+            { text: '√', position: { x: 59, y: 354 }, marginRight: 4 },
+            { text: [{ text: ' Parcours terminé' }, { text: '', fontSize: 8, bold: true }] },
+          ],
+          marginBottom: 4,
+          marginLeft: 20,
+        },
+        // Checkbox 2
+        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 372 } },
+        {
+          text: [
+            { text: '', position: { x: 59, y: 372 }, marginRight: 4 },
+            { text: [{ text: ' Abandon en cours de parcours' }, { text: '', fontSize: 8, bold: true }] },
+          ],
+          marginBottom: 4,
+          marginLeft: 32,
+        },
+      ];
+
+      const body = [
+        {
+          text: [
+            { text: 'Je soussigné ', bold: true },
+            { text: 'Thibault de Saint Blancard ', italics: true },
+            {
+              text: 'représentant légal du dispensateur de l\'action concourant au développement des compétences ',
+              bold: true,
+            },
+            { text: 'COMPANI', italics: true },
+          ],
+        },
+        { text: 'atteste que :', bold: true, marginTop: 4, marginBottom: 8 },
+        {
+          text: [{ text: 'Mme/M. ', bold: true }, { text: 'Jean SAITRIEN', italics: true }],
+          marginLeft: 4,
+          marginBottom: 8,
+        },
+        {
+          text: [{ text: 'salarié(e) de l\'entreprise ', bold: true }, { text: 'structure', italics: true }],
+          marginLeft: 4,
+          marginBottom: 8,
+        },
+        {
+          text: [{ text: 'a suivi l\'action ', bold: true }, { text: 'Programme', italics: true }],
+          marginLeft: 4,
+          marginBottom: 8,
+        },
+        {
+          text: [{ text: 'Nature de l\'action :', bold: true }, { text: ' action de VAE Inversée', italics: true }],
+          marginLeft: 4,
+          marginBottom: 8,
+        },
+        {
+          text: [
+            { text: 'qui s\'est déroulée du ', bold: true },
+            { text: '01/02/2025 ', italics: true },
+            { text: 'au ', bold: true },
+            { text: '28/02/2025', italics: true },
+          ],
+          marginLeft: 4,
+          marginBottom: 8,
+        },
+        { text: [{ text: 'Motif de fin de formation :', bold: true }], marginLeft: 4, marginBottom: 4 },
+        ...checkBoxSection,
+        { text: [{ text: 'Total des heures :', bold: true }], marginLeft: 4, marginBottom: 4, marginTop: 4 },
+        { text: 'Coaching individuel : 3h', marginLeft: 8, marginBottom: 4 },
+        { text: 'Réunions tripartites : 3h', marginLeft: 8, marginBottom: 4 },
+        { text: 'Accompagnement VAE : 1h50', marginLeft: 8, marginBottom: 4 },
+        { text: 'E-learning : 1h30', marginBottom: 8 },
+        {
+          text: [
+            {
+              text: [
+                {
+                  text: 'soit 10h de cours pédagogique à distance et en présentiel, et 1h50 d\'accompagnement VAE, et '
+                + '1h30 de cours pédagogique à distance sur l\'application Compani.',
+                  italics: true,
+                },
+              ],
+            },
+          ],
+          marginBottom: 8,
+          marginLeft: 4,
+        },
+      ];
+
+      const footer = [
+        {
+          columns: [
+            [
+              {
+                text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
+                absolutePosition: { x: 35, y: 568 },
+                marginLeft: 46,
+              },
+              {
+                text: [{ text: 'Le : ', bold: true }, { text: '26/03/2025', italics: true }],
+                absolutePosition: { x: 35, y: 588 },
+                marginLeft: 46,
+              },
+            ],
+            [
+              {
+                canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
+                absolutePosition: { y: 573 },
+                alignment: 'right',
+              },
+              {
+                text: 'Cachet et signature du responsable du \n dispensateur de formation',
+                marginTop: 6,
+                alignment: 'center',
+                fontSize: 10,
+              },
+              {
+                text: 'Thibault de Saint Blancard, Directeur Compani',
+                bold: true,
+                marginTop: 6,
+                alignment: 'center',
+                fontSize: 10,
+              },
+              { image: paths[0], width: 125, absolutePosition: { x: 380, y: 636 } },
+            ],
+          ],
+          marginLeft: 40,
+          marginRight: 40,
+          absolutePosition: { x: 37, y: 583 },
         },
       ];
 
