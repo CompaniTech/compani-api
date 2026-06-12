@@ -6425,6 +6425,7 @@ describe('generateCompletionCertificates', () => {
   let getVAESupportConfigs;
   const REAL_ELEARNING_DURATION_SUBPROGRAM_ID = new ObjectId();
   const PRI_SUBPROGRAM_IDS = new ObjectId();
+  const COACHING_STEP_ID = new ObjectId();
 
   beforeEach(() => {
     courseFindOne = sinon.stub(Course, 'findOne');
@@ -6447,6 +6448,7 @@ describe('generateCompletionCertificates', () => {
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
     process.env.VAEI_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
     process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS;
+    process.env.COACHING_STEP_IDS = COACHING_STEP_ID;
   });
   afterEach(() => {
     courseFindOne.restore();
@@ -6468,6 +6470,7 @@ describe('generateCompletionCertificates', () => {
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = '';
     process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.PRI_SUBPROGRAM_IDS = '';
+    process.env.COACHING_STEP_IDS = '';
   });
 
   it(`should download custom completion certificates from webapp (word with eLearning and
@@ -8394,12 +8397,12 @@ describe('generateCompletionCertificates', () => {
     sinon.assert.notCalled(getPdf);
   });
 
-  it('should download global completion certificates (monthly mode course) #tag', async () => {
+  it('should download global completion certificates (monthly mode course)', async () => {
     const companyId = new ObjectId();
     const credentials = { _id: new ObjectId(), role: { vendor: { name: VENDOR_ADMIN } }, company: { _id: companyId } };
     const courseId = new ObjectId();
     const traineesIds = [new ObjectId(), new ObjectId()];
-    const stepIds = [new ObjectId(), new ObjectId()];
+    const stepIds = [COACHING_STEP_ID, new ObjectId()];
     const slotIds = [new ObjectId(), new ObjectId()];
     const steps = [
       { _id: stepIds[0], name: 'Coaching individuel', type: ON_SITE },
@@ -8549,7 +8552,7 @@ describe('generateCompletionCertificates', () => {
         trainee: {
           _id: traineesIds[0],
           identity: 'trainee 1',
-          attendanceDuration: '4h30',
+          attendanceDuration: '2h40',
           companyName: 'Structure 1',
           eLearningDuration: '0h',
           totalDuration: '4h30',
@@ -8557,7 +8560,7 @@ describe('generateCompletionCertificates', () => {
         date: '20/01/2020',
         monthlyGlobalCertificateData: {
           attendancesByStep: [
-            { stepName: 'Coaching individuel', duration: '3h' },
+            { stepName: 'Coaching individuel', duration: '1h10' },
             { stepName: 'Réunions tripartites', duration: '1h30' },
           ],
           vaeSupportDuration: 110,
@@ -8580,7 +8583,7 @@ describe('generateCompletionCertificates', () => {
         trainee: {
           _id: traineesIds[1],
           identity: 'trainee 2',
-          attendanceDuration: '3h',
+          attendanceDuration: '1h',
           companyName: 'Structure 1',
           eLearningDuration: '0h',
           totalDuration: '3h',
@@ -8588,7 +8591,7 @@ describe('generateCompletionCertificates', () => {
         date: '20/01/2020',
         monthlyGlobalCertificateData: {
           attendancesByStep: [
-            { stepName: 'Coaching individuel', duration: '3h' },
+            { stepName: 'Coaching individuel', duration: '1h' },
           ],
           vaeSupportDuration: 120,
         },

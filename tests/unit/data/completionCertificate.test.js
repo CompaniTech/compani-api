@@ -1873,20 +1873,20 @@ describe('getOfficialPdfContent', () => {
 
       const checkBoxSection = [
       // Checkbox 1
-        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 354 } },
+        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 350 } },
         {
           text: [
-            { text: '√', position: { x: 59, y: 354 }, marginRight: 4 },
+            { text: '√', position: { x: 59, y: 350 }, marginRight: 4 },
             { text: [{ text: ' Parcours terminé' }, { text: '', fontSize: 8, bold: true }] },
           ],
           marginBottom: 4,
           marginLeft: 20,
         },
         // Checkbox 2
-        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 372 } },
+        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 368 } },
         {
           text: [
-            { text: '', position: { x: 59, y: 372 }, marginRight: 4 },
+            { text: '', position: { x: 59, y: 368 }, marginRight: 4 },
             { text: [{ text: ' Abandon en cours de parcours' }, { text: '', fontSize: 8, bold: true }] },
           ],
           marginBottom: 4,
@@ -1943,7 +1943,7 @@ describe('getOfficialPdfContent', () => {
         { text: 'Coaching individuel : 3h', marginLeft: 8, marginBottom: 4 },
         { text: 'Réunions tripartites : 3h', marginLeft: 8, marginBottom: 4 },
         { text: 'Accompagnement VAE : 1h50', marginLeft: 8, marginBottom: 4 },
-        { text: 'E-learning : 1h30', marginBottom: 8 },
+        { text: 'E-learning : 1h30', marginLeft: 8, marginBottom: 8 },
         {
           text: [
             {

@@ -296,8 +296,8 @@ exports.getOfficialPdfContent = async (data) => {
         marginBottom: 8,
       },
       { text: [{ text: 'Motif de fin de formation :', bold: true }], marginLeft: 4, marginBottom: 4 },
-      ...defineCheckbox(59, 354, ' Parcours terminé', isLargeProgramName, !isAbandoned, false),
-      ...defineCheckbox(59, 372, ' Abandon en cours de parcours', isLargeProgramName, !!isAbandoned, false),
+      ...defineCheckbox(59, 350, ' Parcours terminé', isLargeProgramName, !isAbandoned, false),
+      ...defineCheckbox(59, 368, ' Abandon en cours de parcours', isLargeProgramName, !!isAbandoned, false),
       { text: [{ text: 'Total des heures :', bold: true }], marginLeft: 4, marginBottom: 4, marginTop: 4 },
       ...attendancesByStep.map(({ stepName, duration: stepDuration }) => ({
         text: `${stepName} : ${stepDuration}`,
@@ -305,7 +305,7 @@ exports.getOfficialPdfContent = async (data) => {
         marginBottom: 4,
       })),
       ...vaeSupportLine,
-      { text: `E-learning : ${trainee.eLearningDuration}`, marginBottom: 8 },
+      { text: `E-learning : ${trainee.eLearningDuration}`, marginLeft: 8, marginBottom: 8 },
     ];
   } else {
     actionDetailsSection = [

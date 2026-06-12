@@ -1352,7 +1352,14 @@ exports.getRealELearningDuration = (activityHistories) => {
   return eLearningDuration;
 };
 
-const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId, companiesNames = null) => {
+const getTraineeInformations = (
+  trainee,
+  courseAttendances,
+  steps,
+  subProgramId,
+  companiesNames = null,
+  vaeSupportDuration = 0
+) => {
   const REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS
     .split(',')
     .map(id => new ObjectId(id));
@@ -1390,14 +1397,16 @@ const getTraineeInformations = (trainee, courseAttendances, steps, subProgramId,
   return {
     _id: trainee._id,
     identity,
-    attendanceDuration: CompaniDuration(attendanceDuration).format(SHORT_DURATION_H_MM),
+    attendanceDuration: CompaniDuration(attendanceDuration)
+      .subtract({ minutes: vaeSupportDuration })
+      .format(SHORT_DURATION_H_MM),
     ...(companiesNames && { companyName: companiesNames[trainee.company] }),
     eLearningDuration: CompaniDuration(eLearningDuration).format(SHORT_DURATION_H_MM),
     totalDuration,
   };
 };
 
-const computeAttendancesByStep = (traineeId, allAttendances, course) => {
+const computeAttendancesByStep = (traineeId, allAttendances, course, vaeSupportDuration) => {
   const { slots: courseSlots, subProgram } = course;
   const { steps } = subProgram;
   const slotStepMap = new Map(courseSlots.filter(slot => slot.step).map(slot => [slot._id.toHexString(), slot.step]));
@@ -1412,6 +1421,19 @@ const computeAttendancesByStep = (traineeId, allAttendances, course) => {
     const entry = durationByStepId.get(step._id);
     entry.duration = entry.duration
       .add(CompaniDuration(CompaniDate(courseSlot.endDate).diff(courseSlot.startDate, 'minutes')));
+  }
+
+  if (vaeSupportDuration) {
+    const COACHING_STEP_IDS = UtilsHelper.getEnvObjectIds('COACHING_STEP_IDS');
+    for (const [stepId, data] of durationByStepId) {
+      if (UtilsHelper.doesArrayIncludeId(COACHING_STEP_IDS, stepId)) {
+        const vaeSupport = CompaniDuration({ minutes: vaeSupportDuration });
+        data.duration = data.duration.isLongerThan(vaeSupport)
+          ? data.duration.subtract(vaeSupport)
+          : CompaniDuration();
+        break;
+      }
+    }
   }
 
   const result = [];
@@ -1491,7 +1513,8 @@ exports.generateOfficialCompletionCertificatePdf = async (courseData, courseAtte
     courseAttendances,
     courseData.steps,
     courseData.subProgramId,
-    courseData.companyNamesById
+    courseData.companyNamesById,
+    courseData.monthlyGlobalCertificateData[trainee._id].vaeSupportDuration
   );
 
   const pdf = await CompletionCertificatePdf.getPdf(
@@ -1685,8 +1708,8 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
 
       const monthlyGlobalCertificateData = await Promise.all(
         traineeList.map(async (trainee) => {
-          const attendancesByStep = computeAttendancesByStep(trainee._id, allAttendances, course);
           const vaeSupportDuration = await computeVAESupportDuration(course, trainee._id, credentials);
+          const attendancesByStep = computeAttendancesByStep(trainee._id, allAttendances, course, vaeSupportDuration);
           return { traineeId: trainee._id, attendancesByStep, vaeSupportDuration };
         })
       );
