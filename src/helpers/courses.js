@@ -1494,19 +1494,13 @@ exports.generateOfficialCompletionCertificatePdf = async (courseData, courseAtte
     courseData.companyNamesById
   );
 
-  const monthlyGlobalCertificateData = courseData.isMonthlyCertificateMode
-    ? courseData.monthlyGlobalCertificateData[_id]
-    : null;
   const pdf = await CompletionCertificatePdf.getPdf(
     {
-      ...omit(courseData, ['companyNamesById', 'steps', 'monthlyGlobalCertificateData']),
+      ...omit(courseData, ['companyNamesById', 'steps', 'certificateGenerationModeIsMonthly']),
       trainee: { _id, identity, attendanceDuration, companyName, eLearningDuration, totalDuration },
       date: CompaniDate().format(DD_MM_YYYY),
-      ...(monthlyGlobalCertificateData && {
-        attendancesByStep: monthlyGlobalCertificateData.attendancesByStep,
-        vaeSupportDuration: monthlyGlobalCertificateData.vaeSupportDuration
-          ? CompaniDuration({ minutes: monthlyGlobalCertificateData.vaeSupportDuration }).format(SHORT_DURATION_H_MM)
-          : null,
+      ...(courseData.certificateGenerationModeIsMonthly && {
+        monthlyGlobalCertificateData: courseData.monthlyGlobalCertificateData[_id],
       }),
     },
     OFFICIAL
@@ -1682,8 +1676,12 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
 
   if (type === OFFICIAL) {
     if (course.certificateGenerationMode === MONTHLY) {
-      courseData.isMonthlyCertificateMode = true;
+      const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+      const PRI_SUBPROGRAM_IDS = process.env.PRI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
+      courseData.certificateGenerationModeIsMonthly = true;
       courseData.isAbandoned = !!course.isAbandoned;
+      courseData.isVAEISubProgram = UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, courseData.subProgramId);
+      courseData.isPRISubProgram = UtilsHelper.doesArrayIncludeId(PRI_SUBPROGRAM_IDS, courseData.subProgramId);
 
       const monthlyGlobalCertificateData = await Promise.all(
         traineeList.map(async (trainee) => {
