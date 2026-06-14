@@ -1466,7 +1466,7 @@ const computeVAESupportDuration = async (course, traineeId, credentials) => {
     .add(`P${vaeSupportConfig.offsetMonths}M`)
     .toISO();
 
-  if (CompaniDate().isBefore(vaeSupportStartMonth) || !!isAbandoned) return 0;
+  if (CompaniDate().isBefore(vaeSupportStartMonth) || isAbandoned) return 0;
 
   const ccsWithVAE = await CompletionCertificate
     .find(
@@ -1514,7 +1514,7 @@ exports.generateOfficialCompletionCertificatePdf = async (courseData, courseAtte
     courseData.steps,
     courseData.subProgramId,
     courseData.companyNamesById,
-    courseData.monthlyGlobalCertificateData[trainee._id].vaeSupportDuration
+    courseData.monthlyGlobalCertificateData && courseData.monthlyGlobalCertificateData[trainee._id].vaeSupportDuration
   );
 
   const pdf = await CompletionCertificatePdf.getPdf(
