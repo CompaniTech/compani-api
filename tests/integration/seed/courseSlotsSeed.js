@@ -228,6 +228,7 @@ const courseSlotsList = [
       fullAddress: '37 rue de Ponthieu 75008 Paris',
       location: { type: 'Point', coordinates: [2.0987, 1.2345] },
     },
+    trainers: [trainer._id],
   },
   { // 1
     _id: new ObjectId(),
@@ -236,6 +237,7 @@ const courseSlotsList = [
     course: coursesList[0]._id,
     step: stepsList[0]._id,
     trainees: [auxiliary._id],
+    trainers: [trainer._id],
   },
   { // 2
     _id: new ObjectId(),
@@ -243,6 +245,7 @@ const courseSlotsList = [
     endDate: '2020-03-10T16:00:00',
     course: coursesList[0]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   { // 3
     _id: new ObjectId(),
@@ -266,6 +269,7 @@ const courseSlotsList = [
     endDate: '2020-05-10T12:00:00',
     course: coursesList[2]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   { // 6 slot to plan
     _id: new ObjectId(),
@@ -278,6 +282,7 @@ const courseSlotsList = [
     endDate: '2020-05-10T12:00:00',
     course: coursesList[0]._id,
     step: stepsList[1]._id,
+    trainers: [trainer._id],
   },
   { // 8 remote slot with meetingLink
     _id: new ObjectId(),
@@ -285,6 +290,7 @@ const courseSlotsList = [
     endDate: '2020-12-10T12:00:00',
     course: coursesList[0]._id,
     step: stepsList[4]._id,
+    trainers: [trainer._id],
     meetingLink: 'https://meet.google.com',
   },
   { // 9
@@ -292,6 +298,7 @@ const courseSlotsList = [
     startDate: '2020-04-10T09:00:00',
     endDate: '2020-04-10T12:00:00',
     course: coursesList[3]._id,
+    trainers: [trainer._id],
     step: stepsList[0]._id,
   },
   { // 10
@@ -300,6 +307,7 @@ const courseSlotsList = [
     endDate: '2020-04-10T12:00:00',
     course: coursesList[4]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   { // 11
     _id: new ObjectId(),
@@ -307,6 +315,7 @@ const courseSlotsList = [
     endDate: '2020-04-10T12:00:00',
     course: coursesList[5]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   { // 12 slot with attendance sheet
     _id: new ObjectId(),
@@ -339,6 +348,7 @@ const courseSlotsList = [
     endDate: '2020-06-13T12:00:00',
     course: coursesList[6]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   { // 16 slot with several trainers and only one trainerBill
     _id: new ObjectId(),

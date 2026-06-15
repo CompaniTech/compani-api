@@ -945,3 +945,27 @@ describe('getEnvObjectIds', () => {
     expect(result).toEqual(expect.arrayContaining([]));
   });
 });
+
+describe('getVAESupportConfigs', () => {
+  const subProgramId = new ObjectId();
+
+  beforeEach(() => {
+    process.env.VAE_SUPPORT_CONFIGS = `${subProgramId.toHexString()}:13:12,${new ObjectId().toHexString()}:1:10`;
+  });
+
+  afterEach(() => {
+    process.env.VAE_SUPPORT_CONFIGS = '';
+  });
+
+  it('should return subprogram VAE config', () => {
+    const result = UtilsHelper.getVAESupportConfigs(subProgramId);
+
+    expect(result).toEqual({ subProgramId, offsetMonths: 13, vaeDurationMinutes: 720 });
+  });
+
+  it('should return undefined if subprogram not defined', () => {
+    const result = UtilsHelper.getVAESupportConfigs(new ObjectId());
+
+    expect(result).toEqual(undefined);
+  });
+});

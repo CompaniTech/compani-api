@@ -1,6 +1,7 @@
+const { CompaniDuration } = require('../../helpers/dates/companiDurations');
 const FileHelper = require('../../helpers/file');
 const PdfHelper = require('../../helpers/pdf');
-const { COPPER_500, ORANGE_500, COPPER_50, CUSTOM } = require('../../helpers/constants');
+const { COPPER_500, ORANGE_500, COPPER_50, CUSTOM, SHORT_DURATION_H_MM } = require('../../helpers/constants');
 
 const getImages = async () => {
   const imageList = [
@@ -111,12 +112,12 @@ exports.getCustomPdfContent = async (data) => {
             ],
           }],
           [{ text: learningGoals, color: COPPER_500 }],
-          [{ text: 'Résultats de l’évaluation des acquis :', style: 'subTitle' }],
+          [{ text: 'Résultats de l\'évaluation des acquis :', style: 'subTitle' }],
           [{
             text: [
               'Les compétences et connaissances partagées lors de la formation ont été acquises par ',
               { text: trainee.identity, italics: true },
-              { text: ' et validées par un quiz d’acquisition de connaissances.' },
+              { text: ' et validées par un quiz d\'acquisition de connaissances.' },
             ],
             marginBottom: 32,
           }],
@@ -147,7 +148,7 @@ exports.getCustomPdfContent = async (data) => {
             { image: signature, width: 120, marginBottom: 24 },
             { text: 'Compani', style },
             { text: '24 avenue Daumesnil, 75012 Paris', style },
-            { text: 'Numéro SIRET : 90512399800015 | Numéro de déclaration d’activité : 11756363475', style },
+            { text: 'Numéro SIRET : 90512399800015 | Numéro de déclaration d\'activité : 11756363475', style },
             { text: `PAGE ${currentPage.toString()} / ${pageCount}`, style, alignment: 'right' },
           ],
           marginLeft: 40,
@@ -160,7 +161,7 @@ exports.getCustomPdfContent = async (data) => {
   };
 };
 
-const defineCheckbox = (xPos, yPos, label, isLargeProgramName, isChecked = false) => {
+const defineCheckbox = (xPos, yPos, label, isLargeProgramName, isChecked = false, displayIndex = true) => {
   const yPosition = isLargeProgramName ? yPos + 14 : yPos;
 
   return [
@@ -168,7 +169,7 @@ const defineCheckbox = (xPos, yPos, label, isLargeProgramName, isChecked = false
     {
       text: [
         { text: isChecked ? '√' : '', position: { x: xPos, y: yPosition }, marginRight: 4 },
-        { text: [{ text: label }, { text: isChecked ? ' 1' : '', fontSize: 8, bold: true }] },
+        { text: [{ text: label }, { text: isChecked && displayIndex ? ' 1' : '', fontSize: 8, bold: true }] },
       ],
       marginBottom: 4,
       marginLeft: isChecked ? 20 : 32,
@@ -188,10 +189,15 @@ exports.getOfficialPdfContent = async (data) => {
     isPRISubProgram = false,
     certificateGenerationModeIsMonthly = false,
     vaeSupportData = null,
+    monthlyGlobalCertificateData = null,
+    isAbandoned = false,
   } = data;
   const traineeDuration = duration[trainee._id] || {};
   const isLargeProgramName = programName.length > 60;
   const hasELearningStep = duration.eLearning !== '0h';
+
+  const attendancesByStep = monthlyGlobalCertificateData?.attendancesByStep || [];
+  const vaeSupportDuration = monthlyGlobalCertificateData?.vaeSupportDuration || null;
 
   const imageList = [
     { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
@@ -202,33 +208,47 @@ exports.getOfficialPdfContent = async (data) => {
 
   const header = [
     { columns: [{ image: logo, width: 60 }, {}, { image: compani, width: 130 }], marginBottom: 24 },
-    { text: 'CERTIFICAT DE RÉALISATION', style: 'title', alignment: 'center', marginBottom: 24 },
+    {
+      text: `CERTIFICAT DE RÉALISATION${monthlyGlobalCertificateData ? ' FINAL' : ''}`,
+      style: 'title',
+      alignment: 'center',
+      marginBottom: 24,
+    },
   ];
 
   const durationContent = [{ text: 'pour une durée de ', bold: true }];
-  if (certificateGenerationModeIsMonthly) {
+  if (monthlyGlobalCertificateData) {
+    durationContent[0] = {
+      text: `soit ${trainee.attendanceDuration} de cours pédagogique à distance et en présentiel, et `
+        + `${vaeSupportDuration
+          ? `${CompaniDuration({ minutes: vaeSupportDuration }).format(SHORT_DURATION_H_MM)} d'accompagnement VAE, et `
+          : ''}`
+        + `${trainee.eLearningDuration} de cours pédagogique à distance sur l'application Compani.`,
+      italics: true,
+    };
+  } else if (certificateGenerationModeIsMonthly) {
     if (!vaeSupportData) {
       durationContent.push({
-        text: `${trainee.attendanceDuration} d’accompagnement à distance et en présentiel, et `
-          + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
+        text: `${trainee.attendanceDuration} d'accompagnement à distance et en présentiel, et `
+          + `${trainee.eLearningDuration} d'enseignement à distance sur l'application Compani. `
           + `${isVAEISubProgram || isPRISubProgram
             ? 'Ce certificat est lié à une facture de frais pédagogiques.'
             : ''}`,
-        italic: true,
+        italics: true,
       });
     } else if (vaeSupportData.regularDuration) {
       durationContent.push({
-        text: `${vaeSupportData.regularDuration} d’accompagnement à distance et en présentiel, `
-          + `${vaeSupportData.vaeDuration} d’accompagnement VAE, et `
-          + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
-          + 'Ce certificat est lié à une facture de frais pédagogiques et d’accompagnement VAE',
+        text: `${vaeSupportData.regularDuration} d'accompagnement à distance et en présentiel, `
+          + `${vaeSupportData.vaeDuration} d'accompagnement VAE, et `
+          + `${trainee.eLearningDuration} d'enseignement à distance sur l'application Compani. `
+          + 'Ce certificat est lié à une facture de frais pédagogiques et d\'accompagnement VAE',
         italics: true,
       });
     } else {
       durationContent.push({
-        text: `${vaeSupportData.vaeDuration} d’accompagnement VAE, et `
-          + `${trainee.eLearningDuration} d’enseignement à distance sur l’application Compani. `
-          + 'Ce certificat est lié à une facture de frais pédagogiques et d’accompagnement VAE',
+        text: `${vaeSupportData.vaeDuration} d'accompagnement VAE, et `
+          + `${trainee.eLearningDuration} d'enseignement à distance sur l'application Compani. `
+          + 'Ce certificat est lié à une facture de frais pédagogiques et d\'accompagnement VAE',
         italics: true,
       });
     }
@@ -243,6 +263,75 @@ exports.getOfficialPdfContent = async (data) => {
       text: `${trainee.attendanceDuration} en formation présentielle sur ${traineeDuration.total} prévues. `,
       italics: true,
     });
+  }
+
+  let actionDetailsSection;
+  if (monthlyGlobalCertificateData) {
+    const vaeSupportLine = vaeSupportDuration
+      ? [{
+        text: `Accompagnement VAE : ${CompaniDuration({ minutes: vaeSupportDuration }).format(SHORT_DURATION_H_MM)}`,
+        marginLeft: 8,
+        marginBottom: 4,
+      }]
+      : [];
+    let natureLabel;
+    if (isVAEISubProgram) natureLabel = 'action de VAE Inversée';
+    else if (isPRISubProgram) natureLabel = 'action de Période de Reconversion Interne';
+    else if (vaeSupportDuration) natureLabel = 'action de VAE';
+    else natureLabel = 'action de formation';
+    actionDetailsSection = [
+      {
+        text: [{ text: 'Nature de l\'action :', bold: true }, { text: ` ${natureLabel}`, italics: true }],
+        marginLeft: 4,
+        marginBottom: 8,
+      },
+      {
+        text: [
+          { text: 'qui s\'est déroulée du ', bold: true },
+          { text: `${startDate} `, italics: true },
+          { text: 'au ', bold: true },
+          { text: `${endDate}`, italics: true },
+        ],
+        marginLeft: 4,
+        marginBottom: 8,
+      },
+      { text: [{ text: 'Motif de fin de formation :', bold: true }], marginLeft: 4, marginBottom: 4 },
+      ...defineCheckbox(59, 350, ' Parcours terminé', isLargeProgramName, !isAbandoned, false),
+      ...defineCheckbox(59, 368, ' Abandon en cours de parcours', isLargeProgramName, !!isAbandoned, false),
+      { text: [{ text: 'Total des heures :', bold: true }], marginLeft: 4, marginBottom: 4, marginTop: 4 },
+      ...attendancesByStep.map(({ stepName, duration: stepDuration }) => ({
+        text: `${stepName} : ${stepDuration}`,
+        marginLeft: 8,
+        marginBottom: 4,
+      })),
+      ...vaeSupportLine,
+      { text: `E-learning : ${trainee.eLearningDuration}`, marginLeft: 8, marginBottom: 8 },
+    ];
+  } else {
+    actionDetailsSection = [
+      {
+        text: [{ text: 'Nature de l\'action concourant au développement des compétences :', bold: true }],
+        marginLeft: 4,
+        marginBottom: 4,
+      },
+      ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, !(isVAEISubProgram || isPRISubProgram)),
+      ...defineCheckbox(59, 324, ' bilan de compétences', isLargeProgramName),
+      ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName, !!vaeSupportData),
+      ...defineCheckbox(59, 361, ' action de formation par apprentissage', isLargeProgramName),
+      ...defineCheckbox(59, 380, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
+      ...defineCheckbox(59, 398, ' action de Période de Reconversion Interne', isLargeProgramName, isPRISubProgram),
+      {
+        text: [
+          { text: 'qui s\'est déroulée du ', bold: true },
+          { text: `${startDate} `, italics: true },
+          { text: 'au ', bold: true },
+          { text: `${endDate}`, italics: true },
+        ],
+        marginLeft: 4,
+        marginBottom: 8,
+        marginTop: 4,
+      },
+    ];
   }
 
   const body = [
@@ -273,36 +362,22 @@ exports.getOfficialPdfContent = async (data) => {
       marginLeft: 4,
       marginBottom: 8,
     },
-    {
-      text: [{ text: 'Nature de l\'action concourant au développement des compétences :', bold: true }],
-      marginLeft: 4,
-      marginBottom: 4,
-    },
-    ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, !(isVAEISubProgram || isPRISubProgram)),
-    ...defineCheckbox(59, 324, ' bilan de compétences', isLargeProgramName),
-    ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName, !!vaeSupportData),
-    ...defineCheckbox(59, 361, ' action de formation par apprentissage', isLargeProgramName),
-    ...defineCheckbox(59, 380, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
-    ...defineCheckbox(59, 398, ' action de Période de Reconversion Interne', isLargeProgramName, isPRISubProgram),
+    ...actionDetailsSection,
     {
       text: [
-        { text: 'qui s\'est déroulée du ', bold: true },
-        { text: `${startDate} `, italics: true },
-        { text: 'au ', bold: true },
-        { text: `${endDate}`, italics: true },
+        { text: durationContent },
+        ...!monthlyGlobalCertificateData ? [{ text: '2', fontSize: 8, bold: true }] : [],
       ],
-      marginLeft: 4,
       marginBottom: 8,
-      marginTop: 4,
+      marginLeft: 4,
     },
-    { text: [{ text: durationContent }, { text: '2', fontSize: 8, bold: true }], marginBottom: 8, marginLeft: 4 },
-    {
+    ...!monthlyGlobalCertificateData ? [{
       text: 'Sans préjudice des délais imposés par les règles fiscales, comptables ou commerciales, je m\'engage à '
       + 'conserver l\'ensemble des pièces justificatives qui ont permis d\'établir le présent certificat pendant une '
       + 'durée de 3 ans à compter de la fin de l\'année du dernier paiement. En cas de cofinancement des fonds '
       + 'européens la durée de conservation est étendue conformément aux obligations conventionnelles spécifiques.',
       alignment: 'justify',
-    },
+    }] : [],
   ];
 
   const footer = [
@@ -346,7 +421,7 @@ exports.getOfficialPdfContent = async (data) => {
       marginRight: 40,
       absolutePosition: { x: 37, y: 583 },
     },
-    {
+    ...!monthlyGlobalCertificateData ? [{
       text: [
         { text: '1 ', fontSize: 8 },
         {
@@ -364,7 +439,8 @@ exports.getOfficialPdfContent = async (data) => {
       marginRight: 40,
       marginTop: 8,
       fontSize: 11,
-    },
+    }]
+      : [],
   ];
 
   return {

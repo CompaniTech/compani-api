@@ -91,7 +91,8 @@ const SinonMongoose = require('../sinonMongoose');
 const InterAttendanceSheet = require('../../../src/data/pdf/attendanceSheet/interAttendanceSheet');
 const IntraAttendanceSheet = require('../../../src/data/pdf/attendanceSheet/intraAttendanceSheet');
 const CourseConvocation = require('../../../src/data/pdf/courseConvocation');
-const CompletionCertificate = require('../../../src/data/pdf/completionCertificate');
+const CompletionCertificatePdf = require('../../../src/data/pdf/completionCertificate');
+const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const TrainingContractPdf = require('../../../src/data/pdf/trainingContract');
 const QuestionnaireHistory = require('../../../src/models/QuestionnaireHistory');
 const TrainerMission = require('../../../src/models/TrainerMission');
@@ -4915,7 +4916,7 @@ describe('updateCourse', () => {
       [
         {
           query: 'findOneAndUpdate',
-          args: [{ _id: courseId }, { $unset: { archivedAt: '' } }],
+          args: [{ _id: courseId }, { $unset: { archivedAt: '', isAbandoned: '' } }],
         },
         { query: 'lean' },
       ]
@@ -6420,7 +6421,11 @@ describe('generateCompletionCertificates', () => {
   let tmpDir;
   let getPdf;
   let getCompanyAtCourseRegistrationList;
+  let completionCertificateFind;
+  let getVAESupportConfigs;
   const REAL_ELEARNING_DURATION_SUBPROGRAM_ID = new ObjectId();
+  const PRI_SUBPROGRAM_IDS = new ObjectId();
+  const COACHING_STEP_ID = new ObjectId();
 
   beforeEach(() => {
     courseFindOne = sinon.stub(Course, 'findOne');
@@ -6435,10 +6440,15 @@ describe('generateCompletionCertificates', () => {
     createReadStream = sinon.stub(fs, 'createReadStream');
     downloadFileById = sinon.stub(Drive, 'downloadFileById');
     tmpDir = sinon.stub(os, 'tmpdir').returns('/path');
-    getPdf = sinon.stub(CompletionCertificate, 'getPdf');
+    getPdf = sinon.stub(CompletionCertificatePdf, 'getPdf');
     getCompanyAtCourseRegistrationList = sinon
       .stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
+    completionCertificateFind = sinon.stub(CompletionCertificate, 'find');
+    getVAESupportConfigs = sinon.stub(UtilsHelper, 'getVAESupportConfigs');
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
+    process.env.VAEI_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
+    process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS;
+    process.env.COACHING_STEP_IDS = COACHING_STEP_ID;
   });
   afterEach(() => {
     courseFindOne.restore();
@@ -6455,7 +6465,12 @@ describe('generateCompletionCertificates', () => {
     tmpDir.restore();
     getPdf.restore();
     getCompanyAtCourseRegistrationList.restore();
+    completionCertificateFind.restore();
+    getVAESupportConfigs.restore();
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = '';
+    process.env.VAEI_SUBPROGRAM_IDS = '';
+    process.env.PRI_SUBPROGRAM_IDS = '';
+    process.env.COACHING_STEP_IDS = '';
   });
 
   it(`should download custom completion certificates from webapp (word with eLearning and
@@ -6681,7 +6696,14 @@ describe('generateCompletionCertificates', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees step',
+            populate: { path: 'step', select: 'name' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -6692,8 +6714,7 @@ describe('generateCompletionCertificates', () => {
               { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
-                select: 'type theoreticalDuration',
-                match: { type: E_LEARNING },
+                select: 'type theoreticalDuration name',
                 populate: {
                   path: 'activities',
                   populate: { path: 'activityHistories', match: { user: { $in: traineesIds } } },
@@ -6938,7 +6959,14 @@ describe('generateCompletionCertificates', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees step',
+            populate: { path: 'step', select: 'name' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -6949,8 +6977,7 @@ describe('generateCompletionCertificates', () => {
               { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
-                select: 'type theoreticalDuration',
-                match: { type: E_LEARNING },
+                select: 'type theoreticalDuration name',
                 populate: {
                   path: 'activities',
                   populate: { path: 'activityHistories', match: { user: { $in: traineesIds } } },
@@ -7232,7 +7259,14 @@ describe('generateCompletionCertificates', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees step',
+            populate: { path: 'step', select: 'name' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -7243,8 +7277,7 @@ describe('generateCompletionCertificates', () => {
               { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
-                select: 'type theoreticalDuration',
-                match: { type: E_LEARNING },
+                select: 'type theoreticalDuration name',
                 populate: {
                   path: 'activities',
                   populate: { path: 'activityHistories', match: { user: { $in: traineesIds } } },
@@ -7509,7 +7542,14 @@ describe('generateCompletionCertificates', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees step',
+            populate: { path: 'step', select: 'name' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -7520,8 +7560,7 @@ describe('generateCompletionCertificates', () => {
               { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
-                select: 'type theoreticalDuration',
-                match: { type: E_LEARNING },
+                select: 'type theoreticalDuration name',
                 populate: {
                   path: 'activities',
                   populate: { path: 'activityHistories', match: { user: { $in: traineesIds } } },
@@ -7754,7 +7793,14 @@ describe('generateCompletionCertificates', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees step',
+            populate: { path: 'step', select: 'name' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -7765,8 +7811,7 @@ describe('generateCompletionCertificates', () => {
               { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
-                select: 'type theoreticalDuration',
-                match: { type: E_LEARNING },
+                select: 'type theoreticalDuration name',
                 populate: {
                   path: 'activities',
                   populate: { path: 'activityHistories', match: { user: { $in: traineesIds } } },
@@ -7946,7 +7991,14 @@ describe('generateCompletionCertificates', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees step',
+            populate: { path: 'step', select: 'name' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -7957,8 +8009,7 @@ describe('generateCompletionCertificates', () => {
               { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
-                select: 'type theoreticalDuration',
-                match: { type: E_LEARNING },
+                select: 'type theoreticalDuration name',
                 populate: {
                   path: 'activities',
                   populate: { path: 'activityHistories', match: { user: { $in: traineesIds } } },
@@ -8257,7 +8308,14 @@ describe('generateCompletionCertificates', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees step',
+            populate: { path: 'step', select: 'name' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -8268,8 +8326,7 @@ describe('generateCompletionCertificates', () => {
               { path: 'program', select: 'learningGoals subPrograms' },
               {
                 path: 'steps',
-                select: 'type theoreticalDuration',
-                match: { type: E_LEARNING },
+                select: 'type theoreticalDuration name',
                 populate: {
                   path: 'activities',
                   populate: { path: 'activityHistories', match: { user: { $in: traineesIds } } },
@@ -8338,6 +8395,305 @@ describe('generateCompletionCertificates', () => {
       }
     );
     sinon.assert.notCalled(getPdf);
+  });
+
+  it('should download global completion certificates (monthly mode course)', async () => {
+    const companyId = new ObjectId();
+    const credentials = { _id: new ObjectId(), role: { vendor: { name: VENDOR_ADMIN } }, company: { _id: companyId } };
+    const courseId = new ObjectId();
+    const traineesIds = [new ObjectId(), new ObjectId()];
+    const stepIds = [COACHING_STEP_ID, new ObjectId()];
+    const slotIds = [new ObjectId(), new ObjectId()];
+    const steps = [
+      { _id: stepIds[0], name: 'Coaching individuel', type: ON_SITE },
+      { _id: stepIds[1], name: 'Réunions tripartites', type: ON_SITE },
+    ];
+    const course = {
+      _id: courseId,
+      certificateGenerationMode: MONTHLY,
+      isAbandoned: false,
+      trainees: [
+        { _id: traineesIds[0], identity: { lastname: 'trainee 1' } },
+        { _id: traineesIds[1], identity: { lastname: 'trainee 2' } },
+      ],
+      companies: [{ _id: companyId, name: 'Structure 1' }],
+      subProgram: {
+        _id: REAL_ELEARNING_DURATION_SUBPROGRAM_ID,
+        program: { learningGoals: 'Apprendre', subPrograms: [REAL_ELEARNING_DURATION_SUBPROGRAM_ID] },
+        steps,
+      },
+      slots: [
+        {
+          _id: slotIds[0],
+          startDate: '2019-10-15T07:00:00.000Z',
+          endDate: '2019-10-15T10:00:00.000Z',
+          step: { _id: stepIds[0], name: 'Coaching individuel' },
+        },
+        {
+          _id: slotIds[1],
+          startDate: '2019-11-20T12:00:00.000Z',
+          endDate: '2019-11-20T13:30:00.000Z',
+          step: { _id: stepIds[1], name: 'Réunions tripartites' },
+        },
+      ],
+    };
+    const attendances = [
+      {
+        trainee: traineesIds[0],
+        courseSlot: { _id: slotIds[0], startDate: '2019-10-15T07:00:00.000Z', endDate: '2019-10-15T10:00:00.000Z' },
+      },
+      {
+        trainee: traineesIds[0],
+        courseSlot: { _id: slotIds[1], startDate: '2019-11-20T12:00:00.000Z', endDate: '2019-11-20T13:30:00.000Z' },
+      },
+      {
+        trainee: traineesIds[1],
+        courseSlot: { _id: slotIds[0], startDate: '2019-10-15T07:00:00.000Z', endDate: '2019-10-15T10:00:00.000Z' },
+      },
+    ];
+    const query = { format: ALL_PDF, type: OFFICIAL };
+    const courseData = {
+      duration: {
+        eLearning: '0h',
+        [traineesIds[0]]: { onSite: '4h30', total: '4h30' },
+        [traineesIds[1]]: { onSite: '3h', total: '3h' },
+      },
+      learningGoals: 'Apprendre',
+      subProgramId: REAL_ELEARNING_DURATION_SUBPROGRAM_ID,
+      programName: 'NOM DU PROGRAMME',
+      startDate: '15/10/2019',
+      endDate: '20/11/2019',
+      companyNamesById: { [companyId]: 'Structure 1' },
+      steps,
+    };
+
+    const completionCertificateWithRemainingMinutes = {
+      course: courseId,
+      trainee: traineesIds[0],
+      vaeSupportRemainingMinutes: 10,
+    };
+
+    attendanceFind.returns(SinonMongoose.stubChainedQueries(attendances, ['populate', 'setOptions', 'lean']));
+    courseFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries({ trainees: traineesIds }, ['lean']));
+    courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(course));
+    courseFind.returns(SinonMongoose.stubChainedQueries([]));
+    formatCourseForDocuments.returns(courseData);
+    getCompanyAtCourseRegistrationList.returns([
+      { trainee: traineesIds[0], company: companyId },
+      { trainee: traineesIds[1], company: companyId },
+    ]);
+    formatIdentity.onCall(0).returns('trainee 1');
+    formatIdentity.onCall(1).returns('trainee 2');
+    getTotalDuration.onCall(0).returns('PT16200S');
+    getTotalDuration.onCall(1).returns('PT10800S');
+    getPdf.onCall(0).returns('pdf 1');
+    getPdf.onCall(1).returns('pdf 2');
+    getVAESupportConfigs
+      .returns({ subProgramId: REAL_ELEARNING_DURATION_SUBPROGRAM_ID, offsetMonths: 2, vaeDurationMinutes: 120 });
+    completionCertificateFind.onCall(0)
+      .returns(SinonMongoose.stubChainedQueries([completionCertificateWithRemainingMinutes], ['setOptions', 'lean']));
+    completionCertificateFind.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
+
+    await CourseHelper.generateCompletionCertificates(courseId, credentials, query);
+
+    sinon.assert.calledOnceWithExactly(formatCourseForDocuments, course, OFFICIAL);
+    sinon.assert.calledWithExactly(formatIdentity.getCall(0), { lastname: 'trainee 1' }, 'FL');
+    sinon.assert.calledWithExactly(formatIdentity.getCall(1), { lastname: 'trainee 2' }, 'FL');
+    sinon.assert.calledWithExactly(
+      getTotalDuration.getCall(0),
+      [attendances[0].courseSlot, attendances[1].courseSlot],
+      false
+    );
+    sinon.assert.calledWithExactly(getTotalDuration.getCall(1), [attendances[2].courseSlot], false);
+    sinon.assert.calledWithExactly(getVAESupportConfigs.getCall(0), REAL_ELEARNING_DURATION_SUBPROGRAM_ID);
+    sinon.assert.calledWithExactly(getVAESupportConfigs.getCall(1), REAL_ELEARNING_DURATION_SUBPROGRAM_ID);
+    SinonMongoose.calledWithExactly(
+      completionCertificateFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: courseId, trainee: traineesIds[0], vaeSupportRemainingMinutes: { $exists: true } },
+            { vaeSupportRemainingMinutes: 1 },
+          ],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true, requestingOwnInfos: true }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      completionCertificateFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: courseId, trainee: traineesIds[1], vaeSupportRemainingMinutes: { $exists: true } },
+            { vaeSupportRemainingMinutes: 1 },
+          ],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true, requestingOwnInfos: true }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    sinon.assert.calledWithExactly(
+      getPdf.getCall(0),
+      {
+        duration: courseData.duration,
+        learningGoals: 'Apprendre',
+        subProgramId: REAL_ELEARNING_DURATION_SUBPROGRAM_ID,
+        programName: 'NOM DU PROGRAMME',
+        startDate: '15/10/2019',
+        endDate: '20/11/2019',
+        isVAEISubProgram: true,
+        isPRISubProgram: false,
+        isAbandoned: false,
+        trainee: {
+          _id: traineesIds[0],
+          identity: 'trainee 1',
+          attendanceDuration: '2h40',
+          companyName: 'Structure 1',
+          eLearningDuration: '0h',
+          totalDuration: '4h30',
+        },
+        date: '20/01/2020',
+        monthlyGlobalCertificateData: {
+          attendancesByStep: [
+            { stepName: 'Coaching individuel', duration: '1h10' },
+            { stepName: 'Réunions tripartites', duration: '1h30' },
+          ],
+          vaeSupportDuration: 110,
+        },
+      },
+      OFFICIAL
+    );
+    sinon.assert.calledWithExactly(
+      getPdf.getCall(1),
+      {
+        duration: courseData.duration,
+        learningGoals: 'Apprendre',
+        subProgramId: REAL_ELEARNING_DURATION_SUBPROGRAM_ID,
+        programName: 'NOM DU PROGRAMME',
+        startDate: '15/10/2019',
+        endDate: '20/11/2019',
+        isVAEISubProgram: true,
+        isPRISubProgram: false,
+        isAbandoned: false,
+        trainee: {
+          _id: traineesIds[1],
+          identity: 'trainee 2',
+          attendanceDuration: '1h',
+          companyName: 'Structure 1',
+          eLearningDuration: '0h',
+          totalDuration: '3h',
+        },
+        date: '20/01/2020',
+        monthlyGlobalCertificateData: {
+          attendancesByStep: [
+            { stepName: 'Coaching individuel', duration: '1h' },
+          ],
+          vaeSupportDuration: 120,
+        },
+      },
+      OFFICIAL
+    );
+    sinon.assert.calledOnceWithExactly(
+      generateZip,
+      'certificats_pdf.zip',
+      [{ name: 'Certificat - trainee 1.pdf', file: 'pdf 1' }, { name: 'Certificat - trainee 2.pdf', file: 'pdf 2' }]
+    );
+    SinonMongoose.calledWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { trainees: 1 }] }, { query: 'lean' }],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ _id: courseId }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees step',
+            populate: { path: 'step', select: 'name' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'subProgram',
+            select: 'program steps',
+            populate: [
+              { path: 'program', select: 'learningGoals subPrograms' },
+              {
+                path: 'steps',
+                select: 'type theoreticalDuration name',
+                populate: {
+                  path: 'activities',
+                  populate: { path: 'activityHistories', match: { user: { $in: traineesIds } } },
+                },
+              },
+            ],
+          }],
+        },
+        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $ne: courseId },
+            format: BLENDED,
+            subProgram: { $in: [REAL_ELEARNING_DURATION_SUBPROGRAM_ID] },
+            companies: { $in: [companyId] },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'attendances startDate endDate',
+            populate: {
+              path: 'attendances',
+              match: {
+                status: PRESENT,
+                company: { $in: [companyId] },
+                trainee: { $in: traineesIds },
+              },
+              options: { isVendorUser: true },
+            },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      attendanceFind,
+      [
+        {
+          query: 'find',
+          args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
+        },
+        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getCompanyAtCourseRegistrationList,
+      { key: COURSE, value: course._id },
+      { key: TRAINEE, value: course.trainees }
+    );
+    sinon.assert.notCalled(createDocx);
+    sinon.assert.notCalled(downloadFileById);
   });
 });
 

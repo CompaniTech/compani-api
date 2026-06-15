@@ -1657,8 +1657,14 @@ describe('SEEDS VERIFICATION', () => {
         });
 
         it('should pass if every slot trainer exists', () => {
-          const everyTrainerExists = courseSlotList.every(cs => !cs.trainers || cs.trainers.every(t => t._id));
+          const everyTrainerExists = courseSlotList
+            .every(cs => !cs.startDate || (cs.trainers && cs.trainers.every(t => t._id)));
           expect(everyTrainerExists).toBeTruthy();
+        });
+
+        it('should pass if no slot trainer for slot to plan', () => {
+          const noTrainerForSlotToPlan = courseSlotList.every(cs => cs.startDate || !cs.trainers);
+          expect(noTrainerForSlotToPlan).toBeTruthy();
         });
 
         it('should pass if every slot with trainerBill contains trainer and billNumber', () => {

@@ -105,6 +105,7 @@ const coursesList = [
     format: 'blended',
     subProgram: subProgramsList[0]._id,
     type: INTER_B2B,
+    trainers: [trainer._id],
     operationsRepresentative: vendorAdmin._id,
     trainees: [questionnaireHistoriesUsersList[0], questionnaireHistoriesUsersList[2]],
     companies: [authCompany._id],
@@ -204,18 +205,21 @@ const slots = [
     endDate: '2021-04-20T11:00:00.000Z',
     course: coursesList[0]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
   {
     startDate: '2021-04-22T14:00:00.000Z',
     endDate: '2021-04-22T18:00:00.000Z',
     course: coursesList[0]._id,
     step: stepsList[1]._id,
+    trainers: [trainer._id],
   },
   {
     startDate: '2021-04-22T14:00:00.000Z',
     endDate: '2021-04-22T18:00:00.000Z',
     course: coursesList[1]._id,
     step: stepsList[0]._id,
+    trainers: [trainer._id],
   },
 ];
 
