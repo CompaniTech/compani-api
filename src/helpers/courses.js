@@ -1456,8 +1456,10 @@ const computeAttendancesByStep = (traineeId, allAttendances, course, vaeSupportD
 };
 
 const computeVAESupportDuration = async (course, traineeId, credentials) => {
-  const { _id: courseId, subProgram, isAbandoned } = course;
+  const { _id: courseId, subProgram, isAbandoned, companies } = course;
   const { _id: subProgramId } = subProgram;
+  const companyIds = companies.map(c => c._id);
+  const requestingOwnCompanyInfos = UtilsHelper.doesArrayIncludeId(companyIds, credentials.company._id);
   const vaeSupportConfig = UtilsHelper.getVAESupportConfigs(subProgramId);
   if (!vaeSupportConfig) return 0;
 
@@ -1473,7 +1475,7 @@ const computeVAESupportDuration = async (course, traineeId, credentials) => {
       { course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $exists: true } },
       { vaeSupportRemainingMinutes: 1 }
     )
-    .setOptions({ isVendorUser: has(credentials, 'role.vendor.name') })
+    .setOptions({ isVendorUser: has(credentials, 'role.vendor.name'), requestingOwnInfos: requestingOwnCompanyInfos })
     .lean();
 
   if (!ccsWithVAE.length) return vaeSupportConfig.vaeDurationMinutes;

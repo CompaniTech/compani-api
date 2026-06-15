@@ -161,6 +161,7 @@ module.exports = {
     completionCertificatesCreated: 'Completion certificates created.',
     completionCertificateError: 'No attendance or activity history for the trainee this month.',
     completionCertificateDeleted: 'Completion certificate deleted.',
+    courseIsArchived: 'Forbidden: course is archived.',
     /* Course bill */
     courseBillsFound: 'Course bills found.',
     courseBillsNotFound: 'Course bills not found.',
@@ -496,6 +497,7 @@ module.exports = {
     completionCertificatesCreated: 'Certificats de réalisation créé.',
     completionCertificateError: 'Erreur : l\'apprenant n\'a ni émargé un créneau ni réalisé une activité sur le mois.',
     completionCertificateDeleted: 'Certificat de réalisation supprimé.',
+    courseIsArchived: 'Impossible : la formation est archivée.',
     /* Course bill */
     courseBillsFound: 'Factures de la formation trouvées.',
     courseBillsNotFound: 'Factures de la formation non trouvées.',

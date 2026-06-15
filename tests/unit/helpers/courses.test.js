@@ -8517,7 +8517,7 @@ describe('generateCompletionCertificates', () => {
             { vaeSupportRemainingMinutes: 1 },
           ],
         },
-        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'setOptions', args: [{ isVendorUser: true, requestingOwnInfos: true }] },
         { query: 'lean' },
       ],
       0
@@ -8532,7 +8532,7 @@ describe('generateCompletionCertificates', () => {
             { vaeSupportRemainingMinutes: 1 },
           ],
         },
-        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'setOptions', args: [{ isVendorUser: true, requestingOwnInfos: true }] },
         { query: 'lean' },
       ],
       1
