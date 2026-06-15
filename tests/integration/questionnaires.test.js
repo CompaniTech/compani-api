@@ -219,6 +219,16 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
 
       expect(response.statusCode).toBe(404);
     });
+
+    it('should return 400 if course timeline query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/questionnaires?course=${coursesList[0]._id}&courseTimeline=start_course`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
   });
 
   describe('NOT LOGGED', () => {
@@ -233,7 +243,7 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     it('should get all questionnaires', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: `/questionnaires?course=${coursesList[0]._id}`,
+        url: `/questionnaires?course=${coursesList[0]._id}&courseTimeline=start_course`,
       });
 
       expect(response.statusCode).toBe(200);
@@ -243,10 +253,19 @@ describe('QUESTIONNAIRES ROUTES - GET /questionnaires', () => {
     it('should return 403 if no course query', async () => {
       const response = await app.inject({
         method: 'GET',
-        url: '/questionnaires',
+        url: '/questionnaires?courseTimeline=start_course',
       });
 
       expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if no course timeline query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/questionnaires?course=${coursesList[0]._id}`,
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 

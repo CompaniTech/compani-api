@@ -294,6 +294,7 @@ const slotsList = [
     endDate: '2020-01-21T14:00:00.000Z',
     course: coursesList[0],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 2 - slot from other company's course
     _id: new ObjectId(),
@@ -301,6 +302,7 @@ const slotsList = [
     endDate: '2020-01-22T14:00:00.000Z',
     course: coursesList[2],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 3 - slot for coursesList[3]
     _id: new ObjectId(),
@@ -316,6 +318,7 @@ const slotsList = [
     endDate: '2020-01-24T14:00:00.000Z',
     course: coursesList[4],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 5 - slot for coursesList[5]
     _id: new ObjectId(),
@@ -323,6 +326,7 @@ const slotsList = [
     endDate: '2020-01-25T14:00:00.000Z',
     course: coursesList[5],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 6 - slot for coursesList[6]
     _id: new ObjectId(),
@@ -330,6 +334,7 @@ const slotsList = [
     endDate: '2020-01-25T14:00:00.000Z',
     course: coursesList[6],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 7 - slot for coursesList[7]
     _id: new ObjectId(),
@@ -337,6 +342,7 @@ const slotsList = [
     endDate: '2020-01-25T14:00:00.000Z',
     course: coursesList[7],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 8 - slot for coursesList[8]
     _id: new ObjectId(),
@@ -344,6 +350,7 @@ const slotsList = [
     endDate: '2020-01-25T14:00:00.000Z',
     course: coursesList[8],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 9 - slot for coursesList[9]
     _id: new ObjectId(),
@@ -351,6 +358,7 @@ const slotsList = [
     endDate: '2020-01-25T14:00:00.000Z',
     course: coursesList[9],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 10
     _id: new ObjectId(),
@@ -358,6 +366,7 @@ const slotsList = [
     endDate: '2020-01-25T14:00:00.000Z',
     course: coursesList[1],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 11
     _id: new ObjectId(),
@@ -365,6 +374,7 @@ const slotsList = [
     endDate: '2025-01-25T14:00:00.000Z',
     course: coursesList[10],
     step: steps[0]._id,
+    trainers: [trainer._id],
   },
   { // 12
     _id: new ObjectId(),
@@ -372,6 +382,7 @@ const slotsList = [
     endDate: '2025-02-25T14:00:00.000Z',
     course: coursesList[10],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 13
     _id: new ObjectId(),
@@ -379,6 +390,7 @@ const slotsList = [
     endDate: '2025-02-26T14:00:00.000Z',
     course: coursesList[10],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
   },
   { // 14
     _id: new ObjectId(),
@@ -386,6 +398,7 @@ const slotsList = [
     endDate: '2025-03-27T14:00:00.000Z',
     course: coursesList[10],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
     trainerBills: [{ trainer: trainer._id, billNumber: 'test' }],
   },
   { // 15
@@ -394,6 +407,7 @@ const slotsList = [
     endDate: '2025-03-27T17:00:00.000Z',
     course: coursesList[10],
     step: steps[0]._id,
+    trainers: [userList[0]._id],
     trainerBills: [{ trainer: trainer._id, billNumber: 'test' }],
   },
 ];

@@ -124,9 +124,6 @@ describe('COURSES ROUTES - POST /courses', () => {
       sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
         .returns({ sendMail: sinon.stub().returns('emailSent') });
       smsSend = sinon.stub(SmsHelper, 'send');
-      process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
-      process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
-      process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
     });
 
     afterEach(() => {
@@ -135,9 +132,6 @@ describe('COURSES ROUTES - POST /courses', () => {
       gsheetsWriteData.restore();
       sendinBlueTransporter.restore();
       smsSend.restore();
-      process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
-      process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
-      process.env.VAEI_SUBPROGRAM_IDS = '';
     });
 
     it('should create inter_b2b course', async () => {
@@ -1176,6 +1170,7 @@ describe('COURSES ROUTES - GET /courses', () => {
             course: coursesList[2]._id,
             step: { _id: expect.any(Object), type: ON_SITE },
             _id: expect.any(Object),
+            trainers: [trainer._id],
           },
           {
             startDate: CompaniDate('2025-03-04T08:00:00.000Z').toDate(),
@@ -1183,6 +1178,7 @@ describe('COURSES ROUTES - GET /courses', () => {
             course: coursesList[2]._id,
             step: { _id: expect.any(Object), type: ON_SITE },
             _id: expect.any(Object),
+            trainers: [trainer._id],
           },
         ],
         slotsToPlan: [
@@ -2157,6 +2153,27 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 400 if isAbandoned in payload but not archivedAt', async () => {
+      const payload = {
+        misc: ' new single course',
+        contact: trainer._id,
+        estimatedStartDate: '2024-11-12T10:00:00.000Z',
+        hasCertifyingTest: true,
+        expectedBillsCount: 3,
+        isAbandoned: false,
+        certifiedTrainees: [traineeFromAuthFormerlyInOther._id],
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[25]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 404 if course doesn\'t exist', async () => {
       const payload = { maxTrainees: 12 };
       const response = await app.inject({
@@ -2192,7 +2209,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
     });
 
     it('should archive a blended course', async () => {
-      const payload = { archivedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate() };
+      const payload = { archivedAt: CompaniDate('2020-03-25T09:00:00.000Z').toDate(), isAbandoned: true };
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[0]._id}`,
@@ -2202,7 +2219,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
 
-      const course = await Course.countDocuments({ _id: coursesList[0]._id, archivedAt: { $exists: true } });
+      const course = await Course
+        .countDocuments({ _id: coursesList[0]._id, archivedAt: { $exists: true }, isAbandoned: true });
 
       expect(course).toBeTruthy();
     });
@@ -4748,6 +4766,18 @@ describe('COURSES ROUTES - GET /{_id}/completion-certificates', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should return 200 if certificate is global certificate for monthly mode course', async () => {
+      authToken = await getTokenByCredentials(ROFAndCoach.local);
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/${coursesList[14]._id}/completion-certificates?format=${ALL_PDF}&type=${OFFICIAL}`
+        + `&isClientInterface=${true}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return 200 if user is also Coach and isClientInterface is true', async () => {
       authToken = await getTokenByCredentials(ROFAndCoach.local);
       const response = await app.inject({
@@ -5983,7 +6013,8 @@ describe('COURSES ROUTES - PUT /courses/{_id}/tutors', () => {
           'auxiliary@alenvi.io',
           'Trainee WITHEXPOTOKEN (TUTOR)',
           'nom',
-          'gSheetId'
+          'gSheetId',
+          subProgramsList[4]._id
         );
       sinon.assert.calledOnceWithExactly(
         gsheetsWriteData,
@@ -6973,9 +7004,6 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     gdriveCopy = sinon.stub(Gdrive, 'copy');
     gsheetsWriteData = sinon.stub(Gsheets, 'writeData');
     smsSend = sinon.stub(SmsHelper, 'send');
-    process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
-    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folderId';
-    process.env.VAEI_SUBPROGRAM_IDS = subProgramsList[4]._id.toHexString();
     process.env.MAX_CSV_COURSE_SIZE = 30;
   });
   afterEach(() => {
@@ -6987,9 +7015,6 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
     gdriveCopy.restore();
     gsheetsWriteData.restore();
     smsSend.restore();
-    process.env.GOOGLE_SHEET_TEMPLATE_ID = '';
-    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = '';
-    process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.MAX_CSV_COURSE_SIZE = 0;
   });
 

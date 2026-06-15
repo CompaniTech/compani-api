@@ -117,7 +117,7 @@ exports.authorizeCompletionCertificateFileDeletion = async (req) => {
 
   if (!completionCertificate) throw Boom.notFound();
 
-  if (completionCertificate.course.archivedAt) throw Boom.forbidden();
+  if (completionCertificate.course.archivedAt) throw Boom.forbidden(translate[language].courseIsArchived);
 
   if (!has(completionCertificate, 'file.publicId')) throw Boom.forbidden();
 

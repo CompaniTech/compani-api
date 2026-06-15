@@ -14,6 +14,7 @@ const CompletionCertificateSchema = mongoose.Schema({
     publicId: { type: String, required() { return !!this.file.link; } },
     link: { type: String, trim: true, required() { return !!this.file.publicId; } },
   },
+  vaeSupportRemainingMinutes: { type: Number },
 }, { timestamps: true });
 
 CompletionCertificateSchema.pre('find', validateQuery);

@@ -47,6 +47,7 @@ const CourseSchema = mongoose.Schema({
   companyRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   estimatedStartDate: { type: Date },
   archivedAt: { type: Date },
+  isAbandoned: { type: Boolean },
   maxTrainees: {
     type: Number,
     required() { return [INTRA, INTRA_HOLDING, SINGLE].includes(this.type); },

@@ -37,12 +37,12 @@ exports.createCourseFolderAndSheet = async ({
   traineeEmail,
   traineePhone,
   traineeCompany,
+  parentFolderId,
+  templateId,
   coach = null,
   architect = null,
 }) => {
-  const parentFolderId = process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID;
-  const templateId = process.env.GOOGLE_SHEET_TEMPLATE_ID;
-
+  if (!parentFolderId) throw Boom.failedDependency('Parent folder ID missing.');
   if (!templateId) throw Boom.failedDependency('Template sheet ID missing.');
 
   const documentsName = `${traineeName} (${traineeCompany})`;

@@ -354,7 +354,14 @@ const subProgramsList = [
   { _id: new ObjectId(), name: 'sous-programme 2', steps: [stepList[1]._id, stepList[2]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 3', steps: [stepList[1]._id], status: PUBLISHED },
   { _id: new ObjectId(), name: 'sous-programme 4 (non publié)', steps: [stepList[1]._id, stepList[2]._id] },
-  { _id: new ObjectId(), name: 'Subprogram 5', steps: [stepList[0]._id], status: PUBLISHED },
+  {
+    _id: new ObjectId(),
+    name: 'Subprogram 5',
+    steps: [stepList[0]._id],
+    status: PUBLISHED,
+    sheetTemplateId: 'templateId',
+    folderId: 'parent_folderId',
+  },
 ];
 
 const programsList = [
@@ -1192,6 +1199,7 @@ const slots = [
     endDate: '2020-03-01T10:00:00.000Z',
     course: coursesList[0]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 1
     _id: new ObjectId(),
@@ -1199,6 +1207,7 @@ const slots = [
     endDate: '2020-03-02T17:00:00.000Z',
     course: coursesList[0]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 2
     _id: new ObjectId(),
@@ -1206,6 +1215,7 @@ const slots = [
     endDate: '2020-03-03T10:00:00.000Z',
     course: coursesList[1]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 3
     _id: new ObjectId(),
@@ -1213,6 +1223,7 @@ const slots = [
     endDate: '2020-03-04T10:00:00.000Z',
     course: coursesList[1]._id,
     step: stepList[1]._id,
+    trainers: [trainer._id],
   },
   { // 4
     _id: new ObjectId(),
@@ -1220,6 +1231,7 @@ const slots = [
     endDate: '2020-03-04T10:00:00.000Z',
     course: coursesList[2]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 5
     _id: new ObjectId(),
@@ -1244,6 +1256,7 @@ const slots = [
       street: '37 rue de Ponthieu',
       location: { type: 'Point', coordinates: [2.377133, 48.801389] },
     },
+    trainers: [trainer._id],
   },
   { // 8
     _id: new ObjectId(),
@@ -1256,6 +1269,7 @@ const slots = [
     endDate: '2020-03-06T10:00:00.000Z',
     course: coursesList[5]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 10
     _id: new ObjectId(),
@@ -1269,6 +1283,7 @@ const slots = [
     course: coursesList[7]._id,
     step: stepList[0]._id,
     trainees: [auxiliary._id],
+    trainers: [trainer._id],
   },
   { // 12
     _id: new ObjectId(),
@@ -1276,6 +1291,7 @@ const slots = [
     endDate: '2020-03-10T10:00:00.000Z',
     course: coursesList[13]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 13
     _id: new ObjectId(),
@@ -1288,6 +1304,7 @@ const slots = [
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[19]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 15
     _id: new ObjectId(),
@@ -1295,6 +1312,7 @@ const slots = [
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[21]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 16
     _id: new ObjectId(),
@@ -1302,6 +1320,7 @@ const slots = [
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[22]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 17
     _id: new ObjectId(),
@@ -1309,6 +1328,7 @@ const slots = [
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[23]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 18
     _id: new ObjectId(),
@@ -1316,6 +1336,7 @@ const slots = [
     endDate: '2020-03-07T10:00:00.000Z',
     course: coursesList[24]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
   },
   { // 19
     _id: new ObjectId(),
@@ -1328,6 +1349,15 @@ const slots = [
     endDate: '2025-03-04T10:00:00.000Z',
     course: coursesList[2]._id,
     step: stepList[0]._id,
+    trainers: [trainer._id],
+  },
+  { // 21
+    _id: new ObjectId(),
+    startDate: '2020-03-04T08:00:00.000Z',
+    endDate: '2020-03-04T10:00:00.000Z',
+    course: coursesList[14]._id,
+    step: stepList[0]._id,
+    trainers: [trainer._id],
   },
 ];
 
@@ -1401,6 +1431,13 @@ const attendanceList = [
     courseSlot: slots[20]._id,
     company: authCompany._id,
     status: MISSING,
+  },
+  {
+    _id: new ObjectId(),
+    trainee: coach._id,
+    courseSlot: slots[21]._id,
+    company: authCompany._id,
+    status: PRESENT,
   },
 ];
 

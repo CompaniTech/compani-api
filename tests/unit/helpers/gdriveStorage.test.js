@@ -162,16 +162,12 @@ describe('createCourseFolderAndSheet', () => {
     add = sinon.stub(Gdrive, 'add');
     copy = sinon.stub(Gdrive, 'copy');
     writeData = sinon.stub(Gsheets, 'writeData');
-    process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID = 'parent_folder_id';
-    process.env.GOOGLE_SHEET_TEMPLATE_ID = 'templateId';
   });
 
   afterEach(() => {
     add.restore();
     copy.restore();
     writeData.restore();
-    delete process.env.GOOGLE_DRIVE_VAEI_FOLDER_ID;
-    delete process.env.GOOGLE_SHEET_TEMPLATE_ID;
   });
 
   it('should create a VAEI course folder and sheet and write data in it (with coach and architect)', async () => {
@@ -181,12 +177,22 @@ describe('createCourseFolderAndSheet', () => {
     const traineeCompany = 'Company';
     const coach = { name: 'Jean COACH', email: 'coach@compani.fr', phone: '+33123456789' };
     const architect = { name: 'Jill ARCHIE', email: 'architect@compani.fr', phone: '' };
+    const parentFolderId = 'parent_folder_id';
+    const templateId = 'templateId';
 
     add.returns({ id: 'folder_id' });
     copy.returns({ id: 'sheet_id' });
 
-    const result = await GDriveStorageHelper
-      .createCourseFolderAndSheet({ traineeName, traineeEmail, traineePhone, traineeCompany, coach, architect });
+    const result = await GDriveStorageHelper.createCourseFolderAndSheet({
+      traineeName,
+      traineeEmail,
+      traineePhone,
+      traineeCompany,
+      parentFolderId,
+      templateId,
+      coach,
+      architect,
+    });
 
     expect(result).toEqual({ folderId: 'folder_id', gSheetId: 'sheet_id' });
 
@@ -224,6 +230,8 @@ describe('createCourseFolderAndSheet', () => {
     const traineeEmail = 'toto.titi@compani.fr';
     const traineePhone = '+33612345678';
     const traineeCompany = 'Company';
+    const parentFolderId = 'parent_folder_id';
+    const templateId = 'templateId';
 
     add.returns({ id: 'folder_id' });
     copy.returns({ id: 'sheet_id' });
@@ -233,6 +241,8 @@ describe('createCourseFolderAndSheet', () => {
       traineeEmail,
       traineePhone,
       traineeCompany,
+      parentFolderId,
+      templateId,
       coach: null,
       architect: null,
     });

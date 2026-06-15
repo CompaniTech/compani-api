@@ -273,6 +273,8 @@ exports.plugin = {
             operationsRepresentative: Joi.objectId(),
             companyRepresentative: Joi.objectId(),
             archivedAt: Joi.date().allow(''),
+            isAbandoned: Joi.boolean()
+              .when('archivedAt', { is: Joi.date().required(), then: Joi.boolean(), otherwise: Joi.forbidden() }),
             estimatedStartDate: dateToISOString,
             maxTrainees: Joi.number().positive().integer(),
             expectedBillsCount: Joi.number().min(0).integer(),
