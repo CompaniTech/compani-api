@@ -53,7 +53,7 @@ describe('list', () => {
     ];
 
     findCompletionCertificates.returns(
-      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'sort', 'setOptions', 'lean'])
     );
 
     const result = await CompletionCertificatesHelper.list(query, credentials);
@@ -86,6 +86,7 @@ describe('list', () => {
             },
           ]],
         },
+        { query: 'sort', args: [{ createdAt: 1 }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
@@ -110,7 +111,7 @@ describe('list', () => {
     ];
 
     findCompletionCertificates.returns(
-      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'sort', 'setOptions', 'lean'])
     );
 
     const result = await CompletionCertificatesHelper.list(query, credentials);
@@ -143,6 +144,7 @@ describe('list', () => {
             },
           ]],
         },
+        { query: 'sort', args: [{ createdAt: 1 }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
@@ -178,7 +180,7 @@ describe('list', () => {
     ];
 
     findCompletionCertificates.returns(
-      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'sort', 'setOptions', 'lean'])
     );
 
     const query = { course: courseId };
@@ -198,6 +200,7 @@ describe('list', () => {
             populate: { path: 'company', populate: { path: 'company', select: ' _id' } },
           }]],
         },
+        { query: 'sort', args: [{ createdAt: 1 }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
@@ -232,7 +235,7 @@ describe('list', () => {
     ];
 
     findCompletionCertificates.returns(
-      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'sort', 'setOptions', 'lean'])
     );
 
     const query = { months: '08_2025', companies: companyIds[0] };
@@ -266,6 +269,7 @@ describe('list', () => {
             },
           ]],
         },
+        { query: 'sort', args: [{ createdAt: 1 }] },
         { query: 'setOptions', args: [{ isVendorUser: false, requestingOwnInfos: true }] },
         { query: 'lean' },
       ]
@@ -305,7 +309,7 @@ describe('list', () => {
     ];
 
     findCompletionCertificates.returns(
-      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'sort', 'setOptions', 'lean'])
     );
 
     const query = { months: '09_2025', companies: companyIds };
@@ -339,6 +343,7 @@ describe('list', () => {
             },
           ]],
         },
+        { query: 'sort', args: [{ createdAt: 1 }] },
         { query: 'setOptions', args: [{ isVendorUser: false, requestingOwnInfos: true }] },
         { query: 'lean' },
       ]
@@ -387,7 +392,7 @@ describe('list', () => {
     ];
 
     findCompletionCertificates.returns(
-      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'setOptions', 'lean'])
+      SinonMongoose.stubChainedQueries(completionCertificates, ['populate', 'sort', 'setOptions', 'lean'])
     );
 
     const query = { course: courseId, companies: companyIds[0] };
@@ -407,6 +412,7 @@ describe('list', () => {
             populate: { path: 'company', populate: { path: 'company', select: ' _id' } },
           }]],
         },
+        { query: 'sort', args: [{ createdAt: 1 }] },
         { query: 'setOptions', args: [{ isVendorUser: false, requestingOwnInfos: true }] },
         { query: 'lean' },
       ]
@@ -416,6 +422,7 @@ describe('list', () => {
 
 describe('generate', () => {
   let findOneCompletionCertificate;
+  let findCompletionCertificate;
   let findAttendance;
   let formatIdentity;
   let getPdf;
@@ -431,6 +438,7 @@ describe('generate', () => {
 
   beforeEach(() => {
     findOneCompletionCertificate = sinon.stub(CompletionCertificate, 'findOne');
+    findCompletionCertificate = sinon.stub(CompletionCertificate, 'find');
     findAttendance = sinon.stub(Attendance, 'find');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
     getPdf = sinon.stub(CompletionCertificatePdf, 'getPdf');
@@ -450,6 +458,7 @@ describe('generate', () => {
 
   afterEach(() => {
     findOneCompletionCertificate.restore();
+    findCompletionCertificate.restore();
     findAttendance.restore();
     formatIdentity.restore();
     getPdf.restore();
@@ -703,6 +712,7 @@ describe('generate', () => {
       { file: { publicId: '1234', link: 'tests/1234' } }
     );
     sinon.assert.notCalled(getRealELearningDuration);
+    sinon.assert.notCalled(findCompletionCertificate);
   });
 
   it('should generate completion certificate (with real elearning duration)', async () => {
@@ -924,6 +934,7 @@ describe('generate', () => {
       { file: { publicId: '1234', link: 'tests/1234' } }
     );
     sinon.assert.notCalled(getELearningDuration);
+    sinon.assert.notCalled(findCompletionCertificate);
   });
 
   it('should generate completion certificate in VAE period (attendance within remaining budget)', async () => {
@@ -1017,10 +1028,10 @@ describe('generate', () => {
       slots: slotsInOtherCourse,
     }];
 
-    findOneCompletionCertificate.onCall(0).returns(
+    findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
-    findOneCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
+    findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -1032,7 +1043,7 @@ describe('generate', () => {
 
     await CompletionCertificatesHelper.generate(completionCertificateId);
 
-    SinonMongoose.calledWithExactly(
+    SinonMongoose.calledOnceWithExactly(
       findOneCompletionCertificate,
       [
         { query: 'findOne', args: [{ _id: completionCertificateId }] },
@@ -1066,14 +1077,13 @@ describe('generate', () => {
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
-      ],
-      0
+      ]
     );
-    SinonMongoose.calledWithExactly(
-      findOneCompletionCertificate,
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificate,
       [
         {
-          query: 'findOne',
+          query: 'find',
           args: [
             {
               _id: { $ne: completionCertificateId },
@@ -1084,10 +1094,10 @@ describe('generate', () => {
             { vaeSupportRemainingMinutes: 1 },
           ],
         },
-        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'sort', args: [{ vaeSupportRemainingMinutes: 1 }] },
         { query: 'lean' },
-      ],
-      1
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       findAttendance,
@@ -1261,11 +1271,14 @@ describe('generate', () => {
       slots: slotsInOtherCourse,
     }];
 
-    findOneCompletionCertificate.onCall(0).returns(
+    findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
-    findOneCompletionCertificate.onCall(1).returns(
-      SinonMongoose.stubChainedQueries({ vaeSupportRemainingMinutes: 240 }, ['sort', 'lean'])
+    findCompletionCertificate.returns(
+      SinonMongoose.stubChainedQueries(
+        [{ vaeSupportRemainingMinutes: 240 }, { vaeSupportRemainingMinutes: 340 }],
+        ['setOptions', 'sort', 'lean']
+      )
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
@@ -1278,7 +1291,7 @@ describe('generate', () => {
 
     await CompletionCertificatesHelper.generate(completionCertificateId);
 
-    SinonMongoose.calledWithExactly(
+    SinonMongoose.calledOnceWithExactly(
       findOneCompletionCertificate,
       [
         { query: 'findOne', args: [{ _id: completionCertificateId }] },
@@ -1312,14 +1325,13 @@ describe('generate', () => {
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
-      ],
-      0
+      ]
     );
-    SinonMongoose.calledWithExactly(
-      findOneCompletionCertificate,
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificate,
       [
         {
-          query: 'findOne',
+          query: 'find',
           args: [
             {
               _id: { $ne: completionCertificateId },
@@ -1330,10 +1342,10 @@ describe('generate', () => {
             { vaeSupportRemainingMinutes: 1 },
           ],
         },
-        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'sort', args: [{ vaeSupportRemainingMinutes: 1 }] },
         { query: 'lean' },
-      ],
-      1
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       findAttendance,
@@ -1507,11 +1519,11 @@ describe('generate', () => {
       slots: slotsInOtherCourse,
     }];
 
-    findOneCompletionCertificate.onCall(0).returns(
+    findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
-    findOneCompletionCertificate.onCall(1).returns(
-      SinonMongoose.stubChainedQueries({ vaeSupportRemainingMinutes: 0 }, ['sort', 'lean'])
+    findCompletionCertificate.returns(
+      SinonMongoose.stubChainedQueries([{ vaeSupportRemainingMinutes: 0 }], ['setOptions', 'sort', 'lean'])
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
@@ -1524,7 +1536,7 @@ describe('generate', () => {
 
     await CompletionCertificatesHelper.generate(completionCertificateId);
 
-    SinonMongoose.calledWithExactly(
+    SinonMongoose.calledOnceWithExactly(
       findOneCompletionCertificate,
       [
         { query: 'findOne', args: [{ _id: completionCertificateId }] },
@@ -1558,14 +1570,13 @@ describe('generate', () => {
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
-      ],
-      0
+      ]
     );
-    SinonMongoose.calledWithExactly(
-      findOneCompletionCertificate,
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificate,
       [
         {
-          query: 'findOne',
+          query: 'find',
           args: [
             {
               _id: { $ne: completionCertificateId },
@@ -1576,10 +1587,10 @@ describe('generate', () => {
             { vaeSupportRemainingMinutes: 1 },
           ],
         },
-        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'sort', args: [{ vaeSupportRemainingMinutes: 1 }] },
         { query: 'lean' },
-      ],
-      1
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       findAttendance,
@@ -1684,16 +1695,22 @@ describe('create', () => {
 
 describe('deleteFile', () => {
   let findOne;
+  let find;
   let updateOne;
+  let updateMany;
   let deleteCourseFile;
   beforeEach(() => {
     findOne = sinon.stub(CompletionCertificate, 'findOne');
+    find = sinon.stub(CompletionCertificate, 'find');
     updateOne = sinon.stub(CompletionCertificate, 'updateOne');
+    updateMany = sinon.stub(CompletionCertificate, 'updateMany');
     deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
   });
   afterEach(() => {
     findOne.restore();
+    find.restore();
     updateOne.restore();
+    updateMany.restore();
     deleteCourseFile.restore();
   });
 
@@ -1720,5 +1737,55 @@ describe('deleteFile', () => {
       { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
     );
     sinon.assert.calledOnceWithExactly(deleteCourseFile, 'completionCertificateTest');
+    sinon.assert.notCalled(find);
+    sinon.assert.notCalled(updateMany);
+  });
+
+  it('should remove the file of a completion certificat', async () => {
+    const completionCertificateIds = [new ObjectId(), new ObjectId()];
+    const traineeId = new ObjectId();
+    const courseId = new ObjectId();
+    const completionCertificate = {
+      _id: completionCertificateIds[0],
+      trainee: traineeId,
+      course: courseId,
+      month: '03-2025',
+      file: { publicId: 'completionCertificateTest', link: 'test/completionCertificateTest' },
+      vaeSupportRemainingMinutes: 100,
+    };
+    const completionCertificatesWithRemaingMinutes = [{
+      _id: completionCertificateIds[1],
+      trainee: traineeId,
+      course: courseId,
+      month: '04-2025',
+      file: { publicId: 'completionCertificateTest_2', link: 'test/completionCertificateTest_2' },
+      vaeSupportRemainingMinutes: 0,
+    }];
+    findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['lean']));
+    find.returns(SinonMongoose.stubChainedQueries(completionCertificatesWithRemaingMinutes, ['setOptions', 'lean']));
+
+    await CompletionCertificatesHelper.deleteFile(completionCertificateIds[0]);
+
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [{ _id: completionCertificateIds[0] }] }, { query: 'lean' }]
+    );
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        { query: 'find', args: [{ course: courseId, trainee: traineeId, vaeSupportRemainingMinutes: { $lt: 100 } }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: completionCertificateIds } },
+      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+    );
+    sinon.assert.calledWithExactly(deleteCourseFile.getCall(0), 'completionCertificateTest');
+    sinon.assert.calledWithExactly(deleteCourseFile.getCall(1), 'completionCertificateTest_2');
+    sinon.assert.notCalled(updateOne);
   });
 });

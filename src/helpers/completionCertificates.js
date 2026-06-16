@@ -49,6 +49,7 @@ exports.list = async (query, credentials) => {
         populate: { path: 'company', populate: { path: 'company', select: ' _id' } },
       }]
     )
+    .sort({ createdAt: 1 })
     .setOptions({ isVendorUser: has(credentials, 'role.vendor.name'), ...(companies.length && { requestingOwnInfos }) })
     .lean();
 
@@ -170,8 +171,8 @@ exports.generate = async (completionCertificateId) => {
       .toISO();
 
     if (CompaniDate(startOfMonth).isSameOrAfter(vaeSupportStartMonth)) {
-      const lastCertificateWithVAESupport = await CompletionCertificate
-        .findOne(
+      const otherCertificatesWithVAESupport = await CompletionCertificate
+        .find(
           {
             _id: { $ne: completionCertificate._id },
             course: course._id,
@@ -180,8 +181,10 @@ exports.generate = async (completionCertificateId) => {
           },
           { vaeSupportRemainingMinutes: 1 }
         )
-        .sort({ createdAt: -1 })
+        .setOptions({ isVendorUser: true })
+        .sort({ vaeSupportRemainingMinutes: 1 })
         .lean();
+      const lastCertificateWithVAESupport = otherCertificatesWithVAESupport[0];
 
       if (!lastCertificateWithVAESupport || lastCertificateWithVAESupport.vaeSupportRemainingMinutes > 0) {
         const remainingMinutes = lastCertificateWithVAESupport
@@ -237,10 +240,26 @@ exports.create = async payload => CompletionCertificate.create(payload);
 
 exports.deleteFile = async (completionCertificateId) => {
   const completionCertificate = await CompletionCertificate.findOne({ _id: completionCertificateId }).lean();
-  await CompletionCertificate.updateOne(
-    { _id: completionCertificateId },
-    { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
-  );
+  if (completionCertificate.vaeSupportRemainingMinutes) {
+    const { course, trainee, vaeSupportRemainingMinutes } = completionCertificate;
+    const completionCertificateWithRemainingMinutes = await CompletionCertificate
+      .find({ course, trainee, vaeSupportRemainingMinutes: { $lt: vaeSupportRemainingMinutes } })
+      .setOptions({ isVendorUser: true })
+      .lean();
+    const certificateToDelete = [completionCertificate, ...completionCertificateWithRemainingMinutes];
+    await CompletionCertificate.updateMany(
+      { _id: { $in: certificateToDelete.map(c => c._id) } },
+      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+    );
+    for (const certificate of certificateToDelete) {
+      await GCloudStorageHelper.deleteCourseFile(certificate.file.publicId);
+    }
+  } else {
+    await CompletionCertificate.updateOne(
+      { _id: completionCertificateId },
+      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+    );
 
-  await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
+    await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
+  }
 };
