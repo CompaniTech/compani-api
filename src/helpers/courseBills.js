@@ -139,7 +139,9 @@ exports.list = async (query, credentials) => {
       .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
       .lean();
 
-    return courseBills.map(bill => ({ ...bill, netInclTaxes: exports.getNetInclTaxes(bill) }));
+    return courseBills
+      .map(bill => ({ ...bill, netInclTaxes: exports.getNetInclTaxes(bill) }))
+      .sort((a, b) => new Date(a.billedAt || a.maturityDate) - new Date(b.billedAt || b.maturityDate));
   }
 
   if (query.action === BALANCE) return balance(query.company, credentials);
