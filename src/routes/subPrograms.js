@@ -44,6 +44,16 @@ exports.plugin = {
                 .min(1)
                 .required(),
               effectiveDate: Joi.date().required(),
+            }),
+            Joi.object({
+              paymentPlan: Joi.object({
+                _id: Joi.objectId(),
+                prices: Joi.when('_id', {
+                  is: Joi.exist(),
+                  then: Joi.array().items(Joi.number().positive()),
+                  otherwise: Joi.array().items(Joi.number().positive()).min(1).required(),
+                }),
+              }).required(),
             })
           ),
         },
