@@ -590,7 +590,12 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       .populate({ path: 'payer.company', select: 'name bic iban debitMandates' })
       .populate({ path: 'payer.fundingOrganisation', select: 'name' })
       .populate({ path: 'courseCreditNote', select: 'number', options: { isVendorUser } })
-      .populate({ path: 'coursePayments', select: 'netInclTaxes nature status', options: { isVendorUser } })
+      .populate({
+        path: 'coursePayments',
+        select: 'netInclTaxes nature status',
+        options: { isVendorUser },
+        populate: { path: 'xmlSEPAFileInfos', select: 'name -coursePayments', options: { isVendorUser } },
+      })
       .setOptions({ isVendorUser })
       .lean(),
     CourseCreditNote
@@ -661,6 +666,8 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       'Montant réglé': bill.courseCreditNote
         ? UtilsHelper.formatFloatForExport(NumbersHelper.subtract(paid, netInclTaxes))
         : UtilsHelper.formatFloatForExport(paid),
+      'Lot de prélèvement': compact((bill.coursePayments || []).map(p => get(p, 'xmlSEPAFileInfos.name', '')))
+        .join(','),
       'Document lié': get(bill, 'courseCreditNote.number') || '',
       'Montant soldé': bill.courseCreditNote ? UtilsHelper.formatFloatForExport(netInclTaxes) : '',
       Solde: UtilsHelper.formatFloatForExport(total),
@@ -686,6 +693,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       Date: CompaniDate(creditNote.date).format(DD_MM_YYYY),
       ...commonInfos,
       'Montant réglé': '',
+      'Lot de prélèvement': '',
       'Document lié': creditNote.courseBill.number,
       'Montant soldé': '',
       Solde: '',
