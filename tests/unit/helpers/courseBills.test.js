@@ -92,19 +92,38 @@ describe('list', () => {
         company: { name: 'Company' },
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
+        maturityDate: '2021-11-11T08:00:00.000Z',
+      },
+      {
+        course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
+        company: { name: 'Company' },
+        mainFee: { price: 200, count: 2 },
+        payer: { name: 'Funder' },
+        billedAt: '2021-10-11T08:00:00.000Z',
       },
     ];
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
 
     const result = await CourseBillHelper.list({ course: courseId, action: LIST }, credentials);
 
-    expect(result).toEqual([{
-      course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
-      company: { name: 'Company' },
-      mainFee: { price: 120, count: 2 },
-      payer: { name: 'Funder' },
-      netInclTaxes: 240,
-    }]);
+    expect(result).toEqual([
+      {
+        course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
+        company: { name: 'Company' },
+        mainFee: { price: 200, count: 2 },
+        payer: { name: 'Funder' },
+        billedAt: '2021-10-11T08:00:00.000Z',
+        netInclTaxes: 400,
+      },
+      {
+        course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
+        company: { name: 'Company' },
+        mainFee: { price: 120, count: 2 },
+        payer: { name: 'Funder' },
+        maturityDate: '2021-11-11T08:00:00.000Z',
+        netInclTaxes: 240,
+      },
+    ]);
     SinonMongoose.calledOnceWithExactly(
       find,
       [
