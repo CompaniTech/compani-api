@@ -197,7 +197,7 @@ const downloadCompletionCertificates = async (req, h) => {
     }
 
     return h.response(data.file)
-      .header('content-disposition', `inline; filename=${data.name}.pdf`)
+      .header('content-disposition', `inline; filename=${encodeURIComponent(data.name)}`)
       .type('application/pdf');
   } catch (e) {
     req.log('error', e);
