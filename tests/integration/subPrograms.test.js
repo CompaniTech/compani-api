@@ -194,7 +194,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     });
 
     it('should update prices of an existing payment plan', async () => {
-      const payload = { paymentPlan: { _id: paymentPlanId, prices: [150, 250] } };
+      const payload = { paymentPlan: { paymentPlanId, prices: [150, 250] } };
 
       const response = await app.inject({
         method: 'PUT',
@@ -212,7 +212,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     });
 
     it('should delete an existing payment plan if prices is empty', async () => {
-      const payload = { paymentPlan: { _id: paymentPlanId, prices: [] } };
+      const payload = { paymentPlan: { paymentPlanId, prices: [] } };
 
       const response = await app.inject({
         method: 'PUT',
@@ -244,7 +244,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     });
 
     it('should return 404 if payment plan _id does not exist', async () => {
-      const payload = { paymentPlan: { _id: new ObjectId(), prices: [100] } };
+      const payload = { paymentPlan: { paymentPlanId: new ObjectId(), prices: [100] } };
 
       const response = await app.inject({
         method: 'PUT',

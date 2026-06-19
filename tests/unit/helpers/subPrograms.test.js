@@ -456,10 +456,10 @@ describe('updateSubProgram', () => {
       sinon.assert.notCalled(findOneAndUpdate);
     });
 
-    it('should update an existing payment plan if payload.paymentPlan has an _id and prices', async () => {
+    it('should update an existing payment plan if payload.paymentPlan has a paymentPlanId and prices', async () => {
       const subProgramId = new ObjectId();
       const paymentPlanId = new ObjectId();
-      const payload = { paymentPlan: { _id: paymentPlanId, prices: [150, 300] } };
+      const payload = { paymentPlan: { paymentPlanId, prices: [150, 300] } };
 
       await SubProgramHelper.updateSubProgram(subProgramId, payload);
 
@@ -473,10 +473,10 @@ describe('updateSubProgram', () => {
       sinon.assert.notCalled(findOneAndUpdate);
     });
 
-    it('should delete a payment plan if payload.paymentPlan has an _id and empty prices', async () => {
+    it('should delete a payment plan if payload.paymentPlan has a paymentPlanId and empty prices', async () => {
       const subProgramId = new ObjectId();
       const paymentPlanId = new ObjectId();
-      const payload = { paymentPlan: { _id: paymentPlanId, prices: [] } };
+      const payload = { paymentPlan: { paymentPlanId, prices: [] } };
 
       await SubProgramHelper.updateSubProgram(subProgramId, payload);
 

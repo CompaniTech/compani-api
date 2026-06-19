@@ -41,17 +41,17 @@ exports.updateSubProgram = async (subProgramId, payload) => {
   }
 
   if (payload.paymentPlan) {
-    const { _id, prices } = payload.paymentPlan;
+    const { paymentPlanId, prices } = payload.paymentPlan;
 
-    if (_id && prices.length) {
+    if (paymentPlanId && prices.length) {
       return SubProgram.updateOne(
-        { _id: subProgramId, 'paymentPlans._id': _id },
+        { _id: subProgramId, 'paymentPlans._id': paymentPlanId },
         { $set: { 'paymentPlans.$.prices': prices } }
       );
     }
 
-    if (_id && !prices.length) {
-      return SubProgram.updateOne({ _id: subProgramId }, { $pull: { paymentPlans: { _id } } });
+    if (paymentPlanId && !prices.length) {
+      return SubProgram.updateOne({ _id: subProgramId }, { $pull: { paymentPlans: { _id: paymentPlanId } } });
     }
 
     return SubProgram.updateOne({ _id: subProgramId }, { $push: { paymentPlans: { prices } } });
