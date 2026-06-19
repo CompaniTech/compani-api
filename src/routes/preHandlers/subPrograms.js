@@ -120,10 +120,10 @@ exports.authorizeSubProgramUpdate = async (req) => {
   if (req.payload.paymentPlan) {
     if (subProgram.status !== PUBLISHED) throw Boom.forbidden();
 
-    const { _id, prices } = req.payload.paymentPlan;
-    if (_id) {
+    const { paymentPlanId, prices } = req.payload.paymentPlan;
+    if (paymentPlanId) {
       const paymentPlanExists = UtilsHelper
-        .doesArrayIncludeId((subProgram.paymentPlans || []).map(pp => pp._id), _id);
+        .doesArrayIncludeId((subProgram.paymentPlans || []).map(pp => pp._id), paymentPlanId);
       if (!paymentPlanExists) throw Boom.notFound(translate[language].subProgramPaymentPlanNotFound);
     } else {
       const isDuplicate = (subProgram.paymentPlans || [])

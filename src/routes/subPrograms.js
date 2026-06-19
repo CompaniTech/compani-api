@@ -47,8 +47,8 @@ exports.plugin = {
             }),
             Joi.object({
               paymentPlan: Joi.object({
-                _id: Joi.objectId(),
-                prices: Joi.when('_id', {
+                paymentPlanId: Joi.objectId(),
+                prices: Joi.when('paymentPlanId', {
                   is: Joi.exist(),
                   then: Joi.array().items(Joi.number().positive()),
                   otherwise: Joi.array().items(Joi.number().positive()).min(1).required(),
