@@ -55,7 +55,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
   if (!subProgram) throw Boom.notFound();
 
-  if (subProgram.status !== DRAFT && !req.payload.prices && !req.payload.paymentPlan) throw Boom.forbidden();
+  if (subProgram.status !== DRAFT && !(req.payload.prices || req.payload.paymentPlan)) throw Boom.forbidden();
 
   if (req.payload.status === PUBLISHED && !subProgram.areStepsValid) throw Boom.forbidden();
 
