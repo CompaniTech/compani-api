@@ -818,7 +818,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
   const course = await Course.findOne({ _id: courseId })
     .populate({
       path: 'subProgram',
-      select: 'program steps',
+      select: 'program steps paymentPlans',
       populate: [
         { path: 'program', select: 'name image description learningGoals' },
         {

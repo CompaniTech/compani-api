@@ -319,9 +319,12 @@ exports.createBillList = async (payload) => {
         + `Nom de l'apprenant·e: ${traineeName} \r\n`
         + `Nom du / des intervenants: ${trainersName}`;
 
+      const mainFee = { ...payload.mainFee, description };
+      if (payload.prices) mainFee.price = payload.prices[i];
+
       await CourseBill.create({
-        ...omit(payload, ['quantity', 'maturityDate']),
-        mainFee: { ...payload.mainFee, description },
+        ...omit(payload, ['quantity', 'maturityDate', 'prices']),
+        mainFee,
         maturityDate: billMaturityDate.toISO(),
       });
     }
