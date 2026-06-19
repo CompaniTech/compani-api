@@ -66,6 +66,8 @@ exports.plugin = {
           payload: Joi.object({
             quantity: Joi.number().positive().strict().required(),
             course: Joi.objectId().required(),
+            prices: Joi.array().items(Joi.number().positive())
+              .when('quantity', { is: Joi.exist(), then: Joi.array().length(Joi.ref('quantity')) }),
             mainFee: Joi.object({
               price: Joi.number().positive(),
               percentage: Joi.number().positive().integer().max(100),
