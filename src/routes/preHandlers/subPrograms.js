@@ -125,11 +125,11 @@ exports.authorizeSubProgramUpdate = async (req) => {
       const paymentPlanExists = UtilsHelper
         .doesArrayIncludeId((subProgram.paymentPlans || []).map(pp => pp._id), paymentPlanId);
       if (!paymentPlanExists) throw Boom.notFound(translate[language].subProgramPaymentPlanNotFound);
-    } else {
-      const isDuplicate = (subProgram.paymentPlans || [])
-        .some(pp => pp.prices.length === prices.length && pp.prices.every((value, i) => value === prices[i]));
-      if (isDuplicate) throw Boom.forbidden(translate[language].subProgramPaymentPlanAlreadyExists);
     }
+    const isDuplicate = (subProgram.paymentPlans || [])
+      .some(pp => pp.prices.length === prices.length && !UtilsHelper.areObjectIdsEquals(pp._id, paymentPlanId) &&
+        pp.prices.every((value, i) => value === prices[i]));
+    if (isDuplicate) throw Boom.forbidden(translate[language].subProgramPaymentPlanAlreadyExists);
   }
 
   return null;
