@@ -40,6 +40,23 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     return null;
   }
 
+  if (payload.paymentPlan) {
+    const { paymentPlanId, prices } = payload.paymentPlan;
+
+    if (paymentPlanId && prices.length) {
+      return SubProgram.updateOne(
+        { _id: subProgramId, 'paymentPlans._id': paymentPlanId },
+        { $set: { 'paymentPlans.$.prices': prices } }
+      );
+    }
+
+    if (paymentPlanId && !prices.length) {
+      return SubProgram.updateOne({ _id: subProgramId }, { $pull: { paymentPlans: { _id: paymentPlanId } } });
+    }
+
+    return SubProgram.updateOne({ _id: subProgramId }, { $push: { paymentPlans: { prices } } });
+  }
+
   const subProgram = await SubProgram
     .findOneAndUpdate({ _id: subProgramId }, { $set: { status: payload.status } })
     .populate({ path: 'steps', select: 'activities type' })

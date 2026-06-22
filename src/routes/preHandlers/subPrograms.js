@@ -55,7 +55,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
   if (!subProgram) throw Boom.notFound();
 
-  if (subProgram.status !== DRAFT && !req.payload.prices) throw Boom.forbidden();
+  if (subProgram.status !== DRAFT && !(req.payload.prices || req.payload.paymentPlan)) throw Boom.forbidden();
 
   if (req.payload.status === PUBLISHED && !subProgram.areStepsValid) throw Boom.forbidden();
 
@@ -115,6 +115,21 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
       throw Boom.forbidden(message);
     }
+  }
+
+  if (req.payload.paymentPlan) {
+    if (subProgram.status !== PUBLISHED) throw Boom.forbidden();
+
+    const { paymentPlanId, prices } = req.payload.paymentPlan;
+    if (paymentPlanId) {
+      const paymentPlanExists = UtilsHelper
+        .doesArrayIncludeId((subProgram.paymentPlans || []).map(pp => pp._id), paymentPlanId);
+      if (!paymentPlanExists) throw Boom.notFound(translate[language].subProgramPaymentPlanNotFound);
+    }
+    const isDuplicate = (subProgram.paymentPlans || [])
+      .some(pp => pp.prices.length === prices.length && !UtilsHelper.areObjectIdsEquals(pp._id, paymentPlanId) &&
+        pp.prices.every((value, i) => value === prices[i]));
+    if (isDuplicate) throw Boom.forbidden(translate[language].subProgramPaymentPlanAlreadyExists);
   }
 
   return null;

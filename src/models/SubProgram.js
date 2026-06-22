@@ -22,6 +22,7 @@ const SubProgramSchema = mongoose.Schema({
     }],
     default: undefined,
   },
+  paymentPlans: { type: [{ prices: { type: [Number], required: true } }], default: undefined },
   sheetTemplateId: { type: String },
   folderId: { type: String },
 }, { timestamps: true, id: false });

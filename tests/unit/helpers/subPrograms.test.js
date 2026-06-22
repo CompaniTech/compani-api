@@ -438,6 +438,58 @@ describe('updateSubProgram', () => {
       sinon.assert.notCalled(findOneAndUpdate);
     });
   });
+
+  describe('update payment plan', () => {
+    it('should add a new payment plan if payload.paymentPlan has no _id', async () => {
+      const subProgramId = new ObjectId();
+      const payload = { paymentPlan: { prices: [100, 200] } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId },
+        { $push: { paymentPlans: { prices: [100, 200] } } }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should update an existing payment plan if payload.paymentPlan has a paymentPlanId and prices', async () => {
+      const subProgramId = new ObjectId();
+      const paymentPlanId = new ObjectId();
+      const payload = { paymentPlan: { paymentPlanId, prices: [150, 300] } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId, 'paymentPlans._id': paymentPlanId },
+        { $set: { 'paymentPlans.$.prices': [150, 300] } }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should delete a payment plan if payload.paymentPlan has a paymentPlanId and empty prices', async () => {
+      const subProgramId = new ObjectId();
+      const paymentPlanId = new ObjectId();
+      const payload = { paymentPlan: { paymentPlanId, prices: [] } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId },
+        { $pull: { paymentPlans: { _id: paymentPlanId } } }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+  });
 });
 
 describe('listELearningDraft', () => {

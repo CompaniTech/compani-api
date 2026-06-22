@@ -99,6 +99,8 @@ module.exports = {
     eLearningSubProgramAlreadyExists: 'A published eLearning sub-program already exists.',
     subProgramWrongPriceVersionDate: 'Forbidden: a version with a later effectiveDate exists.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Forbidden: a slot is paid after effectiveDate.',
+    subProgramPaymentPlanNotFound: 'This payment plan does not exist.',
+    subProgramPaymentPlanAlreadyExists: 'Forbidden: a payment plan with the same prices already exists.',
     /* Steps */
     stepUpdated: 'Step updated.',
     stepsFound: 'Steps found.',
@@ -434,6 +436,8 @@ module.exports = {
     eLearningSubProgramAlreadyExists: 'Un sous-programme eLearning publié existe déjà.',
     subProgramWrongPriceVersionDate: 'Impossible : une version avec une date d\'effet postérieure existe déjà.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Impossible: un créneau est noté réglé après la date d\'effet renseignée.',
+    subProgramPaymentPlanNotFound: 'Cet échéancier n\'existe pas.',
+    subProgramPaymentPlanAlreadyExists: 'Impossible : un échéancier avec les mêmes montants existe déjà.',
     /* Steps */
     stepsFound: 'Liste des étapes trouvée.',
     stepUpdated: 'Étape mise à jour.',
