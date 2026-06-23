@@ -474,7 +474,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         course: coursesList[15]._id,
         companies: [authCompany._id],
         maturityDate: '2025-04-29T22:00:00.000Z',
-        mainFee: { count: 1, countUnit: GROUP, description: 'test', price: 1200, percentage: 10 },
+        mainFee: { count: 1, countUnit: GROUP, description: 'test', prices: [1200], percentage: 10 },
         payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
       };
       const singleCoursePayload = {
@@ -482,7 +482,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         course: coursesList[12]._id,
         companies: [otherCompany._id],
         maturityDate: '2025-04-29T22:00:00.000Z',
-        mainFee: { count: 1, countUnit: TRAINEE, description: 'test', price: 1200 },
+        mainFee: { count: 1, countUnit: TRAINEE, description: 'test', prices: [1200] },
         payer: { fundingOrganisation: courseFundingOrganisationList[0]._id },
       };
 
@@ -512,7 +512,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           payload: {
             ...intraCoursePayload,
             course: coursesList[13]._id,
-            mainFee: { ...intraCoursePayload.mainFee, price: 200 },
+            mainFee: { ...intraCoursePayload.mainFee, prices: [200] },
           },
         });
 
@@ -584,7 +584,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
             ...intraCoursePayload,
             course: coursesList[13]._id,
             companies: [otherCompany._id, authCompany._id],
-            mainFee: { ...intraCoursePayload.mainFee, price: 2240, percentage: 70 },
+            mainFee: { ...intraCoursePayload.mainFee, prices: [2240], percentage: 70 },
           },
         });
 
@@ -595,7 +595,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         'course',
         'companies',
         'mainFee',
-        'mainFee.price',
+        'mainFee.prices',
         'mainFee.count',
         'payer',
         'mainFee.countUnit',
@@ -616,9 +616,9 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
       });
 
       const wrongValues = [
-        { key: 'price', value: -200 },
-        { key: 'price', value: 0 },
-        { key: 'price', value: '200€' },
+        { key: 'prices', value: [-200] },
+        { key: 'prices', value: [0] },
+        { key: 'prices', value: ['200€'] },
         { key: 'count', value: -200 },
         { key: 'count', value: 0 },
         { key: 'count', value: 1.23 },
@@ -891,7 +891,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload: { ...singleCoursePayload, prices: [1500, 2000] },
+          payload: { ...singleCoursePayload, mainFee: { ...singleCoursePayload.mainFee, prices: [1500, 2000] } },
         });
 
         expect(response.statusCode).toBe(200);
@@ -899,7 +899,9 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         const billsCountAfter = await CourseBill.countDocuments({ course: coursesList[12]._id });
         expect(billsCountAfter).toBe(billsCountBefore + 2);
 
-        const bills = await CourseBill.find({ course: coursesList[12]._id }, { mainFee: 1 })
+        const bills = await CourseBill
+          .find({ course: coursesList[12]._id }, { mainFee: 1 })
+          .setOptions({ isVendorUser: true })
           .sort({ maturityDate: 1 })
           .lean();
         expect(bills[0].mainFee.price).toBe(1500);
@@ -920,7 +922,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
       const wrongParams = [
         { key: 'maturityDate', value: '2025-04-29T22:00:00.000Z' },
         { key: 'mainFee.percentage', value: 10 },
-        { key: 'mainFee.price', value: 120 },
       ];
 
       wrongParams.forEach((param) => {

@@ -1320,11 +1320,10 @@ describe('createBillList', () => {
     const payload = {
       course: course._id,
       quantity: 3,
-      mainFee: { count: 1, countUnit: TRAINEE },
+      mainFee: { count: 1, countUnit: TRAINEE, prices: [1500, 2000, 2500] },
       companies: [companyId],
       payer: { fundingOrganisation: payerId },
       maturityDate: '2025-04-29T22:00:00.000Z',
-      prices: [1500, 2000, 2500],
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));

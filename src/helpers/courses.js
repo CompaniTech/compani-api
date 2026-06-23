@@ -549,7 +549,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       },
       {
         path: 'subProgram',
-        select: 'program steps',
+        select: origin === WEBAPP ? 'program steps paymentPlans' : 'program steps',
         populate: [
           { path: 'program', select: 'learningGoals' },
           ...(origin === WEBAPP
@@ -818,7 +818,7 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
   const course = await Course.findOne({ _id: courseId })
     .populate({
       path: 'subProgram',
-      select: 'program steps paymentPlans',
+      select: 'program steps',
       populate: [
         { path: 'program', select: 'name image description learningGoals' },
         {
