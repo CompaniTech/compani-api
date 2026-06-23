@@ -321,7 +321,7 @@ exports.createBillList = async (payload) => {
 
       await CourseBill.create({
         ...omit(payload, ['quantity', 'maturityDate']),
-        mainFee: { ...payload.mainFee, description },
+        mainFee: { ...payload.mainFee, description, ...payload.mainFee.price && { price: payload.mainFee.price[i] } },
         maturityDate: billMaturityDate.toISO(),
       });
     }

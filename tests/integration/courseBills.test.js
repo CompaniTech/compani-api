@@ -884,10 +884,44 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(billsCountAfter).toBe(billsCountBefore + 2);
       });
 
+      it('should create several bills for SINGLE course with prices array', async () => {
+        const billsCountBefore = await CourseBill.countDocuments({ course: coursesList[12]._id });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, mainFee: { ...singleCoursePayload.mainFee, price: [1500, 2000] } },
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const billsCountAfter = await CourseBill.countDocuments({ course: coursesList[12]._id });
+        expect(billsCountAfter).toBe(billsCountBefore + 2);
+
+        const bills = await CourseBill
+          .find({ course: coursesList[12]._id }, { mainFee: 1 })
+          .setOptions({ isVendorUser: true })
+          .sort({ maturityDate: 1 })
+          .lean();
+        expect(bills[0].mainFee.price).toBe(1500);
+        expect(bills[1].mainFee.price).toBe(2000);
+      });
+
+      it('should return 400 when prices length does not match quantity', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, price: [1500] },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
       const wrongParams = [
         { key: 'maturityDate', value: '2025-04-29T22:00:00.000Z' },
         { key: 'mainFee.percentage', value: 10 },
-        { key: 'mainFee.price', value: 120 },
       ];
 
       wrongParams.forEach((param) => {

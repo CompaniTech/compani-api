@@ -1306,6 +1306,90 @@ describe('createBillList', () => {
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
   });
+
+  it('should create several bills for SINGLE course with prices array', async () => {
+    const companyId = new ObjectId();
+    const payerId = new ObjectId();
+    const course = {
+      _id: new ObjectId(),
+      type: SINGLE,
+      prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
+      trainees: [{ identity: { firstname: 'John', lastname: 'Doe' } }],
+      trainers: [{ identity: { firstname: 'toto', lastname: 'test' } }],
+    };
+    const payload = {
+      course: course._id,
+      quantity: 3,
+      mainFee: { count: 1, countUnit: TRAINEE, price: [1500, 2000, 2500] },
+      companies: [companyId],
+      payer: { fundingOrganisation: payerId },
+      maturityDate: '2025-04-29T22:00:00.000Z',
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+
+    await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledWithExactly(
+      createCourseBill.getCall(0),
+      {
+        course: course._id,
+        mainFee: {
+          count: 1,
+          countUnit: TRAINEE,
+          price: 1500,
+          description: 'Facture liée à des frais pédagogiques \r\n'
+          + 'Contrat de professionnalisation \r\n'
+          + 'ACCOMPAGNEMENT avril 2025 \r\n'
+          + 'Nom de l\'apprenant·e: John DOE \r\n'
+          + 'Nom du / des intervenants: toto TEST',
+        },
+        companies: [companyId],
+        payer: { fundingOrganisation: payerId },
+        maturityDate: '2025-04-29T22:00:00.000Z',
+      }
+    );
+    sinon.assert.calledWithExactly(
+      createCourseBill.getCall(1),
+      {
+        course: course._id,
+        mainFee: {
+          count: 1,
+          countUnit: TRAINEE,
+          price: 2000,
+          description: 'Facture liée à des frais pédagogiques \r\n'
+          + 'Contrat de professionnalisation \r\n'
+          + 'ACCOMPAGNEMENT mai 2025 \r\n'
+          + 'Nom de l\'apprenant·e: John DOE \r\n'
+          + 'Nom du / des intervenants: toto TEST',
+        },
+        companies: [companyId],
+        payer: { fundingOrganisation: payerId },
+        maturityDate: '2025-05-29T22:00:00.000Z',
+      }
+    );
+    sinon.assert.calledWithExactly(
+      createCourseBill.getCall(2),
+      {
+        course: course._id,
+        mainFee: {
+          count: 1,
+          countUnit: TRAINEE,
+          price: 2500,
+          description: 'Facture liée à des frais pédagogiques \r\n'
+          + 'Contrat de professionnalisation \r\n'
+          + 'ACCOMPAGNEMENT juin 2025 \r\n'
+          + 'Nom de l\'apprenant·e: John DOE \r\n'
+          + 'Nom du / des intervenants: toto TEST',
+        },
+        companies: [companyId],
+        payer: { fundingOrganisation: payerId },
+        maturityDate: '2025-06-29T22:00:00.000Z',
+      }
+    );
+    sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(insertManyCourseBills);
+  });
 });
 
 describe('updateCourseBill', () => {
