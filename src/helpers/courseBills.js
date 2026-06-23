@@ -251,16 +251,7 @@ exports.createBillList = async (payload) => {
     .lean();
 
   if (payload.quantity === 1) {
-    const billCreated = await CourseBill.create(
-      {
-        ...omit(payload, 'quantity'),
-        mainFee: {
-          ...omit(payload.mainFee, 'prices'),
-          ...payload.mainFee.prices && { price: payload.mainFee.prices[0] },
-        },
-
-      }
-    );
+    const billCreated = await CourseBill.create(omit(payload, 'quantity'));
 
     if (payload.mainFee.percentage) {
       const trainerFees = (course.prices || []).reduce((acc, price) => {
@@ -330,11 +321,7 @@ exports.createBillList = async (payload) => {
 
       await CourseBill.create({
         ...omit(payload, ['quantity', 'maturityDate']),
-        mainFee: {
-          ...omit(payload.mainFee, 'prices'),
-          description,
-          ...payload.mainFee.prices && { price: payload.mainFee.prices[i] },
-        },
+        mainFee: { ...payload.mainFee, description, ...payload.mainFee.price && { price: payload.mainFee.price[i] } },
         maturityDate: billMaturityDate.toISO(),
       });
     }
