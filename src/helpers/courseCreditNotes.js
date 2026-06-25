@@ -35,7 +35,8 @@ exports.generateCreditNotePdf = async (creditNoteId) => {
       populate: [
         {
           path: 'course',
-          select: 'tradeName prices',
+          select: 'tradeName prices subProgram',
+          populate: { path: 'subProgram', select: 'subjectToVat' },
         },
         { path: 'payer.fundingOrganisation', select: 'name address' },
         { path: 'payer.company', select: 'name address' },

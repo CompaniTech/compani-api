@@ -38,14 +38,22 @@ const {
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 
-exports.getNetInclTaxes = (bill) => {
+exports.getNetInclTaxes = (bill, vatPercentage = 0) => {
   const { price, count } = bill.mainFee;
-  const mainFeeTotal = NumbersHelper.oldMultiply(price || 0, count || 0);
+  const mainFeeTotal = NumbersHelper.multiply(price || 0, count || 0);
   const billingPurchaseTotal = bill.billingPurchaseList
-    ? bill.billingPurchaseList.map(p => NumbersHelper.oldMultiply(p.price, p.count)).reduce((acc, val) => acc + val, 0)
+    ? bill.billingPurchaseList
+      .map(p => NumbersHelper.multiply(p.price, p.count)).reduce((acc, val) => NumbersHelper.add(acc, val), 0)
     : 0;
 
-  return NumbersHelper.oldAdd(mainFeeTotal, billingPurchaseTotal);
+  const netExclTaxes = NumbersHelper.add(mainFeeTotal, billingPurchaseTotal);
+  const vatAmount = vatPercentage
+    ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vatPercentage, 100))
+    : null;
+
+  return vatAmount
+    ? NumbersHelper.toNumber(NumbersHelper.add(netExclTaxes, vatAmount))
+    : NumbersHelper.toNumber(netExclTaxes);
 };
 
 const getTimeProgress = (course) => {
@@ -581,7 +589,11 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
 
   const bill = await CourseBill
     .findOne({ _id: billId }, { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 })
-    .populate({ path: 'course', select: 'tradeName prices' })
+    .populate({
+      path: 'course',
+      select: 'tradeName prices subProgram',
+      populate: { path: 'subProgram', select: 'subjectToVat' },
+    })
     .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } })
     .populate({ path: 'companies', select: 'name address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'name address' })

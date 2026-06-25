@@ -63,6 +63,18 @@ describe('getNetInclTaxes', () => {
     const result = await CourseBillHelper.getNetInclTaxes(bill);
     expect(result).toEqual(730);
   });
+
+  it('should return total price (with vat)', async () => {
+    const bill = {
+      course: new ObjectId(),
+      company: { name: 'Company' },
+      mainFee: { price: 120, count: 2 },
+      payer: { company: new ObjectId() },
+    };
+
+    const result = await CourseBillHelper.getNetInclTaxes(bill, 20);
+    expect(result).toEqual(288);
+  });
 });
 
 describe('list', () => {
@@ -2236,7 +2248,7 @@ describe('generateBillPdf', () => {
 
     const bill = {
       _id: new ObjectId(),
-      course: { _id: new ObjectId(), tradeName: 'Test' },
+      course: { _id: new ObjectId(), tradeName: 'Test', subProgram: { subjectToVat: true } },
       mainFee: { price: 1000, count: 1 },
       billingPurchaseList: [
         { billingItem: { _id: new ObjectId(), name: 'article 1' }, price: 10, count: 10 },
@@ -2301,7 +2313,16 @@ describe('generateBillPdf', () => {
             { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 },
           ],
         },
-        { query: 'populate', args: [{ path: 'course', select: 'tradeName prices' }] },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'course',
+              select: 'tradeName prices subProgram',
+              populate: { path: 'subProgram', select: 'subjectToVat' },
+            },
+          ],
+        },
         {
           query: 'populate',
           args: [{

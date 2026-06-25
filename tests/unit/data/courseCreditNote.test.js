@@ -31,6 +31,7 @@ describe('getPdfContent', () => {
       companies: [{ _id: new ObjectId() }],
       vendorCompany: {
         name: 'Auchan',
+        vat: 20,
         address: {
           fullAddress: '32 Rue du Loup 33000 Bordeaux',
           street: '32 Rue du Loup',
@@ -46,7 +47,7 @@ describe('getPdfContent', () => {
         name: 'payeur',
         address: '24 Avenue Daumesnil 75012 Paris',
       },
-      course: { tradeName: 'Test' },
+      course: { tradeName: 'Test', subProgram: { subjectToVat: true } },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
       billingPurchaseList: [
         { billingItem: { name: 'article 1' }, price: 10, count: 10 },
@@ -161,17 +162,19 @@ describe('getPdfContent', () => {
             { text: '' },
             [
               { text: 'Sous-total HT', alignment: 'right', marginBottom: 8 },
+              { text: 'TVA (20%)', alignment: 'right', marginBottom: 8 },
               { text: 'Total TTC', alignment: 'right', marginBottom: 8, bold: true },
             ],
             [
               { text: '1300,00 €', alignment: 'right', width: 'auto', marginBottom: 8 },
-              { text: '1300,00 €', alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
+              { text: '260,00 €', alignment: 'right', width: 'auto', marginBottom: 8 },
+              { text: '1560,00 €', alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
             ],
           ],
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 48,
         },
@@ -202,8 +205,9 @@ describe('getPdfContent', () => {
     formatPrice.onCall(4).returns('20,00 €');
     formatPrice.onCall(5).returns('200,00 €');
     formatPrice.onCall(6).returns('1300,00 €');
-    formatPrice.onCall(7).returns('1300,00 €');
-    formatPrice.onCall(8).returns('123 000,00 €');
+    formatPrice.onCall(7).returns('260,00 €');
+    formatPrice.onCall(8).returns('1560,00 €');
+    formatPrice.onCall(9).returns('123 000,00 €');
 
     const result = await CourseCreditNote.getPdfContent(creditNote);
 
@@ -237,7 +241,7 @@ describe('getPdfContent', () => {
         name: 'payeur',
         address: '24 Avenue Daumesnil 75012 Paris',
       },
-      course: { tradeName: 'Test' },
+      course: { tradeName: 'Test', subProgram: {} },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
     };
 
@@ -333,8 +337,8 @@ describe('getPdfContent', () => {
           ],
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 48,
         },
@@ -399,6 +403,7 @@ describe('getPdfContent', () => {
       },
       course: {
         tradeName: 'Test',
+        subProgram: {},
         prices: [{ company: companyId, global: 2000, trainerFees: 200 }],
       },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP, percentage: 50 },
@@ -532,8 +537,8 @@ describe('getPdfContent', () => {
           ],
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 48,
         },

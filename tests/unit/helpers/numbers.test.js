@@ -10,6 +10,14 @@ describe('toString', () => {
   });
 });
 
+describe('toNumber', () => {
+  it('should return a number', async () => {
+    const result = NumbersHelper.toNumber('0.1');
+
+    expect(result).toEqual(0.1);
+  });
+});
+
 describe('toFixedToFloat', () => {
   it('should round BN', () => {
     const result = NumbersHelper.toFixedToFloat(BigNumber(1.234567));
