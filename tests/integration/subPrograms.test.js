@@ -37,10 +37,11 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should update subProgram name and steps', async () => {
+    it('should update subProgram name, steps and subjectToVat', async () => {
       const payload = {
         name: 'un autre nom pour le sous-programme',
         steps: [subProgramsList[0].steps[1], subProgramsList[0].steps[0]],
+        subjectToVat: true,
       };
       const response = await app.inject({
         method: 'PUT',
@@ -56,6 +57,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(subProgramUpdated.steps.length).toBe(2);
       expect(UtilsHelper.areObjectIdsEquals(subProgramUpdated.steps[0], payload.steps[0])).toBeTruthy();
       expect(UtilsHelper.areObjectIdsEquals(subProgramUpdated.steps[1], payload.steps[1])).toBeTruthy();
+      expect(subProgramUpdated.subjectToVat).toBe(true);
     });
 
     it('should publish blended subProgram', async () => {

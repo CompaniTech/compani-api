@@ -1,3 +1,4 @@
+const has = require('lodash/has');
 const Program = require('../models/Program');
 const SubProgram = require('../models/SubProgram');
 const Step = require('../models/Step');
@@ -15,7 +16,12 @@ exports.addSubProgram = async (programId, payload) => {
 };
 
 exports.updateSubProgram = async (subProgramId, payload) => {
-  if (payload.name || payload.steps) return SubProgram.updateOne({ _id: subProgramId }, { $set: payload });
+  if (payload.name || payload.steps || payload.subjectToVat) {
+    return SubProgram.updateOne({ _id: subProgramId }, { $set: payload });
+  }
+  if (has(payload, 'subjectToVat') && !payload.subjectToVat) {
+    return SubProgram.updateOne({ _id: subProgramId }, { $unset: { subjectToVat: '' } });
+  }
 
   if (payload.prices) {
     const subProgram = await SubProgram.findOne({ _id: subProgramId }, { priceVersions: 1 }).lean();
