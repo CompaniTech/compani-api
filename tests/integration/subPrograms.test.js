@@ -406,7 +406,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
-        payload: { name: 'qwertyuiop' },
+        payload: { steps: [stepsList[1]._id, stepsList[0]._id] },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
