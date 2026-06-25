@@ -26,6 +26,7 @@ const vendorCompany = {
     location: { type: 'Point', coordinates: [-0.573054, 44.837914] },
   },
   shareCapital: 123000,
+  vat: 20,
   debitMandateTemplate: { driveId: '123456789', link: 'unlienversledoc' },
 };
 
