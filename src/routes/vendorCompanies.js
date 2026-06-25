@@ -39,6 +39,7 @@ exports.plugin = {
             billingRepresentative: Joi.objectId(),
             shareCapital: Joi.number().positive(),
             ics: icsValidation,
+            vat: Joi.number().positive(),
           }),
         },
         auth: { scope: ['vendorcompanies:edit'] },

@@ -139,6 +139,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
       { key: 'billingRepresentative', value: vendorAdmin._id },
       { key: 'shareCapital', value: 3210000 },
       { key: 'ics', value: 'FR234567ERTYU' },
+      { key: 'vat', value: 20 },
     ];
     payloads.forEach((payload) => {
       it(`should update vendor company ${payload.key}`, async () => {
@@ -181,6 +182,10 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
       { key: 'shareCapital', value: '123000€' },
       { key: 'shareCapital', value: -200 },
       { key: 'shareCapital', value: 0 },
+      { key: 'vat', value: '' },
+      { key: 'vat', value: '20%' },
+      { key: 'vat', value: -20 },
+      { key: 'vat', value: 0 },
     ];
     wrongValues.forEach((payload) => {
       it(`should not update vendor company ${payload.key} with wrong value`, async () => {

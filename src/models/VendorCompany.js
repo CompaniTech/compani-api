@@ -15,6 +15,7 @@ const VendorCompanySchema = mongoose.Schema({
   ics: { type: String, validate: ICS_VALIDATION, required: true, unique: true },
   billingRepresentative: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   shareCapital: { type: Number, required: true },
+  vat: { type: Number },
   debitMandateTemplate: { type: driveResourceSchemaDefinition, _id: false, id: false },
 }, { timestamps: true });
 
