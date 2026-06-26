@@ -8,10 +8,9 @@ exports.getPdfContent = async (creditNote) => {
   const [compani] = await UtilsPdfHelper.getImages();
   const header = UtilsPdfHelper.getHeader(creditNote, compani);
   const feeTable = UtilsPdfHelper.getFeeTable(creditNote);
-  const netExclTaxes = CourseBillHelper.getNetInclTaxes(creditNote);
   const { vat } = creditNote.vendorCompany;
   const { subjectToVat } = creditNote.course.subProgram;
-  const netInclTaxes = CourseBillHelper.getNetInclTaxes(creditNote, subjectToVat ? vat : null);
+  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes(creditNote, subjectToVat ? vat : null);
   const vatAmount = subjectToVat ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vat, 100)) : null;
 
   const totalInfos = UtilsPdfHelper.getTotalInfos(netExclTaxes, netInclTaxes, vat, vatAmount);

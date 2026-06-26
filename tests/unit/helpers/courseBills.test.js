@@ -45,7 +45,7 @@ describe('getNetInclTaxes', () => {
     };
 
     const result = await CourseBillHelper.getNetInclTaxes(bill);
-    expect(result).toEqual(240);
+    expect(result).toEqual({ netExclTaxes: 240, netInclTaxes: 240 });
   });
 
   it('should return total price (with billing purchases)', async () => {
@@ -61,7 +61,7 @@ describe('getNetInclTaxes', () => {
     };
 
     const result = await CourseBillHelper.getNetInclTaxes(bill);
-    expect(result).toEqual(730);
+    expect(result).toEqual({ netExclTaxes: 730, netInclTaxes: 730 });
   });
 
   it('should return total price (with vat)', async () => {
@@ -73,7 +73,7 @@ describe('getNetInclTaxes', () => {
     };
 
     const result = await CourseBillHelper.getNetInclTaxes(bill, 20);
-    expect(result).toEqual(288);
+    expect(result).toEqual({ netExclTaxes: 240, netInclTaxes: 288 });
   });
 });
 
@@ -82,17 +82,20 @@ describe('list', () => {
   let getCompanyAtCourseRegistrationList;
   let subProgramFind;
   let activityHistoryFind;
+  let getVendorCompany;
   beforeEach(() => {
     find = sinon.stub(CourseBill, 'find');
     subProgramFind = sinon.stub(SubProgram, 'find');
     activityHistoryFind = sinon.stub(ActivityHistory, 'find');
     getCompanyAtCourseRegistrationList = sinon.stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
+    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
   });
   afterEach(() => {
     find.restore();
     subProgramFind.restore();
     activityHistoryFind.restore();
     getCompanyAtCourseRegistrationList.restore();
+    getVendorCompany.restore();
   });
 
   it('should return all course bills (without billing purchases)', async () => {
@@ -125,7 +128,7 @@ describe('list', () => {
         mainFee: { price: 200, count: 2 },
         payer: { name: 'Funder' },
         billedAt: '2021-10-11T08:00:00.000Z',
-        netInclTaxes: 400,
+        netExclTaxes: 400,
       },
       {
         course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
@@ -133,7 +136,7 @@ describe('list', () => {
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
         maturityDate: '2021-11-11T08:00:00.000Z',
-        netInclTaxes: 240,
+        netExclTaxes: 240,
       },
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -187,7 +190,7 @@ describe('list', () => {
         { billingItem: billingItemList[0]._id, price: 90, count: 1 },
         { billingItem: billingItemList[1]._id, price: 400, count: 1 },
       ],
-      netInclTaxes: 730,
+      netExclTaxes: 730,
     }]);
     SinonMongoose.calledOnceWithExactly(
       find,
@@ -246,6 +249,7 @@ describe('list', () => {
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
+    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list({ company: companyId, action: BALANCE }, credentials);
 
@@ -270,6 +274,7 @@ describe('list', () => {
       ],
       courseCreditNote: { number: 'AV-00001' },
       netInclTaxes: 730,
+      netExclTaxes: 730,
       billedAt: '2022-03-11T08:00:00.000Z',
       progress: 1,
       paid: 780,
@@ -290,8 +295,13 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'misc slots slotsToPlan companies tradeName trainees type',
-              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }, { path: 'trainees', select: 'identity' }],
+              select: 'misc slots slotsToPlan companies tradeName trainees type subProgram',
+              populate: [
+                { path: 'slots' },
+                { path: 'slotsToPlan' },
+                { path: 'trainees', select: 'identity' },
+                { path: 'subProgram', select: 'subjectToVat' },
+              ],
             },
             { path: 'companies', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -377,6 +387,7 @@ describe('list', () => {
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
+    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list({ company: otherCompanyId, action: BALANCE }, credentials);
 
@@ -401,6 +412,7 @@ describe('list', () => {
       ],
       courseCreditNote: null,
       netInclTaxes: 730,
+      netExclTaxes: 730,
       billedAt: '2022-03-11T08:00:00.000Z',
       progress: 1,
       paid: 350,
@@ -421,8 +433,13 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'misc slots slotsToPlan companies tradeName trainees type',
-              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }, { path: 'trainees', select: 'identity' }],
+              select: 'misc slots slotsToPlan companies tradeName trainees type subProgram',
+              populate: [
+                { path: 'slots' },
+                { path: 'slotsToPlan' },
+                { path: 'trainees', select: 'identity' },
+                { path: 'subProgram', select: 'subjectToVat' },
+              ],
             },
             { path: 'companies', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -564,6 +581,7 @@ describe('list', () => {
     getCompanyAtCourseRegistrationList.onCall(2).returns([
       { trainee: traineesIds[2], company: companies[1]._id },
     ]);
+    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list(
       {
@@ -607,6 +625,7 @@ describe('list', () => {
           prices: [{ company: companies[0]._id, global: 200 }, { company: companies[1]._id, global: '' }],
         },
         netInclTaxes: 240,
+        netExclTaxes: 240,
         hasCourseAction: true,
       },
       {
@@ -632,6 +651,7 @@ describe('list', () => {
           slots: [],
         },
         netInclTaxes: 320,
+        netExclTaxes: 320,
         hasCourseAction: true,
       },
       {
@@ -663,6 +683,7 @@ describe('list', () => {
           ],
         },
         netInclTaxes: 320,
+        netExclTaxes: 320,
         hasCourseAction: true,
       },
     ]);
@@ -781,6 +802,7 @@ describe('list', () => {
       { trainee: traineesIds[0], company: companies[0]._id },
       { trainee: traineesIds[1], company: companies[1]._id },
     ]);
+    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list(
       {
@@ -822,6 +844,7 @@ describe('list', () => {
         ],
       },
       netInclTaxes: 240,
+      netExclTaxes: 240,
     }]);
 
     SinonMongoose.calledOnceWithExactly(
@@ -885,6 +908,7 @@ describe('list', () => {
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
+    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list({ action: DASHBOARD, isValidated: true }, credentials);
 
@@ -895,6 +919,7 @@ describe('list', () => {
       billedAt: '2025-06-10T22:00:00.000Z',
       course: { _id: courseId, trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'nom' } }] },
       netInclTaxes: 240,
+      netExclTaxes: 240,
     }]);
 
     SinonMongoose.calledOnceWithExactly(
@@ -907,7 +932,14 @@ describe('list', () => {
         {
           query: 'populate',
           args: [[
-            { path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } },
+            {
+              path: 'course',
+              select: 'trainees type subProgram',
+              populate: [
+                { path: 'trainees', select: 'identity' },
+                { path: 'subProgram', select: 'subjectToVat' },
+              ],
+            },
             { path: 'payer.fundingOrganisation', select: 'name' },
             { path: 'payer.company', select: 'name' },
             { path: 'companies', select: 'name' },
@@ -1410,6 +1442,7 @@ describe('updateCourseBill', () => {
   let findOneAndUpdateCoursePaymentNumber;
   let updateBillingPurchase;
   let coursePaymentCreate;
+  let getVendorCompany;
   const TRAINER_FEES_BILLING_ITEM = new ObjectId();
   const MANAGEMENT_FEES_BILLING_ITEM = new ObjectId();
 
@@ -1419,6 +1452,7 @@ describe('updateCourseBill', () => {
     findOneAndUpdateCoursePaymentNumber = sinon.stub(CoursePaymentNumber, 'findOneAndUpdate');
     updateBillingPurchase = sinon.stub(CourseBillHelper, 'updateBillingPurchase');
     coursePaymentCreate = sinon.stub(CoursePayment, 'create');
+    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
     process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
     process.env.MANAGEMENT_FEES_BILLING_ITEM = MANAGEMENT_FEES_BILLING_ITEM;
   });
@@ -1429,6 +1463,7 @@ describe('updateCourseBill', () => {
     findOneAndUpdateCoursePaymentNumber.restore();
     updateBillingPurchase.restore();
     coursePaymentCreate.restore();
+    getVendorCompany.restore();
     process.env.TRAINER_FEES_BILLING_ITEM = '';
     process.env.MANAGEMENT_FEES_BILLING_ITEM = '';
   });
@@ -1453,7 +1488,14 @@ describe('updateCourseBill', () => {
             { new: true },
           ],
         },
-        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'prices type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1483,7 +1525,14 @@ describe('updateCourseBill', () => {
             { new: true },
           ],
         },
-        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'prices type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1505,7 +1554,14 @@ describe('updateCourseBill', () => {
       findOneAndUpdate,
       [
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
-        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'prices type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1538,7 +1594,14 @@ describe('updateCourseBill', () => {
       findOneAndUpdate,
       [
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
-        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'prices type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1571,7 +1634,14 @@ describe('updateCourseBill', () => {
       findOneAndUpdate,
       [
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
-        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'prices type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1605,7 +1675,14 @@ describe('updateCourseBill', () => {
             { new: true },
           ],
         },
-        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'prices type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1633,6 +1710,7 @@ describe('updateCourseBill', () => {
     findOneAndUpdateCourseBillsNumber.returns(SinonMongoose.stubChainedQueries(lastBillNumber, ['lean']));
     findOneAndUpdateCoursePaymentNumber.returns(SinonMongoose.stubChainedQueries(lastPaymentNumber, ['lean']));
     findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseBill));
+    getVendorCompany.returns({ vat: 20 });
 
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
@@ -1659,7 +1737,14 @@ describe('updateCourseBill', () => {
             { new: true },
           ],
         },
-        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'prices type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1700,6 +1785,7 @@ describe('updateBillList', () => {
   let findOneAndUpdateCoursePaymentNumber;
   let coursePaymentCreate;
   let formatIdentity;
+  let getVendorCompany;
   const MANAGEMENT_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
@@ -1712,6 +1798,7 @@ describe('updateBillList', () => {
     findOneAndUpdateCoursePaymentNumber = sinon.stub(CoursePaymentNumber, 'findOneAndUpdate');
     coursePaymentCreate = sinon.stub(CoursePayment, 'create');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
+    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
     process.env.MANAGEMENT_FEES_BILLING_ITEM = MANAGEMENT_FEES_BILLING_ITEM;
   });
 
@@ -1725,6 +1812,7 @@ describe('updateBillList', () => {
     findOneAndUpdateCoursePaymentNumber.restore();
     coursePaymentCreate.restore();
     formatIdentity.restore();
+    getVendorCompany.restore();
     process.env.MANAGEMENT_FEES_BILLING_ITEM = '';
   });
 
@@ -1757,6 +1845,7 @@ describe('updateBillList', () => {
     findOneAndUpdateCourseBill.onCall(0).returns(SinonMongoose.stubChainedQueries(courseBills[0]));
     findOneAndUpdateCourseBill.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBills[1]));
     findOneAndUpdateCoursePaymentNumber.returns(SinonMongoose.stubChainedQueries(lastPaymentNumber, ['lean']));
+    getVendorCompany.returns({ vat: 20 });
 
     await CourseBillHelper.updateBillList(payload);
 
@@ -1787,7 +1876,14 @@ describe('updateBillList', () => {
             { new: true },
           ],
         },
-        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ],
       0
@@ -1806,7 +1902,14 @@ describe('updateBillList', () => {
             { new: true },
           ],
         },
-        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'type subProgram',
+            populate: { path: 'subProgram', select: 'subjectToVat' },
+          }],
+        },
         { query: 'lean' },
       ],
       1

@@ -113,6 +113,7 @@ const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const CourseCreditNoteNumber = require('../../../src/models/CourseCreditNoteNumber');
 const Holding = require('../../../src/models/Holding');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
+const VendorCompany = require('../../../src/models/VendorCompany');
 
 const sector = { _id: new ObjectId(), name: 'Etoile', company: authCompany._id };
 
@@ -2382,6 +2383,26 @@ const courseHistoriesList = [
   },
 ];
 
+const vendorCompany = {
+  _id: new ObjectId(),
+  name: 'Vendor Company',
+  siret: '12345678901234',
+  iban: 'FR9210096000302523177152Q14',
+  bic: 'BPCEFRPP',
+  ics: 'FR1234567894D',
+  activityDeclarationNumber: '13736343575',
+  address: {
+    fullAddress: '32 Rue du Loup 33000 Bordeaux',
+    street: '32 Rue du Loup',
+    city: 'Bordeaux',
+    zipCode: '33000',
+    location: { type: 'Point', coordinates: [-0.573054, 44.837914] },
+  },
+  shareCapital: 123000,
+  vat: 20,
+  debitMandateTemplate: { driveId: '123456789', link: 'unlienversledoc' },
+};
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
@@ -2429,6 +2450,7 @@ const populateDB = async () => {
     User.create([...auxiliaryList, ...traineeList, user, trainer, operationsRepresentative]),
     UserCompany.create(userCompanies),
     XmlSEPAFileInfos.create(xmlSEPAFileInfos),
+    VendorCompany.create(vendorCompany),
   ]);
 };
 

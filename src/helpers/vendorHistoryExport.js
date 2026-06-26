@@ -49,6 +49,7 @@ const NumbersHelper = require('./numbers');
 const CourseBillHelper = require('./courseBills');
 const CourseHelper = require('./courses');
 const CourseSlotHelper = require('./courseSlots');
+const VendorCompaniesHelper = require('./vendorCompanies');
 const AttendanceSheet = require('../models/AttendanceSheet');
 const CourseSmsHistory = require('../models/CourseSmsHistory');
 const CourseSlot = require('../models/CourseSlot');
@@ -114,21 +115,25 @@ const getAttendancesCountInfos = (course) => {
   };
 };
 
-const getBillsInfos = (course) => {
+const getBillsInfos = (course, vat) => {
   const validatedBillsWithoutCreditNote = course.bills.filter(bill => !bill.courseCreditNote && bill.billedAt);
 
   const payerList =
     [...new Set(validatedBillsWithoutCreditNote.map(bill => get(bill, 'payer.name')))]
       .sort((a, b) => a.localeCompare(b))
       .toString();
-  const computedAmounts = validatedBillsWithoutCreditNote.map(bill => CourseBillHelper.computeAmounts(bill));
+  const computedAmounts = validatedBillsWithoutCreditNote.map((bill) => {
+    const subjectToVat = get(bill, 'course.subProgram.subjectToVat');
+    return CourseBillHelper.computeAmounts(bill, subjectToVat ? vat : 0);
+  });
   const amountsInfos = validatedBillsWithoutCreditNote.length
     ? {
       netInclTaxes: computedAmounts.map(amount => amount.netInclTaxes).reduce((acc, value) => acc + value, 0),
+      netExclTaxes: computedAmounts.map(amount => amount.netExclTaxes).reduce((acc, value) => acc + value, 0),
       paid: computedAmounts.map(amount => amount.paid).reduce((acc, value) => acc + value, 0),
       total: computedAmounts.map(amount => amount.total).reduce((acc, value) => acc + value, 0),
     }
-    : { netInclTaxes: '', paid: '', total: '' };
+    : { netExclTaxes: '', netInclTaxes: '', paid: '', total: '' };
 
   if ([INTRA, SINGLE].includes(course.type)) {
     const billsCountForExport = `${validatedBillsWithoutCreditNote.length} sur ${course.expectedBillsCount}`;
@@ -182,7 +187,7 @@ const formatTrainersName = courseTrainers => courseTrainers
   .map(trainer => UtilsHelper.formatIdentity(trainer.identity, 'FL'))
   .join(', ');
 
-const formatCourseForExport = async (course, courseQH, smsCount, asCount, estimatedStartDateHistory) => {
+const formatCourseForExport = async (course, courseQH, smsCount, asCount, estimatedStartDateHistory, vat) => {
   const slotsGroupedByDate = CourseHelper.groupSlotsByDate(course.slots);
   const {
     subscribedAttendances,
@@ -200,7 +205,15 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     .filter(qh => qh.questionnaire.type === END_OF_COURSE)
     .length;
 
-  const { isBilled, billsCountForExport, payerList, netInclTaxes, paid, total } = getBillsInfos(course);
+  const {
+    isBilled,
+    billsCountForExport,
+    payerList,
+    netInclTaxes,
+    netExclTaxes,
+    paid,
+    total,
+  } = getBillsInfos(course, vat);
 
   const companiesName = course.companies.map(co => co.name).sort((a, b) => a.localeCompare(b)).toString();
 
@@ -281,7 +294,8 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     'Prix de la formation': price,
     'Nombre de factures': billsCountForExport,
     Facturée: isBilled ? 'Oui' : 'Non',
-    'Montant facturé': UtilsHelper.formatFloatForExport(netInclTaxes),
+    'Montant facturé HT': UtilsHelper.formatFloatForExport(netExclTaxes),
+    'Montant facturé TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
     'Montant réglé': UtilsHelper.formatFloatForExport(paid),
     Solde: UtilsHelper.formatFloatForExport(total),
     'Date de création': CompaniDate(course.createdAt).format(DD_MM_YYYY),
@@ -298,7 +312,13 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
 
   const courseIds = filteredCourses.map(course => course._id);
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
-  const [questionnaireHistories, smsList, attendanceSheetList, estimatedStartDateHistories] = await Promise.all([
+  const [
+    questionnaireHistories,
+    smsList,
+    attendanceSheetList,
+    estimatedStartDateHistories,
+    vendorCompany,
+  ] = await Promise.all([
     QuestionnaireHistory
       .find({ course: { $in: courseIds } })
       .select('course questionnaire')
@@ -315,6 +335,7 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
       },
       { course: 1, update: 1 }
     ).lean(),
+    VendorCompaniesHelper.get(),
   ]);
 
   const rows = [];
@@ -329,7 +350,9 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
     const courseQH = groupedCourseQuestionnaireHistories[course._id] || [];
     const estimatedStartDateHistory = groupedEstimatedStartDateHistories[course._id];
 
-    rows.push(await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory));
+    rows.push(
+      await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory, vendorCompany.vat)
+    );
   }
 
   return [Object.keys(rows[0]), ...rows.map(d => Object.values(d))];
@@ -530,7 +553,7 @@ exports.exportEndOfCourseQuestionnaireHistory = async (startDate, endDate, crede
   return rows.length ? [Object.keys(rows[0]), ...rows.map(d => Object.values(d))] : [[NO_DATA]];
 };
 
-const formatCommonInfos = (bill, netInclTaxes) => {
+const formatCommonInfos = (bill, netInclTaxes, netExclTaxes) => {
   const companyName = bill.course.type === INTRA ? `${bill.companies[0].name} - ` : '';
   const misc = bill.course.misc ? ` - ${bill.course.misc}` : '';
   const courseName = `${companyName}${bill.course.tradeName}${misc}`;
@@ -550,6 +573,7 @@ const formatCommonInfos = (bill, netInclTaxes) => {
     'Date de signature de mandat du payeur': get(lastMandate, 'signedAt') && get(lastMandate, 'file.link')
       ? CompaniDate(lastMandate.signedAt).format(DD_MM_YYYY)
       : '',
+    'Montant HT': UtilsHelper.formatFloatForExport(netExclTaxes),
     'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
   };
 };
@@ -582,7 +606,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
         path: 'course',
         select: 'subProgram misc type trainees tradeName',
         populate: [
-          { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+          { path: 'subProgram', select: 'program subjectToVat', populate: { path: 'program', select: 'name' } },
           { path: 'trainees', select: 'identity' },
         ],
       })
@@ -611,7 +635,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
             path: 'course',
             select: 'subProgram misc type trainees tradeName',
             populate: [
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'subProgram', select: 'program subjectToVat', populate: { path: 'program', select: 'name' } },
               { path: 'trainees', select: 'identity' },
             ],
           },
@@ -651,12 +675,18 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
 
   const slotDataMap = new Map(slotData.map(s => [s._id.toHexString(), s]));
   const slotsToPlanMap = new Map(slotsToPlanData.map(s => [s._id.toHexString(), s]));
-
+  const vendorCompany = await VendorCompaniesHelper.get();
   const rows = [];
   for (const bill of courseBills) {
-    const { netInclTaxes, paid, total } = CourseBillHelper.computeAmounts(bill);
+    const subjectToVat = get(bill, 'course.subProgram.subjectToVat');
+    const {
+      netInclTaxes,
+      netExclTaxes,
+      paid,
+      total,
+    } = CourseBillHelper.computeAmounts(bill, subjectToVat ? vendorCompany.vat : 0);
     const slotInfo = getCourseSlotInfo(bill.course._id, slotDataMap, slotsToPlanMap);
-    const commonInfos = formatCommonInfos(bill, netInclTaxes);
+    const commonInfos = formatCommonInfos(bill, netInclTaxes, netExclTaxes);
 
     const formattedBill = {
       Nature: BILLING_DOCUMENTS[BILL],
@@ -683,9 +713,12 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
   }
 
   for (const creditNote of courseCreditNotes) {
-    const { netInclTaxes } = CourseBillHelper
-      .computeAmounts({ ...creditNote.courseBill, courseCreditNote: { _id: creditNote._id } });
-    const commonInfos = formatCommonInfos(creditNote.courseBill, netInclTaxes);
+    const subjectToVat = get(creditNote.courseBill, 'course.subProgram.subjectToVat');
+    const { netInclTaxes, netExclTaxes } = CourseBillHelper.computeAmounts(
+      { ...creditNote.courseBill, courseCreditNote: { _id: creditNote._id } },
+      subjectToVat ? vendorCompany.vat : 0
+    );
+    const commonInfos = formatCommonInfos(creditNote.courseBill, netInclTaxes, netExclTaxes);
 
     const formattedCreditNote = {
       Nature: BILLING_DOCUMENTS[CREDIT_NOTE],

@@ -74,7 +74,7 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
     .populate({ path: 'holding', select: 'name' })
     .populate({
       path: 'subProgram',
-      select: 'name steps program',
+      select: 'name steps program subjectToVat',
       populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
     })
     .populate({ path: 'trainers', select: 'identity' })
