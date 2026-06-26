@@ -123,7 +123,7 @@ const getBillsInfos = (course, vat) => {
       .sort((a, b) => a.localeCompare(b))
       .toString();
   const computedAmounts = validatedBillsWithoutCreditNote.map((bill) => {
-    const subjectToVat = get(bill, 'course.subProgram.subjectToVat');
+    const subjectToVat = get(course, 'subProgram.subjectToVat');
     return CourseBillHelper.computeAmounts(bill, subjectToVat ? vat : 0);
   });
   const amountsInfos = validatedBillsWithoutCreditNote.length
