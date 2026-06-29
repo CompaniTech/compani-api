@@ -700,8 +700,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type '
-                + 'tradeName',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
               populate: [
                 { path: 'companies', select: 'name' },
                 {
@@ -859,8 +858,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type '
-                + 'tradeName',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'slots', select: 'startDate endDate' },

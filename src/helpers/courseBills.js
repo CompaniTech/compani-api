@@ -49,7 +49,7 @@ exports.getNetInclTaxes = (bill, vatPercentage = 0) => {
   const netExclTaxes = NumbersHelper.add(mainFeeTotal, billingPurchaseTotal);
   const vatAmount = vatPercentage
     ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vatPercentage, 100))
-    : null;
+    : 0;
 
   return {
     netExclTaxes: NumbersHelper.toNumber(netExclTaxes),
@@ -184,8 +184,7 @@ exports.list = async (query, credentials) => {
         ...(query.startDate && query.endDate
           ? [{
             path: 'course',
-            select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type '
-              + 'tradeName',
+            select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
             populate: [
               { path: 'companies', select: 'name' },
               {

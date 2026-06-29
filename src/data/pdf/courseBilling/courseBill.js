@@ -15,7 +15,7 @@ exports.getPdfContent = async (bill) => {
 
   const { vat } = bill.vendorCompany;
   const { subjectToVat } = bill.course.subProgram;
-  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes(bill, subjectToVat ? vat : null);
+  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes(bill, subjectToVat ? vat : 0);
   const vatAmount = subjectToVat ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vat, 100)) : null;
   const totalBalance = courseCreditNote ? -amountPaid : NumbersHelper.subtract(netInclTaxes, amountPaid);
   const isPaid = !courseCreditNote && totalBalance <= 0;
