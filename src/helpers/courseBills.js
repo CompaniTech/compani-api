@@ -177,7 +177,8 @@ exports.list = async (query, credentials) => {
       ...(query.startDate && query.endDate
         ? [{
           path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
+            + ' trainers',
           populate: [
             { path: 'companies', select: 'name' },
             {
@@ -194,6 +195,7 @@ exports.list = async (query, credentials) => {
             },
             { path: 'slotsToPlan', select: '_id' },
             { path: 'trainees', select: 'identity' },
+            ...!query.isValidated ? [{ path: 'trainers', select: 'identity' }] : [],
           ],
         },
         {
