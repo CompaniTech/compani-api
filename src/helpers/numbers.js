@@ -2,6 +2,8 @@ const { BigNumber } = require('bignumber.js');
 
 exports.toString = a => BigNumber(a).toString();
 
+exports.toNumber = a => BigNumber(a).toNumber();
+
 exports.toFixedToFloat = (a, decimalPlaces = 2) => parseFloat(BigNumber(a).toFixed(decimalPlaces));
 
 exports.oldMultiply = (...nums) => nums.reduce((acc, n) => BigNumber(acc).multipliedBy(n).toNumber(), 1);

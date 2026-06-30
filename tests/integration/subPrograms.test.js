@@ -8,7 +8,7 @@ const Course = require('../../src/models/Course');
 const Step = require('../../src/models/Step');
 const NotificationHelper = require('../../src/helpers/notifications');
 const UtilsHelper = require('../../src/helpers/utils');
-const { populateDB, subProgramsList, stepsList, tester } = require('./seed/subProgramsSeed');
+const { populateDB, subProgramsList, stepsList, tester, paymentPlanId } = require('./seed/subProgramsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { authCompany, otherCompany } = require('../seed/authCompaniesSeed');
 
@@ -37,10 +37,11 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should update subProgram name and steps', async () => {
+    it('should update subProgram name, steps and subjectToVat', async () => {
       const payload = {
         name: 'un autre nom pour le sous-programme',
         steps: [subProgramsList[0].steps[1], subProgramsList[0].steps[0]],
+        subjectToVat: true,
       };
       const response = await app.inject({
         method: 'PUT',
@@ -56,6 +57,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(subProgramUpdated.steps.length).toBe(2);
       expect(UtilsHelper.areObjectIdsEquals(subProgramUpdated.steps[0], payload.steps[0])).toBeTruthy();
       expect(UtilsHelper.areObjectIdsEquals(subProgramUpdated.steps[1], payload.steps[1])).toBeTruthy();
+      expect(subProgramUpdated.subjectToVat).toBe(true);
     });
 
     it('should publish blended subProgram', async () => {
@@ -178,6 +180,136 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(updatedSubProgram.priceVersions.length).toBe(2);
     });
 
+    it('should add a new payment plan', async () => {
+      const payload = { paymentPlan: { prices: [300, 400] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
+      expect(updatedSubProgram.paymentPlans.length).toBe(2);
+    });
+
+    it('should update prices of an existing payment plan', async () => {
+      const payload = { paymentPlan: { paymentPlanId, prices: [150, 250] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
+      expect(updatedSubProgram.paymentPlans.length).toBe(1);
+      const updatedPaymentPlan = updatedSubProgram.paymentPlans
+        .find(pp => UtilsHelper.areObjectIdsEquals(pp._id, paymentPlanId));
+      expect(updatedPaymentPlan.prices).toEqual([150, 250]);
+    });
+
+    it('should delete an existing payment plan if prices is empty', async () => {
+      const payload = { paymentPlan: { paymentPlanId, prices: [] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
+      const deletedPaymentPlan = (updatedSubProgram.paymentPlans || [])
+        .find(pp => UtilsHelper.areObjectIdsEquals(pp._id, paymentPlanId));
+      expect(deletedPaymentPlan).toBeUndefined();
+    });
+
+    it('should add a payment plan with same prices in a different order', async () => {
+      const payload = { paymentPlan: { prices: [200, 100] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
+      expect(updatedSubProgram.paymentPlans.length).toBe(2);
+    });
+
+    it('should return 404 if payment plan _id does not exist', async () => {
+      const payload = { paymentPlan: { paymentPlanId: new ObjectId(), prices: [100] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if adding payment plan on non published subProgram', async () => {
+      const payload = { paymentPlan: { prices: [100, 200] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${blendedSubProgramId.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if a payment plan with the same prices already exists', async () => {
+      const payload = { paymentPlan: { prices: [100, 200] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 400 if payment plan prices is empty without _id', async () => {
+      const payload = { paymentPlan: { prices: [] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if payment plan has a non positive price', async () => {
+      const payload = { paymentPlan: { prices: [100, -5] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 400 if setting status to draft ', async () => {
       const payload = { status: 'draft' };
       const response = await app.inject({
@@ -274,7 +406,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
-        payload: { name: 'qwertyuiop' },
+        payload: { steps: [stepsList[2]._id, stepsList[0]._id] },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 

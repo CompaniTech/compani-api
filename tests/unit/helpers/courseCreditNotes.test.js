@@ -109,6 +109,7 @@ describe('generateCreditNotePdf', () => {
       companies: [companyId],
       courseBill: {
         _id: new ObjectId(),
+        vat: 20,
         course: { _id: new ObjectId(), tradeName: 'Test' },
         mainFee: { price: 1000, count: 1 },
         billingPurchaseList: [
@@ -143,7 +144,7 @@ describe('generateCreditNotePdf', () => {
         date: '09/03/2022',
         companies: [{ _id: companyId }],
         misc: 'motif',
-        courseBill: { number: 'FACT-00001', date: '08/03/2022' },
+        courseBill: { number: 'FACT-00001', date: '08/03/2022', vat: 20 },
         vendorCompany,
         payer: { name: 'test', address: '24 Avenue Daumesnil 75012 Paris' },
         course: creditNote.courseBill.course,
@@ -159,7 +160,7 @@ describe('generateCreditNotePdf', () => {
           args: [
             {
               path: 'courseBill',
-              select: 'course number date payer billingPurchaseList mainFee billedAt',
+              select: 'course number date payer billingPurchaseList mainFee billedAt vat',
               populate: [
                 { path: 'course', select: 'tradeName prices' },
                 { path: 'payer.fundingOrganisation', select: 'name address' },

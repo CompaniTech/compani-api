@@ -5,15 +5,17 @@ const CourseBillHelper = require('../../../helpers/courseBills');
 
 exports.getPdfContent = async (creditNote) => {
   const [compani] = await UtilsPdfHelper.getImages();
-  const netInclTaxes = CourseBillHelper.getNetInclTaxes(creditNote);
+  const vat = creditNote.courseBill.vat || 0;
+  const { netExclTaxes, netInclTaxes, vatAmount } = CourseBillHelper.getDetailWithTaxes({ ...creditNote, vat });
   const header = UtilsPdfHelper.getHeader(creditNote, compani);
   const feeTable = UtilsPdfHelper.getFeeTable(creditNote);
-  const totalInfos = UtilsPdfHelper.getTotalInfos(netInclTaxes);
+
+  const totalInfos = UtilsPdfHelper.getTotalInfos(netExclTaxes, netInclTaxes, vat, vatAmount);
 
   const footer = [
     {
-      text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-        + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+      text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+        + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
       fontSize: 8,
       marginTop: 48,
     },

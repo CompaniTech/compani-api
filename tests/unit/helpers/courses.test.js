@@ -2811,7 +2811,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps',
+                select: 'program steps paymentPlans',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
@@ -2921,7 +2921,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps',
+                  select: 'program steps paymentPlans',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3024,7 +3024,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps',
+                  select: 'program steps paymentPlans',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3201,7 +3201,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps',
+                select: 'program steps paymentPlans',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {

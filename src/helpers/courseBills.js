@@ -38,14 +38,29 @@ const {
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 
-exports.getNetInclTaxes = (bill) => {
+exports.getDetailWithTaxes = (bill) => {
+  const vatPercentage = bill.vat || 0;
   const { price, count } = bill.mainFee;
-  const mainFeeTotal = NumbersHelper.oldMultiply(price || 0, count || 0);
+  const mainFeeTotal = NumbersHelper.multiply(price || 0, count || 0);
   const billingPurchaseTotal = bill.billingPurchaseList
-    ? bill.billingPurchaseList.map(p => NumbersHelper.oldMultiply(p.price, p.count)).reduce((acc, val) => acc + val, 0)
+    ? bill.billingPurchaseList
+      .map(p => NumbersHelper.multiply(p.price, p.count)).reduce((acc, val) => NumbersHelper.add(acc, val), 0)
     : 0;
 
-  return NumbersHelper.oldAdd(mainFeeTotal, billingPurchaseTotal);
+  const netExclTaxes = NumbersHelper.add(mainFeeTotal, billingPurchaseTotal);
+  const vatAmount = vatPercentage
+    ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vatPercentage, 100))
+    : 0;
+
+  return {
+    netExclTaxes: NumbersHelper.toNumber(netExclTaxes),
+    ...vatAmount
+      ? {
+        netInclTaxes: NumbersHelper.toNumber(NumbersHelper.add(netExclTaxes, vatAmount)),
+        vatAmount: NumbersHelper.toNumber(vatAmount),
+      }
+      : { netInclTaxes: NumbersHelper.toNumber(netExclTaxes) },
+  };
 };
 
 const getTimeProgress = (course) => {
@@ -55,24 +70,25 @@ const getTimeProgress = (course) => {
 };
 
 exports.computeAmounts = (courseBill) => {
-  if (!courseBill) return { netInclTaxes: 0, paid: 0, total: 0 };
+  if (!courseBill) return { netInclTaxes: 0, netExclTaxes: 0, paid: 0, total: 0 };
 
-  const netInclTaxes = exports.getNetInclTaxes(courseBill);
+  const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(courseBill);
   const totalPayments = BalanceHelper.computePayments(
     (courseBill.coursePayments || []).filter(p => p.status === RECEIVED)
   );
   const creditNote = courseBill.courseCreditNote ? netInclTaxes : 0;
   const paid = totalPayments + creditNote;
 
-  return { netInclTaxes, paid, total: paid - netInclTaxes };
+  return { netInclTaxes, netExclTaxes, paid, total: paid - netInclTaxes };
 };
 
 exports.formatCourseBill = (courseBill) => {
-  const { netInclTaxes, paid, total } = this.computeAmounts(courseBill);
+  const { netInclTaxes, netExclTaxes, paid, total } = this.computeAmounts(courseBill);
 
   return {
     progress: getTimeProgress(courseBill.course),
     netInclTaxes,
+    netExclTaxes,
     ...omit(courseBill, ['course.slots', 'course.slotsToPlan']),
     paid,
     total,
@@ -140,7 +156,10 @@ exports.list = async (query, credentials) => {
       .lean();
 
     return courseBills
-      .map(bill => ({ ...bill, netInclTaxes: exports.getNetInclTaxes(bill) }))
+      .map((bill) => {
+        const { netExclTaxes } = exports.getDetailWithTaxes(bill);
+        return { ...bill, netExclTaxes };
+      })
       .sort((a, b) => new Date(a.billedAt || a.maturityDate) - new Date(b.billedAt || b.maturityDate));
   }
 
@@ -158,7 +177,8 @@ exports.list = async (query, credentials) => {
       ...(query.startDate && query.endDate
         ? [{
           path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type tradeName',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
+            + ' trainers',
           populate: [
             { path: 'companies', select: 'name' },
             {
@@ -175,6 +195,7 @@ exports.list = async (query, credentials) => {
             },
             { path: 'slotsToPlan', select: '_id' },
             { path: 'trainees', select: 'identity' },
+            ...!query.isValidated ? [{ path: 'trainers', select: 'identity' }] : [],
           ],
         },
         {
@@ -223,35 +244,46 @@ exports.list = async (query, credentials) => {
         const isCourseInterrupted = UtilsHelper.isCourseInterrupted(bill.course.interruptionDates);
         return query.isValidated || !isCourseInterrupted;
       })
-      .map(async bill => ({
-        ...bill,
-        ...(query.startDate && query.endDate
-          ? {
-            course: await formatCourse(bill.course),
-            ...!query.isValidated && {
-              hasCourseAction: bill.course.type !== SINGLE ||
-                bill.course.trainees.some(t => activityHistoriesByTrainee[t._id]) ||
-                bill.course.slots
-                  .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
-                  .some(s => s.attendances.length),
-            },
-          }
-          : { course: bill.course }
-        ),
-        netInclTaxes: exports.getNetInclTaxes(bill),
-      }))
-  );
+      .map(async (bill) => {
+        const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
+
+        return {
+          ...bill,
+          ...(query.startDate && query.endDate
+            ? {
+              course: await formatCourse(bill.course),
+              ...!query.isValidated && {
+                hasCourseAction: bill.course.type !== SINGLE ||
+                  bill.course.trainees.some(t => activityHistoriesByTrainee[t._id]) ||
+                  bill.course.slots
+                    .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
+                    .some(s => s.attendances.length),
+              },
+            }
+            : { course: bill.course }
+          ),
+          netInclTaxes,
+          netExclTaxes,
+        };
+      }));
 };
 
 exports.createBillList = async (payload) => {
   const course = await Course
-    .findOne({ _id: payload.course }, { type: 1, prices: 1, trainees: 1, trainers: 1 })
+    .findOne({ _id: payload.course }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 })
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
+    .populate({ path: 'subProgram', select: 'subjectToVat' })
     .lean();
 
+  let vat = 0;
+  if (get(course, 'subProgram.subjectToVat')) {
+    const vendorCompany = await VendorCompaniesHelper.get();
+    vat = vendorCompany.vat;
+  }
+
   if (payload.quantity === 1) {
-    const billCreated = await CourseBill.create(omit(payload, 'quantity'));
+    const billCreated = await CourseBill.create({ ...omit(payload, 'quantity'), ...vat && { vat } });
 
     if (payload.mainFee.percentage) {
       const trainerFees = (course.prices || []).reduce((acc, price) => {
@@ -285,6 +317,7 @@ exports.createBillList = async (payload) => {
       },
       companies: payload.companies,
       payer: payload.payer,
+      ...vat && { vat },
     });
     const createdBills = await CourseBill.insertMany(billsToCreate);
 
@@ -321,19 +354,22 @@ exports.createBillList = async (payload) => {
 
       await CourseBill.create({
         ...omit(payload, ['quantity', 'maturityDate']),
-        mainFee: { ...payload.mainFee, description },
+        mainFee: { ...payload.mainFee, description, ...payload.mainFee.price && { price: payload.mainFee.price[i] } },
         maturityDate: billMaturityDate.toISO(),
+        ...vat && { vat },
       });
     }
   }
 };
 
 const formatPaymentPayload = (courseBill, seq) => {
+  const { netInclTaxes } = exports.getDetailWithTaxes(courseBill);
+
   const paymentPayload = {
     companies: courseBill.companies,
     number: `REG-${seq.toString().padStart(5, '0')}`,
     status: PENDING,
-    netInclTaxes: exports.getNetInclTaxes(courseBill),
+    netInclTaxes,
     nature: PAYMENT,
     courseBill: courseBill._id,
     date: courseBill.billedAt,
@@ -580,7 +616,10 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
   const vendorCompany = await VendorCompaniesHelper.get();
 
   const bill = await CourseBill
-    .findOne({ _id: billId }, { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 })
+    .findOne(
+      { _id: billId },
+      { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1, vat: 1 }
+    )
     .populate({ path: 'course', select: 'tradeName prices' })
     .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } })
     .populate({ path: 'companies', select: 'name address' })

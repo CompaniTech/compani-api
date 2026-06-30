@@ -1,3 +1,6 @@
+const has = require('lodash/has');
+const omit = require('lodash/omit');
+const isEmpty = require('lodash/isEmpty');
 const Program = require('../models/Program');
 const SubProgram = require('../models/SubProgram');
 const Step = require('../models/Step');
@@ -15,7 +18,11 @@ exports.addSubProgram = async (programId, payload) => {
 };
 
 exports.updateSubProgram = async (subProgramId, payload) => {
-  if (payload.name || payload.steps) return SubProgram.updateOne({ _id: subProgramId }, { $set: payload });
+  let query = {};
+  if (payload.name || payload.steps) query = { $set: omit(payload, 'subjectToVat') };
+  if (has(payload, 'subjectToVat') && !payload.subjectToVat) query.$unset = { subjectToVat: '' };
+  else if (payload.subjectToVat) query.$set = payload;
+  if (!isEmpty(query)) return SubProgram.updateOne({ _id: subProgramId }, query);
 
   if (payload.prices) {
     const subProgram = await SubProgram.findOne({ _id: subProgramId }, { priceVersions: 1 }).lean();
@@ -40,6 +47,23 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     return null;
   }
 
+  if (payload.paymentPlan) {
+    const { paymentPlanId, prices } = payload.paymentPlan;
+
+    if (paymentPlanId && prices.length) {
+      return SubProgram.updateOne(
+        { _id: subProgramId, 'paymentPlans._id': paymentPlanId },
+        { $set: { 'paymentPlans.$.prices': prices } }
+      );
+    }
+
+    if (paymentPlanId && !prices.length) {
+      return SubProgram.updateOne({ _id: subProgramId }, { $pull: { paymentPlans: { _id: paymentPlanId } } });
+    }
+
+    return SubProgram.updateOne({ _id: subProgramId }, { $push: { paymentPlans: { prices } } });
+  }
+
   const subProgram = await SubProgram
     .findOneAndUpdate({ _id: subProgramId }, { $set: { status: payload.status } })
     .populate({ path: 'steps', select: 'activities type' })
@@ -54,7 +78,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       accessRules: payload.accessCompanies || [],
       tradeName: subProgram.program.name,
     });
-    const query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
+    query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
     if (payload.accessCompanies) {
       const userCompanies = await UserCompany
         .find(

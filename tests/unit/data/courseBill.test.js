@@ -28,6 +28,7 @@ describe('getPdfContent', () => {
       number: 'FACT-000045',
       date: '18/08/1998',
       vendorCompany: {
+        vat: 18,
         name: 'Auchan',
         address: {
           fullAddress: '32 Rue du Loup 33000 Bordeaux',
@@ -47,6 +48,7 @@ describe('getPdfContent', () => {
         address: '24 Avenue Daumesnil 75012 Paris',
       },
       isPayerCompany: false,
+      vat: 20,
       course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
       billingPurchaseList: [
@@ -56,7 +58,7 @@ describe('getPdfContent', () => {
       courseCreditNote: null,
       coursePayments: [
         { netInclTaxes: 1300, nature: REFUND, date: '2023-01-10T00:00:00.000Z' },
-        { netInclTaxes: 1400, nature: PAYMENT, date: '2023-01-02T10:00:00.000Z' },
+        { netInclTaxes: 1660, nature: PAYMENT, date: '2023-01-02T10:00:00.000Z' },
         { netInclTaxes: 1200, nature: PAYMENT, date: '2023-01-01T10:00:00.000Z' },
       ],
     };
@@ -166,11 +168,13 @@ describe('getPdfContent', () => {
             { text: '' },
             [
               { text: 'Sous-total HT', alignment: 'right', marginBottom: 8 },
+              { text: 'TVA (20%)', alignment: 'right', marginBottom: 8 },
               { text: 'Total TTC', alignment: 'right', marginBottom: 8, bold: true },
             ],
             [
               { text: '1300,00 €', alignment: 'right', width: 'auto', marginBottom: 8 },
-              { text: '1300,00 €', alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
+              { text: '260,00 €', alignment: 'right', width: 'auto', marginBottom: 8 },
+              { text: '1560,00 €', alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
             ],
           ],
         },
@@ -184,29 +188,29 @@ describe('getPdfContent', () => {
               { text: 'Solde dû', alignment: 'right', marginBottom: 8, bold: true },
             ],
             [
-              { text: '1300,00 €', alignment: 'right', width: 'auto', marginBottom: 8 },
+              { text: '1560,00 €', alignment: 'right', width: 'auto', marginBottom: 8 },
               { text: '0,00 €', alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
             ],
           ],
         },
         { text: 'Modes de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
         {
-          text: '- Prélèvement ou virement bancaire, conformément aux CGP Compani s’appliquant à la prestation objet '
+          text: '- Prélèvement ou virement bancaire, conformément aux CGP Compani s\'appliquant à la prestation objet '
             + 'de la présente facture',
           fontSize: 8,
         },
         { text: '- Pour les virements : IBAN : FR9210096000302523177152Q14 / BIC : BPCEFRPP', fontSize: 8 },
         { text: 'Conditions de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
         { text: '- Paiement à réception', fontSize: 8 },
-        { text: '- Conditions d’escompte : non applicable', fontSize: 8 },
+        { text: '- Conditions d\'escompte : non applicable', fontSize: 8 },
         {
-          text: '- Taux des pénalités de retard : trois fois le taux de l’intérêt légal, majoré d’une indemnité'
+          text: '- Taux des pénalités de retard : trois fois le taux de l\'intérêt légal, majoré d\'une indemnité'
             + ' forfaitaire pour frais de recouvrement de 40 €',
           fontSize: 8,
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 8,
         },
@@ -239,10 +243,11 @@ describe('getPdfContent', () => {
     formatPrice.onCall(4).returns('20,00 €');
     formatPrice.onCall(5).returns('200,00 €');
     formatPrice.onCall(6).returns('1300,00 €');
-    formatPrice.onCall(7).returns('1300,00 €');
-    formatPrice.onCall(8).returns('1300,00 €');
-    formatPrice.onCall(9).returns('0,00 €');
-    formatPrice.onCall(10).returns('123 000,00 €');
+    formatPrice.onCall(7).returns('260,00 €');
+    formatPrice.onCall(8).returns('1560,00 €');
+    formatPrice.onCall(9).returns('1560,00 €');
+    formatPrice.onCall(10).returns('0,00 €');
+    formatPrice.onCall(11).returns('123 000,00 €');
 
     const result = await CourseBill.getPdfContent(bill);
 
@@ -387,22 +392,22 @@ describe('getPdfContent', () => {
         },
         { text: 'Modes de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
         {
-          text: '- Prélèvement ou virement bancaire, conformément aux CGP Compani s’appliquant à la prestation objet '
+          text: '- Prélèvement ou virement bancaire, conformément aux CGP Compani s\'appliquant à la prestation objet '
             + 'de la présente facture',
           fontSize: 8,
         },
         { text: '- Pour les virements : IBAN : FR9210096000302523177152Q14 / BIC : BPCEFRPP', fontSize: 8 },
         { text: 'Conditions de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
         { text: '- Paiement à réception', fontSize: 8 },
-        { text: '- Conditions d’escompte : non applicable', fontSize: 8 },
+        { text: '- Conditions d\'escompte : non applicable', fontSize: 8 },
         {
-          text: '- Taux des pénalités de retard : trois fois le taux de l’intérêt légal, majoré d’une indemnité'
+          text: '- Taux des pénalités de retard : trois fois le taux de l\'intérêt légal, majoré d\'une indemnité'
             + ' forfaitaire pour frais de recouvrement de 40 €',
           fontSize: 8,
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 8,
         },
@@ -624,22 +629,22 @@ describe('getPdfContent', () => {
         },
         { text: 'Modes de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
         {
-          text: '- Prélèvement ou virement bancaire, conformément aux CGP Compani s’appliquant à la prestation objet '
+          text: '- Prélèvement ou virement bancaire, conformément aux CGP Compani s\'appliquant à la prestation objet '
             + 'de la présente facture',
           fontSize: 8,
         },
         { text: '- Pour les virements : IBAN : FR9210096000302523177152Q14 / BIC : BPCEFRPP', fontSize: 8 },
         { text: 'Conditions de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
         { text: '- Paiement à réception', fontSize: 8 },
-        { text: '- Conditions d’escompte : non applicable', fontSize: 8 },
+        { text: '- Conditions d\'escompte : non applicable', fontSize: 8 },
         {
-          text: '- Taux des pénalités de retard : trois fois le taux de l’intérêt légal, majoré d’une indemnité'
+          text: '- Taux des pénalités de retard : trois fois le taux de l\'intérêt légal, majoré d\'une indemnité'
             + ' forfaitaire pour frais de recouvrement de 40 €',
           fontSize: 8,
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 8,
         },
@@ -724,16 +729,16 @@ describe('getPdf', () => {
         { text: '- Prélèvement ou virement bancaire', fontSize: 8 },
         { text: '- Pour les virements : IBAN : FR9210096000302523177152Q14 / BIC : BPCEFRPP', fontSize: 8 },
         { text: 'Conditions de paiement', fontSize: 8, decoration: 'underline', marginTop: 8 },
-        { text: '- 1er paiement à réception, le solde selon l’échéancier contractuel', fontSize: 8 },
+        { text: '- 1er paiement à réception, le solde selon l\'échéancier contractuel', fontSize: 8 },
         { text: '- Escompte en cas de paiement anticipé : aucun', fontSize: 8 },
         {
-          text: '- Pénalité en cas de retard de paiement : trois fois le taux de l’intérêt légal, conformément aux '
-      + 'dispositions légales en vigueur, majoré d’une indemnité  forfaitaire de 40€ pour frais de recouvrement',
+          text: '- Pénalité en cas de retard de paiement : trois fois le taux de l\'intérêt légal, conformément aux '
+      + 'dispositions légales en vigueur, majoré d\'une indemnité  forfaitaire de 40€ pour frais de recouvrement',
           fontSize: 8,
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-            + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+            + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 8,
         },

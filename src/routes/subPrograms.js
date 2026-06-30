@@ -32,7 +32,11 @@ exports.plugin = {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
           payload: Joi.alternatives().try(
-            Joi.object({ name: Joi.string(), steps: Joi.array().items(Joi.string()).min(1) }).min(1),
+            Joi.object({
+              name: Joi.string(),
+              steps: Joi.array().items(Joi.string()).min(1),
+              subjectToVat: Joi.boolean(),
+            }).min(1),
             Joi.object(
               {
                 status: Joi.string().required().valid(PUBLISHED),
@@ -44,6 +48,16 @@ exports.plugin = {
                 .min(1)
                 .required(),
               effectiveDate: Joi.date().required(),
+            }),
+            Joi.object({
+              paymentPlan: Joi.object({
+                paymentPlanId: Joi.objectId(),
+                prices: Joi.when('paymentPlanId', {
+                  is: Joi.exist(),
+                  then: Joi.array().items(Joi.number().positive()),
+                  otherwise: Joi.array().items(Joi.number().positive()).min(1).required(),
+                }),
+              }).required(),
             })
           ),
         },

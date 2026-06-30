@@ -284,6 +284,7 @@ const vendorCompany = {
   shareCapital: 123000,
   activityDeclarationNumber: 123456789,
   siret: '12345678901245',
+  vat: 20,
 };
 
 const populateDB = async () => {

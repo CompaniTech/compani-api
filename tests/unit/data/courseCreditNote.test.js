@@ -31,6 +31,7 @@ describe('getPdfContent', () => {
       companies: [{ _id: new ObjectId() }],
       vendorCompany: {
         name: 'Auchan',
+        vat: 18,
         address: {
           fullAddress: '32 Rue du Loup 33000 Bordeaux',
           street: '32 Rue du Loup',
@@ -41,7 +42,7 @@ describe('getPdfContent', () => {
         siret: '27272727274124',
         shareCapital: 123000,
       },
-      courseBill: { number: 'FACT-000045', date: '18/08/1998' },
+      courseBill: { number: 'FACT-000045', date: '18/08/1998', vat: 20 },
       payer: {
         name: 'payeur',
         address: '24 Avenue Daumesnil 75012 Paris',
@@ -161,17 +162,19 @@ describe('getPdfContent', () => {
             { text: '' },
             [
               { text: 'Sous-total HT', alignment: 'right', marginBottom: 8 },
+              { text: 'TVA (20%)', alignment: 'right', marginBottom: 8 },
               { text: 'Total TTC', alignment: 'right', marginBottom: 8, bold: true },
             ],
             [
               { text: '1300,00 €', alignment: 'right', width: 'auto', marginBottom: 8 },
-              { text: '1300,00 €', alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
+              { text: '260,00 €', alignment: 'right', width: 'auto', marginBottom: 8 },
+              { text: '1560,00 €', alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
             ],
           ],
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 48,
         },
@@ -202,8 +205,9 @@ describe('getPdfContent', () => {
     formatPrice.onCall(4).returns('20,00 €');
     formatPrice.onCall(5).returns('200,00 €');
     formatPrice.onCall(6).returns('1300,00 €');
-    formatPrice.onCall(7).returns('1300,00 €');
-    formatPrice.onCall(8).returns('123 000,00 €');
+    formatPrice.onCall(7).returns('260,00 €');
+    formatPrice.onCall(8).returns('1560,00 €');
+    formatPrice.onCall(9).returns('123 000,00 €');
 
     const result = await CourseCreditNote.getPdfContent(creditNote);
 
@@ -333,8 +337,8 @@ describe('getPdfContent', () => {
           ],
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 48,
         },
@@ -532,8 +536,8 @@ describe('getPdfContent', () => {
           ],
         },
         {
-          text: 'En tant qu’organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
-          + 'en vertu de l’article 261 du Code Général des Impôts (CGI).',
+          text: 'En tant qu\'organisme de formation, Compani est exonéré de la Taxe sur la Valeur Ajoutée (TVA) '
+          + 'en vertu de l\'article 261 du Code Général des Impôts (CGI).',
           fontSize: 8,
           marginTop: 48,
         },

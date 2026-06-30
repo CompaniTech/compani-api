@@ -95,6 +95,40 @@ describe('updateSubProgram', () => {
     sinon.assert.notCalled(findOneAndUpdate);
   });
 
+  it('should add subjectToVat from a subProgram', async () => {
+    const subProgram = { _id: new ObjectId() };
+    const payload = { subjectToVat: true };
+
+    await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgram._id }, { $set: payload });
+    sinon.assert.notCalled(stepUpdateManyStub);
+    sinon.assert.notCalled(activityUpdateManyStub);
+    sinon.assert.notCalled(userCompanyFind);
+    sinon.assert.notCalled(courseCreateStub);
+    sinon.assert.notCalled(sendNewElearningCourseNotification);
+    sinon.assert.notCalled(getLastVersion);
+    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(findOneAndUpdate);
+  });
+
+  it('should remove subjectToVat from a subProgram', async () => {
+    const subProgram = { _id: new ObjectId() };
+    const payload = { subjectToVat: false };
+
+    await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgram._id }, { $unset: { subjectToVat: '' } });
+    sinon.assert.notCalled(stepUpdateManyStub);
+    sinon.assert.notCalled(activityUpdateManyStub);
+    sinon.assert.notCalled(userCompanyFind);
+    sinon.assert.notCalled(courseCreateStub);
+    sinon.assert.notCalled(sendNewElearningCourseNotification);
+    sinon.assert.notCalled(getLastVersion);
+    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(findOneAndUpdate);
+  });
+
   describe('update status', () => {
     it('if subProgram is blended, should only update status', async () => {
       const payload = { status: 'published' };
@@ -435,6 +469,58 @@ describe('updateSubProgram', () => {
         'effectiveDate'
       );
       sinon.assert.notCalled(updateOne);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+  });
+
+  describe('update payment plan', () => {
+    it('should add a new payment plan if payload.paymentPlan has no _id', async () => {
+      const subProgramId = new ObjectId();
+      const payload = { paymentPlan: { prices: [100, 200] } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId },
+        { $push: { paymentPlans: { prices: [100, 200] } } }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should update an existing payment plan if payload.paymentPlan has a paymentPlanId and prices', async () => {
+      const subProgramId = new ObjectId();
+      const paymentPlanId = new ObjectId();
+      const payload = { paymentPlan: { paymentPlanId, prices: [150, 300] } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId, 'paymentPlans._id': paymentPlanId },
+        { $set: { 'paymentPlans.$.prices': [150, 300] } }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should delete a payment plan if payload.paymentPlan has a paymentPlanId and empty prices', async () => {
+      const subProgramId = new ObjectId();
+      const paymentPlanId = new ObjectId();
+      const payload = { paymentPlan: { paymentPlanId, prices: [] } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId },
+        { $pull: { paymentPlans: { _id: paymentPlanId } } }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(getLastVersion);
       sinon.assert.notCalled(findOneAndUpdate);
     });
   });

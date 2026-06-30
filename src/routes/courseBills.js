@@ -67,7 +67,11 @@ exports.plugin = {
             quantity: Joi.number().positive().strict().required(),
             course: Joi.objectId().required(),
             mainFee: Joi.object({
-              price: Joi.number().positive(),
+              price: Joi.alternatives().try(
+                Joi.array().items(Joi.number().positive())
+                  .when('quantity', { is: Joi.exist(), then: Joi.array().length(Joi.ref('quantity')) }),
+                Joi.number().positive()
+              ),
               percentage: Joi.number().positive().integer().max(100),
               count: Joi.number().positive().integer().required(),
               countUnit: Joi.string().required().valid(GROUP, TRAINEE),
@@ -78,7 +82,7 @@ exports.plugin = {
                 {
                   is: 1,
                   then: Joi.object({ price: Joi.required() }),
-                  otherwise: Joi.object({ price: Joi.forbidden(), percentage: Joi.forbidden() }),
+                  otherwise: Joi.object({ percentage: Joi.forbidden() }),
                 }
               ),
             companies: Joi.array().items(Joi.objectId()).min(1).required(),

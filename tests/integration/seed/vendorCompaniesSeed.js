@@ -16,6 +16,7 @@ const vendorCompany = {
     city: 'Antony',
     location: { type: 'Point', coordinates: [2.377133, 48.801389] },
   },
+  vat: 20,
   billingRepresentative: vendorAdmin._id,
   shareCapital: 1230000,
 };
