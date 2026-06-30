@@ -171,7 +171,6 @@ exports.list = async (query, credentials) => {
       ? { billedAt: { $gte: query.startDate, $lte: query.endDate } }
       : { maturityDate: { $gte: query.startDate, $lte: query.endDate } };
   } else if (query.isValidated) formattedQuery = { billedAt: { $exists: true } };
-
   const courseBills = await CourseBill
     .find(formattedQuery)
     .populate([
@@ -203,7 +202,7 @@ exports.list = async (query, credentials) => {
           populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
         },
         ]
-        : [{ path: 'course', select: 'trainees type subProgram', populate: { path: 'trainees', select: 'identity' } }]
+        : [{ path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } }]
       ),
       { path: 'payer.fundingOrganisation', select: 'name' },
       { path: 'payer.company', select: 'name' },
@@ -502,8 +501,7 @@ exports.updateBillList = async (payload) => {
       .lean();
     const paymentsPromises = [];
     fulfilledResults.forEach((courseBill, index) => {
-      const seq = lastPaymentNumber.seq - result.length + 1 + index;
-      const paymentPayload = formatPaymentPayload(courseBill.value, seq);
+      const paymentPayload = formatPaymentPayload(courseBill.value, lastPaymentNumber.seq - result.length + 1 + index);
       paymentsPromises.push(CoursePayment.create(paymentPayload));
     });
     await Promise.all(paymentsPromises);

@@ -913,11 +913,7 @@ describe('list', () => {
         {
           query: 'populate',
           args: [[
-            {
-              path: 'course',
-              select: 'trainees type subProgram',
-              populate: { path: 'trainees', select: 'identity' },
-            },
+            { path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } },
             { path: 'payer.fundingOrganisation', select: 'name' },
             { path: 'payer.company', select: 'name' },
             { path: 'companies', select: 'name' },
@@ -1490,10 +1486,7 @@ describe('updateCourseBill', () => {
             { new: true },
           ],
         },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'prices type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
         { query: 'lean' },
       ]
     );
@@ -1523,10 +1516,7 @@ describe('updateCourseBill', () => {
             { new: true },
           ],
         },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'prices type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
         { query: 'lean' },
       ]
     );
@@ -1548,10 +1538,7 @@ describe('updateCourseBill', () => {
       findOneAndUpdate,
       [
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'prices type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
         { query: 'lean' },
       ]
     );
@@ -1584,10 +1571,7 @@ describe('updateCourseBill', () => {
       findOneAndUpdate,
       [
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'prices type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
         { query: 'lean' },
       ]
     );
@@ -1620,10 +1604,7 @@ describe('updateCourseBill', () => {
       findOneAndUpdate,
       [
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'prices type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
         { query: 'lean' },
       ]
     );
@@ -1657,10 +1638,7 @@ describe('updateCourseBill', () => {
             { new: true },
           ],
         },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'prices type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
         { query: 'lean' },
       ]
     );
@@ -1714,10 +1692,7 @@ describe('updateCourseBill', () => {
             { new: true },
           ],
         },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'prices type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'prices type' }] },
         { query: 'lean' },
       ]
     );
@@ -1845,10 +1820,7 @@ describe('updateBillList', () => {
             { new: true },
           ],
         },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
         { query: 'lean' },
       ],
       0
@@ -1867,10 +1839,7 @@ describe('updateBillList', () => {
             { new: true },
           ],
         },
-        {
-          query: 'populate',
-          args: [{ path: 'course', select: 'type' }],
-        },
+        { query: 'populate', args: [{ path: 'course', select: 'type' }] },
         { query: 'lean' },
       ],
       1
