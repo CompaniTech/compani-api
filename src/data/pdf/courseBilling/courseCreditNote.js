@@ -1,16 +1,14 @@
 const { ORANGE_600 } = require('../../../helpers/constants');
 const UtilsPdfHelper = require('./utils');
-const NumbersHelper = require('../../../helpers/numbers');
 const PdfHelper = require('../../../helpers/pdf');
 const CourseBillHelper = require('../../../helpers/courseBills');
 
 exports.getPdfContent = async (creditNote) => {
   const [compani] = await UtilsPdfHelper.getImages();
   const vat = creditNote.courseBill.vat || 0;
-  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes({ ...creditNote, vat });
+  const { netExclTaxes, netInclTaxes, vatAmount } = CourseBillHelper.getDetailWithTaxes({ ...creditNote, vat });
   const header = UtilsPdfHelper.getHeader(creditNote, compani);
   const feeTable = UtilsPdfHelper.getFeeTable(creditNote);
-  const vatAmount = vat ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vat, 100)) : null;
 
   const totalInfos = UtilsPdfHelper.getTotalInfos(netExclTaxes, netInclTaxes, vat, vatAmount);
 

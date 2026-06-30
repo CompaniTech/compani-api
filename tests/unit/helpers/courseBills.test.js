@@ -35,7 +35,7 @@ const {
   PRESENT,
 } = require('../../../src/helpers/constants');
 
-describe('getNetInclTaxes', () => {
+describe('getDetailWithTaxes', () => {
   it('should return total price (without billing purchases)', async () => {
     const bill = {
       course: new ObjectId(),
@@ -44,7 +44,7 @@ describe('getNetInclTaxes', () => {
       payer: { company: new ObjectId() },
     };
 
-    const result = await CourseBillHelper.getNetInclTaxes(bill);
+    const result = await CourseBillHelper.getDetailWithTaxes(bill);
     expect(result).toEqual({ netExclTaxes: 240, netInclTaxes: 240 });
   });
 
@@ -60,7 +60,7 @@ describe('getNetInclTaxes', () => {
       ],
     };
 
-    const result = await CourseBillHelper.getNetInclTaxes(bill);
+    const result = await CourseBillHelper.getDetailWithTaxes(bill);
     expect(result).toEqual({ netExclTaxes: 730, netInclTaxes: 730 });
   });
 
@@ -73,8 +73,8 @@ describe('getNetInclTaxes', () => {
       vat: 20,
     };
 
-    const result = await CourseBillHelper.getNetInclTaxes(bill);
-    expect(result).toEqual({ netExclTaxes: 240, netInclTaxes: 288 });
+    const result = await CourseBillHelper.getDetailWithTaxes(bill);
+    expect(result).toEqual({ netExclTaxes: 240, netInclTaxes: 288, vatAmount: 48 });
   });
 });
 

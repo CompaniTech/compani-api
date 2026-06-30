@@ -38,7 +38,7 @@ const {
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 
-exports.getNetInclTaxes = (bill) => {
+exports.getDetailWithTaxes = (bill) => {
   const vatPercentage = bill.vat || 0;
   const { price, count } = bill.mainFee;
   const mainFeeTotal = NumbersHelper.multiply(price || 0, count || 0);
@@ -55,7 +55,10 @@ exports.getNetInclTaxes = (bill) => {
   return {
     netExclTaxes: NumbersHelper.toNumber(netExclTaxes),
     ...vatAmount
-      ? { netInclTaxes: NumbersHelper.toNumber(NumbersHelper.add(netExclTaxes, vatAmount)) }
+      ? {
+        netInclTaxes: NumbersHelper.toNumber(NumbersHelper.add(netExclTaxes, vatAmount)),
+        vatAmount: NumbersHelper.toNumber(vatAmount),
+      }
       : { netInclTaxes: NumbersHelper.toNumber(netExclTaxes) },
   };
 };
@@ -67,9 +70,9 @@ const getTimeProgress = (course) => {
 };
 
 exports.computeAmounts = (courseBill) => {
-  if (!courseBill) return { netInclTaxes: 0, paid: 0, total: 0 };
+  if (!courseBill) return { netInclTaxes: 0, netExclTaxes: 0, paid: 0, total: 0 };
 
-  const { netExclTaxes, netInclTaxes } = exports.getNetInclTaxes(courseBill);
+  const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(courseBill);
   const totalPayments = BalanceHelper.computePayments(
     (courseBill.coursePayments || []).filter(p => p.status === RECEIVED)
   );
@@ -154,7 +157,7 @@ exports.list = async (query, credentials) => {
 
     return courseBills
       .map((bill) => {
-        const { netExclTaxes } = exports.getNetInclTaxes(bill);
+        const { netExclTaxes } = exports.getDetailWithTaxes(bill);
         return { ...bill, netExclTaxes };
       })
       .sort((a, b) => new Date(a.billedAt || a.maturityDate) - new Date(b.billedAt || b.maturityDate));
@@ -241,7 +244,7 @@ exports.list = async (query, credentials) => {
         return query.isValidated || !isCourseInterrupted;
       })
       .map(async (bill) => {
-        const { netExclTaxes, netInclTaxes } = exports.getNetInclTaxes(bill);
+        const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
 
         return {
           ...bill,
@@ -273,7 +276,7 @@ exports.createBillList = async (payload) => {
     .lean();
 
   let vat = 0;
-  if (course.subProgram.subjectToVat) {
+  if (get(course, 'subProgram.subjectToVat')) {
     const vendorCompany = await VendorCompaniesHelper.get();
     vat = vendorCompany.vat;
   }
@@ -359,7 +362,7 @@ exports.createBillList = async (payload) => {
 };
 
 const formatPaymentPayload = (courseBill, seq) => {
-  const { netInclTaxes } = exports.getNetInclTaxes(courseBill);
+  const { netInclTaxes } = exports.getDetailWithTaxes(courseBill);
 
   const paymentPayload = {
     companies: courseBill.companies,

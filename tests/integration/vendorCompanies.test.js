@@ -186,6 +186,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
       { key: 'vat', value: '20%' },
       { key: 'vat', value: -20 },
       { key: 'vat', value: 0 },
+      { key: 'vat', value: 101 },
     ];
     wrongValues.forEach((payload) => {
       it(`should not update vendor company ${payload.key} with wrong value`, async () => {

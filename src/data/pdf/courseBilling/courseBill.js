@@ -6,7 +6,7 @@ const CourseBillHelper = require('../../../helpers/courseBills');
 
 exports.getPdfContent = async (bill) => {
   const { coursePayments, courseCreditNote } = bill;
-  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes(bill);
+  const { netExclTaxes, netInclTaxes, vatAmount } = CourseBillHelper.getDetailWithTaxes(bill);
   const amountPaid = coursePayments
     .reduce(
       (acc, p) =>
@@ -14,7 +14,6 @@ exports.getPdfContent = async (bill) => {
       NumbersHelper.toString(0)
     );
 
-  const vatAmount = bill.vat ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(bill.vat, 100)) : null;
   const totalBalance = courseCreditNote ? -amountPaid : NumbersHelper.subtract(netInclTaxes, amountPaid);
   const isPaid = !courseCreditNote && totalBalance <= 0;
 
