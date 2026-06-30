@@ -202,18 +202,28 @@ exports.getFeeTable = (data) => {
   ];
 };
 
-exports.getTotalInfos = netInclTaxes => ({
+exports.getTotalInfos = (netExclTaxes, netInclTaxes, vatPercentage, vatAmount) => ({
   columns: [
     { text: '' },
     { text: '' },
     { text: '' },
     [
       { text: 'Sous-total HT', alignment: 'right', marginBottom: 8 },
+      ...(vatAmount ? [{ text: `TVA (${vatPercentage}%)`, alignment: 'right', marginBottom: 8 }] : []),
       { text: 'Total TTC', alignment: 'right', marginBottom: 8, bold: true },
     ],
     [
-      { text: UtilsHelper.formatPrice(netInclTaxes), alignment: 'right', width: 'auto', marginBottom: 8 },
-      { text: UtilsHelper.formatPrice(netInclTaxes), alignment: 'right', width: 'auto', marginBottom: 8, bold: true },
+      { text: UtilsHelper.formatPrice(netExclTaxes), alignment: 'right', width: 'auto', marginBottom: 8 },
+      ...(vatAmount
+        ? [{ text: UtilsHelper.formatPrice(vatAmount), alignment: 'right', width: 'auto', marginBottom: 8 }]
+        : []),
+      {
+        text: UtilsHelper.formatPrice(netInclTaxes),
+        alignment: 'right',
+        width: 'auto',
+        marginBottom: 8,
+        bold: true,
+      },
     ],
   ],
 });

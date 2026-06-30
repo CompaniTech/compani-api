@@ -32,7 +32,11 @@ exports.plugin = {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
           payload: Joi.alternatives().try(
-            Joi.object({ name: Joi.string(), steps: Joi.array().items(Joi.string()).min(1) }).min(1),
+            Joi.object({
+              name: Joi.string(),
+              steps: Joi.array().items(Joi.string()).min(1),
+              subjectToVat: Joi.boolean(),
+            }).min(1),
             Joi.object(
               {
                 status: Joi.string().required().valid(PUBLISHED),

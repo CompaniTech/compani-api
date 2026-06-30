@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
+const has = require('lodash/has');
 const SubProgram = require('../../models/SubProgram');
 const Program = require('../../models/Program');
 const Company = require('../../models/Company');
@@ -55,7 +56,9 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
   if (!subProgram) throw Boom.notFound();
 
-  if (subProgram.status !== DRAFT && !(req.payload.prices || req.payload.paymentPlan)) throw Boom.forbidden();
+  const allowedFieldsForPublishedSubProgram = req.payload.prices || req.payload.paymentPlan || req.payload.name ||
+    has(req.payload, 'subjectToVat');
+  if (subProgram.status !== DRAFT && !allowedFieldsForPublishedSubProgram) throw Boom.forbidden();
 
   if (req.payload.status === PUBLISHED && !subProgram.areStepsValid) throw Boom.forbidden();
 

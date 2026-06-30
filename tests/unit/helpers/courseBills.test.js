@@ -35,7 +35,7 @@ const {
   PRESENT,
 } = require('../../../src/helpers/constants');
 
-describe('getNetInclTaxes', () => {
+describe('getDetailWithTaxes', () => {
   it('should return total price (without billing purchases)', async () => {
     const bill = {
       course: new ObjectId(),
@@ -44,8 +44,8 @@ describe('getNetInclTaxes', () => {
       payer: { company: new ObjectId() },
     };
 
-    const result = await CourseBillHelper.getNetInclTaxes(bill);
-    expect(result).toEqual(240);
+    const result = await CourseBillHelper.getDetailWithTaxes(bill);
+    expect(result).toEqual({ netExclTaxes: 240, netInclTaxes: 240 });
   });
 
   it('should return total price (with billing purchases)', async () => {
@@ -60,8 +60,21 @@ describe('getNetInclTaxes', () => {
       ],
     };
 
-    const result = await CourseBillHelper.getNetInclTaxes(bill);
-    expect(result).toEqual(730);
+    const result = await CourseBillHelper.getDetailWithTaxes(bill);
+    expect(result).toEqual({ netExclTaxes: 730, netInclTaxes: 730 });
+  });
+
+  it('should return total price (with vat)', async () => {
+    const bill = {
+      course: new ObjectId(),
+      company: { name: 'Company' },
+      mainFee: { price: 120, count: 2 },
+      payer: { company: new ObjectId() },
+      vat: 20,
+    };
+
+    const result = await CourseBillHelper.getDetailWithTaxes(bill);
+    expect(result).toEqual({ netExclTaxes: 240, netInclTaxes: 288, vatAmount: 48 });
   });
 });
 
@@ -113,7 +126,7 @@ describe('list', () => {
         mainFee: { price: 200, count: 2 },
         payer: { name: 'Funder' },
         billedAt: '2021-10-11T08:00:00.000Z',
-        netInclTaxes: 400,
+        netExclTaxes: 400,
       },
       {
         course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
@@ -121,7 +134,7 @@ describe('list', () => {
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
         maturityDate: '2021-11-11T08:00:00.000Z',
-        netInclTaxes: 240,
+        netExclTaxes: 240,
       },
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -175,7 +188,7 @@ describe('list', () => {
         { billingItem: billingItemList[0]._id, price: 90, count: 1 },
         { billingItem: billingItemList[1]._id, price: 400, count: 1 },
       ],
-      netInclTaxes: 730,
+      netExclTaxes: 730,
     }]);
     SinonMongoose.calledOnceWithExactly(
       find,
@@ -258,6 +271,7 @@ describe('list', () => {
       ],
       courseCreditNote: { number: 'AV-00001' },
       netInclTaxes: 730,
+      netExclTaxes: 730,
       billedAt: '2022-03-11T08:00:00.000Z',
       progress: 1,
       paid: 780,
@@ -389,6 +403,7 @@ describe('list', () => {
       ],
       courseCreditNote: null,
       netInclTaxes: 730,
+      netExclTaxes: 730,
       billedAt: '2022-03-11T08:00:00.000Z',
       progress: 1,
       paid: 350,
@@ -595,6 +610,7 @@ describe('list', () => {
           prices: [{ company: companies[0]._id, global: 200 }, { company: companies[1]._id, global: '' }],
         },
         netInclTaxes: 240,
+        netExclTaxes: 240,
         hasCourseAction: true,
       },
       {
@@ -620,6 +636,7 @@ describe('list', () => {
           slots: [],
         },
         netInclTaxes: 320,
+        netExclTaxes: 320,
         hasCourseAction: true,
       },
       {
@@ -651,6 +668,7 @@ describe('list', () => {
           ],
         },
         netInclTaxes: 320,
+        netExclTaxes: 320,
         hasCourseAction: true,
       },
     ]);
@@ -667,8 +685,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type '
-                + 'tradeName',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
               populate: [
                 { path: 'companies', select: 'name' },
                 {
@@ -810,6 +827,7 @@ describe('list', () => {
         ],
       },
       netInclTaxes: 240,
+      netExclTaxes: 240,
     }]);
 
     SinonMongoose.calledOnceWithExactly(
@@ -824,8 +842,7 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc type '
-                + 'tradeName',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'slots', select: 'startDate endDate' },
@@ -883,6 +900,7 @@ describe('list', () => {
       billedAt: '2025-06-10T22:00:00.000Z',
       course: { _id: courseId, trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'nom' } }] },
       netInclTaxes: 240,
+      netExclTaxes: 240,
     }]);
 
     SinonMongoose.calledOnceWithExactly(
@@ -917,6 +935,7 @@ describe('createBillList', () => {
   let createCourseBill;
   let insertManyCourseBills;
   let addBillingPurchase;
+  let getVendorCompany;
   const TRAINER_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
@@ -924,6 +943,7 @@ describe('createBillList', () => {
     createCourseBill = sinon.stub(CourseBill, 'create');
     insertManyCourseBills = sinon.stub(CourseBill, 'insertMany');
     addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
+    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
     process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
   });
 
@@ -932,11 +952,12 @@ describe('createBillList', () => {
     createCourseBill.restore();
     insertManyCourseBills.restore();
     addBillingPurchase.restore();
+    getVendorCompany.restore();
     process.env.TRAINER_FEES_BILLING_ITEM = '';
   });
 
   it('should create one bill without percentage for INTER course', async () => {
-    const course = { type: INTER_B2B, prices: [] };
+    const course = { type: INTER_B2B, prices: [], subProgram: { subjectToVat: false } };
     const payload = {
       course: new ObjectId(),
       quantity: 1,
@@ -967,6 +988,7 @@ describe('createBillList', () => {
     );
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
+    sinon.assert.notCalled(getVendorCompany);
   });
 
   it('should create one bill with percentage for INTRA course with trainer fees', async () => {
@@ -975,6 +997,7 @@ describe('createBillList', () => {
       _id: new ObjectId(),
       type: INTRA,
       prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
+      subProgram: { subjectToVat: true },
     };
     const billCreated = { _id: new ObjectId() };
     const payload = {
@@ -988,6 +1011,7 @@ describe('createBillList', () => {
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
     createCourseBill.returns(billCreated);
+    getVendorCompany.returns({ vat: 20 });
 
     await CourseBillHelper.createBillList(payload);
 
@@ -1004,6 +1028,7 @@ describe('createBillList', () => {
         companies: payload.companies,
         payer: payload.payer,
         maturityDate: payload.maturityDate,
+        vat: 20,
       }
     );
     sinon.assert.calledOnceWithExactly(
@@ -1025,6 +1050,7 @@ describe('createBillList', () => {
       _id: new ObjectId(),
       type: INTRA,
       prices: [{ company: companyId, global: 1200 }],
+      subProgram: { subjectToVat: false },
     };
     const billCreated = { _id: new ObjectId() };
     const payload = {
@@ -1061,7 +1087,7 @@ describe('createBillList', () => {
   });
 
   it('should create several bills (without course price)', async () => {
-    const course = { _id: new ObjectId(), type: INTER_B2B };
+    const course = { _id: new ObjectId(), type: INTER_B2B, subProgram: { subjectToVat: false } };
     const payload = {
       course: course._id,
       quantity: 3,
@@ -1091,6 +1117,7 @@ describe('createBillList', () => {
     sinon.assert.calledOnceWithExactly(insertManyCourseBills, expectedBills);
     sinon.assert.notCalled(createCourseBill);
     sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(getVendorCompany);
   });
 
   it('should create several bills (with global price and trainer fees)', async () => {
@@ -1099,6 +1126,7 @@ describe('createBillList', () => {
       _id: new ObjectId(),
       type: INTER_B2B,
       prices: [{ company: companyId, global: 2000, trainerFees: 200 }],
+      subProgram: { subjectToVat: true },
     };
     const payload = {
       course: course._id,
@@ -1112,6 +1140,7 @@ describe('createBillList', () => {
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
     insertManyCourseBills.returns(createdBills);
+    getVendorCompany.returns({ vat: 20 });
 
     await CourseBillHelper.createBillList(payload);
 
@@ -1126,6 +1155,7 @@ describe('createBillList', () => {
       },
       companies: payload.companies,
       payer: payload.payer,
+      vat: 20,
     };
 
     const expectedBills = new Array(3).fill(expectedBill);
@@ -1173,6 +1203,7 @@ describe('createBillList', () => {
       prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
       trainees: [{ identity: { firstname: 'Sarah', lastname: 'Pel' } }],
       trainers: [{ identity: { firstname: 'toto', lastname: 'test' } }],
+      subProgram: { subjectToVat: false },
     };
     const payload = {
       course: course._id,
@@ -1190,9 +1221,13 @@ describe('createBillList', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneCourse,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1 }] },
+        {
+          query: 'findOne',
+          args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'subjectToVat' }] },
         { query: 'lean' },
       ]
     );
@@ -1234,6 +1269,7 @@ describe('createBillList', () => {
     );
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
+    sinon.assert.notCalled(getVendorCompany);
   });
 
   it('should create several bills for SINGLE course without trainers', async () => {
@@ -1244,6 +1280,7 @@ describe('createBillList', () => {
       type: SINGLE,
       prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
       trainees: [{ identity: { firstname: 'Sarah', lastname: 'Pel' } }],
+      subProgram: { subjectToVat: true },
     };
     const payload = {
       course: course._id,
@@ -1255,15 +1292,19 @@ describe('createBillList', () => {
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
-
+    getVendorCompany.returns({ vat: 20 });
     await CourseBillHelper.createBillList(payload);
 
     SinonMongoose.calledOnceWithExactly(
       findOneCourse,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1 }] },
+        {
+          query: 'findOne',
+          args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'subjectToVat' }] },
         { query: 'lean' },
       ]
     );
@@ -1283,6 +1324,7 @@ describe('createBillList', () => {
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-04-29T22:00:00.000Z',
+        vat: 20,
       }
     );
     sinon.assert.calledWithExactly(
@@ -1301,6 +1343,7 @@ describe('createBillList', () => {
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-05-29T22:00:00.000Z',
+        vat: 20,
       }
     );
     sinon.assert.notCalled(addBillingPurchase);
@@ -1316,6 +1359,7 @@ describe('createBillList', () => {
       prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
       trainees: [{ identity: { firstname: 'John', lastname: 'Doe' } }],
       trainers: [{ identity: { firstname: 'toto', lastname: 'test' } }],
+      subProgram: { subjectToVat: false },
     };
     const payload = {
       course: course._id,
@@ -1389,6 +1433,7 @@ describe('createBillList', () => {
     );
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
+    sinon.assert.notCalled(getVendorCompany);
   });
 });
 
@@ -2298,10 +2343,13 @@ describe('generateBillPdf', () => {
           query: 'findOne',
           args: [
             { _id: billId },
-            { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 },
+            { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1, vat: 1 },
           ],
         },
-        { query: 'populate', args: [{ path: 'course', select: 'tradeName prices' }] },
+        {
+          query: 'populate',
+          args: [{ path: 'course', select: 'tradeName prices' }],
+        },
         {
           query: 'populate',
           args: [{

@@ -95,6 +95,40 @@ describe('updateSubProgram', () => {
     sinon.assert.notCalled(findOneAndUpdate);
   });
 
+  it('should add subjectToVat from a subProgram', async () => {
+    const subProgram = { _id: new ObjectId() };
+    const payload = { subjectToVat: true };
+
+    await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgram._id }, { $set: payload });
+    sinon.assert.notCalled(stepUpdateManyStub);
+    sinon.assert.notCalled(activityUpdateManyStub);
+    sinon.assert.notCalled(userCompanyFind);
+    sinon.assert.notCalled(courseCreateStub);
+    sinon.assert.notCalled(sendNewElearningCourseNotification);
+    sinon.assert.notCalled(getLastVersion);
+    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(findOneAndUpdate);
+  });
+
+  it('should remove subjectToVat from a subProgram', async () => {
+    const subProgram = { _id: new ObjectId() };
+    const payload = { subjectToVat: false };
+
+    await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgram._id }, { $unset: { subjectToVat: '' } });
+    sinon.assert.notCalled(stepUpdateManyStub);
+    sinon.assert.notCalled(activityUpdateManyStub);
+    sinon.assert.notCalled(userCompanyFind);
+    sinon.assert.notCalled(courseCreateStub);
+    sinon.assert.notCalled(sendNewElearningCourseNotification);
+    sinon.assert.notCalled(getLastVersion);
+    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(findOneAndUpdate);
+  });
+
   describe('update status', () => {
     it('if subProgram is blended, should only update status', async () => {
       const payload = { status: 'published' };

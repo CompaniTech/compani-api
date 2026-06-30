@@ -31,12 +31,9 @@ exports.generateCreditNotePdf = async (creditNoteId) => {
   const creditNote = await CourseCreditNote.findOne({ _id: creditNoteId })
     .populate({
       path: 'courseBill',
-      select: 'course number date payer billingPurchaseList mainFee billedAt',
+      select: 'course number date payer billingPurchaseList mainFee billedAt vat',
       populate: [
-        {
-          path: 'course',
-          select: 'tradeName prices',
-        },
+        { path: 'course', select: 'tradeName prices' },
         { path: 'payer.fundingOrganisation', select: 'name address' },
         { path: 'payer.company', select: 'name address' },
         { path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } },
@@ -54,6 +51,7 @@ exports.generateCreditNotePdf = async (creditNoteId) => {
     courseBill: {
       number: creditNote.courseBill.number,
       date: CompaniDate(creditNote.courseBill.billedAt).format(DD_MM_YYYY),
+      ...creditNote.courseBill.vat && { vat: creditNote.courseBill.vat },
     },
     payer: { name: payer.name, address: get(payer, 'address.fullAddress') || payer.address },
     course: creditNote.courseBill.course,
