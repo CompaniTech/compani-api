@@ -31,7 +31,7 @@ describe('getPdfContent', () => {
       companies: [{ _id: new ObjectId() }],
       vendorCompany: {
         name: 'Auchan',
-        vat: 20,
+        vat: 18,
         address: {
           fullAddress: '32 Rue du Loup 33000 Bordeaux',
           street: '32 Rue du Loup',
@@ -42,12 +42,12 @@ describe('getPdfContent', () => {
         siret: '27272727274124',
         shareCapital: 123000,
       },
-      courseBill: { number: 'FACT-000045', date: '18/08/1998' },
+      courseBill: { number: 'FACT-000045', date: '18/08/1998', vat: 20 },
       payer: {
         name: 'payeur',
         address: '24 Avenue Daumesnil 75012 Paris',
       },
-      course: { tradeName: 'Test', subProgram: { subjectToVat: true } },
+      course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
       billingPurchaseList: [
         { billingItem: { name: 'article 1' }, price: 10, count: 10 },
@@ -241,7 +241,7 @@ describe('getPdfContent', () => {
         name: 'payeur',
         address: '24 Avenue Daumesnil 75012 Paris',
       },
-      course: { tradeName: 'Test', subProgram: {} },
+      course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
     };
 
@@ -403,7 +403,6 @@ describe('getPdfContent', () => {
       },
       course: {
         tradeName: 'Test',
-        subProgram: {},
         prices: [{ company: companyId, global: 2000, trainerFees: 200 }],
       },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP, percentage: 50 },

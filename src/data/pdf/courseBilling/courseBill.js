@@ -6,6 +6,7 @@ const CourseBillHelper = require('../../../helpers/courseBills');
 
 exports.getPdfContent = async (bill) => {
   const { coursePayments, courseCreditNote } = bill;
+  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes(bill);
   const amountPaid = coursePayments
     .reduce(
       (acc, p) =>
@@ -13,10 +14,7 @@ exports.getPdfContent = async (bill) => {
       NumbersHelper.toString(0)
     );
 
-  const { vat } = bill.vendorCompany;
-  const { subjectToVat } = bill.course.subProgram;
-  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes(bill, subjectToVat ? vat : 0);
-  const vatAmount = subjectToVat ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vat, 100)) : null;
+  const vatAmount = bill.vat ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(bill.vat, 100)) : null;
   const totalBalance = courseCreditNote ? -amountPaid : NumbersHelper.subtract(netInclTaxes, amountPaid);
   const isPaid = !courseCreditNote && totalBalance <= 0;
 
@@ -24,7 +22,7 @@ exports.getPdfContent = async (bill) => {
 
   const header = UtilsPdfHelper.getHeader(bill, compani, true, isPaid);
   const feeTable = UtilsPdfHelper.getFeeTable(bill);
-  const totalInfos = UtilsPdfHelper.getTotalInfos(netExclTaxes, netInclTaxes, vat, vatAmount);
+  const totalInfos = UtilsPdfHelper.getTotalInfos(netExclTaxes, netInclTaxes, bill.vat, vatAmount);
   const balanceInfos = UtilsPdfHelper.getBalanceInfos(courseCreditNote, amountPaid, netInclTaxes, totalBalance);
 
   const footer = [

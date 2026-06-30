@@ -49,7 +49,6 @@ const NumbersHelper = require('./numbers');
 const CourseBillHelper = require('./courseBills');
 const CourseHelper = require('./courses');
 const CourseSlotHelper = require('./courseSlots');
-const VendorCompaniesHelper = require('./vendorCompanies');
 const AttendanceSheet = require('../models/AttendanceSheet');
 const CourseSmsHistory = require('../models/CourseSmsHistory');
 const CourseSlot = require('../models/CourseSlot');
@@ -115,17 +114,14 @@ const getAttendancesCountInfos = (course) => {
   };
 };
 
-const getBillsInfos = (course, vat) => {
+const getBillsInfos = (course) => {
   const validatedBillsWithoutCreditNote = course.bills.filter(bill => !bill.courseCreditNote && bill.billedAt);
 
   const payerList =
     [...new Set(validatedBillsWithoutCreditNote.map(bill => get(bill, 'payer.name')))]
       .sort((a, b) => a.localeCompare(b))
       .toString();
-  const computedAmounts = validatedBillsWithoutCreditNote.map((bill) => {
-    const subjectToVat = get(course, 'subProgram.subjectToVat');
-    return CourseBillHelper.computeAmounts(bill, subjectToVat ? vat : 0);
-  });
+  const computedAmounts = validatedBillsWithoutCreditNote.map(bill => CourseBillHelper.computeAmounts(bill));
   const amountsInfos = validatedBillsWithoutCreditNote.length
     ? {
       netInclTaxes: computedAmounts.map(amount => amount.netInclTaxes).reduce((acc, value) => acc + value, 0),
@@ -187,7 +183,7 @@ const formatTrainersName = courseTrainers => courseTrainers
   .map(trainer => UtilsHelper.formatIdentity(trainer.identity, 'FL'))
   .join(', ');
 
-const formatCourseForExport = async (course, courseQH, smsCount, asCount, estimatedStartDateHistory, vat) => {
+const formatCourseForExport = async (course, courseQH, smsCount, asCount, estimatedStartDateHistory) => {
   const slotsGroupedByDate = CourseHelper.groupSlotsByDate(course.slots);
   const {
     subscribedAttendances,
@@ -213,7 +209,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     netExclTaxes,
     paid,
     total,
-  } = getBillsInfos(course, vat);
+  } = getBillsInfos(course);
 
   const companiesName = course.companies.map(co => co.name).sort((a, b) => a.localeCompare(b)).toString();
 
@@ -317,7 +313,6 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
     smsList,
     attendanceSheetList,
     estimatedStartDateHistories,
-    vendorCompany,
   ] = await Promise.all([
     QuestionnaireHistory
       .find({ course: { $in: courseIds } })
@@ -335,7 +330,6 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
       },
       { course: 1, update: 1 }
     ).lean(),
-    VendorCompaniesHelper.get(),
   ]);
 
   const rows = [];
@@ -351,7 +345,7 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
     const estimatedStartDateHistory = groupedEstimatedStartDateHistories[course._id];
 
     rows.push(
-      await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory, vendorCompany.vat)
+      await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory)
     );
   }
 
@@ -606,7 +600,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
         path: 'course',
         select: 'subProgram misc type trainees tradeName',
         populate: [
-          { path: 'subProgram', select: 'program subjectToVat', populate: { path: 'program', select: 'name' } },
+          { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
           { path: 'trainees', select: 'identity' },
         ],
       })
@@ -635,7 +629,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
             path: 'course',
             select: 'subProgram misc type trainees tradeName',
             populate: [
-              { path: 'subProgram', select: 'program subjectToVat', populate: { path: 'program', select: 'name' } },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               { path: 'trainees', select: 'identity' },
             ],
           },
@@ -675,16 +669,14 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
 
   const slotDataMap = new Map(slotData.map(s => [s._id.toHexString(), s]));
   const slotsToPlanMap = new Map(slotsToPlanData.map(s => [s._id.toHexString(), s]));
-  const vendorCompany = await VendorCompaniesHelper.get();
   const rows = [];
   for (const bill of courseBills) {
-    const subjectToVat = get(bill, 'course.subProgram.subjectToVat');
     const {
       netInclTaxes,
       netExclTaxes,
       paid,
       total,
-    } = CourseBillHelper.computeAmounts(bill, subjectToVat ? vendorCompany.vat : 0);
+    } = CourseBillHelper.computeAmounts(bill);
     const slotInfo = getCourseSlotInfo(bill.course._id, slotDataMap, slotsToPlanMap);
     const commonInfos = formatCommonInfos(bill, netInclTaxes, netExclTaxes);
 
@@ -713,10 +705,8 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
   }
 
   for (const creditNote of courseCreditNotes) {
-    const subjectToVat = get(creditNote.courseBill, 'course.subProgram.subjectToVat');
     const { netInclTaxes, netExclTaxes } = CourseBillHelper.computeAmounts(
-      { ...creditNote.courseBill, courseCreditNote: { _id: creditNote._id } },
-      subjectToVat ? vendorCompany.vat : 0
+      { ...creditNote.courseBill, courseCreditNote: { _id: creditNote._id } }
     );
     const commonInfos = formatCommonInfos(creditNote.courseBill, netInclTaxes, netExclTaxes);
 

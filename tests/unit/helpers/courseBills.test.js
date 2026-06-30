@@ -70,9 +70,10 @@ describe('getNetInclTaxes', () => {
       company: { name: 'Company' },
       mainFee: { price: 120, count: 2 },
       payer: { company: new ObjectId() },
+      vat: 20,
     };
 
-    const result = await CourseBillHelper.getNetInclTaxes(bill, 20);
+    const result = await CourseBillHelper.getNetInclTaxes(bill);
     expect(result).toEqual({ netExclTaxes: 240, netInclTaxes: 288 });
   });
 });
@@ -82,20 +83,17 @@ describe('list', () => {
   let getCompanyAtCourseRegistrationList;
   let subProgramFind;
   let activityHistoryFind;
-  let getVendorCompany;
   beforeEach(() => {
     find = sinon.stub(CourseBill, 'find');
     subProgramFind = sinon.stub(SubProgram, 'find');
     activityHistoryFind = sinon.stub(ActivityHistory, 'find');
     getCompanyAtCourseRegistrationList = sinon.stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
-    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
   });
   afterEach(() => {
     find.restore();
     subProgramFind.restore();
     activityHistoryFind.restore();
     getCompanyAtCourseRegistrationList.restore();
-    getVendorCompany.restore();
   });
 
   it('should return all course bills (without billing purchases)', async () => {
@@ -249,7 +247,6 @@ describe('list', () => {
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
-    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list({ company: companyId, action: BALANCE }, credentials);
 
@@ -295,13 +292,8 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'misc slots slotsToPlan companies tradeName trainees type subProgram',
-              populate: [
-                { path: 'slots' },
-                { path: 'slotsToPlan' },
-                { path: 'trainees', select: 'identity' },
-                { path: 'subProgram', select: 'subjectToVat' },
-              ],
+              select: 'misc slots slotsToPlan companies tradeName trainees type',
+              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }, { path: 'trainees', select: 'identity' }],
             },
             { path: 'companies', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -387,7 +379,6 @@ describe('list', () => {
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
-    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list({ company: otherCompanyId, action: BALANCE }, credentials);
 
@@ -433,13 +424,8 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'misc slots slotsToPlan companies tradeName trainees type subProgram',
-              populate: [
-                { path: 'slots' },
-                { path: 'slotsToPlan' },
-                { path: 'trainees', select: 'identity' },
-                { path: 'subProgram', select: 'subjectToVat' },
-              ],
+              select: 'misc slots slotsToPlan companies tradeName trainees type',
+              populate: [{ path: 'slots' }, { path: 'slotsToPlan' }, { path: 'trainees', select: 'identity' }],
             },
             { path: 'companies', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -581,7 +567,6 @@ describe('list', () => {
     getCompanyAtCourseRegistrationList.onCall(2).returns([
       { trainee: traineesIds[2], company: companies[1]._id },
     ]);
-    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list(
       {
@@ -801,7 +786,6 @@ describe('list', () => {
       { trainee: traineesIds[0], company: companies[0]._id },
       { trainee: traineesIds[1], company: companies[1]._id },
     ]);
-    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list(
       {
@@ -906,7 +890,6 @@ describe('list', () => {
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
-    getVendorCompany.returns({ vat: 20 });
 
     const result = await CourseBillHelper.list({ action: DASHBOARD, isValidated: true }, credentials);
 
@@ -933,10 +916,7 @@ describe('list', () => {
             {
               path: 'course',
               select: 'trainees type subProgram',
-              populate: [
-                { path: 'trainees', select: 'identity' },
-                { path: 'subProgram', select: 'subjectToVat' },
-              ],
+              populate: { path: 'trainees', select: 'identity' },
             },
             { path: 'payer.fundingOrganisation', select: 'name' },
             { path: 'payer.company', select: 'name' },
@@ -959,6 +939,7 @@ describe('createBillList', () => {
   let createCourseBill;
   let insertManyCourseBills;
   let addBillingPurchase;
+  let getVendorCompany;
   const TRAINER_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
@@ -966,6 +947,7 @@ describe('createBillList', () => {
     createCourseBill = sinon.stub(CourseBill, 'create');
     insertManyCourseBills = sinon.stub(CourseBill, 'insertMany');
     addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
+    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
     process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
   });
 
@@ -974,11 +956,12 @@ describe('createBillList', () => {
     createCourseBill.restore();
     insertManyCourseBills.restore();
     addBillingPurchase.restore();
+    getVendorCompany.restore();
     process.env.TRAINER_FEES_BILLING_ITEM = '';
   });
 
   it('should create one bill without percentage for INTER course', async () => {
-    const course = { type: INTER_B2B, prices: [] };
+    const course = { type: INTER_B2B, prices: [], subProgram: { subjectToVat: false } };
     const payload = {
       course: new ObjectId(),
       quantity: 1,
@@ -1009,6 +992,7 @@ describe('createBillList', () => {
     );
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
+    sinon.assert.notCalled(getVendorCompany);
   });
 
   it('should create one bill with percentage for INTRA course with trainer fees', async () => {
@@ -1017,6 +1001,7 @@ describe('createBillList', () => {
       _id: new ObjectId(),
       type: INTRA,
       prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
+      subProgram: { subjectToVat: true },
     };
     const billCreated = { _id: new ObjectId() };
     const payload = {
@@ -1030,6 +1015,7 @@ describe('createBillList', () => {
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
     createCourseBill.returns(billCreated);
+    getVendorCompany.returns({ vat: 20 });
 
     await CourseBillHelper.createBillList(payload);
 
@@ -1046,6 +1032,7 @@ describe('createBillList', () => {
         companies: payload.companies,
         payer: payload.payer,
         maturityDate: payload.maturityDate,
+        vat: 20,
       }
     );
     sinon.assert.calledOnceWithExactly(
@@ -1067,6 +1054,7 @@ describe('createBillList', () => {
       _id: new ObjectId(),
       type: INTRA,
       prices: [{ company: companyId, global: 1200 }],
+      subProgram: { subjectToVat: false },
     };
     const billCreated = { _id: new ObjectId() };
     const payload = {
@@ -1103,7 +1091,7 @@ describe('createBillList', () => {
   });
 
   it('should create several bills (without course price)', async () => {
-    const course = { _id: new ObjectId(), type: INTER_B2B };
+    const course = { _id: new ObjectId(), type: INTER_B2B, subProgram: { subjectToVat: false } };
     const payload = {
       course: course._id,
       quantity: 3,
@@ -1133,6 +1121,7 @@ describe('createBillList', () => {
     sinon.assert.calledOnceWithExactly(insertManyCourseBills, expectedBills);
     sinon.assert.notCalled(createCourseBill);
     sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(getVendorCompany);
   });
 
   it('should create several bills (with global price and trainer fees)', async () => {
@@ -1141,6 +1130,7 @@ describe('createBillList', () => {
       _id: new ObjectId(),
       type: INTER_B2B,
       prices: [{ company: companyId, global: 2000, trainerFees: 200 }],
+      subProgram: { subjectToVat: true },
     };
     const payload = {
       course: course._id,
@@ -1154,6 +1144,7 @@ describe('createBillList', () => {
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
     insertManyCourseBills.returns(createdBills);
+    getVendorCompany.returns({ vat: 20 });
 
     await CourseBillHelper.createBillList(payload);
 
@@ -1168,6 +1159,7 @@ describe('createBillList', () => {
       },
       companies: payload.companies,
       payer: payload.payer,
+      vat: 20,
     };
 
     const expectedBills = new Array(3).fill(expectedBill);
@@ -1215,6 +1207,7 @@ describe('createBillList', () => {
       prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
       trainees: [{ identity: { firstname: 'Sarah', lastname: 'Pel' } }],
       trainers: [{ identity: { firstname: 'toto', lastname: 'test' } }],
+      subProgram: { subjectToVat: false },
     };
     const payload = {
       course: course._id,
@@ -1232,9 +1225,13 @@ describe('createBillList', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneCourse,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1 }] },
+        {
+          query: 'findOne',
+          args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'subjectToVat' }] },
         { query: 'lean' },
       ]
     );
@@ -1276,6 +1273,7 @@ describe('createBillList', () => {
     );
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
+    sinon.assert.notCalled(getVendorCompany);
   });
 
   it('should create several bills for SINGLE course without trainers', async () => {
@@ -1286,6 +1284,7 @@ describe('createBillList', () => {
       type: SINGLE,
       prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
       trainees: [{ identity: { firstname: 'Sarah', lastname: 'Pel' } }],
+      subProgram: { subjectToVat: true },
     };
     const payload = {
       course: course._id,
@@ -1297,15 +1296,19 @@ describe('createBillList', () => {
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
-
+    getVendorCompany.returns({ vat: 20 });
     await CourseBillHelper.createBillList(payload);
 
     SinonMongoose.calledOnceWithExactly(
       findOneCourse,
       [
-        { query: 'findOne', args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1 }] },
+        {
+          query: 'findOne',
+          args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'subjectToVat' }] },
         { query: 'lean' },
       ]
     );
@@ -1325,6 +1328,7 @@ describe('createBillList', () => {
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-04-29T22:00:00.000Z',
+        vat: 20,
       }
     );
     sinon.assert.calledWithExactly(
@@ -1343,6 +1347,7 @@ describe('createBillList', () => {
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-05-29T22:00:00.000Z',
+        vat: 20,
       }
     );
     sinon.assert.notCalled(addBillingPurchase);
@@ -1358,6 +1363,7 @@ describe('createBillList', () => {
       prices: [{ company: companyId, global: 1000, trainerFees: 200 }],
       trainees: [{ identity: { firstname: 'John', lastname: 'Doe' } }],
       trainers: [{ identity: { firstname: 'toto', lastname: 'test' } }],
+      subProgram: { subjectToVat: false },
     };
     const payload = {
       course: course._id,
@@ -1431,6 +1437,7 @@ describe('createBillList', () => {
     );
     sinon.assert.notCalled(addBillingPurchase);
     sinon.assert.notCalled(insertManyCourseBills);
+    sinon.assert.notCalled(getVendorCompany);
   });
 });
 
@@ -1440,7 +1447,6 @@ describe('updateCourseBill', () => {
   let findOneAndUpdateCoursePaymentNumber;
   let updateBillingPurchase;
   let coursePaymentCreate;
-  let getVendorCompany;
   const TRAINER_FEES_BILLING_ITEM = new ObjectId();
   const MANAGEMENT_FEES_BILLING_ITEM = new ObjectId();
 
@@ -1450,7 +1456,6 @@ describe('updateCourseBill', () => {
     findOneAndUpdateCoursePaymentNumber = sinon.stub(CoursePaymentNumber, 'findOneAndUpdate');
     updateBillingPurchase = sinon.stub(CourseBillHelper, 'updateBillingPurchase');
     coursePaymentCreate = sinon.stub(CoursePayment, 'create');
-    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
     process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
     process.env.MANAGEMENT_FEES_BILLING_ITEM = MANAGEMENT_FEES_BILLING_ITEM;
   });
@@ -1461,7 +1466,6 @@ describe('updateCourseBill', () => {
     findOneAndUpdateCoursePaymentNumber.restore();
     updateBillingPurchase.restore();
     coursePaymentCreate.restore();
-    getVendorCompany.restore();
     process.env.TRAINER_FEES_BILLING_ITEM = '';
     process.env.MANAGEMENT_FEES_BILLING_ITEM = '';
   });
@@ -1488,11 +1492,7 @@ describe('updateCourseBill', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'prices type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'prices type' }],
         },
         { query: 'lean' },
       ]
@@ -1525,11 +1525,7 @@ describe('updateCourseBill', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'prices type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'prices type' }],
         },
         { query: 'lean' },
       ]
@@ -1554,11 +1550,7 @@ describe('updateCourseBill', () => {
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'prices type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'prices type' }],
         },
         { query: 'lean' },
       ]
@@ -1594,11 +1586,7 @@ describe('updateCourseBill', () => {
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'prices type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'prices type' }],
         },
         { query: 'lean' },
       ]
@@ -1634,11 +1622,7 @@ describe('updateCourseBill', () => {
         { query: 'findOneAndUpdate', args: [{ _id: courseBillId }, { $set: payload }, { new: true }] },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'prices type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'prices type' }],
         },
         { query: 'lean' },
       ]
@@ -1675,11 +1659,7 @@ describe('updateCourseBill', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'prices type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'prices type' }],
         },
         { query: 'lean' },
       ]
@@ -1708,7 +1688,6 @@ describe('updateCourseBill', () => {
     findOneAndUpdateCourseBillsNumber.returns(SinonMongoose.stubChainedQueries(lastBillNumber, ['lean']));
     findOneAndUpdateCoursePaymentNumber.returns(SinonMongoose.stubChainedQueries(lastPaymentNumber, ['lean']));
     findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseBill));
-    getVendorCompany.returns({ vat: 20 });
 
     await CourseBillHelper.updateCourseBill(courseBillId, payload);
 
@@ -1737,11 +1716,7 @@ describe('updateCourseBill', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'prices type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'prices type' }],
         },
         { query: 'lean' },
       ]
@@ -1783,7 +1758,6 @@ describe('updateBillList', () => {
   let findOneAndUpdateCoursePaymentNumber;
   let coursePaymentCreate;
   let formatIdentity;
-  let getVendorCompany;
   const MANAGEMENT_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
@@ -1796,7 +1770,6 @@ describe('updateBillList', () => {
     findOneAndUpdateCoursePaymentNumber = sinon.stub(CoursePaymentNumber, 'findOneAndUpdate');
     coursePaymentCreate = sinon.stub(CoursePayment, 'create');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
-    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
     process.env.MANAGEMENT_FEES_BILLING_ITEM = MANAGEMENT_FEES_BILLING_ITEM;
   });
 
@@ -1810,7 +1783,6 @@ describe('updateBillList', () => {
     findOneAndUpdateCoursePaymentNumber.restore();
     coursePaymentCreate.restore();
     formatIdentity.restore();
-    getVendorCompany.restore();
     process.env.MANAGEMENT_FEES_BILLING_ITEM = '';
   });
 
@@ -1843,7 +1815,6 @@ describe('updateBillList', () => {
     findOneAndUpdateCourseBill.onCall(0).returns(SinonMongoose.stubChainedQueries(courseBills[0]));
     findOneAndUpdateCourseBill.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBills[1]));
     findOneAndUpdateCoursePaymentNumber.returns(SinonMongoose.stubChainedQueries(lastPaymentNumber, ['lean']));
-    getVendorCompany.returns({ vat: 20 });
 
     await CourseBillHelper.updateBillList(payload);
 
@@ -1876,11 +1847,7 @@ describe('updateBillList', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'type' }],
         },
         { query: 'lean' },
       ],
@@ -1902,11 +1869,7 @@ describe('updateBillList', () => {
         },
         {
           query: 'populate',
-          args: [{
-            path: 'course',
-            select: 'type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          }],
+          args: [{ path: 'course', select: 'type' }],
         },
         { query: 'lean' },
       ],
@@ -2349,7 +2312,7 @@ describe('generateBillPdf', () => {
 
     const bill = {
       _id: new ObjectId(),
-      course: { _id: new ObjectId(), tradeName: 'Test', subProgram: { subjectToVat: true } },
+      course: { _id: new ObjectId(), tradeName: 'Test' },
       mainFee: { price: 1000, count: 1 },
       billingPurchaseList: [
         { billingItem: { _id: new ObjectId(), name: 'article 1' }, price: 10, count: 10 },
@@ -2411,18 +2374,12 @@ describe('generateBillPdf', () => {
           query: 'findOne',
           args: [
             { _id: billId },
-            { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 },
+            { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1, vat: 1 },
           ],
         },
         {
           query: 'populate',
-          args: [
-            {
-              path: 'course',
-              select: 'tradeName prices subProgram',
-              populate: { path: 'subProgram', select: 'subjectToVat' },
-            },
-          ],
+          args: [{ path: 'course', select: 'tradeName prices' }],
         },
         {
           query: 'populate',

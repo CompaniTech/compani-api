@@ -74,7 +74,7 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
     .populate({ path: 'holding', select: 'name' })
     .populate({
       path: 'subProgram',
-      select: 'name steps program subjectToVat',
+      select: 'name steps program',
       populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
     })
     .populate({ path: 'trainers', select: 'identity' })
@@ -89,7 +89,7 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
     .populate({ path: 'trainees', select: 'firstMobileConnectionDate' })
     .populate({
       path: 'bills',
-      select: 'payer billedAt mainFee billingPurchaseList',
+      select: 'payer billedAt mainFee billingPurchaseList vat',
       options: { isVendorUser },
       populate: [
         { path: 'payer.fundingOrganisation', select: 'name' },

@@ -1453,6 +1453,7 @@ const courseBillList = [
     billedAt: '2022-03-08T00:00:00.000Z',
     number: 'FACT-00001',
     sendingDates: ['2022-05-08T00:00:00.000Z', '2022-06-08T00:00:00.000Z'],
+    vat: 10,
   },
   { // 1 cancelled with creditNote
     _id: new ObjectId(),

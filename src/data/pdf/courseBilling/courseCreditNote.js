@@ -6,12 +6,11 @@ const CourseBillHelper = require('../../../helpers/courseBills');
 
 exports.getPdfContent = async (creditNote) => {
   const [compani] = await UtilsPdfHelper.getImages();
+  const vat = creditNote.courseBill.vat || 0;
+  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes({ ...creditNote, vat });
   const header = UtilsPdfHelper.getHeader(creditNote, compani);
   const feeTable = UtilsPdfHelper.getFeeTable(creditNote);
-  const { vat } = creditNote.vendorCompany;
-  const { subjectToVat } = creditNote.course.subProgram;
-  const { netExclTaxes, netInclTaxes } = CourseBillHelper.getNetInclTaxes(creditNote, subjectToVat ? vat : null);
-  const vatAmount = subjectToVat ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vat, 100)) : null;
+  const vatAmount = vat ? NumbersHelper.multiply(netExclTaxes, NumbersHelper.divide(vat, 100)) : null;
 
   const totalInfos = UtilsPdfHelper.getTotalInfos(netExclTaxes, netInclTaxes, vat, vatAmount);
 

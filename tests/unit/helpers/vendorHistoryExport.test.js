@@ -8,7 +8,6 @@ const SinonMongoose = require('../sinonMongoose');
 const CourseHelper = require('../../../src/helpers/courses');
 const ExportHelper = require('../../../src/helpers/vendorHistoryExport');
 const UtilsHelper = require('../../../src/helpers/utils');
-const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
 const {
   INTRA,
   INTER_B2B,
@@ -194,6 +193,7 @@ describe('exportCourseHistory', () => {
           billedAt: '2022-03-08T00:00:00.000Z',
           number: 'FACT-00002',
           courseCreditNote: null,
+          vat: 10,
           coursePayments: [{ netInclTaxes: 110, nature: PAYMENT, status: RECEIVED }],
         },
       ],
@@ -461,7 +461,6 @@ describe('exportCourseHistory', () => {
   let findCourseHistory;
   let findActivityHistory;
   let formatPrice;
-  let getVendorCompany;
 
   beforeEach(() => {
     findCourseSlot = sinon.stub(CourseSlot, 'find');
@@ -474,7 +473,6 @@ describe('exportCourseHistory', () => {
     findCourseHistory = sinon.stub(CourseHistory, 'find');
     findActivityHistory = sinon.stub(ActivityHistory, 'find');
     formatPrice = sinon.stub(UtilsHelper, 'formatPrice');
-    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
   });
 
   afterEach(() => {
@@ -488,7 +486,6 @@ describe('exportCourseHistory', () => {
     findCourseHistory.restore();
     findActivityHistory.restore();
     formatPrice.restore();
-    getVendorCompany.restore();
   });
 
   it('should return an empty array if no course', async () => {
@@ -539,7 +536,7 @@ describe('exportCourseHistory', () => {
           args: [
             {
               path: 'subProgram',
-              select: 'name steps program subjectToVat',
+              select: 'name steps program',
               populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
             }],
         },
@@ -566,7 +563,7 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'bills',
-            select: 'payer billedAt mainFee billingPurchaseList',
+            select: 'payer billedAt mainFee billingPurchaseList vat',
             options: { isVendorUser: has(credentials, 'role.vendor') },
             populate: [
               { path: 'payer.fundingOrganisation', select: 'name' },
@@ -627,7 +624,6 @@ describe('exportCourseHistory', () => {
     formatPrice.onCall(0).returns('3000,00 €');
     formatPrice.onCall(1).returns('2500,00 €');
     formatPrice.onCall(2).returns('250,00 €');
-    getVendorCompany.returns({ vat: 20 });
 
     const result = await ExportHelper
       .exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
@@ -720,9 +716,9 @@ describe('exportCourseHistory', () => {
         '1 sur 2',
         'Non',
         '120,00',
-        '120,00',
+        '132,00',
         '110,00',
-        '-10,00',
+        '-22,00',
         '07/01/2018',
       ],
       [
@@ -951,7 +947,7 @@ describe('exportCourseHistory', () => {
           args: [
             {
               path: 'subProgram',
-              select: 'name steps program subjectToVat',
+              select: 'name steps program',
               populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
             }],
         },
@@ -978,7 +974,7 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'bills',
-            select: 'payer billedAt mainFee billingPurchaseList',
+            select: 'payer billedAt mainFee billingPurchaseList vat',
             options: { isVendorUser: has(credentials, 'role.vendor') },
             populate: [
               { path: 'payer.fundingOrganisation', select: 'name' },
@@ -1082,7 +1078,6 @@ describe('exportCourseHistory', () => {
     findCourseSmsHistory.returns(SinonMongoose.stubChainedQueries([], ['select', 'lean']));
     findAttendanceSheet.returns(SinonMongoose.stubChainedQueries([], ['select', 'setOptions', 'lean']));
     findActivityHistory.returns(SinonMongoose.stubChainedQueries([], ['lean']));
-    getVendorCompany.returns({ vat: 20 });
 
     const result = await ExportHelper
       .exportCourseHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [SINGLE]);
@@ -1222,7 +1217,7 @@ describe('exportCourseHistory', () => {
           args: [
             {
               path: 'subProgram',
-              select: 'name steps program subjectToVat',
+              select: 'name steps program',
               populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
             }],
         },
@@ -1249,7 +1244,7 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'bills',
-            select: 'payer billedAt mainFee billingPurchaseList',
+            select: 'payer billedAt mainFee billingPurchaseList vat',
             options: { isVendorUser: has(credentials, 'role.vendor') },
             populate: [
               { path: 'payer.fundingOrganisation', select: 'name' },
@@ -2261,6 +2256,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       payer: payerList[0],
       billedAt: '2022-03-08T00:00:00.000Z',
       number: 'FACT-00001',
+      vat: 10,
       courseCreditNote: { number: 'AV-00001', date: '2022-03-09T00:00:00.000Z' },
       coursePayments: [{ netInclTaxes: 10, nature: PAYMENT, status: RECEIVED, xmlSEPAFileInfos: { name: 'LOT-001' } }],
       sendingDates: ['2022-06-10T00:00:00.000Z'],
@@ -2319,13 +2315,11 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
   let findCourseBill;
   let findCourseCreditNote;
   let courseSlotAggregate;
-  let getVendorCompany;
 
   beforeEach(() => {
     findCourseBill = sinon.stub(CourseBill, 'find');
     findCourseCreditNote = sinon.stub(CourseCreditNote, 'find');
     courseSlotAggregate = sinon.stub(CourseSlot, 'aggregate');
-    getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
     UtilsMock.mockCurrentDate('2025-09-29T13:45:25.437Z');
   });
 
@@ -2333,7 +2327,6 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
     findCourseBill.restore();
     findCourseCreditNote.restore();
     courseSlotAggregate.restore();
-    getVendorCompany.restore();
     UtilsMock.unmockCurrentDate();
   });
 
@@ -2357,7 +2350,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
             path: 'course',
             select: 'subProgram misc type trainees tradeName',
             populate: [
-              { path: 'subProgram', select: 'program subjectToVat', populate: { path: 'program', select: 'name' } },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               { path: 'trainees', select: 'identity' },
             ],
           }],
@@ -2399,7 +2392,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
                 path: 'course',
                 select: 'subProgram misc type trainees tradeName',
                 populate: [
-                  { path: 'subProgram', select: 'program subjectToVat', populate: { path: 'program', select: 'name' } },
+                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
                   { path: 'trainees', select: 'identity' },
                 ],
               },
@@ -2418,7 +2411,6 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
     findCourseCreditNote.returns(SinonMongoose.stubChainedQueries(courseCreditNoteList, ['populate', 'setOptions', 'lean']));
     courseSlotAggregate.onCall(0).returns(slotData);
     courseSlotAggregate.onCall(1).returns(slotsToPlanData);
-    getVendorCompany.returns({ vat: 20 });
 
     const result = await ExportHelper
       .exportCourseBillAndCreditNoteHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
@@ -2464,11 +2456,11 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Non',
         '',
         '120,00',
-        '120,00',
+        '132,00',
         '10,00',
         'LOT-001',
         'AV-00001',
-        '120,00',
+        '132,00',
         '10,00',
         '10/06/2022',
         '1,00',
@@ -2594,7 +2586,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
             path: 'course',
             select: 'subProgram misc type trainees tradeName',
             populate: [
-              { path: 'subProgram', select: 'program subjectToVat', populate: { path: 'program', select: 'name' } },
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
               { path: 'trainees', select: 'identity' },
             ],
           }],
@@ -2636,7 +2628,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
                 path: 'course',
                 select: 'subProgram misc type trainees tradeName',
                 populate: [
-                  { path: 'subProgram', select: 'program subjectToVat', populate: { path: 'program', select: 'name' } },
+                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
                   { path: 'trainees', select: 'identity' },
                 ],
               },

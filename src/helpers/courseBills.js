@@ -38,7 +38,8 @@ const {
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 
-exports.getNetInclTaxes = (bill, vatPercentage = 0) => {
+exports.getNetInclTaxes = (bill) => {
+  const vatPercentage = bill.vat || 0;
   const { price, count } = bill.mainFee;
   const mainFeeTotal = NumbersHelper.multiply(price || 0, count || 0);
   const billingPurchaseTotal = bill.billingPurchaseList
@@ -65,10 +66,10 @@ const getTimeProgress = (course) => {
   return pastSlotsCount / (course.slots.length + course.slotsToPlan.length);
 };
 
-exports.computeAmounts = (courseBill, vatPercentage) => {
+exports.computeAmounts = (courseBill) => {
   if (!courseBill) return { netInclTaxes: 0, paid: 0, total: 0 };
 
-  const { netExclTaxes, netInclTaxes } = exports.getNetInclTaxes(courseBill, vatPercentage);
+  const { netExclTaxes, netInclTaxes } = exports.getNetInclTaxes(courseBill);
   const totalPayments = BalanceHelper.computePayments(
     (courseBill.coursePayments || []).filter(p => p.status === RECEIVED)
   );
@@ -78,9 +79,8 @@ exports.computeAmounts = (courseBill, vatPercentage) => {
   return { netInclTaxes, netExclTaxes, paid, total: paid - netInclTaxes };
 };
 
-exports.formatCourseBill = (courseBill, vat) => {
-  const subjectToVat = get(courseBill, 'course.subProgram.subjectToVat');
-  const { netInclTaxes, netExclTaxes, paid, total } = this.computeAmounts(courseBill, subjectToVat ? vat : 0);
+exports.formatCourseBill = (courseBill) => {
+  const { netInclTaxes, netExclTaxes, paid, total } = this.computeAmounts(courseBill);
 
   return {
     progress: getTimeProgress(courseBill.course),
@@ -95,40 +95,32 @@ exports.formatCourseBill = (courseBill, vat) => {
 const balance = async (company, credentials) => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
 
-  const [courseBills, vendorCompany] = await Promise.all([
-    CourseBill
-      .find({ $or: [{ companies: company }, { 'payer.company': company }], billedAt: { $exists: true, $type: 'date' } })
-      .populate([
-        {
-          path: 'course',
-          select: 'misc slots slotsToPlan companies tradeName trainees type subProgram',
-          populate: [
-            { path: 'slots' },
-            { path: 'slotsToPlan' },
-            { path: 'trainees', select: 'identity' },
-            { path: 'subProgram', select: 'subjectToVat' },
-          ],
-        },
-        { path: 'companies', select: 'name' },
-        { path: 'payer.company', select: 'name' },
-        { path: 'payer.fundingOrganisation', select: 'name' },
-        {
-          path: 'courseCreditNote',
-          options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
-        },
-        {
-          path: 'coursePayments',
-          options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
-          ...isVendorUser && { populate: { path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser } } },
-        },
-        ...(isVendorUser ? [{ path: 'pendingCourseBill', options: { isVendorUser: true } }] : []),
-      ])
-      .setOptions({ isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) })
-      .lean(),
-    VendorCompaniesHelper.get(),
-  ]);
+  const courseBills = await CourseBill
+    .find({ $or: [{ companies: company }, { 'payer.company': company }], billedAt: { $exists: true, $type: 'date' } })
+    .populate([
+      {
+        path: 'course',
+        select: 'misc slots slotsToPlan companies tradeName trainees type',
+        populate: [{ path: 'slots' }, { path: 'slotsToPlan' }, { path: 'trainees', select: 'identity' }],
+      },
+      { path: 'companies', select: 'name' },
+      { path: 'payer.company', select: 'name' },
+      { path: 'payer.fundingOrganisation', select: 'name' },
+      {
+        path: 'courseCreditNote',
+        options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
+      },
+      {
+        path: 'coursePayments',
+        options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
+        ...isVendorUser && { populate: { path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser } } },
+      },
+      ...(isVendorUser ? [{ path: 'pendingCourseBill', options: { isVendorUser: true } }] : []),
+    ])
+    .setOptions({ isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) })
+    .lean();
 
-  return courseBills.map(bill => exports.formatCourseBill(bill, vendorCompany.vat));
+  return courseBills.map(bill => exports.formatCourseBill(bill));
 };
 
 const formatCourse = async (course) => {
@@ -162,7 +154,7 @@ exports.list = async (query, credentials) => {
 
     return courseBills
       .map((bill) => {
-        const { netExclTaxes } = exports.getNetInclTaxes(bill, 0);
+        const { netExclTaxes } = exports.getNetInclTaxes(bill);
         return { ...bill, netExclTaxes };
       })
       .sort((a, b) => new Date(a.billedAt || a.maturityDate) - new Date(b.billedAt || b.maturityDate));
@@ -177,56 +169,46 @@ exports.list = async (query, credentials) => {
       : { maturityDate: { $gte: query.startDate, $lte: query.endDate } };
   } else if (query.isValidated) formattedQuery = { billedAt: { $exists: true } };
 
-  const [courseBills, vendorCompany] = await Promise.all([
-    CourseBill
-      .find(formattedQuery)
-      .populate([
-        ...(query.startDate && query.endDate
-          ? [{
-            path: 'course',
-            select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
-            populate: [
-              { path: 'companies', select: 'name' },
-              {
-                path: 'slots',
-                select: 'startDate endDate',
-                ...!query.isValidated && {
-                  populate: {
-                    path: 'attendances',
-                    select: '_id',
-                    match: { status: PRESENT },
-                    options: { isVendorUser: true },
-                  },
+  const courseBills = await CourseBill
+    .find(formattedQuery)
+    .populate([
+      ...(query.startDate && query.endDate
+        ? [{
+          path: 'course',
+          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
+          populate: [
+            { path: 'companies', select: 'name' },
+            {
+              path: 'slots',
+              select: 'startDate endDate',
+              ...!query.isValidated && {
+                populate: {
+                  path: 'attendances',
+                  select: '_id',
+                  match: { status: PRESENT },
+                  options: { isVendorUser: true },
                 },
               },
-              { path: 'slotsToPlan', select: '_id' },
-              { path: 'trainees', select: 'identity' },
-            ],
-          },
-          {
-            path: 'companies',
-            select: 'name',
-            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
-          },
-          ]
-          : [{
-            path: 'course',
-            select: 'trainees type subProgram',
-            populate: [
-              { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'subjectToVat' },
-            ],
-          }]
-        ),
-        { path: 'payer.fundingOrganisation', select: 'name' },
-        { path: 'payer.company', select: 'name' },
-        { path: 'companies', select: 'name' },
-        { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
-      ])
-      .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
-      .lean(),
-    VendorCompaniesHelper.get(),
-  ]);
+            },
+            { path: 'slotsToPlan', select: '_id' },
+            { path: 'trainees', select: 'identity' },
+          ],
+        },
+        {
+          path: 'companies',
+          select: 'name',
+          populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+        },
+        ]
+        : [{ path: 'course', select: 'trainees type subProgram', populate: { path: 'trainees', select: 'identity' } }]
+      ),
+      { path: 'payer.fundingOrganisation', select: 'name' },
+      { path: 'payer.company', select: 'name' },
+      { path: 'companies', select: 'name' },
+      { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
+    ])
+    .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
+    .lean();
 
   let activityHistoriesByTrainee = {};
   if (!query.isValidated) {
@@ -259,8 +241,7 @@ exports.list = async (query, credentials) => {
         return query.isValidated || !isCourseInterrupted;
       })
       .map(async (bill) => {
-        const subjectToVat = get(bill, 'course.subProgram.subjectToVat');
-        const { netExclTaxes, netInclTaxes } = exports.getNetInclTaxes(bill, subjectToVat ? vendorCompany.vat : 0);
+        const { netExclTaxes, netInclTaxes } = exports.getNetInclTaxes(bill);
 
         return {
           ...bill,
@@ -285,13 +266,20 @@ exports.list = async (query, credentials) => {
 
 exports.createBillList = async (payload) => {
   const course = await Course
-    .findOne({ _id: payload.course }, { type: 1, prices: 1, trainees: 1, trainers: 1 })
+    .findOne({ _id: payload.course }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 })
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
+    .populate({ path: 'subProgram', select: 'subjectToVat' })
     .lean();
 
+  let vat = 0;
+  if (course.subProgram.subjectToVat) {
+    const vendorCompany = await VendorCompaniesHelper.get();
+    vat = vendorCompany.vat;
+  }
+
   if (payload.quantity === 1) {
-    const billCreated = await CourseBill.create(omit(payload, 'quantity'));
+    const billCreated = await CourseBill.create({ ...omit(payload, 'quantity'), ...vat && { vat } });
 
     if (payload.mainFee.percentage) {
       const trainerFees = (course.prices || []).reduce((acc, price) => {
@@ -325,6 +313,7 @@ exports.createBillList = async (payload) => {
       },
       companies: payload.companies,
       payer: payload.payer,
+      ...vat && { vat },
     });
     const createdBills = await CourseBill.insertMany(billsToCreate);
 
@@ -363,14 +352,14 @@ exports.createBillList = async (payload) => {
         ...omit(payload, ['quantity', 'maturityDate']),
         mainFee: { ...payload.mainFee, description, ...payload.mainFee.price && { price: payload.mainFee.price[i] } },
         maturityDate: billMaturityDate.toISO(),
+        ...vat && { vat },
       });
     }
   }
 };
 
-const formatPaymentPayload = (courseBill, seq, vat) => {
-  const subjectToVat = get(courseBill, 'course.subProgram.subjectToVat');
-  const { netInclTaxes } = exports.getNetInclTaxes(courseBill, subjectToVat ? vat : 0);
+const formatPaymentPayload = (courseBill, seq) => {
+  const { netInclTaxes } = exports.getNetInclTaxes(courseBill);
 
   const paymentPayload = {
     companies: courseBill.companies,
@@ -423,11 +412,7 @@ exports.updateCourseBill = async (courseBillId, payload) => {
 
   const courseBill = await CourseBill
     .findOneAndUpdate({ _id: courseBillId }, formattedPayload, { new: true })
-    .populate({
-      path: 'course',
-      select: 'prices type subProgram',
-      populate: { path: 'subProgram', select: 'subjectToVat' },
-    })
+    .populate({ path: 'course', select: 'prices type' })
     .lean();
   if (get(payload, 'mainFee.percentage')) {
     const billingPurchase = courseBill.billingPurchaseList.find(bp =>
@@ -458,8 +443,8 @@ exports.updateCourseBill = async (courseBillId, payload) => {
         { new: true, upsert: true, setDefaultsOnInsert: true }
       )
       .lean();
-    const vendorCompany = await VendorCompaniesHelper.get();
-    const paymentPayload = formatPaymentPayload(courseBill, lastPaymentNumber.seq, vendorCompany.vat);
+
+    const paymentPayload = formatPaymentPayload(courseBill, lastPaymentNumber.seq);
 
     await CoursePayment.create(paymentPayload);
   }
@@ -492,11 +477,7 @@ exports.updateBillList = async (payload) => {
           },
           { new: true }
         )
-          .populate({
-            path: 'course',
-            select: 'type subProgram',
-            populate: { path: 'subProgram', select: 'subjectToVat' },
-          })
+          .populate({ path: 'course', select: 'type' })
           .lean()
       );
     }
@@ -516,11 +497,10 @@ exports.updateBillList = async (payload) => {
         { new: true, upsert: true, setDefaultsOnInsert: true }
       )
       .lean();
-    const vendorCompany = await VendorCompaniesHelper.get();
     const paymentsPromises = [];
     fulfilledResults.forEach((courseBill, index) => {
       const seq = lastPaymentNumber.seq - result.length + 1 + index;
-      const paymentPayload = formatPaymentPayload(courseBill.value, seq, vendorCompany.vat);
+      const paymentPayload = formatPaymentPayload(courseBill.value, seq);
       paymentsPromises.push(CoursePayment.create(paymentPayload));
     });
     await Promise.all(paymentsPromises);
@@ -633,12 +613,11 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
   const vendorCompany = await VendorCompaniesHelper.get();
 
   const bill = await CourseBill
-    .findOne({ _id: billId }, { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1 })
-    .populate({
-      path: 'course',
-      select: 'tradeName prices subProgram',
-      populate: { path: 'subProgram', select: 'subjectToVat' },
-    })
+    .findOne(
+      { _id: billId },
+      { number: 1, companies: 1, course: 1, mainFee: 1, billingPurchaseList: 1, billedAt: 1, vat: 1 }
+    )
+    .populate({ path: 'course', select: 'tradeName prices' })
     .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } })
     .populate({ path: 'companies', select: 'name address' })
     .populate({ path: 'payer.fundingOrganisation', select: 'name address' })

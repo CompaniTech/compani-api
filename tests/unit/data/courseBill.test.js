@@ -28,7 +28,7 @@ describe('getPdfContent', () => {
       number: 'FACT-000045',
       date: '18/08/1998',
       vendorCompany: {
-        vat: 20,
+        vat: 18,
         name: 'Auchan',
         address: {
           fullAddress: '32 Rue du Loup 33000 Bordeaux',
@@ -48,7 +48,8 @@ describe('getPdfContent', () => {
         address: '24 Avenue Daumesnil 75012 Paris',
       },
       isPayerCompany: false,
-      course: { tradeName: 'Test', subProgram: { subjectToVat: true } },
+      vat: 20,
+      course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
       billingPurchaseList: [
         { billingItem: { name: 'article 1' }, price: 10, count: 10 },
@@ -281,7 +282,7 @@ describe('getPdfContent', () => {
         address: '24 Avenue Daumesnil 75012 Paris',
       },
       isPayerCompany: true,
-      course: { tradeName: 'Test', subProgram: {} },
+      course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: TRAINEE },
       courseCreditNote: { number: 'AV-00001' },
       coursePayments: [],
@@ -475,7 +476,6 @@ describe('getPdfContent', () => {
       isPayerCompany: false,
       course: {
         tradeName: 'Test',
-        subProgram: {},
         prices: [{ company: companyId, global: 2000, trainerFees: 200 }],
       },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP, percentage: 50 },
