@@ -685,7 +685,8 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
+                + ' trainers',
               populate: [
                 { path: 'companies', select: 'name' },
                 {
@@ -700,6 +701,7 @@ describe('list', () => {
                 },
                 { path: 'slotsToPlan', select: '_id' },
                 { path: 'trainees', select: 'identity' },
+                { path: 'trainers', select: 'identity' },
               ],
             },
             {
@@ -842,7 +844,8 @@ describe('list', () => {
           args: [[
             {
               path: 'course',
-              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName',
+              select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
+              + ' trainers',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'slots', select: 'startDate endDate' },
