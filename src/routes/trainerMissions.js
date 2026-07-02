@@ -6,7 +6,11 @@ const {
   authorizeTrainerMissionGet,
   authorizeTrainerMissionEdit,
 } = require('./preHandlers/trainerMissions');
-const { formDataPayload, requiredDateToISOString } = require('./validations/utils');
+const {
+  formDataPayload,
+  requiredDateToISOString,
+  trainerMissionCoursesValidation,
+} = require('./validations/utils');
 
 exports.plugin = {
   name: 'routes-trainermissions',
@@ -20,9 +24,8 @@ exports.plugin = {
         validate: {
           payload: Joi.object({
             trainer: Joi.objectId().required(),
-            courses: Joi.alternatives().try(Joi.array().items(Joi.objectId()).min(1), Joi.objectId()).required(),
+            courses: trainerMissionCoursesValidation.required(),
             file: Joi.any(),
-            fee: Joi.number().min(0).required(),
           }),
         },
         pre: [{ method: authorizeTrainerMissionCreation }],

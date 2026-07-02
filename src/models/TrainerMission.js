@@ -8,7 +8,7 @@ const TrainerMissionSchema = mongoose.Schema({
   courses: {
     type: [{
       _id: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
-      cost: { type: Number },
+      fee: { type: Number },
     }],
     required: true,
     immutable: true,
