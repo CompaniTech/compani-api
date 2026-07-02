@@ -5257,7 +5257,7 @@ describe('deleteCourse', () => {
   let deleteCourseSlot;
   let deleteQuestionnaireHistory;
   let findTrainingContract;
-  let findOneTrainerMission;
+  let findTrainerMission;
   let deleteManyTrainingContract;
   let deleteTrainerMission;
   let deleteCourseFile;
@@ -5271,8 +5271,8 @@ describe('deleteCourse', () => {
     deleteQuestionnaireHistory = sinon.stub(QuestionnaireHistory, 'deleteMany');
     findTrainingContract = sinon.stub(TrainingContract, 'find');
     deleteManyTrainingContract = sinon.stub(TrainingContractsHelper, 'deleteMany');
-    findOneTrainerMission = sinon.stub(TrainerMission, 'findOne');
-    deleteTrainerMission = sinon.stub(TrainerMission, 'deleteOne');
+    findTrainerMission = sinon.stub(TrainerMission, 'find');
+    deleteTrainerMission = sinon.stub(TrainerMission, 'deleteMany');
     deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
   });
   afterEach(() => {
@@ -5284,7 +5284,7 @@ describe('deleteCourse', () => {
     deleteQuestionnaireHistory.restore();
     findTrainingContract.restore();
     deleteManyTrainingContract.restore();
-    findOneTrainerMission.restore();
+    findTrainerMission.restore();
     deleteTrainerMission.restore();
     deleteCourseFile.restore();
   });
@@ -5292,10 +5292,14 @@ describe('deleteCourse', () => {
   it('should delete course and sms history', async () => {
     const courseId = new ObjectId();
     const trainingContractList = [{ _id: new ObjectId() }, { _id: new ObjectId() }];
-    const trainerMission = { _id: new ObjectId(), file: { publicId: '1234' } };
+    const trainerMissionIds = [new ObjectId(), new ObjectId()];
+    const trainerMissions = [
+      { _id: trainerMissionIds[0], file: { publicId: '1234' } },
+      { _id: trainerMissionIds[1], file: { publicId: '5678' } },
+    ];
 
     findTrainingContract.returns(SinonMongoose.stubChainedQueries(trainingContractList, ['setOptions', 'lean']));
-    findOneTrainerMission.returns(SinonMongoose.stubChainedQueries(trainerMission, ['lean']));
+    findTrainerMission.returns(SinonMongoose.stubChainedQueries(trainerMissions, ['lean']));
 
     await CourseHelper.deleteCourse(courseId);
 
@@ -5309,7 +5313,10 @@ describe('deleteCourse', () => {
     sinon.assert.calledOnceWithExactly(deleteCourseSlot, { course: courseId });
     sinon.assert.calledOnceWithExactly(deleteQuestionnaireHistory, { course: courseId });
     sinon.assert.calledOnceWithExactly(deleteManyTrainingContract, trainingContractList.map(tc => tc._id));
-    sinon.assert.calledOnceWithExactly(deleteTrainerMission, { _id: trainerMission._id });
+    sinon.assert.calledOnceWithExactly(
+      deleteTrainerMission,
+      { _id: { $in: trainerMissionIds } }
+    );
     SinonMongoose.calledOnceWithExactly(
       findTrainingContract,
       [
@@ -5319,13 +5326,18 @@ describe('deleteCourse', () => {
       ]
     );
     SinonMongoose.calledOnceWithExactly(
-      findOneTrainerMission,
+      findTrainerMission,
       [
-        { query: 'findOne', args: [{ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 }] },
+        {
+          query: 'find',
+          args: [{ 'courses._id': courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 }],
+        },
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(deleteCourseFile, '1234');
+    sinon.assert.calledTwice(deleteCourseFile);
+    sinon.assert.calledWithExactly(deleteCourseFile.getCall(0), '1234');
+    sinon.assert.calledWithExactly(deleteCourseFile.getCall(1), '5678');
   });
 });
 
@@ -9453,7 +9465,7 @@ describe('removeTrainer', () => {
   it('should remove trainer and contact from course and cancelled trainerMission', async () => {
     const trainerId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', trainers: [trainerId], contact: trainerId };
-    const trainerMission = { _id: new ObjectId(), courses: [course._id], trainer: trainerId };
+    const trainerMission = { _id: new ObjectId(), courses: [{ _id: course._id }], trainer: trainerId };
     const credentials = { _id: new ObjectId() };
     const payload = { course: course._id, trainer: trainerId, action: TRAINER_DELETION };
 
@@ -9470,7 +9482,7 @@ describe('removeTrainer', () => {
         {
           query: 'findOneAndUpdate',
           args: [
-            { courses: course._id, trainer: trainerId, cancelledAt: { $exists: false } },
+            { 'courses._id': course._id, trainer: trainerId, cancelledAt: { $exists: false } },
             { $set: { cancelledAt: CompaniDate().startOf(DAY).toISO() } },
           ],
         },
