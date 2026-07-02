@@ -140,7 +140,9 @@ describe('list', () => {
       trainer: trainerId,
       file: { publicId: 'mon premier upload', link: 'www.test.com' },
       date: '2023-12-10T23:00:00.000Z',
-      courses: [{ _id: new ObjectId(), subProgram: { program: { name: 'name' } }, companies: [{ name: 'Alenvi' }] }],
+      courses: [
+        { _id: new ObjectId(), subProgram: { program: { name: 'name' } }, companies: [{ name: 'Alenvi' }], fee: 12 },
+      ],
       fee: 12,
       createdBy: new ObjectId(),
     }];

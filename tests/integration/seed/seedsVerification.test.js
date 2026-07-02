@@ -2538,7 +2538,7 @@ describe('SEEDS VERIFICATION', () => {
               populate: [{ path: 'role.vendor', select: 'name' }],
               transform,
             })
-            .populate({ path: 'courses', select: 'trainers', transform })
+            .populate({ path: 'courses._id', select: 'trainers', transform })
             .setOptions({ isVendorUser: true })
             .lean();
         });
@@ -2578,6 +2578,15 @@ describe('SEEDS VERIFICATION', () => {
             .every(tm => !tm.cancelledAt || CompaniDate(tm.date).isBefore(tm.cancelledAt));
 
           expect(everyCancellationDateIsAfter).toBeTruthy();
+        });
+
+        it('should pass if total course fee is equals to trainer mission fee', () => {
+          const trainerMissionFeeIsRight = trainerMissionList
+            .every(tm => !tm.courses.some(c => c && c.fee) ||
+              tm.courses.reduce((acc, c) => acc + (c.fee || 0), 0) === tm.fee
+            );
+
+          expect(trainerMissionFeeIsRight).toBeTruthy();
         });
       });
 
