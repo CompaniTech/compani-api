@@ -16,19 +16,22 @@ const uploadDocument = async (payload, course, file, method, credentials, traine
   const fileUploaded = await GCloudStorageHelper
     .uploadCourseFile({ fileName, file, ...(method === GENERATION && { contentType: 'application/pdf' }) });
 
-  const courseIds = Array.isArray(payload.courses) ? payload.courses : [payload.courses];
+  const courses = Array.isArray(payload.courses) ? payload.courses : [payload.courses];
+  const fee = courses.reduce((acc, c) => acc + (c.fee || 0), 0);
+
   await TrainerMission.create({
     ...payload,
-    courses: courseIds,
+    courses,
+    fee,
     file: fileUploaded,
     createdBy: credentials._id,
     creationMethod: method,
   });
 };
 exports.upload = async (payload, credentials) => {
-  const courseIds = Array.isArray(payload.courses) ? payload.courses : [payload.courses];
+  const courseId = Array.isArray(payload.courses) ? payload.courses[0].courseId : payload.courses.courseId;
   const course = await Course
-    .findOne({ _id: courseIds[0] }, { trainers: 1, subProgram: 1 })
+    .findOne({ _id: courseId }, { trainers: 1, subProgram: 1 })
     .populate([
       { path: 'trainers', select: 'identity' },
       { path: 'subProgram', select: 'program', populate: [{ path: 'program', select: 'name' }] },
@@ -45,7 +48,7 @@ exports.list = async (query) => {
   return TrainerMission
     .find({ trainer })
     .populate({
-      path: 'courses',
+      path: 'courses.courseId',
       select: 'misc type companies subProgram tradeName',
       populate: [
         { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
@@ -76,7 +79,9 @@ const formatData = (courses, fee, credentials, trainerIdentity) => {
 };
 
 exports.generate = async (payload, credentials) => {
-  const courseIds = Array.isArray(payload.courses) ? payload.courses : [payload.courses];
+  const payloadCourses = Array.isArray(payload.courses) ? payload.courses : [payload.courses];
+  const courseIds = payloadCourses.map(c => c.courseId);
+  const fee = payloadCourses.reduce((acc, c) => acc + (c.fee || 0), 0);
   const courses = await Course
     .find({ _id: { $in: courseIds } }, { hasCertifyingTest: 1, misc: 1, type: 1, tradeName: 1 })
     .populate({ path: 'companies', select: 'name' })
@@ -92,7 +97,7 @@ exports.generate = async (payload, credentials) => {
 
   const trainer = get(courses[0], 'trainers', []).find(t => UtilsHelper.areObjectIdsEquals(t._id, payload.trainer));
 
-  const data = formatData(courses, payload.fee, credentials, trainer.identity);
+  const data = formatData(courses, fee, credentials, trainer.identity);
 
   const pdf = await TrainerMissionPdf.getPdf(data);
 

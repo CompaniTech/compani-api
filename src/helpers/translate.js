@@ -681,7 +681,7 @@ module.exports = {
     + 'INTRA SOCIÉTÉ-MÈRE',
     unexpectedBillCount: 'un nombre de factures attendues est renseigné alors que la formation n\'est pas INTRA',
     invalidGlobalPrice: 'le prix global est invalide',
-    invalidTrainerFees: 'les frais de formateur sont invalides',
+    invalidTrainerFees: 'les frais de gestion sont invalides',
     missingGlobalPrice: 'le prix global est manquant',
     unexpectedPrice: 'un prix est renseigné alors que la formation n\'est pas INTRA',
   },

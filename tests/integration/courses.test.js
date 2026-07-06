@@ -9191,7 +9191,7 @@ describe('COURSES ROUTES - POST /courses/collective-courses-csv', () => {
       });
 
       expect(response.statusCode).toBe(422);
-      expect(Object.values(response.result.errorsByCourse)[0]).toContain('les frais de formateur sont invalides');
+      expect(Object.values(response.result.errorsByCourse)[0]).toContain('les frais de gestion sont invalides');
     });
 
     it('should return 422 if trainer fees but no global price', async () => {

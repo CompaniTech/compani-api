@@ -1034,8 +1034,8 @@ exports.deleteCourse = async (courseId) => {
     .setOptions({ isVendorUser: true })
     .lean();
 
-  const trainerMission = await TrainerMission
-    .findOne({ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
+  const trainerMissions = await TrainerMission
+    .find({ 'courses.courseId': courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
     .lean();
 
   return Promise.all([
@@ -1052,10 +1052,10 @@ exports.deleteCourse = async (courseId) => {
       ? [TrainingContractsHelper.deleteMany(trainingContractList.map(tc => tc._id))]
       : []
     ),
-    ...(trainerMission
+    ...(trainerMissions.length
       ? [
-        TrainerMission.deleteOne({ _id: trainerMission._id }),
-        GCloudStorageHelper.deleteCourseFile(trainerMission.file.publicId),
+        TrainerMission.deleteMany({ _id: { $in: trainerMissions.map(tm => tm._id) } }),
+        ...trainerMissions.map(tm => GCloudStorageHelper.deleteCourseFile(tm.file.publicId)),
       ]
       : []),
   ]);
@@ -1893,7 +1893,7 @@ exports.addTrainer = async (courseId, payload, credentials) => {
 exports.removeTrainer = async (courseId, trainerId, credentials) => {
   await TrainerMission
     .findOneAndUpdate(
-      { courses: courseId, trainer: trainerId, cancelledAt: { $exists: false } },
+      { 'courses.courseId': courseId, trainer: trainerId, cancelledAt: { $exists: false } },
       { $set: { cancelledAt: CompaniDate().startOf(DAY).toISO() } }
     ).lean();
 

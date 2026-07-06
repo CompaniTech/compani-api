@@ -38,7 +38,7 @@ describe('upload', () => {
       ],
       subProgram: { program: { name: 'program' } },
     };
-    const payload = { courses: courseId, file: 'test.pdf', fee: 1200, trainer: trainerId };
+    const payload = { courses: { courseId, fee: 1200 }, file: 'test.pdf', trainer: trainerId };
 
     uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
@@ -52,7 +52,7 @@ describe('upload', () => {
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        courses: [courseId],
+        courses: [{ courseId, fee: 1200 }],
         fee: 1200,
         trainer: trainerId,
         file: { publicId: 'yo', link: 'yo' },
@@ -85,7 +85,8 @@ describe('upload', () => {
       trainers: [{ _id: trainerId, identity: { lastname: 'For', firstname: 'Matrice' } }],
       subProgram: { program: { name: 'program' } },
     };
-    const payload = { courses: courseIds, file: 'test.pdf', fee: 1200, trainer: trainerId };
+    const courses = [{ courseId: courseIds[0], fee: 500 }, { courseId: courseIds[1] }];
+    const payload = { courses, file: 'test.pdf', trainer: trainerId };
 
     uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
@@ -99,8 +100,8 @@ describe('upload', () => {
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        courses: courseIds,
-        fee: 1200,
+        courses,
+        fee: 500,
         trainer: trainerId,
         file: { publicId: 'yo', link: 'yo' },
         createdBy: credentials._id,
@@ -139,7 +140,14 @@ describe('list', () => {
       trainer: trainerId,
       file: { publicId: 'mon premier upload', link: 'www.test.com' },
       date: '2023-12-10T23:00:00.000Z',
-      courses: [{ _id: new ObjectId(), subProgram: { program: { name: 'name' } }, companies: [{ name: 'Alenvi' }] }],
+      courses: [
+        {
+          courseId: new ObjectId(),
+          subProgram: { program: { name: 'name' } },
+          companies: [{ name: 'Alenvi' }],
+          fee: 12,
+        },
+      ],
       fee: 12,
       createdBy: new ObjectId(),
     }];
@@ -156,7 +164,7 @@ describe('list', () => {
         {
           query: 'populate',
           args: [{
-            path: 'courses',
+            path: 'courses.courseId',
             select: 'misc type companies subProgram tradeName',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
@@ -225,7 +233,7 @@ describe('generate', () => {
       ],
       slotsToPlan: [{ _id: new ObjectId() }],
     }];
-    const payload = { courses: courseId, fee: 1200, trainer: trainerId };
+    const payload = { courses: { courseId, fee: 1200 }, trainer: trainerId };
 
     const data = {
       trainerIdentity: { lastname: 'For', firstname: 'Matrice' },
@@ -257,7 +265,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        courses: [courseId],
+        courses: [{ courseId, fee: 1200 }],
         fee: 1200,
         trainer: trainerId,
         file: { publicId: 'yo', link: 'yo' },
@@ -362,7 +370,8 @@ describe('generate', () => {
         slotsToPlan: [],
       },
     ];
-    const payload = { courses: courseIds, fee: 1200, trainer: trainerId };
+    const missionCourses = [{ courseId: courseIds[0], fee: 500 }, { courseId: courseIds[1], fee: 700 }];
+    const payload = { courses: missionCourses, trainer: trainerId };
 
     const data = {
       trainerIdentity: { lastname: 'For', firstname: 'Matrice' },
@@ -394,7 +403,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        courses: courseIds,
+        courses: missionCourses,
         fee: 1200,
         trainer: trainerId,
         file: { publicId: 'yo', link: 'yo' },
