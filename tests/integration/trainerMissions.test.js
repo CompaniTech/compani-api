@@ -40,7 +40,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
     });
 
     it('should upload trainer mission for a single course', async () => {
-      const courses = [{ _id: courseList[0]._id.toHexString(), fee: 0 }];
+      const courses = [{ courseId: courseList[0]._id.toHexString(), fee: 0 }];
       const formData = {
         trainer: trainer._id.toHexString(),
         file: 'test',
@@ -58,7 +58,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [{ _id: courseList[0]._id, fee: 0 }],
+        courses: [{ courseId: courseList[0]._id, fee: 0 }],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 0,
@@ -70,7 +70,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
     it('should upload trainer mission when there\'s already a trainer mission for another trainer',
       async () => {
-        const courses = [{ _id: courseList[3]._id.toHexString(), fee: 0 }];
+        const courses = [{ courseId: courseList[3]._id.toHexString(), fee: 0 }];
         const formData = {
           trainer: trainerAndCoach._id.toHexString(),
           file: 'test',
@@ -88,7 +88,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
         expect(response.statusCode).toBe(200);
         const trainerMissionCount = await TrainerMission.countDocuments({
-          courses: [{ _id: courseList[3]._id, fee: 0 }],
+          courses: [{ courseId: courseList[3]._id, fee: 0 }],
           date: CompaniDate().startOf(DAY).toISO(),
           trainer: trainerAndCoach._id,
           fee: 0,
@@ -100,8 +100,8 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
     it('should upload trainer mission for several courses', async () => {
       const courses = [
-        { _id: courseList[0]._id.toHexString(), fee: 500 },
-        { _id: courseList[1]._id.toHexString(), fee: 700 },
+        { courseId: courseList[0]._id.toHexString(), fee: 500 },
+        { courseId: courseList[1]._id.toHexString(), fee: 700 },
       ];
       const formData = {
         trainer: trainer._id.toHexString(),
@@ -121,7 +121,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [{ _id: courseList[0]._id, fee: 500 }, { _id: courseList[1]._id, fee: 700 }],
+        courses: [{ courseId: courseList[0]._id, fee: 500 }, { courseId: courseList[1]._id, fee: 700 }],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 1200,
@@ -132,7 +132,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
     });
 
     it('should generate trainer mission for a single course', async () => {
-      const courses = [{ _id: courseList[0]._id.toHexString(), fee: 1200 }];
+      const courses = [{ courseId: courseList[0]._id.toHexString(), fee: 1200 }];
       const formData = {
         trainer: trainer._id.toHexString(),
       };
@@ -149,7 +149,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [{ _id: courseList[0]._id, fee: 1200 }],
+        courses: [{ courseId: courseList[0]._id, fee: 1200 }],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 1200,
@@ -161,8 +161,8 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
     it('should generate trainer mission for several courses', async () => {
       const courses = [
-        { _id: courseList[0]._id.toHexString(), fee: 600 },
-        { _id: courseList[1]._id.toHexString(), fee: 600 },
+        { courseId: courseList[0]._id.toHexString(), fee: 600 },
+        { courseId: courseList[1]._id.toHexString(), fee: 600 },
       ];
       const formData = {
         trainer: trainer._id.toHexString(),
@@ -181,7 +181,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [{ _id: courseList[0]._id, fee: 600 }, { _id: courseList[1]._id, fee: 600 }],
+        courses: [{ courseId: courseList[0]._id, fee: 600 }, { courseId: courseList[1]._id, fee: 600 }],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 1200,
@@ -193,8 +193,8 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
     it('should return 400 if fee is smaller than 0', async () => {
       const courses = [
-        { _id: courseList[0]._id.toHexString(), fee: -500 },
-        { _id: courseList[1]._id.toHexString(), fee: 700 },
+        { courseId: courseList[0]._id.toHexString(), fee: -500 },
+        { courseId: courseList[1]._id.toHexString(), fee: 700 },
       ];
       const formData = {
         trainer: trainer._id.toHexString(),
@@ -259,9 +259,9 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
     it('should return 404 if course not found', async () => {
       const courses = [
-        { _id: courseList[0]._id.toHexString(), fee: 400 },
-        { _id: courseList[1]._id.toHexString(), fee: 400 },
-        { _id: new ObjectId().toHexString(), fee: 400 },
+        { courseId: courseList[0]._id.toHexString(), fee: 400 },
+        { courseId: courseList[1]._id.toHexString(), fee: 400 },
+        { courseId: new ObjectId().toHexString(), fee: 400 },
       ];
       const formData = {
         trainer: trainer._id.toHexString(),
@@ -284,8 +284,8 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
     it('should return 404 if wrong trainer', async () => {
       const courses = [
-        { _id: courseList[0]._id.toHexString(), fee: 600 },
-        { _id: courseList[2]._id.toHexString(), fee: 600 },
+        { courseId: courseList[0]._id.toHexString(), fee: 600 },
+        { courseId: courseList[2]._id.toHexString(), fee: 600 },
       ];
       const formData = {
         trainer: trainer._id.toHexString(),
@@ -308,8 +308,8 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
     it('should return 409 if course already have a trainer mission', async () => {
       const courses = [
-        { _id: courseList[0]._id.toHexString(), fee: 600 },
-        { _id: courseList[3]._id.toHexString(), fee: 600 },
+        { courseId: courseList[0]._id.toHexString(), fee: 600 },
+        { courseId: courseList[3]._id.toHexString(), fee: 600 },
       ];
       const formData = {
         trainer: trainer._id.toHexString(),
@@ -343,8 +343,8 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
         authToken = await getToken(role.name);
 
         const courses = [
-          { _id: courseList[0]._id.toHexString(), fee: 600 },
-          { _id: courseList[1]._id.toHexString(), fee: 600 },
+          { courseId: courseList[0]._id.toHexString(), fee: 600 },
+          { courseId: courseList[1]._id.toHexString(), fee: 600 },
         ];
         const formData = {
           trainer: trainer._id.toHexString(),

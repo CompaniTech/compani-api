@@ -9,13 +9,13 @@ const { language } = translate;
 
 exports.authorizeTrainerMissionCreation = async (req) => {
   const { trainer, courses } = req.payload;
-  const coursesId = Array.isArray(courses) ? courses.map(course => course._id) : [courses._id];
+  const coursesId = Array.isArray(courses) ? courses.map(course => course.courseId) : [courses.courseId];
 
   const coursesCount = await Course.countDocuments({ _id: { $in: coursesId }, trainers: trainer });
   if (coursesCount !== coursesId.length) throw Boom.notFound();
 
   const trainerMission = await TrainerMission
-    .countDocuments({ 'courses._id': { $in: coursesId }, cancelledAt: { $exists: false }, trainer });
+    .countDocuments({ 'courses.courseId': { $in: coursesId }, cancelledAt: { $exists: false }, trainer });
   if (trainerMission) throw Boom.conflict(translate[language].trainerMissionAlreadyExist);
 
   return null;

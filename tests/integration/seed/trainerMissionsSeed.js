@@ -81,7 +81,7 @@ const courseList = [
 const trainerMissionList = [
   {
     _id: new ObjectId(),
-    courses: [{ _id: courseList[3]._id, fee: 1200 }],
+    courses: [{ courseId: courseList[3]._id, fee: 1200 }],
     trainer: trainer._id,
     date: '2023-01-02T23:00:00.000Z',
     fee: 1200,
@@ -91,7 +91,7 @@ const trainerMissionList = [
   },
   {
     _id: new ObjectId(),
-    courses: [{ _id: courseList[0]._id, fee: 1200 }],
+    courses: [{ courseId: courseList[0]._id, fee: 1200 }],
     trainer: trainer._id,
     date: '2023-01-02T23:00:00.000Z',
     cancelledAt: '2023-01-05T23:00:00.000Z',
@@ -102,7 +102,7 @@ const trainerMissionList = [
   },
   {
     _id: new ObjectId(),
-    courses: [{ _id: courseList[2]._id, fee: 1200 }],
+    courses: [{ courseId: courseList[2]._id, fee: 1200 }],
     trainer: trainerAndCoach._id,
     date: '2023-01-02T23:00:00.000Z',
     cancelledAt: '2023-01-05T23:00:00.000Z',

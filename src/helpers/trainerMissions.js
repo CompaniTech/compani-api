@@ -29,7 +29,7 @@ const uploadDocument = async (payload, course, file, method, credentials, traine
   });
 };
 exports.upload = async (payload, credentials) => {
-  const courseId = Array.isArray(payload.courses) ? payload.courses[0]._id : payload.courses._id;
+  const courseId = Array.isArray(payload.courses) ? payload.courses[0].courseId : payload.courses.courseId;
   const course = await Course
     .findOne({ _id: courseId }, { trainers: 1, subProgram: 1 })
     .populate([
@@ -48,7 +48,7 @@ exports.list = async (query) => {
   return TrainerMission
     .find({ trainer })
     .populate({
-      path: 'courses._id',
+      path: 'courses.courseId',
       select: 'misc type companies subProgram tradeName',
       populate: [
         { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
@@ -80,7 +80,7 @@ const formatData = (courses, fee, credentials, trainerIdentity) => {
 
 exports.generate = async (payload, credentials) => {
   const payloadCourses = Array.isArray(payload.courses) ? payload.courses : [payload.courses];
-  const courseIds = payloadCourses.map(c => c._id);
+  const courseIds = payloadCourses.map(c => c.courseId);
   const fee = payloadCourses.reduce((acc, c) => acc + (c.fee || 0), 0);
   const courses = await Course
     .find({ _id: { $in: courseIds } }, { hasCertifyingTest: 1, misc: 1, type: 1, tradeName: 1 })

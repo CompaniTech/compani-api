@@ -1480,7 +1480,7 @@ const completionCertificateList = [
 const trainerMissionList = [
   {
     _id: new ObjectId(),
-    courses: [{ _id: coursesList[27]._id, fee: 1200 }],
+    courses: [{ courseId: coursesList[27]._id, fee: 1200 }],
     trainer: trainer._id,
     date: '2023-01-02T23:00:00.000Z',
     fee: 1200,
@@ -1490,7 +1490,7 @@ const trainerMissionList = [
   },
   {
     _id: new ObjectId(),
-    courses: [{ _id: coursesList[6]._id, fee: 1200 }],
+    courses: [{ courseId: coursesList[6]._id, fee: 1200 }],
     trainer: trainer._id,
     date: '2023-01-02T23:00:00.000Z',
     cancelledAt: '2023-01-03T23:00:00.000Z',

@@ -12,8 +12,9 @@ const TrainerMissionSchema = mongoose.Schema({
   trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, immutable: true },
   courses: {
     type: [{
-      _id: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
+      courseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true },
       fee: { type: Number },
+      _id: false,
     }],
     required: true,
     immutable: true,
@@ -33,9 +34,9 @@ function formatCourses(doc) {
   if (!doc || !Array.isArray(doc.courses)) return;
 
   // eslint-disable-next-line no-param-reassign
-  doc.courses = doc.courses.map(course => (course._id instanceof mongoose.Types.ObjectId
+  doc.courses = doc.courses.map(course => (course.courseId instanceof mongoose.Types.ObjectId
     ? course
-    : { ...course._id, fee: course.fee }));
+    : { ...course.courseId, fee: course.fee }));
 }
 
 function formatCoursesList(docs) {

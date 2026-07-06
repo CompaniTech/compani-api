@@ -107,7 +107,7 @@ const attendanceSheetSlotsValidation = Joi.alternatives().try(
 );
 
 const trainerMissionCourseSchema = Joi.object({
-  _id: Joi.objectId().required(),
+  courseId: Joi.objectId().required(),
   fee: Joi.number().min(0),
 });
 
