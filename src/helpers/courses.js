@@ -1459,7 +1459,7 @@ const computeVAESupportDuration = async (course, traineeId, credentials) => {
   const { _id: courseId, subProgram, isAbandoned, companies } = course;
   const { _id: subProgramId } = subProgram;
   const companyIds = companies.map(c => c._id);
-  const requestingOwnCompanyInfos = UtilsHelper.doesArrayIncludeId(companyIds, credentials.company._id);
+  const requestingOwnCompanyInfos = UtilsHelper.doesArrayIncludeId(companyIds, get(credentials, 'company._id'));
   const vaeSupportConfig = UtilsHelper.getVAESupportConfigs(subProgramId);
   if (!vaeSupportConfig) return 0;
 
