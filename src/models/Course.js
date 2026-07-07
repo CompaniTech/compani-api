@@ -109,6 +109,15 @@ const CourseSchema = mongoose.Schema({
     },
   },
   tradeName: { type: String, required: true },
+  billingPurchaseList: {
+    type: [mongoose.Schema({
+      billingItem: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseBillingItem', required: true },
+      price: { type: Number, required: true },
+      count: { type: Number, required: true },
+      description: { type: String },
+    })],
+    default: undefined,
+  },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {

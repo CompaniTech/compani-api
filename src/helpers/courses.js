@@ -585,6 +585,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
           { path: 'accessRules', select: 'name' },
+          { path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } },
           {
             path: 'operationsRepresentative',
             select: 'identity.firstname identity.lastname contact local.email picture.link',
@@ -2112,3 +2113,23 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
     ]
   );
 };
+
+exports.addBillingPurchase = async (courseId, payload) =>
+  Course.updateOne({ _id: courseId }, { $push: { billingPurchaseList: payload } });
+
+exports.updateBillingPurchase = async (courseId, billingPurchaseId, payload) => Course.updateOne(
+  { _id: courseId, 'billingPurchaseList._id': billingPurchaseId },
+  {
+    $set: {
+      'billingPurchaseList.$.price': payload.price,
+      'billingPurchaseList.$.count': payload.count,
+      ...(!!payload.description && { 'billingPurchaseList.$.description': payload.description }),
+    },
+    ...(get(payload, 'description') === '' && { $unset: { 'billingPurchaseList.$.description': '' } }),
+  }
+);
+
+exports.deleteBillingPurchase = async (courseId, billingPurchaseId) => Course.updateOne(
+  { _id: courseId },
+  { $pull: { billingPurchaseList: { _id: billingPurchaseId } } }
+);

@@ -2841,6 +2841,11 @@ describe('getCourse', () => {
               },
               { path: 'accessRules', select: 'name' },
               {
+                path: 'billingPurchaseList',
+                select: 'billingItem',
+                populate: { path: 'billingItem', select: 'name' },
+              },
+              {
                 path: 'operationsRepresentative',
                 select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
@@ -2948,6 +2953,11 @@ describe('getCourse', () => {
                 },
                 { path: 'accessRules', select: 'name' },
                 {
+                  path: 'billingPurchaseList',
+                  select: 'billingItem',
+                  populate: { path: 'billingItem', select: 'name' },
+                },
+                {
                   path: 'operationsRepresentative',
                   select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
@@ -3050,6 +3060,11 @@ describe('getCourse', () => {
                   select: 'identity.firstname identity.lastname contact local.email picture.link',
                 },
                 { path: 'accessRules', select: 'name' },
+                {
+                  path: 'billingPurchaseList',
+                  select: 'billingItem',
+                  populate: { path: 'billingItem', select: 'name' },
+                },
                 {
                   path: 'operationsRepresentative',
                   select: 'identity.firstname identity.lastname contact local.email picture.link',
@@ -3227,6 +3242,11 @@ describe('getCourse', () => {
                 select: 'identity.firstname identity.lastname contact local.email picture.link',
               },
               { path: 'accessRules', select: 'name' },
+              {
+                path: 'billingPurchaseList',
+                select: 'billingItem',
+                populate: { path: 'billingItem', select: 'name' },
+              },
               {
                 path: 'operationsRepresentative',
                 select: 'identity.firstname identity.lastname contact local.email picture.link',
@@ -9148,6 +9168,115 @@ describe('removeCourseCompany', () => {
     SinonMongoose.calledOnceWithExactly(
       findOneTrainingContract,
       [{ query: 'findOne', args: [{ course: course._id, company: companyId }, { _id: 1 }] }, { query: 'lean' }]
+    );
+  });
+});
+
+describe('addBillingPurchase', () => {
+  let updateOne;
+
+  beforeEach(() => {
+    updateOne = sinon.stub(Course, 'updateOne');
+  });
+
+  afterEach(() => {
+    updateOne.restore();
+  });
+
+  it('should add a billing purchase to course', async () => {
+    const courseId = new ObjectId();
+    const payload = { billingItem: new ObjectId(), price: 120, count: 1 };
+
+    await CourseHelper.addBillingPurchase(courseId, payload);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: courseId }, { $push: { billingPurchaseList: payload } });
+  });
+});
+
+describe('updateBillingPurchase', () => {
+  let updateOne;
+
+  beforeEach(() => {
+    updateOne = sinon.stub(Course, 'updateOne');
+  });
+
+  afterEach(() => {
+    updateOne.restore();
+  });
+
+  it('should update a billing purchase of course', async () => {
+    const courseId = new ObjectId();
+    const billingPurchaseId = new ObjectId();
+    const payload = { price: 120, count: 2 };
+
+    await CourseHelper.updateBillingPurchase(courseId, billingPurchaseId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: courseId, 'billingPurchaseList._id': billingPurchaseId },
+      { $set: { 'billingPurchaseList.$.price': 120, 'billingPurchaseList.$.count': 2 } }
+    );
+  });
+
+  it('should update a billing purchase of course with description', async () => {
+    const courseId = new ObjectId();
+    const billingPurchaseId = new ObjectId();
+    const payload = { price: 120, count: 2, description: 'billing purchase for test' };
+
+    await CourseHelper.updateBillingPurchase(courseId, billingPurchaseId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: courseId, 'billingPurchaseList._id': billingPurchaseId },
+      {
+        $set: {
+          'billingPurchaseList.$.price': 120,
+          'billingPurchaseList.$.count': 2,
+          'billingPurchaseList.$.description': 'billing purchase for test',
+        },
+      }
+    );
+  });
+
+  it('should update a billing purchase of course and remove description', async () => {
+    const courseId = new ObjectId();
+    const billingPurchaseId = new ObjectId();
+    const payload = { price: 120, count: 2, description: '' };
+
+    await CourseHelper.updateBillingPurchase(courseId, billingPurchaseId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: courseId, 'billingPurchaseList._id': billingPurchaseId },
+      {
+        $set: { 'billingPurchaseList.$.price': 120, 'billingPurchaseList.$.count': 2 },
+        $unset: { 'billingPurchaseList.$.description': '' },
+      }
+    );
+  });
+});
+
+describe('deleteBillingPurchase', () => {
+  let updateOne;
+
+  beforeEach(() => {
+    updateOne = sinon.stub(Course, 'updateOne');
+  });
+
+  afterEach(() => {
+    updateOne.restore();
+  });
+
+  it('should delete a billing purchase of course', async () => {
+    const courseId = new ObjectId();
+    const billingPurchaseId = new ObjectId();
+
+    await CourseHelper.deleteBillingPurchase(courseId, billingPurchaseId);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: courseId },
+      { $pull: { billingPurchaseList: { _id: billingPurchaseId } } }
     );
   });
 });

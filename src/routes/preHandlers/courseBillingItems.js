@@ -17,14 +17,17 @@ exports.authorizeCourseBillingItemCreation = async (req) => {
 exports.authorizeBillingItemsDeletion = async (req) => {
   const { credentials } = req.auth;
 
-  const courseBillingItems = await CourseBillingItem
+  const courseBillingItem = await CourseBillingItem
     .findOne(req.params)
-    .populate({ path: 'courseBillCount', options: { isVendorUser: has(credentials, 'role.vendor') } })
+    .populate([
+      { path: 'courseBillCount', options: { isVendorUser: has(credentials, 'role.vendor') } },
+      { path: 'courseCount', options: { isVendorUser: has(credentials, 'role.vendor') } },
+    ])
     .lean();
 
-  if (!courseBillingItems) throw Boom.notFound();
+  if (!courseBillingItem) throw Boom.notFound();
 
-  if (courseBillingItems.courseBillCount) throw Boom.forbidden();
+  if (courseBillingItem.courseBillCount || courseBillingItem.courseCount) throw Boom.forbidden();
 
   return null;
 };
