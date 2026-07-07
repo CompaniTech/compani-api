@@ -1370,8 +1370,8 @@ describe('SEEDS VERIFICATION', () => {
           courseBillingItemList = await CourseBillingItem.find().lean();
         });
 
-        it('should pass if every name is unique', () => {
-          const courseBillingItemNameList = courseBillingItemList.map(item => item.name);
+        it('should pass if every name is unique for same type', () => {
+          const courseBillingItemNameList = courseBillingItemList.map(item => `${item.name}_${item.type}`);
           const courseBillingItemNamesWithoutDuplicates = [...new Set(courseBillingItemNameList)];
 
           expect(courseBillingItemNamesWithoutDuplicates.length).toEqual(courseBillingItemNameList.length);

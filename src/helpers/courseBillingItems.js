@@ -1,8 +1,8 @@
 const has = require('lodash/has');
 const CourseBillingItem = require('../models/CourseBillingItem');
 
-exports.list = async credentials => CourseBillingItem
-  .find()
+exports.list = async (query, credentials) => CourseBillingItem
+  .find(query)
   .populate({ path: 'courseBillCount', options: { isVendorUser: has(credentials, 'role.vendor') } })
   .lean({ virtuals: true });
 

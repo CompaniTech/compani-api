@@ -6,13 +6,13 @@ const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseFundingOrganisation = require('../../../src/models/CourseFundingOrganisation');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { PUBLISHED, INTRA, GLOBAL, GROUP } = require('../../../src/helpers/constants');
+const { PUBLISHED, INTRA, GLOBAL, GROUP, COURSE, COURSE_BILL } = require('../../../src/helpers/constants');
 const { trainer, vendorAdmin, auxiliary } = require('../../seed/authUsersSeed');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 
 const courseBillingItemsList = [
-  { _id: new ObjectId(), name: 'frais formateur' },
-  { _id: new ObjectId(), name: 'frais de certification' },
+  { _id: new ObjectId(), name: 'frais formateur', type: COURSE },
+  { _id: new ObjectId(), name: 'frais de certification', type: COURSE_BILL },
 ];
 
 const steps = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 }];

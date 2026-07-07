@@ -4,6 +4,7 @@ const CourseBillingItem = require('../../src/models/CourseBillingItem');
 const app = require('../../server');
 const { populateDB, courseBillingItemsList } = require('./seed/courseBillingItemsSeed');
 const { getToken } = require('./helpers/authentication');
+const { COURSE, COURSE_BILL } = require('../../src/helpers/constants');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -29,6 +30,28 @@ describe('COURSE BILLING ITEM ROUTES - GET /coursebillingitems', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.courseBillingItems.length).toEqual(courseBillingItemsList.length);
+    });
+
+    it('should get only course billing items with requested type', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebillingitems?type=course_bill',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.courseBillingItems.length).toEqual(1);
+      expect(response.result.data.courseBillingItems[0]._id).toEqual(courseBillingItemsList[1]._id);
+    });
+
+    it('should return 400 if type is invalid', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/coursebillingitems?type=invalid',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
   });
 
@@ -58,7 +81,7 @@ describe('COURSE BILLING ITEM ROUTES - GET /coursebillingitems', () => {
 describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
   let authToken;
   beforeEach(populateDB);
-  const payload = { name: 'article' };
+  const payload = { name: 'article', type: COURSE };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
@@ -79,23 +102,34 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
       expect(count).toBe(courseBillingItemsList.length + 1);
     });
 
-    it('should return 409 if other billing item has exact same name', async () => {
+    it('should create billing item if same name exists but with a different type', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebillingitems',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { name: 'frais formateur' },
+        payload: { name: 'frais formateur', type: COURSE_BILL },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 409 if other billing item has exact same name and type', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebillingitems',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { name: 'frais formateur', type: COURSE },
       });
 
       expect(response.statusCode).toBe(409);
     });
 
-    it('should return 409 if other billing item has same name (case and diacritics insensitive)', async () => {
+    it('should return 409 if other billing item has same name (case and diacritics insensitive) and type', async () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebillingitems',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { name: 'Frais Formateur' },
+        payload: { name: 'Frais Formateur', type: COURSE },
       });
 
       expect(response.statusCode).toBe(409);
@@ -105,7 +139,29 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
       const response = await app.inject({
         method: 'POST',
         url: '/coursebillingitems',
-        payload: {},
+        payload: { type: COURSE },
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 as type is missing', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebillingitems',
+        payload: { name: 'article' },
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 as type is invalid', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/coursebillingitems',
+        payload: { name: 'article', type: 'invalid' },
         headers: { 'x-access-token': authToken },
       });
 

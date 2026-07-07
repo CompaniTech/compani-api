@@ -5,6 +5,7 @@ const has = require('lodash/has');
 const CourseBillingItem = require('../../../src/models/CourseBillingItem');
 const CourseBillingItemHelper = require('../../../src/helpers/courseBillingItems');
 const SinonMongoose = require('../sinonMongoose');
+const { COURSE_BILL, COURSE } = require('../../../src/helpers/constants');
 
 describe('list', () => {
   let find;
@@ -18,18 +19,39 @@ describe('list', () => {
   it('should return all course billing items', async () => {
     const credentials = { role: { vendor: 'training_organisation_manager' } };
     const courseBillingItems = [
-      { name: 'article' },
-      { name: 'frais formateur' },
+      { name: 'article', type: COURSE_BILL },
+      { name: 'frais formateur', type: COURSE },
     ];
     find.returns(SinonMongoose.stubChainedQueries(courseBillingItems));
 
-    const result = await CourseBillingItemHelper.list(credentials);
+    const result = await CourseBillingItemHelper.list({}, credentials);
 
     expect(result).toBe(courseBillingItems);
     SinonMongoose.calledOnceWithExactly(
       find,
       [
-        { query: 'find' },
+        { query: 'find', args: [{}] },
+        {
+          query: 'populate',
+          args: [{ path: 'courseBillCount', options: { isVendorUser: has(credentials, 'role.vendor') } }],
+        },
+        { query: 'lean', args: [{ virtuals: true }] },
+      ]
+    );
+  });
+
+  it('should return course billing items with requested type', async () => {
+    const credentials = { role: { vendor: 'training_organisation_manager' } };
+    const courseBillingItems = [{ name: 'frais formateur', type: COURSE }];
+    find.returns(SinonMongoose.stubChainedQueries(courseBillingItems));
+
+    const result = await CourseBillingItemHelper.list({ type: COURSE }, credentials);
+
+    expect(result).toBe(courseBillingItems);
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        { query: 'find', args: [{ type: COURSE }] },
         {
           query: 'populate',
           args: [{ path: 'courseBillCount', options: { isVendorUser: has(credentials, 'role.vendor') } }],
@@ -52,7 +74,7 @@ describe('create', () => {
   });
 
   it('should create a course billing item', async () => {
-    const newItem = { name: 'article' };
+    const newItem = { name: 'article', type: COURSE_BILL };
     await CourseBillingItemHelper.create(newItem);
 
     sinon.assert.calledOnceWithExactly(create, newItem);
