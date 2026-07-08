@@ -80,6 +80,7 @@ const courseList = [
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
     tradeName: 'nom',
+    billingPurchaseList: [{ billingItem: billingItemList[0]._id, price: 1200, count: 1 }],
   },
 ];
 

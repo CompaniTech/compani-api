@@ -495,20 +495,62 @@ describe('generate', () => {
 });
 
 describe('update', () => {
+  let trainerMissionFindOne;
   let updateOne;
+  let courseBillingItemFindOne;
+  let courseUpdateMany;
+
   beforeEach(() => {
+    trainerMissionFindOne = sinon.stub(TrainerMission, 'findOne');
     updateOne = sinon.stub(TrainerMission, 'updateOne');
+    courseBillingItemFindOne = sinon.stub(CourseBillingItem, 'findOne');
+    courseUpdateMany = sinon.stub(Course, 'updateMany');
   });
   afterEach(() => {
+    trainerMissionFindOne.restore();
     updateOne.restore();
+    courseBillingItemFindOne.restore();
+    courseUpdateMany.restore();
   });
 
-  it('should cancel a trainer mission', async () => {
-    const trainerMission = { _id: new ObjectId() };
+  it('should cancel a trainer mission and remove trainer billing purchase from its courses', async () => {
+    const trainerMissionId = new ObjectId();
+    const billingItemId = new ObjectId();
+    const courseIds = [new ObjectId(), new ObjectId()];
     const payload = { cancelledAt: '2023-01-05T23:00:00.000Z' };
 
-    await trainerMissionsHelper.update(trainerMission._id, payload);
+    trainerMissionFindOne.returns(SinonMongoose.stubChainedQueries({ courses: courseIds }, ['lean']));
+    courseBillingItemFindOne.returns(SinonMongoose.stubChainedQueries({ _id: billingItemId }, ['lean']));
 
-    sinon.assert.calledOnceWithExactly(updateOne, { _id: trainerMission._id }, { $set: payload });
+    await trainerMissionsHelper.update(trainerMissionId, payload);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: trainerMissionId }, { $set: payload });
+    sinon.assert.calledOnceWithExactly(
+      courseUpdateMany,
+      { _id: { $in: courseIds } },
+      { $pull: { billingPurchaseList: { billingItem: billingItemId } } }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      trainerMissionFindOne,
+      [{ query: 'findOne', args: [{ _id: trainerMissionId }, { courses: 1 }] }, { query: 'lean' }]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseBillingItemFindOne,
+      [{ query: 'findOne', args: [{ type: TRAINER }, { _id: 1 }] }, { query: 'lean' }]
+    );
+  });
+
+  it('should cancel a trainer mission without touching courses if no trainer billing item exists', async () => {
+    const trainerMissionId = new ObjectId();
+    const courseIds = [new ObjectId()];
+    const payload = { cancelledAt: '2023-01-05T23:00:00.000Z' };
+
+    trainerMissionFindOne.returns(SinonMongoose.stubChainedQueries({ courses: courseIds }, ['lean']));
+    courseBillingItemFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+
+    await trainerMissionsHelper.update(trainerMissionId, payload);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: trainerMissionId }, { $set: payload });
+    sinon.assert.notCalled(courseUpdateMany);
   });
 });

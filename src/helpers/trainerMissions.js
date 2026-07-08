@@ -117,5 +117,17 @@ exports.generate = async (payload, credentials) => {
   return uploadDocument(payload, courses[0], pdf, GENERATION, credentials, trainer.identity);
 };
 
-exports.update = async (trainerMissionId, payload) =>
-  TrainerMission.updateOne({ _id: trainerMissionId }, { $set: payload });
+exports.update = async (trainerMissionId, payload) => {
+  const trainerMission = await TrainerMission.findOne({ _id: trainerMissionId }, { courses: 1 }).lean();
+  const billingItem = await CourseBillingItem.findOne({ type: TRAINER }, { _id: 1 }).lean();
+
+  const promises = [TrainerMission.updateOne({ _id: trainerMissionId }, { $set: payload })];
+  if (billingItem) {
+    promises.push(Course.updateMany(
+      { _id: { $in: trainerMission.courses } },
+      { $pull: { billingPurchaseList: { billingItem: billingItem._id } } }
+    ));
+  }
+
+  await Promise.all(promises);
+};

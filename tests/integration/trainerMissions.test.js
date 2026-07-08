@@ -477,7 +477,7 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should cancel trainer mission', async () => {
+    it('should cancel trainer mission and remove trainer billing purchase from its courses', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/trainermissions/${trainerMissionList[0]._id}`,
@@ -487,9 +487,14 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
 
       const trainerMissionUpdated = await TrainerMission
         .countDocuments({ _id: trainerMissionList[0]._id, cancelledAt: '2023-01-03T23:00:00.000Z' });
+      const courseBillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[3]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id } },
+      });
 
       expect(response.statusCode).toBe(200);
       expect(trainerMissionUpdated).toEqual(1);
+      expect(courseBillingPurchaseCount).toEqual(0);
     });
 
     it('should return 409 if cancellation is before trainer mission\'s', async () => {
