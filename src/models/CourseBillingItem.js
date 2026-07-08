@@ -1,8 +1,8 @@
 const mongoose = require('mongoose');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
-const { COURSE, COURSE_BILL } = require('../helpers/constants');
+const { COURSE, COURSE_BILL, TRAINER } = require('../helpers/constants');
 
-const COURSE_BILLING_ITEM_TYPES = [COURSE, COURSE_BILL];
+const COURSE_BILLING_ITEM_TYPES = [COURSE, COURSE_BILL, TRAINER];
 
 const CourseBillingItemSchema = mongoose.Schema({
   // unique mongo index on 'name' (with case and diacritics insensitive collation) has been added manually in mep58

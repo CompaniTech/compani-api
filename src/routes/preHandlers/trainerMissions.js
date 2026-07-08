@@ -15,7 +15,7 @@ exports.authorizeTrainerMissionCreation = async (req) => {
   if (coursesCount !== coursesId.length) throw Boom.notFound();
 
   const trainerMission = await TrainerMission
-    .countDocuments({ 'courses.courseId': { $in: coursesId }, cancelledAt: { $exists: false }, trainer });
+    .countDocuments({ courses: { $in: coursesId }, cancelledAt: { $exists: false }, trainer });
   if (trainerMission) throw Boom.conflict(translate[language].trainerMissionAlreadyExist);
 
   return null;

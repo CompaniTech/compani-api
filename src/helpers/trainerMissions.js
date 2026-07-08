@@ -3,8 +3,10 @@ const GCloudStorageHelper = require('./gCloudStorage');
 const UtilsHelper = require('./utils');
 const CourseSlotsHelper = require('./courseSlots');
 const StepsHelper = require('./steps');
-const { GENERATION, UPLOAD } = require('./constants');
+const CourseHelper = require('./courses');
+const { GENERATION, UPLOAD, TRAINER } = require('./constants');
 const Course = require('../models/Course');
+const CourseBillingItem = require('../models/CourseBillingItem');
 const TrainerMission = require('../models/TrainerMission');
 const TrainerMissionPdf = require('../data/pdf/trainerMission');
 
@@ -18,15 +20,26 @@ const uploadDocument = async (payload, course, file, method, credentials, traine
 
   const courses = Array.isArray(payload.courses) ? payload.courses : [payload.courses];
   const fee = courses.reduce((acc, c) => acc + (c.fee || 0), 0);
+  const courseIds = courses.map(c => c.courseId);
 
   await TrainerMission.create({
     ...payload,
-    courses,
+    courses: courseIds,
     fee,
     file: fileUploaded,
     createdBy: credentials._id,
     creationMethod: method,
   });
+
+  const coursesWithFee = courses.filter(c => c.fee);
+  if (coursesWithFee.length) {
+    const billingItem = await CourseBillingItem.findOne({ type: TRAINER }, { _id: 1 }).lean();
+
+    await Promise.all(coursesWithFee.map(c => CourseHelper.addBillingPurchase(
+      c.courseId,
+      { billingItem: billingItem._id, price: c.fee, count: 1 }
+    )));
+  }
 };
 exports.upload = async (payload, credentials) => {
   const courseId = Array.isArray(payload.courses) ? payload.courses[0].courseId : payload.courses.courseId;
@@ -48,7 +61,7 @@ exports.list = async (query) => {
   return TrainerMission
     .find({ trainer })
     .populate({
-      path: 'courses.courseId',
+      path: 'courses',
       select: 'misc type companies subProgram tradeName',
       populate: [
         { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -nE \"^  [A-Z_]+: '[A-Z_]+',$\" /Users/ulysse/compani-api/src/helpers/constants.js)",
+      "Bash(npx eslint *)",
+      "Bash(npx jest *)",
+      "Bash(npx mocha *)",
+      "Bash(grep -n \"Schema\\(\\\\|}, { timestamps\" src/models/Course.js)",
+      "Bash(xargs -I{} basename {})",
+      "Bash(grep -n \"trainer=\\\\${trainerAndCoach\" /Users/ulysse/compani-api/tests/integration/courses.test.js)",
+      "Bash(jobs)",
+      "Bash(sort -t'[' -k2 -n)",
+      "Bash(awk 'NR==388,NR==833' /Users/ulysse/compani-api/tests/integration/seed/coursesSeed.js)",
+      "Bash(sort -t'[' -k2 -n -u)",
+      "Bash(grep -E '^[0-9]+$')"
+    ]
+  }
+}

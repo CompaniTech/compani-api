@@ -2,34 +2,43 @@ const sinon = require('sinon');
 const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const Course = require('../../../src/models/Course');
+const CourseBillingItem = require('../../../src/models/CourseBillingItem');
 const TrainerMission = require('../../../src/models/TrainerMission');
+const CourseHelper = require('../../../src/helpers/courses');
 const trainerMissionsHelper = require('../../../src/helpers/trainerMissions');
 const SinonMongoose = require('../sinonMongoose');
 const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
-const { UPLOAD, GENERATION, INTRA } = require('../../../src/helpers/constants');
+const { UPLOAD, GENERATION, INTRA, TRAINER } = require('../../../src/helpers/constants');
 const TrainerMissionPdf = require('../../../src/data/pdf/trainerMission');
 
 describe('upload', () => {
   let uploadCourseFile;
   let courseFindOne;
   let create;
+  let addBillingPurchase;
+  let courseBillingItemFindOne;
 
   beforeEach(() => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     create = sinon.stub(TrainerMission, 'create');
     courseFindOne = sinon.stub(Course, 'findOne');
+    addBillingPurchase = sinon.stub(CourseHelper, 'addBillingPurchase');
+    courseBillingItemFindOne = sinon.stub(CourseBillingItem, 'findOne');
   });
 
   afterEach(() => {
     uploadCourseFile.restore();
     create.restore();
     courseFindOne.restore();
+    addBillingPurchase.restore();
+    courseBillingItemFindOne.restore();
   });
 
   it('should create a trainer mission for a single course', async () => {
     const credentials = { _id: new ObjectId() };
     const courseId = new ObjectId();
     const trainerId = new ObjectId();
+    const billingItemId = new ObjectId();
     const course = {
       _id: courseId,
       trainers: [
@@ -42,6 +51,7 @@ describe('upload', () => {
 
     uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
+    courseBillingItemFindOne.returns(SinonMongoose.stubChainedQueries({ _id: billingItemId }, ['lean']));
 
     await trainerMissionsHelper.upload(payload, credentials);
 
@@ -52,13 +62,22 @@ describe('upload', () => {
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        courses: [{ courseId, fee: 1200 }],
+        courses: [courseId],
         fee: 1200,
         trainer: trainerId,
         file: { publicId: 'yo', link: 'yo' },
         createdBy: credentials._id,
         creationMethod: UPLOAD,
       }
+    );
+    sinon.assert.calledOnceWithExactly(
+      addBillingPurchase,
+      courseId,
+      { billingItem: billingItemId, price: 1200, count: 1 }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseBillingItemFindOne,
+      [{ query: 'findOne', args: [{ type: TRAINER }, { _id: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
@@ -80,6 +99,7 @@ describe('upload', () => {
     const credentials = { _id: new ObjectId() };
     const courseIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
+    const billingItemId = new ObjectId();
     const course = {
       _id: courseIds[0],
       trainers: [{ _id: trainerId, identity: { lastname: 'For', firstname: 'Matrice' } }],
@@ -90,6 +110,7 @@ describe('upload', () => {
 
     uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course));
+    courseBillingItemFindOne.returns(SinonMongoose.stubChainedQueries({ _id: billingItemId }, ['lean']));
 
     await trainerMissionsHelper.upload(payload, credentials);
 
@@ -100,13 +121,22 @@ describe('upload', () => {
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        courses,
+        courses: courseIds,
         fee: 500,
         trainer: trainerId,
         file: { publicId: 'yo', link: 'yo' },
         createdBy: credentials._id,
         creationMethod: UPLOAD,
       }
+    );
+    sinon.assert.calledOnceWithExactly(
+      addBillingPurchase,
+      courseIds[0],
+      { billingItem: billingItemId, price: 500, count: 1 }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseBillingItemFindOne,
+      [{ query: 'findOne', args: [{ type: TRAINER }, { _id: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
@@ -140,14 +170,7 @@ describe('list', () => {
       trainer: trainerId,
       file: { publicId: 'mon premier upload', link: 'www.test.com' },
       date: '2023-12-10T23:00:00.000Z',
-      courses: [
-        {
-          courseId: new ObjectId(),
-          subProgram: { program: { name: 'name' } },
-          companies: [{ name: 'Alenvi' }],
-          fee: 12,
-        },
-      ],
+      courses: [{ _id: new ObjectId(), subProgram: { program: { name: 'name' } }, companies: [{ name: 'Alenvi' }] }],
       fee: 12,
       createdBy: new ObjectId(),
     }];
@@ -164,7 +187,7 @@ describe('list', () => {
         {
           query: 'populate',
           args: [{
-            path: 'courses.courseId',
+            path: 'courses',
             select: 'misc type companies subProgram tradeName',
             populate: [
               { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
@@ -184,12 +207,16 @@ describe('generate', () => {
   let courseFind;
   let trainerMissionGetPdf;
   let create;
+  let addBillingPurchase;
+  let courseBillingItemFindOne;
 
   beforeEach(() => {
     uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
     create = sinon.stub(TrainerMission, 'create');
     courseFind = sinon.stub(Course, 'find');
     trainerMissionGetPdf = sinon.stub(TrainerMissionPdf, 'getPdf');
+    addBillingPurchase = sinon.stub(CourseHelper, 'addBillingPurchase');
+    courseBillingItemFindOne = sinon.stub(CourseBillingItem, 'findOne');
   });
 
   afterEach(() => {
@@ -197,12 +224,15 @@ describe('generate', () => {
     create.restore();
     courseFind.restore();
     trainerMissionGetPdf.restore();
+    addBillingPurchase.restore();
+    courseBillingItemFindOne.restore();
   });
 
   it('should generate a trainer mission for a single course', async () => {
     const credentials = { _id: new ObjectId(), identity: { lastname: 'Doe', firstname: 'John' } };
     const courseId = new ObjectId();
     const trainerId = new ObjectId();
+    const billingItemId = new ObjectId();
     const courses = [{
       _id: courseId,
       misc: 'test',
@@ -253,6 +283,7 @@ describe('generate', () => {
     uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
     courseFind.returns(SinonMongoose.stubChainedQueries(courses));
     trainerMissionGetPdf.returns('test.pdf');
+    courseBillingItemFindOne.returns(SinonMongoose.stubChainedQueries({ _id: billingItemId }, ['lean']));
 
     await trainerMissionsHelper.generate(payload, credentials);
 
@@ -265,13 +296,22 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        courses: [{ courseId, fee: 1200 }],
+        courses: [courseId],
         fee: 1200,
         trainer: trainerId,
         file: { publicId: 'yo', link: 'yo' },
         createdBy: credentials._id,
         creationMethod: GENERATION,
       }
+    );
+    sinon.assert.calledOnceWithExactly(
+      addBillingPurchase,
+      courseId,
+      { billingItem: billingItemId, price: 1200, count: 1 }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseBillingItemFindOne,
+      [{ query: 'findOne', args: [{ type: TRAINER }, { _id: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       courseFind,
@@ -372,6 +412,7 @@ describe('generate', () => {
     ];
     const missionCourses = [{ courseId: courseIds[0], fee: 500 }, { courseId: courseIds[1], fee: 700 }];
     const payload = { courses: missionCourses, trainer: trainerId };
+    const billingItemId = new ObjectId();
 
     const data = {
       trainerIdentity: { lastname: 'For', firstname: 'Matrice' },
@@ -391,6 +432,7 @@ describe('generate', () => {
     uploadCourseFile.returns({ publicId: 'yo', link: 'yo' });
     courseFind.returns(SinonMongoose.stubChainedQueries(courses));
     trainerMissionGetPdf.returns('test.pdf');
+    courseBillingItemFindOne.returns(SinonMongoose.stubChainedQueries({ _id: billingItemId }, ['lean']));
 
     await trainerMissionsHelper.generate(payload, credentials);
 
@@ -403,13 +445,27 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       create,
       {
-        courses: missionCourses,
+        courses: courseIds,
         fee: 1200,
         trainer: trainerId,
         file: { publicId: 'yo', link: 'yo' },
         createdBy: credentials._id,
         creationMethod: GENERATION,
       }
+    );
+    sinon.assert.calledWithExactly(
+      addBillingPurchase.getCall(0),
+      courseIds[0],
+      { billingItem: billingItemId, price: 500, count: 1 }
+    );
+    sinon.assert.calledWithExactly(
+      addBillingPurchase.getCall(1),
+      courseIds[1],
+      { billingItem: billingItemId, price: 700, count: 1 }
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseBillingItemFindOne,
+      [{ query: 'findOne', args: [{ type: TRAINER }, { _id: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       courseFind,

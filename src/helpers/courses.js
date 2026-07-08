@@ -1036,7 +1036,7 @@ exports.deleteCourse = async (courseId) => {
     .lean();
 
   const trainerMissions = await TrainerMission
-    .find({ 'courses.courseId': courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
+    .find({ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
     .lean();
 
   return Promise.all([
@@ -1894,7 +1894,7 @@ exports.addTrainer = async (courseId, payload, credentials) => {
 exports.removeTrainer = async (courseId, trainerId, credentials) => {
   await TrainerMission
     .findOneAndUpdate(
-      { 'courses.courseId': courseId, trainer: trainerId, cancelledAt: { $exists: false } },
+      { courses: courseId, trainer: trainerId, cancelledAt: { $exists: false } },
       { $set: { cancelledAt: CompaniDate().startOf(DAY).toISO() } }
     ).lean();
 

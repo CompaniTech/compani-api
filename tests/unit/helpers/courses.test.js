@@ -5350,7 +5350,7 @@ describe('deleteCourse', () => {
       [
         {
           query: 'find',
-          args: [{ 'courses.courseId': courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 }],
+          args: [{ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 }],
         },
         { query: 'lean' },
       ]
@@ -9594,7 +9594,7 @@ describe('removeTrainer', () => {
   it('should remove trainer and contact from course and cancelled trainerMission', async () => {
     const trainerId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', trainers: [trainerId], contact: trainerId };
-    const trainerMission = { _id: new ObjectId(), courses: [{ courseId: course._id }], trainer: trainerId };
+    const trainerMission = { _id: new ObjectId(), courses: [course._id], trainer: trainerId };
     const credentials = { _id: new ObjectId() };
     const payload = { course: course._id, trainer: trainerId, action: TRAINER_DELETION };
 
@@ -9611,7 +9611,7 @@ describe('removeTrainer', () => {
         {
           query: 'findOneAndUpdate',
           args: [
-            { 'courses.courseId': course._id, trainer: trainerId, cancelledAt: { $exists: false } },
+            { courses: course._id, trainer: trainerId, cancelledAt: { $exists: false } },
             { $set: { cancelledAt: CompaniDate().startOf(DAY).toISO() } },
           ],
         },
