@@ -74,6 +74,7 @@ const {
   MISSING,
   COURSE,
   COURSE_BILL,
+  TRAINER,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -383,6 +384,7 @@ const programsList = [
 const courseBillingItemsList = [
   { _id: new ObjectId(), name: 'article formation', type: COURSE },
   { _id: new ObjectId(), name: 'article facture', type: COURSE_BILL },
+  { _id: new ObjectId(), name: 'frais de formateur', type: TRAINER },
 ];
 
 const coursesList = [
@@ -802,13 +804,21 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
     tradeName: 'nom',
-    billingPurchaseList: [{
-      _id: new ObjectId(),
-      billingItem: courseBillingItemsList[0]._id,
-      price: 100,
-      count: 2,
-      description: 'billing purchase',
-    }],
+    billingPurchaseList: [
+      {
+        _id: new ObjectId(),
+        billingItem: courseBillingItemsList[0]._id,
+        price: 100,
+        count: 2,
+        description: 'billing purchase',
+      },
+      {
+        _id: new ObjectId(),
+        billingItem: courseBillingItemsList[2]._id,
+        price: 120,
+        count: 1,
+      },
+    ],
   },
 ];
 

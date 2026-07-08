@@ -2843,7 +2843,7 @@ describe('getCourse', () => {
               {
                 path: 'billingPurchaseList',
                 select: 'billingItem',
-                populate: { path: 'billingItem', select: 'name' },
+                populate: { path: 'billingItem', select: 'name type' },
               },
               {
                 path: 'operationsRepresentative',
@@ -2955,7 +2955,7 @@ describe('getCourse', () => {
                 {
                   path: 'billingPurchaseList',
                   select: 'billingItem',
-                  populate: { path: 'billingItem', select: 'name' },
+                  populate: { path: 'billingItem', select: 'name type' },
                 },
                 {
                   path: 'operationsRepresentative',
@@ -3063,7 +3063,7 @@ describe('getCourse', () => {
                 {
                   path: 'billingPurchaseList',
                   select: 'billingItem',
-                  populate: { path: 'billingItem', select: 'name' },
+                  populate: { path: 'billingItem', select: 'name type' },
                 },
                 {
                   path: 'operationsRepresentative',
@@ -3245,7 +3245,7 @@ describe('getCourse', () => {
               {
                 path: 'billingPurchaseList',
                 select: 'billingItem',
-                populate: { path: 'billingItem', select: 'name' },
+                populate: { path: 'billingItem', select: 'name type' },
               },
               {
                 path: 'operationsRepresentative',

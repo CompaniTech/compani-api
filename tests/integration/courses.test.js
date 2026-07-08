@@ -5733,7 +5733,7 @@ describe('COURSES ROUTES - POST /courses/{_id}/billingpurchases', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 404 if billing item is not a course billing item', async () => {
+    it('should return 404 if billing item type is not course', async () => {
       const response = await app.inject({
         method: 'POST',
         url: `/courses/${courseWithoutBillingPurchaseId}/billingpurchases`,
@@ -5882,6 +5882,17 @@ describe('COURSES ROUTES - PUT /courses/{_id}/billingpurchases/{billingPurchaseI
       expect(response.statusCode).toBe(404);
     });
 
+    it('should return 409 if billing purchase type is TRAINER', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${courseWithBillingPurchaseId}/billingpurchases/${coursesList[27].billingPurchaseList[1]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { price: 200, count: 3 },
+      });
+
+      expect(response.statusCode).toBe(409);
+    });
+
     const missingParams = ['price', 'count'];
     missingParams.forEach((param) => {
       it(`should return 400 if ${param} is missing`, async () => {
@@ -5968,6 +5979,16 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/billingpurchases/{billingPurcha
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 409 if billing purchase type is TRAINER', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${courseWithBillingPurchaseId}/billingpurchases/${coursesList[27].billingPurchaseList[1]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(409);
     });
   });
 

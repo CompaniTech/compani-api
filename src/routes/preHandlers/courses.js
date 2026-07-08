@@ -1633,8 +1633,14 @@ exports.authorizeCourseBillingPurchaseAddition = async (req) => {
 exports.authorizeCourseBillingPurchaseEdition = async (req) => {
   const { _id: courseId, billingPurchaseId } = req.params;
 
-  const course = await Course.findOne({ _id: courseId, 'billingPurchaseList._id': billingPurchaseId }).lean();
+  const course = await Course
+    .findOne({ _id: courseId, 'billingPurchaseList._id': billingPurchaseId })
+    .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'type' } })
+    .lean();
   if (!course) throw Boom.notFound();
+  const billingPurchase = course.billingPurchaseList
+    .find(p => UtilsHelper.areObjectIdsEquals(billingPurchaseId, p._id));
+  if (billingPurchase.billingItem.type !== COURSE) throw Boom.conflict();
 
   return null;
 };

@@ -103,6 +103,7 @@ const {
   DIRECT_DEBIT,
   RECEIVED,
   PRESENT,
+  COURSE,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -873,6 +874,11 @@ describe('SEEDS VERIFICATION', () => {
             .populate({ path: 'subProgram', select: '_id status steps', populate: { path: 'steps', select: 'type' } })
             .populate({ path: 'slots', select: 'endDate' })
             .populate({ path: 'slotsToPlan' })
+            .populate({
+              path: 'billingPurchaseList',
+              select: 'billingItem',
+              populate: { path: 'billingItem', select: 'type' },
+            })
             .lean({ virtuals: true });
         });
 
@@ -1199,6 +1205,13 @@ describe('SEEDS VERIFICATION', () => {
             .every(course => get(course, 'prices', [])
               .every(price => !!price.global));
           expect(everyCoursePriceHasGlobalPrice).toBeTruthy();
+        });
+
+        it('should pass if course billing items type is course', () => {
+          const everyCourseBillingItemHasCourseType = courseList
+            .every(course => get(course, 'billingPurchaseList', [])
+              .every(purchase => [COURSE, TRAINER].includes(purchase.billingItem.type)));
+          expect(everyCourseBillingItemHasCourseType).toBeTruthy();
         });
       });
 

@@ -585,7 +585,11 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
           { path: 'accessRules', select: 'name' },
-          { path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } },
+          {
+            path: 'billingPurchaseList',
+            select: 'billingItem',
+            populate: { path: 'billingItem', select: 'name type' },
+          },
           {
             path: 'operationsRepresentative',
             select: 'identity.firstname identity.lastname contact local.email picture.link',
