@@ -294,7 +294,7 @@ exports.authorizeCourseBillingPurchaseUpdate = async (req) => {
 
   const areFieldsChanged = payloadKeys.some(key => get(req.payload, key) !== get(purchase, key));
   const isTrainerFeesWithPercentage = has(purchase, 'percentage') &&
-    UtilsHelper.areObjectIdsEquals(purchase.billingItem, process.env.TRAINER_FEES_BILLING_ITEM);
+    UtilsHelper.areObjectIdsEquals(purchase.billingItem, process.env.MANAGEMENT_FEES_BILLING_ITEM);
   if (!isTrainerFeesWithPercentage && !(req.payload.price && req.payload.count)) throw Boom.badRequest();
   if ((courseBillRelatedToPurchase.billedAt || isTrainerFeesWithPercentage) && areFieldsChanged) throw Boom.forbidden();
 
@@ -313,7 +313,7 @@ exports.authorizeCourseBillingPurchaseDelete = async (req) => {
     .find(p => UtilsHelper.areObjectIdsEquals(p._id, billingPurchaseId));
   if (!purchaseRelatedToBill) throw Boom.notFound();
   const isTrainerFeesWithPercentage = purchaseRelatedToBill.percentage &&
-    UtilsHelper.areObjectIdsEquals(purchaseRelatedToBill.billingItem, process.env.TRAINER_FEES_BILLING_ITEM);
+    UtilsHelper.areObjectIdsEquals(purchaseRelatedToBill.billingItem, process.env.MANAGEMENT_FEES_BILLING_ITEM);
 
   if (isTrainerFeesWithPercentage) throw Boom.forbidden();
 

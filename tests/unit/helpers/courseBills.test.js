@@ -939,7 +939,7 @@ describe('createBillList', () => {
   let insertManyCourseBills;
   let addBillingPurchase;
   let getVendorCompany;
-  const TRAINER_FEES_BILLING_ITEM = new ObjectId();
+  const MANAGEMENT_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
     findOneCourse = sinon.stub(Course, 'findOne');
@@ -947,7 +947,7 @@ describe('createBillList', () => {
     insertManyCourseBills = sinon.stub(CourseBill, 'insertMany');
     addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
     getVendorCompany = sinon.stub(VendorCompaniesHelper, 'get');
-    process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
+    process.env.MANAGEMENT_FEES_BILLING_ITEM = MANAGEMENT_FEES_BILLING_ITEM;
   });
 
   afterEach(() => {
@@ -956,7 +956,7 @@ describe('createBillList', () => {
     insertManyCourseBills.restore();
     addBillingPurchase.restore();
     getVendorCompany.restore();
-    process.env.TRAINER_FEES_BILLING_ITEM = '';
+    process.env.MANAGEMENT_FEES_BILLING_ITEM = '';
   });
 
   it('should create one bill without percentage for INTER course', async () => {
@@ -1041,7 +1041,7 @@ describe('createBillList', () => {
         price: 20,
         count: 1,
         percentage: 10,
-        billingItem: TRAINER_FEES_BILLING_ITEM,
+        billingItem: MANAGEMENT_FEES_BILLING_ITEM,
       }
     );
     sinon.assert.notCalled(insertManyCourseBills);
@@ -1171,7 +1171,7 @@ describe('createBillList', () => {
         price: 0,
         count: 1,
         percentage: 0,
-        billingItem: TRAINER_FEES_BILLING_ITEM,
+        billingItem: MANAGEMENT_FEES_BILLING_ITEM,
       }
     );
     sinon.assert.calledWithExactly(
@@ -1181,7 +1181,7 @@ describe('createBillList', () => {
         price: 0,
         count: 1,
         percentage: 0,
-        billingItem: TRAINER_FEES_BILLING_ITEM,
+        billingItem: MANAGEMENT_FEES_BILLING_ITEM,
       }
     );
     sinon.assert.calledWithExactly(
@@ -1191,7 +1191,7 @@ describe('createBillList', () => {
         price: 0,
         count: 1,
         percentage: 0,
-        billingItem: TRAINER_FEES_BILLING_ITEM,
+        billingItem: MANAGEMENT_FEES_BILLING_ITEM,
       }
     );
     sinon.assert.notCalled(createCourseBill);
@@ -1446,7 +1446,6 @@ describe('updateCourseBill', () => {
   let findOneAndUpdateCoursePaymentNumber;
   let updateBillingPurchase;
   let coursePaymentCreate;
-  const TRAINER_FEES_BILLING_ITEM = new ObjectId();
   const MANAGEMENT_FEES_BILLING_ITEM = new ObjectId();
 
   beforeEach(() => {
@@ -1455,7 +1454,6 @@ describe('updateCourseBill', () => {
     findOneAndUpdateCoursePaymentNumber = sinon.stub(CoursePaymentNumber, 'findOneAndUpdate');
     updateBillingPurchase = sinon.stub(CourseBillHelper, 'updateBillingPurchase');
     coursePaymentCreate = sinon.stub(CoursePayment, 'create');
-    process.env.TRAINER_FEES_BILLING_ITEM = TRAINER_FEES_BILLING_ITEM;
     process.env.MANAGEMENT_FEES_BILLING_ITEM = MANAGEMENT_FEES_BILLING_ITEM;
   });
 
@@ -1465,7 +1463,6 @@ describe('updateCourseBill', () => {
     findOneAndUpdateCoursePaymentNumber.restore();
     updateBillingPurchase.restore();
     coursePaymentCreate.restore();
-    process.env.TRAINER_FEES_BILLING_ITEM = '';
     process.env.MANAGEMENT_FEES_BILLING_ITEM = '';
   });
 
@@ -1559,7 +1556,7 @@ describe('updateCourseBill', () => {
       _id: courseBillId,
       mainFee: { price: 100, count: 1, percentage: 10 },
       billingPurchaseList: [
-        { _id: billingPurchaseId, billingItem: TRAINER_FEES_BILLING_ITEM, price: 10, count: 1 },
+        { _id: billingPurchaseId, billingItem: MANAGEMENT_FEES_BILLING_ITEM, price: 10, count: 1 },
       ],
       companies: [companyId],
       course: { prices: [{ company: companyId, global: 1000 }] },
@@ -1592,7 +1589,7 @@ describe('updateCourseBill', () => {
       _id: courseBillId,
       mainFee: { price: 100, count: 1, percentage: 10 },
       billingPurchaseList: [
-        { _id: billingPurchaseId, billingItem: TRAINER_FEES_BILLING_ITEM, price: 10, count: 1, percentage: 10 },
+        { _id: billingPurchaseId, billingItem: MANAGEMENT_FEES_BILLING_ITEM, price: 10, count: 1, percentage: 10 },
       ],
       companies: [companyId],
       course: { prices: [{ company: companyId, global: 1000, trainerFees: 100 }] },
