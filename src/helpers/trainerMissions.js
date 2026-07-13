@@ -34,11 +34,12 @@ const uploadDocument = async (payload, course, file, method, credentials, traine
   const coursesWithFee = courses.filter(c => c.fee);
   if (coursesWithFee.length) {
     const billingItem = await CourseBillingItem.findOne({ type: TRAINER }, { _id: 1 }).lean();
-
-    await Promise.all(coursesWithFee.map(c => CourseHelper.addBillingPurchase(
-      c.courseId,
-      { billingItem: billingItem._id, price: c.fee, count: 1 }
-    )));
+    if (billingItem) {
+      await Promise.all(coursesWithFee.map(c => CourseHelper.addBillingPurchase(
+        c.courseId,
+        { billingItem: billingItem._id, price: c.fee, count: 1 }
+      )));
+    }
   }
 };
 exports.upload = async (payload, credentials) => {

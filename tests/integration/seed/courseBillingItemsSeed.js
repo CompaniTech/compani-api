@@ -11,7 +11,7 @@ const { trainer, vendorAdmin, auxiliary } = require('../../seed/authUsersSeed');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 
 const courseBillingItemsList = [
-  { _id: new ObjectId(), name: 'frais formateur', type: COURSE },
+  { _id: new ObjectId(), name: 'frais de gestion', type: COURSE },
   { _id: new ObjectId(), name: 'frais de certification', type: COURSE_BILL },
 ];
 

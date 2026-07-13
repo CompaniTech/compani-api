@@ -107,7 +107,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
         method: 'POST',
         url: '/coursebillingitems',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { name: 'frais formateur', type: COURSE_BILL },
+        payload: { name: 'frais de gestion', type: COURSE_BILL },
       });
 
       expect(response.statusCode).toBe(200);
@@ -118,7 +118,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
         method: 'POST',
         url: '/coursebillingitems',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { name: 'frais formateur', type: COURSE },
+        payload: { name: 'frais de gestion', type: COURSE },
       });
 
       expect(response.statusCode).toBe(409);
@@ -129,7 +129,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
         method: 'POST',
         url: '/coursebillingitems',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { name: 'Frais Formateur', type: COURSE },
+        payload: { name: 'Frais de Gestion', type: COURSE },
       });
 
       expect(response.statusCode).toBe(409);

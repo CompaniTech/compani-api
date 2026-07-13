@@ -381,7 +381,7 @@ const courseFundingOrganisationList = [
 ];
 
 const billingItemList = [
-  { _id: new ObjectId(process.env.MANAGEMENT_FEES_BILLING_ITEM), name: 'frais formateur', type: COURSE_BILL },
+  { _id: new ObjectId(process.env.MANAGEMENT_FEES_BILLING_ITEM), name: 'frais de gestion', type: COURSE_BILL },
   { _id: new ObjectId(), name: 'forfait salle', type: COURSE_BILL },
   { _id: new ObjectId(), name: 'petit déjeuner', type: COURSE_BILL },
 ];

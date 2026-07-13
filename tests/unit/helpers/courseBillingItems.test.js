@@ -20,7 +20,7 @@ describe('list', () => {
     const credentials = { role: { vendor: 'training_organisation_manager' } };
     const courseBillingItems = [
       { name: 'article', type: COURSE_BILL },
-      { name: 'frais formateur', type: COURSE },
+      { name: 'frais de gestion', type: COURSE },
     ];
     find.returns(SinonMongoose.stubChainedQueries(courseBillingItems));
 
@@ -42,7 +42,7 @@ describe('list', () => {
 
   it('should return course billing items with requested type', async () => {
     const credentials = { role: { vendor: 'training_organisation_manager' } };
-    const courseBillingItems = [{ name: 'frais formateur', type: COURSE }];
+    const courseBillingItems = [{ name: 'frais de gestion', type: COURSE }];
     find.returns(SinonMongoose.stubChainedQueries(courseBillingItems));
 
     const result = await CourseBillingItemHelper.list({ type: COURSE }, credentials);
