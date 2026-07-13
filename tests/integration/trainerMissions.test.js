@@ -3,11 +3,13 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const app = require('../../server');
 const TrainerMission = require('../../src/models/TrainerMission');
+const Course = require('../../src/models/Course');
 const { trainer, coach, trainerAndCoach } = require('../seed/authUsersSeed');
 const {
   populateDB,
   courseList,
   trainerMissionList,
+  billingItemList,
 } = require('./seed/trainerMissionsSeed');
 const { getToken } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
@@ -58,7 +60,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [{ courseId: courseList[0]._id, fee: 0 }],
+        courses: [courseList[0]._id],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 0,
@@ -88,7 +90,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
         expect(response.statusCode).toBe(200);
         const trainerMissionCount = await TrainerMission.countDocuments({
-          courses: [{ courseId: courseList[3]._id, fee: 0 }],
+          courses: [courseList[3]._id],
           date: CompaniDate().startOf(DAY).toISO(),
           trainer: trainerAndCoach._id,
           fee: 0,
@@ -121,7 +123,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [{ courseId: courseList[0]._id, fee: 500 }, { courseId: courseList[1]._id, fee: 700 }],
+        courses: [courseList[0]._id, courseList[1]._id],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 1200,
@@ -129,6 +131,17 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
         creationMethod: UPLOAD,
       });
       expect(trainerMissionCount).toBe(1);
+
+      const firstCourseBillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[0]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id, price: 500, count: 1 } },
+      });
+      const secondCourse1BillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[1]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id, price: 700, count: 1 } },
+      });
+      expect(firstCourseBillingPurchaseCount).toBe(1);
+      expect(secondCourse1BillingPurchaseCount).toBe(1);
     });
 
     it('should generate trainer mission for a single course', async () => {
@@ -149,7 +162,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [{ courseId: courseList[0]._id, fee: 1200 }],
+        courses: [courseList[0]._id],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 1200,
@@ -181,7 +194,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [{ courseId: courseList[0]._id, fee: 600 }, { courseId: courseList[1]._id, fee: 600 }],
+        courses: [courseList[0]._id, courseList[1]._id],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 1200,
@@ -464,7 +477,7 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should cancel trainer mission', async () => {
+    it('should cancel trainer mission and remove trainer billing purchase from its courses', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/trainermissions/${trainerMissionList[0]._id}`,
@@ -474,9 +487,14 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
 
       const trainerMissionUpdated = await TrainerMission
         .countDocuments({ _id: trainerMissionList[0]._id, cancelledAt: '2023-01-03T23:00:00.000Z' });
+      const courseBillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[3]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id } },
+      });
 
       expect(response.statusCode).toBe(200);
       expect(trainerMissionUpdated).toEqual(1);
+      expect(courseBillingPurchaseCount).toEqual(0);
     });
 
     it('should return 409 if cancellation is before trainer mission\'s', async () => {

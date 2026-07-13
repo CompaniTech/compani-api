@@ -24,6 +24,9 @@ const {
   getQuestionnaires,
   addCompany,
   removeCompany,
+  addBillingPurchase,
+  updateBillingPurchase,
+  deleteBillingPurchase,
   generateTrainingContract,
   addTrainer,
   removeTrainer,
@@ -56,6 +59,8 @@ const {
   authorizeSmsGet,
   authorizeCourseCompanyAddition,
   authorizeCourseCompanyDeletion,
+  authorizeCourseBillingPurchaseAddition,
+  authorizeCourseBillingPurchaseEdition,
   authorizeGenerateTrainingContract,
   authorizeGetCompletionCertificates,
   authorizeTrainerAddition,
@@ -496,6 +501,56 @@ exports.plugin = {
         pre: [{ method: authorizeCourseEdit }, { method: authorizeCourseCompanyDeletion }],
       },
       handler: removeCompany,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/{_id}/billingpurchases',
+      options: {
+        auth: { scope: ['coursebills:edit'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required() }),
+          payload: Joi.object({
+            billingItem: Joi.objectId().required(),
+            price: Joi.number().positive().required(),
+            count: Joi.number().positive().integer().required(),
+            description: Joi.string().allow(''),
+          }),
+        },
+        pre: [{ method: authorizeCourseBillingPurchaseAddition }],
+      },
+      handler: addBillingPurchase,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/{_id}/billingpurchases/{billingPurchaseId}',
+      options: {
+        auth: { scope: ['coursebills:edit'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), billingPurchaseId: Joi.objectId().required() }),
+          payload: Joi.object({
+            price: Joi.number().positive().required(),
+            count: Joi.number().positive().integer().required(),
+            description: Joi.string().allow(''),
+          }),
+        },
+        pre: [{ method: authorizeCourseBillingPurchaseEdition }],
+      },
+      handler: updateBillingPurchase,
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/{_id}/billingpurchases/{billingPurchaseId}',
+      options: {
+        auth: { scope: ['coursebills:edit'] },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), billingPurchaseId: Joi.objectId().required() }),
+        },
+        pre: [{ method: authorizeCourseBillingPurchaseEdition }],
+      },
+      handler: deleteBillingPurchase,
     });
 
     server.route({

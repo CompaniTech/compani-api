@@ -586,6 +586,11 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           },
           { path: 'accessRules', select: 'name' },
           {
+            path: 'billingPurchaseList',
+            select: 'billingItem',
+            populate: { path: 'billingItem', select: 'name type' },
+          },
+          {
             path: 'operationsRepresentative',
             select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
@@ -1035,7 +1040,7 @@ exports.deleteCourse = async (courseId) => {
     .lean();
 
   const trainerMissions = await TrainerMission
-    .find({ 'courses.courseId': courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
+    .find({ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
     .lean();
 
   return Promise.all([
@@ -1893,7 +1898,7 @@ exports.addTrainer = async (courseId, payload, credentials) => {
 exports.removeTrainer = async (courseId, trainerId, credentials) => {
   await TrainerMission
     .findOneAndUpdate(
-      { 'courses.courseId': courseId, trainer: trainerId, cancelledAt: { $exists: false } },
+      { courses: courseId, trainer: trainerId, cancelledAt: { $exists: false } },
       { $set: { cancelledAt: CompaniDate().startOf(DAY).toISO() } }
     ).lean();
 
@@ -2112,3 +2117,23 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
     ]
   );
 };
+
+exports.addBillingPurchase = async (courseId, payload) =>
+  Course.updateOne({ _id: courseId }, { $push: { billingPurchaseList: payload } });
+
+exports.updateBillingPurchase = async (courseId, billingPurchaseId, payload) => Course.updateOne(
+  { _id: courseId, 'billingPurchaseList._id': billingPurchaseId },
+  {
+    $set: {
+      'billingPurchaseList.$.price': payload.price,
+      'billingPurchaseList.$.count': payload.count,
+      ...(!!payload.description && { 'billingPurchaseList.$.description': payload.description }),
+    },
+    ...(get(payload, 'description') === '' && { $unset: { 'billingPurchaseList.$.description': '' } }),
+  }
+);
+
+exports.deleteBillingPurchase = async (courseId, billingPurchaseId) => Course.updateOne(
+  { _id: courseId },
+  { $pull: { billingPurchaseList: { _id: billingPurchaseId } } }
+);

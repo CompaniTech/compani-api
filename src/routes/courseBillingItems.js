@@ -3,6 +3,7 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 const { list, create, remove } = require('../controllers/courseBillingItemController');
+const { COURSE_BILLING_ITEM_TYPES } = require('../models/CourseBillingItem');
 const {
   authorizeCourseBillingItemCreation,
   authorizeBillingItemsDeletion,
@@ -14,7 +15,12 @@ exports.plugin = {
     server.route({
       method: 'GET',
       path: '/',
-      options: { auth: { scope: ['vendorcompanies:edit'] } },
+      options: {
+        validate: {
+          query: Joi.object({ type: Joi.string().valid(...COURSE_BILLING_ITEM_TYPES) }),
+        },
+        auth: { scope: ['vendorcompanies:edit'] },
+      },
       handler: list,
     });
 
@@ -25,6 +31,7 @@ exports.plugin = {
         validate: {
           payload: Joi.object({
             name: Joi.string().required(),
+            type: Joi.string().valid(...COURSE_BILLING_ITEM_TYPES).required(),
           }),
         },
         auth: { scope: ['vendorcompanies:edit'] },

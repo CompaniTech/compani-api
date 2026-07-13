@@ -300,7 +300,7 @@ exports.createBillList = async (payload) => {
           ),
           count: 1,
           percentage: payload.mainFee.percentage,
-          billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+          billingItem: new ObjectId(process.env.MANAGEMENT_FEES_BILLING_ITEM),
         };
         await exports.addBillingPurchase(billCreated._id, trainerFeesPayload);
       }
@@ -329,7 +329,7 @@ exports.createBillList = async (payload) => {
         price: 0,
         count: 1,
         percentage: 0,
-        billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+        billingItem: new ObjectId(process.env.MANAGEMENT_FEES_BILLING_ITEM),
       };
 
       for (const createdBill of createdBills) {
@@ -420,7 +420,7 @@ exports.updateCourseBill = async (courseBillId, payload) => {
     .lean();
   if (get(payload, 'mainFee.percentage')) {
     const billingPurchase = courseBill.billingPurchaseList.find(bp =>
-      UtilsHelper.areObjectIdsEquals(bp.billingItem, process.env.TRAINER_FEES_BILLING_ITEM) && has(bp, 'percentage')
+      UtilsHelper.areObjectIdsEquals(bp.billingItem, process.env.MANAGEMENT_FEES_BILLING_ITEM) && has(bp, 'percentage')
     );
     if (billingPurchase) {
       const trainerFees = (courseBill.course.prices || []).reduce((acc, price) => {

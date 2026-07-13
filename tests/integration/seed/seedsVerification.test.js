@@ -103,6 +103,7 @@ const {
   DIRECT_DEBIT,
   RECEIVED,
   PRESENT,
+  COURSE,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -873,6 +874,11 @@ describe('SEEDS VERIFICATION', () => {
             .populate({ path: 'subProgram', select: '_id status steps', populate: { path: 'steps', select: 'type' } })
             .populate({ path: 'slots', select: 'endDate' })
             .populate({ path: 'slotsToPlan' })
+            .populate({
+              path: 'billingPurchaseList',
+              select: 'billingItem',
+              populate: { path: 'billingItem', select: 'type' },
+            })
             .lean({ virtuals: true });
         });
 
@@ -1200,6 +1206,13 @@ describe('SEEDS VERIFICATION', () => {
               .every(price => !!price.global));
           expect(everyCoursePriceHasGlobalPrice).toBeTruthy();
         });
+
+        it('should pass if course billing items type is course', () => {
+          const everyCourseBillingItemHasCourseType = courseList
+            .every(course => get(course, 'billingPurchaseList', [])
+              .every(purchase => [COURSE, TRAINER].includes(purchase.billingItem.type)));
+          expect(everyCourseBillingItemHasCourseType).toBeTruthy();
+        });
       });
 
       describe('Collection CourseBill', () => {
@@ -1353,7 +1366,7 @@ describe('SEEDS VERIFICATION', () => {
               }, 0);
 
               const trainerFeeBillinItem = bill.billingPurchaseList.find(purchase => UtilsHelper
-                .areObjectIdsEquals(purchase.billingItem._id, process.env.TRAINER_FEES_BILLING_ITEM)
+                .areObjectIdsEquals(purchase.billingItem._id, process.env.MANAGEMENT_FEES_BILLING_ITEM)
               );
 
               return NumbersHelper.multiply(trainerFeeBillinItem.price, trainerFeeBillinItem.count) === NumbersHelper
@@ -1370,8 +1383,8 @@ describe('SEEDS VERIFICATION', () => {
           courseBillingItemList = await CourseBillingItem.find().lean();
         });
 
-        it('should pass if every name is unique', () => {
-          const courseBillingItemNameList = courseBillingItemList.map(item => item.name);
+        it('should pass if every name is unique for same type', () => {
+          const courseBillingItemNameList = courseBillingItemList.map(item => `${item.name}_${item.type}`);
           const courseBillingItemNamesWithoutDuplicates = [...new Set(courseBillingItemNameList)];
 
           expect(courseBillingItemNamesWithoutDuplicates.length).toEqual(courseBillingItemNameList.length);
@@ -2538,7 +2551,7 @@ describe('SEEDS VERIFICATION', () => {
               populate: [{ path: 'role.vendor', select: 'name' }],
               transform,
             })
-            .populate({ path: 'courses.courseId', select: 'trainers', transform })
+            .populate({ path: 'courses', select: 'trainers', transform })
             .setOptions({ isVendorUser: true })
             .lean();
         });
@@ -2578,15 +2591,6 @@ describe('SEEDS VERIFICATION', () => {
             .every(tm => !tm.cancelledAt || CompaniDate(tm.date).isBefore(tm.cancelledAt));
 
           expect(everyCancellationDateIsAfter).toBeTruthy();
-        });
-
-        it('should pass if total course fee is equals to trainer mission fee', () => {
-          const trainerMissionFeeIsRight = trainerMissionList
-            .every(tm => !tm.courses.some(c => c && c.fee) ||
-              tm.courses.reduce((acc, c) => acc + (c.fee || 0), 0) === tm.fee
-            );
-
-          expect(trainerMissionFeeIsRight).toBeTruthy();
         });
       });
 
