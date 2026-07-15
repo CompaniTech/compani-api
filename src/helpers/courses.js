@@ -86,6 +86,7 @@ const {
   MISSING,
   SECOND,
   MONTH,
+  TRAINER_SALARY,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -103,7 +104,9 @@ const CourseBill = require('../models/CourseBill');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHistory = require('../models/CourseHistory');
 const CompletionCertificate = require('../models/CompletionCertificate');
+const CourseBillingItem = require('../models/CourseBillingItem');
 const { CompaniDuration } = require('./dates/companiDurations');
+const NumbersHelper = require('./numbers');
 
 exports.createCourse = async (payload, credentials) => {
   let coursePayload = payload.company
@@ -111,8 +114,8 @@ exports.createCourse = async (payload, credentials) => {
     : omit(payload, ['coach', 'architect']);
 
   const subProgram = await SubProgram
-    .findOne({ _id: payload.subProgram }, { steps: 1, sheetTemplateId: 1, folderId: 1 })
-    .populate({ path: 'steps', select: '_id type' })
+    .findOne({ _id: payload.subProgram }, { steps: 1, sheetTemplateId: 1, folderId: 1, priceVersions: 1 })
+    .populate({ path: 'steps', select: '_id type theoreticalDuration' })
     .lean();
 
   if (payload.type === SINGLE) {
@@ -172,6 +175,29 @@ exports.createCourse = async (payload, credentials) => {
   }
 
   const course = await Course.create(coursePayload);
+
+  const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions || [], 'effectiveDate');
+  if (lastPriceVersion) {
+    const hasPriceAndDurationForEveryStep = subProgram.steps.every(step => step.theoreticalDuration &&
+      lastPriceVersion.prices.some(p => UtilsHelper.areObjectIdsEquals(p.step, step._id)));
+
+    if (hasPriceAndDurationForEveryStep) {
+      const totalPrice = subProgram.steps.reduce((acc, step) => {
+        const stepPrice = lastPriceVersion.prices.find(p => UtilsHelper.areObjectIdsEquals(p.step, step._id));
+        const stepDurationInHours = CompaniDuration(step.theoreticalDuration).asHours();
+
+        return NumbersHelper.add(acc, NumbersHelper.multiply(stepPrice.hourlyAmount, stepDurationInHours));
+      }, 0);
+
+      const trainerSalaryBillingItem = await CourseBillingItem.findOne({ type: TRAINER_SALARY }, { _id: 1 }).lean();
+      if (trainerSalaryBillingItem) {
+        await exports.addBillingPurchase(
+          course._id,
+          { billingItem: trainerSalaryBillingItem._id, price: NumbersHelper.toNumber(totalPrice), count: 1 }
+        );
+      }
+    }
+  }
 
   if (course.estimatedStartDate) {
     await CourseHistoriesHelper.createHistoryOnEstimatedStartDateEdition(
