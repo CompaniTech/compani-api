@@ -163,7 +163,6 @@ describe('createCourse', () => {
         prices: [
           { step: steps[0]._id, hourlyAmount: 10 },
           { step: steps[1]._id, hourlyAmount: 10 },
-          { step: steps[2]._id, hourlyAmount: 10 },
         ],
       },
       {
@@ -171,7 +170,6 @@ describe('createCourse', () => {
         prices: [
           { step: steps[0]._id, hourlyAmount: 100 },
           { step: steps[1]._id, hourlyAmount: 50 },
-          { step: steps[2]._id, hourlyAmount: 20 },
         ],
       },
     ];
@@ -229,11 +227,11 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
-    // last version : (100 * 2h) + (50 * 1h) + (20 * 0.5h) = 260
+    // last version : (100 * 2h) + (50 * 1h) = 250
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
       courseId,
-      { billingItem: billingItemId, price: 260, count: 1 }
+      { billingItem: billingItemId, price: 250, count: 1 }
     );
     SinonMongoose.calledOnceWithExactly(
       findOneCourseBillingItem,
@@ -242,10 +240,19 @@ describe('createCourse', () => {
   });
 
   it('should create a vaei single course (no user with same name)', async () => {
-    const steps = [{ _id: new ObjectId(), type: ON_SITE }];
+    const steps = [{ _id: new ObjectId(), type: ON_SITE, theoreticalDuration: 'PT7200S' }];
+    const priceVersions = [
+      {
+        effectiveDate: '2020-01-01T00:00:00.000Z',
+        prices: [
+          { step: steps[0]._id, hourlyAmount: 10 },
+        ],
+      },
+    ];
     const subProgram = {
       _id: new ObjectId(),
       steps,
+      priceVersions,
       sheetTemplateId: 'vaei_templateId',
       folderId: 'vaei_parent_folder_id',
     };

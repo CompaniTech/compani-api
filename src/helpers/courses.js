@@ -176,25 +176,28 @@ exports.createCourse = async (payload, credentials) => {
 
   const course = await Course.create(coursePayload);
 
-  const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions || [], 'effectiveDate');
-  if (lastPriceVersion) {
-    const hasPriceAndDurationForEveryStep = subProgram.steps.every(step => step.theoreticalDuration &&
-      lastPriceVersion.prices.some(p => UtilsHelper.areObjectIdsEquals(p.step, step._id)));
+  const steps = subProgram.steps.filter(step => [REMOTE, ON_SITE].includes(step.type));
+  if (course.type !== SINGLE) {
+    const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions || [], 'effectiveDate');
+    if (lastPriceVersion) {
+      const hasPriceAndDurationForEveryStep = steps.every(step => step.theoreticalDuration &&
+        lastPriceVersion.prices.some(p => UtilsHelper.areObjectIdsEquals(p.step, step._id)));
 
-    if (hasPriceAndDurationForEveryStep) {
-      const totalPrice = subProgram.steps.reduce((acc, step) => {
-        const stepPrice = lastPriceVersion.prices.find(p => UtilsHelper.areObjectIdsEquals(p.step, step._id));
-        const stepDurationInHours = CompaniDuration(step.theoreticalDuration).asHours();
+      if (hasPriceAndDurationForEveryStep) {
+        const totalPrice = steps.reduce((acc, step) => {
+          const stepPrice = lastPriceVersion.prices.find(p => UtilsHelper.areObjectIdsEquals(p.step, step._id));
+          const stepDurationInHours = CompaniDuration(step.theoreticalDuration).asHours();
 
-        return NumbersHelper.add(acc, NumbersHelper.multiply(stepPrice.hourlyAmount, stepDurationInHours));
-      }, 0);
+          return NumbersHelper.add(acc, NumbersHelper.multiply(stepPrice.hourlyAmount, stepDurationInHours));
+        }, 0);
 
-      const trainerSalaryBillingItem = await CourseBillingItem.findOne({ type: TRAINER_SALARY }, { _id: 1 }).lean();
-      if (trainerSalaryBillingItem) {
-        await exports.addBillingPurchase(
-          course._id,
-          { billingItem: trainerSalaryBillingItem._id, price: NumbersHelper.toNumber(totalPrice), count: 1 }
-        );
+        const trainerSalaryBillingItem = await CourseBillingItem.findOne({ type: TRAINER_SALARY }, { _id: 1 }).lean();
+        if (trainerSalaryBillingItem) {
+          await exports.addBillingPurchase(
+            course._id,
+            { billingItem: trainerSalaryBillingItem._id, price: NumbersHelper.toNumber(totalPrice), count: 1 }
+          );
+        }
       }
     }
   }
@@ -207,9 +210,7 @@ exports.createCourse = async (payload, credentials) => {
     );
   }
 
-  const slots = subProgram.steps
-    .filter(step => [ON_SITE, REMOTE].includes(step.type))
-    .map(step => ({ course: course._id, step: step._id }));
+  const slots = steps.map(step => ({ course: course._id, step: step._id }));
 
   if (slots.length) await CourseSlot.insertMany(slots);
 
