@@ -180,7 +180,7 @@ exports.createCourse = async (payload, credentials) => {
   if (course.type !== SINGLE) {
     const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions || [], 'effectiveDate');
     if (lastPriceVersion) {
-      const hasPriceAndDurationForEveryStep = steps.every(step => step.theoreticalDuration &&
+      const hasPriceAndDurationForEveryStep = steps.length && steps.every(step => step.theoreticalDuration &&
         lastPriceVersion.prices.some(p => UtilsHelper.areObjectIdsEquals(p.step, step._id)));
 
       if (hasPriceAndDurationForEveryStep) {
