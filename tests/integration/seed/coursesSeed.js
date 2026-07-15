@@ -817,6 +817,7 @@ const coursesList = [
         billingItem: courseBillingItemsList[2]._id,
         price: 120,
         count: 1,
+        trainer: trainer._id,
       },
     ],
   },

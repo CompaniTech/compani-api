@@ -1213,6 +1213,13 @@ describe('SEEDS VERIFICATION', () => {
               .every(purchase => [COURSE, TRAINER].includes(purchase.billingItem.type)));
           expect(everyCourseBillingItemHasCourseType).toBeTruthy();
         });
+
+        it('should pass if every billing purchase with a trainer is linked to a TRAINER billing item', () => {
+          const isEveryPurchaseWithTrainerHasTrainerType = courseList
+            .every(course => get(course, 'billingPurchaseList', [])
+              .every(purchase => !purchase.trainer || purchase.billingItem.type === TRAINER));
+          expect(isEveryPurchaseWithTrainerHasTrainerType).toBeTruthy();
+        });
       });
 
       describe('Collection CourseBill', () => {
