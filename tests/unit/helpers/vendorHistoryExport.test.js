@@ -174,6 +174,7 @@ describe('exportCourseHistory', () => {
       archivedAt: '2024-07-07T22:00:00.000Z',
       createdAt: '2018-01-07T17:33:55.000Z',
       prices: [{ global: 3000, company: company._id }],
+      billingPurchaseList: [{ billingItem: { name: 'Frais de dossier' }, price: 20, count: 1 }],
       bills: [
         {
           course: courseIdList[0],
@@ -521,7 +522,7 @@ describe('exportCourseHistory', () => {
             type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] },
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName'] },
+        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName billingPurchaseList'] },
         {
           query: 'populate',
           args: [{
@@ -559,6 +560,7 @@ describe('exportCourseHistory', () => {
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
         { query: 'populate', args: [{ path: 'trainees', select: 'firstMobileConnectionDate' }] },
+        { query: 'populate', args: [{ path: 'billingPurchaseList', populate: { path: 'billingItem', select: 'name' } }] },
         {
           query: 'populate',
           args: [{
@@ -673,6 +675,7 @@ describe('exportCourseHistory', () => {
         'Montant facturé TTC',
         'Montant réglé',
         'Solde',
+        'Frais de dossier',
         'Date de création',
       ],
       [
@@ -719,6 +722,7 @@ describe('exportCourseHistory', () => {
         '132,00',
         '110,00',
         '-22,00',
+        '20,00',
         '07/01/2018',
       ],
       [
@@ -765,6 +769,7 @@ describe('exportCourseHistory', () => {
         '240,00',
         '10,00',
         '-230,00',
+        '0,00',
         '07/01/2018',
       ],
       [
@@ -811,6 +816,7 @@ describe('exportCourseHistory', () => {
         '',
         '',
         '',
+        '0,00',
         '07/01/2018',
       ],
       [
@@ -857,6 +863,7 @@ describe('exportCourseHistory', () => {
         '560,00',
         '120,00',
         '-440,00',
+        '0,00',
         '07/01/2018',
       ],
       [
@@ -903,6 +910,7 @@ describe('exportCourseHistory', () => {
         '120,00',
         '10,00',
         '-110,00',
+        '0,00',
         '07/01/2018',
       ],
     ]);
@@ -932,7 +940,7 @@ describe('exportCourseHistory', () => {
             type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] },
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName'] },
+        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName billingPurchaseList'] },
         {
           query: 'populate',
           args: [{
@@ -970,6 +978,7 @@ describe('exportCourseHistory', () => {
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
         { query: 'populate', args: [{ path: 'trainees', select: 'firstMobileConnectionDate' }] },
+        { query: 'populate', args: [{ path: 'billingPurchaseList', populate: { path: 'billingItem', select: 'name' } }] },
         {
           query: 'populate',
           args: [{
@@ -1202,7 +1211,7 @@ describe('exportCourseHistory', () => {
             type: { $in: [SINGLE] },
           }],
         },
-        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName'] },
+        { query: 'select', args: ['_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName billingPurchaseList'] },
         {
           query: 'populate',
           args: [{
@@ -1240,6 +1249,7 @@ describe('exportCourseHistory', () => {
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
         { query: 'populate', args: [{ path: 'trainees', select: 'firstMobileConnectionDate' }] },
+        { query: 'populate', args: [{ path: 'billingPurchaseList', populate: { path: 'billingItem', select: 'name' } }] },
         {
           query: 'populate',
           args: [{

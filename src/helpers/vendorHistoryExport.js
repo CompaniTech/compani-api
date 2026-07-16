@@ -147,6 +147,19 @@ const getBillsInfos = (course) => {
   return { isBilled, billsCountForExport, payerList, ...amountsInfos };
 };
 
+const getBillingPurchasesAmounts = (course, billingItemNames) => {
+  const amountsByName = (course.billingPurchaseList || []).reduce((acc, purchase) => {
+    const { name } = purchase.billingItem;
+    acc[name] = NumbersHelper.add(acc[name] || 0, NumbersHelper.multiply(purchase.price, purchase.count));
+    return acc;
+  }, {});
+
+  return billingItemNames.reduce((acc, name) => {
+    acc[name] = UtilsHelper.formatFloatForExport(amountsByName[name] || 0);
+    return acc;
+  }, {});
+};
+
 const getProgress = (pastSlots, course) =>
   UtilsHelper.formatFloatForExport(pastSlots / (course.slots.length + course.slotsToPlan.length));
 
@@ -183,7 +196,14 @@ const formatTrainersName = courseTrainers => courseTrainers
   .map(trainer => UtilsHelper.formatIdentity(trainer.identity, 'FL'))
   .join(', ');
 
-const formatCourseForExport = async (course, courseQH, smsCount, asCount, estimatedStartDateHistory) => {
+const formatCourseForExport = async (
+  course,
+  courseQH,
+  smsCount,
+  asCount,
+  estimatedStartDateHistory,
+  billingItemNames
+) => {
   const slotsGroupedByDate = CourseHelper.groupSlotsByDate(course.slots);
   const {
     subscribedAttendances,
@@ -245,6 +265,8 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
 
   const companiesHolding = [...new Set(compact(course.companies.map(c => get(c, 'holding.name'))))];
 
+  const billingPurchaseColumns = getBillingPurchasesAmounts(course, billingItemNames);
+
   return {
     Identifiant: course._id,
     Type: COURSE_TYPES[course.type],
@@ -294,6 +316,7 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     'Montant facturé TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
     'Montant réglé': UtilsHelper.formatFloatForExport(paid),
     Solde: UtilsHelper.formatFloatForExport(total),
+    ...billingPurchaseColumns,
     'Date de création': CompaniDate(course.createdAt).format(DD_MM_YYYY),
   };
 };
@@ -337,6 +360,9 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
   const grouppedAttendanceSheets = groupBy(attendanceSheetList, 'course');
   const groupedCourseQuestionnaireHistories = groupBy(questionnaireHistories, 'course');
   const groupedEstimatedStartDateHistories = groupBy(estimatedStartDateHistories, 'course');
+  const billingItemNames = [
+    ...new Set(filteredCourses.flatMap(course => (course.billingPurchaseList || []).map(p => p.billingItem.name))),
+  ];
 
   for (const course of filteredCourses) {
     const smsCount = (groupedSms[course._id] || []).length;
@@ -345,7 +371,7 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
     const estimatedStartDateHistory = groupedEstimatedStartDateHistories[course._id];
 
     rows.push(
-      await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory)
+      await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory, billingItemNames)
     );
   }
 

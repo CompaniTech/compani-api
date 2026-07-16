@@ -30,6 +30,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const Course = require('../../../src/models/Course');
 const CourseFundingOrganisation = require('../../../src/models/CourseFundingOrganisation');
 const CourseBill = require('../../../src/models/CourseBill');
+const CourseBillingItem = require('../../../src/models/CourseBillingItem');
 const CourseCreditNote = require('../../../src/models/CourseCreditNote');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const CourseSlot = require('../../../src/models/CourseSlot');
@@ -100,6 +101,7 @@ const {
   PRESENT,
   MISSING,
   ARCHIVED,
+  COURSE,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -1243,6 +1245,8 @@ const userCompanies = [
 
 const holding = { _id: new ObjectId(), name: 'Société mère' };
 
+const courseBillingItemList = [{ _id: new ObjectId(), name: 'Frais de dossier', type: COURSE }];
+
 const coursesList = [
   { // 0 with 1 bill
     _id: new ObjectId(),
@@ -1261,6 +1265,7 @@ const coursesList = [
     certificateGenerationMode: GLOBAL,
     prices: [{ global: 3000, company: authCompany._id }],
     tradeName: 'Nom 1',
+    billingPurchaseList: [{ billingItem: courseBillingItemList[0]._id, price: 20, count: 1 }],
   },
   { // 1 with 2 bills
     _id: new ObjectId(),
@@ -2417,6 +2422,7 @@ const populateDB = async () => {
     Contract.create(contractList),
     Course.create(coursesList),
     CourseBill.create(courseBillList),
+    CourseBillingItem.create(courseBillingItemList),
     CourseBillsNumber.create(courseBillNumber),
     CoursePaymentNumber.create(coursePaymentNumber),
     CourseCreditNoteNumber.create(courseCreditNoteNumber),
