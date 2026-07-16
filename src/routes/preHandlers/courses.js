@@ -1640,7 +1640,12 @@ exports.authorizeCourseBillingPurchaseEdition = async (req) => {
   if (!course) throw Boom.notFound();
   const billingPurchase = course.billingPurchaseList
     .find(p => UtilsHelper.areObjectIdsEquals(billingPurchaseId, p._id));
-  if (billingPurchase.billingItem.type !== COURSE) throw Boom.conflict();
+  if (billingPurchase.billingItem.type !== COURSE) {
+    if (!req.payload) throw Boom.forbidden();
+    const { price, count } = req.payload;
+    const isPriceOrCountEdited = price !== billingPurchase.price || count !== billingPurchase.count;
+    if (isPriceOrCountEdited) throw Boom.forbidden();
+  }
 
   return null;
 };

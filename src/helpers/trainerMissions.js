@@ -37,7 +37,7 @@ const uploadDocument = async (payload, course, file, method, credentials, traine
     if (billingItem) {
       await Promise.all(coursesWithFee.map(c => CourseHelper.addBillingPurchase(
         c.courseId,
-        { billingItem: billingItem._id, price: c.fee, count: 1 }
+        { billingItem: billingItem._id, price: c.fee, count: 1, trainer: payload.trainer }
       )));
     }
   }
@@ -119,14 +119,14 @@ exports.generate = async (payload, credentials) => {
 };
 
 exports.update = async (trainerMissionId, payload) => {
-  const trainerMission = await TrainerMission.findOne({ _id: trainerMissionId }, { courses: 1 }).lean();
+  const trainerMission = await TrainerMission.findOne({ _id: trainerMissionId }, { courses: 1, trainer: 1 }).lean();
   const billingItem = await CourseBillingItem.findOne({ type: TRAINER }, { _id: 1 }).lean();
 
   const promises = [TrainerMission.updateOne({ _id: trainerMissionId }, { $set: payload })];
   if (billingItem) {
     promises.push(Course.updateMany(
       { _id: { $in: trainerMission.courses } },
-      { $pull: { billingPurchaseList: { billingItem: billingItem._id } } }
+      { $pull: { billingPurchaseList: { billingItem: billingItem._id, trainer: trainerMission.trainer } } }
     ));
   }
 

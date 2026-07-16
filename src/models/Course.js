@@ -115,6 +115,8 @@ const CourseSchema = mongoose.Schema({
       price: { type: Number, required: true },
       count: { type: Number, required: true },
       description: { type: String },
+      // only set for entries created from a TrainerMission, to identify which one to remove on cancellation
+      trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     })],
     default: undefined,
   },

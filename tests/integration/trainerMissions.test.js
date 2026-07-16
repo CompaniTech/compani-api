@@ -487,14 +487,19 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
 
       const trainerMissionUpdated = await TrainerMission
         .countDocuments({ _id: trainerMissionList[0]._id, cancelledAt: '2023-01-03T23:00:00.000Z' });
-      const courseBillingPurchaseCount = await Course.countDocuments({
+      const removedBillingPurchaseCount = await Course.countDocuments({
         _id: courseList[3]._id,
-        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id } },
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id, trainer: trainer._id } },
+      });
+      const otherTrainerBillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[3]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id, trainer: trainerAndCoach._id } },
       });
 
       expect(response.statusCode).toBe(200);
       expect(trainerMissionUpdated).toEqual(1);
-      expect(courseBillingPurchaseCount).toEqual(0);
+      expect(removedBillingPurchaseCount).toEqual(0);
+      expect(otherTrainerBillingPurchaseCount).toEqual(1);
     });
 
     it('should return 409 if cancellation is before trainer mission\'s', async () => {

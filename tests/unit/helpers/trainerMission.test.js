@@ -73,7 +73,7 @@ describe('upload', () => {
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
       courseId,
-      { billingItem: billingItemId, price: 1200, count: 1 }
+      { billingItem: billingItemId, price: 1200, count: 1, trainer: trainerId }
     );
     SinonMongoose.calledOnceWithExactly(
       courseBillingItemFindOne,
@@ -132,7 +132,7 @@ describe('upload', () => {
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
       courseIds[0],
-      { billingItem: billingItemId, price: 500, count: 1 }
+      { billingItem: billingItemId, price: 500, count: 1, trainer: trainerId }
     );
     SinonMongoose.calledOnceWithExactly(
       courseBillingItemFindOne,
@@ -307,7 +307,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
       courseId,
-      { billingItem: billingItemId, price: 1200, count: 1 }
+      { billingItem: billingItemId, price: 1200, count: 1, trainer: trainerId }
     );
     SinonMongoose.calledOnceWithExactly(
       courseBillingItemFindOne,
@@ -456,12 +456,12 @@ describe('generate', () => {
     sinon.assert.calledWithExactly(
       addBillingPurchase.getCall(0),
       courseIds[0],
-      { billingItem: billingItemId, price: 500, count: 1 }
+      { billingItem: billingItemId, price: 500, count: 1, trainer: trainerId }
     );
     sinon.assert.calledWithExactly(
       addBillingPurchase.getCall(1),
       courseIds[1],
-      { billingItem: billingItemId, price: 700, count: 1 }
+      { billingItem: billingItemId, price: 700, count: 1, trainer: trainerId }
     );
     SinonMongoose.calledOnceWithExactly(
       courseBillingItemFindOne,
@@ -515,11 +515,14 @@ describe('update', () => {
 
   it('should cancel a trainer mission and remove trainer billing purchase from its courses', async () => {
     const trainerMissionId = new ObjectId();
+    const trainerId = new ObjectId();
     const billingItemId = new ObjectId();
     const courseIds = [new ObjectId(), new ObjectId()];
     const payload = { cancelledAt: '2023-01-05T23:00:00.000Z' };
 
-    trainerMissionFindOne.returns(SinonMongoose.stubChainedQueries({ courses: courseIds }, ['lean']));
+    trainerMissionFindOne.returns(
+      SinonMongoose.stubChainedQueries({ courses: courseIds, trainer: trainerId }, ['lean'])
+    );
     courseBillingItemFindOne.returns(SinonMongoose.stubChainedQueries({ _id: billingItemId }, ['lean']));
 
     await trainerMissionsHelper.update(trainerMissionId, payload);
@@ -528,11 +531,11 @@ describe('update', () => {
     sinon.assert.calledOnceWithExactly(
       courseUpdateMany,
       { _id: { $in: courseIds } },
-      { $pull: { billingPurchaseList: { billingItem: billingItemId } } }
+      { $pull: { billingPurchaseList: { billingItem: billingItemId, trainer: trainerId } } }
     );
     SinonMongoose.calledOnceWithExactly(
       trainerMissionFindOne,
-      [{ query: 'findOne', args: [{ _id: trainerMissionId }, { courses: 1 }] }, { query: 'lean' }]
+      [{ query: 'findOne', args: [{ _id: trainerMissionId }, { courses: 1, trainer: 1 }] }, { query: 'lean' }]
     );
     SinonMongoose.calledOnceWithExactly(
       courseBillingItemFindOne,

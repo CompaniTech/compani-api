@@ -5824,12 +5824,13 @@ describe('COURSES ROUTES - PUT /courses/{_id}/billingpurchases/{billingPurchaseI
       expect(course).toEqual(1);
     });
 
-    it('should update the description of a billing purchase of course', async () => {
+    it('should update the description of a non-course billing purchase', async () => {
+      const nonCourseBillingPurchaseId = coursesList[27].billingPurchaseList[1]._id;
       const response = await app.inject({
         method: 'PUT',
-        url: `/courses/${courseWithBillingPurchaseId}/billingpurchases/${billingPurchaseId}`,
+        url: `/courses/${courseWithBillingPurchaseId}/billingpurchases/${nonCourseBillingPurchaseId}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { price: 200, count: 3, description: 'updated description' },
+        payload: { price: 120, count: 1, description: 'updated description' },
       });
 
       expect(response.statusCode).toBe(200);
@@ -5837,7 +5838,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/billingpurchases/{billingPurchaseI
       const course = await Course.countDocuments({
         _id: courseWithBillingPurchaseId,
         billingPurchaseList: {
-          $elemMatch: { _id: billingPurchaseId, price: 200, count: 3, description: 'updated description' },
+          $elemMatch: { _id: nonCourseBillingPurchaseId, price: 120, count: 1, description: 'updated description' },
         },
       });
       expect(course).toEqual(1);
@@ -5882,7 +5883,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/billingpurchases/{billingPurchaseI
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 409 if billing purchase type is TRAINER', async () => {
+    it('should return 403 if trying to edit price or count of a non-course billing purchase', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${courseWithBillingPurchaseId}/billingpurchases/${coursesList[27].billingPurchaseList[1]._id}`,
@@ -5890,7 +5891,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/billingpurchases/{billingPurchaseI
         payload: { price: 200, count: 3 },
       });
 
-      expect(response.statusCode).toBe(409);
+      expect(response.statusCode).toBe(403);
     });
 
     const missingParams = ['price', 'count'];
@@ -5981,14 +5982,14 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/billingpurchases/{billingPurcha
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 409 if billing purchase type is TRAINER', async () => {
+    it('should return 403 if billing purchase type is TRAINER', async () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courses/${courseWithBillingPurchaseId}/billingpurchases/${coursesList[27].billingPurchaseList[1]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
-      expect(response.statusCode).toBe(409);
+      expect(response.statusCode).toBe(403);
     });
   });
 
