@@ -235,8 +235,8 @@ const formatCourseForExport = async (
 
   const courseCompletion = await getCourseCompletion(course);
 
-  let price = '';
-
+  let priceDetails = '';
+  let price = 0;
   if (course.prices) {
     if ([INTRA_HOLDING, INTER_B2B].includes(course.type)) {
       course.companies.forEach((company) => {
@@ -245,21 +245,25 @@ const formatCourseForExport = async (
         if (!companyPrice) return;
 
         let formattedPrice = UtilsHelper.formatPrice(companyPrice.global);
+        price += companyPrice.global;
 
         if (companyPrice.trainerFees) {
           formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
+          price += companyPrice.trainerFees;
         }
 
-        price += `\n${company.name}: ${formattedPrice}`;
+        priceDetails += `\n${company.name}: ${formattedPrice}`;
       });
     } else {
       let formattedPrice = UtilsHelper.formatPrice(course.prices[0].global);
+      price += course.prices[0].global;
 
       if (course.prices[0].trainerFees) {
         formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
+        price += course.prices[0].trainerFees;
       }
 
-      price += formattedPrice;
+      priceDetails += formattedPrice;
     }
   }
 
@@ -309,7 +313,8 @@ const formatCourseForExport = async (
     Avancement: getProgress(pastSlots, course),
     Archivée: course.archivedAt ? 'Oui' : 'Non',
     'Date d\'archivage': course.archivedAt ? CompaniDate(course.archivedAt).format(DD_MM_YYYY) : '',
-    'Prix de la formation': price,
+    'Prix de la formation': UtilsHelper.formatFloatForExport(price),
+    'Détail du prix': priceDetails,
     'Nombre de factures': billsCountForExport,
     Facturée: isBilled ? 'Oui' : 'Non',
     'Montant facturé HT': UtilsHelper.formatFloatForExport(netExclTaxes),
