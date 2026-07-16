@@ -245,22 +245,22 @@ const formatCourseForExport = async (
         if (!companyPrice) return;
 
         let formattedPrice = UtilsHelper.formatPrice(companyPrice.global);
-        price += companyPrice.global;
+        price = NumbersHelper.add(price, companyPrice.global);
 
         if (companyPrice.trainerFees) {
           formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
-          price += companyPrice.trainerFees;
+          price = NumbersHelper.add(price, companyPrice.trainerFees);
         }
 
         priceDetails += `\n${company.name}: ${formattedPrice}`;
       });
     } else {
       let formattedPrice = UtilsHelper.formatPrice(course.prices[0].global);
-      price += course.prices[0].global;
+      price = NumbersHelper.add(price, course.prices[0].global);
 
       if (course.prices[0].trainerFees) {
         formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
-        price += course.prices[0].trainerFees;
+        price = NumbersHelper.add(price, course.prices[0].trainerFees);
       }
 
       priceDetails += formattedPrice;

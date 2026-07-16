@@ -174,7 +174,11 @@ describe('exportCourseHistory', () => {
       archivedAt: '2024-07-07T22:00:00.000Z',
       createdAt: '2018-01-07T17:33:55.000Z',
       prices: [{ global: 3000, company: company._id }],
-      billingPurchaseList: [{ billingItem: { name: 'Frais de dossier' }, price: 20, count: 1 }],
+      billingPurchaseList: [
+        { billingItem: { name: 'Frais de formateur' }, price: 20, count: 1 },
+        { billingItem: { name: 'Support pédagogique' }, price: 15, count: 2 },
+        { billingItem: { name: 'Frais de formateur' }, price: 5, count: 2 },
+      ],
       bills: [
         {
           course: courseIdList[0],
@@ -676,7 +680,8 @@ describe('exportCourseHistory', () => {
         'Montant facturé TTC',
         'Montant réglé',
         'Solde',
-        'Frais de dossier',
+        'Frais de formateur',
+        'Support pédagogique',
         'Date de création',
       ],
       [
@@ -724,7 +729,8 @@ describe('exportCourseHistory', () => {
         '132,00',
         '110,00',
         '-22,00',
-        '20,00',
+        '30,00',
+        '30,00',
         '07/01/2018',
       ],
       [
@@ -772,6 +778,7 @@ describe('exportCourseHistory', () => {
         '240,00',
         '10,00',
         '-230,00',
+        '0,00',
         '0,00',
         '07/01/2018',
       ],
@@ -821,6 +828,7 @@ describe('exportCourseHistory', () => {
         '',
         '',
         '0,00',
+        '0,00',
         '07/01/2018',
       ],
       [
@@ -869,6 +877,7 @@ describe('exportCourseHistory', () => {
         '120,00',
         '-440,00',
         '0,00',
+        '0,00',
         '07/01/2018',
       ],
       [
@@ -916,6 +925,7 @@ describe('exportCourseHistory', () => {
         '120,00',
         '10,00',
         '-110,00',
+        '0,00',
         '0,00',
         '07/01/2018',
       ],
