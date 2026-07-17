@@ -317,7 +317,7 @@ exports.authorizeCourseBillingPurchaseDelete = async (req) => {
   if (!purchaseRelatedToBill) throw Boom.notFound();
   const isTrainerFeesWithPercentage = purchaseRelatedToBill.percentage &&
     UtilsHelper.doesArrayIncludeId(
-      [process.env.MANAGEMENT_FEES_BILLING_ITEM, process.env.MANAGEMENT_FEES_BILLING_ITEM],
+      [process.env.MANAGEMENT_FEES_BILLING_ITEM, process.env.TRAINER_FEES_BILLING_ITEM],
       purchaseRelatedToBill.billingItem
     );
 
