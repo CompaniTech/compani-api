@@ -420,7 +420,10 @@ exports.updateCourseBill = async (courseBillId, payload) => {
     .lean();
   if (get(payload, 'mainFee.percentage')) {
     const billingPurchase = courseBill.billingPurchaseList.find(bp =>
-      UtilsHelper.areObjectIdsEquals(bp.billingItem, process.env.MANAGEMENT_FEES_BILLING_ITEM) && has(bp, 'percentage')
+      UtilsHelper.doesArrayIncludeId(
+        [process.env.TRAINER_FEES_BILLING_ITEM, process.env.MANAGEMENT_FEES_BILLING_ITEM],
+        (bp.billingItem)
+      ) && has(bp, 'percentage')
     );
     if (billingPurchase) {
       const trainerFees = (courseBill.course.prices || []).reduce((acc, price) => {
