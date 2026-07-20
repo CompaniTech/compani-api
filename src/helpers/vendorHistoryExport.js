@@ -132,19 +132,38 @@ const getBillsInfos = (course) => {
     : { netExclTaxes: '', netInclTaxes: '', paid: '', total: '' };
 
   if ([INTRA, SINGLE].includes(course.type)) {
-    const billsCountForExport = `${validatedBillsWithoutCreditNote.length} sur ${course.expectedBillsCount}`;
+    const billsCountForExport = {
+      validatedBillsCount: validatedBillsWithoutCreditNote.length,
+      expectedBillsCount: course.expectedBillsCount,
+    };
     const isBilled = !!course.expectedBillsCount &&
       validatedBillsWithoutCreditNote.length === course.expectedBillsCount;
 
     return { isBilled, billsCountForExport, payerList, ...amountsInfos };
   }
 
-  const mainFeesCount = validatedBillsWithoutCreditNote
-    .map(bill => bill.mainFee.count).reduce((acc, value) => acc + value, 0);
-  const billsCountForExport = `${mainFeesCount} sur ${course.trainees.length}`;
-  const isBilled = !!course.trainees.length && mainFeesCount === course.trainees.length;
+  const validatedBillsCount = validatedBillsWithoutCreditNote
+    .map(bill => bill.companies.length).reduce((acc, value) => acc + value, 0);
+  const billsCountForExport = {
+    validatedBillsCount,
+    expectedBillsCount: course.companies.length * 3,
+  };
+  const isBilled = course.companies.length && validatedBillsCount === course.companies.length * 3;
 
   return { isBilled, billsCountForExport, payerList, ...amountsInfos };
+};
+
+const getBillingPurchasesAmounts = (course, billingItemNames) => {
+  const amountsByName = (course.billingPurchaseList || []).reduce((acc, purchase) => {
+    const { name } = purchase.billingItem;
+    acc[name] = NumbersHelper.add(acc[name] || 0, NumbersHelper.multiply(purchase.price, purchase.count));
+    return acc;
+  }, {});
+
+  return billingItemNames.reduce((acc, name) => {
+    acc[name] = UtilsHelper.formatFloatForExport(amountsByName[name] || 0);
+    return acc;
+  }, {});
 };
 
 const getProgress = (pastSlots, course) =>
@@ -183,7 +202,14 @@ const formatTrainersName = courseTrainers => courseTrainers
   .map(trainer => UtilsHelper.formatIdentity(trainer.identity, 'FL'))
   .join(', ');
 
-const formatCourseForExport = async (course, courseQH, smsCount, asCount, estimatedStartDateHistory) => {
+const formatCourseForExport = async (
+  course,
+  courseQH,
+  smsCount,
+  asCount,
+  estimatedStartDateHistory,
+  billingItemNames
+) => {
   const slotsGroupedByDate = CourseHelper.groupSlotsByDate(course.slots);
   const {
     subscribedAttendances,
@@ -215,8 +241,8 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
 
   const courseCompletion = await getCourseCompletion(course);
 
-  let price = '';
-
+  let priceDetails = '';
+  let price = 0;
   if (course.prices) {
     if ([INTRA_HOLDING, INTER_B2B].includes(course.type)) {
       course.companies.forEach((company) => {
@@ -225,25 +251,31 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
         if (!companyPrice) return;
 
         let formattedPrice = UtilsHelper.formatPrice(companyPrice.global);
+        price = NumbersHelper.add(price, companyPrice.global);
 
         if (companyPrice.trainerFees) {
           formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
+          price = NumbersHelper.add(price, companyPrice.trainerFees);
         }
 
-        price += `\n${company.name}: ${formattedPrice}`;
+        priceDetails += `\n${company.name}: ${formattedPrice}`;
       });
     } else {
       let formattedPrice = UtilsHelper.formatPrice(course.prices[0].global);
+      price = NumbersHelper.add(price, course.prices[0].global);
 
       if (course.prices[0].trainerFees) {
         formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
+        price = NumbersHelper.add(price, course.prices[0].trainerFees);
       }
 
-      price += formattedPrice;
+      priceDetails += formattedPrice;
     }
   }
 
   const companiesHolding = [...new Set(compact(course.companies.map(c => get(c, 'holding.name'))))];
+
+  const billingPurchaseColumns = getBillingPurchasesAmounts(course, billingItemNames);
 
   return {
     Identifiant: course._id,
@@ -287,13 +319,16 @@ const formatCourseForExport = async (course, courseQH, smsCount, asCount, estima
     Avancement: getProgress(pastSlots, course),
     Archivée: course.archivedAt ? 'Oui' : 'Non',
     'Date d\'archivage': course.archivedAt ? CompaniDate(course.archivedAt).format(DD_MM_YYYY) : '',
-    'Prix de la formation': price,
-    'Nombre de factures': billsCountForExport,
+    'Prix de la formation': UtilsHelper.formatFloatForExport(price),
+    'Détail du prix': priceDetails,
+    'Nombre de factures validées': billsCountForExport.validatedBillsCount,
+    'Nombre de factures attendues': billsCountForExport.expectedBillsCount,
     Facturée: isBilled ? 'Oui' : 'Non',
     'Montant facturé HT': UtilsHelper.formatFloatForExport(netExclTaxes),
     'Montant facturé TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
     'Montant réglé': UtilsHelper.formatFloatForExport(paid),
     Solde: UtilsHelper.formatFloatForExport(total),
+    ...billingPurchaseColumns,
     'Date de création': CompaniDate(course.createdAt).format(DD_MM_YYYY),
   };
 };
@@ -337,6 +372,9 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
   const grouppedAttendanceSheets = groupBy(attendanceSheetList, 'course');
   const groupedCourseQuestionnaireHistories = groupBy(questionnaireHistories, 'course');
   const groupedEstimatedStartDateHistories = groupBy(estimatedStartDateHistories, 'course');
+  const billingItemNames = [
+    ...new Set(filteredCourses.flatMap(course => (course.billingPurchaseList || []).map(p => p.billingItem.name))),
+  ];
 
   for (const course of filteredCourses) {
     const smsCount = (groupedSms[course._id] || []).length;
@@ -345,7 +383,7 @@ exports.exportCourseHistory = async (startDate, endDate, credentials, courseType
     const estimatedStartDateHistory = groupedEstimatedStartDateHistories[course._id];
 
     rows.push(
-      await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory)
+      await formatCourseForExport(course, courseQH, smsCount, asCount, estimatedStartDateHistory, billingItemNames)
     );
   }
 

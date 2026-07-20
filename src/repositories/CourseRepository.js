@@ -65,7 +65,9 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
         type: { $in: courseTypes },
       }
     )
-    .select('_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName')
+    .select(
+      '_id type misc estimatedStartDate expectedBillsCount archivedAt createdAt prices tradeName billingPurchaseList'
+    )
     .populate({
       path: 'companies',
       select: 'name',
@@ -87,9 +89,10 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
     })
     .populate({ path: 'slotsToPlan', select: '_id' })
     .populate({ path: 'trainees', select: 'firstMobileConnectionDate' })
+    .populate({ path: 'billingPurchaseList', populate: { path: 'billingItem', select: 'name' } })
     .populate({
       path: 'bills',
-      select: 'payer billedAt mainFee billingPurchaseList vat',
+      select: 'payer billedAt mainFee billingPurchaseList vat companies',
       options: { isVendorUser },
       populate: [
         { path: 'payer.fundingOrganisation', select: 'name' },
