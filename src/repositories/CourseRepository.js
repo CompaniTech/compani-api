@@ -92,7 +92,7 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
     .populate({ path: 'billingPurchaseList', populate: { path: 'billingItem', select: 'name' } })
     .populate({
       path: 'bills',
-      select: 'payer billedAt mainFee billingPurchaseList vat',
+      select: 'payer billedAt mainFee billingPurchaseList vat companies',
       options: { isVendorUser },
       populate: [
         { path: 'payer.fundingOrganisation', select: 'name' },

@@ -132,17 +132,23 @@ const getBillsInfos = (course) => {
     : { netExclTaxes: '', netInclTaxes: '', paid: '', total: '' };
 
   if ([INTRA, SINGLE].includes(course.type)) {
-    const billsCountForExport = `${validatedBillsWithoutCreditNote.length} sur ${course.expectedBillsCount}`;
+    const billsCountForExport = {
+      validatedBillsCount: validatedBillsWithoutCreditNote.length,
+      expectedBillsCount: course.expectedBillsCount,
+    };
     const isBilled = !!course.expectedBillsCount &&
       validatedBillsWithoutCreditNote.length === course.expectedBillsCount;
 
     return { isBilled, billsCountForExport, payerList, ...amountsInfos };
   }
 
-  const mainFeesCount = validatedBillsWithoutCreditNote
-    .map(bill => bill.mainFee.count).reduce((acc, value) => acc + value, 0);
-  const billsCountForExport = `${mainFeesCount} sur ${course.trainees.length}`;
-  const isBilled = !!course.trainees.length && mainFeesCount === course.trainees.length;
+  const validatedBillsCount = validatedBillsWithoutCreditNote
+    .map(bill => bill.companies.length).reduce((acc, value) => acc + value, 0);
+  const billsCountForExport = {
+    validatedBillsCount,
+    expectedBillsCount: course.companies.length * 3,
+  };
+  const isBilled = course.companies.length && validatedBillsCount === course.companies.length * 3;
 
   return { isBilled, billsCountForExport, payerList, ...amountsInfos };
 };
@@ -315,7 +321,8 @@ const formatCourseForExport = async (
     'Date d\'archivage': course.archivedAt ? CompaniDate(course.archivedAt).format(DD_MM_YYYY) : '',
     'Prix de la formation': UtilsHelper.formatFloatForExport(price),
     'Détail du prix': priceDetails,
-    'Nombre de factures': billsCountForExport,
+    'Nombre de factures validées': billsCountForExport.validatedBillsCount,
+    'Nombre de factures attendues': billsCountForExport.expectedBillsCount,
     Facturée: isBilled ? 'Oui' : 'Non',
     'Montant facturé HT': UtilsHelper.formatFloatForExport(netExclTaxes),
     'Montant facturé TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
