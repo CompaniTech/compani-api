@@ -5330,12 +5330,99 @@ describe('updateCourse', () => {
     sinon.assert.calledWithExactly(
       courseBillUpdateOne.getCall(0),
       { _id: billIds[0] },
-      { maturityDate: '2025-05-02T21:40:00.000Z' }
+      { $set: { maturityDate: '2025-05-02T21:40:00.000Z' } }
     );
     sinon.assert.calledWithExactly(
       courseBillUpdateOne.getCall(1),
       { _id: billIds[1] },
-      { maturityDate: '2025-06-03T21:40:00.000Z' }
+      { $set: { maturityDate: '2025-06-03T21:40:00.000Z' } }
+    );
+  });
+
+  it('should restart an interrupted SINGLE course (with bills on interruption period)', async () => {
+    const courseId = new ObjectId();
+    const traineeId = new ObjectId();
+    const trainerId = new ObjectId();
+    const payload = { interruptionDate: '2025-04-22T10:20:00.000Z' };
+    const courseFromDb = {
+      _id: courseId,
+      type: SINGLE,
+      interruptionDates: [
+        { startDate: '2024-01-06T10:20:00.000Z', endDate: '2024-01-12T10:20:00.000Z' },
+        { startDate: '2025-03-22T10:20:00.000Z' },
+      ],
+    };
+    const billIds = [new ObjectId(), new ObjectId()];
+    const bills = [
+      { _id: billIds[0], course: courseId, maturityDate: '2025-04-01T10:20:00.000Z' },
+      { _id: billIds[1], course: courseId, maturityDate: '2025-05-03T10:20:00.000Z' },
+    ];
+    const courseWithTraineesAndTrainers = {
+      _id: courseId,
+      trainees: [{ _id: traineeId, identity: { firstname: 'Jean', lastname: 'Dupont' } }],
+      trainers: [{ _id: trainerId, identity: { firstname: 'Marie', lastname: 'Martin' } }],
+    };
+
+    courseFindOne.onCall(0).returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+    courseFindOne.onCall(1).returns(SinonMongoose.stubChainedQueries(courseWithTraineesAndTrainers));
+    courseBillFind.returns(SinonMongoose.stubChainedQueries(bills, ['setOptions', 'lean']));
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(courseFromDb, ['lean']));
+
+    await CourseHelper.updateCourse(courseId, payload, credentials);
+
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnCourseInterruptionOrRestart,
+      { courseId, action: COURSE_RESTART },
+      credentials._id
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseBillFind,
+      [
+        {
+          query: 'find',
+          args: [{ course: courseId, maturityDate: { $gte: '2025-03-21T23:00:00.000Z' } }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ _id: courseId }] },
+        { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    sinon.assert.calledWithExactly(
+      courseBillUpdateOne.getCall(0),
+      { _id: billIds[0] },
+      {
+        $set: {
+          maturityDate: '2025-05-02T21:40:00.000Z',
+          'mainFee.description': 'Facture liée à des frais pédagogiques \r\n'
+            + 'Contrat de professionnalisation \r\n'
+            + 'ACCOMPAGNEMENT mai 2025 \r\n'
+            + 'Nom de l\'apprenant·e: Jean DUPONT \r\n'
+            + 'Nom du / des intervenants: Marie MARTIN',
+        },
+      }
+    );
+    sinon.assert.calledWithExactly(
+      courseBillUpdateOne.getCall(1),
+      { _id: billIds[1] },
+      {
+        $set: {
+          maturityDate: '2025-06-03T21:40:00.000Z',
+          'mainFee.description': 'Facture liée à des frais pédagogiques \r\n'
+            + 'Contrat de professionnalisation \r\n'
+            + 'ACCOMPAGNEMENT juin 2025 \r\n'
+            + 'Nom de l\'apprenant·e: Jean DUPONT \r\n'
+            + 'Nom du / des intervenants: Marie MARTIN',
+        },
+      }
     );
   });
 });
