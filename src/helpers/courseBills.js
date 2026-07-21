@@ -174,34 +174,35 @@ exports.list = async (query, credentials) => {
     .find(formattedQuery)
     .populate([
       ...(query.startDate && query.endDate
-        ? [{
-          path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
+        ? [
+          {
+            path: 'course',
+            select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
             + ' trainers archivedAt',
-          populate: [
-            { path: 'companies', select: 'name' },
-            {
-              path: 'slots',
-              select: 'startDate endDate',
-              ...!query.isValidated && {
-                populate: {
-                  path: 'attendances',
-                  select: '_id',
-                  match: { status: PRESENT },
-                  options: { isVendorUser: true },
+            populate: [
+              { path: 'companies', select: 'name' },
+              {
+                path: 'slots',
+                select: 'startDate endDate',
+                ...!query.isValidated && {
+                  populate: {
+                    path: 'attendances',
+                    select: '_id',
+                    match: { status: PRESENT },
+                    options: { isVendorUser: true },
+                  },
                 },
               },
-            },
-            { path: 'slotsToPlan', select: '_id' },
-            { path: 'trainees', select: 'identity' },
-            ...!query.isValidated ? [{ path: 'trainers', select: 'identity' }] : [],
-          ],
-        },
-        {
-          path: 'companies',
-          select: 'name',
-          populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
-        },
+              { path: 'slotsToPlan', select: '_id' },
+              { path: 'trainees', select: 'identity' },
+              ...!query.isValidated ? [{ path: 'trainers', select: 'identity' }] : [],
+            ],
+          },
+          {
+            path: 'companies',
+            select: 'name',
+            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+          },
         ]
         : [
           { path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } },
@@ -238,9 +239,9 @@ exports.list = async (query, credentials) => {
   }
 
   const hasCourseAction = bill => bill.course.type !== SINGLE ||
-    bill.course.trainees?.some(t => activityHistoriesByTrainee[t._id]) ||
+    bill.course.trainees.some(t => activityHistoriesByTrainee[t._id]) ||
     bill.course.slots
-      ?.filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
+      .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
       .some(s => s.attendances.length);
 
   return Promise.all(

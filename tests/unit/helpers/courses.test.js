@@ -5389,7 +5389,7 @@ describe('updateCourse', () => {
     SinonMongoose.calledWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ _id: courseId }] },
+        { query: 'findOne', args: [{ _id: courseId }, { trainees: 1, trainers: 1 }] },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
         { query: 'lean' },

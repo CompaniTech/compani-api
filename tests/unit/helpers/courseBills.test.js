@@ -500,6 +500,7 @@ describe('list', () => {
           trainees: [{ _id: traineesIds[0], identity: { lastname: 'trainee', firstname: '0' } }],
           prices: [{ company: companies[0]._id, global: 400 }],
           interruptionDates: [{ startDate: '2025-01-01T00:00:00.000Z' }],
+          slots: [],
         },
         companies: [companies[0]],
         mainFee: { price: 320, count: 1 },

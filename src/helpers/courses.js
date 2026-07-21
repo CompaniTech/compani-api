@@ -1050,7 +1050,7 @@ exports.updateCourse = async (courseId, payload, credentials) => {
         let singleCourseTrainees = [];
         let singleCourseTrainers = [];
         if (courseFromDb.type === SINGLE) {
-          const course = await Course.findOne({ _id: courseId })
+          const course = await Course.findOne({ _id: courseId }, { trainees: 1, trainers: 1 })
             .populate({ path: 'trainees', select: 'identity' })
             .populate({ path: 'trainers', select: 'identity' })
             .lean();
