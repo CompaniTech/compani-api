@@ -462,8 +462,10 @@ describe('list', () => {
   });
 
   it('should return all draft course bills between two dates', async () => {
-    const courseIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
-    const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const courseIds = [
+      new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(),
+    ];
+    const traineesIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const companies = [{ _id: new ObjectId(), name: 'Company 1' }, { _id: new ObjectId(), name: 'Company 2' }];
     const credentials = { role: { vendor: new ObjectId() } };
     const singleSubProgramId = new ObjectId();
@@ -478,7 +480,8 @@ describe('list', () => {
           expectedBillscount: 2,
           tradeName: 'program',
           subProgram: interSubProgramId,
-          trainees: traineesIds.map((t, i) => ({ _id: t, identity: { lastname: 'trainee', firstname: String(i) } })),
+          trainees: [traineesIds[0], traineesIds[1], traineesIds[2]]
+            .map((t, i) => ({ _id: t, identity: { lastname: 'trainee', firstname: String(i) } })),
           prices: [{ company: companies[0]._id, global: 200 }],
         },
         companies: [companies[0]],
@@ -543,6 +546,44 @@ describe('list', () => {
         payer: { name: 'Funder' },
         maturityDate: '2025-06-13T14:00:00.000Z',
       },
+      {
+        course: {
+          _id: courseIds[4],
+          companies: [companies[1]],
+          type: INTER_B2B,
+          tradeName: 'program archived',
+          trainees: [],
+          archivedAt: '2025-04-01T00:00:00.000Z',
+        },
+        companies: [companies[1]],
+        mainFee: { price: 100, count: 1 },
+        payer: { name: 'Funder' },
+        maturityDate: '2025-06-13T14:00:00.000Z',
+      },
+      {
+        course: {
+          _id: courseIds[5],
+          companies: [companies[1]],
+          type: SINGLE,
+          expectedBillscount: 4,
+          tradeName: 'program 2',
+          subProgram: singleSubProgramId,
+          trainees: [{ _id: traineesIds[3], identity: { lastname: 'trainee', firstname: '3' } }],
+          prices: [{ company: companies[1]._id, global: 400 }],
+          interruptionDates: [{ startDate: '2025-01-01T00:00:00.000Z' }],
+          slots: [
+            {
+              startDate: '2025-05-12T22:00:00.000Z',
+              endDate: '2025-05-12T23:00:00.000Z',
+              attendances: [{ status: PRESENT }],
+            },
+          ],
+        },
+        companies: [companies[1]],
+        mainFee: { price: 320, count: 1 },
+        payer: { name: 'Funder' },
+        maturityDate: '2025-06-14T14:00:00.000Z',
+      },
     ];
     const singleSubProgram = {
       _id: singleSubProgramId,
@@ -566,6 +607,9 @@ describe('list', () => {
     ]);
     getCompanyAtCourseRegistrationList.onCall(2).returns([
       { trainee: traineesIds[2], company: companies[1]._id },
+    ]);
+    getCompanyAtCourseRegistrationList.onCall(3).returns([
+      { trainee: traineesIds[3], company: companies[1]._id },
     ]);
 
     const result = await CourseBillHelper.list(
@@ -671,6 +715,39 @@ describe('list', () => {
         netExclTaxes: 320,
         hasCourseAction: true,
       },
+      {
+        companies: [companies[1]],
+        mainFee: { price: 320, count: 1 },
+        payer: { name: 'Funder' },
+        maturityDate: '2025-06-14T14:00:00.000Z',
+        course: {
+          _id: courseIds[5],
+          companies: [companies[1]],
+          type: SINGLE,
+          expectedBillscount: 4,
+          tradeName: 'program 2',
+          subProgram: singleSubProgramId,
+          trainees: [
+            {
+              _id: traineesIds[3],
+              registrationCompany: companies[1]._id,
+              identity: { lastname: 'trainee', firstname: '3' },
+            },
+          ],
+          prices: [{ company: companies[1]._id, global: 400 }],
+          interruptionDates: [{ startDate: '2025-01-01T00:00:00.000Z' }],
+          slots: [
+            {
+              startDate: '2025-05-12T22:00:00.000Z',
+              endDate: '2025-05-12T23:00:00.000Z',
+              attendances: [{ status: PRESENT }],
+            },
+          ],
+        },
+        netInclTaxes: 320,
+        netExclTaxes: 320,
+        hasCourseAction: true,
+      },
     ]);
 
     SinonMongoose.calledOnceWithExactly(
@@ -686,7 +763,7 @@ describe('list', () => {
             {
               path: 'course',
               select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
-                + ' trainers',
+                + ' trainers archivedAt',
               populate: [
                 { path: 'companies', select: 'name' },
                 {
@@ -733,7 +810,7 @@ describe('list', () => {
           query: 'find',
           args: [{
             activity: { $in: activitiesIds },
-            user: { $in: [traineesIds[1], traineesIds[2]] },
+            user: { $in: [traineesIds[0], traineesIds[1], traineesIds[2], traineesIds[3]] },
             date: { $gte: '2025-05-10T22:00:00.000Z', $lte: '2025-07-10T22:00:00.000Z' },
           }],
         },
@@ -754,6 +831,11 @@ describe('list', () => {
       getCompanyAtCourseRegistrationList.getCall(2),
       { key: COURSE, value: courseIds[3] },
       { key: TRAINEE, value: courseBills[3].course.trainees }
+    );
+    sinon.assert.calledWithExactly(
+      getCompanyAtCourseRegistrationList.getCall(3),
+      { key: COURSE, value: courseIds[5] },
+      { key: TRAINEE, value: courseBills[5].course.trainees }
     );
   });
 
@@ -844,7 +926,7 @@ describe('list', () => {
             {
               path: 'course',
               select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
-              + ' trainers',
+              + ' trainers archivedAt',
               populate: [
                 { path: 'companies', select: 'name' },
                 { path: 'slots', select: 'startDate endDate' },
