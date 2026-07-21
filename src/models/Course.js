@@ -109,6 +109,17 @@ const CourseSchema = mongoose.Schema({
     },
   },
   tradeName: { type: String, required: true },
+  billingPurchaseList: {
+    type: [mongoose.Schema({
+      billingItem: { type: mongoose.Schema.Types.ObjectId, ref: 'CourseBillingItem', required: true },
+      price: { type: Number, required: true },
+      count: { type: Number, required: true },
+      description: { type: String },
+      // only set for entries created from a TrainerMission, to identify which one to remove on cancellation
+      trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    })],
+    default: undefined,
+  },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {

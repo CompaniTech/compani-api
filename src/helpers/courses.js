@@ -86,6 +86,7 @@ const {
   MISSING,
   SECOND,
   MONTH,
+  TRAINER_SALARY,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -103,7 +104,9 @@ const CourseBill = require('../models/CourseBill');
 const CourseSlot = require('../models/CourseSlot');
 const CourseHistory = require('../models/CourseHistory');
 const CompletionCertificate = require('../models/CompletionCertificate');
+const CourseBillingItem = require('../models/CourseBillingItem');
 const { CompaniDuration } = require('./dates/companiDurations');
+const NumbersHelper = require('./numbers');
 
 exports.createCourse = async (payload, credentials) => {
   let coursePayload = payload.company
@@ -111,8 +114,8 @@ exports.createCourse = async (payload, credentials) => {
     : omit(payload, ['coach', 'architect']);
 
   const subProgram = await SubProgram
-    .findOne({ _id: payload.subProgram }, { steps: 1, sheetTemplateId: 1, folderId: 1 })
-    .populate({ path: 'steps', select: '_id type' })
+    .findOne({ _id: payload.subProgram }, { steps: 1, sheetTemplateId: 1, folderId: 1, priceVersions: 1 })
+    .populate({ path: 'steps', select: '_id type theoreticalDuration' })
     .lean();
 
   if (payload.type === SINGLE) {
@@ -173,6 +176,32 @@ exports.createCourse = async (payload, credentials) => {
 
   const course = await Course.create(coursePayload);
 
+  const steps = subProgram.steps.filter(step => [REMOTE, ON_SITE].includes(step.type));
+  if (course.type !== SINGLE) {
+    const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions || [], 'effectiveDate');
+    if (lastPriceVersion) {
+      const hasPriceAndDurationForEveryStep = steps.length && steps.every(step => step.theoreticalDuration &&
+        lastPriceVersion.prices.some(p => UtilsHelper.areObjectIdsEquals(p.step, step._id)));
+
+      if (hasPriceAndDurationForEveryStep) {
+        const totalPrice = steps.reduce((acc, step) => {
+          const stepPrice = lastPriceVersion.prices.find(p => UtilsHelper.areObjectIdsEquals(p.step, step._id));
+          const stepDurationInHours = CompaniDuration(step.theoreticalDuration).asHours();
+
+          return NumbersHelper.add(acc, NumbersHelper.multiply(stepPrice.hourlyAmount, stepDurationInHours));
+        }, 0);
+
+        const trainerSalaryBillingItem = await CourseBillingItem.findOne({ type: TRAINER_SALARY }, { _id: 1 }).lean();
+        if (trainerSalaryBillingItem) {
+          await exports.addBillingPurchase(
+            course._id,
+            { billingItem: trainerSalaryBillingItem._id, price: NumbersHelper.toNumber(totalPrice), count: 1 }
+          );
+        }
+      }
+    }
+  }
+
   if (course.estimatedStartDate) {
     await CourseHistoriesHelper.createHistoryOnEstimatedStartDateEdition(
       course._id,
@@ -181,9 +210,7 @@ exports.createCourse = async (payload, credentials) => {
     );
   }
 
-  const slots = subProgram.steps
-    .filter(step => [ON_SITE, REMOTE].includes(step.type))
-    .map(step => ({ course: course._id, step: step._id }));
+  const slots = steps.map(step => ({ course: course._id, step: step._id }));
 
   if (slots.length) await CourseSlot.insertMany(slots);
 
@@ -585,6 +612,11 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
             select: 'identity.firstname identity.lastname contact local.email picture.link',
           },
           { path: 'accessRules', select: 'name' },
+          {
+            path: 'billingPurchaseList',
+            select: 'billingItem',
+            populate: { path: 'billingItem', select: 'name type' },
+          },
           {
             path: 'operationsRepresentative',
             select: 'identity.firstname identity.lastname contact local.email picture.link',
@@ -1014,10 +1046,27 @@ exports.updateCourse = async (courseId, payload, credentials) => {
         .lean();
       if (courseBillsAfterLastInterruptionStartDate.length) {
         const interruptionDuration = CompaniDate(interruptionEndDate).diff(interruptionStartDate, SECOND);
+
+        let singleCourseTrainees = [];
+        let singleCourseTrainers = [];
+        if (courseFromDb.type === SINGLE) {
+          const course = await Course.findOne({ _id: courseId }, { trainees: 1, trainers: 1 })
+            .populate({ path: 'trainees', select: 'identity' })
+            .populate({ path: 'trainers', select: 'identity' })
+            .lean();
+          singleCourseTrainees = course.trainees;
+          singleCourseTrainers = course.trainers || [];
+        }
+
         const promises = [];
         for (const bill of courseBillsAfterLastInterruptionStartDate) {
-          const maturityDate = CompaniDate(bill.maturityDate).add(interruptionDuration).toISO();
-          promises.push(CourseBill.updateOne({ _id: bill._id }, { maturityDate }));
+          const maturityDate = CompaniDate(bill.maturityDate).add(interruptionDuration);
+          const billPayload = { maturityDate: maturityDate.toISO() };
+          if (courseFromDb.type === SINGLE) {
+            billPayload['mainFee.description'] = UtilsHelper
+              .formatSingleCourseBillDescription(maturityDate, singleCourseTrainees, singleCourseTrainers);
+          }
+          promises.push(CourseBill.updateOne({ _id: bill._id }, { $set: billPayload }));
         }
 
         await Promise.all(promises);
@@ -1034,8 +1083,8 @@ exports.deleteCourse = async (courseId) => {
     .setOptions({ isVendorUser: true })
     .lean();
 
-  const trainerMission = await TrainerMission
-    .findOne({ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
+  const trainerMissions = await TrainerMission
+    .find({ courses: courseId, cancelledAt: { $exists: true } }, { _id: 1, file: 1 })
     .lean();
 
   return Promise.all([
@@ -1052,10 +1101,10 @@ exports.deleteCourse = async (courseId) => {
       ? [TrainingContractsHelper.deleteMany(trainingContractList.map(tc => tc._id))]
       : []
     ),
-    ...(trainerMission
+    ...(trainerMissions.length
       ? [
-        TrainerMission.deleteOne({ _id: trainerMission._id }),
-        GCloudStorageHelper.deleteCourseFile(trainerMission.file.publicId),
+        TrainerMission.deleteMany({ _id: { $in: trainerMissions.map(tm => tm._id) } }),
+        ...trainerMissions.map(tm => GCloudStorageHelper.deleteCourseFile(tm.file.publicId)),
       ]
       : []),
   ]);
@@ -2112,3 +2161,23 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
     ]
   );
 };
+
+exports.addBillingPurchase = async (courseId, payload) =>
+  Course.updateOne({ _id: courseId }, { $push: { billingPurchaseList: payload } });
+
+exports.updateBillingPurchase = async (courseId, billingPurchaseId, payload) => Course.updateOne(
+  { _id: courseId, 'billingPurchaseList._id': billingPurchaseId },
+  {
+    $set: {
+      'billingPurchaseList.$.price': payload.price,
+      'billingPurchaseList.$.count': payload.count,
+      ...(!!payload.description && { 'billingPurchaseList.$.description': payload.description }),
+    },
+    ...(get(payload, 'description') === '' && { $unset: { 'billingPurchaseList.$.description': '' } }),
+  }
+);
+
+exports.deleteBillingPurchase = async (courseId, billingPurchaseId) => Course.updateOne(
+  { _id: courseId },
+  { $pull: { billingPurchaseList: { _id: billingPurchaseId } } }
+);

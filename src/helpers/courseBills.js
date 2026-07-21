@@ -27,7 +27,6 @@ const {
   COURSE,
   TRAINEE,
   SINGLE,
-  MONTH_YEAR,
   RECEIVED,
   PENDING,
   PAYMENT,
@@ -175,40 +174,43 @@ exports.list = async (query, credentials) => {
     .find(formattedQuery)
     .populate([
       ...(query.startDate && query.endDate
-        ? [{
-          path: 'course',
-          select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
-            + ' trainers',
-          populate: [
-            { path: 'companies', select: 'name' },
-            {
-              path: 'slots',
-              select: 'startDate endDate',
-              ...!query.isValidated && {
-                populate: {
-                  path: 'attendances',
-                  select: '_id',
-                  match: { status: PRESENT },
-                  options: { isVendorUser: true },
+        ? [
+          {
+            path: 'course',
+            select: 'companies trainees subProgram type expectedBillsCount prices interruptionDates misc tradeName'
+            + ' trainers archivedAt',
+            populate: [
+              { path: 'companies', select: 'name' },
+              {
+                path: 'slots',
+                select: 'startDate endDate',
+                ...!query.isValidated && {
+                  populate: {
+                    path: 'attendances',
+                    select: '_id',
+                    match: { status: PRESENT },
+                    options: { isVendorUser: true },
+                  },
                 },
               },
-            },
-            { path: 'slotsToPlan', select: '_id' },
-            { path: 'trainees', select: 'identity' },
-            ...!query.isValidated ? [{ path: 'trainers', select: 'identity' }] : [],
-          ],
-        },
-        {
-          path: 'companies',
-          select: 'name',
-          populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
-        },
+              { path: 'slotsToPlan', select: '_id' },
+              { path: 'trainees', select: 'identity' },
+              ...!query.isValidated ? [{ path: 'trainers', select: 'identity' }] : [],
+            ],
+          },
+          {
+            path: 'companies',
+            select: 'name',
+            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+          },
         ]
-        : [{ path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } }]
+        : [
+          { path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } },
+          { path: 'companies', select: 'name' },
+        ]
       ),
       { path: 'payer.fundingOrganisation', select: 'name' },
       { path: 'payer.company', select: 'name' },
-      { path: 'companies', select: 'name' },
       { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
     ])
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
@@ -216,10 +218,8 @@ exports.list = async (query, credentials) => {
 
   let activityHistoriesByTrainee = {};
   if (!query.isValidated) {
-    const singleCourseBills = courseBills.filter((bill) => {
-      const isCourseInterrupted = UtilsHelper.isCourseInterrupted(bill.course.interruptionDates);
-      return bill.course.type === SINGLE && !isCourseInterrupted;
-    });
+    const singleCourseBills = courseBills
+      .filter(bill => !bill.course.archivedAt && bill.course.type === SINGLE);
     const singleSubProgramIds = [...new Set(singleCourseBills.map(b => b.course.subProgram._id.toHexString()))];
     const subPrograms = await SubProgram
       .find({ _id: { $in: singleSubProgramIds } })
@@ -238,11 +238,20 @@ exports.list = async (query, credentials) => {
     activityHistoriesByTrainee = groupBy(activityHistories, 'user');
   }
 
+  const hasCourseAction = bill => bill.course.type !== SINGLE ||
+    bill.course.trainees.some(t => activityHistoriesByTrainee[t._id]) ||
+    bill.course.slots
+      .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
+      .some(s => s.attendances.length);
+
   return Promise.all(
     courseBills
       .filter((bill) => {
+        if (bill.course.archivedAt) return false;
+        if (query.isValidated) return true;
+
         const isCourseInterrupted = UtilsHelper.isCourseInterrupted(bill.course.interruptionDates);
-        return query.isValidated || !isCourseInterrupted;
+        return !isCourseInterrupted || hasCourseAction(bill);
       })
       .map(async (bill) => {
         const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
@@ -252,13 +261,7 @@ exports.list = async (query, credentials) => {
           ...(query.startDate && query.endDate
             ? {
               course: await formatCourse(bill.course),
-              ...!query.isValidated && {
-                hasCourseAction: bill.course.type !== SINGLE ||
-                  bill.course.trainees.some(t => activityHistoriesByTrainee[t._id]) ||
-                  bill.course.slots
-                    .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
-                    .some(s => s.attendances.length),
-              },
+              ...!query.isValidated && { hasCourseAction: hasCourseAction(bill) },
             }
             : { course: bill.course }
           ),
@@ -300,7 +303,7 @@ exports.createBillList = async (payload) => {
           ),
           count: 1,
           percentage: payload.mainFee.percentage,
-          billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+          billingItem: new ObjectId(process.env.MANAGEMENT_FEES_BILLING_ITEM),
         };
         await exports.addBillingPurchase(billCreated._id, trainerFeesPayload);
       }
@@ -329,7 +332,7 @@ exports.createBillList = async (payload) => {
         price: 0,
         count: 1,
         percentage: 0,
-        billingItem: new ObjectId(process.env.TRAINER_FEES_BILLING_ITEM),
+        billingItem: new ObjectId(process.env.MANAGEMENT_FEES_BILLING_ITEM),
       };
 
       for (const createdBill of createdBills) {
@@ -337,20 +340,10 @@ exports.createBillList = async (payload) => {
       }
     }
   } else {
-    const traineeName = course.trainees.length
-      ? UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL')
-      : '';
-
-    const trainersName = get(course, 'trainers', [])
-      .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
-
     for (let i = 0; i < payload.quantity; i++) {
       const billMaturityDate = CompaniDate(payload.maturityDate).add(`P${i}M`);
-      const description = 'Facture liée à des frais pédagogiques \r\n'
-        + 'Contrat de professionnalisation \r\n'
-        + `ACCOMPAGNEMENT ${billMaturityDate.format(MONTH_YEAR)} \r\n`
-        + `Nom de l'apprenant·e: ${traineeName} \r\n`
-        + `Nom du / des intervenants: ${trainersName}`;
+      const description = UtilsHelper
+        .formatSingleCourseBillDescription(billMaturityDate, course.trainees, get(course, 'trainers', []));
 
       await CourseBill.create({
         ...omit(payload, ['quantity', 'maturityDate']),
@@ -420,7 +413,10 @@ exports.updateCourseBill = async (courseBillId, payload) => {
     .lean();
   if (get(payload, 'mainFee.percentage')) {
     const billingPurchase = courseBill.billingPurchaseList.find(bp =>
-      UtilsHelper.areObjectIdsEquals(bp.billingItem, process.env.TRAINER_FEES_BILLING_ITEM) && has(bp, 'percentage')
+      UtilsHelper.doesArrayIncludeId(
+        [process.env.TRAINER_FEES_BILLING_ITEM, process.env.MANAGEMENT_FEES_BILLING_ITEM],
+        (bp.billingItem)
+      ) && has(bp, 'percentage')
     );
     if (billingPurchase) {
       const trainerFees = (courseBill.course.prices || []).reduce((acc, price) => {
@@ -553,14 +549,8 @@ exports.updateBillList = async (payload) => {
         if (!isFirstBill && payload.maturityDate) {
           const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
           const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDurationToAdd);
-          const traineeName = UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL');
-          const trainersName = course.trainers
-            .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
-          const newDescription = 'Facture liée à des frais pédagogiques \r\n'
-            + 'Contrat de professionnalisation \r\n'
-            + `ACCOMPAGNEMENT ${newMaturityDate.format('LLLL yyyy')}\r\n`
-            + `Nom de l'apprenant·e: ${traineeName} \r\n`
-            + `Nom du / des intervenants: ${trainersName}`;
+          const newDescription = UtilsHelper
+            .formatSingleCourseBillDescription(newMaturityDate, course.trainees, course.trainers);
 
           payloadToSet['mainFee.description'] = newDescription;
           payloadToSet.maturityDate = newMaturityDate.toISO();

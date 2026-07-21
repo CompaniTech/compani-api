@@ -106,6 +106,31 @@ const attendanceSheetSlotsValidation = Joi.alternatives().try(
   Joi.string().custom(parseAndValidateSlot)
 );
 
+const trainerMissionCourseSchema = Joi.object({
+  courseId: Joi.objectId().required(),
+  fee: Joi.number().min(0),
+});
+
+const parseAndValidateTrainerMissionCourse = (value, helpers) => {
+  let parsed;
+  try {
+    parsed = JSON.parse(value);
+  } catch (_) {
+    return helpers.error('any.invalid', { message: 'Invalid JSON' });
+  }
+
+  const { error, value: validated } = trainerMissionCourseSchema.validate(parsed);
+  if (error) {
+    return helpers.error('any.invalid', { message: error.message });
+  }
+  return validated;
+};
+
+const trainerMissionCoursesValidation = Joi.alternatives().try(
+  Joi.array().items(Joi.string().custom(parseAndValidateTrainerMissionCourse)).min(1),
+  Joi.string().custom(parseAndValidateTrainerMissionCourse)
+);
+
 module.exports = {
   monthValidation,
   phoneNumberValidation,
@@ -124,4 +149,5 @@ module.exports = {
   durationPositive,
   icsValidation,
   attendanceSheetSlotsValidation,
+  trainerMissionCoursesValidation,
 };

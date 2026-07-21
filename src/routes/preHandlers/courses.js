@@ -13,6 +13,7 @@ const CourseSlot = require('../../models/CourseSlot');
 const CompletionCertificate = require('../../models/CompletionCertificate');
 const CompanyHolding = require('../../models/CompanyHolding');
 const CourseBill = require('../../models/CourseBill');
+const CourseBillingItem = require('../../models/CourseBillingItem');
 const AttendanceSheet = require('../../models/AttendanceSheet');
 const Role = require('../../models/Role');
 const SubProgram = require('../../models/SubProgram');
@@ -1610,5 +1611,41 @@ exports.authorizeGetAllDocuments = async (req) => {
       .some(company => UtilsHelper.hasUserAccessToCompany(credentials, company));
     if (!hasAccessToCompany) throw Boom.forbidden();
   }
+  return null;
+};
+
+exports.authorizeCourseBillingPurchaseAddition = async (req) => {
+  const { billingItem } = req.payload;
+
+  const billingItemExists = await CourseBillingItem.countDocuments({ _id: billingItem, type: COURSE }, { limit: 1 });
+  if (!billingItemExists) throw Boom.notFound();
+
+  const course = await Course.findOne({ _id: req.params._id }).lean();
+  if (!course) throw Boom.notFound();
+
+  if (course.billingPurchaseList?.find(p => UtilsHelper.areObjectIdsEquals(p.billingItem, billingItem))) {
+    throw Boom.conflict(translate[language].courseBillingItemAlreadyAddedToCourse);
+  }
+
+  return null;
+};
+
+exports.authorizeCourseBillingPurchaseEdition = async (req) => {
+  const { _id: courseId, billingPurchaseId } = req.params;
+
+  const course = await Course
+    .findOne({ _id: courseId, 'billingPurchaseList._id': billingPurchaseId })
+    .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'type' } })
+    .lean();
+  if (!course) throw Boom.notFound();
+  const billingPurchase = course.billingPurchaseList
+    .find(p => UtilsHelper.areObjectIdsEquals(billingPurchaseId, p._id));
+  if (billingPurchase.billingItem.type !== COURSE) {
+    if (!req.payload) throw Boom.forbidden();
+    const { price, count } = req.payload;
+    const isPriceOrCountEdited = price !== billingPurchase.price || count !== billingPurchase.count;
+    if (isPriceOrCountEdited) throw Boom.forbidden();
+  }
+
   return null;
 };

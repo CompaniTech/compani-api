@@ -19,6 +19,7 @@ const Card = require('../../../src/models/Card');
 const Questionnaire = require('../../../src/models/Questionnaire');
 const QuestionnaireHistory = require('../../../src/models/QuestionnaireHistory');
 const CourseBill = require('../../../src/models/CourseBill');
+const CourseBillingItem = require('../../../src/models/CourseBillingItem');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
 const CourseCreditNote = require('../../../src/models/CourseCreditNote');
 const CourseCreditNoteNumber = require('../../../src/models/CourseCreditNoteNumber');
@@ -71,6 +72,9 @@ const {
   GENERATION,
   PRESENT,
   MISSING,
+  COURSE,
+  COURSE_BILL,
+  TRAINER,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -375,6 +379,12 @@ const programsList = [
   },
   { _id: new ObjectId(), name: 'training program', image: { link: 'belle/url', publicId: '12345' } },
   { _id: new ObjectId(), name: 'programme e_learning', subPrograms: [subProgramsList[2]._id, subProgramsList[3]._id] },
+];
+
+const courseBillingItemsList = [
+  { _id: new ObjectId(), name: 'article formation', type: COURSE },
+  { _id: new ObjectId(), name: 'article facture', type: COURSE_BILL },
+  { _id: new ObjectId(), name: 'frais de formateur', type: TRAINER },
 ];
 
 const coursesList = [
@@ -782,7 +792,7 @@ const coursesList = [
     certificateGenerationMode: GLOBAL,
     tradeName: 'nom',
   },
-  { // 27 course without trainee, without slot but with trainer mission
+  { // 27 course without trainee, without slot but with trainer mission, with billing purchase
     _id: new ObjectId(),
     subProgram: subProgramsList[0]._id,
     misc: '',
@@ -794,6 +804,22 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
     tradeName: 'nom',
+    billingPurchaseList: [
+      {
+        _id: new ObjectId(),
+        billingItem: courseBillingItemsList[0]._id,
+        price: 100,
+        count: 2,
+        description: 'billing purchase',
+      },
+      {
+        _id: new ObjectId(),
+        billingItem: courseBillingItemsList[2]._id,
+        price: 120,
+        count: 1,
+        trainer: trainer._id,
+      },
+    ],
   },
 ];
 
@@ -1515,6 +1541,7 @@ const populateDB = async () => {
     CompletionCertificate.create(completionCertificateList),
     Course.create(coursesList),
     CourseBill.create(courseBillsList),
+    CourseBillingItem.create(courseBillingItemsList),
     CourseBillsNumber.create(courseBillNumber),
     CourseCreditNote.create(courseCreditNoteList),
     CourseCreditNoteNumber.create(courseCreditNoteNumber),
@@ -1537,6 +1564,7 @@ module.exports = {
   activitiesList,
   stepList,
   coursesList,
+  courseBillingItemsList,
   fourthCompany,
   subProgramsList,
   programsList,

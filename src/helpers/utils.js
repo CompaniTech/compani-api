@@ -7,7 +7,7 @@ const { isObjectIdOrHexString } = require('mongoose');
 const Intl = require('intl');
 const crypto = require('crypto');
 const { diacriticsMap } = require('../data/diacritics');
-const { CIVILITY_LIST, SHORT_DURATION_H_MM, HHhMM, SECOND } = require('./constants');
+const { CIVILITY_LIST, SHORT_DURATION_H_MM, HHhMM, SECOND, MONTH_YEAR } = require('./constants');
 const DatesHelper = require('./dates');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -154,6 +154,17 @@ exports.formatIdentity = (identity, format) => {
   }
 
   return values.join(' ');
+};
+
+exports.formatSingleCourseBillDescription = (maturityDate, trainees, trainers = []) => {
+  const traineeName = trainees.length ? exports.formatIdentity(get(trainees[0], 'identity'), 'FL') : '';
+  const trainersName = trainers.map(trainer => exports.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
+
+  return 'Facture liée à des frais pédagogiques \r\n'
+    + 'Contrat de professionnalisation \r\n'
+    + `ACCOMPAGNEMENT ${maturityDate.format(MONTH_YEAR)} \r\n`
+    + `Nom de l'apprenant·e: ${traineeName} \r\n`
+    + `Nom du / des intervenants: ${trainersName}`;
 };
 exports.flatQuery = (payload) => {
   const flattenPayload = flat(JSON.parse(JSON.stringify(payload)), { safe: true });

@@ -103,6 +103,7 @@ const {
   DIRECT_DEBIT,
   RECEIVED,
   PRESENT,
+  COURSE,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -873,6 +874,11 @@ describe('SEEDS VERIFICATION', () => {
             .populate({ path: 'subProgram', select: '_id status steps', populate: { path: 'steps', select: 'type' } })
             .populate({ path: 'slots', select: 'endDate' })
             .populate({ path: 'slotsToPlan' })
+            .populate({
+              path: 'billingPurchaseList',
+              select: 'billingItem',
+              populate: { path: 'billingItem', select: 'type' },
+            })
             .lean({ virtuals: true });
         });
 
@@ -1200,6 +1206,20 @@ describe('SEEDS VERIFICATION', () => {
               .every(price => !!price.global));
           expect(everyCoursePriceHasGlobalPrice).toBeTruthy();
         });
+
+        it('should pass if course billing items type is course', () => {
+          const everyCourseBillingItemHasCourseType = courseList
+            .every(course => get(course, 'billingPurchaseList', [])
+              .every(purchase => [COURSE, TRAINER].includes(purchase.billingItem.type)));
+          expect(everyCourseBillingItemHasCourseType).toBeTruthy();
+        });
+
+        it('should pass if every billing purchase with a trainer is linked to a TRAINER billing item', () => {
+          const isEveryPurchaseWithTrainerHasTrainerType = courseList
+            .every(course => get(course, 'billingPurchaseList', [])
+              .every(purchase => !purchase.trainer || purchase.billingItem.type === TRAINER));
+          expect(isEveryPurchaseWithTrainerHasTrainerType).toBeTruthy();
+        });
       });
 
       describe('Collection CourseBill', () => {
@@ -1353,7 +1373,7 @@ describe('SEEDS VERIFICATION', () => {
               }, 0);
 
               const trainerFeeBillinItem = bill.billingPurchaseList.find(purchase => UtilsHelper
-                .areObjectIdsEquals(purchase.billingItem._id, process.env.TRAINER_FEES_BILLING_ITEM)
+                .areObjectIdsEquals(purchase.billingItem._id, process.env.MANAGEMENT_FEES_BILLING_ITEM)
               );
 
               return NumbersHelper.multiply(trainerFeeBillinItem.price, trainerFeeBillinItem.count) === NumbersHelper
@@ -1370,8 +1390,8 @@ describe('SEEDS VERIFICATION', () => {
           courseBillingItemList = await CourseBillingItem.find().lean();
         });
 
-        it('should pass if every name is unique', () => {
-          const courseBillingItemNameList = courseBillingItemList.map(item => item.name);
+        it('should pass if every name is unique for same type', () => {
+          const courseBillingItemNameList = courseBillingItemList.map(item => `${item.name}_${item.type}`);
           const courseBillingItemNamesWithoutDuplicates = [...new Set(courseBillingItemNameList)];
 
           expect(courseBillingItemNamesWithoutDuplicates.length).toEqual(courseBillingItemNameList.length);

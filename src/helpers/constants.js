@@ -631,6 +631,7 @@ module.exports = {
   SINGLE_COURSE_SLOT: 'single_course_slot',
   COURSE_BILL: 'course_bill',
   COURSE_PAYMENT: 'course_payment',
+  TRAINER_SALARY: 'trainer_salary',
   get HISTORY_EXPORT_TYPES() {
     return [
       this.WORKING_EVENT,

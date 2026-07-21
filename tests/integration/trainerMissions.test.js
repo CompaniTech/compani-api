@@ -3,11 +3,13 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const app = require('../../server');
 const TrainerMission = require('../../src/models/TrainerMission');
+const Course = require('../../src/models/Course');
 const { trainer, coach, trainerAndCoach } = require('../seed/authUsersSeed');
 const {
   populateDB,
   courseList,
   trainerMissionList,
+  billingItemList,
 } = require('./seed/trainerMissionsSeed');
 const { getToken } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
@@ -40,14 +42,13 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
     });
 
     it('should upload trainer mission for a single course', async () => {
+      const courses = [{ courseId: courseList[0]._id.toHexString(), fee: 0 }];
       const formData = {
-        courses: courseList[0]._id.toHexString(),
         trainer: trainer._id.toHexString(),
         file: 'test',
-        fee: 0,
       };
       const form = generateFormData(formData);
-
+      courses.forEach((course) => { form.append('courses', JSON.stringify(course)); });
       uploadCourseFileStub.returns({ publicId: '1234567890', link: 'ceciestunautrelien' });
 
       const response = await app.inject({
@@ -71,14 +72,13 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
     it('should upload trainer mission when there\'s already a trainer mission for another trainer',
       async () => {
+        const courses = [{ courseId: courseList[3]._id.toHexString(), fee: 0 }];
         const formData = {
-          courses: courseList[3]._id.toHexString(),
           trainer: trainerAndCoach._id.toHexString(),
           file: 'test',
-          fee: 0,
         };
         const form = generateFormData(formData);
-
+        courses.forEach((course) => { form.append('courses', JSON.stringify(course)); });
         uploadCourseFileStub.returns({ publicId: '1234567890', link: 'ceciestunautrelien' });
 
         const response = await app.inject({
@@ -101,14 +101,16 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       });
 
     it('should upload trainer mission for several courses', async () => {
-      const courses = [courseList[0]._id.toHexString(), courseList[1]._id.toHexString()];
+      const courses = [
+        { courseId: courseList[0]._id.toHexString(), fee: 500 },
+        { courseId: courseList[1]._id.toHexString(), fee: 700 },
+      ];
       const formData = {
         trainer: trainer._id.toHexString(),
         file: 'test',
-        fee: 1200,
       };
       const form = generateFormData(formData);
-      courses.forEach(course => form.append('courses', course));
+      courses.forEach(course => form.append('courses', JSON.stringify(course)));
 
       uploadCourseFileStub.returns({ publicId: '1234567890', link: 'ceciestunautrelien' });
 
@@ -121,7 +123,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [courseList[0]._id, courseList[1]],
+        courses: [courseList[0]._id, courseList[1]._id],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 1200,
@@ -129,16 +131,26 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
         creationMethod: UPLOAD,
       });
       expect(trainerMissionCount).toBe(1);
+
+      const firstCourseBillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[0]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id, price: 500, count: 1 } },
+      });
+      const secondCourse1BillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[1]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id, price: 700, count: 1 } },
+      });
+      expect(firstCourseBillingPurchaseCount).toBe(1);
+      expect(secondCourse1BillingPurchaseCount).toBe(1);
     });
 
     it('should generate trainer mission for a single course', async () => {
+      const courses = [{ courseId: courseList[0]._id.toHexString(), fee: 1200 }];
       const formData = {
-        courses: courseList[0]._id.toHexString(),
         trainer: trainer._id.toHexString(),
-        fee: 1200,
       };
       const form = generateFormData(formData);
-
+      courses.forEach(course => form.append('courses', JSON.stringify(course)));
       uploadCourseFileStub.returns({ publicId: '1234567890', link: 'ceciestunautrelien' });
 
       const response = await app.inject({
@@ -161,13 +173,15 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
     });
 
     it('should generate trainer mission for several courses', async () => {
-      const courses = [courseList[0]._id.toHexString(), courseList[1]._id.toHexString()];
+      const courses = [
+        { courseId: courseList[0]._id.toHexString(), fee: 600 },
+        { courseId: courseList[1]._id.toHexString(), fee: 600 },
+      ];
       const formData = {
         trainer: trainer._id.toHexString(),
-        fee: 1200,
       };
       const form = generateFormData(formData);
-      courses.forEach(course => form.append('courses', course));
+      courses.forEach(course => form.append('courses', JSON.stringify(course)));
 
       uploadCourseFileStub.returns({ publicId: '1234567890', link: 'ceciestunautrelien' });
 
@@ -180,7 +194,7 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
 
       expect(response.statusCode).toBe(200);
       const trainerMissionCount = await TrainerMission.countDocuments({
-        courses: [courseList[0]._id, courseList[1]],
+        courses: [courseList[0]._id, courseList[1]._id],
         date: CompaniDate().startOf(DAY).toISO(),
         trainer: trainer._id,
         fee: 1200,
@@ -191,13 +205,15 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
     });
 
     it('should return 400 if fee is smaller than 0', async () => {
-      const courses = [courseList[0]._id.toHexString(), courseList[1]._id.toHexString()];
+      const courses = [
+        { courseId: courseList[0]._id.toHexString(), fee: -500 },
+        { courseId: courseList[1]._id.toHexString(), fee: 700 },
+      ];
       const formData = {
         trainer: trainer._id.toHexString(),
-        fee: -1200,
       };
       const form = generateFormData(formData);
-      courses.forEach(course => form.append('courses', course));
+      courses.forEach(course => form.append('courses', JSON.stringify(course)));
 
       uploadCourseFileStub.returns({ publicId: '1234567890', link: 'https://test.com/file.pdf' });
 
@@ -255,14 +271,17 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
     });
 
     it('should return 404 if course not found', async () => {
-      const courses = [courseList[0]._id.toHexString(), courseList[1]._id.toHexString(), new ObjectId().toHexString()];
+      const courses = [
+        { courseId: courseList[0]._id.toHexString(), fee: 400 },
+        { courseId: courseList[1]._id.toHexString(), fee: 400 },
+        { courseId: new ObjectId().toHexString(), fee: 400 },
+      ];
       const formData = {
         trainer: trainer._id.toHexString(),
         file: 'test',
-        fee: 1200,
       };
       const form = generateFormData(formData);
-      courses.forEach(course => form.append('courses', course));
+      courses.forEach(course => form.append('courses', JSON.stringify(course)));
 
       uploadCourseFileStub.returns({ publicId: '1234567890', link: 'https://test.com/file.pdf' });
 
@@ -277,14 +296,16 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
     });
 
     it('should return 404 if wrong trainer', async () => {
-      const courses = [courseList[0]._id.toHexString(), courseList[2]._id.toHexString()];
+      const courses = [
+        { courseId: courseList[0]._id.toHexString(), fee: 600 },
+        { courseId: courseList[2]._id.toHexString(), fee: 600 },
+      ];
       const formData = {
         trainer: trainer._id.toHexString(),
         file: 'test',
-        fee: 1200,
       };
       const form = generateFormData(formData);
-      courses.forEach(course => form.append('courses', course));
+      courses.forEach(course => form.append('courses', JSON.stringify(course)));
 
       uploadCourseFileStub.returns({ publicId: '1234567890', link: 'https://test.com/file.pdf' });
 
@@ -299,14 +320,16 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
     });
 
     it('should return 409 if course already have a trainer mission', async () => {
-      const courses = [courseList[0]._id.toHexString(), courseList[3]._id.toHexString()];
+      const courses = [
+        { courseId: courseList[0]._id.toHexString(), fee: 600 },
+        { courseId: courseList[3]._id.toHexString(), fee: 600 },
+      ];
       const formData = {
         trainer: trainer._id.toHexString(),
         file: 'test',
-        fee: 1200,
       };
       const form = generateFormData(formData);
-      courses.forEach(course => form.append('courses', course));
+      courses.forEach(course => form.append('courses', JSON.stringify(course)));
 
       uploadCourseFileStub.returns({ publicId: '1234567890', link: 'https://test.com/file.pdf' });
 
@@ -332,15 +355,17 @@ describe('TRAINER MISSIONS ROUTES - POST /trainermissions', () => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
         authToken = await getToken(role.name);
 
-        const courses = [courseList[0]._id.toHexString(), courseList[1]._id.toHexString()];
+        const courses = [
+          { courseId: courseList[0]._id.toHexString(), fee: 600 },
+          { courseId: courseList[1]._id.toHexString(), fee: 600 },
+        ];
         const formData = {
           trainer: trainer._id.toHexString(),
           file: 'test',
-          fee: 1200,
         };
 
         const form = generateFormData(formData);
-        courses.forEach(course => form.append('courses', course));
+        courses.forEach(course => form.append('courses', JSON.stringify(course)));
 
         uploadCourseFileStub.returns({ publicId: '1234567890', link: 'https://test.com/file.pdf' });
 
@@ -452,7 +477,7 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should cancel trainer mission', async () => {
+    it('should cancel trainer mission and remove trainer billing purchase from its courses', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/trainermissions/${trainerMissionList[0]._id}`,
@@ -462,9 +487,19 @@ describe('TRAINER MISSIONS ROUTES - PUT /trainermissions/{_id}', () => {
 
       const trainerMissionUpdated = await TrainerMission
         .countDocuments({ _id: trainerMissionList[0]._id, cancelledAt: '2023-01-03T23:00:00.000Z' });
+      const removedBillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[3]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id, trainer: trainer._id } },
+      });
+      const otherTrainerBillingPurchaseCount = await Course.countDocuments({
+        _id: courseList[3]._id,
+        billingPurchaseList: { $elemMatch: { billingItem: billingItemList[0]._id, trainer: trainerAndCoach._id } },
+      });
 
       expect(response.statusCode).toBe(200);
       expect(trainerMissionUpdated).toEqual(1);
+      expect(removedBillingPurchaseCount).toEqual(0);
+      expect(otherTrainerBillingPurchaseCount).toEqual(1);
     });
 
     it('should return 409 if cancellation is before trainer mission\'s', async () => {

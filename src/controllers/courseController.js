@@ -276,6 +276,41 @@ const removeCompany = async (req) => {
   }
 };
 
+const addBillingPurchase = async (req) => {
+  try {
+    await CoursesHelper.addBillingPurchase(req.params._id, req.payload);
+
+    return { message: translate[language].courseUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const updateBillingPurchase = async (req) => {
+  try {
+    const { _id: courseId, billingPurchaseId } = req.params;
+    await CoursesHelper.updateBillingPurchase(courseId, billingPurchaseId, req.payload);
+
+    return { message: translate[language].courseUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const deleteBillingPurchase = async (req) => {
+  try {
+    const { _id: courseId, billingPurchaseId } = req.params;
+    await CoursesHelper.deleteBillingPurchase(courseId, billingPurchaseId);
+
+    return { message: translate[language].courseUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 const generateTrainingContract = async (req, h) => {
   try {
     const { pdf, fileName } = await CoursesHelper.generateTrainingContract(req.params._id, req.payload);
@@ -398,6 +433,9 @@ module.exports = {
   getQuestionnaires,
   addCompany,
   removeCompany,
+  addBillingPurchase,
+  updateBillingPurchase,
+  deleteBillingPurchase,
   generateTrainingContract,
   addTrainer,
   removeTrainer,
