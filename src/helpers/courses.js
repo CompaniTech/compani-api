@@ -75,7 +75,6 @@ const {
   SHORT_DURATION_H_MM,
   END_COURSE,
   DAY_D_MONTH_YEAR,
-  MONTH_YEAR,
   MOBILE,
   SINGLE,
   TRAINER_ADDITION,
@@ -1048,19 +1047,15 @@ exports.updateCourse = async (courseId, payload, credentials) => {
       if (courseBillsAfterLastInterruptionStartDate.length) {
         const interruptionDuration = CompaniDate(interruptionEndDate).diff(interruptionStartDate, SECOND);
 
-        let traineeName = '';
-        let trainersName = '';
+        let singleCourseTrainees = [];
+        let singleCourseTrainers = [];
         if (courseFromDb.type === SINGLE) {
-          const courseWithTraineesAndTrainers = await Course.findOne({ _id: courseId })
+          const course = await Course.findOne({ _id: courseId })
             .populate({ path: 'trainees', select: 'identity' })
             .populate({ path: 'trainers', select: 'identity' })
             .lean();
-          traineeName = courseWithTraineesAndTrainers.trainees.length
-            ? UtilsHelper.formatIdentity(get(courseWithTraineesAndTrainers.trainees[0], 'identity'), 'FL')
-            : '';
-          trainersName = (courseWithTraineesAndTrainers.trainers || [])
-            .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL'))
-            .join(', ');
+          singleCourseTrainees = course.trainees;
+          singleCourseTrainers = course.trainers || [];
         }
 
         const promises = [];
@@ -1068,11 +1063,8 @@ exports.updateCourse = async (courseId, payload, credentials) => {
           const maturityDate = CompaniDate(bill.maturityDate).add(interruptionDuration);
           const billPayload = { maturityDate: maturityDate.toISO() };
           if (courseFromDb.type === SINGLE) {
-            billPayload['mainFee.description'] = 'Facture liée à des frais pédagogiques \r\n'
-              + 'Contrat de professionnalisation \r\n'
-              + `ACCOMPAGNEMENT ${maturityDate.format(MONTH_YEAR)} \r\n`
-              + `Nom de l'apprenant·e: ${traineeName} \r\n`
-              + `Nom du / des intervenants: ${trainersName}`;
+            billPayload['mainFee.description'] = UtilsHelper
+              .formatSingleCourseBillDescription(maturityDate, singleCourseTrainees, singleCourseTrainers);
           }
           promises.push(CourseBill.updateOne({ _id: bill._id }, { $set: billPayload }));
         }

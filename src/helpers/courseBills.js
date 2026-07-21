@@ -27,7 +27,6 @@ const {
   COURSE,
   TRAINEE,
   SINGLE,
-  MONTH_YEAR,
   RECEIVED,
   PENDING,
   PAYMENT,
@@ -339,20 +338,10 @@ exports.createBillList = async (payload) => {
       }
     }
   } else {
-    const traineeName = course.trainees.length
-      ? UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL')
-      : '';
-
-    const trainersName = get(course, 'trainers', [])
-      .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
-
     for (let i = 0; i < payload.quantity; i++) {
       const billMaturityDate = CompaniDate(payload.maturityDate).add(`P${i}M`);
-      const description = 'Facture liée à des frais pédagogiques \r\n'
-        + 'Contrat de professionnalisation \r\n'
-        + `ACCOMPAGNEMENT ${billMaturityDate.format(MONTH_YEAR)} \r\n`
-        + `Nom de l'apprenant·e: ${traineeName} \r\n`
-        + `Nom du / des intervenants: ${trainersName}`;
+      const description = UtilsHelper
+        .formatSingleCourseBillDescription(billMaturityDate, course.trainees, get(course, 'trainers', []));
 
       await CourseBill.create({
         ...omit(payload, ['quantity', 'maturityDate']),
@@ -558,14 +547,8 @@ exports.updateBillList = async (payload) => {
         if (!isFirstBill && payload.maturityDate) {
           const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
           const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDurationToAdd);
-          const traineeName = UtilsHelper.formatIdentity(get(course.trainees[0], 'identity'), 'FL');
-          const trainersName = course.trainers
-            .map(trainer => UtilsHelper.formatIdentity(get(trainer, 'identity'), 'FL')).join(', ');
-          const newDescription = 'Facture liée à des frais pédagogiques \r\n'
-            + 'Contrat de professionnalisation \r\n'
-            + `ACCOMPAGNEMENT ${newMaturityDate.format('LLLL yyyy')}\r\n`
-            + `Nom de l'apprenant·e: ${traineeName} \r\n`
-            + `Nom du / des intervenants: ${trainersName}`;
+          const newDescription = UtilsHelper
+            .formatSingleCourseBillDescription(newMaturityDate, course.trainees, course.trainers);
 
           payloadToSet['mainFee.description'] = newDescription;
           payloadToSet.maturityDate = newMaturityDate.toISO();

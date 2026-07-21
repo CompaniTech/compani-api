@@ -1997,7 +1997,7 @@ describe('updateBillList', () => {
     };
     const description = 'Facture liée à des frais pédagogiques \r\n'
       + 'Contrat de professionnalisation \r\n'
-      + 'ACCOMPAGNEMENT septembre 2025\r\n'
+      + 'ACCOMPAGNEMENT septembre 2025 \r\n'
       + 'Nom de l\'apprenant·e: Lili Apprenante \r\n'
       + 'Nom du / des intervenants: Toto Formateur, Architecte Parcours';
 
