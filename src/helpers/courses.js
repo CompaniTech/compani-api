@@ -1046,10 +1046,27 @@ exports.updateCourse = async (courseId, payload, credentials) => {
         .lean();
       if (courseBillsAfterLastInterruptionStartDate.length) {
         const interruptionDuration = CompaniDate(interruptionEndDate).diff(interruptionStartDate, SECOND);
+
+        let singleCourseTrainees = [];
+        let singleCourseTrainers = [];
+        if (courseFromDb.type === SINGLE) {
+          const course = await Course.findOne({ _id: courseId }, { trainees: 1, trainers: 1 })
+            .populate({ path: 'trainees', select: 'identity' })
+            .populate({ path: 'trainers', select: 'identity' })
+            .lean();
+          singleCourseTrainees = course.trainees;
+          singleCourseTrainers = course.trainers || [];
+        }
+
         const promises = [];
         for (const bill of courseBillsAfterLastInterruptionStartDate) {
-          const maturityDate = CompaniDate(bill.maturityDate).add(interruptionDuration).toISO();
-          promises.push(CourseBill.updateOne({ _id: bill._id }, { maturityDate }));
+          const maturityDate = CompaniDate(bill.maturityDate).add(interruptionDuration);
+          const billPayload = { maturityDate: maturityDate.toISO() };
+          if (courseFromDb.type === SINGLE) {
+            billPayload['mainFee.description'] = UtilsHelper
+              .formatSingleCourseBillDescription(maturityDate, singleCourseTrainees, singleCourseTrainers);
+          }
+          promises.push(CourseBill.updateOne({ _id: bill._id }, { $set: billPayload }));
         }
 
         await Promise.all(promises);
