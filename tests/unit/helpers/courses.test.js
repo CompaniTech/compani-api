@@ -36,6 +36,7 @@ const DocxHelper = require('../../../src/helpers/docx');
 const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
 const StepsHelper = require('../../../src/helpers/steps');
 const TrainingContractsHelper = require('../../../src/helpers/trainingContracts');
+const TrainerMissionsHelper = require('../../../src/helpers/trainerMissions');
 const GDriveStorageHelper = require('../../../src/helpers/gDriveStorage');
 const NotificationHelper = require('../../../src/helpers/notifications');
 const UserHelper = require('../../../src/helpers/users');
@@ -9730,12 +9731,14 @@ describe('addTrainer', () => {
 
 describe('removeTrainer', () => {
   let courseUpdateOne;
-  let trainerMissionFindOneAndUpdate;
+  let trainerMissionFindOne;
+  let trainerMissionsHelperUpdate;
   let courseFindOne;
   let createHistoryOnTrainerAdditionOrDeletion;
 
   beforeEach(() => {
-    trainerMissionFindOneAndUpdate = sinon.stub(TrainerMission, 'findOneAndUpdate');
+    trainerMissionFindOne = sinon.stub(TrainerMission, 'findOne');
+    trainerMissionsHelperUpdate = sinon.stub(TrainerMissionsHelper, 'update');
     courseUpdateOne = sinon.stub(Course, 'updateOne');
     courseFindOne = sinon.stub(Course, 'findOne');
     createHistoryOnTrainerAdditionOrDeletion = sinon
@@ -9743,38 +9746,39 @@ describe('removeTrainer', () => {
   });
 
   afterEach(() => {
-    trainerMissionFindOneAndUpdate.restore();
+    trainerMissionFindOne.restore();
+    trainerMissionsHelperUpdate.restore();
     courseUpdateOne.restore();
     courseFindOne.restore();
     createHistoryOnTrainerAdditionOrDeletion.restore();
   });
 
-  it('should remove trainer and contact from course and cancelled trainerMission', async () => {
+  it('should remove trainer and contact from course and cancel trainerMission', async () => {
     const trainerId = new ObjectId();
     const course = { _id: new ObjectId(), misc: 'Test', trainers: [trainerId], contact: trainerId };
-    const trainerMission = { _id: new ObjectId(), courses: [course._id], trainer: trainerId };
+    const trainerMission = { _id: new ObjectId() };
     const credentials = { _id: new ObjectId() };
     const payload = { course: course._id, trainer: trainerId, action: TRAINER_DELETION };
 
-    trainerMissionFindOneAndUpdate.returns(
-      SinonMongoose.stubChainedQueries({ ...trainerMission, cancelledAt: CompaniDate().startOf(DAY).toISO() }, ['lean'])
-    );
+    trainerMissionFindOne.returns(SinonMongoose.stubChainedQueries(trainerMission, ['lean']));
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
 
     await CourseHelper.removeTrainer(course._id, trainerId, credentials);
 
     SinonMongoose.calledOnceWithExactly(
-      trainerMissionFindOneAndUpdate,
+      trainerMissionFindOne,
       [
         {
-          query: 'findOneAndUpdate',
-          args: [
-            { courses: course._id, trainer: trainerId, cancelledAt: { $exists: false } },
-            { $set: { cancelledAt: CompaniDate().startOf(DAY).toISO() } },
-          ],
+          query: 'findOne',
+          args: [{ courses: course._id, trainer: trainerId, cancelledAt: { $exists: false } }, { _id: 1 }],
         },
         { query: 'lean' },
       ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      trainerMissionsHelperUpdate,
+      trainerMission._id,
+      { cancelledAt: CompaniDate().startOf(DAY).toISO() }
     );
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
