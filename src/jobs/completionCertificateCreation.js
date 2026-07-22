@@ -19,8 +19,14 @@ const completionCertificateCreationJob = {
       const app = server.server;
       const { month } = server.query;
 
+      const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
+      const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
+
       const courses = await Course
-        .find({ archivedAt: { $exists: false }, certificateGenerationMode: MONTHLY })
+        .find({
+          $or: [{ archivedAt: { $exists: false } }, { archivedAt: { $gte: startOfMonth } }],
+          certificateGenerationMode: MONTHLY,
+        })
         .populate({
           path: 'subProgram',
           select: 'steps subProgram',
@@ -28,9 +34,6 @@ const completionCertificateCreationJob = {
         })
         .populate({ path: 'slots', select: 'startDate endDate' })
         .lean();
-
-      const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
-      const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
 
       const courseSlots = courses
         .map((course) => {
@@ -47,7 +50,11 @@ const completionCertificateCreationJob = {
         .lean();
 
       const attendancesByCourse = groupBy(attendanceList, 'courseSlot.course');
-      const traineeCoursesWithAHOrAttendancesOnMonth = [];
+      const certificatesToCreate = [];
+      const certificatesToRegenerate = await CompletionCertificate
+        .find({ month, 'file.link': { $exists: false } })
+        .setOptions({ isVendorUser: true })
+        .lean();
       for (const course of courses) {
         const unsubscribedAttendances = await CoursesHelper.getUnsubscribedAttendances(
           {
@@ -75,7 +82,7 @@ const completionCertificateCreationJob = {
               continue;
             }
 
-            traineeCoursesWithAHOrAttendancesOnMonth.push(payload);
+            certificatesToCreate.push(payload);
           }
         }
 
@@ -100,14 +107,14 @@ const completionCertificateCreationJob = {
               continue;
             }
 
-            const certificateIsGonnaBeCreated = traineeCoursesWithAHOrAttendancesOnMonth.some(certificate =>
+            const certificateIsGonnaBeCreated = certificatesToCreate.some(certificate =>
               Object.entries(payload).every(([key, value]) => {
                 if (key === 'month') return certificate[key] === value;
                 return UtilsHelper.areObjectIdsEquals(certificate[key], value);
               }));
             if (certificateIsGonnaBeCreated) continue;
 
-            traineeCoursesWithAHOrAttendancesOnMonth.push(payload);
+            certificatesToCreate.push(payload);
           }
         }
       }
@@ -115,13 +122,14 @@ const completionCertificateCreationJob = {
       const certificateCreated = [];
       const errors = [];
       try {
-        const res = await CompletionCertificate.insertMany(traineeCoursesWithAHOrAttendancesOnMonth);
+        const res = await CompletionCertificate.insertMany(certificatesToCreate);
 
         certificateCreated.push(...res);
 
+        const certificatesToGenerate = [...res, ...certificatesToRegenerate];
         const BATCH_SIZE = 5;
-        for (let i = 0; i < res.length; i += BATCH_SIZE) {
-          const batch = res.slice(i, i + BATCH_SIZE);
+        for (let i = 0; i < certificatesToGenerate.length; i += BATCH_SIZE) {
+          const batch = certificatesToGenerate.slice(i, i + BATCH_SIZE);
           const generationPromises = batch.map(certificate =>
             app.inject({
               method: 'PUT',
@@ -144,18 +152,23 @@ const completionCertificateCreationJob = {
         errors.push(...writeErrors.map(error => error.err.op));
       }
 
-      return { certificateCreated, errors, month: CompaniDate(month, MM_YYYY).format('MMMM yyyy') };
+      return {
+        certificateCreated,
+        certificateUpdated: certificatesToRegenerate,
+        errors,
+        month: CompaniDate(month, MM_YYYY).format('MMMM yyyy'),
+      };
     } catch (e) {
       server.log(['cron', 'method'], e);
       return Boom.isBoom(e) ? e : Boom.badImplementation(e);
     }
   },
-  async onComplete(server, { certificateCreated, errors, month }) {
+  async onComplete(server, { certificateCreated, certificateUpdated, errors, month }) {
     try {
       server.log(['cron'], 'CompletionCertificateCreation OK');
       if (errors && errors.length) server.log(['error', 'cron', 'oncomplete'], errors);
 
-      await EmailHelper.completionCertificateCreationEmail(certificateCreated, errors, month);
+      await EmailHelper.completionCertificateCreationEmail(certificateCreated, certificateUpdated, errors, month);
 
       server.log(['cron', 'oncomplete'], 'Completion certificate creation : email envoyé.');
     } catch (e) {

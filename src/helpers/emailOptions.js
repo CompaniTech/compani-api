@@ -119,10 +119,12 @@ const addTutorContent = (tutorIdentity, tutorEmail, learnerIdentity, courseName,
   `;
 };
 
-const completionCertificateCreationContent = (certificateCreated, errors) => {
-  let body = `<p>Script exécuté. ${certificateCreated.length + errors.length} certificats traités.</p>`;
+const completionCertificateCreationContent = (certificateCreated, certificateUpdated, errors) => {
+  let body = `<p>Script exécuté. ${certificateCreated.length + certificateUpdated.length + errors.length} certificats traités.</p>`;
 
   if (certificateCreated.length) body = body.concat(`<p>Certificat créé pour les apprenants suivants :<br/> ${certificateCreated.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}<br/>`).join('\r\n')}</p>`);
+
+  if (certificateUpdated.length) body = body.concat(`<p>Certificat mis à jour pour les apprenants suivants :<br/> ${certificateUpdated.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}<br/>`).join('\r\n')}</p>`);
 
   if (errors.length) body = body.concat(`<p>Certificat à créer manuellement pour les apprenants suivants :<br/> ${errors.map(c => `Formation : ${c.course}, apprenant: ${c.trainee}, mois: ${c.month}<br/>`).join('\r\n')}</p>`);
 

@@ -382,11 +382,12 @@ describe('completionCertificateCreationEmail', async () => {
 
   it('should send an email to TECH_EMAILS after script has been executed', async () => {
     const certificateCreated = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+    const certificateUpdated = [new ObjectId(), new ObjectId()];
     const errors = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
     const month = '01-2025';
-    const content = `<p>Script correctement exécuté. ${certificateCreated.length + errors.length}
-      formations traitées.</p>
+    const content = `<p>Script correctement exécuté. 11 formations traitées.</p>
       <p>Certificat créé pour les formations suivantes : ${certificateCreated.join(', ')}</p>
+      <p>Certificat mis à jour pour les formations suivantes : ${certificateUpdated.join(', ')}</p>
       <p>Certificat à créer manuellement pour les formations suivantes : ${errors.join(', ')}</p>`;
     const sentObj = { msg: content };
 
@@ -394,7 +395,8 @@ describe('completionCertificateCreationEmail', async () => {
     sendMail.returns(sentObj);
     sendinBlueTransporter.returns({ sendMail });
 
-    const result = await EmailHelper.completionCertificateCreationEmail(certificateCreated, errors, month);
+    const result = await EmailHelper
+      .completionCertificateCreationEmail(certificateCreated, certificateUpdated, errors, month);
 
     expect(result).toEqual(sentObj);
     sinon.assert.calledWithExactly(sendinBlueTransporter);
@@ -407,7 +409,12 @@ describe('completionCertificateCreationEmail', async () => {
         html: content,
       }
     );
-    sinon.assert.calledWithExactly(completionCertificateCreationContent, certificateCreated, errors);
+    sinon.assert.calledWithExactly(
+      completionCertificateCreationContent,
+      certificateCreated,
+      certificateUpdated,
+      errors
+    );
   });
 });
 

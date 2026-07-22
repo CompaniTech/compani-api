@@ -15,6 +15,7 @@ describe('method', () => {
   let findCourse;
   let findAttendance;
   let findActivityHistory;
+  let findCompletionCertificate;
   let countDocumentsCompletionCertificate;
   let createManyCompletionCertificate;
   let injectStub;
@@ -23,6 +24,7 @@ describe('method', () => {
     findCourse = sinon.stub(Course, 'find');
     findAttendance = sinon.stub(Attendance, 'find');
     findActivityHistory = sinon.stub(ActivityHistory, 'find');
+    findCompletionCertificate = sinon.stub(CompletionCertificate, 'find');
     countDocumentsCompletionCertificate = sinon.stub(CompletionCertificate, 'countDocuments');
     createManyCompletionCertificate = sinon.stub(CompletionCertificate, 'insertMany');
     injectStub = sinon.stub();
@@ -32,6 +34,7 @@ describe('method', () => {
     findCourse.restore();
     findAttendance.restore();
     findActivityHistory.restore();
+    findCompletionCertificate.restore();
     countDocumentsCompletionCertificate.restore();
     createManyCompletionCertificate.restore();
   });
@@ -166,6 +169,7 @@ describe('method', () => {
     findCourse.onCall(2).returns(SinonMongoose.stubChainedQueries([]));
     findActivityHistory.onCall(0).returns(SinonMongoose.stubChainedQueries({}, ['lean']));
     findActivityHistory.onCall(1).returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
     countDocumentsCompletionCertificate.onCall(0).returns(0);
     countDocumentsCompletionCertificate.onCall(1).returns(0);
     createManyCompletionCertificate.returns([
@@ -182,11 +186,18 @@ describe('method', () => {
     const res = await completionCertificateCreationJob.method(server);
 
     expect(res.certificateCreated.length).toBe(3);
+    expect(res.certificateUpdated.length).toBe(0);
     expect(res.errors.length).toBe(1);
     SinonMongoose.calledWithExactly(
       findCourse,
       [
-        { query: 'find', args: [{ archivedAt: { $exists: false }, certificateGenerationMode: MONTHLY }] },
+        {
+          query: 'find',
+          args: [{
+            $or: [{ archivedAt: { $exists: false } }, { archivedAt: { $gte: startOfMonth } }],
+            certificateGenerationMode: MONTHLY,
+          }],
+        },
         {
           query: 'populate',
           args: [
@@ -301,6 +312,14 @@ describe('method', () => {
       ],
       1
     );
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificate,
+      [
+        { query: 'find', args: [{ month, 'file.link': { $exists: false } }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
     SinonMongoose.calledWithExactly(
       countDocumentsCompletionCertificate,
       [{ query: 'countDocuments', args: [{ course: courseIds[0], trainee: traineeIds[0], month }] }],
@@ -346,6 +365,84 @@ describe('method', () => {
       }
     );
   });
+
+  it('should retry generation for stuck certificates', async () => {
+    const courseId = new ObjectId();
+    const traineeId = new ObjectId();
+    const month = '02-2025';
+    const startOfMonth = CompaniDate(month, MM_YYYY).startOf('month').toISO();
+    const ungeneratedCertificate = new ObjectId();
+
+    findCourse.returns(SinonMongoose.stubChainedQueries([]));
+    findAttendance.returns(SinonMongoose.stubChainedQueries([], ['populate', 'setOptions', 'lean']));
+    findCompletionCertificate.returns(SinonMongoose.stubChainedQueries(
+      [{ _id: ungeneratedCertificate, course: courseId, trainee: traineeId, month }],
+      ['setOptions', 'lean']
+    ));
+    createManyCompletionCertificate.returns([]);
+    injectStub.onCall(0).returns({ statusCode: 200 });
+
+    // eslint-disable-next-line no-console
+    const server = { server: { inject: injectStub }, query: { month }, log: value => console.log(value) };
+    const res = await completionCertificateCreationJob.method(server);
+
+    expect(res.certificateCreated.length).toBe(0);
+    expect(res.certificateUpdated.length).toBe(1);
+    expect(res.errors.length).toBe(0);
+    SinonMongoose.calledOnceWithExactly(
+      findCourse,
+      [
+        {
+          query: 'find',
+          args: [{
+            $or: [{ archivedAt: { $exists: false } }, { archivedAt: { $gte: startOfMonth } }],
+            certificateGenerationMode: MONTHLY,
+          }],
+        },
+        {
+          query: 'populate',
+          args: [
+            {
+              path: 'subProgram',
+              select: 'steps subProgram',
+              populate: [{ path: 'steps', select: 'activities' }, { path: 'program', select: 'subPrograms' }],
+            },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate' }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findAttendance,
+      [
+        { query: 'find', args: [{ courseSlot: { $in: [] }, status: PRESENT }] },
+        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate course' }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificate,
+      [
+        { query: 'find', args: [{ month, 'file.link': { $exists: false } }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledWithExactly(createManyCompletionCertificate, []);
+    sinon.assert.calledWithExactly(
+      injectStub,
+      {
+        method: 'PUT',
+        url: `/completioncertificates/${ungeneratedCertificate}`,
+        auth: { credentials: { scope: ['completioncertificates:edit'] }, strategy: 'jwt' },
+        payload: { action: GENERATION },
+      }
+    );
+    sinon.assert.notCalled(countDocumentsCompletionCertificate);
+    sinon.assert.notCalled(findActivityHistory);
+  });
 });
 
 describe('onComplete', () => {
@@ -371,9 +468,19 @@ describe('onComplete', () => {
       { course: new ObjectId(), trainee: new ObjectId(), month },
       { course: new ObjectId(), trainee: new ObjectId(), month },
     ];
+    const certificateUpdated = [{ course: new ObjectId(), trainee: new ObjectId(), month }];
     const errors = [];
 
-    await completionCertificateCreationJob.onComplete(server, { certificateCreated, errors, month });
-    sinon.assert.calledOnceWithExactly(completionCertificateCreationEmail, certificateCreated, errors, month);
+    await completionCertificateCreationJob.onComplete(
+      server,
+      { certificateCreated, certificateUpdated, errors, month }
+    );
+    sinon.assert.calledOnceWithExactly(
+      completionCertificateCreationEmail,
+      certificateCreated,
+      certificateUpdated,
+      errors,
+      month
+    );
   });
 });
