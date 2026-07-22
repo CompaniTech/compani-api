@@ -39,6 +39,7 @@ const FileHelper = require('./file');
 const GCloudStorageHelper = require('./gCloudStorage');
 const StepsHelper = require('./steps');
 const TrainingContractsHelper = require('./trainingContracts');
+const TrainerMissionsHelper = require('./trainerMissions');
 const UserCompaniesHelper = require('./userCompanies');
 const drive = require('../models/Google/Drive');
 const {
@@ -1940,11 +1941,13 @@ exports.addTrainer = async (courseId, payload, credentials) => {
 };
 
 exports.removeTrainer = async (courseId, trainerId, credentials) => {
-  await TrainerMission
-    .findOneAndUpdate(
-      { courses: courseId, trainer: trainerId, cancelledAt: { $exists: false } },
-      { $set: { cancelledAt: CompaniDate().startOf(DAY).toISO() } }
-    ).lean();
+  const trainerMission = await TrainerMission
+    .findOne({ courses: courseId, trainer: trainerId, cancelledAt: { $exists: false } }, { _id: 1 })
+    .lean();
+
+  if (trainerMission) {
+    await TrainerMissionsHelper.update(trainerMission._id, { cancelledAt: CompaniDate().startOf(DAY).toISO() });
+  }
 
   const course = await Course.findOne({ _id: courseId }).lean();
   const trainerIsContact = UtilsHelper.areObjectIdsEquals(get(course, 'contact'), trainerId);
