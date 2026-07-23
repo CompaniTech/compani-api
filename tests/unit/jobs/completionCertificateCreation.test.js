@@ -443,6 +443,65 @@ describe('method', () => {
     sinon.assert.notCalled(countDocumentsCompletionCertificate);
     sinon.assert.notCalled(findActivityHistory);
   });
+
+  it('should not report a stuck certificate as updated if its retry still fails', async () => {
+    const courseId = new ObjectId();
+    const traineeId = new ObjectId();
+    const month = '02-2025';
+    const ungeneratedCertificate = new ObjectId();
+
+    findCourse.returns(SinonMongoose.stubChainedQueries([]));
+    findAttendance.returns(SinonMongoose.stubChainedQueries([], ['populate', 'setOptions', 'lean']));
+    findCompletionCertificate.returns(SinonMongoose.stubChainedQueries(
+      [{ _id: ungeneratedCertificate, course: courseId, trainee: traineeId, month }],
+      ['setOptions', 'lean']
+    ));
+    createManyCompletionCertificate.returns([]);
+    injectStub.onCall(0).returns({ statusCode: 500 });
+
+    // eslint-disable-next-line no-console
+    const server = { server: { inject: injectStub }, query: { month }, log: value => console.log(value) };
+    const res = await completionCertificateCreationJob.method(server);
+
+    expect(res.certificateCreated.length).toBe(0);
+    expect(res.certificateUpdated.length).toBe(0);
+    expect(res.errors).toEqual([{ trainee: traineeId, course: courseId, month }]);
+  });
+
+  it('should still retry stuck certificates if insertMany fails for new certificates', async () => {
+    const courseId = new ObjectId();
+    const traineeId = new ObjectId();
+    const month = '02-2025';
+    const ungeneratedCertificate = new ObjectId();
+
+    findCourse.returns(SinonMongoose.stubChainedQueries([]));
+    findAttendance.returns(SinonMongoose.stubChainedQueries([], ['populate', 'setOptions', 'lean']));
+    findCompletionCertificate.returns(SinonMongoose.stubChainedQueries(
+      [{ _id: ungeneratedCertificate, course: courseId, trainee: traineeId, month }],
+      ['setOptions', 'lean']
+    ));
+    createManyCompletionCertificate.throws(
+      { writeErrors: [{ err: { op: { trainee: traineeId, course: courseId, month } } }] }
+    );
+    injectStub.onCall(0).returns({ statusCode: 200 });
+
+    // eslint-disable-next-line no-console
+    const server = { server: { inject: injectStub }, query: { month }, log: value => console.log(value) };
+    const res = await completionCertificateCreationJob.method(server);
+
+    expect(res.certificateCreated.length).toBe(0);
+    expect(res.certificateUpdated.length).toBe(1);
+    expect(res.errors).toEqual([{ trainee: traineeId, course: courseId, month }]);
+    sinon.assert.calledWithExactly(
+      injectStub,
+      {
+        method: 'PUT',
+        url: `/completioncertificates/${ungeneratedCertificate}`,
+        auth: { credentials: { scope: ['completioncertificates:edit'] }, strategy: 'jwt' },
+        payload: { action: GENERATION },
+      }
+    );
+  });
 });
 
 describe('onComplete', () => {

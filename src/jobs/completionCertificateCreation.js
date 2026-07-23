@@ -120,41 +120,44 @@ const completionCertificateCreationJob = {
       }
 
       const certificateCreated = [];
+      const certificateUpdated = [];
       const errors = [];
+
+      let insertedCertificates = [];
       try {
-        const res = await CompletionCertificate.insertMany(certificatesToCreate);
-
-        certificateCreated.push(...res);
-
-        const certificatesToGenerate = [...res, ...certificatesToRegenerate];
-        const BATCH_SIZE = 5;
-        for (let i = 0; i < certificatesToGenerate.length; i += BATCH_SIZE) {
-          const batch = certificatesToGenerate.slice(i, i + BATCH_SIZE);
-          const generationPromises = batch.map(certificate =>
-            app.inject({
-              method: 'PUT',
-              url: `/completioncertificates/${certificate._id}`,
-              auth: { credentials: { scope: ['completioncertificates:edit'] }, strategy: 'jwt' },
-              payload: { action: GENERATION },
-            })
-          );
-          const generationRes = await Promise.allSettled(generationPromises);
-          generationRes.forEach((r, idx) => {
-            if (get(r, 'value.statusCode') !== 200) {
-              const cert = batch[idx];
-              errors.push({ trainee: cert.trainee, course: cert.course, month });
-            }
-          });
-        }
+        insertedCertificates = await CompletionCertificate.insertMany(certificatesToCreate);
+        certificateCreated.push(...insertedCertificates);
       } catch (e) {
         const { writeErrors } = e;
         server.log('completionCertificateCreation', e);
         errors.push(...writeErrors.map(error => error.err.op));
       }
 
+      const idsToRegenerate = new Set(certificatesToRegenerate.map(c => c._id.toString()));
+      const certificatesToGenerate = [...insertedCertificates, ...certificatesToRegenerate];
+      const BATCH_SIZE = 5;
+      for (let i = 0; i < certificatesToGenerate.length; i += BATCH_SIZE) {
+        const batch = certificatesToGenerate.slice(i, i + BATCH_SIZE);
+        const generationPromises = batch.map(certificate =>
+          app.inject({
+            method: 'PUT',
+            url: `/completioncertificates/${certificate._id}`,
+            auth: { credentials: { scope: ['completioncertificates:edit'] }, strategy: 'jwt' },
+            payload: { action: GENERATION },
+          })
+        );
+        const generationRes = await Promise.allSettled(generationPromises);
+        generationRes.forEach((r, idx) => {
+          const cert = batch[idx];
+          if (get(r, 'value.statusCode') !== 200) {
+            errors.push({ trainee: cert.trainee, course: cert.course, month });
+          } else if (idsToRegenerate.has(cert._id.toString())) certificateUpdated.push(cert);
+        });
+      }
+
       return {
         certificateCreated,
-        certificateUpdated: certificatesToRegenerate,
+        certificateUpdated,
         errors,
         month: CompaniDate(month, MM_YYYY).format('MMMM yyyy'),
       };

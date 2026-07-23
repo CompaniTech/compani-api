@@ -6,12 +6,17 @@ const { notionCourseSlotsUpdateJob } = require('../jobs/notionCourseSlotsUpdate'
 
 const completionCertificateCreation = async (req) => {
   try {
-    const { certificateCreated, errors, month } = await completionCertificateCreationJob.method(req);
+    const {
+      certificateCreated,
+      certificateUpdated,
+      errors,
+      month,
+    } = await completionCertificateCreationJob.method(req);
 
     return {
       message: `Completion certificate creation : ${certificateCreated.length} certificates created and
         ${errors.length} errors`,
-      data: { certificateCreated, errors, month },
+      data: { certificateCreated, certificateUpdated, errors, month },
     };
   } catch (e) {
     req.log('error', e);
