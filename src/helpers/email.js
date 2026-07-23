@@ -134,12 +134,12 @@ exports.addTutor = async (courseId, tutorId) => {
   }
 };
 
-exports.completionCertificateCreationEmail = (certificateCreated, errors, month) => {
+exports.completionCertificateCreationEmail = (certificateCreated, certificateUpdated, errors, month) => {
   const mailOptions = {
     from: `Compani <${SENDER_MAIL}>`,
     to: process.env.TECH_EMAILS,
     subject: `Script création des certificats de réalisation pour le mois de ${month}`,
-    html: EmailOptionsHelper.completionCertificateCreationContent(certificateCreated, errors),
+    html: EmailOptionsHelper.completionCertificateCreationContent(certificateCreated, certificateUpdated, errors),
   };
 
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
