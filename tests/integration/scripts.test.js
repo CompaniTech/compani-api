@@ -45,6 +45,7 @@ describe('SCRIPTS ROUTES - GET /scripts/completioncertificates-generation', () =
           expect.objectContaining({ course: courseList[0]._id, trainee: userList[0]._id, month }),
           expect.objectContaining({ course: courseList[2]._id, trainee: userList[2]._id, month }),
         ]));
+      expect(response.result.data.certificateUpdated).toEqual([]);
       expect(response.result.data.errors)
         .toEqual(expect.arrayContaining([
           expect.objectContaining({ course: courseList[0]._id, trainee: userList[0]._id, month }),
