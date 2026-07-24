@@ -33,6 +33,7 @@ exports.routes = [
   { plugin: require('./steps'), routes: { prefix: '/steps' } },
   { plugin: require('./subPrograms'), routes: { prefix: '/subprograms' } },
   { plugin: require('./taxCertificates'), routes: { prefix: '/taxcertificates' } },
+  { plugin: require('./trainerInvoices'), routes: { prefix: '/trainerinvoices' } },
   { plugin: require('./trainerMissions'), routes: { prefix: '/trainermissions' } },
   { plugin: require('./trainingContracts'), routes: { prefix: '/trainingcontracts' } },
   { plugin: require('./users'), routes: { prefix: '/users' } },
