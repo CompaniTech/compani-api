@@ -360,17 +360,6 @@ exports.getOfficialPdfContent = async (data) => {
     ...actionDetailsSection,
     {
       text: [
-        { text: 'qui s\'est déroulée du ', bold: true },
-        { text: `${startDate} `, italics: true },
-        { text: 'au ', bold: true },
-        { text: `${endDate}`, italics: true },
-      ],
-      marginLeft: 4,
-      marginBottom: 8,
-      marginTop: 4,
-    },
-    {
-      text: [
         {
           text: [
             { text: 'pour une durée de ', bold: true },
