@@ -9,6 +9,7 @@ const CourseSlot = require('../../../src/models/CourseSlot');
 const Step = require('../../../src/models/Step');
 const Program = require('../../../src/models/Program');
 const SubProgram = require('../../../src/models/SubProgram');
+const TrainerInvoice = require('../../../src/models/TrainerInvoice');
 const { authCompany, otherCompany, companyWithoutSubscription, otherHolding } = require('../../seed/authCompaniesSeed');
 const {
   WEBAPP,
@@ -23,6 +24,7 @@ const {
   SINGLE,
   PRESENT,
   MISSING,
+  PAID,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -292,6 +294,8 @@ const courseHistoriesList = [
   },
 ];
 
+const trainerInvoiceId = new ObjectId();
+
 const slotsList = [
   { // 0
     _id: new ObjectId(),
@@ -535,7 +539,19 @@ const slotsList = [
     course: coursesList[7]._id,
     step: steps[0]._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'FAC-0001' }],
+    trainerBills: [{ trainer: trainer._id, trainerInvoice: trainerInvoiceId }],
+  },
+];
+
+const trainerInvoiceList = [
+  {
+    _id: trainerInvoiceId,
+    trainer: trainer._id,
+    number: 'FAC-0001',
+    status: PAID,
+    courseSlots: [slotsList[29]._id],
+    amount: 0,
+    submittedAt: '2022-06-03T10:00:00.000Z',
   },
 ];
 
@@ -1076,6 +1092,7 @@ const populateDB = async () => {
     SubProgram.create(subProgramList),
     Program.create(programsList),
     CompletionCertificate.create(completionCertificates),
+    TrainerInvoice.create(trainerInvoiceList),
   ]);
 };
 

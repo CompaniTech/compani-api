@@ -37,8 +37,6 @@ const {
   PRESENT,
   DRAFT,
   SLOT_STATUS,
-  PAID,
-  NOT_PAID,
   MINUTE,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
@@ -417,6 +415,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       },
     })
     .populate({ path: 'trainers', select: 'identity' })
+    .populate({ path: 'trainerBills.trainerInvoice', select: 'status number' })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 
@@ -447,21 +446,20 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
 
     let trainersData;
     if (slot.trainers.length === 1) {
-      const trainerBill = (slot.trainerBills || [])
-        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, slot.trainers[0]._id));
+      const { status, trainerBill } = CourseSlotHelper.getSlotStatus(slot, slot.trainers[0]._id);
       trainersData = {
-        status: SLOT_STATUS[trainerBill ? PAID : NOT_PAID],
-        bills: trainerBill ? trainerBill.billNumber : '',
+        status: SLOT_STATUS[status],
+        bills: get(trainerBill, 'trainerInvoice') ? trainerBill.trainerInvoice.number : '',
       };
     } else {
       trainersData = (slot.trainers || []).reduce((acc, trainer) => {
-        const trainerBill = (slot.trainerBills || [])
-          .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainer._id));
-
+        const { status, trainerBill } = CourseSlotHelper.getSlotStatus(slot, trainer._id);
         const trainerIdentity = UtilsHelper.formatIdentity(trainer.identity, 'FL');
 
-        acc.status.push(`${trainerIdentity} : ${SLOT_STATUS[trainerBill ? PAID : NOT_PAID]}`);
-        if (trainerBill) acc.bills.push(`${trainerIdentity} : ${trainerBill.billNumber}`);
+        acc.status.push(`${trainerIdentity} : ${SLOT_STATUS[status]}`);
+        if (get(trainerBill, 'trainerInvoice')) {
+          acc.bills.push(`${trainerIdentity} : ${trainerBill.trainerInvoice.number}`);
+        }
 
         return acc;
       }, { status: [], bills: [] });

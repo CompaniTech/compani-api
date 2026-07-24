@@ -7,7 +7,15 @@ const Course = require('../../../src/models/Course');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
 const SinonMongoose = require('../sinonMongoose');
-const { REMOTE, ON_SITE, PRESENT, MISSING, SINGLE, NOT_PAID, PAID } = require('../../../src/helpers/constants');
+const {
+  REMOTE,
+  ON_SITE,
+  PRESENT,
+  MISSING,
+  SINGLE,
+  NOT_INVOICED,
+  PAID,
+} = require('../../../src/helpers/constants');
 
 describe('list', () => {
   let courseSlotsFind;
@@ -28,6 +36,8 @@ describe('list', () => {
     const courseIds = [new ObjectId(), new ObjectId()];
     const traineeIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
+    const trainerInvoiceId = new ObjectId();
+    const trainerInvoice = { _id: trainerInvoiceId, status: PAID, number: 'FACT_0001' };
     const subProgramId = new ObjectId();
     const stepIds = [new ObjectId(), new ObjectId(), new ObjectId()];
 
@@ -68,7 +78,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
-        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
+        trainerBills: [{ trainer: trainerId, trainerInvoice }],
       },
       {
         _id: new ObjectId(),
@@ -430,6 +440,7 @@ describe('list', () => {
                     status: PAID,
                     amount: '50',
                     trainerBillNumber: 'FACT_0001',
+                    trainerInvoiceId,
                     tradeName: 'program',
                   },
                   {
@@ -438,7 +449,7 @@ describe('list', () => {
                     endDate: '2020-05-10T12:30:00.000Z',
                     duration: 'PT30M',
                     isAbsence: true,
-                    status: NOT_PAID,
+                    status: NOT_INVOICED,
                     amount: '30',
                     tradeName: 'program',
                   },
@@ -448,23 +459,28 @@ describe('list', () => {
                     endDate: '2020-05-11T14:00:00.000Z',
                     duration: 'PT120M',
                     isAbsence: true,
-                    status: NOT_PAID,
+                    status: NOT_INVOICED,
                     amount: '120',
                     tradeName: 'program',
                   },
                 ],
-                toPayDuration: 'PT150M',
+                notInvoicedDuration: 'PT150M',
+                notInvoicedAmount: '150',
+                invoicedDuration: 'PT0S',
+                invoicedAmount: 0,
                 paidDuration: 'PT60M',
-                toPayAmount: '150',
                 paidAmount: '50',
               },
             },
             paidSingleSlotsDuration: 'PT60M',
             paidSingleSlotsAbsenceDuration: 'PT0S',
             paidSingleSlotsAmount: '50',
-            notPaidSingleSlotsDuration: 'PT150M',
-            notPaidSingleSlotsAbsenceDuration: 'PT150M',
-            notPaidSingleSlotsAmount: '150',
+            notInvoicedSingleSlotsDuration: 'PT150M',
+            notInvoicedSingleSlotsAbsenceDuration: 'PT150M',
+            notInvoicedSingleSlotsAmount: '150',
+            invoicedSingleSlotsDuration: 'PT0S',
+            invoicedSingleSlotsAbsenceDuration: 'PT0S',
+            invoicedSingleSlotsAmount: 0,
           },
         ],
         collectiveSlots: {
@@ -479,7 +495,7 @@ describe('list', () => {
                   endDate: '2020-05-04T15:00:00.000Z',
                   duration: 'PT180M',
                   isAbsence: true,
-                  status: NOT_PAID,
+                  status: NOT_INVOICED,
                   amount: '330',
                   stepName: 'step collective',
                   tradeName: 'program',
@@ -492,16 +508,18 @@ describe('list', () => {
                   endDate: '2020-05-04T15:00:00.000Z',
                   duration: 'PT180M',
                   isAbsence: false,
-                  status: NOT_PAID,
+                  status: NOT_INVOICED,
                   amount: '330',
                   stepName: 'step collective',
                   tradeName: 'program',
                 },
               ],
+              notInvoicedAmount: '330',
+              notInvoicedDuration: 'PT180M',
+              invoicedAmount: 0,
+              invoicedDuration: 'PT0S',
               paidAmount: 0,
               paidDuration: 'PT0S',
-              toPayAmount: '330',
-              toPayDuration: 'PT180M',
             },
             '08/05/2020': {
               slots: [
@@ -513,7 +531,7 @@ describe('list', () => {
                   endDate: '2020-05-08T14:00:00.000Z',
                   duration: 'PT120M',
                   isAbsence: true,
-                  status: NOT_PAID,
+                  status: NOT_INVOICED,
                   amount: '220',
                   stepName: 'step collective',
                   tradeName: 'program',
@@ -526,7 +544,7 @@ describe('list', () => {
                   endDate: '2020-05-08T14:00:00.000Z',
                   duration: 'PT120M',
                   isAbsence: true,
-                  status: NOT_PAID,
+                  status: NOT_INVOICED,
                   amount: '220',
                   stepName: 'step collective',
                   tradeName: 'program',
@@ -539,33 +557,41 @@ describe('list', () => {
                   endDate: '2020-05-08T10:30:00.000Z',
                   duration: 'PT30M',
                   isAbsence: true,
-                  status: NOT_PAID,
+                  status: NOT_INVOICED,
                   amount: '55',
                   stepName: 'step collective',
                   tradeName: 'program',
                 },
               ],
+              notInvoicedAmount: '275',
+              notInvoicedDuration: 'PT150M',
+              invoicedAmount: 0,
+              invoicedDuration: 'PT0S',
               paidAmount: 0,
               paidDuration: 'PT0S',
-              toPayAmount: '275',
-              toPayDuration: 'PT150M',
             },
           },
           totals: {
             paidCollectiveSlotsDuration: 'PT0S',
             paidCollectiveSlotsAbsenceDuration: 'PT0S',
-            paidCollectiveSlotsAmount: '0',
-            notPaidCollectiveSlotsDuration: 'PT330M',
-            notPaidCollectiveSlotsAbsenceDuration: 'PT150M',
-            notPaidCollectiveSlotsAmount: '605',
+            paidCollectiveSlotsAmount: 0,
+            invoicedCollectiveSlotsDuration: 'PT0S',
+            invoicedCollectiveSlotsAbsenceDuration: 'PT0S',
+            invoicedCollectiveSlotsAmount: 0,
+            notInvoicedCollectiveSlotsDuration: 'PT330M',
+            notInvoicedCollectiveSlotsAbsenceDuration: 'PT150M',
+            notInvoicedCollectiveSlotsAmount: '605',
           },
         },
         totalPaidSlotsDuration: 'PT60M',
         totalPaidSlotsAbsenceDuration: 'PT0S',
         totalPaidSlotsAmount: '50',
-        totalNotPaidSlotsDuration: 'PT480M',
-        totalNotPaidSlotsAbsenceDuration: 'PT300M',
-        totalNotPaidSlotsAmount: '755',
+        totalInvoicedSlotsDuration: 'PT0S',
+        totalInvoicedSlotsAbsenceDuration: 'PT0S',
+        totalInvoicedSlotsAmount: '0',
+        totalNotInvoicedSlotsDuration: 'PT480M',
+        totalNotInvoicedSlotsAbsenceDuration: 'PT300M',
+        totalNotInvoicedSlotsAmount: '755',
       },
     });
 
@@ -599,6 +625,7 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -678,7 +705,7 @@ describe('list', () => {
                   endDate: '2020-05-05T13:00:00.000Z',
                   duration: 'PT60M',
                   isAbsence: true,
-                  status: NOT_PAID,
+                  status: NOT_INVOICED,
                   amount: '110',
                   stepName: 'step collective',
                   tradeName: 'program',
@@ -691,33 +718,41 @@ describe('list', () => {
                   endDate: '2020-05-05T13:00:00.000Z',
                   duration: 'PT60M',
                   isAbsence: true,
-                  status: NOT_PAID,
+                  status: NOT_INVOICED,
                   amount: '110',
                   stepName: 'step collective',
                   tradeName: 'program',
                 },
               ],
+              notInvoicedAmount: '110',
+              notInvoicedDuration: 'PT60M',
+              invoicedAmount: 0,
+              invoicedDuration: 'PT0S',
               paidAmount: 0,
               paidDuration: 'PT0S',
-              toPayAmount: '110',
-              toPayDuration: 'PT60M',
             },
           },
           totals: {
             paidCollectiveSlotsDuration: 'PT0S',
             paidCollectiveSlotsAbsenceDuration: 'PT0S',
-            paidCollectiveSlotsAmount: '0',
-            notPaidCollectiveSlotsDuration: 'PT60M',
-            notPaidCollectiveSlotsAbsenceDuration: 'PT60M',
-            notPaidCollectiveSlotsAmount: '110',
+            paidCollectiveSlotsAmount: 0,
+            invoicedCollectiveSlotsDuration: 'PT0S',
+            invoicedCollectiveSlotsAbsenceDuration: 'PT0S',
+            invoicedCollectiveSlotsAmount: 0,
+            notInvoicedCollectiveSlotsDuration: 'PT60M',
+            notInvoicedCollectiveSlotsAbsenceDuration: 'PT60M',
+            notInvoicedCollectiveSlotsAmount: '110',
           },
         },
         totalPaidSlotsDuration: 'PT0S',
         totalPaidSlotsAbsenceDuration: 'PT0S',
         totalPaidSlotsAmount: '0',
-        totalNotPaidSlotsDuration: 'PT60M',
-        totalNotPaidSlotsAbsenceDuration: 'PT60M',
-        totalNotPaidSlotsAmount: '110',
+        totalInvoicedSlotsDuration: 'PT0S',
+        totalInvoicedSlotsAbsenceDuration: 'PT0S',
+        totalInvoicedSlotsAmount: '0',
+        totalNotInvoicedSlotsDuration: 'PT60M',
+        totalNotInvoicedSlotsAbsenceDuration: 'PT60M',
+        totalNotInvoicedSlotsAmount: '110',
       },
     });
 
@@ -750,6 +785,7 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -760,6 +796,8 @@ describe('list', () => {
     const courseIds = [new ObjectId(), new ObjectId()];
     const traineeIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
+    const trainerInvoiceId = new ObjectId();
+    const trainerInvoice = { _id: trainerInvoiceId, status: PAID, number: 'FACT_0001' };
     const subProgramId = new ObjectId();
 
     const slots = [
@@ -783,7 +821,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
+        trainerBills: [{ trainer: trainerId, trainerInvoice }],
       },
       {
         _id: new ObjectId(),
@@ -805,7 +843,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: MISSING }],
-        trainerBills: [{ trainer: trainerId, billNumber: 'FACT_0001' }],
+        trainerBills: [{ trainer: trainerId, trainerInvoice }],
       },
     ];
 
@@ -835,6 +873,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
+                  trainerInvoiceId,
                   tradeName: 'program',
                 },
                 {
@@ -849,30 +888,39 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
+                  trainerInvoiceId,
                   tradeName: 'program',
                 },
               ],
+              notInvoicedAmount: 0,
+              notInvoicedDuration: 'PT0S',
+              invoicedAmount: 0,
+              invoicedDuration: 'PT0S',
               paidAmount: '110',
               paidDuration: 'PT60M',
-              toPayAmount: 0,
-              toPayDuration: 'PT0S',
             },
           },
           totals: {
             paidCollectiveSlotsDuration: 'PT60M',
             paidCollectiveSlotsAbsenceDuration: 'PT60M',
             paidCollectiveSlotsAmount: '110',
-            notPaidCollectiveSlotsDuration: 'PT0S',
-            notPaidCollectiveSlotsAbsenceDuration: 'PT0S',
-            notPaidCollectiveSlotsAmount: '0',
+            invoicedCollectiveSlotsDuration: 'PT0S',
+            invoicedCollectiveSlotsAbsenceDuration: 'PT0S',
+            invoicedCollectiveSlotsAmount: 0,
+            notInvoicedCollectiveSlotsDuration: 'PT0S',
+            notInvoicedCollectiveSlotsAbsenceDuration: 'PT0S',
+            notInvoicedCollectiveSlotsAmount: 0,
           },
         },
         totalPaidSlotsDuration: 'PT60M',
         totalPaidSlotsAbsenceDuration: 'PT60M',
         totalPaidSlotsAmount: '110',
-        totalNotPaidSlotsDuration: 'PT0S',
-        totalNotPaidSlotsAbsenceDuration: 'PT0S',
-        totalNotPaidSlotsAmount: '0',
+        totalInvoicedSlotsDuration: 'PT0S',
+        totalInvoicedSlotsAbsenceDuration: 'PT0S',
+        totalInvoicedSlotsAmount: '0',
+        totalNotInvoicedSlotsDuration: 'PT0S',
+        totalNotInvoicedSlotsAbsenceDuration: 'PT0S',
+        totalNotInvoicedSlotsAmount: '0',
       },
     });
 
@@ -905,9 +953,61 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
+  });
+
+  it('should return PAID status for a slot paid before the invoicing system existed', async () => {
+    const courseId = new ObjectId();
+    const traineeId = new ObjectId();
+    const trainerId = new ObjectId();
+    const subProgramId = new ObjectId();
+    const stepId = new ObjectId();
+
+    const slots = [
+      {
+        _id: new ObjectId(),
+        startDate: '2020-05-03T12:00:00.000Z',
+        endDate: '2020-05-03T13:00:00.000Z',
+        step: { _id: stepId, name: 'step 1' },
+        trainers: [{ _id: trainerId, identity: { firstname: 'Jean', lastname: 'Pierre' } }],
+        course: {
+          _id: courseId,
+          misc: 'indiv 1',
+          tradeName: 'program',
+          subProgram: {
+            _id: subProgramId,
+            priceVersions: [
+              { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 50 }] },
+            ],
+          },
+          trainees: [{ _id: traineeId, identity: { firstname: 'App', lastname: 'One' } }],
+        },
+        attendances: [{ status: PRESENT }],
+        trainerBills: [{ trainer: trainerId }],
+      },
+    ];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries([{ _id: courseId }], ['lean']));
+    courseSlotsFind.returns(SinonMongoose.stubChainedQueries(slots));
+
+    const result = await CourseSlotsHelper
+      .list({ startDate: '2020-04-30T22:00:00.000Z', endDate: '2020-05-31T21:59:59.999Z' });
+
+    expect(result[trainerId].courses[0].singleTraineeSlots['step 1'].slots[0]).toEqual({
+      _id: slots[0]._id,
+      startDate: '2020-05-03T12:00:00.000Z',
+      endDate: '2020-05-03T13:00:00.000Z',
+      duration: 'PT60M',
+      isAbsence: false,
+      status: PAID,
+      amount: '50',
+      tradeName: 'program',
+    });
+    expect(result[trainerId].totalPaidSlotsAmount).toBe('50');
+    expect(result[trainerId].totalNotInvoicedSlotsAmount).toBe('0');
   });
 });
 
