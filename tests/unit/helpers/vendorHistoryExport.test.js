@@ -31,6 +31,7 @@ const {
   SINGLE,
   RECEIVED,
   PENDING,
+  PAID,
   PRESENT,
   MISSING,
   DRAFT,
@@ -1444,6 +1445,7 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -1621,6 +1623,7 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -1653,7 +1656,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
+        trainerBills: [{ trainer: trainers[0]._id, trainerInvoice: { status: PAID, number: 'FACT_0001' } }],
       },
       { // individual slot (MISSING)
         _id: new ObjectId(),
@@ -1677,7 +1680,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
+        trainerBills: [{ trainer: trainers[0]._id, trainerInvoice: { status: PAID, number: 'FACT_0001' } }],
       },
       { // collective slot (MISSING)
         _id: new ObjectId(),
@@ -1701,7 +1704,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0002' }],
+        trainerBills: [{ trainer: trainers[0]._id, trainerInvoice: { status: PAID, number: 'FACT_0002' } }],
       },
       { // collective slot (MISSING)
         _id: new ObjectId(),
@@ -1725,7 +1728,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0002' }],
+        trainerBills: [{ trainer: trainers[0]._id, trainerInvoice: { status: PAID, number: 'FACT_0002' } }],
       },
       { // collective slot (PRESENT)
         _id: new ObjectId(),
@@ -1749,7 +1752,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0003' }],
+        trainerBills: [{ trainer: trainers[0]._id, trainerInvoice: { status: PAID, number: 'FACT_0003' } }],
       },
     ];
 
@@ -1915,6 +1918,7 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
         { query: 'lean' },
       ]
     );

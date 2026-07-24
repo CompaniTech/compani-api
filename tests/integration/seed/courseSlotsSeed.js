@@ -13,6 +13,7 @@ const Attendance = require('../../../src/models/Attendance');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const CourseHistory = require('../../../src/models/CourseHistory');
+const TrainerInvoice = require('../../../src/models/TrainerInvoice');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
 const {
   vendorAdmin,
@@ -34,6 +35,7 @@ const {
   PRESENT,
   MOBILE,
   TRAINER_DELETION,
+  PAID,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { auxiliaryRoleId } = require('../../seed/authRolesSeed');
@@ -214,6 +216,8 @@ const coursesList = [
   },
 ];
 
+const trainerInvoiceIds = [new ObjectId(), new ObjectId()];
+
 const courseSlotsList = [
   { // 0
     _id: new ObjectId(),
@@ -324,7 +328,7 @@ const courseSlotsList = [
     course: coursesList[1]._id,
     step: stepsList[0]._id,
     trainers: [trainerAndCoach._id],
-    trainerBills: [{ trainer: trainerAndCoach._id, billNumber: 'FACT_0012' }],
+    trainerBills: [{ trainer: trainerAndCoach._id, trainerInvoice: trainerInvoiceIds[0] }],
   },
   { // 13 slot in completion certificate month
     _id: new ObjectId(),
@@ -357,7 +361,28 @@ const courseSlotsList = [
     course: coursesList[6]._id,
     step: stepsList[0]._id,
     trainers: [trainerAndCoach._id, trainer._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'Fact_test' }],
+    trainerBills: [{ trainer: trainer._id, trainerInvoice: trainerInvoiceIds[1] }],
+  },
+];
+
+const trainerInvoiceList = [
+  {
+    _id: trainerInvoiceIds[0],
+    trainer: trainerAndCoach._id,
+    number: 'FACT_0012',
+    status: PAID,
+    courseSlots: [courseSlotsList[12]._id],
+    amount: 90,
+    submittedAt: '2020-05-15T10:00:00.000Z',
+  },
+  {
+    _id: trainerInvoiceIds[1],
+    trainer: trainer._id,
+    number: 'Fact_test',
+    status: PAID,
+    courseSlots: [courseSlotsList[16]._id],
+    amount: 90,
+    submittedAt: '2020-05-15T10:00:00.000Z',
   },
 ];
 
@@ -476,6 +501,7 @@ const populateDB = async () => {
     Attendance.create(attendances),
     AttendanceSheet.create(attendanceSheets),
     UserCompany.create(userCompanies),
+    TrainerInvoice.create(trainerInvoiceList),
   ]);
 };
 
