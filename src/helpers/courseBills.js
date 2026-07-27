@@ -22,6 +22,8 @@ const {
   LIST,
   TRAINING_ORGANISATION_MANAGER,
   VENDOR_ADMIN,
+  COACH,
+  CLIENT_ADMIN,
   DD_MM_YYYY,
   BALANCE,
   COURSE,
@@ -96,6 +98,8 @@ exports.formatCourseBill = (courseBill) => {
 
 const balance = async (company, credentials) => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
+  const canSeeXmlSEPAFileInfos = isVendorUser ||
+    [COACH, CLIENT_ADMIN].includes(get(credentials, 'role.client.name'));
 
   const courseBills = await CourseBill
     .find({ $or: [{ companies: company }, { 'payer.company': company }], billedAt: { $exists: true, $type: 'date' } })
@@ -115,7 +119,13 @@ const balance = async (company, credentials) => {
       {
         path: 'coursePayments',
         options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
-        ...isVendorUser && { populate: { path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser } } },
+        ...canSeeXmlSEPAFileInfos && {
+          populate: {
+            path: 'xmlSEPAFileInfos',
+            select: 'name',
+            options: { isVendorUser, requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, company) },
+          },
+        },
       },
       ...(isVendorUser ? [{ path: 'pendingCourseBill', options: { isVendorUser: true } }] : []),
     ])
