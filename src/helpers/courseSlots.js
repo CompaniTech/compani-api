@@ -43,11 +43,14 @@ exports.getHourlyAmount = (slot) => {
   return price ? price.hourlyAmount : 0;
 };
 
-const initStatusTotals = () => ({
-  [NOT_INVOICED]: { duration: CompaniDuration('PT0S'), amount: 0, absenceDuration: CompaniDuration('PT0S') },
-  [INVOICED]: { duration: CompaniDuration('PT0S'), amount: 0, absenceDuration: CompaniDuration('PT0S') },
-  [PAID]: { duration: CompaniDuration('PT0S'), amount: 0, absenceDuration: CompaniDuration('PT0S') },
-});
+const SLOT_STATUS = [NOT_INVOICED, INVOICED, PAID];
+
+const initStatusTotals = () => Object.fromEntries(
+  SLOT_STATUS.map(status => [
+    status,
+    { duration: CompaniDuration('PT0S'), amount: 0, absenceDuration: CompaniDuration('PT0S') },
+  ])
+);
 
 const addToStatusTotals = (totals, status, durationObj, amount, isAbsence) => ({
   ...totals,
@@ -195,7 +198,7 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
 };
 
 const mergeStatusTotals = (target, source) => Object.fromEntries(
-  [NOT_INVOICED, INVOICED, PAID].map(status => [status, {
+  SLOT_STATUS.map(status => [status, {
     duration: target[status].duration.add(source[status].duration),
     amount: NumbersHelper.add(target[status].amount, source[status].amount),
     absenceDuration: target[status].absenceDuration.add(source[status].absenceDuration),
