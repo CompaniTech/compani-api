@@ -307,14 +307,11 @@ describe('list', () => {
             },
             {
               path: 'coursePayments',
-              options: {
-                isVendorUser: true,
-                requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
-              },
+              options: { isVendorUser: true, requestingOwnInfos: true },
               populate: {
                 path: 'xmlSEPAFileInfos',
                 select: 'name',
-                options: { isVendorUser: true },
+                options: { isVendorUser: true, requestingOwnInfos: true },
               },
             },
             { path: 'pendingCourseBill', options: { isVendorUser: true } },
@@ -439,20 +436,16 @@ describe('list', () => {
             },
             {
               path: 'coursePayments',
-              options: {
-                isVendorUser: false,
-                requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
+              options: { isVendorUser: false, requestingOwnInfos: true },
+              populate: {
+                path: 'xmlSEPAFileInfos',
+                select: 'name',
+                options: { isVendorUser: false, requestingOwnInfos: true },
               },
             },
           ]],
         },
-        {
-          query: 'setOptions',
-          args: [{
-            isVendorUser: false,
-            requestingOwnInfos: UtilsHelper.hasUserAccessToCompany(credentials, companyId),
-          }],
-        },
+        { query: 'setOptions', args: [{ isVendorUser: false, requestingOwnInfos: true }] },
         { query: 'lean' },
       ]
     );
