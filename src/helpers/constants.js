@@ -228,12 +228,14 @@ module.exports = {
       [this.XML_GENERATED]: 'Fichier XML associé',
     };
   },
+  NOT_INVOICED: 'not_invoiced',
+  INVOICED: 'invoiced',
   PAID: 'paid',
-  NOT_PAID: 'not_paid',
   get SLOT_STATUS() {
     return {
+      [this.NOT_INVOICED]: 'Non facturé',
+      [this.INVOICED]: 'Facturé',
       [this.PAID]: 'Réglé',
-      [this.NOT_PAID]: 'Non réglé',
     };
   },
   // SURCHARGES

@@ -162,7 +162,7 @@ const vendorHistoryExportTypes = [
     expectedRows: [
       '\ufeff"Id Créneau";"Id Formation";"Formation";"Étape";"Type";"Apprenant";"Date de création";"Date de début";"Date de fin";"Durée";"Adresse";"Nombre de présences";"Nombre d\'absences";"Durée absences";"Nombre de présences non prévues";"Nombre d\'émargements non remplis";"Intervenants";"Statut";"Facture intervenant";"Montant"',
       `${courseSlotList[12]._id};${coursesList[9]._id};"Nom 1 - Paul Trainee";"étape 2";"distanciel";"Paul TRAINEE";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";0;0;"0,00";0;1;"Gilles FORMATEUR, Simon TRAINERANDCOACH";"Gilles FORMATEUR : Réglé, Simon TRAINERANDCOACH : Réglé";"Gilles FORMATEUR : FACT_00012, Simon TRAINERANDCOACH : FACT_234w";"200,00"`,
-      `${courseSlotList[13]._id};${coursesList[10]._id};"Nom 1 - Marie Trainee";"étape 2";"distanciel";"Marie TRAINEE";"12/12/2020 11:00:01";"17/01/2021 15:00:00";"17/01/2021 19:00:00";"4,00";"https://meet.google.com";1;0;"0,00";0;0;"Gilles FORMATEUR";"Non réglé";;"320,00"`,
+      `${courseSlotList[13]._id};${coursesList[10]._id};"Nom 1 - Marie Trainee";"étape 2";"distanciel";"Marie TRAINEE";"12/12/2020 11:00:01";"17/01/2021 15:00:00";"17/01/2021 19:00:00";"4,00";"https://meet.google.com";1;0;"0,00";0;0;"Gilles FORMATEUR";"Non facturé";;"320,00"`,
     ],
     query: 'startDate=2021-01-16T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
   },

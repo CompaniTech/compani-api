@@ -15,7 +15,7 @@ const CourseSlotSchema = mongoose.Schema({
   trainerBills: {
     type: [{
       trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-      billNumber: { type: String, required: true },
+      trainerInvoice: { type: mongoose.Schema.Types.ObjectId, ref: 'TrainerInvoice' },
     }],
     _id: false,
     default: undefined,

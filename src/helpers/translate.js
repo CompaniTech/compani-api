@@ -214,6 +214,9 @@ module.exports = {
     noSlotLinkedToTrainerOnThisDay: 'No slot linked to trainer on this day.',
     trainerNotLinkedToSlot: 'Trainer is not linked to this slot.',
     courseSlotsUpdated: 'Course slots updated.',
+    /* Trainer invoices */
+    trainerInvoiceCreated: 'Trainer invoice created.',
+    trainerInvoiceNumberAlreadyUsed: 'This invoice number is already used.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Course funding organisations found.',
     courseFundingOrganisationsNotFound: 'Course funding organisations not found.',
@@ -556,6 +559,9 @@ module.exports = {
     noSlotLinkedToTrainerOnThisDay: 'Il n\'y a pas de créneau lié à cet intervenant pour cette journée.',
     trainerNotLinkedToSlot: 'Certains créneaux ne sont pas liés à l\'intervenant.',
     courseSlotsUpdated: 'Créneaux mis à jour.',
+    /* Trainer invoices */
+    trainerInvoiceCreated: 'Facture de l\'intervenant·e créée.',
+    trainerInvoiceNumberAlreadyUsed: 'Ce numéro de facture est déjà utilisé.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
     courseFundingOrganisationsNotFound: 'Financeurs non trouvés.',
