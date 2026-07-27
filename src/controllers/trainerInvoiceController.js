@@ -13,6 +13,11 @@ const create = async (req) => {
       data: { trainerInvoice },
     };
   } catch (e) {
+    // Error code when there is a duplicate key, in this case : trainer + number (unique)
+    if (e.code === 11000) {
+      req.log(['error', 'db'], e);
+      return Boom.conflict(translate[language].trainerInvoiceNumberAlreadyUsed);
+    }
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
   }

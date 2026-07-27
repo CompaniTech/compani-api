@@ -11,6 +11,8 @@ const TrainerInvoiceSchema = mongoose.Schema({
   submittedAt: { type: Date, required: true },
 }, { timestamps: true });
 
+TrainerInvoiceSchema.index({ trainer: 1, number: 1 }, { unique: true });
+
 queryMiddlewareList.map(middleware => TrainerInvoiceSchema.pre(middleware, formatQuery));
 
 module.exports = mongoose.model('TrainerInvoice', TrainerInvoiceSchema);
