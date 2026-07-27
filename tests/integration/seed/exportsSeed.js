@@ -1636,6 +1636,7 @@ const xmlSEPAFileInfos = {
   _id: new ObjectId(),
   coursePayments: [coursePaymentList[0]._id],
   name: 'Prélèvements Septembre 2025',
+  createdAt: '2022-03-12T10:00:00.000Z',
 };
 
 const courseCreditNotesList = [

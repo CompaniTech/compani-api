@@ -648,7 +648,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
         path: 'coursePayments',
         select: 'netInclTaxes nature status',
         options: { isVendorUser },
-        populate: { path: 'xmlSEPAFileInfos', select: 'name -coursePayments', options: { isVendorUser } },
+        populate: { path: 'xmlSEPAFileInfos', select: 'name -coursePayments createdAt', options: { isVendorUser } },
       })
       .setOptions({ isVendorUser })
       .lean(),
@@ -715,6 +715,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
     } = CourseBillHelper.computeAmounts(bill);
     const slotInfo = getCourseSlotInfo(bill.course._id, slotDataMap, slotsToPlanMap);
     const commonInfos = formatCommonInfos(bill, netInclTaxes, netExclTaxes);
+    const xmlSEPAFileInfos = compact((bill.coursePayments || []).map(p => (get(p, 'xmlSEPAFileInfos'))));
 
     const formattedBill = {
       Nature: BILLING_DOCUMENTS[BILL],
@@ -724,7 +725,9 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       'Montant réglé': bill.courseCreditNote
         ? UtilsHelper.formatFloatForExport(NumbersHelper.subtract(paid, netInclTaxes))
         : UtilsHelper.formatFloatForExport(paid),
-      'Lot de prélèvement': compact((bill.coursePayments || []).map(p => get(p, 'xmlSEPAFileInfos.name', '')))
+      'Lot de prélèvement': xmlSEPAFileInfos.map(xml => xml.name).join(','),
+      'Date du lot de prélèvement': xmlSEPAFileInfos
+        .map(xml => (CompaniDate(xml.createdAt).format(DD_MM_YYYY)))
         .join(','),
       'Document lié': get(bill, 'courseCreditNote.number') || '',
       'Montant soldé': bill.courseCreditNote ? UtilsHelper.formatFloatForExport(netInclTaxes) : '',
@@ -753,6 +756,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       ...commonInfos,
       'Montant réglé': '',
       'Lot de prélèvement': '',
+      'Date du lot de prélèvement': '',
       'Document lié': creditNote.courseBill.number,
       'Montant soldé': '',
       Solde: '',
