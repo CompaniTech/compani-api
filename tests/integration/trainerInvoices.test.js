@@ -1,8 +1,10 @@
 const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
+const sinon = require('sinon');
 const app = require('../../server');
 const TrainerInvoice = require('../../src/models/TrainerInvoice');
 const CourseSlot = require('../../src/models/CourseSlot');
+const NodemailerHelper = require('../../src/helpers/nodemailer');
 const { trainer, trainerAndCoach } = require('../seed/authUsersSeed');
 const { populateDB, courseSlotsList } = require('./seed/trainerInvoicesSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
@@ -17,9 +19,16 @@ describe('NODE ENV', () => {
 
 describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
   let authToken;
+  let sendinBlueTransporter;
 
   beforeEach(async () => {
     await populateDB();
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
+      .returns({ sendMail: sinon.stub().returns('emailSent') });
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
   });
 
   describe('TRAINER', () => {

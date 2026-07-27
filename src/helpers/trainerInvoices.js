@@ -2,7 +2,9 @@ const uniqBy = require('lodash/uniqBy');
 const CourseSlot = require('../models/CourseSlot');
 const TrainerInvoice = require('../models/TrainerInvoice');
 const CourseSlotsHelper = require('./courseSlots');
+const EmailHelper = require('./email');
 const NumbersHelper = require('./numbers');
+const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 const { MINUTE, INVOICED } = require('./constants');
@@ -30,9 +32,18 @@ exports.createInvoice = async (payload, credentials) => {
     .find({ _id: { $in: courseSlotIds } })
     .populate({ path: 'step', select: '_id' })
     .populate({ path: 'course', select: 'subProgram', populate: { path: 'subProgram', select: 'priceVersions' } })
+    .sort({ startDate: -1 })
     .lean();
 
   const amount = computeAmount(courseSlots);
+
+  await EmailHelper.sendTrainerInvoiceEmail(
+    payload.number,
+    amount,
+    UtilsHelper.formatIdentity(credentials.identity, 'FL'),
+    courseSlots,
+    payload.file
+  );
 
   const trainerInvoice = await TrainerInvoice.create({
     trainer: credentials._id,

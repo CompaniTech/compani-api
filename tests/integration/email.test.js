@@ -208,13 +208,13 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
     await populateDB();
     sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
       .returns({ sendMail: sinon.stub().returns('emailSent') });
-    process.env.BILLING_COMPANI_EMAIL = 'test@compani.fr';
+    process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
     process.env.BILLING_USER_ID = emailUser._id;
     process.env.VAEI_SUBPROGRAM_IDS = VAEI_SUBPROGRAM_ID;
   });
   afterEach(() => {
     sendinBlueTransporter.restore();
-    process.env.BILLING_COMPANI_EMAIL = '';
+    process.env.MANAGEMENT_COMPANI_EMAIL = '';
     process.env.BILLING_USER_ID = '';
     process.env.VAEI_SUBPROGRAM_IDS = '';
   });
