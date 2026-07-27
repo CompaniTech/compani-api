@@ -17,6 +17,7 @@ const {
   RESEND,
   DAY,
   DD_MM_YYYY,
+  HH_MM,
 } = require('./constants');
 const translate = require('./translate');
 const Course = require('../models/Course');
@@ -175,7 +176,7 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
     }
 
     const billNumbers = courseBills.map(cb => cb.number).join(', ');
-    const senderEmail = process.env.BILLING_COMPANI_EMAIL;
+    const senderEmail = process.env.MANAGEMENT_COMPANI_EMAIL;
     const signatureBillingUserId = new ObjectId(process.env.BILLING_USER_ID);
     const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 }).lean();
 
@@ -216,6 +217,33 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
     content,
     type,
   });
+};
+
+exports.sendTrainerInvoiceEmail = async (number, amount, trainerName, courseSlots, file) => {
+  const slotsList = [
+    ...new Set(courseSlots.map(s =>
+      `<li>${CompaniDate(s.startDate).format(`${DD_MM_YYYY} ${HH_MM}`)} - ${CompaniDate(s.endDate).format(HH_MM)}</li>`
+    )),
+  ]
+    .join('');
+
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: process.env.BILLING_COMPANI_EMAIL,
+    subject: `${trainerName} - nouvelle facture formateur - ${number}`,
+    html: `<p>Numéro de facture : ${number}</p>
+      <p>Créneaux facturés :</p>
+      <ul>${slotsList}</ul>
+      <p>Montant total TTC : ${UtilsHelper.formatPrice(amount)}</p>
+      <p><em>Merci de ne pas répondre directement à cet email.</em></p>`,
+    attachments: [{
+      filename: `${UtilsHelper.formatDownloadName(`facture_${trainerName}_${number}`)}.pdf`,
+      content: file,
+      contentType: 'application/pdf',
+    }],
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
 
 exports.completionSendingPendingBillsEmail = (day, emailSent, pendingCourseBillDeleted) => {
