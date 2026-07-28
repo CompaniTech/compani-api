@@ -73,11 +73,10 @@ describe('createInvoice', () => {
             populate: { path: 'subProgram', select: 'priceVersions' },
           }],
         },
-        { query: 'sort', args: [{ startDate: -1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(sendTrainerInvoiceEmail, 'FACT_0001', '125', 'Jean DUPONT', courseSlots, 'file');
     sinon.assert.calledOnceWithExactly(
       trainerInvoiceCreate,
       {
@@ -94,6 +93,7 @@ describe('createInvoice', () => {
       { _id: { $in: courseSlotIds } },
       { $push: { trainerBills: { trainer: credentials._id, trainerInvoice: trainerInvoiceId } } }
     );
+    sinon.assert.calledOnceWithExactly(sendTrainerInvoiceEmail, 'FACT_0001', '125', 'Jean DUPONT', courseSlots, 'file');
   });
 
   it('should count a collective session amount only once, whatever the number of attending trainees', async () => {
@@ -140,11 +140,10 @@ describe('createInvoice', () => {
             populate: { path: 'subProgram', select: 'priceVersions' },
           }],
         },
-        { query: 'sort', args: [{ startDate: -1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(sendTrainerInvoiceEmail, 'FACT_0003', '170', 'Jean DUPONT', courseSlots, 'file');
     sinon.assert.calledOnceWithExactly(
       trainerInvoiceCreate,
       {
@@ -161,5 +160,6 @@ describe('createInvoice', () => {
       { _id: { $in: courseSlotIds } },
       { $push: { trainerBills: { trainer: credentials._id, trainerInvoice: trainerInvoiceId } } }
     );
+    sinon.assert.calledOnceWithExactly(sendTrainerInvoiceEmail, 'FACT_0003', '170', 'Jean DUPONT', courseSlots, 'file');
   });
 });

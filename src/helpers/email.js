@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const compact = require('lodash/compact');
+const uniqBy = require('lodash/uniqBy');
 const NodemailerHelper = require('./nodemailer');
 const EmailOptionsHelper = require('./emailOptions');
 const AuthenticationHelper = require('./authentication');
@@ -220,11 +221,10 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
 };
 
 exports.sendTrainerInvoiceEmail = async (number, amount, trainerName, courseSlots, file) => {
-  const slotsList = [
-    ...new Set(courseSlots.map(s =>
-      `<li>${CompaniDate(s.startDate).format(`${DD_MM_YYYY} ${HH_MM}`)} - ${CompaniDate(s.endDate).format(HH_MM)}</li>`
-    )),
-  ]
+  const uniqueSlots = uniqBy(courseSlots, s => `${s.startDate.toISOString()}_${s.endDate.toISOString()}`);
+  const slotsList = uniqueSlots
+    .map(s => `<li>${CompaniDate(s.startDate).format(`${DD_MM_YYYY} ${HH_MM}`)}`
+      + ` - ${CompaniDate(s.endDate).format(HH_MM)}</li>`)
     .join('');
 
   const mailOptions = {
