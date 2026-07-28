@@ -431,7 +431,7 @@ describe('sendBillEmail', async () => {
     generateBillPdf = sinon.stub(CourseBillHelper, 'generateBillPdf');
     sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
     sendMail = sinon.stub();
-    process.env.BILLING_COMPANI_EMAIL = 'tech@compani.fr';
+    process.env.MANAGEMENT_COMPANI_EMAIL = 'tech@compani.fr';
     process.env.BILLING_USER_ID = userId.toHexString();
     userFindOne = sinon.stub(User, 'findOne');
     updateManyCourseBill = sinon.stub(CourseBill, 'updateMany');
@@ -442,7 +442,7 @@ describe('sendBillEmail', async () => {
   afterEach(() => {
     generateBillPdf.restore();
     sendinBlueTransporter.restore();
-    process.env.BILLING_COMPANI_EMAIL = '';
+    process.env.MANAGEMENT_COMPANI_EMAIL = '';
     process.env.BILLING_USER_ID = '';
     userFindOne.restore();
     updateManyCourseBill.restore();
@@ -815,6 +815,57 @@ describe('completionNotionCourseSlotsUpdate', () => {
         to: 'tech@compani.fr',
         subject: 'Script de mise à jour des actions de formations individuelles dans Notion',
         html,
+      }
+    );
+  });
+});
+
+describe('sendTrainerInvoiceEmail', () => {
+  let sendMail;
+  let sendinBlueTransporter;
+
+  beforeEach(() => {
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
+    sendMail = sinon.stub();
+    process.env.BILLING_COMPANI_EMAIL = 'test@test.fr';
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+    process.env.BILLING_COMPANI_EMAIL = '';
+  });
+
+  it('should send an email to accounting with the invoice pdf attached', async () => {
+    const number = 'FACT_0001';
+    const amount = '125';
+    const trainerName = 'Jean DUPONT';
+    const courseSlots = [
+      { startDate: new Date('2020-01-01T09:00:00.000Z'), endDate: new Date('2020-01-01T10:00:00.000Z') },
+      { startDate: new Date('2020-01-01T09:00:00.000Z'), endDate: new Date('2020-01-01T10:00:00.000Z') },
+      { startDate: new Date('2020-01-01T10:00:00.000Z'), endDate: new Date('2020-01-01T11:30:00.000Z') },
+    ];
+    const file = 'file-stream';
+    const sentObj = { msg: 'Message sent !' };
+
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+
+    const result = await EmailHelper.sendTrainerInvoiceEmail(number, amount, trainerName, courseSlots, file);
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: 'test@test.fr',
+        subject: 'Jean DUPONT - nouvelle facture formateur - FACT_0001',
+        html: '<p>Numéro de facture : FACT_0001</p>\n'
+          + '      <p>Créneaux facturés :</p>\n'
+          + '      <ul><li>01/01/2020 10:00 - 11:00</li><li>01/01/2020 11:00 - 12:30</li></ul>\n'
+          + `      <p>Montant total TTC : ${UtilsHelper.formatPrice(125)}</p>\n`
+          + '      <p><em>Merci de ne pas répondre directement à cet email.</em></p>',
+        attachments: [{ filename: 'facture_Jean_DUPONT_FACT_0001.pdf', content: file, contentType: 'application/pdf' }],
       }
     );
   });

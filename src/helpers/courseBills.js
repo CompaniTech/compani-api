@@ -98,8 +98,7 @@ exports.formatCourseBill = (courseBill) => {
 
 const balance = async (company, credentials) => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
-  const canSeeXmlSEPAFileInfos = isVendorUser ||
-    [COACH, CLIENT_ADMIN].includes(get(credentials, 'role.client.name'));
+  const canSeeXmlSEPAFileInfos = isVendorUser || [COACH, CLIENT_ADMIN].includes(get(credentials, 'role.client.name'));
 
   const courseBills = await CourseBill
     .find({ $or: [{ companies: company }, { 'payer.company': company }], billedAt: { $exists: true, $type: 'date' } })
