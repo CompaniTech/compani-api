@@ -23,7 +23,7 @@ exports.createCourseCreditNote = async (payload) => {
 
   await CourseCreditNote.create(formattedPayload);
 
-  await CoursePayment.updateMany({ courseBill: payload.courseBill, status: PENDING }, { status: CANCELLED });
+  await CoursePayment.updateMany({ courseBill: payload.courseBill, status: PENDING }, { $set: { status: CANCELLED } });
 };
 
 exports.generateCreditNotePdf = async (creditNoteId) => {

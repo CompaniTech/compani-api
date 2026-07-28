@@ -440,7 +440,7 @@ describe('list', () => {
                     status: PAID,
                     amount: '50',
                     trainerBillNumber: 'FACT_0001',
-                    trainerInvoiceId,
+                    trainerInvoice: trainerInvoiceId,
                     tradeName: 'program',
                   },
                   {
@@ -873,7 +873,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  trainerInvoiceId,
+                  trainerInvoice: trainerInvoiceId,
                   tradeName: 'program',
                 },
                 {
@@ -888,7 +888,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  trainerInvoiceId,
+                  trainerInvoice: trainerInvoiceId,
                   tradeName: 'program',
                 },
               ],

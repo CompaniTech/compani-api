@@ -233,7 +233,7 @@ exports.generate = async (completionCertificateId) => {
   if (newVAESupportRemainingMinutes !== undefined) {
     updatePayload.vaeSupportRemainingMinutes = newVAESupportRemainingMinutes;
   }
-  await CompletionCertificate.updateOne({ _id: completionCertificateId }, updatePayload);
+  await CompletionCertificate.updateOne({ _id: completionCertificateId }, { $set: updatePayload });
 };
 
 exports.create = async payload => CompletionCertificate.create(payload);
