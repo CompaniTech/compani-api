@@ -709,7 +709,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: completionCertificateId },
-      { file: { publicId: '1234', link: 'tests/1234' } }
+      { $set: { file: { publicId: '1234', link: 'tests/1234' } } }
     );
     sinon.assert.notCalled(getRealELearningDuration);
     sinon.assert.notCalled(findCompletionCertificate);
@@ -931,7 +931,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: completionCertificateId },
-      { file: { publicId: '1234', link: 'tests/1234' } }
+      { $set: { file: { publicId: '1234', link: 'tests/1234' } } }
     );
     sinon.assert.notCalled(getELearningDuration);
     sinon.assert.notCalled(findCompletionCertificate);
@@ -1175,7 +1175,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: completionCertificateId },
-      { file: { publicId: '1234', link: 'tests/1234' }, vaeSupportRemainingMinutes: 330 }
+      { $set: { file: { publicId: '1234', link: 'tests/1234' }, vaeSupportRemainingMinutes: 330 } }
     );
     sinon.assert.notCalled(getELearningDuration);
   });
@@ -1423,7 +1423,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: completionCertificateId },
-      { file: { publicId: '1234', link: 'tests/1234' }, vaeSupportRemainingMinutes: 0 }
+      { $set: { file: { publicId: '1234', link: 'tests/1234' }, vaeSupportRemainingMinutes: 0 } }
     );
     sinon.assert.notCalled(getELearningDuration);
   });
@@ -1667,7 +1667,7 @@ describe('generate', () => {
     sinon.assert.calledOnceWithExactly(
       updateOne,
       { _id: completionCertificateId },
-      { file: { publicId: '1234', link: 'tests/1234' } }
+      { $set: { file: { publicId: '1234', link: 'tests/1234' } } }
     );
     sinon.assert.notCalled(getELearningDuration);
   });

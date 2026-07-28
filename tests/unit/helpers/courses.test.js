@@ -5791,7 +5791,11 @@ describe('addTrainee', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnce(userUpdateOne);
+    sinon.assert.calledOnceWithExactly(
+      userUpdateOne,
+      { _id: user._id },
+      { $set: { loginCode: sinon.match(/^\d{4}$/) } }
+    );
     sinon.assert.calledOnceWithExactly(
       createHistoryOnTraineeAddition,
       { course: course._id, traineeId: user._id, company: course.companies[0] },
@@ -9839,7 +9843,11 @@ describe('addTutor', () => {
 
     expect(result).toEqual('email sent');
     sinon.assert.notCalled(gSheetWriteData);
-    sinon.assert.calledOnce(userUpdateOne);
+    sinon.assert.calledOnceWithExactly(
+      userUpdateOne,
+      { _id: tutorId },
+      { $set: { loginCode: sinon.match(/^\d{4}$/) } }
+    );
     sinon.assert.calledOnceWithExactly(emailAddTutor, course._id, tutorId);
     SinonMongoose.calledOnceWithExactly(
       courseFindOneAndUpdate,

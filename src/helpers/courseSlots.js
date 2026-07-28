@@ -100,7 +100,7 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
         amount,
         tradeName: slot.course.tradeName,
         ...(trainerBill && trainerBill.trainerInvoice && {
-          trainerInvoiceId: trainerBill.trainerInvoice._id,
+          trainerInvoice: trainerBill.trainerInvoice._id,
           trainerBillNumber: trainerBill.trainerInvoice.number,
         }),
       };
@@ -164,7 +164,7 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
         status: slotStatus,
         stepName: slot.step.name,
         ...(trainerBill && trainerBill.trainerInvoice && {
-          trainerInvoiceId: trainerBill.trainerInvoice._id,
+          trainerInvoice: trainerBill.trainerInvoice._id,
           trainerBillNumber: trainerBill.trainerInvoice.number,
         }),
       });
