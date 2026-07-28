@@ -7,7 +7,7 @@ const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const EmailHelper = require('../../../src/helpers/email');
 const TrainerInvoicesHelper = require('../../../src/helpers/trainerInvoices');
 const SinonMongoose = require('../sinonMongoose');
-const { INVOICED } = require('../../../src/helpers/constants');
+const { INVOICED, PAID } = require('../../../src/helpers/constants');
 
 describe('createInvoice', () => {
   let courseSlotFind;
@@ -161,5 +161,53 @@ describe('createInvoice', () => {
       { $push: { trainerBills: { trainer: credentials._id, trainerInvoice: trainerInvoiceId } } }
     );
     sinon.assert.calledOnceWithExactly(sendTrainerInvoiceEmail, 'FACT_0003', '170', 'Jean DUPONT', courseSlots, 'file');
+  });
+});
+
+describe('update', () => {
+  let trainerInvoiceUpdateOne;
+
+  beforeEach(() => {
+    trainerInvoiceUpdateOne = sinon.stub(TrainerInvoice, 'updateOne');
+  });
+
+  afterEach(() => {
+    trainerInvoiceUpdateOne.restore();
+  });
+
+  it('should update the trainer invoice status', async () => {
+    const trainerInvoiceId = new ObjectId();
+
+    await TrainerInvoicesHelper.update(trainerInvoiceId, { status: PAID });
+
+    sinon.assert.calledOnceWithExactly(trainerInvoiceUpdateOne, { _id: trainerInvoiceId }, { $set: { status: PAID } });
+  });
+});
+
+describe('remove', () => {
+  let courseSlotUpdateMany;
+  let trainerInvoiceDeleteOne;
+
+  beforeEach(() => {
+    courseSlotUpdateMany = sinon.stub(CourseSlot, 'updateMany');
+    trainerInvoiceDeleteOne = sinon.stub(TrainerInvoice, 'deleteOne');
+  });
+
+  afterEach(() => {
+    courseSlotUpdateMany.restore();
+    trainerInvoiceDeleteOne.restore();
+  });
+
+  it('should unlink the course slots and delete the trainer invoice', async () => {
+    const trainerInvoiceId = new ObjectId();
+
+    await TrainerInvoicesHelper.remove(trainerInvoiceId);
+
+    sinon.assert.calledOnceWithExactly(
+      courseSlotUpdateMany,
+      { 'trainerBills.trainerInvoice': trainerInvoiceId },
+      { $pull: { trainerBills: { trainerInvoice: trainerInvoiceId } } }
+    );
+    sinon.assert.calledOnceWithExactly(trainerInvoiceDeleteOne, { _id: trainerInvoiceId });
   });
 });

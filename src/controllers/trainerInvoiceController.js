@@ -23,4 +23,26 @@ const create = async (req) => {
   }
 };
 
-module.exports = { create };
+const update = async (req) => {
+  try {
+    await TrainerInvoicesHelper.update(req.params._id, req.payload);
+
+    return { message: translate[language].trainerInvoiceUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+const remove = async (req) => {
+  try {
+    await TrainerInvoicesHelper.remove(req.params._id);
+
+    return { message: translate[language].trainerInvoiceRemoved };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { create, update, remove };

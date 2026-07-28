@@ -61,3 +61,15 @@ exports.createInvoice = async (payload, credentials) => {
 
   return trainerInvoice;
 };
+
+exports.update = async (trainerInvoiceId, payload) => TrainerInvoice
+  .updateOne({ _id: trainerInvoiceId }, { $set: payload });
+
+exports.remove = async (trainerInvoiceId) => {
+  await CourseSlot.updateMany(
+    { 'trainerBills.trainerInvoice': trainerInvoiceId },
+    { $pull: { trainerBills: { trainerInvoice: trainerInvoiceId } } }
+  );
+
+  await TrainerInvoice.deleteOne({ _id: trainerInvoiceId });
+};
