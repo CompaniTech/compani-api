@@ -8,7 +8,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { vendorAdmin, trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
-const { INTRA, PUBLISHED, GLOBAL, INVOICED } = require('../../../src/helpers/constants');
+const { INTRA, PUBLISHED, GLOBAL, INVOICED, PAID } = require('../../../src/helpers/constants');
 
 const step = { _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 };
 
@@ -37,6 +37,7 @@ const course = {
 };
 
 const trainerInvoiceId = new ObjectId();
+const paidTrainerInvoiceId = new ObjectId();
 
 const courseSlotsList = [
   { // 0 not invoiced, belongs to the trainer
@@ -72,6 +73,15 @@ const courseSlotsList = [
     step: step._id,
     trainers: [trainerAndCoach._id],
   },
+  { // 4 already invoiced and paid
+    _id: new ObjectId(),
+    startDate: '2023-01-14T09:00:00.000Z',
+    endDate: '2023-01-14T11:00:00.000Z',
+    course: course._id,
+    step: step._id,
+    trainers: [trainer._id],
+    trainerBills: [{ trainer: trainer._id, trainerInvoice: paidTrainerInvoiceId }],
+  },
 ];
 
 const trainerInvoiceList = [
@@ -83,6 +93,15 @@ const trainerInvoiceList = [
     courseSlots: [courseSlotsList[2]._id],
     amount: 100,
     submittedAt: '2023-01-01T10:00:00.000Z',
+  },
+  {
+    _id: paidTrainerInvoiceId,
+    trainer: trainer._id,
+    number: 'FACT_0099',
+    status: PAID,
+    courseSlots: [courseSlotsList[4]._id],
+    amount: 100,
+    submittedAt: '2023-01-02T10:00:00.000Z',
   },
 ];
 
@@ -99,4 +118,4 @@ const populateDB = async () => {
   ]);
 };
 
-module.exports = { populateDB, course, courseSlotsList };
+module.exports = { populateDB, course, courseSlotsList, trainerInvoiceId, paidTrainerInvoiceId };
