@@ -58,14 +58,4 @@ const remove = async (req) => {
   }
 };
 
-const updateSlotList = async (req) => {
-  try {
-    await CourseSlotsHelper.updateSlotList(req.payload);
-    return { message: translate[language].courseSlotsUpdated };
-  } catch (e) {
-    req.log('error', e);
-    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
-  }
-};
-
-module.exports = { list, create, update, remove, updateSlotList };
+module.exports = { list, create, update, remove };

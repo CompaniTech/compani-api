@@ -441,8 +441,3 @@ exports.formatSlotDates = (slots) => {
 
   return [...new Set(slotDatesWithDuplicate)];
 };
-
-exports.updateSlotList = async payload => CourseSlot.updateMany(
-  { _id: { $in: payload._ids } },
-  { $push: { trainerBills: { trainer: payload.trainer, billNumber: payload.billNumber } } }
-);
