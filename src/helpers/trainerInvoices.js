@@ -32,18 +32,10 @@ exports.createInvoice = async (payload, credentials) => {
     .find({ _id: { $in: courseSlotIds } })
     .populate({ path: 'step', select: '_id' })
     .populate({ path: 'course', select: 'subProgram', populate: { path: 'subProgram', select: 'priceVersions' } })
-    .sort({ startDate: -1 })
+    .sort({ startDate: 1 })
     .lean();
 
   const amount = computeAmount(courseSlots);
-
-  await EmailHelper.sendTrainerInvoiceEmail(
-    payload.number,
-    amount,
-    UtilsHelper.formatIdentity(credentials.identity, 'FL'),
-    courseSlots,
-    payload.file
-  );
 
   const trainerInvoice = await TrainerInvoice.create({
     trainer: credentials._id,
@@ -57,6 +49,14 @@ exports.createInvoice = async (payload, credentials) => {
   await CourseSlot.updateMany(
     { _id: { $in: courseSlotIds } },
     { $push: { trainerBills: { trainer: credentials._id, trainerInvoice: trainerInvoice._id } } }
+  );
+
+  await EmailHelper.sendTrainerInvoiceEmail(
+    payload.number,
+    amount,
+    UtilsHelper.formatIdentity(credentials.identity, 'FL'),
+    courseSlots,
+    payload.file
   );
 
   return trainerInvoice;

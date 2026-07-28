@@ -840,9 +840,9 @@ describe('sendTrainerInvoiceEmail', () => {
     const amount = '125';
     const trainerName = 'Jean DUPONT';
     const courseSlots = [
-      { startDate: '2020-01-01T09:00:00.000Z', endDate: '2020-01-01T10:00:00.000Z' },
-      { startDate: '2020-01-01T09:00:00.000Z', endDate: '2020-01-01T10:00:00.000Z' },
-      { startDate: '2020-01-01T10:00:00.000Z', endDate: '2020-01-01T11:30:00.000Z' },
+      { startDate: new Date('2020-01-01T09:00:00.000Z'), endDate: new Date('2020-01-01T10:00:00.000Z') },
+      { startDate: new Date('2020-01-01T09:00:00.000Z'), endDate: new Date('2020-01-01T10:00:00.000Z') },
+      { startDate: new Date('2020-01-01T10:00:00.000Z'), endDate: new Date('2020-01-01T11:30:00.000Z') },
     ];
     const file = 'file-stream';
     const sentObj = { msg: 'Message sent !' };
