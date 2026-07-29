@@ -246,6 +246,24 @@ exports.sendTrainerInvoiceEmail = async (number, amount, trainerName, courseSlot
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
 
+exports.sendTrainerFeesBillEmail = async (number, file, credentials) => {
+  const trainerName = UtilsHelper.formatIdentity(credentials.identity, 'FL');
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: process.env.BILLING_COMPANI_EMAIL,
+    subject: `${trainerName} - nouvelle facture (frais de formateur) - ${number}`,
+    html: `<p>Numéro de facture : ${number}</p>
+      <p><em>Merci de ne pas répondre directement à cet email.</em></p>`,
+    attachments: [{
+      filename: `${UtilsHelper.formatDownloadName(`frais_formateur_${trainerName}_${number}`)}.pdf`,
+      content: file,
+      contentType: 'application/pdf',
+    }],
+  };
+
+  return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
+};
+
 exports.completionSendingPendingBillsEmail = (day, emailSent, pendingCourseBillDeleted) => {
   const content = `Script exécuté. ${emailSent} email envoyés et ${pendingCourseBillDeleted} éléments`
   + ' supprimés de la collection PendingCourseBill.';
