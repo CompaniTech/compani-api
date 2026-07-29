@@ -440,7 +440,7 @@ describe('list', () => {
                     status: PAID,
                     amount: '50',
                     trainerBillNumber: 'FACT_0001',
-                    trainerInvoiceId,
+                    trainerInvoice: trainerInvoiceId,
                     tradeName: 'program',
                   },
                   {
@@ -873,7 +873,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  trainerInvoiceId,
+                  trainerInvoice: trainerInvoiceId,
                   tradeName: 'program',
                 },
                 {
@@ -888,7 +888,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  trainerInvoiceId,
+                  trainerInvoice: trainerInvoiceId,
                   tradeName: 'program',
                 },
               ],
@@ -1492,28 +1492,5 @@ describe('removeCourseSlot', () => {
     await CourseSlotsHelper.removeCourseSlot(courseSlotId);
 
     sinon.assert.calledOnceWithExactly(deleteOne, { _id: courseSlotId });
-  });
-});
-
-describe('updateSlotList', () => {
-  let updateMany;
-  beforeEach(() => {
-    updateMany = sinon.stub(CourseSlot, 'updateMany');
-  });
-  afterEach(() => {
-    updateMany.restore();
-  });
-
-  it('should update slots', async () => {
-    const courseSlotIds = [new ObjectId(), new ObjectId(), new ObjectId()];
-    const payload = { _ids: courseSlotIds, billNumber: 'FACT_0001', trainer: new ObjectId() };
-
-    await CourseSlotsHelper.updateSlotList(payload);
-
-    sinon.assert.calledOnceWithExactly(
-      updateMany,
-      { _id: { $in: courseSlotIds } },
-      { $push: { trainerBills: { trainer: payload.trainer, billNumber: payload.billNumber } } }
-    );
   });
 });
