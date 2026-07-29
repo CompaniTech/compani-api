@@ -20,6 +20,7 @@ const NodemailerHelper = require('../../src/helpers/nodemailer');
 const { TRAINEE, START_COURSE, VAEI, END_COURSE, RESEND } = require('../../src/helpers/constants');
 const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 const UtilsMock = require('../utilsMock');
+const { generateFormData, getStream } = require('./utils');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -461,6 +462,93 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
           url: '/email/send-coursebill-list',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('EMAIL ROUTES - POST emails/send-trainer-fees-bill', () => {
+  let authToken;
+  let sendinBlueTransporter;
+
+  beforeEach(async () => {
+    await populateDB();
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
+      .returns({ sendMail: sinon.stub().returns('emailSent') });
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+  });
+
+  describe('TRAINER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('trainer');
+    });
+
+    it('should send an email with trainer fees invoice attached', async () => {
+      const form = generateFormData({ number: 'FACT_0001', file: 'test' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-trainer-fees-bill',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(200);
+      sinon.assert.calledOnce(sendinBlueTransporter);
+    });
+
+    it('should return 400 if number is missing', async () => {
+      const form = generateFormData({ file: 'test' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-trainer-fees-bill',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if file is missing', async () => {
+      const form = generateFormData({ number: 'FACT_0001' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-trainer-fees-bill',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+  });
+
+  describe('other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'coach', expectedCode: 403 },
+      { name: 'vendor_admin', expectedCode: 200 },
+      { name: 'training_organisation_manager', expectedCode: 200 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const form = generateFormData({ number: 'FACT_0001', file: 'test' });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/email/send-trainer-fees-bill',
+          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: getStream(form),
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

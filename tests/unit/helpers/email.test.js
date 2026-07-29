@@ -870,3 +870,47 @@ describe('sendTrainerInvoiceEmail', () => {
     );
   });
 });
+
+describe('sendTrainerFeesBillEmail', () => {
+  let sendMail;
+  let sendinBlueTransporter;
+
+  beforeEach(() => {
+    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
+    sendMail = sinon.stub();
+    process.env.BILLING_COMPANI_EMAIL = 'test@test.fr';
+  });
+
+  afterEach(() => {
+    sendinBlueTransporter.restore();
+    process.env.BILLING_COMPANI_EMAIL = '';
+  });
+
+  it('should send an email with trainer fees invoice pdf attached', async () => {
+    const number = 'FACT_0001';
+    const file = 'file-stream';
+    const credentials = { identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const sentObj = { msg: 'Message sent !' };
+
+    sendMail.returns(sentObj);
+    sendinBlueTransporter.returns({ sendMail });
+
+    const result = await EmailHelper.sendTrainerFeesBillEmail(number, file, credentials);
+
+    expect(result).toEqual(sentObj);
+    sinon.assert.calledWithExactly(sendinBlueTransporter);
+    sinon.assert.calledOnceWithExactly(
+      sendMail,
+      {
+        from: 'Compani <nepasrepondre@compani.fr>',
+        to: 'test@test.fr',
+        subject: 'Jean DUPONT - nouvelle facture (frais de formateur) - FACT_0001',
+        html: '<p>Numéro de facture : FACT_0001</p>\n'
+          + '      <p><em>Merci de ne pas répondre directement à cet email.</em></p>',
+        attachments: [
+          { filename: 'frais_formateur_Jean_DUPONT_FACT_0001.pdf', content: file, contentType: 'application/pdf' },
+        ],
+      }
+    );
+  });
+});
