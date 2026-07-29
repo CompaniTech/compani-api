@@ -563,7 +563,7 @@ module.exports = {
     /* Trainer invoices */
     trainerInvoiceCreated: 'Facture de l\'intervenant·e créée.',
     trainerInvoiceNumberAlreadyUsed: 'Ce numéro de facture est déjà utilisé.',
-    trainerInvoiceUpdated: 'Facture de l\'intervenant·e modifié.',
+    trainerInvoiceUpdated: 'Facture de l\'intervenant·e modifiée.',
     trainerInvoiceRemoved: 'Facture de l\'intervenant·e annulée.',
     trainerInvoiceStatusConflict: 'Impossible : le statut demandé entre en conflit avec le statut actuel des créneaux.',
     /* Course funding organisation */
