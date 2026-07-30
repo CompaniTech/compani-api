@@ -36,8 +36,8 @@ describe('list', () => {
     const courseIds = [new ObjectId(), new ObjectId()];
     const traineeIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
-    const trainerInvoiceId = new ObjectId();
-    const trainerInvoice = { _id: trainerInvoiceId, status: PAID, number: 'FACT_0001' };
+    const trainerBillId = new ObjectId();
+    const trainerBill = { _id: trainerBillId, status: PAID, number: 'FACT_0001' };
     const subProgramId = new ObjectId();
     const stepIds = [new ObjectId(), new ObjectId(), new ObjectId()];
 
@@ -78,7 +78,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
-        trainerBills: [{ trainer: trainerId, trainerInvoice }],
+        trainerBills: [{ trainer: trainerId, trainerBillId: trainerBill }],
       },
       {
         _id: new ObjectId(),
@@ -440,7 +440,7 @@ describe('list', () => {
                     status: PAID,
                     amount: '50',
                     trainerBillNumber: 'FACT_0001',
-                    trainerInvoice: trainerInvoiceId,
+                    trainerBillId,
                     tradeName: 'program',
                   },
                   {
@@ -625,7 +625,7 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerBillId', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -785,7 +785,7 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerBillId', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -796,8 +796,8 @@ describe('list', () => {
     const courseIds = [new ObjectId(), new ObjectId()];
     const traineeIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
-    const trainerInvoiceId = new ObjectId();
-    const trainerInvoice = { _id: trainerInvoiceId, status: PAID, number: 'FACT_0001' };
+    const trainerBillId = new ObjectId();
+    const trainerBill = { _id: trainerBillId, status: PAID, number: 'FACT_0001' };
     const subProgramId = new ObjectId();
 
     const slots = [
@@ -821,7 +821,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        trainerBills: [{ trainer: trainerId, trainerInvoice }],
+        trainerBills: [{ trainer: trainerId, trainerBillId: trainerBill }],
       },
       {
         _id: new ObjectId(),
@@ -843,7 +843,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: MISSING }],
-        trainerBills: [{ trainer: trainerId, trainerInvoice }],
+        trainerBills: [{ trainer: trainerId, trainerBillId: trainerBill }],
       },
     ];
 
@@ -873,7 +873,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  trainerInvoice: trainerInvoiceId,
+                  trainerBillId,
                   tradeName: 'program',
                 },
                 {
@@ -888,7 +888,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  trainerInvoice: trainerInvoiceId,
+                  trainerBillId,
                   tradeName: 'program',
                 },
               ],
@@ -953,7 +953,7 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBills.trainerInvoice', select: 'status number' }] },
+        { query: 'populate', args: [{ path: 'trainerBills.trainerBillId', select: 'status number' }] },
         { query: 'lean' },
       ]
     );

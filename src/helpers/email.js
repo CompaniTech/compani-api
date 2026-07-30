@@ -220,7 +220,7 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
   });
 };
 
-exports.sendTrainerInvoiceEmail = async (number, amount, trainerName, courseSlots, file) => {
+exports.sendTrainerBillEmail = async (number, amount, trainerName, courseSlots, file) => {
   const uniqueSlots = uniqBy(courseSlots, s => `${s.startDate.toISOString()}_${s.endDate.toISOString()}`);
   const slotsList = uniqueSlots
     .map(s => `<li>${CompaniDate(s.startDate).format(`${DD_MM_YYYY} ${HH_MM}`)}`

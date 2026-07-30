@@ -33,7 +33,7 @@ const Questionnaire = require('../../../src/models/Questionnaire');
 const QuestionnaireHistory = require('../../../src/models/QuestionnaireHistory');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
-const TrainerInvoice = require('../../../src/models/TrainerInvoice');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const TrainerMission = require('../../../src/models/TrainerMission');
 const TrainingContract = require('../../../src/models/TrainingContract');
 const User = require('../../../src/models/User');
@@ -1633,7 +1633,7 @@ describe('SEEDS VERIFICATION', () => {
             })
             .populate({ path: 'step', select: 'type', transform })
             .populate({ path: 'trainers', select: '_id', transform })
-            .populate({ path: 'trainerBills.trainerInvoice', select: 'courseSlots' })
+            .populate({ path: 'trainerBills.trainerBillId', select: 'courseSlots' })
             .lean();
         });
 
@@ -1698,10 +1698,10 @@ describe('SEEDS VERIFICATION', () => {
           expect(everySlotTrainerBillsContainGoodValues).toBeTruthy();
         });
 
-        it('should pass if every slot trainerBill\'s trainerInvoice contains this slot', () => {
-          const isSlotInEveryTrainerInvoice = courseSlotList.every(cs => (cs.trainerBills || [])
-            .every(b => !b.trainerInvoice || UtilsHelper.doesArrayIncludeId(b.trainerInvoice.courseSlots, cs._id)));
-          expect(isSlotInEveryTrainerInvoice).toBeTruthy();
+        it('should pass if every slot\'s trainerBillId contains this slot', () => {
+          const isSlotInEveryTrainerBill = courseSlotList.every(cs => (cs.trainerBills || [])
+            .every(b => !b.trainerBillId || UtilsHelper.doesArrayIncludeId(b.trainerBillId.courseSlots, cs._id)));
+          expect(isSlotInEveryTrainerBill).toBeTruthy();
         });
       });
 
@@ -2552,11 +2552,11 @@ describe('SEEDS VERIFICATION', () => {
         });
       });
 
-      describe('Collection TrainerInvoice', () => {
-        let trainerInvoiceList;
+      describe('Collection TrainerBill', () => {
+        let trainerBillList;
 
         before(async () => {
-          trainerInvoiceList = await TrainerInvoice
+          trainerBillList = await TrainerBill
             .find()
             .populate({
               path: 'courseSlots',
@@ -2573,21 +2573,21 @@ describe('SEEDS VERIFICATION', () => {
             .lean();
         });
 
-        it('should pass if every trainerInvoice course slot has a trainerBill pointing back to it', () => {
-          const everySlotHasMatchingTrainerBill = trainerInvoiceList.every(ti => ti.courseSlots.every(cs => (
+        it('should pass if every trainerBill course slot has a matching entry pointing back to it', () => {
+          const everySlotHasMatchingTrainerBill = trainerBillList.every(tb => tb.courseSlots.every(cs => (
             (cs.trainerBills || []).some(b => (
-              UtilsHelper.areObjectIdsEquals(b.trainer, ti.trainer) &&
-              UtilsHelper.areObjectIdsEquals(b.trainerInvoice, ti._id)
+              UtilsHelper.areObjectIdsEquals(b.trainer, tb.trainer) &&
+              UtilsHelper.areObjectIdsEquals(b.trainerBillId, tb._id)
             ))
           )));
 
           expect(everySlotHasMatchingTrainerBill).toBeTruthy();
         });
 
-        it('should pass if every trainerInvoice amount matches the amount computed from its course slots', () => {
-          const everyAmountIsCorrect = trainerInvoiceList.every((ti) => {
+        it('should pass if every trainerBill amount matches the amount computed from its course slots', () => {
+          const everyAmountIsCorrect = trainerBillList.every((tb) => {
             const uniqueDateSlots = uniqBy(
-              ti.courseSlots,
+              tb.courseSlots,
               s => `${s.startDate.toISOString()}_${s.endDate.toISOString()}`
             );
 
@@ -2600,7 +2600,7 @@ describe('SEEDS VERIFICATION', () => {
               return NumbersHelper.add(acc, slotAmount);
             }, 0);
 
-            return NumbersHelper.isEqualTo(ti.amount, computedAmount);
+            return NumbersHelper.isEqualTo(tb.amount, computedAmount);
           });
 
           expect(everyAmountIsCorrect).toBeTruthy();

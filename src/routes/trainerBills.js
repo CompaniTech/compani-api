@@ -1,22 +1,22 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
-const { create, update, remove } = require('../controllers/trainerInvoiceController');
+const { create, update, remove } = require('../controllers/trainerBillController');
 const {
-  authorizeTrainerInvoiceCreation,
-  authorizeTrainerInvoiceUpdate,
-  authorizeTrainerInvoiceDeletion,
-} = require('./preHandlers/trainerInvoices');
+  authorizeTrainerBillCreation,
+  authorizeTrainerBillUpdate,
+  authorizeTrainerBillDeletion,
+} = require('./preHandlers/trainerBills');
 const { formDataPayload, objectIdOrArray } = require('./validations/utils');
 const { INVOICED, PAID } = require('../helpers/constants');
 
 exports.plugin = {
-  name: 'routes-trainer-invoices',
+  name: 'routes-trainer-bills',
   register: async (server) => {
     server.route({
       method: 'POST',
       path: '/',
       options: {
-        auth: { scope: ['trainerinvoices:create'] },
+        auth: { scope: ['trainerbills:create'] },
         payload: formDataPayload(),
         validate: {
           payload: Joi.object({
@@ -25,7 +25,7 @@ exports.plugin = {
             file: Joi.any().required(),
           }),
         },
-        pre: [{ method: authorizeTrainerInvoiceCreation }],
+        pre: [{ method: authorizeTrainerBillCreation }],
       },
       handler: create,
     });
@@ -34,12 +34,12 @@ exports.plugin = {
       method: 'PUT',
       path: '/{_id}',
       options: {
-        auth: { scope: ['trainerinvoices:edit'] },
+        auth: { scope: ['trainerbills:edit'] },
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
           payload: Joi.object({ status: Joi.string().valid(INVOICED, PAID).required() }),
         },
-        pre: [{ method: authorizeTrainerInvoiceUpdate }],
+        pre: [{ method: authorizeTrainerBillUpdate }],
       },
       handler: update,
     });
@@ -48,11 +48,11 @@ exports.plugin = {
       method: 'DELETE',
       path: '/{_id}',
       options: {
-        auth: { scope: ['trainerinvoices:edit'] },
+        auth: { scope: ['trainerbills:edit'] },
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
         },
-        pre: [{ method: authorizeTrainerInvoiceDeletion }],
+        pre: [{ method: authorizeTrainerBillDeletion }],
       },
       handler: remove,
     });

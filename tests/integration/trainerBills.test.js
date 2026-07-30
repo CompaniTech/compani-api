@@ -2,11 +2,11 @@ const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
 const app = require('../../server');
-const TrainerInvoice = require('../../src/models/TrainerInvoice');
+const TrainerBill = require('../../src/models/TrainerBill');
 const CourseSlot = require('../../src/models/CourseSlot');
 const NodemailerHelper = require('../../src/helpers/nodemailer');
 const { trainer, trainerAndCoach } = require('../seed/authUsersSeed');
-const { populateDB, courseSlotsList, trainerInvoiceId, paidTrainerInvoiceId } = require('./seed/trainerInvoicesSeed');
+const { populateDB, courseSlotsList, trainerBillId, paidTrainerBillId } = require('./seed/trainerBillsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
 const { INVOICED, PAID } = require('../../src/helpers/constants');
@@ -17,7 +17,7 @@ describe('NODE ENV', () => {
   });
 });
 
-describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
+describe('TRAINER BILLS ROUTES - POST /trainerbills', () => {
   let authToken;
   let sendinBlueTransporter;
 
@@ -36,27 +36,27 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
       authToken = await getToken('trainer');
     });
 
-    it('should create a trainer invoice and link it to the course slots', async () => {
+    it('should create a trainer bill and link it to the course slots', async () => {
       const form = generateFormData({ number: 'FACT_0002', file: 'test' });
       form.append('courseSlots', courseSlotsList[0]._id.toHexString());
       form.append('courseSlots', courseSlotsList[1]._id.toHexString());
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
       expect(response.statusCode).toBe(200);
 
-      const trainerInvoiceCount = await TrainerInvoice.countDocuments({
+      const trainerBillCount = await TrainerBill.countDocuments({
         trainer: trainer._id,
         number: 'FACT_0002',
         status: INVOICED,
         courseSlots: [courseSlotsList[0]._id, courseSlotsList[1]._id],
       });
-      expect(trainerInvoiceCount).toBe(1);
+      expect(trainerBillCount).toBe(1);
 
       const updatedSlotsCount = await CourseSlot.countDocuments({
         _id: { $in: [courseSlotsList[0]._id, courseSlotsList[1]._id] },
@@ -71,15 +71,15 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
 
       expect(response.statusCode).toBe(200);
-      const trainerInvoiceCount = await TrainerInvoice
+      const trainerBillCount = await TrainerBill
         .countDocuments({ trainer: trainer._id, number: 'FACT_0003' });
-      expect(trainerInvoiceCount).toBe(1);
+      expect(trainerBillCount).toBe(1);
     });
 
     it('should return 400 if number is missing', async () => {
@@ -88,7 +88,7 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
@@ -102,7 +102,7 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
@@ -116,7 +116,7 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
@@ -130,7 +130,7 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
@@ -138,13 +138,13 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
       expect(response.statusCode).toBe(404);
     });
 
-    it('should return 403 if a course slot is already invoiced', async () => {
+    it('should return 403 if a course slot is already billed', async () => {
       const form = generateFormData({ number: 'FACT_0007', file: 'test' });
       form.append('courseSlots', courseSlotsList[2]._id.toHexString());
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
@@ -152,13 +152,13 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
       expect(response.statusCode).toBe(403);
     });
 
-    it('should return 409 if invoice number is already used by this trainer', async () => {
+    it('should return 409 if bill number is already used by this trainer', async () => {
       const form = generateFormData({ number: 'FACT_0001', file: 'test' });
       form.append('courseSlots', courseSlotsList[0]._id.toHexString());
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
@@ -168,7 +168,7 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
   });
 
   describe('Other trainer', () => {
-    it('should return 404 if trying to invoice someone else\'s course slots', async () => {
+    it('should return 404 if trying to bill someone else\'s course slots', async () => {
       authToken = await getTokenByCredentials(trainerAndCoach.local);
 
       const form = generateFormData({ number: 'FACT_0008', file: 'test' });
@@ -176,7 +176,7 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
 
       const response = await app.inject({
         method: 'POST',
-        url: '/trainerinvoices',
+        url: '/trainerbills',
         headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: getStream(form),
       });
@@ -201,7 +201,7 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
 
         const response = await app.inject({
           method: 'POST',
-          url: '/trainerinvoices',
+          url: '/trainerbills',
           headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: getStream(form),
         });
@@ -212,7 +212,7 @@ describe('TRAINER INVOICES ROUTES - POST /trainerinvoices', () => {
   });
 });
 
-describe('TRAINER INVOICES ROUTES - PUT /trainerinvoices/{_id}', () => {
+describe('TRAINER BILLS ROUTES - PUT /trainerbills/{_id}', () => {
   let authToken;
 
   beforeEach(async () => {
@@ -224,36 +224,36 @@ describe('TRAINER INVOICES ROUTES - PUT /trainerinvoices/{_id}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should update an invoiced trainer invoice to paid', async () => {
+    it('should update an invoiced trainer bill to paid', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/trainerinvoices/${trainerInvoiceId}`,
+        url: `/trainerbills/${trainerBillId}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { status: PAID },
       });
 
       expect(response.statusCode).toBe(200);
-      const trainerInvoiceCount = await TrainerInvoice.countDocuments({ _id: trainerInvoiceId, status: PAID });
-      expect(trainerInvoiceCount).toBe(1);
+      const trainerBillCount = await TrainerBill.countDocuments({ _id: trainerBillId, status: PAID });
+      expect(trainerBillCount).toBe(1);
     });
 
-    it('should update a paid trainer invoice to invoiced', async () => {
+    it('should update a paid trainer bill to invoiced', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/trainerinvoices/${paidTrainerInvoiceId}`,
+        url: `/trainerbills/${paidTrainerBillId}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { status: INVOICED },
       });
 
       expect(response.statusCode).toBe(200);
-      const trainerInvoiceCount = await TrainerInvoice.countDocuments({ _id: paidTrainerInvoiceId, status: INVOICED });
-      expect(trainerInvoiceCount).toBe(1);
+      const trainerBillCount = await TrainerBill.countDocuments({ _id: paidTrainerBillId, status: INVOICED });
+      expect(trainerBillCount).toBe(1);
     });
 
-    it('should return 409 if trainer invoice is not in the expected starting status', async () => {
+    it('should return 409 if trainer bill is not in the expected starting status', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/trainerinvoices/${paidTrainerInvoiceId}`,
+        url: `/trainerbills/${paidTrainerBillId}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { status: PAID },
       });
@@ -261,10 +261,10 @@ describe('TRAINER INVOICES ROUTES - PUT /trainerinvoices/{_id}', () => {
       expect(response.statusCode).toBe(409);
     });
 
-    it('should return 404 if trainer invoice does not exist', async () => {
+    it('should return 404 if trainer bill does not exist', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/trainerinvoices/${new ObjectId()}`,
+        url: `/trainerbills/${new ObjectId()}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { status: PAID },
       });
@@ -287,7 +287,7 @@ describe('TRAINER INVOICES ROUTES - PUT /trainerinvoices/{_id}', () => {
 
         const response = await app.inject({
           method: 'PUT',
-          url: `/trainerinvoices/${trainerInvoiceId}`,
+          url: `/trainerbills/${trainerBillId}`,
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: { status: PAID },
         });
@@ -298,7 +298,7 @@ describe('TRAINER INVOICES ROUTES - PUT /trainerinvoices/{_id}', () => {
   });
 });
 
-describe('TRAINER INVOICES ROUTES - DELETE /trainerinvoices/{_id}', () => {
+describe('TRAINER BILLS ROUTES - DELETE /trainerbills/{_id}', () => {
   let authToken;
 
   beforeEach(async () => {
@@ -310,39 +310,39 @@ describe('TRAINER INVOICES ROUTES - DELETE /trainerinvoices/{_id}', () => {
       authToken = await getToken('vendor_admin');
     });
 
-    it('should cancel an invoiced trainer invoice', async () => {
+    it('should cancel a trainer bill', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/trainerinvoices/${trainerInvoiceId}`,
+        url: `/trainerbills/${trainerBillId}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
 
-      const trainerInvoiceCount = await TrainerInvoice.countDocuments({ _id: trainerInvoiceId });
-      expect(trainerInvoiceCount).toBe(0);
+      const trainerBillCount = await TrainerBill.countDocuments({ _id: trainerBillId });
+      expect(trainerBillCount).toBe(0);
 
       const updatedSlotsCount = await CourseSlot.countDocuments({
         _id: courseSlotsList[2]._id,
-        'trainerBills.trainerInvoice': trainerInvoiceId,
+        'trainerBills.trainerBillId': trainerBillId,
       });
       expect(updatedSlotsCount).toBe(0);
     });
 
-    it('should return 409 if trainer invoice is already paid', async () => {
+    it('should return 409 if trainer bill is already paid', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/trainerinvoices/${paidTrainerInvoiceId}`,
+        url: `/trainerbills/${paidTrainerBillId}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(409);
     });
 
-    it('should return 404 if trainer invoice does not exist', async () => {
+    it('should return 404 if trainer bill does not exist', async () => {
       const response = await app.inject({
         method: 'DELETE',
-        url: `/trainerinvoices/${new ObjectId()}`,
+        url: `/trainerbills/${new ObjectId()}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
@@ -364,7 +364,7 @@ describe('TRAINER INVOICES ROUTES - DELETE /trainerinvoices/{_id}', () => {
 
         const response = await app.inject({
           method: 'DELETE',
-          url: `/trainerinvoices/${trainerInvoiceId}`,
+          url: `/trainerbills/${trainerBillId}`,
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 

@@ -415,7 +415,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       },
     })
     .populate({ path: 'trainers', select: 'identity' })
-    .populate({ path: 'trainerBills.trainerInvoice', select: 'status number' })
+    .populate({ path: 'trainerBills.trainerBillId', select: 'status number' })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 
@@ -449,7 +449,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       const { status, trainerBill } = CourseSlotHelper.getSlotStatus(slot, slot.trainers[0]._id);
       trainersData = {
         status: SLOT_STATUS[status],
-        bills: get(trainerBill, 'trainerInvoice') ? trainerBill.trainerInvoice.number : '',
+        bills: get(trainerBill, 'trainerBillId') ? trainerBill.trainerBillId.number : '',
       };
     } else {
       trainersData = (slot.trainers || []).reduce((acc, trainer) => {
@@ -457,8 +457,8 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         const trainerIdentity = UtilsHelper.formatIdentity(trainer.identity, 'FL');
 
         acc.status.push(`${trainerIdentity} : ${SLOT_STATUS[status]}`);
-        if (get(trainerBill, 'trainerInvoice')) {
-          acc.bills.push(`${trainerIdentity} : ${trainerBill.trainerInvoice.number}`);
+        if (get(trainerBill, 'trainerBillId')) {
+          acc.bills.push(`${trainerIdentity} : ${trainerBill.trainerBillId.number}`);
         }
 
         return acc;

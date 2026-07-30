@@ -1,6 +1,6 @@
 const uniqBy = require('lodash/uniqBy');
 const CourseSlot = require('../models/CourseSlot');
-const TrainerInvoice = require('../models/TrainerInvoice');
+const TrainerBill = require('../models/TrainerBill');
 const CourseSlotsHelper = require('./courseSlots');
 const EmailHelper = require('./email');
 const NumbersHelper = require('./numbers');
@@ -25,7 +25,7 @@ const computeAmount = (courseSlots) => {
   }, 0);
 };
 
-exports.createInvoice = async (payload, credentials) => {
+exports.createBill = async (payload, credentials) => {
   const courseSlotIds = Array.isArray(payload.courseSlots) ? payload.courseSlots : [payload.courseSlots];
 
   const courseSlots = await CourseSlot
@@ -37,7 +37,7 @@ exports.createInvoice = async (payload, credentials) => {
 
   const amount = computeAmount(courseSlots);
 
-  const trainerInvoice = await TrainerInvoice.create({
+  const trainerBill = await TrainerBill.create({
     trainer: credentials._id,
     number: payload.number,
     status: INVOICED,
@@ -48,10 +48,10 @@ exports.createInvoice = async (payload, credentials) => {
 
   await CourseSlot.updateMany(
     { _id: { $in: courseSlotIds } },
-    { $push: { trainerBills: { trainer: credentials._id, trainerInvoice: trainerInvoice._id } } }
+    { $push: { trainerBills: { trainer: credentials._id, trainerBillId: trainerBill._id } } }
   );
 
-  await EmailHelper.sendTrainerInvoiceEmail(
+  await EmailHelper.sendTrainerBillEmail(
     payload.number,
     amount,
     UtilsHelper.formatIdentity(credentials.identity, 'FL'),
@@ -59,17 +59,17 @@ exports.createInvoice = async (payload, credentials) => {
     payload.file
   );
 
-  return trainerInvoice;
+  return trainerBill;
 };
 
-exports.update = async (trainerInvoiceId, payload) => TrainerInvoice
-  .updateOne({ _id: trainerInvoiceId }, { $set: payload });
+exports.update = async (trainerBillId, payload) => TrainerBill
+  .updateOne({ _id: trainerBillId }, { $set: payload });
 
-exports.remove = async (trainerInvoiceId) => {
+exports.remove = async (trainerBillId) => {
   await CourseSlot.updateMany(
-    { 'trainerBills.trainerInvoice': trainerInvoiceId },
-    { $pull: { trainerBills: { trainerInvoice: trainerInvoiceId } } }
+    { 'trainerBills.trainerBillId': trainerBillId },
+    { $pull: { trainerBills: { trainerBillId } } }
   );
 
-  await TrainerInvoice.deleteOne({ _id: trainerInvoiceId });
+  await TrainerBill.deleteOne({ _id: trainerBillId });
 };

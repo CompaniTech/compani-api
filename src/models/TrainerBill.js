@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const { INVOICED, PAID } = require('../helpers/constants');
 
-const TrainerInvoiceSchema = mongoose.Schema({
+const TrainerBillSchema = mongoose.Schema({
   trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   number: { type: String, required: true },
   status: { type: String, enum: [INVOICED, PAID], required: true },
@@ -11,8 +11,8 @@ const TrainerInvoiceSchema = mongoose.Schema({
   submittedAt: { type: Date, required: true },
 }, { timestamps: true });
 
-TrainerInvoiceSchema.index({ trainer: 1, number: 1 }, { unique: true });
+TrainerBillSchema.index({ trainer: 1, number: 1 }, { unique: true });
 
-queryMiddlewareList.map(middleware => TrainerInvoiceSchema.pre(middleware, formatQuery));
+queryMiddlewareList.map(middleware => TrainerBillSchema.pre(middleware, formatQuery));
 
-module.exports = mongoose.model('TrainerInvoice', TrainerInvoiceSchema);
+module.exports = mongoose.model('TrainerBill', TrainerBillSchema);
