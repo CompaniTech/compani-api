@@ -1685,7 +1685,7 @@ const courseSlotList = [
     address: slotAddress,
     createdAt: '2020-12-12T10:00:00.000Z',
     trainers: [trainer._id, trainerAndCoach._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId: trainerBillIds[0] }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[0] }],
   },
   { // 1
     _id: new ObjectId(),
@@ -1696,7 +1696,7 @@ const courseSlotList = [
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
     trainers: [trainer._id, trainerAndCoach._id],
-    trainerBills: [{ trainer: trainerAndCoach._id, trainerBillId: trainerBillIds[1] }],
+    trainerBillings: [{ trainer: trainerAndCoach._id, trainerBill: trainerBillIds[1] }],
   },
   { // 2
     _id: new ObjectId(),
@@ -1707,7 +1707,7 @@ const courseSlotList = [
     address: slotAddress,
     createdAt: '2020-12-12T10:00:02.000Z',
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId: trainerBillIds[2] }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[2] }],
   },
   { // 3
     _id: new ObjectId(),
@@ -1717,7 +1717,7 @@ const courseSlotList = [
     endDate: '2021-02-02T10:00:00.000Z',
     createdAt: '2020-12-12T10:00:03.000Z',
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId: trainerBillIds[2] }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[2] }],
   },
   { // 4
     _id: new ObjectId(),
@@ -1735,7 +1735,7 @@ const courseSlotList = [
     endDate: '2021-04-12T12:00:00.000Z',
     trainees: [traineeList[0]._id, traineeList[2]._id],
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId: trainerBillIds[0] }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[0] }],
   },
   { // 6
     _id: new ObjectId(),
@@ -1746,7 +1746,7 @@ const courseSlotList = [
     startDate: '2021-04-12T10:00:00.000Z',
     endDate: '2021-04-12T12:00:00.000Z',
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId: trainerBillIds[0] }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[0] }],
   },
   { // 7 - out of COURSE_SLOT export period
     _id: new ObjectId(),
@@ -1806,9 +1806,9 @@ const courseSlotList = [
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
     trainers: [trainer._id, trainerAndCoach._id],
-    trainerBills: [
-      { trainer: trainer._id, trainerBillId: trainerBillIds[3] },
-      { trainer: trainerAndCoach._id, trainerBillId: trainerBillIds[4] },
+    trainerBillings: [
+      { trainer: trainer._id, trainerBill: trainerBillIds[3] },
+      { trainer: trainerAndCoach._id, trainerBill: trainerBillIds[4] },
     ],
   },
   { // 13

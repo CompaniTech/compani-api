@@ -403,7 +403,7 @@ const slotsList = [
     course: coursesList[10],
     step: steps[0]._id,
     trainers: [userList[0]._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
   },
   { // 15
     _id: new ObjectId(),
@@ -412,7 +412,7 @@ const slotsList = [
     course: coursesList[10],
     step: steps[0]._id,
     trainers: [userList[0]._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
   },
 ];
 

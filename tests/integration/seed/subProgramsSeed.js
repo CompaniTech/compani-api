@@ -178,7 +178,7 @@ const courseSlotsList = [
     course: coursesList[0]._id,
     step: stepsList[0]._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
   },
 ];
 

@@ -17,8 +17,8 @@ exports.authorizeTrainerBillCreation = async (req) => {
       .lean();
     if (courseSlots.length !== courseSlotIds.length) throw Boom.notFound();
 
-    const someSlotsAreAlreadyBilled = courseSlots.some(slot => (slot.trainerBills || []).some(
-      bill => UtilsHelper.areObjectIdsEquals(bill.trainer, credentials._id)
+    const someSlotsAreAlreadyBilled = courseSlots.some(slot => (slot.trainerBillings || []).some(
+      billing => UtilsHelper.areObjectIdsEquals(billing.trainer, credentials._id)
     ));
     if (someSlotsAreAlreadyBilled) throw Boom.forbidden();
 

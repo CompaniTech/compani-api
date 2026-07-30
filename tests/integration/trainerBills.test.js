@@ -60,7 +60,7 @@ describe('TRAINER BILLS ROUTES - POST /trainerbills', () => {
 
       const updatedSlotsCount = await CourseSlot.countDocuments({
         _id: { $in: [courseSlotsList[0]._id, courseSlotsList[1]._id] },
-        'trainerBills.trainer': trainer._id,
+        'trainerBillings.trainer': trainer._id,
       });
       expect(updatedSlotsCount).toBe(2);
     });
@@ -324,7 +324,7 @@ describe('TRAINER BILLS ROUTES - DELETE /trainerbills/{_id}', () => {
 
       const updatedSlotsCount = await CourseSlot.countDocuments({
         _id: courseSlotsList[2]._id,
-        'trainerBills.trainerBillId': trainerBillId,
+        'trainerBillings.trainerBill': trainerBillId,
       });
       expect(updatedSlotsCount).toBe(0);
     });

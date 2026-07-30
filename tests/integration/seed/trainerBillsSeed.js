@@ -63,7 +63,7 @@ const courseSlotsList = [
     course: course._id,
     step: step._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
   },
   { // 3 belongs to another trainer
     _id: new ObjectId(),
@@ -80,7 +80,7 @@ const courseSlotsList = [
     course: course._id,
     step: step._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId: paidTrainerBillId }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: paidTrainerBillId }],
   },
 ];
 
