@@ -1633,7 +1633,7 @@ describe('SEEDS VERIFICATION', () => {
             })
             .populate({ path: 'step', select: 'type', transform })
             .populate({ path: 'trainers', select: '_id', transform })
-            .populate({ path: 'trainerBills.trainerBillId', select: 'courseSlots' })
+            .populate({ path: 'trainerBillings.trainerBill', select: 'courseSlots' })
             .lean();
         });
 
@@ -1692,15 +1692,15 @@ describe('SEEDS VERIFICATION', () => {
           expect(noTrainerForSlotToPlan).toBeTruthy();
         });
 
-        it('should pass if every slot trainerBill contains a trainer', () => {
-          const everySlotTrainerBillsContainGoodValues = courseSlotList
-            .every(cs => !cs.trainerBills || cs.trainerBills.every(b => b.trainer));
-          expect(everySlotTrainerBillsContainGoodValues).toBeTruthy();
+        it('should pass if every slot trainerBilling contains a trainer', () => {
+          const everySlotTrainerBillingsContainGoodValues = courseSlotList
+            .every(cs => !cs.trainerBillings || cs.trainerBillings.every(b => b.trainer));
+          expect(everySlotTrainerBillingsContainGoodValues).toBeTruthy();
         });
 
-        it('should pass if every slot\'s trainerBillId contains this slot', () => {
-          const isSlotInEveryTrainerBill = courseSlotList.every(cs => (cs.trainerBills || [])
-            .every(b => !b.trainerBillId || UtilsHelper.doesArrayIncludeId(b.trainerBillId.courseSlots, cs._id)));
+        it('should pass if every slot\'s trainerBill contains this slot', () => {
+          const isSlotInEveryTrainerBill = courseSlotList.every(cs => (cs.trainerBillings || [])
+            .every(b => !b.trainerBill || UtilsHelper.doesArrayIncludeId(b.trainerBill.courseSlots, cs._id)));
           expect(isSlotInEveryTrainerBill).toBeTruthy();
         });
       });
@@ -2560,7 +2560,7 @@ describe('SEEDS VERIFICATION', () => {
             .find()
             .populate({
               path: 'courseSlots',
-              select: 'startDate endDate step trainerBills',
+              select: 'startDate endDate step trainerBillings',
               populate: [
                 { path: 'step', select: '_id' },
                 {
@@ -2575,9 +2575,9 @@ describe('SEEDS VERIFICATION', () => {
 
         it('should pass if every trainerBill course slot has a matching entry pointing back to it', () => {
           const everySlotHasMatchingTrainerBill = trainerBillList.every(tb => tb.courseSlots.every(cs => (
-            (cs.trainerBills || []).some(b => (
+            (cs.trainerBillings || []).some(b => (
               UtilsHelper.areObjectIdsEquals(b.trainer, tb.trainer) &&
-              UtilsHelper.areObjectIdsEquals(b.trainerBillId, tb._id)
+              UtilsHelper.areObjectIdsEquals(b.trainerBill, tb._id)
             ))
           )));
 

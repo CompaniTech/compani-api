@@ -328,7 +328,7 @@ const courseSlotsList = [
     course: coursesList[1]._id,
     step: stepsList[0]._id,
     trainers: [trainerAndCoach._id],
-    trainerBills: [{ trainer: trainerAndCoach._id, trainerBillId: trainerBillIds[0] }],
+    trainerBillings: [{ trainer: trainerAndCoach._id, trainerBill: trainerBillIds[0] }],
   },
   { // 13 slot in completion certificate month
     _id: new ObjectId(),
@@ -361,7 +361,7 @@ const courseSlotsList = [
     course: coursesList[6]._id,
     step: stepsList[0]._id,
     trainers: [trainerAndCoach._id, trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerBillId: trainerBillIds[1] }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[1] }],
   },
 ];
 

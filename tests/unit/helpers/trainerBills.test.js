@@ -91,7 +91,7 @@ describe('createBill', () => {
     sinon.assert.calledOnceWithExactly(
       courseSlotUpdateMany,
       { _id: { $in: courseSlotIds } },
-      { $push: { trainerBills: { trainer: credentials._id, trainerBillId } } }
+      { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBillId } } }
     );
     sinon.assert.calledOnceWithExactly(sendTrainerBillEmail, 'FACT_0001', '125', 'Jean DUPONT', courseSlots, 'file');
   });
@@ -158,7 +158,7 @@ describe('createBill', () => {
     sinon.assert.calledOnceWithExactly(
       courseSlotUpdateMany,
       { _id: { $in: courseSlotIds } },
-      { $push: { trainerBills: { trainer: credentials._id, trainerBillId } } }
+      { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBillId } } }
     );
     sinon.assert.calledOnceWithExactly(sendTrainerBillEmail, 'FACT_0003', '170', 'Jean DUPONT', courseSlots, 'file');
   });
@@ -205,8 +205,8 @@ describe('remove', () => {
 
     sinon.assert.calledOnceWithExactly(
       courseSlotUpdateMany,
-      { 'trainerBills.trainerBillId': trainerBillId },
-      { $pull: { trainerBills: { trainerBillId } } }
+      { 'trainerBillings.trainerBill': trainerBillId },
+      { $pull: { trainerBillings: { trainerBill: trainerBillId } } }
     );
     sinon.assert.calledOnceWithExactly(trainerBillDeleteOne, { _id: trainerBillId });
   });

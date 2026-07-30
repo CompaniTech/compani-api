@@ -107,7 +107,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
     }
 
     const paidSlots = await CourseSlot
-      .find({ trainerBills: { $exists: true }, course: { $in: subProgram.courses } })
+      .find({ trainerBillings: { $exists: true }, course: { $in: subProgram.courses } })
       .sort({ startDate: -1 })
       .lean();
 

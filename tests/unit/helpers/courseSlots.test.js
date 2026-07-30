@@ -78,7 +78,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
-        trainerBills: [{ trainer: trainerId, trainerBillId: trainerBill }],
+        trainerBillings: [{ trainer: trainerId, trainerBill }],
       },
       {
         _id: new ObjectId(),
@@ -440,7 +440,7 @@ describe('list', () => {
                     status: PAID,
                     amount: '50',
                     trainerBillNumber: 'FACT_0001',
-                    trainerBillId,
+                    trainerBill: trainerBillId,
                     tradeName: 'program',
                   },
                   {
@@ -625,7 +625,7 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBills.trainerBillId', select: 'status number' }] },
+        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -785,7 +785,7 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBills.trainerBillId', select: 'status number' }] },
+        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -821,7 +821,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[0], identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: MISSING }],
-        trainerBills: [{ trainer: trainerId, trainerBillId: trainerBill }],
+        trainerBillings: [{ trainer: trainerId, trainerBill }],
       },
       {
         _id: new ObjectId(),
@@ -843,7 +843,7 @@ describe('list', () => {
           trainees: [{ _id: traineeIds[1], identity: { firstname: 'App', lastname: 'Two' } }],
         },
         attendances: [{ status: MISSING }],
-        trainerBills: [{ trainer: trainerId, trainerBillId: trainerBill }],
+        trainerBillings: [{ trainer: trainerId, trainerBill }],
       },
     ];
 
@@ -873,7 +873,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  trainerBillId,
+                  trainerBill: trainerBillId,
                   tradeName: 'program',
                 },
                 {
@@ -888,7 +888,7 @@ describe('list', () => {
                   amount: '110',
                   stepName: 'step collective',
                   trainerBillNumber: 'FACT_0001',
-                  trainerBillId,
+                  trainerBill: trainerBillId,
                   tradeName: 'program',
                 },
               ],
@@ -953,7 +953,7 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBills.trainerBillId', select: 'status number' }] },
+        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -986,7 +986,7 @@ describe('list', () => {
           trainees: [{ _id: traineeId, identity: { firstname: 'App', lastname: 'One' } }],
         },
         attendances: [{ status: PRESENT }],
-        trainerBills: [{ trainer: trainerId }],
+        trainerBillings: [{ trainer: trainerId }],
       },
     ];
 

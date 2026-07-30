@@ -48,7 +48,7 @@ exports.createBill = async (payload, credentials) => {
 
   await CourseSlot.updateMany(
     { _id: { $in: courseSlotIds } },
-    { $push: { trainerBills: { trainer: credentials._id, trainerBillId: trainerBill._id } } }
+    { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBill._id } } }
   );
 
   await EmailHelper.sendTrainerBillEmail(
@@ -67,8 +67,8 @@ exports.update = async (trainerBillId, payload) => TrainerBill
 
 exports.remove = async (trainerBillId) => {
   await CourseSlot.updateMany(
-    { 'trainerBills.trainerBillId': trainerBillId },
-    { $pull: { trainerBills: { trainerBillId } } }
+    { 'trainerBillings.trainerBill': trainerBillId },
+    { $pull: { trainerBillings: { trainerBill: trainerBillId } } }
   );
 
   await TrainerBill.deleteOne({ _id: trainerBillId });
