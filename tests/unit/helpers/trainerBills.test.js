@@ -2,40 +2,40 @@ const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
 const { expect } = require('expect');
 const CourseSlot = require('../../../src/models/CourseSlot');
-const TrainerInvoice = require('../../../src/models/TrainerInvoice');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const EmailHelper = require('../../../src/helpers/email');
-const TrainerInvoicesHelper = require('../../../src/helpers/trainerInvoices');
+const TrainerBillsHelper = require('../../../src/helpers/trainerBills');
 const SinonMongoose = require('../sinonMongoose');
 const { INVOICED, PAID } = require('../../../src/helpers/constants');
 
-describe('createInvoice', () => {
+describe('createBill', () => {
   let courseSlotFind;
-  let trainerInvoiceCreate;
+  let trainerBillCreate;
   let courseSlotUpdateMany;
   let getHourlyAmount;
-  let sendTrainerInvoiceEmail;
+  let sendTrainerBillEmail;
 
   beforeEach(() => {
     courseSlotFind = sinon.stub(CourseSlot, 'find');
-    trainerInvoiceCreate = sinon.stub(TrainerInvoice, 'create');
+    trainerBillCreate = sinon.stub(TrainerBill, 'create');
     courseSlotUpdateMany = sinon.stub(CourseSlot, 'updateMany');
     getHourlyAmount = sinon.stub(CourseSlotsHelper, 'getHourlyAmount');
-    sendTrainerInvoiceEmail = sinon.stub(EmailHelper, 'sendTrainerInvoiceEmail');
+    sendTrainerBillEmail = sinon.stub(EmailHelper, 'sendTrainerBillEmail');
   });
 
   afterEach(() => {
     courseSlotFind.restore();
-    trainerInvoiceCreate.restore();
+    trainerBillCreate.restore();
     courseSlotUpdateMany.restore();
     getHourlyAmount.restore();
-    sendTrainerInvoiceEmail.restore();
+    sendTrainerBillEmail.restore();
   });
 
-  it('should create a trainer invoice and link it to the course slots', async () => {
+  it('should create a trainer bill and link it to the course slots', async () => {
     const credentials = { _id: new ObjectId(), identity: { firstname: 'Jean', lastname: 'Dupont' } };
     const courseSlotIds = [new ObjectId(), new ObjectId()];
-    const trainerInvoiceId = new ObjectId();
+    const trainerBillId = new ObjectId();
     const payload = { courseSlots: courseSlotIds, number: 'FACT_0001', file: 'file' };
 
     const courseSlots = [
@@ -54,11 +54,11 @@ describe('createInvoice', () => {
     courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlots, ['populate', 'sort', 'lean']));
     getHourlyAmount.onCall(0).returns(50);
     getHourlyAmount.onCall(1).returns(50);
-    trainerInvoiceCreate.returns({ _id: trainerInvoiceId });
+    trainerBillCreate.returns({ _id: trainerBillId });
 
-    const result = await TrainerInvoicesHelper.createInvoice(payload, credentials);
+    const result = await TrainerBillsHelper.createBill(payload, credentials);
 
-    expect(result).toEqual({ _id: trainerInvoiceId });
+    expect(result).toEqual({ _id: trainerBillId });
 
     SinonMongoose.calledOnceWithExactly(
       courseSlotFind,
@@ -78,7 +78,7 @@ describe('createInvoice', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(
-      trainerInvoiceCreate,
+      trainerBillCreate,
       {
         trainer: credentials._id,
         number: 'FACT_0001',
@@ -91,15 +91,15 @@ describe('createInvoice', () => {
     sinon.assert.calledOnceWithExactly(
       courseSlotUpdateMany,
       { _id: { $in: courseSlotIds } },
-      { $push: { trainerBills: { trainer: credentials._id, trainerInvoice: trainerInvoiceId } } }
+      { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBillId } } }
     );
-    sinon.assert.calledOnceWithExactly(sendTrainerInvoiceEmail, 'FACT_0001', '125', 'Jean DUPONT', courseSlots, 'file');
+    sinon.assert.calledOnceWithExactly(sendTrainerBillEmail, 'FACT_0001', '125', 'Jean DUPONT', courseSlots, 'file');
   });
 
   it('should count a collective session amount only once, whatever the number of attending trainees', async () => {
     const credentials = { _id: new ObjectId(), identity: { firstname: 'Jean', lastname: 'Dupont' } };
     const courseSlotIds = [new ObjectId(), new ObjectId(), new ObjectId()];
-    const trainerInvoiceId = new ObjectId();
+    const trainerBillId = new ObjectId();
     const payload = { courseSlots: courseSlotIds, number: 'FACT_0003', file: 'file' };
 
     const courseSlots = [
@@ -123,9 +123,9 @@ describe('createInvoice', () => {
     courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlots, ['populate', 'sort', 'lean']));
     getHourlyAmount.onCall(0).returns(50);
     getHourlyAmount.onCall(1).returns(70);
-    trainerInvoiceCreate.returns({ _id: trainerInvoiceId });
+    trainerBillCreate.returns({ _id: trainerBillId });
 
-    await TrainerInvoicesHelper.createInvoice(payload, credentials);
+    await TrainerBillsHelper.createBill(payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       courseSlotFind,
@@ -145,7 +145,7 @@ describe('createInvoice', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(
-      trainerInvoiceCreate,
+      trainerBillCreate,
       {
         trainer: credentials._id,
         number: 'FACT_0003',
@@ -158,56 +158,56 @@ describe('createInvoice', () => {
     sinon.assert.calledOnceWithExactly(
       courseSlotUpdateMany,
       { _id: { $in: courseSlotIds } },
-      { $push: { trainerBills: { trainer: credentials._id, trainerInvoice: trainerInvoiceId } } }
+      { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBillId } } }
     );
-    sinon.assert.calledOnceWithExactly(sendTrainerInvoiceEmail, 'FACT_0003', '170', 'Jean DUPONT', courseSlots, 'file');
+    sinon.assert.calledOnceWithExactly(sendTrainerBillEmail, 'FACT_0003', '170', 'Jean DUPONT', courseSlots, 'file');
   });
 });
 
 describe('update', () => {
-  let trainerInvoiceUpdateOne;
+  let trainerBillUpdateOne;
 
   beforeEach(() => {
-    trainerInvoiceUpdateOne = sinon.stub(TrainerInvoice, 'updateOne');
+    trainerBillUpdateOne = sinon.stub(TrainerBill, 'updateOne');
   });
 
   afterEach(() => {
-    trainerInvoiceUpdateOne.restore();
+    trainerBillUpdateOne.restore();
   });
 
-  it('should update the trainer invoice status', async () => {
-    const trainerInvoiceId = new ObjectId();
+  it('should update the trainer bill status', async () => {
+    const trainerBillId = new ObjectId();
 
-    await TrainerInvoicesHelper.update(trainerInvoiceId, { status: PAID });
+    await TrainerBillsHelper.update(trainerBillId, { status: PAID });
 
-    sinon.assert.calledOnceWithExactly(trainerInvoiceUpdateOne, { _id: trainerInvoiceId }, { $set: { status: PAID } });
+    sinon.assert.calledOnceWithExactly(trainerBillUpdateOne, { _id: trainerBillId }, { $set: { status: PAID } });
   });
 });
 
 describe('remove', () => {
   let courseSlotUpdateMany;
-  let trainerInvoiceDeleteOne;
+  let trainerBillDeleteOne;
 
   beforeEach(() => {
     courseSlotUpdateMany = sinon.stub(CourseSlot, 'updateMany');
-    trainerInvoiceDeleteOne = sinon.stub(TrainerInvoice, 'deleteOne');
+    trainerBillDeleteOne = sinon.stub(TrainerBill, 'deleteOne');
   });
 
   afterEach(() => {
     courseSlotUpdateMany.restore();
-    trainerInvoiceDeleteOne.restore();
+    trainerBillDeleteOne.restore();
   });
 
-  it('should unlink the course slots and delete the trainer invoice', async () => {
-    const trainerInvoiceId = new ObjectId();
+  it('should unlink the course slots and delete the trainer bill', async () => {
+    const trainerBillId = new ObjectId();
 
-    await TrainerInvoicesHelper.remove(trainerInvoiceId);
+    await TrainerBillsHelper.remove(trainerBillId);
 
     sinon.assert.calledOnceWithExactly(
       courseSlotUpdateMany,
-      { 'trainerBills.trainerInvoice': trainerInvoiceId },
-      { $pull: { trainerBills: { trainerInvoice: trainerInvoiceId } } }
+      { 'trainerBillings.trainerBill': trainerBillId },
+      { $pull: { trainerBillings: { trainerBill: trainerBillId } } }
     );
-    sinon.assert.calledOnceWithExactly(trainerInvoiceDeleteOne, { _id: trainerInvoiceId });
+    sinon.assert.calledOnceWithExactly(trainerBillDeleteOne, { _id: trainerBillId });
   });
 });

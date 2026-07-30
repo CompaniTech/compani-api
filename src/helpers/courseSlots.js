@@ -62,12 +62,12 @@ const addToStatusTotals = (totals, status, durationObj, amount, isAbsence) => ({
 });
 
 exports.getSlotStatus = (slot, trainerId) => {
-  const trainerBill = (slot.trainerBills || [])
-    .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainerId));
-  if (!trainerBill) return { status: NOT_INVOICED, trainerBill: null };
+  const trainerBilling = (slot.trainerBillings || [])
+    .find(billing => UtilsHelper.areObjectIdsEquals(billing.trainer, trainerId));
+  if (!trainerBilling) return { status: NOT_INVOICED, trainerBilling: null };
 
-  // A trainerBill with no trainerInvoice is a slot paid before this invoicing system existed.
-  return { status: trainerBill.trainerInvoice ? trainerBill.trainerInvoice.status : PAID, trainerBill };
+  // A trainerBilling with no trainerBill is a slot paid before this billing system existed.
+  return { status: trainerBilling.trainerBill ? trainerBilling.trainerBill.status : PAID, trainerBilling };
 };
 
 const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
@@ -85,7 +85,7 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
       const durationObj = CompaniDuration(duration);
       const isAbsence = slot.attendances[0].status === MISSING;
       const amount = NumbersHelper.multiply(slot.hourlyAmount, durationObj.asHours());
-      const { status: slotStatus, trainerBill } = exports.getSlotStatus(slot, trainerId);
+      const { status: slotStatus, trainerBilling } = exports.getSlotStatus(slot, trainerId);
 
       stepTotals = addToStatusTotals(stepTotals, slotStatus, durationObj, amount, isAbsence);
       courseTotals = addToStatusTotals(courseTotals, slotStatus, durationObj, amount, isAbsence);
@@ -99,9 +99,9 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
         status: slotStatus,
         amount,
         tradeName: slot.course.tradeName,
-        ...(trainerBill && trainerBill.trainerInvoice && {
-          trainerInvoice: trainerBill.trainerInvoice._id,
-          trainerBillNumber: trainerBill.trainerInvoice.number,
+        ...(trainerBilling && trainerBilling.trainerBill && {
+          trainerBill: trainerBilling.trainerBill._id,
+          trainerBillNumber: trainerBilling.trainerBill.number,
         }),
       };
     });
@@ -138,7 +138,7 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
       const endISO = CompaniDate(slot.endDate).toISO();
       const dates = `${startISO}_${endISO}`;
 
-      const { status: slotStatus, trainerBill } = exports.getSlotStatus(slot, trainerId);
+      const { status: slotStatus, trainerBilling } = exports.getSlotStatus(slot, trainerId);
 
       if (!slotsByDates[dates]) {
         slotsByDates[dates] = {
@@ -163,9 +163,9 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
         isAbsence,
         status: slotStatus,
         stepName: slot.step.name,
-        ...(trainerBill && trainerBill.trainerInvoice && {
-          trainerInvoice: trainerBill.trainerInvoice._id,
-          trainerBillNumber: trainerBill.trainerInvoice.number,
+        ...(trainerBilling && trainerBilling.trainerBill && {
+          trainerBill: trainerBilling.trainerBill._id,
+          trainerBillNumber: trainerBilling.trainerBill.number,
         }),
       });
     });
@@ -228,7 +228,7 @@ exports.list = async (query) => {
       ],
     })
     .populate({ path: 'attendances', select: 'status', options: { isVendorUser: true } })
-    .populate({ path: 'trainerBills.trainerInvoice', select: 'status number' })
+    .populate({ path: 'trainerBillings.trainerBill', select: 'status number' })
     .lean();
 
   const filteredCourseSlots = courseSlots.reduce((acc, slot) => {

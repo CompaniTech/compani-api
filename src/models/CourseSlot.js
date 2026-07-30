@@ -12,10 +12,10 @@ const CourseSlotSchema = mongoose.Schema({
   step: { type: mongoose.Schema.Types.ObjectId, ref: 'Step', required: true },
   trainees: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
   trainers: { type: [mongoose.Schema.Types.ObjectId], ref: 'User', default: undefined },
-  trainerBills: {
+  trainerBillings: {
     type: [{
       trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-      trainerInvoice: { type: mongoose.Schema.Types.ObjectId, ref: 'TrainerInvoice' },
+      trainerBill: { type: mongoose.Schema.Types.ObjectId, ref: 'TrainerBill' },
     }],
     _id: false,
     default: undefined,

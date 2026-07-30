@@ -63,7 +63,7 @@ exports.plugin = {
       method: 'POST',
       path: '/send-trainer-fees-bill',
       options: {
-        auth: { scope: ['trainerinvoices:create'] },
+        auth: { scope: ['trainerbills:create'] },
         payload: formDataPayload(),
         validate: {
           payload: Joi.object({

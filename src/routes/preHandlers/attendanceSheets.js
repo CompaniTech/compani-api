@@ -337,7 +337,7 @@ exports.authorizeAttendanceSheetDeletion = async (req) => {
       ? [attendanceSheet.trainee]
       : attendanceSheet.slots.flatMap(s => (s.traineesSignature || []).map(signature => signature.traineeId));
     await checkCompletionCertificates(courseSlots, attendanceSheet.course._id, trainees);
-    if (courseSlots.some(s => (s.trainerBills || []).length)) {
+    if (courseSlots.some(s => (s.trainerBillings || []).length)) {
       throw Boom.forbidden(translate[language].slotIsLinkedToTrainerBill);
     }
   }

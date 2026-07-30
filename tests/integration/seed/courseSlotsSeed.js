@@ -13,7 +13,7 @@ const Attendance = require('../../../src/models/Attendance');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const CourseHistory = require('../../../src/models/CourseHistory');
-const TrainerInvoice = require('../../../src/models/TrainerInvoice');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
 const {
   vendorAdmin,
@@ -216,7 +216,7 @@ const coursesList = [
   },
 ];
 
-const trainerInvoiceIds = [new ObjectId(), new ObjectId()];
+const trainerBillIds = [new ObjectId(), new ObjectId()];
 
 const courseSlotsList = [
   { // 0
@@ -328,7 +328,7 @@ const courseSlotsList = [
     course: coursesList[1]._id,
     step: stepsList[0]._id,
     trainers: [trainerAndCoach._id],
-    trainerBills: [{ trainer: trainerAndCoach._id, trainerInvoice: trainerInvoiceIds[0] }],
+    trainerBillings: [{ trainer: trainerAndCoach._id, trainerBill: trainerBillIds[0] }],
   },
   { // 13 slot in completion certificate month
     _id: new ObjectId(),
@@ -361,13 +361,13 @@ const courseSlotsList = [
     course: coursesList[6]._id,
     step: stepsList[0]._id,
     trainers: [trainerAndCoach._id, trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerInvoice: trainerInvoiceIds[1] }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[1] }],
   },
 ];
 
-const trainerInvoiceList = [
+const trainerBillList = [
   {
-    _id: trainerInvoiceIds[0],
+    _id: trainerBillIds[0],
     trainer: trainerAndCoach._id,
     number: 'FACT_0012',
     status: PAID,
@@ -376,7 +376,7 @@ const trainerInvoiceList = [
     submittedAt: '2020-05-15T10:00:00.000Z',
   },
   {
-    _id: trainerInvoiceIds[1],
+    _id: trainerBillIds[1],
     trainer: trainer._id,
     number: 'Fact_test',
     status: PAID,
@@ -501,7 +501,7 @@ const populateDB = async () => {
     Attendance.create(attendances),
     AttendanceSheet.create(attendanceSheets),
     UserCompany.create(userCompanies),
-    TrainerInvoice.create(trainerInvoiceList),
+    TrainerBill.create(trainerBillList),
   ]);
 };
 

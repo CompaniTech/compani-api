@@ -9,7 +9,7 @@ const CourseSlot = require('../../../src/models/CourseSlot');
 const Step = require('../../../src/models/Step');
 const Program = require('../../../src/models/Program');
 const SubProgram = require('../../../src/models/SubProgram');
-const TrainerInvoice = require('../../../src/models/TrainerInvoice');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const { authCompany, otherCompany, companyWithoutSubscription, otherHolding } = require('../../seed/authCompaniesSeed');
 const {
   WEBAPP,
@@ -294,7 +294,7 @@ const courseHistoriesList = [
   },
 ];
 
-const trainerInvoiceId = new ObjectId();
+const trainerBillId = new ObjectId();
 
 const slotsList = [
   { // 0
@@ -539,13 +539,13 @@ const slotsList = [
     course: coursesList[7]._id,
     step: steps[0]._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerInvoice: trainerInvoiceId }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
   },
 ];
 
-const trainerInvoiceList = [
+const trainerBillList = [
   {
-    _id: trainerInvoiceId,
+    _id: trainerBillId,
     trainer: trainer._id,
     number: 'FAC-0001',
     status: PAID,
@@ -1092,7 +1092,7 @@ const populateDB = async () => {
     SubProgram.create(subProgramList),
     Program.create(programsList),
     CompletionCertificate.create(completionCertificates),
-    TrainerInvoice.create(trainerInvoiceList),
+    TrainerBill.create(trainerBillList),
   ]);
 };
 

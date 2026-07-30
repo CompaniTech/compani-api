@@ -820,7 +820,7 @@ describe('completionNotionCourseSlotsUpdate', () => {
   });
 });
 
-describe('sendTrainerInvoiceEmail', () => {
+describe('sendTrainerBillEmail', () => {
   let sendMail;
   let sendinBlueTransporter;
 
@@ -850,7 +850,7 @@ describe('sendTrainerInvoiceEmail', () => {
     sendMail.returns(sentObj);
     sendinBlueTransporter.returns({ sendMail });
 
-    const result = await EmailHelper.sendTrainerInvoiceEmail(number, amount, trainerName, courseSlots, file);
+    const result = await EmailHelper.sendTrainerBillEmail(number, amount, trainerName, courseSlots, file);
 
     expect(result).toEqual(sentObj);
     sinon.assert.calledWithExactly(sendinBlueTransporter);

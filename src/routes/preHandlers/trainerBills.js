@@ -1,13 +1,13 @@
 const Boom = require('@hapi/boom');
 const CourseSlot = require('../../models/CourseSlot');
-const TrainerInvoice = require('../../models/TrainerInvoice');
+const TrainerBill = require('../../models/TrainerBill');
 const UtilsHelper = require('../../helpers/utils');
 const translate = require('../../helpers/translate');
 const { INVOICED, PAID } = require('../../helpers/constants');
 
 const { language } = translate;
 
-exports.authorizeTrainerInvoiceCreation = async (req) => {
+exports.authorizeTrainerBillCreation = async (req) => {
   try {
     const { credentials } = req.auth;
     const courseSlotIds = Array.isArray(req.payload.courseSlots) ? req.payload.courseSlots : [req.payload.courseSlots];
@@ -17,14 +17,14 @@ exports.authorizeTrainerInvoiceCreation = async (req) => {
       .lean();
     if (courseSlots.length !== courseSlotIds.length) throw Boom.notFound();
 
-    const someSlotsAreAlreadyInvoiced = courseSlots.some(slot => (slot.trainerBills || []).some(
-      bill => UtilsHelper.areObjectIdsEquals(bill.trainer, credentials._id)
+    const someSlotsAreAlreadyBilled = courseSlots.some(slot => (slot.trainerBillings || []).some(
+      billing => UtilsHelper.areObjectIdsEquals(billing.trainer, credentials._id)
     ));
-    if (someSlotsAreAlreadyInvoiced) throw Boom.forbidden();
+    if (someSlotsAreAlreadyBilled) throw Boom.forbidden();
 
-    const invoiceNumberAlreadyUsed = await TrainerInvoice
+    const billNumberAlreadyUsed = await TrainerBill
       .countDocuments({ trainer: credentials._id, number: req.payload.number });
-    if (invoiceNumberAlreadyUsed) throw Boom.conflict(translate[language].trainerInvoiceNumberAlreadyUsed);
+    if (billNumberAlreadyUsed) throw Boom.conflict(translate[language].trainerBillNumberAlreadyUsed);
 
     return null;
   } catch (e) {
@@ -33,14 +33,14 @@ exports.authorizeTrainerInvoiceCreation = async (req) => {
   }
 };
 
-exports.authorizeTrainerInvoiceUpdate = async (req) => {
+exports.authorizeTrainerBillUpdate = async (req) => {
   try {
-    const trainerInvoice = await TrainerInvoice.findOne({ _id: req.params._id }).lean();
-    if (!trainerInvoice) throw Boom.notFound();
+    const trainerBill = await TrainerBill.findOne({ _id: req.params._id }).lean();
+    if (!trainerBill) throw Boom.notFound();
 
-    const expectedPayloadStatus = trainerInvoice.status === PAID ? INVOICED : PAID;
+    const expectedPayloadStatus = trainerBill.status === PAID ? INVOICED : PAID;
     if (req.payload.status !== expectedPayloadStatus) {
-      throw Boom.conflict(translate[language].trainerInvoiceStatusConflict);
+      throw Boom.conflict(translate[language].trainerBillStatusConflict);
     }
 
     return null;
@@ -50,12 +50,12 @@ exports.authorizeTrainerInvoiceUpdate = async (req) => {
   }
 };
 
-exports.authorizeTrainerInvoiceDeletion = async (req) => {
+exports.authorizeTrainerBillDeletion = async (req) => {
   try {
-    const trainerInvoice = await TrainerInvoice.findOne({ _id: req.params._id }).lean();
-    if (!trainerInvoice) throw Boom.notFound();
+    const trainerBill = await TrainerBill.findOne({ _id: req.params._id }).lean();
+    if (!trainerBill) throw Boom.notFound();
 
-    if (trainerInvoice.status !== INVOICED) throw Boom.conflict(translate[language].trainerInvoiceStatusConflict);
+    if (trainerBill.status !== INVOICED) throw Boom.conflict(translate[language].trainerBillStatusConflict);
 
     return null;
   } catch (e) {

@@ -7,7 +7,7 @@ const Activity = require('../../../src/models/Activity');
 const Course = require('../../../src/models/Course');
 const Card = require('../../../src/models/Card');
 const CourseSlot = require('../../../src/models/CourseSlot');
-const TrainerInvoice = require('../../../src/models/TrainerInvoice');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const { vendorAdmin, trainer } = require('../../seed/authUsersSeed');
@@ -160,7 +160,7 @@ const coursesList = [{
   tradeName: 'nom',
 }];
 
-const trainerInvoiceId = new ObjectId();
+const trainerBillId = new ObjectId();
 
 const courseSlotsList = [
   {
@@ -178,13 +178,13 @@ const courseSlotsList = [
     course: coursesList[0]._id,
     step: stepsList[0]._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerInvoice: trainerInvoiceId }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
   },
 ];
 
-const trainerInvoiceList = [
+const trainerBillList = [
   {
-    _id: trainerInvoiceId,
+    _id: trainerBillId,
     trainer: trainer._id,
     number: '1245',
     status: PAID,
@@ -207,7 +207,7 @@ const populateDB = async () => {
     SubProgram.create(subProgramsList),
     User.create([tester, userFromAuthCompany]),
     UserCompany.create(userCompany),
-    TrainerInvoice.create(trainerInvoiceList),
+    TrainerBill.create(trainerBillList),
   ]);
 };
 
