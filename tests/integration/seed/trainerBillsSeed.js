@@ -1,7 +1,7 @@
 const { ObjectId } = require('mongodb');
 const Course = require('../../../src/models/Course');
 const CourseSlot = require('../../../src/models/CourseSlot');
-const TrainerInvoice = require('../../../src/models/TrainerInvoice');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const Program = require('../../../src/models/Program');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
@@ -36,8 +36,8 @@ const course = {
   tradeName: 'nom',
 };
 
-const trainerInvoiceId = new ObjectId();
-const paidTrainerInvoiceId = new ObjectId();
+const trainerBillId = new ObjectId();
+const paidTrainerBillId = new ObjectId();
 
 const courseSlotsList = [
   { // 0 not invoiced, belongs to the trainer
@@ -63,7 +63,7 @@ const courseSlotsList = [
     course: course._id,
     step: step._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerInvoice: trainerInvoiceId }],
+    trainerBills: [{ trainer: trainer._id, trainerBillId }],
   },
   { // 3 belongs to another trainer
     _id: new ObjectId(),
@@ -80,13 +80,13 @@ const courseSlotsList = [
     course: course._id,
     step: step._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, trainerInvoice: paidTrainerInvoiceId }],
+    trainerBills: [{ trainer: trainer._id, trainerBillId: paidTrainerBillId }],
   },
 ];
 
-const trainerInvoiceList = [
+const trainerBillList = [
   {
-    _id: trainerInvoiceId,
+    _id: trainerBillId,
     trainer: trainer._id,
     number: 'FACT_0001',
     status: INVOICED,
@@ -95,7 +95,7 @@ const trainerInvoiceList = [
     submittedAt: '2023-01-01T10:00:00.000Z',
   },
   {
-    _id: paidTrainerInvoiceId,
+    _id: paidTrainerBillId,
     trainer: trainer._id,
     number: 'FACT_0099',
     status: PAID,
@@ -114,8 +114,8 @@ const populateDB = async () => {
     Course.create(course),
     Step.create(step),
     CourseSlot.create(courseSlotsList),
-    TrainerInvoice.create(trainerInvoiceList),
+    TrainerBill.create(trainerBillList),
   ]);
 };
 
-module.exports = { populateDB, course, courseSlotsList, trainerInvoiceId, paidTrainerInvoiceId };
+module.exports = { populateDB, course, courseSlotsList, trainerBillId, paidTrainerBillId };

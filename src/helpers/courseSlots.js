@@ -66,8 +66,8 @@ exports.getSlotStatus = (slot, trainerId) => {
     .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainerId));
   if (!trainerBill) return { status: NOT_INVOICED, trainerBill: null };
 
-  // A trainerBill with no trainerInvoice is a slot paid before this invoicing system existed.
-  return { status: trainerBill.trainerInvoice ? trainerBill.trainerInvoice.status : PAID, trainerBill };
+  // A trainerBill with no trainerBillId is a slot paid before this billing system existed.
+  return { status: trainerBill.trainerBillId ? trainerBill.trainerBillId.status : PAID, trainerBill };
 };
 
 const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
@@ -99,9 +99,9 @@ const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
         status: slotStatus,
         amount,
         tradeName: slot.course.tradeName,
-        ...(trainerBill && trainerBill.trainerInvoice && {
-          trainerInvoice: trainerBill.trainerInvoice._id,
-          trainerBillNumber: trainerBill.trainerInvoice.number,
+        ...(trainerBill && trainerBill.trainerBillId && {
+          trainerBillId: trainerBill.trainerBillId._id,
+          trainerBillNumber: trainerBill.trainerBillId.number,
         }),
       };
     });
@@ -163,9 +163,9 @@ const formatCollectiveSlots = (collectiveSlots, trainerId) => {
         isAbsence,
         status: slotStatus,
         stepName: slot.step.name,
-        ...(trainerBill && trainerBill.trainerInvoice && {
-          trainerInvoice: trainerBill.trainerInvoice._id,
-          trainerBillNumber: trainerBill.trainerInvoice.number,
+        ...(trainerBill && trainerBill.trainerBillId && {
+          trainerBillId: trainerBill.trainerBillId._id,
+          trainerBillNumber: trainerBill.trainerBillId.number,
         }),
       });
     });
@@ -228,7 +228,7 @@ exports.list = async (query) => {
       ],
     })
     .populate({ path: 'attendances', select: 'status', options: { isVendorUser: true } })
-    .populate({ path: 'trainerBills.trainerInvoice', select: 'status number' })
+    .populate({ path: 'trainerBills.trainerBillId', select: 'status number' })
     .lean();
 
   const filteredCourseSlots = courseSlots.reduce((acc, slot) => {
