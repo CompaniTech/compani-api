@@ -215,7 +215,7 @@ module.exports = {
     trainerNotLinkedToSlot: 'Trainer is not linked to this slot.',
     /* Trainer bills */
     trainerBillCreated: 'Trainer bill created.',
-    trainerBillNumberAlreadyUsed: 'This invoice number is already used.',
+    trainerBillNumberAlreadyUsed: 'This bill number is already used.',
     trainerBillUpdated: 'Trainer bill updated.',
     trainerBillRemoved: 'Trainer bill removed.',
     trainerBillStatusConflict: 'Impossible : trainer bill is not in the expected status.',
