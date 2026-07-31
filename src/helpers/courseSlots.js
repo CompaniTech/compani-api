@@ -413,6 +413,24 @@ exports.updateCourseSlot = async (courseSlotId, payload, user) => {
   }
 };
 
+exports.uploadCourseSlotsCSV = async (courseId, slotList, credentials) => {
+  for (const slot of slotList) {
+    let slotId;
+    if (slot.slotId) slotId = slot.slotId;
+    else {
+      const createdSlot = await CourseSlot.create({ course: courseId, step: slot.stepId });
+      slotId = createdSlot._id;
+    }
+
+    await exports.updateCourseSlot(
+      slotId,
+      pick(slot, ['startDate', 'endDate', 'address', 'meetingLink', 'trainers']),
+      credentials
+    );
+    if (slot.trainees) await exports.updateCourseSlot(slotId, { trainees: slot.trainees }, credentials);
+  }
+};
+
 exports.removeCourseSlot = async courseSlotId => CourseSlot.deleteOne({ _id: courseSlotId });
 
 exports.getAddressList = (slots, steps) => {

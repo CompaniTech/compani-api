@@ -1477,6 +1477,75 @@ describe('updateCourseSlot', () => {
   });
 });
 
+describe('uploadCourseSlotsCSV', () => {
+  let create;
+  let updateCourseSlot;
+  beforeEach(() => {
+    create = sinon.stub(CourseSlot, 'create');
+    updateCourseSlot = sinon.stub(CourseSlotsHelper, 'updateCourseSlot');
+  });
+  afterEach(() => {
+    create.restore();
+    updateCourseSlot.restore();
+  });
+
+  it('should reuse an existing slotToPlan', async () => {
+    const courseId = new ObjectId();
+    const slotId = new ObjectId();
+    const stepId = new ObjectId();
+    const trainerId = new ObjectId();
+    const traineeId = new ObjectId();
+    const credentials = { _id: new ObjectId() };
+    const formattedSlots = [{
+      stepId,
+      startDate: '2020-03-03T09:00:00.000Z',
+      endDate: '2020-03-03T11:00:00.000Z',
+      trainers: [trainerId],
+      trainees: [traineeId],
+      slotId,
+    }];
+
+    await CourseSlotsHelper.uploadCourseSlotsCSV(courseId, formattedSlots, credentials);
+
+    sinon.assert.notCalled(create);
+    sinon.assert.calledTwice(updateCourseSlot);
+    sinon.assert.calledWithExactly(
+      updateCourseSlot.getCall(0),
+      slotId,
+      { startDate: '2020-03-03T09:00:00.000Z', endDate: '2020-03-03T11:00:00.000Z', trainers: [trainerId] },
+      credentials
+    );
+    sinon.assert.calledWithExactly(updateCourseSlot.getCall(1), slotId, { trainees: [traineeId] }, credentials);
+  });
+
+  it('should create a new course slot if there is no slotToPlan to reuse', async () => {
+    const courseId = new ObjectId();
+    const newSlotId = new ObjectId();
+    const stepId = new ObjectId();
+    const trainerId = new ObjectId();
+    const credentials = { _id: new ObjectId() };
+    const formattedSlots = [{
+      stepId,
+      startDate: '2020-03-03T09:00:00.000Z',
+      endDate: '2020-03-03T11:00:00.000Z',
+      trainers: [trainerId],
+      slotId: null,
+    }];
+
+    create.returns({ _id: newSlotId });
+
+    await CourseSlotsHelper.uploadCourseSlotsCSV(courseId, formattedSlots, credentials);
+
+    sinon.assert.calledOnceWithExactly(create, { course: courseId, step: stepId });
+    sinon.assert.calledOnceWithExactly(
+      updateCourseSlot,
+      newSlotId,
+      { startDate: '2020-03-03T09:00:00.000Z', endDate: '2020-03-03T11:00:00.000Z', trainers: [trainerId] },
+      credentials
+    );
+  });
+});
+
 describe('removeCourseSlot', () => {
   let deleteOne;
   beforeEach(() => {

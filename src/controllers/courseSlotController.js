@@ -58,4 +58,15 @@ const remove = async (req) => {
   }
 };
 
-module.exports = { list, create, update, remove };
+const uploadCourseSlotsCSV = async (req) => {
+  try {
+    await CourseSlotsHelper.uploadCourseSlotsCSV(req.payload.course, req.pre.slotList, req.auth.credentials);
+
+    return { message: translate[language].courseSlotCreated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { list, create, update, remove, uploadCourseSlotsCSV };
