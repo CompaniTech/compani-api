@@ -88,6 +88,7 @@ exports.getHeader = (data, compani, isBill = false, isPaid = false) => {
           stack: [
             { text: isBill ? 'Facturer à' : '' },
             { text: get(data, 'payer.name') || '', bold: true },
+            ...(get(data, 'payer.billingInfos') ? [{ text: data.payer.billingInfos }] : []),
             { text: get(data, 'payer.address') || '' },
           ],
         },

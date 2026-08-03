@@ -46,6 +46,7 @@ describe('getPdfContent', () => {
       payer: {
         name: 'payeur',
         address: '24 Avenue Daumesnil 75012 Paris',
+        billingInfos: '123_456',
       },
       isPayerCompany: false,
       vat: 20,
@@ -100,6 +101,7 @@ describe('getPdfContent', () => {
               stack: [
                 { text: 'Facturer à' },
                 { text: 'payeur', bold: true },
+                { text: '123_456' },
                 { text: '24 Avenue Daumesnil 75012 Paris' },
               ],
             },
