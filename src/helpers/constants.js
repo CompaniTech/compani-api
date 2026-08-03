@@ -634,6 +634,7 @@ module.exports = {
   COURSE_BILL: 'course_bill',
   COURSE_PAYMENT: 'course_payment',
   TRAINER_SALARY: 'trainer_salary',
+  DRAFT_COURSE_BILL: 'draft_course_bill',
   get HISTORY_EXPORT_TYPES() {
     return [
       this.WORKING_EVENT,
@@ -651,6 +652,7 @@ module.exports = {
       this.COURSE_BILL,
       this.COURSE_PAYMENT,
       this.SELF_POSITIONNING,
+      this.DRAFT_COURSE_BILL,
     ];
   },
   get CLIENT_EXPORT_TYPES() {
@@ -683,6 +685,7 @@ module.exports = {
       this.COURSE_BILL,
       this.COURSE_PAYMENT,
       this.SELF_POSITIONNING,
+      this.DRAFT_COURSE_BILL,
     ];
   },
   // COURSE BILLING

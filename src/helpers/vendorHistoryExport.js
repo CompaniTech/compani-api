@@ -773,6 +773,60 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
   return rows.length ? [Object.keys(rows[0]), ...rows.map(d => Object.values(d))] : [[NO_DATA]];
 };
 
+const getInterruptionDatesForExport = interruptionDates => (interruptionDates || [])
+  .map((interruption) => {
+    const end = interruption.endDate ? CompaniDate(interruption.endDate).format(DD_MM_YYYY) : 'en cours';
+    return `${CompaniDate(interruption.startDate).format(DD_MM_YYYY)} - ${end}`;
+  })
+  .join(', ');
+
+exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) => {
+  const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
+  const courseBills = await CourseBill
+    .find({ billedAt: { $exists: false }, maturityDate: { $lte: endDate, $gte: startDate } })
+    .populate({
+      path: 'course',
+      select: 'subProgram type trainees archivedAt interruptionDates',
+      populate: [
+        { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+        { path: 'trainees', select: 'identity' },
+      ],
+    })
+    .populate({
+      path: 'companies',
+      select: 'name',
+      populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+    })
+    .setOptions({ isVendorUser })
+    .lean();
+
+  if (!courseBills.length) return [[NO_DATA]];
+
+  const rows = [];
+  for (const bill of courseBills) {
+    const { netExclTaxes, netInclTaxes } = CourseBillHelper.getDetailWithTaxes(bill);
+    const companiesHolding = [...new Set(compact(bill.companies.map(c => get(c, 'holding.name'))))];
+
+    rows.push({
+      'Id formation': bill.course._id,
+      Programme: get(bill, 'course.subProgram.program.name') || '',
+      'Id apprenant': bill.course.type === SINGLE ? bill.course.trainees[0]._id : '',
+      Apprenant: bill.course.type === SINGLE ? UtilsHelper.formatIdentity(bill.course.trainees[0].identity, 'FL') : '',
+      Structure: bill.companies.map(c => c.name).join(', '),
+      'Société mère': companiesHolding.join(', '),
+      'Date de facturation': CompaniDate(bill.maturityDate).format(DD_MM_YYYY),
+      Description: bill.mainFee.description || '',
+      'Montant HT': UtilsHelper.formatFloatForExport(netExclTaxes),
+      'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
+      TVA: UtilsHelper.formatFloatForExport(bill.vat || 0),
+      'Date d\'archivage': bill.course.archivedAt ? CompaniDate(bill.course.archivedAt).format(DD_MM_YYYY) : '',
+      'Liste des pauses': getInterruptionDatesForExport(bill.course.interruptionDates),
+    });
+  }
+
+  return [Object.keys(rows[0]), ...rows.map(d => Object.values(d))];
+};
+
 exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
   const paymentsOnPeriod = await CoursePayment.find({ date: { $lte: endDate, $gte: startDate } }, { courseBill: 1 })
