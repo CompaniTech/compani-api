@@ -1476,6 +1476,25 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 403 if too many slots in file', async () => {
+      const slotList = [];
+      for (let i = 0; i <= process.env.MAX_CSV_COURSE_SIZE; i++) {
+        slotList.push({
+          step: stepsList[0].name,
+          startDate: '2021-01-12T09:00:00.000Z',
+          endDate: '2021-01-12T11:00:00.000Z',
+          address: '',
+          meetingLink: '',
+          trainers: 'trainer@alenvi.io',
+          trainees: '',
+        });
+      }
+
+      const response = await injectCsv(coursesList[0]._id, slotList, authToken);
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 422 if step doesn\'t exist', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: 'etape inconnue',
