@@ -274,7 +274,9 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
     const addressesToGeocode = [...new Set(slotList
       .filter(slot => slot.address && !slot.meetingLink && get(stepForSlot(slot), 'type') === ON_SITE)
       .map(slot => slot.address))];
-    const geocodeResponses = await Promise.all(addressesToGeocode.map(address => Geocode.search(address)));
+    const geocodeResponses = await Promise.all(
+      addressesToGeocode.map(address => Geocode.search(address).catch(() => null))
+    );
     const geocodeByAddress = keyBy(
       addressesToGeocode.map((address, index) => ({ address, data: get(geocodeResponses[index], 'data') })),
       'address'

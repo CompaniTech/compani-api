@@ -1434,7 +1434,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     });
 
     it('should geocode address for an on site slot', async () => {
-      geocodeSearch.returns({
+      geocodeSearch.resolves({
         data: {
           features: [{
             properties: {
@@ -1662,13 +1662,30 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     });
 
     it('should return 422 if address is not found by geocoding', async () => {
-      geocodeSearch.returns({ data: { features: [] } });
+      geocodeSearch.resolves({ data: { features: [] } });
 
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
         startDate: '2021-01-12T09:00:00.000Z',
         endDate: '2021-01-12T11:00:00.000Z',
         address: 'adresse qui n\'existe pas',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if the geocoding service is unreachable', async () => {
+      geocodeSearch.rejects(new Error('getaddrinfo ENOTFOUND data.geopf.fr'));
+
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00.000Z',
+        endDate: '2021-01-12T11:00:00.000Z',
+        address: '37 rue de Ponthieu 75008 Paris',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
         trainees: '',
