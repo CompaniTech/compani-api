@@ -818,7 +818,7 @@ exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) =
       Description: bill.mainFee.description || '',
       'Montant HT': UtilsHelper.formatFloatForExport(netExclTaxes),
       'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
-      TVA: UtilsHelper.formatFloatForExport(bill.vat || 0),
+      'Taux TVA': UtilsHelper.formatFloatForExport(bill.vat || 0),
       'Date d\'archivage': bill.course.archivedAt ? CompaniDate(bill.course.archivedAt).format(DD_MM_YYYY) : '',
       'Liste des pauses': getInterruptionDatesForExport(bill.course.interruptionDates),
     });
