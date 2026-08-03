@@ -605,7 +605,11 @@ const formatDataForPdf = (bill, vendorCompany) => {
     ...omit(bill, ['_id', 'billedAt']),
     date: CompaniDate(billedAt).format(DD_MM_YYYY),
     vendorCompany,
-    payer: { name: payer.name, address: get(payer, 'address.fullAddress') || payer.address },
+    payer: {
+      name: payer.name,
+      address: get(payer, 'address.fullAddress') || payer.address,
+      billingInfos: payer.billingInfos,
+    },
   };
 };
 
@@ -623,8 +627,8 @@ exports.generateBillPdf = async (billId, companies, credentials) => {
     .populate({ path: 'course', select: 'tradeName prices' })
     .populate({ path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } })
     .populate({ path: 'companies', select: 'name address' })
-    .populate({ path: 'payer.fundingOrganisation', select: 'name address' })
-    .populate({ path: 'payer.company', select: 'name address' })
+    .populate({ path: 'payer.fundingOrganisation', select: 'name address billingInfos' })
+    .populate({ path: 'payer.company', select: 'name address billingInfos' })
     .populate({
       path: 'coursePayments',
       select: 'nature netInclTaxes date',

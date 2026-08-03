@@ -34,8 +34,8 @@ exports.generateCreditNotePdf = async (creditNoteId) => {
       select: 'course number date payer billingPurchaseList mainFee billedAt vat',
       populate: [
         { path: 'course', select: 'tradeName prices' },
-        { path: 'payer.fundingOrganisation', select: 'name address' },
-        { path: 'payer.company', select: 'name address' },
+        { path: 'payer.fundingOrganisation', select: 'name address billingInfos' },
+        { path: 'payer.company', select: 'name address billingInfos' },
         { path: 'billingPurchaseList', select: 'billingItem', populate: { path: 'billingItem', select: 'name' } },
       ],
     })
@@ -53,7 +53,11 @@ exports.generateCreditNotePdf = async (creditNoteId) => {
       date: CompaniDate(creditNote.courseBill.billedAt).format(DD_MM_YYYY),
       ...creditNote.courseBill.vat && { vat: creditNote.courseBill.vat },
     },
-    payer: { name: payer.name, address: get(payer, 'address.fullAddress') || payer.address },
+    payer: {
+      name: payer.name,
+      address: get(payer, 'address.fullAddress') || payer.address,
+      billingInfos: payer.billingInfos,
+    },
     course: creditNote.courseBill.course,
     mainFee: creditNote.courseBill.mainFee,
     billingPurchaseList: creditNote.courseBill.billingPurchaseList,
