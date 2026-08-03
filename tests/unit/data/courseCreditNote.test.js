@@ -46,6 +46,7 @@ describe('getPdfContent', () => {
       payer: {
         name: 'payeur',
         address: '24 Avenue Daumesnil 75012 Paris',
+        billingInfos: '123_456',
       },
       course: { tradeName: 'Test' },
       mainFee: { price: 1000, count: 1, description: 'description', countUnit: GROUP },
@@ -91,6 +92,7 @@ describe('getPdfContent', () => {
               stack: [
                 { text: '' },
                 { text: 'payeur', bold: true },
+                { text: '123_456' },
                 { text: '24 Avenue Daumesnil 75012 Paris' },
               ],
             },

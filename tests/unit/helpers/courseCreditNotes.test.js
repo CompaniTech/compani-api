@@ -127,6 +127,7 @@ describe('generateCreditNotePdf', () => {
             zipCode: '75012',
             location: { type: 'Point', coordinates: [2.37345, 48.848024] },
           },
+          billingInfos: '123_456',
         },
       },
     };
@@ -146,7 +147,7 @@ describe('generateCreditNotePdf', () => {
         misc: 'motif',
         courseBill: { number: 'FACT-00001', date: '08/03/2022', vat: 20 },
         vendorCompany,
-        payer: { name: 'test', address: '24 Avenue Daumesnil 75012 Paris' },
+        payer: { name: 'test', address: '24 Avenue Daumesnil 75012 Paris', billingInfos: '123_456' },
         course: creditNote.courseBill.course,
         mainFee: creditNote.courseBill.mainFee,
         billingPurchaseList: creditNote.courseBill.billingPurchaseList,
@@ -163,8 +164,8 @@ describe('generateCreditNotePdf', () => {
               select: 'course number date payer billingPurchaseList mainFee billedAt vat',
               populate: [
                 { path: 'course', select: 'tradeName prices' },
-                { path: 'payer.fundingOrganisation', select: 'name address' },
-                { path: 'payer.company', select: 'name address' },
+                { path: 'payer.fundingOrganisation', select: 'name address billingInfos' },
+                { path: 'payer.company', select: 'name address billingInfos' },
                 {
                   path: 'billingPurchaseList',
                   select: 'billingItem',
