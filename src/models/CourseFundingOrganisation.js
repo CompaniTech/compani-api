@@ -5,6 +5,7 @@ const CourseFundingOrganisationSchema = mongoose.Schema({
   // unique mongo index on 'name' (with case and diacritics insensitive collation) has been added manually in mep58
   name: { type: String, required: true },
   address: { type: String, required: true },
+  billingInfos: { type: String },
 }, { timestamps: true });
 
 CourseFundingOrganisationSchema.virtual('courseBillCount', {

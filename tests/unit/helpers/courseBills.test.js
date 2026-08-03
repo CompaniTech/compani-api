@@ -2383,6 +2383,7 @@ describe('generateBillPdf', () => {
           zipCode: '75012',
           location: { type: 'Point', coordinates: [2.37345, 48.848024] },
         },
+        billingInfos: '123_456',
       },
       isPayerCompany: true,
       coursePayments: [{ netInclTaxes: 1200 }],
@@ -2402,7 +2403,7 @@ describe('generateBillPdf', () => {
         date: '08/03/2022',
         vendorCompany,
         companies: bill.companies,
-        payer: { name: 'test', address: '24 Avenue Daumesnil 75012 Paris' },
+        payer: { name: 'test', address: '24 Avenue Daumesnil 75012 Paris', billingInfos: '123_456' },
         isPayerCompany: true,
         course: bill.course,
         mainFee: bill.mainFee,
@@ -2431,8 +2432,8 @@ describe('generateBillPdf', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'companies', select: 'name address' }] },
-        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name address' }] },
-        { query: 'populate', args: [{ path: 'payer.company', select: 'name address' }] },
+        { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name address billingInfos' }] },
+        { query: 'populate', args: [{ path: 'payer.company', select: 'name address billingInfos' }] },
         {
           query: 'populate',
           args: [
