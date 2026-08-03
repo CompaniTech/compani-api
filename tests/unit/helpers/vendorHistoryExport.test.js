@@ -3211,7 +3211,7 @@ describe('exportDraftCourseBillHistory', () => {
         'Description',
         'Montant HT',
         'Montant TTC',
-        'TVA',
+        'Taux TVA',
         'Date d\'archivage',
         'Liste des pauses',
       ],
