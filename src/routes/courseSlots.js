@@ -2,13 +2,14 @@
 
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
-const { create, update, remove, list } = require('../controllers/courseSlotController');
-const { addressValidation, requiredDateToISOString } = require('./validations/utils');
+const { create, update, remove, list, uploadCourseSlotsCSV } = require('../controllers/courseSlotController');
+const { addressValidation, requiredDateToISOString, formDataPayload } = require('./validations/utils');
 const {
   authorizeCreate,
   authorizeUpdate,
   authorizeDeletion,
   authorizeCourseSlotListGet,
+  authorizeUploadCourseSlotsCSV,
 } = require('./preHandlers/courseSlot');
 
 exports.plugin = {
@@ -46,6 +47,20 @@ exports.plugin = {
         auth: { scope: ['courseslots:create'] },
       },
       handler: create,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/csv',
+      options: {
+        validate: {
+          payload: Joi.object({ course: Joi.objectId().required(), file: Joi.any().required() }),
+        },
+        payload: formDataPayload(),
+        pre: [{ method: authorizeUploadCourseSlotsCSV, assign: 'slotList' }],
+        auth: { scope: ['courses:edit'] },
+      },
+      handler: uploadCourseSlotsCSV,
     });
 
     server.route({
