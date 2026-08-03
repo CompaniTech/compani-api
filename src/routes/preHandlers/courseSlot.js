@@ -248,6 +248,8 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
 
     const slotList = await UtilsHelper.parseCsv(file);
 
+    if (slotList.length > process.env.MAX_CSV_COURSE_SIZE) throw Boom.forbidden(translate[language].fileIsToBig);
+
     const allowedKeys = ['step', 'startDate', 'endDate', 'address', 'meetingLink', 'trainers', 'trainees'].sort();
     if (!slotList.length || !isEqual(Object.keys(slotList[0]).sort(), allowedKeys)) {
       throw Boom.badRequest(translate[language].wrongColumnsInCsv);
@@ -267,6 +269,16 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
     ))];
     const users = await User.find({ 'local.email': { $in: allEmails } }, { _id: 1, local: 1 }).lean();
     const userByEmail = keyBy(users, u => u.local.email);
+
+    const stepForSlot = slot => stepsByName[(slot.step || '').trim().toLowerCase()] || null;
+    const addressesToGeocode = [...new Set(slotList
+      .filter(slot => slot.address && !slot.meetingLink && get(stepForSlot(slot), 'type') === ON_SITE)
+      .map(slot => slot.address))];
+    const geocodeResponses = await Promise.all(addressesToGeocode.map(address => Geocode.search(address)));
+    const geocodeByAddress = keyBy(
+      addressesToGeocode.map((address, index) => ({ address, data: get(geocodeResponses[index], 'data') })),
+      'address'
+    );
 
     const errorsBySlot = {};
     const addError = (rowLabel, message) => {
@@ -311,14 +323,16 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
       if (slot.address && meetingLink) {
         addError(rowLabel, translate[language].addressAndMeetingLinkBothSet);
       } else {
-        if (slot.address && get(step, 'type') !== ON_SITE) {
-          addError(rowLabel, translate[language].addressNotAllowedForStepType);
-        }
-        if (meetingLink && get(step, 'type') !== REMOTE) {
-          addError(rowLabel, translate[language].meetingLinkNotAllowedForStepType);
+        if (step) {
+          if (slot.address && step.type !== ON_SITE) {
+            addError(rowLabel, translate[language].addressNotAllowedForStepType);
+          }
+          if (meetingLink && step.type !== REMOTE) {
+            addError(rowLabel, translate[language].meetingLinkNotAllowedForStepType);
+          }
         }
         if (slot.address && get(step, 'type') === ON_SITE) {
-          const { data } = await Geocode.search(slot.address);
+          const { data } = geocodeByAddress[slot.address];
           const [best] = [...(get(data, 'features') || [])].sort((a, b) => b.properties.score - a.properties.score);
           if (!best) addError(rowLabel, translate[language].unknownAddress);
           else {
