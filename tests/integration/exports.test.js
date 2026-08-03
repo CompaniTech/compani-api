@@ -26,6 +26,7 @@ const {
   SELF_POSITIONNING,
   SINGLE_COURSE,
   SINGLE_COURSE_SLOT,
+  DRAFT_COURSE_BILL,
 } = require('../../src/helpers/constants');
 const { getToken } = require('./helpers/authentication');
 const {
@@ -198,6 +199,15 @@ const vendorHistoryExportTypes = [
       `"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";${courseFundingOrganisation._id};2;"Chèque";"200,00";"Reçu";;`,
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
+  },
+  {
+    exportType: DRAFT_COURSE_BILL,
+    expectedRows: [
+      '﻿"Id formation";"Programme";"Id apprenant";"Apprenant";"Structure";"Société mère";"Date de facturation";"Description";"Montant HT";"Montant TTC";"TVA";"Date d\'archivage";"Liste des pauses"',
+      `${coursesList[0]._id};"Program 1";;;"Test SAS";"Auth Holding";"15/05/2022";"Échéance 2";"1045,00";"1254,00";"20,00";"08/07/2024";"10/01/2023 - 15/02/2023"`,
+      `${coursesList[9]._id};"Program 1";${coursesList[9].trainees[0]};"Paul TRAINEE";"Un autre SAS";"Other Holding";"20/05/2022";;"300,00";"300,00";"0,00";;`,
+    ],
+    query: 'startDate=2022-05-01T10:00:00.000Z&endDate=2022-05-31T10:00:00.000Z',
   },
   {
     exportType: SELF_POSITIONNING,
