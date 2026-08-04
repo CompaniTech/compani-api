@@ -29,6 +29,7 @@ const {
   INTRA,
   INTRA_HOLDING,
   INTER_B2B,
+  DRAFT_COURSE_BILL,
 } = require('../helpers/constants');
 const { CompaniDate } = require('../helpers/dates/companiDates');
 const HistoryExportHelper = require('../helpers/historyExport');
@@ -148,6 +149,9 @@ const exportHistory = async (req, h) => {
       case SELF_POSITIONNING:
         exportArray = await VendorHistoryExportHelper
           .exportSelfPositionningQuestionnaireHistory(startDate, endDate, credentials);
+        break;
+      case DRAFT_COURSE_BILL:
+        exportArray = await VendorHistoryExportHelper.exportDraftCourseBillHistory(startDate, endDate, credentials);
         break;
     }
 
