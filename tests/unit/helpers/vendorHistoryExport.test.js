@@ -3213,6 +3213,7 @@ describe('exportDraftCourseBillHistory', () => {
         'Montant TTC',
         'Taux TVA',
         'Date d\'archivage',
+        'En pause',
         'Liste des pauses',
       ],
       [
@@ -3228,6 +3229,7 @@ describe('exportDraftCourseBillHistory', () => {
         '144,00',
         '20,00',
         '01/02/2022',
+        'Oui',
         '01/01/2022 - en cours',
       ],
       [
@@ -3243,6 +3245,7 @@ describe('exportDraftCourseBillHistory', () => {
         '200,00',
         '0,00',
         '',
+        'Non',
         '',
       ],
     ]);
