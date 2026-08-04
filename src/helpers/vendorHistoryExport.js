@@ -37,8 +37,6 @@ const {
   PRESENT,
   DRAFT,
   SLOT_STATUS,
-  PAID,
-  NOT_PAID,
   MINUTE,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
@@ -254,7 +252,7 @@ const formatCourseForExport = async (
         price = NumbersHelper.add(price, companyPrice.global);
 
         if (companyPrice.trainerFees) {
-          formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
+          formattedPrice += ` (+ frais gestion: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
           price = NumbersHelper.add(price, companyPrice.trainerFees);
         }
 
@@ -265,7 +263,7 @@ const formatCourseForExport = async (
       price = NumbersHelper.add(price, course.prices[0].global);
 
       if (course.prices[0].trainerFees) {
-        formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
+        formattedPrice += ` (+ frais gestion: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
         price = NumbersHelper.add(price, course.prices[0].trainerFees);
       }
 
@@ -417,6 +415,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       },
     })
     .populate({ path: 'trainers', select: 'identity' })
+    .populate({ path: 'trainerBillings.trainerBill', select: 'status number' })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 
@@ -447,21 +446,20 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
 
     let trainersData;
     if (slot.trainers.length === 1) {
-      const trainerBill = (slot.trainerBills || [])
-        .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, slot.trainers[0]._id));
+      const { status, trainerBilling } = CourseSlotHelper.getSlotStatus(slot, slot.trainers[0]._id);
       trainersData = {
-        status: SLOT_STATUS[trainerBill ? PAID : NOT_PAID],
-        bills: trainerBill ? trainerBill.billNumber : '',
+        status: SLOT_STATUS[status],
+        bills: get(trainerBilling, 'trainerBill') ? trainerBilling.trainerBill.number : '',
       };
     } else {
       trainersData = (slot.trainers || []).reduce((acc, trainer) => {
-        const trainerBill = (slot.trainerBills || [])
-          .find(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainer._id));
-
+        const { status, trainerBilling } = CourseSlotHelper.getSlotStatus(slot, trainer._id);
         const trainerIdentity = UtilsHelper.formatIdentity(trainer.identity, 'FL');
 
-        acc.status.push(`${trainerIdentity} : ${SLOT_STATUS[trainerBill ? PAID : NOT_PAID]}`);
-        if (trainerBill) acc.bills.push(`${trainerIdentity} : ${trainerBill.billNumber}`);
+        acc.status.push(`${trainerIdentity} : ${SLOT_STATUS[status]}`);
+        if (get(trainerBilling, 'trainerBill')) {
+          acc.bills.push(`${trainerIdentity} : ${trainerBilling.trainerBill.number}`);
+        }
 
         return acc;
       }, { status: [], bills: [] });
@@ -773,6 +771,68 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
   }
 
   return rows.length ? [Object.keys(rows[0]), ...rows.map(d => Object.values(d))] : [[NO_DATA]];
+};
+
+const getInterruptionDatesForExport = (interruptionDates) => {
+  let isInterrupted = 'Non';
+  const interruptionDatesList = (interruptionDates || [])
+    .map((interruption) => {
+      const end = interruption.endDate ? CompaniDate(interruption.endDate).format(DD_MM_YYYY) : 'en cours';
+      if (!interruption.endDate) isInterrupted = 'Oui';
+      return `${CompaniDate(interruption.startDate).format(DD_MM_YYYY)} - ${end}`;
+    })
+    .join(', ');
+
+  return { interruptionDatesList, isInterrupted };
+};
+
+exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) => {
+  const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
+  const courseBills = await CourseBill
+    .find({ billedAt: { $exists: false }, maturityDate: { $lte: endDate, $gte: startDate } })
+    .populate({
+      path: 'course',
+      select: 'subProgram type trainees archivedAt interruptionDates',
+      populate: [
+        { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+        { path: 'trainees', select: 'identity' },
+      ],
+    })
+    .populate({
+      path: 'companies',
+      select: 'name',
+      populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+    })
+    .setOptions({ isVendorUser })
+    .lean();
+
+  if (!courseBills.length) return [[NO_DATA]];
+
+  const rows = [];
+  for (const bill of courseBills) {
+    const { netExclTaxes, netInclTaxes } = CourseBillHelper.getDetailWithTaxes(bill);
+    const companiesHolding = [...new Set(compact(bill.companies.map(c => get(c, 'holding.name'))))];
+    const { interruptionDatesList, isInterrupted } = getInterruptionDatesForExport(bill.course.interruptionDates);
+
+    rows.push({
+      'Id formation': bill.course._id,
+      Programme: get(bill, 'course.subProgram.program.name') || '',
+      'Id apprenant': bill.course.type === SINGLE ? bill.course.trainees[0]._id : '',
+      Apprenant: bill.course.type === SINGLE ? UtilsHelper.formatIdentity(bill.course.trainees[0].identity, 'FL') : '',
+      Structure: bill.companies.map(c => c.name).join(', '),
+      'Société mère': companiesHolding.join(', '),
+      'Date de facturation': CompaniDate(bill.maturityDate).format(DD_MM_YYYY),
+      Description: bill.mainFee.description || '',
+      'Montant HT': UtilsHelper.formatFloatForExport(netExclTaxes),
+      'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
+      'Taux TVA': UtilsHelper.formatFloatForExport(bill.vat || 0),
+      'Date d\'archivage': bill.course.archivedAt ? CompaniDate(bill.course.archivedAt).format(DD_MM_YYYY) : '',
+      'En pause': isInterrupted,
+      'Liste des pauses': interruptionDatesList,
+    });
+  }
+
+  return [Object.keys(rows[0]), ...rows.map(d => Object.values(d))];
 };
 
 exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => {

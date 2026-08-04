@@ -102,6 +102,8 @@ const {
   MISSING,
   ARCHIVED,
   COURSE,
+  PAID,
+  COURSE_BILL,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -116,6 +118,7 @@ const CourseCreditNoteNumber = require('../../../src/models/CourseCreditNoteNumb
 const Holding = require('../../../src/models/Holding');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const VendorCompany = require('../../../src/models/VendorCompany');
+const TrainerBill = require('../../../src/models/TrainerBill');
 
 const sector = { _id: new ObjectId(), name: 'Etoile', company: authCompany._id };
 
@@ -1245,7 +1248,10 @@ const userCompanies = [
 
 const holding = { _id: new ObjectId(), name: 'Société mère' };
 
-const courseBillingItemList = [{ _id: new ObjectId(), name: 'Frais de dossier', type: COURSE }];
+const courseBillingItemList = [
+  { _id: new ObjectId(), name: 'Frais de dossier', type: COURSE },
+  { _id: new ObjectId(), name: 'Frais de transport', type: COURSE_BILL },
+];
 
 const coursesList = [
   { // 0 with 1 bill
@@ -1257,7 +1263,7 @@ const coursesList = [
     trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: operationsRepresentative._id,
     contact: operationsRepresentative._id,
-    expectedBillsCount: 1,
+    expectedBillsCount: 2,
     trainees: [traineeList[0]._id, traineeList[2]._id, traineeList[3]._id],
     companies: [authCompany._id],
     archivedAt: '2024-07-07T22:00:00.000Z',
@@ -1266,6 +1272,7 @@ const coursesList = [
     prices: [{ global: 3000, company: authCompany._id }],
     tradeName: 'Nom 1',
     billingPurchaseList: [{ billingItem: courseBillingItemList[0]._id, price: 20, count: 1 }],
+    interruptionDates: [{ startDate: '2023-01-10T00:00:00.000Z', endDate: '2023-02-15T00:00:00.000Z' }],
   },
   { // 1 with 2 bills
     _id: new ObjectId(),
@@ -1524,6 +1531,24 @@ const courseBillList = [
     billedAt: '2021-06-08T00:10:00.000Z',
     number: 'FACT-00008',
   },
+  { // 8 draft, with billing purchase, archived course with an interruption
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    mainFee: { price: 1000, count: 1, countUnit: GROUP, description: 'Échéance 2' },
+    companies: [authCompany._id],
+    payer: { company: authCompany._id },
+    maturityDate: '2022-05-15T00:00:00.000Z',
+    vat: 20,
+    billingPurchaseList: [{ billingItem: courseBillingItemList[1]._id, price: 15, count: 3 }],
+  },
+  { // 9 draft, single course, no vat
+    _id: new ObjectId(),
+    course: coursesList[9]._id,
+    mainFee: { price: 300, count: 1, countUnit: TRAINEE },
+    companies: [otherCompany._id],
+    payer: { company: otherCompany._id },
+    maturityDate: '2022-05-20T00:00:00.000Z',
+  },
 ];
 
 const coursePaymentList = [
@@ -1671,6 +1696,8 @@ const slotAddress = {
   location: { type: 'Point', coordinates: [2.37345, 48.848024] },
 };
 
+const trainerBillIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
+
 const courseSlotList = [
   { // 0
     _id: new ObjectId(),
@@ -1681,7 +1708,7 @@ const courseSlotList = [
     address: slotAddress,
     createdAt: '2020-12-12T10:00:00.000Z',
     trainers: [trainer._id, trainerAndCoach._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[0] }],
   },
   { // 1
     _id: new ObjectId(),
@@ -1692,7 +1719,7 @@ const courseSlotList = [
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
     trainers: [trainer._id, trainerAndCoach._id],
-    trainerBills: [{ trainer: trainerAndCoach._id, billNumber: 'FACT_01234' }],
+    trainerBillings: [{ trainer: trainerAndCoach._id, trainerBill: trainerBillIds[1] }],
   },
   { // 2
     _id: new ObjectId(),
@@ -1703,7 +1730,7 @@ const courseSlotList = [
     address: slotAddress,
     createdAt: '2020-12-12T10:00:02.000Z',
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0002' }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[2] }],
   },
   { // 3
     _id: new ObjectId(),
@@ -1713,7 +1740,7 @@ const courseSlotList = [
     endDate: '2021-02-02T10:00:00.000Z',
     createdAt: '2020-12-12T10:00:03.000Z',
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0002' }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[2] }],
   },
   { // 4
     _id: new ObjectId(),
@@ -1731,7 +1758,7 @@ const courseSlotList = [
     endDate: '2021-04-12T12:00:00.000Z',
     trainees: [traineeList[0]._id, traineeList[2]._id],
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[0] }],
   },
   { // 6
     _id: new ObjectId(),
@@ -1742,7 +1769,7 @@ const courseSlotList = [
     startDate: '2021-04-12T10:00:00.000Z',
     endDate: '2021-04-12T12:00:00.000Z',
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'FACT_0001' }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[0] }],
   },
   { // 7 - out of COURSE_SLOT export period
     _id: new ObjectId(),
@@ -1802,9 +1829,9 @@ const courseSlotList = [
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
     trainers: [trainer._id, trainerAndCoach._id],
-    trainerBills: [
-      { trainer: trainer._id, billNumber: 'FACT_00012' },
-      { trainer: trainerAndCoach._id, billNumber: 'FACT_234w' },
+    trainerBillings: [
+      { trainer: trainer._id, trainerBill: trainerBillIds[3] },
+      { trainer: trainerAndCoach._id, trainerBill: trainerBillIds[4] },
     ],
   },
   { // 13
@@ -1816,6 +1843,54 @@ const courseSlotList = [
     meetingLink: 'https://meet.google.com',
     createdAt: '2020-12-12T10:00:01.000Z',
     trainers: [trainer._id],
+  },
+];
+
+const trainerBillList = [
+  {
+    _id: trainerBillIds[0],
+    trainer: trainer._id,
+    number: 'FACT_0001',
+    status: PAID,
+    courseSlots: [courseSlotList[0]._id, courseSlotList[5]._id, courseSlotList[6]._id],
+    amount: 0,
+    submittedAt: '2021-05-03T10:00:00.000Z',
+  },
+  {
+    _id: trainerBillIds[1],
+    trainer: trainerAndCoach._id,
+    number: 'FACT_01234',
+    status: PAID,
+    courseSlots: [courseSlotList[1]._id],
+    amount: 200,
+    submittedAt: '2021-05-03T10:00:00.000Z',
+  },
+  {
+    _id: trainerBillIds[2],
+    trainer: trainer._id,
+    number: 'FACT_0002',
+    status: PAID,
+    courseSlots: [courseSlotList[2]._id, courseSlotList[3]._id],
+    amount: 0,
+    submittedAt: '2021-05-03T10:00:00.000Z',
+  },
+  {
+    _id: trainerBillIds[3],
+    trainer: trainer._id,
+    number: 'FACT_00012',
+    status: PAID,
+    courseSlots: [courseSlotList[12]._id],
+    amount: 200,
+    submittedAt: '2021-05-03T10:00:00.000Z',
+  },
+  {
+    _id: trainerBillIds[4],
+    trainer: trainerAndCoach._id,
+    number: 'FACT_234w',
+    status: PAID,
+    courseSlots: [courseSlotList[12]._id],
+    amount: 200,
+    submittedAt: '2021-05-03T10:00:00.000Z',
   },
 ];
 
@@ -2455,6 +2530,7 @@ const populateDB = async () => {
     Step.create(stepList),
     SubProgram.create(subProgramList),
     ThirdPartyPayer.create(thirdPartyPayer),
+    TrainerBill.create(trainerBillList),
     User.create([...auxiliaryList, ...traineeList, user, trainer, operationsRepresentative]),
     UserCompany.create(userCompanies),
     XmlSEPAFileInfos.create(xmlSEPAFileInfos),

@@ -94,9 +94,9 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     await NotificationHelper.sendNewElearningCourseNotification(course._id, query);
   }
 
-  await Step.updateMany({ _id: { $in: subProgram.steps.map(step => step._id) } }, { status: payload.status });
+  await Step.updateMany({ _id: { $in: subProgram.steps.map(step => step._id) } }, { $set: { status: payload.status } });
   const activities = subProgram.steps.map(step => step.activities).flat();
-  return Activity.updateMany({ _id: { $in: activities } }, { status: payload.status });
+  return Activity.updateMany({ _id: { $in: activities } }, { $set: { status: payload.status } });
 };
 
 exports.listELearningDraft = async (testerRestrictedPrograms) => {

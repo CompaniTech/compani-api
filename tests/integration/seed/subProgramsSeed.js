@@ -7,11 +7,12 @@ const Activity = require('../../../src/models/Activity');
 const Course = require('../../../src/models/Course');
 const Card = require('../../../src/models/Card');
 const CourseSlot = require('../../../src/models/CourseSlot');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const { vendorAdmin, trainer } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL } = require('../../../src/helpers/constants');
+const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL, PAID } = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 
 const tester = {
@@ -159,6 +160,8 @@ const coursesList = [{
   tradeName: 'nom',
 }];
 
+const trainerBillId = new ObjectId();
+
 const courseSlotsList = [
   {
     _id: new ObjectId(),
@@ -175,7 +178,19 @@ const courseSlotsList = [
     course: coursesList[0]._id,
     step: stepsList[0]._id,
     trainers: [trainer._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: '1245' }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
+  },
+];
+
+const trainerBillList = [
+  {
+    _id: trainerBillId,
+    trainer: trainer._id,
+    number: '1245',
+    status: PAID,
+    courseSlots: [courseSlotsList[1]._id],
+    amount: 150,
+    submittedAt: '2026-03-01T10:00:00.000Z',
   },
 ];
 
@@ -192,6 +207,7 @@ const populateDB = async () => {
     SubProgram.create(subProgramsList),
     User.create([tester, userFromAuthCompany]),
     UserCompany.create(userCompany),
+    TrainerBill.create(trainerBillList),
   ]);
 };
 

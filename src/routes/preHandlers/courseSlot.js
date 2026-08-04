@@ -2,6 +2,9 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const compact = require('lodash/compact');
+const isEqual = require('lodash/isEqual');
+const groupBy = require('lodash/groupBy');
+const keyBy = require('lodash/keyBy');
 const CourseSlot = require('../../models/CourseSlot');
 const Course = require('../../models/Course');
 const CompletionCertificate = require('../../models/CompletionCertificate');
@@ -10,6 +13,7 @@ const Attendance = require('../../models/Attendance');
 const AttendanceSheet = require('../../models/AttendanceSheet');
 const CourseHistory = require('../../models/CourseHistory');
 const User = require('../../models/User');
+const Geocode = require('../../models/Geocode');
 const translate = require('../../helpers/translate');
 const { checkAuthorization } = require('./courses');
 const {
@@ -25,6 +29,7 @@ const {
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
+const { EMAIL_VALIDATION } = require('../../models/utils');
 
 const { language } = translate;
 
@@ -221,21 +226,198 @@ exports.authorizeDeletion = async (req) => {
   }
 };
 
-exports.authorizeCourseSlotEdition = async (req) => {
+const extractEmails = value => [...new Set(
+  (value || '').split('/').map(email => email.trim().toLowerCase()).filter(Boolean)
+)];
+
+exports.authorizeUploadCourseSlotsCSV = async (req) => {
   try {
-    const { _ids, trainer } = req.payload;
-    const courseSlots = await CourseSlot
-      .find({ _id: { $in: _ids }, trainers: trainer }, { trainers: 1, trainerBills: 1 })
+    const { course: courseId, file } = req.payload;
+
+    const course = await Course
+      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1 })
+      .populate({ path: 'subProgram', select: 'steps', populate: { path: 'steps', select: 'name type' } })
       .lean();
-    if (courseSlots.length !== _ids.length) throw Boom.notFound();
+    if (!course) throw Boom.notFound();
+    if (course.archivedAt) throw Boom.forbidden();
 
-    const someSlotAreAlreadyPaidForTrainer = courseSlots.some((slot) => {
-      const trainersWithBillNumber = (slot.trainerBills || []).map(b => b.trainer);
-      return UtilsHelper.doesArrayIncludeId(trainersWithBillNumber, trainer);
-    });
-    if (someSlotAreAlreadyPaidForTrainer) throw Boom.forbidden();
+    const slotList = await UtilsHelper.parseCsv(file);
 
-    return null;
+    if (slotList.length > process.env.MAX_CSV_COURSE_SIZE) throw Boom.forbidden(translate[language].fileIsToBig);
+
+    const allowedKeys = ['step', 'startDate', 'endDate', 'address', 'meetingLink', 'trainers', 'trainees'].sort();
+    if (!slotList.length || !isEqual(Object.keys(slotList[0]).sort(), allowedKeys)) {
+      throw Boom.badRequest(translate[language].wrongColumnsInCsv);
+    }
+
+    const steps = get(course, 'subProgram.steps', []);
+    const stepsByName = keyBy(steps, s => s.name.trim().toLowerCase());
+
+    const existingSlots = await CourseSlot.find({ course: courseId }, { step: 1, startDate: 1, endDate: 1 }).lean();
+    const slotsToPlanByStep = groupBy(existingSlots.filter(s => !s.startDate), 'step');
+    const conflictIntervals = existingSlots
+      .filter(s => s.startDate)
+      .map(s => ({ startDate: s.startDate, endDate: s.endDate }));
+
+    const allEmails = [...new Set(slotList.flatMap(
+      row => [...extractEmails(row.trainers), ...extractEmails(row.trainees)]
+    ))];
+    const users = await User.find({ 'local.email': { $in: allEmails } }, { _id: 1, local: 1 }).lean();
+    const userByEmail = keyBy(users, u => u.local.email);
+
+    const stepForSlot = slot => stepsByName[(slot.step || '').trim().toLowerCase()] || null;
+    const addressesToGeocode = [...new Set(slotList
+      .filter(slot => slot.address && !slot.meetingLink && get(stepForSlot(slot), 'type') === ON_SITE)
+      .map(slot => slot.address))];
+    const geocodeResponses = await Promise.all(
+      addressesToGeocode.map(address => Geocode.search(address).catch(() => null))
+    );
+    const geocodeByAddress = keyBy(
+      addressesToGeocode.map((address, index) => ({ address, data: get(geocodeResponses[index], 'data') })),
+      'address'
+    );
+
+    const errorsBySlot = {};
+    const addError = (rowLabel, message) => {
+      if (errorsBySlot[rowLabel]) errorsBySlot[rowLabel].push(message);
+      else errorsBySlot[rowLabel] = [message];
+    };
+    const formattedSlotList = [];
+
+    let i = 1;
+    for (const slot of slotList) {
+      const rowLabel = `Créneau ${i}`;
+
+      let step = stepsByName[(slot.step || '').trim().toLowerCase()] || null;
+      if (!step) {
+        addError(rowLabel, translate[language].unknownStep);
+      } else if (step.type === E_LEARNING) {
+        addError(rowLabel, translate[language].courseSlotElearningStepCsv);
+        step = null;
+      }
+
+      let formattedStartDate = null;
+      let formattedEndDate = null;
+      try {
+        formattedStartDate = CompaniDate(slot.startDate).toISO();
+        formattedEndDate = CompaniDate(slot.endDate).toISO();
+      } catch (_) {
+        addError(rowLabel, translate[language].incorrectDate);
+      }
+      if (formattedStartDate && formattedEndDate) {
+        if (!CompaniDate(formattedStartDate).isSame(formattedEndDate, 'day')) {
+          addError(rowLabel, translate[language].courseSlotDatesNotSameDay);
+        }
+        if (!CompaniDate(formattedStartDate).isSameOrBefore(formattedEndDate)) {
+          addError(rowLabel, translate[language].courseSlotStartAfterEndCsv);
+        }
+      }
+
+      let address = null;
+      const meetingLink = slot.meetingLink || null;
+      if (slot.address && meetingLink) {
+        addError(rowLabel, translate[language].addressAndMeetingLinkBothSet);
+      } else {
+        if (step) {
+          if (slot.address && step.type !== ON_SITE) {
+            addError(rowLabel, translate[language].addressNotAllowedForStepType);
+          }
+          if (meetingLink && step.type !== REMOTE) {
+            addError(rowLabel, translate[language].meetingLinkNotAllowedForStepType);
+          }
+        }
+        if (slot.address && get(step, 'type') === ON_SITE) {
+          const { data } = geocodeByAddress[slot.address];
+          const [best] = [...(get(data, 'features') || [])].sort((a, b) => b.properties.score - a.properties.score);
+          if (!best) addError(rowLabel, translate[language].unknownAddress);
+          else {
+            address = {
+              fullAddress: best.properties.label,
+              street: best.properties.name,
+              zipCode: best.properties.postcode,
+              city: best.properties.city,
+              location: best.geometry,
+            };
+          }
+        }
+      }
+
+      const trainerEmails = extractEmails(slot.trainers);
+      const trainerIds = [];
+      if (!trainerEmails.length) addError(rowLabel, translate[language].missingTrainersCsv);
+      trainerEmails.forEach((email) => {
+        if (!email.match(EMAIL_VALIDATION)) {
+          addError(rowLabel, translate[language].incorrectTrainerEmail);
+          return;
+        }
+        const user = userByEmail[email];
+        if (!user) {
+          addError(rowLabel, translate[language].unknownTrainer);
+          return;
+        }
+        if (!UtilsHelper.doesArrayIncludeId(course.trainers, user._id)) {
+          addError(rowLabel, translate[language].trainerNotInCourse);
+          return;
+        }
+        trainerIds.push(user._id);
+      });
+
+      const traineeEmails = extractEmails(slot.trainees);
+      const traineeIds = [];
+      traineeEmails.forEach((email) => {
+        if (!email.match(EMAIL_VALIDATION)) {
+          addError(rowLabel, translate[language].incorrectTraineeEmail);
+          return;
+        }
+        const user = userByEmail[email];
+        if (!user) {
+          addError(rowLabel, translate[language].unknownTraineeCsv);
+          return;
+        }
+        if (!UtilsHelper.doesArrayIncludeId(course.trainees, user._id)) {
+          addError(rowLabel, translate[language].traineeNotInCourse);
+          return;
+        }
+        traineeIds.push(user._id);
+      });
+
+      let candidateInterval = null;
+      if (step && formattedStartDate && formattedEndDate) {
+        candidateInterval = { startDate: formattedStartDate, endDate: formattedEndDate };
+        const isInConflict = conflictIntervals.some(interval =>
+          CompaniDate(candidateInterval.startDate).isBefore(interval.endDate) &&
+          CompaniDate(candidateInterval.endDate).isAfter(interval.startDate)
+        );
+        if (isInConflict) addError(rowLabel, translate[language].courseSlotConflict);
+      }
+
+      if (!errorsBySlot[rowLabel]) {
+        if (candidateInterval) conflictIntervals.push(candidateInterval);
+
+        const queue = slotsToPlanByStep[step._id] || [];
+        const reuseSlot = queue.shift();
+
+        formattedSlotList.push({
+          stepId: step._id,
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+          ...(address && { address }),
+          ...(meetingLink && { meetingLink }),
+          trainers: trainerIds,
+          ...(traineeIds.length && { trainees: traineeIds }),
+          ...(reuseSlot && { slotId: reuseSlot._id }),
+        });
+      }
+      i += 1;
+    }
+
+    if (Object.keys(errorsBySlot).length) {
+      const error = Boom.badData();
+      error.output.payload.errorsBySlot = errorsBySlot;
+      throw error;
+    }
+
+    return formattedSlotList;
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);

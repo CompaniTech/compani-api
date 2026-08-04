@@ -1,4 +1,5 @@
 const { expect } = require('expect');
+const sinon = require('sinon');
 const omit = require('lodash/omit');
 const { ObjectId } = require('mongodb');
 const app = require('../../server');
@@ -10,9 +11,12 @@ const {
   traineeFromOtherCompany,
 } = require('./seed/courseSlotsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
+const { generateFormData, getStream } = require('./utils');
 const CourseHistory = require('../../src/models/CourseHistory');
 const { SLOT_DELETION, SLOT_EDITION, SLOT_RESTRICTION, SLOT_CREATION } = require('../../src/helpers/constants');
 const CourseSlot = require('../../src/models/CourseSlot');
+const UtilsHelper = require('../../src/helpers/utils');
+const Geocode = require('../../src/models/Geocode');
 const {
   holdingAdminFromOtherCompany,
   holdingAdminFromAuthCompany,
@@ -1363,119 +1367,419 @@ describe('COURSE SLOTS ROUTES - DELETE /courseslots/{_id}', () => {
   });
 });
 
-describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
+describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
   let authToken;
+  let parseCSV;
+  let geocodeSearch;
+
   beforeEach(populateDB);
+  beforeEach(() => {
+    parseCSV = sinon.stub(UtilsHelper, 'parseCsv');
+    geocodeSearch = sinon.stub(Geocode, 'search');
+  });
+  afterEach(() => {
+    parseCSV.restore();
+    geocodeSearch.restore();
+  });
+
+  const injectCsv = async (courseId, rows, token) => {
+    const form = generateFormData({ course: courseId.toString(), file: 'test' });
+    parseCSV.returns(rows);
+
+    return app.inject({
+      method: 'POST',
+      url: '/courseslots/csv',
+      headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${token}` },
+      payload: getStream(form),
+    });
+  };
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should update slots', async () => {
-      const payload = {
-        _ids: [courseSlotsList[3]._id, courseSlotsList[16]._id],
-        billNumber: 'FACT_0001',
-        trainer: trainerAndCoach._id,
-      };
+    it('should create a new course slot from csv', async () => {
+      const slotsCountBefore = await CourseSlot.countDocuments({ course: coursesList[0]._id, step: stepsList[0]._id });
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/courseslots/list-edition',
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
 
       expect(response.statusCode).toBe(200);
+      const slotsCountAfter = await CourseSlot.countDocuments({ course: coursesList[0]._id, step: stepsList[0]._id });
+      expect(slotsCountAfter).toBe(slotsCountBefore + 1);
     });
 
-    it('should return 400 if _ids is empty', async () => {
-      const payload = {
-        _ids: [],
-        billNumber: 'FACT_0001',
-        trainer: trainerAndCoach._id,
-      };
+    it('should reuse an existing slot to plan and set trainees', async () => {
+      const response = await injectCsv(coursesList[1]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainercoach@alenvi.io',
+        trainees: 'traineeOtherCompany@alenvi.fr',
+      }], authToken);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/courseslots/list-edition',
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
+      expect(response.statusCode).toBe(200);
+      const updatedSlot = await CourseSlot.findOne({ _id: courseSlotsList[6]._id }).lean();
+      expect(updatedSlot.startDate).toBeDefined();
+    });
+
+    it('should geocode address for an on site slot', async () => {
+      geocodeSearch.resolves({
+        data: {
+          features: [{
+            properties: {
+              label: '37 rue de Ponthieu 75008 Paris',
+              name: '37 rue de Ponthieu',
+              postcode: '75008',
+              city: 'Paris',
+              score: 0.9,
+            },
+            geometry: { type: 'Point', coordinates: [2.31, 48.87] },
+          }],
+        },
       });
+
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '37 rue de Ponthieu 75008 Paris',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(200);
+      const newSlot = await CourseSlot
+        .findOne({ course: coursesList[0]._id, step: stepsList[0]._id, startDate: '2021-01-12T08:00:00.000Z' })
+        .lean();
+      expect(newSlot.address.fullAddress).toBe('37 rue de Ponthieu 75008 Paris');
+    });
+
+    it('should return 400 if csv columns are wrong', async () => {
+      const response = await injectCsv(
+        coursesList[0]._id,
+        [{ step: stepsList[0].name, startDate: '2021-01-12T09:00:00' }],
+        authToken
+      );
 
       expect(response.statusCode).toBe(400);
     });
 
-    it('should return 400 if billNumber is not defined', async () => {
-      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id], trainer: trainerAndCoach._id };
-      const response = await app.inject({
-        method: 'POST',
-        url: '/courseslots/list-edition',
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
+    it('should return 403 if too many slots in file', async () => {
+      const slotList = [];
+      for (let i = 0; i <= process.env.MAX_CSV_COURSE_SIZE; i++) {
+        slotList.push({
+          step: stepsList[0].name,
+          startDate: '2021-01-12T09:00:00',
+          endDate: '2021-01-12T11:00:00',
+          address: '',
+          meetingLink: '',
+          trainers: 'trainer@alenvi.io',
+          trainees: '',
+        });
+      }
 
-      expect(response.statusCode).toBe(400);
+      const response = await injectCsv(coursesList[0]._id, slotList, authToken);
+
+      expect(response.statusCode).toBe(403);
     });
 
-    it('should return 400 if trainer is not defined', async () => {
-      const payload = { _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id], billNumber: 'FACT_0001' };
+    it('should return 422 if step doesn\'t exist', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: 'etape inconnue',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/courseslots/list-edition',
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(400);
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
     });
 
-    it('should return 404 if trainer is not the trainer of one slot', async () => {
-      const payload = {
-        _ids: [courseSlotsList[3]._id, courseSlotsList[5]._id],
-        billNumber: 'FACT_0001',
-        trainer: trainerAndCoach._id,
-      };
+    it('should return 422 if trainer is not linked to course', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'coach@alenvi.io',
+        trainees: '',
+      }], authToken);
 
-      const response = await app.inject({
-        method: 'POST',
-        url: '/courseslots/list-edition',
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
-
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
     });
 
-    it('should return 404 if a slot does not exist', async () => {
-      const payload = {
-        _ids: [courseSlotsList[3]._id, new ObjectId()],
-        billNumber: 'FACT_0001',
-        trainer: trainerAndCoach._id,
-      };
-      const response = await app.inject({
-        method: 'POST',
-        url: '/courseslots/list-edition',
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
+    it('should return 422 if trainee is not registered to course', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: 'traineeOtherCompany@alenvi.fr',
+      }], authToken);
 
-      expect(response.statusCode).toBe(404);
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
     });
 
-    it('should return 403 if a slot is already link to a trainer\'s bill', async () => {
-      const payload = {
-        _ids: [courseSlotsList[3]._id, courseSlotsList[12]._id],
-        billNumber: 'FACT_0001',
-        trainer: trainerAndCoach._id,
-      };
-      const response = await app.inject({
-        method: 'POST',
-        url: '/courseslots/list-edition',
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload,
-      });
+    it('should return 422 if slot is in conflict with an existing slot', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2020-03-10T10:00:00.000Z',
+        endDate: '2020-03-10T11:00:00.000Z',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if address is given for a remote step', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[4].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '37 rue de Ponthieu 75008 Paris',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      sinon.assert.notCalled(geocodeSearch);
+    });
+
+    it('should return 422 if step is eLearning', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[1].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if a date is incorrect', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: 'not-a-date',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if startDate and endDate are not on the same day', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-13T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if startDate is after endDate', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T11:00:00',
+        endDate: '2021-01-12T09:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if both address and meetingLink are given', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '37 rue de Ponthieu 75008 Paris',
+        meetingLink: 'https://meet.google.com',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if meetingLink is given for an on site step', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: 'https://meet.google.com',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if address is not found by geocoding', async () => {
+      geocodeSearch.resolves({ data: { features: [] } });
+
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: 'adresse qui n\'existe pas',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if the geocoding service is unreachable', async () => {
+      geocodeSearch.rejects(new Error('getaddrinfo ENOTFOUND data.geopf.fr'));
+
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '37 rue de Ponthieu 75008 Paris',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if trainers is missing', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: '',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if trainer email is incorrect', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'not-an-email',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if trainer doesn\'t exist', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'ghost@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if trainee email is incorrect', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: 'not-an-email',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 422 if trainee doesn\'t exist', async () => {
+      const response = await injectCsv(coursesList[0]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: 'ghost@alenvi.io',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+    });
+
+    it('should return 403 if course is archived', async () => {
+      const response = await injectCsv(coursesList[2]._id, [{
+        step: stepsList[0].name,
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'trainer@alenvi.io',
+        trainees: '',
+      }], authToken);
 
       expect(response.statusCode).toBe(403);
     });
@@ -1483,26 +1787,24 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/list-edition', () => {
 
   describe('Other roles', () => {
     const roles = [
-      { name: 'trainer', expectedCode: 403 },
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
     ];
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
-        const payload = {
-          _ids: [courseSlotsList[3]._id, courseSlotsList[4]._id],
-          billNumber: 'FACT_0001',
-          trainer: trainerAndCoach._id,
-        };
-
         authToken = await getToken(role.name);
-        const response = await app.inject({
-          method: 'POST',
-          url: '/courseslots/list-edition',
-          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload,
-        });
+
+        const response = await injectCsv(coursesList[0]._id, [{
+          step: stepsList[0].name,
+          startDate: '2021-01-12T09:00:00',
+          endDate: '2021-01-12T11:00:00',
+          address: '',
+          meetingLink: '',
+          trainers: 'trainer@alenvi.io',
+          trainees: '',
+        }], authToken);
 
         expect(response.statusCode).toBe(role.expectedCode);
       });

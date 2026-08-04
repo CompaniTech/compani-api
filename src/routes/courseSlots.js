@@ -2,14 +2,14 @@
 
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
-const { create, update, remove, list, updateSlotList } = require('../controllers/courseSlotController');
-const { addressValidation, requiredDateToISOString } = require('./validations/utils');
+const { create, update, remove, list, uploadCourseSlotsCSV } = require('../controllers/courseSlotController');
+const { addressValidation, requiredDateToISOString, formDataPayload } = require('./validations/utils');
 const {
   authorizeCreate,
   authorizeUpdate,
   authorizeDeletion,
-  authorizeCourseSlotEdition,
   authorizeCourseSlotListGet,
+  authorizeUploadCourseSlotsCSV,
 } = require('./preHandlers/courseSlot');
 
 exports.plugin = {
@@ -50,6 +50,20 @@ exports.plugin = {
     });
 
     server.route({
+      method: 'POST',
+      path: '/csv',
+      options: {
+        validate: {
+          payload: Joi.object({ course: Joi.objectId().required(), file: Joi.any().required() }),
+        },
+        payload: formDataPayload(),
+        pre: [{ method: authorizeUploadCourseSlotsCSV, assign: 'slotList' }],
+        auth: { scope: ['courses:create'] },
+      },
+      handler: uploadCourseSlotsCSV,
+    });
+
+    server.route({
       method: 'PUT',
       path: '/{_id}',
       options: {
@@ -84,23 +98,6 @@ exports.plugin = {
         auth: { scope: ['courseslots:create'] },
       },
       handler: remove,
-    });
-
-    server.route({
-      method: 'POST',
-      path: '/list-edition',
-      options: {
-        validate: {
-          payload: Joi.object({
-            _ids: Joi.array().items(Joi.objectId()).min(1).required(),
-            trainer: Joi.objectId().required(),
-            billNumber: Joi.string().required(),
-          }),
-        },
-        pre: [{ method: authorizeCourseSlotEdition }],
-        auth: { scope: ['courseslots:edit-list'] },
-      },
-      handler: updateSlotList,
     });
   },
 };

@@ -31,6 +31,7 @@ const {
   SINGLE,
   RECEIVED,
   PENDING,
+  PAID,
   PRESENT,
   MISSING,
   DRAFT,
@@ -773,7 +774,7 @@ describe('exportCourseHistory', () => {
         'Non',
         '',
         '2750,00',
-        '\nAutre structure: 2500,00 € (+ FF: 250,00 €)',
+        '\nAutre structure: 2500,00 € (+ frais gestion: 250,00 €)',
         2,
         6,
         'Non',
@@ -1444,6 +1445,7 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -1621,6 +1623,7 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -1653,7 +1656,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0001' } }],
       },
       { // individual slot (MISSING)
         _id: new ObjectId(),
@@ -1677,7 +1680,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0001' }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0001' } }],
       },
       { // collective slot (MISSING)
         _id: new ObjectId(),
@@ -1701,7 +1704,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0002' }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0002' } }],
       },
       { // collective slot (MISSING)
         _id: new ObjectId(),
@@ -1725,7 +1728,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0002' }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0002' } }],
       },
       { // collective slot (PRESENT)
         _id: new ObjectId(),
@@ -1749,7 +1752,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBills: [{ trainer: trainers[0]._id, billNumber: 'FACT_0003' }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0003' } }],
       },
     ];
 
@@ -1915,6 +1918,7 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
@@ -3092,6 +3096,189 @@ describe('exportSelfPositionningQuestionnaireHistory', () => {
         { query: 'populate', args: [{ path: 'questionnaire', select: 'type' }] },
         { query: 'populate', args: [{ path: 'questionnaireAnswersList.card' }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+});
+
+describe('exportDraftCourseBillHistory', () => {
+  const credentials = { company: { _id: new ObjectId() }, role: { vendor: { name: TRAINING_ORGANISATION_MANAGER } } };
+  const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
+
+  let findCourseBill;
+
+  beforeEach(() => {
+    findCourseBill = sinon.stub(CourseBill, 'find');
+  });
+
+  afterEach(() => {
+    findCourseBill.restore();
+  });
+
+  it('should return an empty array if no draft course bill', async () => {
+    findCourseBill.returns(SinonMongoose.stubChainedQueries([], ['populate', 'setOptions', 'lean']));
+
+    const result = await ExportHelper
+      .exportDraftCourseBillHistory('2022-03-31T22:00:00.000Z', '2022-04-30T22:59:59.000Z', credentials);
+
+    expect(result).toEqual([[NO_DATA]]);
+    SinonMongoose.calledOnceWithExactly(
+      findCourseBill,
+      [
+        {
+          query: 'find',
+          args: [{
+            billedAt: { $exists: false },
+            maturityDate: { $lte: '2022-04-30T22:59:59.000Z', $gte: '2022-03-31T22:00:00.000Z' },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'subProgram type trainees archivedAt interruptionDates',
+            populate: [
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'trainees', select: 'identity' },
+            ],
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'companies',
+            select: 'name',
+            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+          }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should return an array with the header and one row per bill', async () => {
+    const subProgram = { _id: new ObjectId(), program: { name: 'Program 1' } };
+    const courseIds = [new ObjectId(), new ObjectId()];
+    const traineeId = new ObjectId();
+    const courseList = [
+      {
+        _id: courseIds[0],
+        subProgram,
+        type: SINGLE,
+        trainees: [{ _id: traineeId, identity: { firstname: 'Austin', lastname: 'Butler' } }],
+        archivedAt: '2022-02-01T00:00:00.000Z',
+        interruptionDates: [{ startDate: '2022-01-01T00:00:00.000Z' }],
+      },
+      { _id: courseIds[1], subProgram, type: INTRA, trainees: [] },
+    ];
+    const companies = [
+      { _id: new ObjectId(), name: 'Test SAS', holding: { name: 'Auth Holding' } },
+      { _id: new ObjectId(), name: 'Un autre SAS' },
+    ];
+    const courseBillList = [
+      {
+        course: courseList[0],
+        mainFee: { price: 100, count: 1, description: 'Échéance 1' },
+        companies: [companies[0]],
+        maturityDate: '2022-04-05T00:00:00.000Z',
+        vat: 20,
+        billingPurchaseList: [{ price: 10, count: 2 }],
+      },
+      {
+        course: courseList[1],
+        mainFee: { price: 200, count: 1 },
+        companies: [companies[0], companies[1]],
+        maturityDate: '2022-04-10T00:00:00.000Z',
+      },
+    ];
+
+    findCourseBill.returns(SinonMongoose.stubChainedQueries(courseBillList, ['populate', 'setOptions', 'lean']));
+
+    const result = await ExportHelper
+      .exportDraftCourseBillHistory('2022-03-31T22:00:00.000Z', '2022-04-30T22:59:59.000Z', credentials);
+
+    expect(result).toEqual([
+      [
+        'Id formation',
+        'Programme',
+        'Id apprenant',
+        'Apprenant',
+        'Structure',
+        'Société mère',
+        'Date de facturation',
+        'Description',
+        'Montant HT',
+        'Montant TTC',
+        'Taux TVA',
+        'Date d\'archivage',
+        'En pause',
+        'Liste des pauses',
+      ],
+      [
+        courseIds[0],
+        'Program 1',
+        traineeId,
+        'Austin BUTLER',
+        'Test SAS',
+        'Auth Holding',
+        '05/04/2022',
+        'Échéance 1',
+        '120,00',
+        '144,00',
+        '20,00',
+        '01/02/2022',
+        'Oui',
+        '01/01/2022 - en cours',
+      ],
+      [
+        courseIds[1],
+        'Program 1',
+        '',
+        '',
+        'Test SAS, Un autre SAS',
+        'Auth Holding',
+        '10/04/2022',
+        '',
+        '200,00',
+        '200,00',
+        '0,00',
+        '',
+        'Non',
+        '',
+      ],
+    ]);
+    SinonMongoose.calledOnceWithExactly(
+      findCourseBill,
+      [
+        {
+          query: 'find',
+          args: [{
+            billedAt: { $exists: false },
+            maturityDate: { $lte: '2022-04-30T22:59:59.000Z', $gte: '2022-03-31T22:00:00.000Z' },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'course',
+            select: 'subProgram type trainees archivedAt interruptionDates',
+            populate: [
+              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              { path: 'trainees', select: 'identity' },
+            ],
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'companies',
+            select: 'name',
+            populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+          }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser }] },
         { query: 'lean' },
       ]
     );

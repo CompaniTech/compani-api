@@ -1163,7 +1163,7 @@ exports.addTrainee = async (courseId, payload, credentials) => {
 
   if (!trainee.firstMobileConnectionDate && !trainee.loginCode) {
     const loginCode = String(Math.floor(Math.random() * 9000 + 1000));
-    await User.updateOne({ _id: payload.trainee }, { loginCode });
+    await User.updateOne({ _id: payload.trainee }, { $set: { loginCode } });
   }
 
   await Promise.all([
@@ -1988,7 +1988,7 @@ exports.addTutor = async (courseId, payload) => {
 
   if (!(tutor.firstMobileConnectionDate || tutor.loginCode)) {
     const loginCode = String(Math.floor(Math.random() * 9000 + 1000));
-    await User.updateOne({ _id: payload.tutor }, { loginCode });
+    await User.updateOne({ _id: payload.tutor }, { $set: { loginCode } });
   }
 
   return EmailHelper.addTutor(courseId, payload.tutor);

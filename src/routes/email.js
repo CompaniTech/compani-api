@@ -3,8 +3,9 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 
-const { sendWelcome, sendBillEmail } = require('../controllers/emailController');
+const { sendWelcome, sendBillEmail, sendTrainerFeesBill } = require('../controllers/emailController');
 const { authorizeSendEmail, authorizeSendEmailBillList } = require('./preHandlers/email');
+const { formDataPayload } = require('./validations/utils');
 const {
   HELPER,
   TRAINER,
@@ -56,6 +57,22 @@ exports.plugin = {
         pre: [{ method: authorizeSendEmailBillList, assign: 'courseBills' }],
       },
       handler: sendBillEmail,
+    });
+
+    server.route({
+      method: 'POST',
+      path: '/send-trainer-fees-bill',
+      options: {
+        auth: { scope: ['trainerbills:create'] },
+        payload: formDataPayload(),
+        validate: {
+          payload: Joi.object({
+            number: Joi.string().required(),
+            file: Joi.any().required(),
+          }),
+        },
+      },
+      handler: sendTrainerFeesBill,
     });
   },
 };

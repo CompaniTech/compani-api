@@ -3,6 +3,7 @@ const groupBy = require('lodash/groupBy');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const compact = require('lodash/compact');
+const uniqBy = require('lodash/uniqBy');
 const Activity = require('../../../src/models/Activity');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Attendance = require('../../../src/models/Attendance');
@@ -32,6 +33,7 @@ const Questionnaire = require('../../../src/models/Questionnaire');
 const QuestionnaireHistory = require('../../../src/models/QuestionnaireHistory');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const TrainerMission = require('../../../src/models/TrainerMission');
 const TrainingContract = require('../../../src/models/TrainingContract');
 const User = require('../../../src/models/User');
@@ -44,6 +46,7 @@ const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const { CompaniDuration } = require('../../../src/helpers/dates/companiDurations');
 const { descendingSortBy, ascendingSortBy } = require('../../../src/helpers/dates/utils');
 const NumbersHelper = require('../../../src/helpers/numbers');
+const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const UtilsHelper = require('../../../src/helpers/utils');
 const UserCompaniesHelper = require('../../../src/helpers/userCompanies');
 const {
@@ -104,6 +107,7 @@ const {
   RECEIVED,
   PRESENT,
   COURSE,
+  MINUTE,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -1629,6 +1633,7 @@ describe('SEEDS VERIFICATION', () => {
             })
             .populate({ path: 'step', select: 'type', transform })
             .populate({ path: 'trainers', select: '_id', transform })
+            .populate({ path: 'trainerBillings.trainerBill', select: 'courseSlots' })
             .lean();
         });
 
@@ -1687,10 +1692,16 @@ describe('SEEDS VERIFICATION', () => {
           expect(noTrainerForSlotToPlan).toBeTruthy();
         });
 
-        it('should pass if every slot with trainerBill contains trainer and billNumber', () => {
-          const everySlotTrainerBillsContainGoodValues = courseSlotList
-            .every(cs => !cs.trainerBills || cs.trainerBills.every(b => b.billNumber && b.trainer));
-          expect(everySlotTrainerBillsContainGoodValues).toBeTruthy();
+        it('should pass if every slot trainerBilling contains a trainer', () => {
+          const everySlotTrainerBillingsContainGoodValues = courseSlotList
+            .every(cs => !cs.trainerBillings || cs.trainerBillings.every(b => b.trainer));
+          expect(everySlotTrainerBillingsContainGoodValues).toBeTruthy();
+        });
+
+        it('should pass if every slot\'s trainerBill contains this slot', () => {
+          const isSlotInEveryTrainerBill = courseSlotList.every(cs => (cs.trainerBillings || [])
+            .every(b => !b.trainerBill || UtilsHelper.doesArrayIncludeId(b.trainerBill.courseSlots, cs._id)));
+          expect(isSlotInEveryTrainerBill).toBeTruthy();
         });
       });
 
@@ -2538,6 +2549,61 @@ describe('SEEDS VERIFICATION', () => {
             .every(sp => sp.status === DRAFT || sp.steps.every(step => step.status === PUBLISHED));
 
           expect(doesEveryPublishedProgramHavePublishedStep).toBeTruthy();
+        });
+      });
+
+      describe('Collection TrainerBill', () => {
+        let trainerBillList;
+
+        before(async () => {
+          trainerBillList = await TrainerBill
+            .find()
+            .populate({
+              path: 'courseSlots',
+              select: 'startDate endDate step trainerBillings',
+              populate: [
+                { path: 'step', select: '_id' },
+                {
+                  path: 'course',
+                  select: 'subProgram',
+                  populate: { path: 'subProgram', select: 'priceVersions' },
+                },
+              ],
+            })
+            .lean();
+        });
+
+        it('should pass if every trainerBill course slot has a matching entry pointing back to it', () => {
+          const everySlotHasMatchingTrainerBill = trainerBillList.every(tb => tb.courseSlots.every(cs => (
+            (cs.trainerBillings || []).some(b => (
+              UtilsHelper.areObjectIdsEquals(b.trainer, tb.trainer) &&
+              UtilsHelper.areObjectIdsEquals(b.trainerBill, tb._id)
+            ))
+          )));
+
+          expect(everySlotHasMatchingTrainerBill).toBeTruthy();
+        });
+
+        it('should pass if every trainerBill amount matches the amount computed from its course slots', () => {
+          const everyAmountIsCorrect = trainerBillList.every((tb) => {
+            const uniqueDateSlots = uniqBy(
+              tb.courseSlots,
+              s => `${s.startDate.toISOString()}_${s.endDate.toISOString()}`
+            );
+
+            const computedAmount = uniqueDateSlots.reduce((acc, slot) => {
+              const hourlyAmount = CourseSlotsHelper.getHourlyAmount(slot);
+              const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
+              const slotAmount = NumbersHelper
+                .toFixedToFloat(NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours()));
+
+              return NumbersHelper.add(acc, slotAmount);
+            }, 0);
+
+            return NumbersHelper.isEqualTo(tb.amount, computedAmount);
+          });
+
+          expect(everyAmountIsCorrect).toBeTruthy();
         });
       });
 

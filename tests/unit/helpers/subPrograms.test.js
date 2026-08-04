@@ -158,9 +158,13 @@ describe('updateSubProgram', () => {
       sinon.assert.calledWithExactly(
         stepUpdateManyStub,
         { _id: { $in: subProgram.steps } },
-        { status: payload.status }
+        { $set: { status: payload.status } }
       );
-      sinon.assert.calledWithExactly(activityUpdateManyStub, { _id: { $in: activities } }, { status: payload.status });
+      sinon.assert.calledWithExactly(
+        activityUpdateManyStub,
+        { _id: { $in: activities } },
+        { $set: { status: payload.status } }
+      );
       SinonMongoose.calledOnceWithExactly(
         findOneAndUpdate,
         [
@@ -213,9 +217,13 @@ describe('updateSubProgram', () => {
       sinon.assert.calledWithExactly(
         stepUpdateManyStub,
         { _id: { $in: subProgram.steps } },
-        { status: payload.status }
+        { $set: { status: payload.status } }
       );
-      sinon.assert.calledWithExactly(activityUpdateManyStub, { _id: { $in: activities } }, { status: payload.status });
+      sinon.assert.calledWithExactly(
+        activityUpdateManyStub,
+        { _id: { $in: activities } },
+        { $set: { status: payload.status } }
+      );
       SinonMongoose.calledOnceWithExactly(
         findOneAndUpdate,
         [
@@ -286,12 +294,12 @@ describe('updateSubProgram', () => {
         sinon.assert.calledWithExactly(
           stepUpdateManyStub,
           { _id: { $in: subProgram.steps } },
-          { status: payload.status }
+          { $set: { status: payload.status } }
         );
         sinon.assert.calledWithExactly(
           activityUpdateManyStub,
           { _id: { $in: activities } },
-          { status: payload.status }
+          { $set: { status: payload.status } }
         );
         SinonMongoose.calledOnceWithExactly(
           findOneAndUpdate,

@@ -1193,6 +1193,7 @@ describe('COURSES ROUTES - GET /courses', () => {
     });
 
     it('should return 400 if no trainer (ops mobile)', async () => {
+      authToken = await getToken('trainer');
       const response = await app.inject({
         method: 'GET',
         url: '/courses?action=operations&origin=mobile',

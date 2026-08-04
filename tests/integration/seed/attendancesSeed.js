@@ -9,6 +9,7 @@ const CourseSlot = require('../../../src/models/CourseSlot');
 const Program = require('../../../src/models/Program');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const { otherCompany, authCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
@@ -25,6 +26,7 @@ const {
   MOBILE,
   PRESENT,
   MISSING,
+  PAID,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { trainerRoleId, vendorAdminRoleId } = require('../../seed/authRolesSeed');
@@ -278,6 +280,8 @@ const coursesList = [
   },
 ];
 
+const trainerBillId = new ObjectId();
+
 const slotsList = [
   { // 0
     _id: new ObjectId(),
@@ -399,7 +403,7 @@ const slotsList = [
     course: coursesList[10],
     step: steps[0]._id,
     trainers: [userList[0]._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'test' }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
   },
   { // 15
     _id: new ObjectId(),
@@ -408,7 +412,19 @@ const slotsList = [
     course: coursesList[10],
     step: steps[0]._id,
     trainers: [userList[0]._id],
-    trainerBills: [{ trainer: trainer._id, billNumber: 'test' }],
+    trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
+  },
+];
+
+const trainerBillList = [
+  {
+    _id: trainerBillId,
+    trainer: trainer._id,
+    number: 'test',
+    status: PAID,
+    courseSlots: [slotsList[14]._id, slotsList[15]._id],
+    amount: 0,
+    submittedAt: '2025-04-01T10:00:00.000Z',
   },
 ];
 
@@ -711,6 +727,7 @@ const populateDB = async () => {
     Step.create(steps),
     SubProgram.create(subProgramList),
     CourseHistory.create(courseHistoryList),
+    TrainerBill.create(trainerBillList),
   ]);
 };
 

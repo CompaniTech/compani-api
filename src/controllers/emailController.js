@@ -28,4 +28,16 @@ const sendBillEmail = async (req) => {
   }
 };
 
-module.exports = { sendWelcome, sendBillEmail };
+const sendTrainerFeesBill = async (req) => {
+  try {
+    const { number, file } = req.payload;
+    const mailInfo = await EmailHelper.sendTrainerFeesBillEmail(number, file, req.auth.credentials);
+
+    return { message: translate[language].emailSent, data: { mailInfo } };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { sendWelcome, sendBillEmail, sendTrainerFeesBill };

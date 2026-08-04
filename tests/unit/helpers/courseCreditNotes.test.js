@@ -63,7 +63,7 @@ describe('createCourseCreditNote', () => {
     sinon.assert.calledOnceWithExactly(
       updateManyCoursePayment,
       { courseBill: courseBillId, status: PENDING },
-      { status: CANCELLED }
+      { $set: { status: CANCELLED } }
     );
   });
 });
