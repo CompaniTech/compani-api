@@ -1789,8 +1789,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     const roles = [
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
-      { name: 'coach', expectedCode: 200 },
-      { name: 'trainer', expectedCode: 200 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
     ];
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
