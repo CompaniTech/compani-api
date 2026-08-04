@@ -203,9 +203,9 @@ const vendorHistoryExportTypes = [
   {
     exportType: DRAFT_COURSE_BILL,
     expectedRows: [
-      '\ufeff"Id formation";"Programme";"Id apprenant";"Apprenant";"Structure";"Société mère";"Date de facturation";"Description";"Montant HT";"Montant TTC";"Taux TVA";"Date d\'archivage";"Liste des pauses"',
-      `${coursesList[0]._id};"Program 1";;;"Test SAS";"Auth Holding";"15/05/2022";"Échéance 2";"1045,00";"1254,00";"20,00";"08/07/2024";"10/01/2023 - 15/02/2023"`,
-      `${coursesList[9]._id};"Program 1";${coursesList[9].trainees[0]};"Paul TRAINEE";"Un autre SAS";"Other Holding";"20/05/2022";;"300,00";"300,00";"0,00";;`,
+      '\ufeff"Id formation";"Programme";"Id apprenant";"Apprenant";"Structure";"Société mère";"Date de facturation";"Description";"Montant HT";"Montant TTC";"Taux TVA";"Date d\'archivage";"En pause";"Liste des pauses"',
+      `${coursesList[0]._id};"Program 1";;;"Test SAS";"Auth Holding";"15/05/2022";"Échéance 2";"1045,00";"1254,00";"20,00";"08/07/2024";"Non";"10/01/2023 - 15/02/2023"`,
+      `${coursesList[9]._id};"Program 1";${coursesList[9].trainees[0]};"Paul TRAINEE";"Un autre SAS";"Other Holding";"20/05/2022";;"300,00";"300,00";"0,00";;"Non";`,
     ],
     query: 'startDate=2022-05-01T10:00:00.000Z&endDate=2022-05-31T10:00:00.000Z',
   },

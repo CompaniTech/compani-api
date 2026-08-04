@@ -773,12 +773,18 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
   return rows.length ? [Object.keys(rows[0]), ...rows.map(d => Object.values(d))] : [[NO_DATA]];
 };
 
-const getInterruptionDatesForExport = interruptionDates => (interruptionDates || [])
-  .map((interruption) => {
-    const end = interruption.endDate ? CompaniDate(interruption.endDate).format(DD_MM_YYYY) : 'en cours';
-    return `${CompaniDate(interruption.startDate).format(DD_MM_YYYY)} - ${end}`;
-  })
-  .join(', ');
+const getInterruptionDatesForExport = (interruptionDates) => {
+  let isInterrupted = 'Non';
+  const interruptionDatesList = (interruptionDates || [])
+    .map((interruption) => {
+      const end = interruption.endDate ? CompaniDate(interruption.endDate).format(DD_MM_YYYY) : 'en cours';
+      if (!interruption.endDate) isInterrupted = 'Oui';
+      return `${CompaniDate(interruption.startDate).format(DD_MM_YYYY)} - ${end}`;
+    })
+    .join(', ');
+
+  return { interruptionDatesList, isInterrupted };
+};
 
 exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) => {
   const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
@@ -806,6 +812,7 @@ exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) =
   for (const bill of courseBills) {
     const { netExclTaxes, netInclTaxes } = CourseBillHelper.getDetailWithTaxes(bill);
     const companiesHolding = [...new Set(compact(bill.companies.map(c => get(c, 'holding.name'))))];
+    const { interruptionDatesList, isInterrupted } = getInterruptionDatesForExport(bill.course.interruptionDates);
 
     rows.push({
       'Id formation': bill.course._id,
@@ -820,7 +827,8 @@ exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) =
       'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
       'Taux TVA': UtilsHelper.formatFloatForExport(bill.vat || 0),
       'Date d\'archivage': bill.course.archivedAt ? CompaniDate(bill.course.archivedAt).format(DD_MM_YYYY) : '',
-      'Liste des pauses': getInterruptionDatesForExport(bill.course.interruptionDates),
+      'En pause': isInterrupted,
+      'Liste des pauses': interruptionDatesList,
     });
   }
 
