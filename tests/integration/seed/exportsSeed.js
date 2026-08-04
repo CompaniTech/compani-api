@@ -1263,7 +1263,7 @@ const coursesList = [
     trainers: [trainer._id, trainerAndCoach._id],
     operationsRepresentative: operationsRepresentative._id,
     contact: operationsRepresentative._id,
-    expectedBillsCount: 1,
+    expectedBillsCount: 2,
     trainees: [traineeList[0]._id, traineeList[2]._id, traineeList[3]._id],
     companies: [authCompany._id],
     archivedAt: '2024-07-07T22:00:00.000Z',
