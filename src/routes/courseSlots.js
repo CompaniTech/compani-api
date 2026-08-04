@@ -58,7 +58,7 @@ exports.plugin = {
         },
         payload: formDataPayload(),
         pre: [{ method: authorizeUploadCourseSlotsCSV, assign: 'slotList' }],
-        auth: { scope: ['courses:edit'] },
+        auth: { scope: ['courses:create'] },
       },
       handler: uploadCourseSlotsCSV,
     });

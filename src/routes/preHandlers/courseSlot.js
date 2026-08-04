@@ -232,19 +232,14 @@ const extractEmails = value => [...new Set(
 
 exports.authorizeUploadCourseSlotsCSV = async (req) => {
   try {
-    const { credentials } = req.auth;
     const { course: courseId, file } = req.payload;
 
     const course = await Course
-      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1, companies: 1, holding: 1, type: 1 })
+      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1 })
       .populate({ path: 'subProgram', select: 'steps', populate: { path: 'steps', select: 'name type' } })
       .lean();
     if (!course) throw Boom.notFound();
     if (course.archivedAt) throw Boom.forbidden();
-
-    const courseCompanies = [INTRA, INTRA_HOLDING].includes(course.type) ? course.companies : [];
-    const courseHolding = course.type === INTRA_HOLDING ? course.holding : null;
-    checkAuthorization(credentials, course.trainers, courseCompanies, courseHolding);
 
     const slotList = await UtilsHelper.parseCsv(file);
 
@@ -303,15 +298,13 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
 
       let formattedStartDate = null;
       let formattedEndDate = null;
-      const startDate = slot.startDate ? new Date(slot.startDate) : null;
-      const endDate = slot.endDate ? new Date(slot.endDate) : null;
-      const isStartDateValid = startDate && !Number.isNaN(startDate.getTime());
-      const isEndDateValid = endDate && !Number.isNaN(endDate.getTime());
-      if (!isStartDateValid || !isEndDateValid) {
+      try {
+        formattedStartDate = CompaniDate(slot.startDate).toISO();
+        formattedEndDate = CompaniDate(slot.endDate).toISO();
+      } catch (_) {
         addError(rowLabel, translate[language].incorrectDate);
-      } else {
-        formattedStartDate = CompaniDate(startDate).toISO();
-        formattedEndDate = CompaniDate(endDate).toISO();
+      }
+      if (formattedStartDate && formattedEndDate) {
         if (!CompaniDate(formattedStartDate).isSame(formattedEndDate, 'day')) {
           addError(rowLabel, translate[language].courseSlotDatesNotSameDay);
         }

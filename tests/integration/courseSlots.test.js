@@ -1404,8 +1404,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
 
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1420,8 +1420,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should reuse an existing slot to plan and set trainees', async () => {
       const response = await injectCsv(coursesList[1]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainercoach@alenvi.io',
@@ -1451,8 +1451,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
 
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '37 rue de Ponthieu 75008 Paris',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1461,7 +1461,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
 
       expect(response.statusCode).toBe(200);
       const newSlot = await CourseSlot
-        .findOne({ course: coursesList[0]._id, step: stepsList[0]._id, startDate: '2021-01-12T09:00:00.000Z' })
+        .findOne({ course: coursesList[0]._id, step: stepsList[0]._id, startDate: '2021-01-12T08:00:00.000Z' })
         .lean();
       expect(newSlot.address.fullAddress).toBe('37 rue de Ponthieu 75008 Paris');
     });
@@ -1469,7 +1469,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 400 if csv columns are wrong', async () => {
       const response = await injectCsv(
         coursesList[0]._id,
-        [{ step: stepsList[0].name, startDate: '2021-01-12T09:00:00.000Z' }],
+        [{ step: stepsList[0].name, startDate: '2021-01-12T09:00:00' }],
         authToken
       );
 
@@ -1481,8 +1481,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       for (let i = 0; i <= process.env.MAX_CSV_COURSE_SIZE; i++) {
         slotList.push({
           step: stepsList[0].name,
-          startDate: '2021-01-12T09:00:00.000Z',
-          endDate: '2021-01-12T11:00:00.000Z',
+          startDate: '2021-01-12T09:00:00',
+          endDate: '2021-01-12T11:00:00',
           address: '',
           meetingLink: '',
           trainers: 'trainer@alenvi.io',
@@ -1498,8 +1498,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if step doesn\'t exist', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: 'etape inconnue',
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1513,8 +1513,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if trainer is not linked to course', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'coach@alenvi.io',
@@ -1528,8 +1528,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if trainee is not registered to course', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1558,8 +1558,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if address is given for a remote step', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[4].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '37 rue de Ponthieu 75008 Paris',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1574,8 +1574,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if step is eLearning', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[1].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1590,7 +1590,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
         startDate: 'not-a-date',
-        endDate: '2021-01-12T11:00:00.000Z',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1604,8 +1604,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if startDate and endDate are not on the same day', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-13T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-13T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1619,8 +1619,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if startDate is after endDate', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T11:00:00.000Z',
-        endDate: '2021-01-12T09:00:00.000Z',
+        startDate: '2021-01-12T11:00:00',
+        endDate: '2021-01-12T09:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1634,8 +1634,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if both address and meetingLink are given', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '37 rue de Ponthieu 75008 Paris',
         meetingLink: 'https://meet.google.com',
         trainers: 'trainer@alenvi.io',
@@ -1649,8 +1649,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if meetingLink is given for an on site step', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: 'https://meet.google.com',
         trainers: 'trainer@alenvi.io',
@@ -1666,8 +1666,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
 
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: 'adresse qui n\'existe pas',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1683,8 +1683,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
 
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '37 rue de Ponthieu 75008 Paris',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1698,8 +1698,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if trainers is missing', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: '',
@@ -1713,8 +1713,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if trainer email is incorrect', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'not-an-email',
@@ -1728,8 +1728,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if trainer doesn\'t exist', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'ghost@alenvi.io',
@@ -1743,8 +1743,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if trainee email is incorrect', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1758,8 +1758,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 422 if trainee doesn\'t exist', async () => {
       const response = await injectCsv(coursesList[0]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1773,8 +1773,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     it('should return 403 if course is archived', async () => {
       const response = await injectCsv(coursesList[2]._id, [{
         step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00.000Z',
-        endDate: '2021-01-12T11:00:00.000Z',
+        startDate: '2021-01-12T09:00:00',
+        endDate: '2021-01-12T11:00:00',
         address: '',
         meetingLink: '',
         trainers: 'trainer@alenvi.io',
@@ -1789,8 +1789,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
     const roles = [
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
-      { name: 'coach', expectedCode: 200 },
-      { name: 'trainer', expectedCode: 200 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
     ];
     roles.forEach((role) => {
       it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
@@ -1798,8 +1798,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
 
         const response = await injectCsv(coursesList[0]._id, [{
           step: stepsList[0].name,
-          startDate: '2021-01-12T09:00:00.000Z',
-          endDate: '2021-01-12T11:00:00.000Z',
+          startDate: '2021-01-12T09:00:00',
+          endDate: '2021-01-12T11:00:00',
           address: '',
           meetingLink: '',
           trainers: 'trainer@alenvi.io',

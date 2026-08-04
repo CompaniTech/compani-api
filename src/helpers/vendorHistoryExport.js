@@ -252,7 +252,7 @@ const formatCourseForExport = async (
         price = NumbersHelper.add(price, companyPrice.global);
 
         if (companyPrice.trainerFees) {
-          formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
+          formattedPrice += ` (+ frais gestion: ${UtilsHelper.formatPrice(companyPrice.trainerFees)})`;
           price = NumbersHelper.add(price, companyPrice.trainerFees);
         }
 
@@ -263,7 +263,7 @@ const formatCourseForExport = async (
       price = NumbersHelper.add(price, course.prices[0].global);
 
       if (course.prices[0].trainerFees) {
-        formattedPrice += ` (+ FF: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
+        formattedPrice += ` (+ frais gestion: ${UtilsHelper.formatPrice(course.prices[0].trainerFees)})`;
         price = NumbersHelper.add(price, course.prices[0].trainerFees);
       }
 
