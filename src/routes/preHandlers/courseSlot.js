@@ -303,15 +303,13 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
 
       let formattedStartDate = null;
       let formattedEndDate = null;
-      const startDate = slot.startDate ? new Date(slot.startDate) : null;
-      const endDate = slot.endDate ? new Date(slot.endDate) : null;
-      const isStartDateValid = startDate && !Number.isNaN(startDate.getTime());
-      const isEndDateValid = endDate && !Number.isNaN(endDate.getTime());
-      if (!isStartDateValid || !isEndDateValid) {
+      try {
+        formattedStartDate = CompaniDate(slot.startDate).toISO();
+        formattedEndDate = CompaniDate(slot.endDate).toISO();
+      } catch (_) {
         addError(rowLabel, translate[language].incorrectDate);
-      } else {
-        formattedStartDate = CompaniDate(startDate).toISO();
-        formattedEndDate = CompaniDate(endDate).toISO();
+      }
+      if (formattedStartDate && formattedEndDate) {
         if (!CompaniDate(formattedStartDate).isSame(formattedEndDate, 'day')) {
           addError(rowLabel, translate[language].courseSlotDatesNotSameDay);
         }

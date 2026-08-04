@@ -774,7 +774,7 @@ describe('exportCourseHistory', () => {
         'Non',
         '',
         '2750,00',
-        '\nAutre structure: 2500,00 € (+ FF: 250,00 €)',
+        '\nAutre structure: 2500,00 € (+ frais gestion: 250,00 €)',
         2,
         6,
         'Non',
