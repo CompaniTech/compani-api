@@ -232,19 +232,14 @@ const extractEmails = value => [...new Set(
 
 exports.authorizeUploadCourseSlotsCSV = async (req) => {
   try {
-    const { credentials } = req.auth;
     const { course: courseId, file } = req.payload;
 
     const course = await Course
-      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1, companies: 1, holding: 1, type: 1 })
+      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1 })
       .populate({ path: 'subProgram', select: 'steps', populate: { path: 'steps', select: 'name type' } })
       .lean();
     if (!course) throw Boom.notFound();
     if (course.archivedAt) throw Boom.forbidden();
-
-    const courseCompanies = [INTRA, INTRA_HOLDING].includes(course.type) ? course.companies : [];
-    const courseHolding = course.type === INTRA_HOLDING ? course.holding : null;
-    checkAuthorization(credentials, course.trainers, courseCompanies, courseHolding);
 
     const slotList = await UtilsHelper.parseCsv(file);
 
