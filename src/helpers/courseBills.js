@@ -259,7 +259,7 @@ exports.list = async (query, credentials) => {
   });
 
   let traineesCompanyAtCourseRegistrationByCourse = {};
-  if (query.startDate && query.endDate) {
+  if (query.startDate && query.endDate && filteredCourseBills.length) {
     traineesCompanyAtCourseRegistrationByCourse = await CourseHistoriesHelper
       .getCompanyAtCourseRegistrationListByCourse(filteredCourseBills.map(bill => bill.course));
   }
