@@ -697,6 +697,80 @@ describe('getCompanyAtCourseRegistrationList', () => {
   });
 });
 
+describe('getCompanyAtCourseRegistrationListByCourse', () => {
+  let courseHistoryFind;
+
+  beforeEach(() => {
+    courseHistoryFind = sinon.stub(CourseHistory, 'find');
+  });
+  afterEach(() => {
+    courseHistoryFind.restore();
+  });
+
+  it('should list, for each course, the trainees and the company that registered them', async () => {
+    const courseIds = [new ObjectId(), new ObjectId()];
+    const traineeIds = [new ObjectId(), new ObjectId(), new ObjectId()];
+    const companyIds = [new ObjectId(), new ObjectId()];
+    const courses = [
+      { _id: courseIds[0], trainees: [{ _id: traineeIds[0] }, { _id: traineeIds[1] }] },
+      { _id: courseIds[1], trainees: [{ _id: traineeIds[2] }] },
+    ];
+    const courseHistories = [
+      {
+        course: courseIds[0],
+        trainee: traineeIds[1],
+        company: companyIds[1],
+        createdAt: '2023-01-04T12:30:00.000Z',
+      },
+      {
+        course: courseIds[1],
+        trainee: traineeIds[2],
+        company: companyIds[1],
+        createdAt: '2023-01-03T12:30:00.000Z',
+      },
+      {
+        course: courseIds[0],
+        trainee: traineeIds[0],
+        company: companyIds[0],
+        createdAt: '2023-01-02T12:30:00.000Z',
+      },
+      {
+        course: courseIds[0],
+        trainee: traineeIds[0],
+        company: new ObjectId(),
+        createdAt: '2022-12-15T12:30:00.000Z',
+      },
+    ];
+
+    courseHistoryFind.returns(SinonMongoose.stubChainedQueries(courseHistories, ['sort', 'lean']));
+
+    const result = await CourseHistoriesHelper.getCompanyAtCourseRegistrationListByCourse(courses);
+
+    expect(result).toEqual({
+      [courseIds[0]]: [
+        { trainee: traineeIds[1], company: companyIds[1] },
+        { trainee: traineeIds[0], company: companyIds[0] },
+      ],
+      [courseIds[1]]: [{ trainee: traineeIds[2], company: companyIds[1] }],
+    });
+
+    SinonMongoose.calledOnceWithExactly(
+      courseHistoryFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: courseIds }, action: TRAINEE_ADDITION, trainee: { $in: traineeIds } },
+            { course: 1, trainee: 1, company: 1, createdAt: 1, _id: 0 },
+          ],
+        },
+        { query: 'sort', args: [{ createdAt: -1, trainee: 1 }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+});
+
 describe('createHistoryOnCourseInterruptionOrRestart', () => {
   let createHistory;
 

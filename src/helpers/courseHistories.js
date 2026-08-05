@@ -1,4 +1,6 @@
 const pick = require('lodash/pick');
+const groupBy = require('lodash/groupBy');
+const mapValues = require('lodash/mapValues');
 const sortedUniqBy = require('lodash/sortedUniqBy');
 const { CompaniDate } = require('./dates/companiDates');
 const CourseHistory = require('../models/CourseHistory');
@@ -132,6 +134,24 @@ exports.getCompanyAtCourseRegistrationList = async (singleton, list) => {
     .map(courseHistory => pick(courseHistory, [list.key, 'company']));
 
   return companyAtCourseRegistrationList;
+};
+
+exports.getCompanyAtCourseRegistrationListByCourse = async (courses) => {
+  const courseIds = courses.map(course => course._id);
+  const traineeIds = courses.flatMap(course => course.trainees.map(trainee => trainee._id));
+
+  const courseHistories = await CourseHistory
+    .find(
+      { course: { $in: courseIds }, action: TRAINEE_ADDITION, trainee: { $in: traineeIds } },
+      { course: 1, trainee: 1, company: 1, createdAt: 1, _id: 0 }
+    )
+    .sort({ createdAt: -1, trainee: 1 })
+    .lean();
+
+  return mapValues(
+    groupBy(courseHistories, ch => ch.course),
+    histories => sortedUniqBy(histories, ch => ch.trainee).map(ch => pick(ch, ['trainee', 'company']))
+  );
 };
 
 exports.createHistoryOnTrainerAdditionOrDeletion = (payload, userId) =>
