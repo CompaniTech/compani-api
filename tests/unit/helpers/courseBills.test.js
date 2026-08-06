@@ -22,7 +22,6 @@ const {
   REFUND,
   DASHBOARD,
   INTRA,
-  COURSE,
   TRAINEE,
   SINGLE,
   GROUP,
@@ -80,20 +79,21 @@ describe('getDetailWithTaxes', () => {
 
 describe('list', () => {
   let find;
-  let getCompanyAtCourseRegistrationList;
+  let getCompanyAtCourseRegistrationListByCourse;
   let subProgramFind;
   let activityHistoryFind;
   beforeEach(() => {
     find = sinon.stub(CourseBill, 'find');
     subProgramFind = sinon.stub(SubProgram, 'find');
     activityHistoryFind = sinon.stub(ActivityHistory, 'find');
-    getCompanyAtCourseRegistrationList = sinon.stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
+    getCompanyAtCourseRegistrationListByCourse = sinon
+      .stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationListByCourse');
   });
   afterEach(() => {
     find.restore();
     subProgramFind.restore();
     activityHistoryFind.restore();
-    getCompanyAtCourseRegistrationList.restore();
+    getCompanyAtCourseRegistrationListByCourse.restore();
   });
 
   it('should return all course bills (without billing purchases)', async () => {
@@ -153,7 +153,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationListByCourse);
     sinon.assert.notCalled(subProgramFind);
     sinon.assert.notCalled(activityHistoryFind);
   });
@@ -206,7 +206,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationListByCourse);
     sinon.assert.notCalled(subProgramFind);
     sinon.assert.notCalled(activityHistoryFind);
   });
@@ -327,7 +327,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationListByCourse);
     sinon.assert.notCalled(subProgramFind);
     sinon.assert.notCalled(activityHistoryFind);
   });
@@ -449,7 +449,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationListByCourse);
     sinon.assert.notCalled(subProgramFind);
     sinon.assert.notCalled(activityHistoryFind);
   });
@@ -591,20 +591,16 @@ describe('list', () => {
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
     subProgramFind.returns(SinonMongoose.stubChainedQueries([singleSubProgram]));
     activityHistoryFind.returns(SinonMongoose.stubChainedQueries(histories, ['lean']));
-    getCompanyAtCourseRegistrationList.onCall(0).returns([
-      { trainee: traineesIds[0], company: companies[0]._id },
-      { trainee: traineesIds[1], company: companies[1]._id },
-      { trainee: traineesIds[2], company: companies[1]._id },
-    ]);
-    getCompanyAtCourseRegistrationList.onCall(1).returns([
-      { trainee: traineesIds[1], company: companies[1]._id },
-    ]);
-    getCompanyAtCourseRegistrationList.onCall(2).returns([
-      { trainee: traineesIds[2], company: companies[1]._id },
-    ]);
-    getCompanyAtCourseRegistrationList.onCall(3).returns([
-      { trainee: traineesIds[3], company: companies[1]._id },
-    ]);
+    getCompanyAtCourseRegistrationListByCourse.returns({
+      [courseIds[0]]: [
+        { trainee: traineesIds[0], company: companies[0]._id },
+        { trainee: traineesIds[1], company: companies[1]._id },
+        { trainee: traineesIds[2], company: companies[1]._id },
+      ],
+      [courseIds[2]]: [{ trainee: traineesIds[1], company: companies[1]._id }],
+      [courseIds[3]]: [{ trainee: traineesIds[2], company: companies[1]._id }],
+      [courseIds[5]]: [{ trainee: traineesIds[3], company: companies[1]._id }],
+    });
 
     const result = await CourseBillHelper.list(
       {
@@ -811,25 +807,9 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledWithExactly(
-      getCompanyAtCourseRegistrationList.getCall(0),
-      { key: COURSE, value: courseIds[0] },
-      { key: TRAINEE, value: courseBills[0].course.trainees }
-    );
-    sinon.assert.calledWithExactly(
-      getCompanyAtCourseRegistrationList.getCall(1),
-      { key: COURSE, value: courseIds[2] },
-      { key: TRAINEE, value: courseBills[2].course.trainees }
-    );
-    sinon.assert.calledWithExactly(
-      getCompanyAtCourseRegistrationList.getCall(2),
-      { key: COURSE, value: courseIds[3] },
-      { key: TRAINEE, value: courseBills[3].course.trainees }
-    );
-    sinon.assert.calledWithExactly(
-      getCompanyAtCourseRegistrationList.getCall(3),
-      { key: COURSE, value: courseIds[5] },
-      { key: TRAINEE, value: courseBills[5].course.trainees }
+    sinon.assert.calledOnceWithExactly(
+      getCompanyAtCourseRegistrationListByCourse,
+      [courseBills[0].course, courseBills[2].course, courseBills[3].course, courseBills[5].course]
     );
   });
 
@@ -859,10 +839,12 @@ describe('list', () => {
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));
-    getCompanyAtCourseRegistrationList.returns([
-      { trainee: traineesIds[0], company: companies[0]._id },
-      { trainee: traineesIds[1], company: companies[1]._id },
-    ]);
+    getCompanyAtCourseRegistrationListByCourse.returns({
+      [courseId]: [
+        { trainee: traineesIds[0], company: companies[0]._id },
+        { trainee: traineesIds[1], company: companies[1]._id },
+      ],
+    });
 
     const result = await CourseBillHelper.list(
       {
@@ -942,11 +924,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(
-      getCompanyAtCourseRegistrationList,
-      { key: COURSE, value: courseId },
-      { key: TRAINEE, value: courseBills[0].course.trainees }
-    );
+    sinon.assert.calledOnceWithExactly(getCompanyAtCourseRegistrationListByCourse, [courseBills[0].course]);
     sinon.assert.notCalled(subProgramFind);
     sinon.assert.notCalled(activityHistoryFind);
   });
@@ -1001,7 +979,7 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(getCompanyAtCourseRegistrationList);
+    sinon.assert.notCalled(getCompanyAtCourseRegistrationListByCourse);
     sinon.assert.notCalled(subProgramFind);
     sinon.assert.notCalled(activityHistoryFind);
   });
