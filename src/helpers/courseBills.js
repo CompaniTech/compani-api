@@ -26,8 +26,6 @@ const {
   CLIENT_ADMIN,
   DD_MM_YYYY,
   BALANCE,
-  COURSE,
-  TRAINEE,
   SINGLE,
   RECEIVED,
   PENDING,
@@ -134,9 +132,8 @@ const balance = async (company, credentials) => {
   return courseBills.map(bill => exports.formatCourseBill(bill));
 };
 
-const formatCourse = async (course) => {
-  const traineesCompanyAtCourseRegistration = await CourseHistoriesHelper
-    .getCompanyAtCourseRegistrationList({ key: COURSE, value: course._id }, { key: TRAINEE, value: course.trainees });
+const formatCourse = (course, traineesCompanyAtCourseRegistrationByCourse) => {
+  const traineesCompanyAtCourseRegistration = traineesCompanyAtCourseRegistrationByCourse[course._id] || [];
   const traineesCompany = mapValues(keyBy(traineesCompanyAtCourseRegistration, 'trainee'), 'company');
   const courseTrainees = course.trainees.map(trainee => ({
     _id: trainee._id,
@@ -253,31 +250,36 @@ exports.list = async (query, credentials) => {
       .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
       .some(s => s.attendances.length);
 
-  return Promise.all(
-    courseBills
-      .filter((bill) => {
-        if (bill.course.archivedAt) return false;
-        if (query.isValidated) return true;
+  const filteredCourseBills = courseBills.filter((bill) => {
+    if (bill.course.archivedAt) return false;
+    if (query.isValidated) return true;
 
-        const isCourseInterrupted = UtilsHelper.isCourseInterrupted(bill.course.interruptionDates);
-        return !isCourseInterrupted || hasCourseAction(bill);
-      })
-      .map(async (bill) => {
-        const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
+    const isCourseInterrupted = UtilsHelper.isCourseInterrupted(bill.course.interruptionDates);
+    return !isCourseInterrupted || hasCourseAction(bill);
+  });
 
-        return {
-          ...bill,
-          ...(query.startDate && query.endDate
-            ? {
-              course: await formatCourse(bill.course),
-              ...!query.isValidated && { hasCourseAction: hasCourseAction(bill) },
-            }
-            : { course: bill.course }
-          ),
-          netInclTaxes,
-          netExclTaxes,
-        };
-      }));
+  let traineesCompanyAtCourseRegistrationByCourse = {};
+  if (query.startDate && query.endDate && filteredCourseBills.length) {
+    traineesCompanyAtCourseRegistrationByCourse = await CourseHistoriesHelper
+      .getCompanyAtCourseRegistrationListByCourse(filteredCourseBills.map(bill => bill.course));
+  }
+
+  return filteredCourseBills.map((bill) => {
+    const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
+
+    return {
+      ...bill,
+      ...(query.startDate && query.endDate
+        ? {
+          course: formatCourse(bill.course, traineesCompanyAtCourseRegistrationByCourse),
+          ...!query.isValidated && { hasCourseAction: hasCourseAction(bill) },
+        }
+        : { course: bill.course }
+      ),
+      netInclTaxes,
+      netExclTaxes,
+    };
+  });
 };
 
 exports.createBillList = async (payload) => {
