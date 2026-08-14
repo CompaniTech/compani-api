@@ -84,7 +84,7 @@
     "eslint-plugin-import": "~2.32.0",
     "eslint-plugin-mocha": "~11.2.0",
     "expect": "~30.4.1",
-    "mocha": "~11.7.5",
+    "mocha": "~11.8.0",
     "sinon": "21.0.1"
   }
 }
