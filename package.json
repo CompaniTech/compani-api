@@ -72,7 +72,7 @@
     "randomatic": "~3.1.1",
     "shelljs": "~0.10.0",
     "util": "~0.12.3",
-    "uuid": "~13.0.0",
+    "uuid": "~14.0.1",
     "xmlbuilder": "~15.1.1"
   },
   "devDependencies": {
