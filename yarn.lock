@@ -4497,10 +4497,10 @@ node-fetch@^3.3.2:
     fetch-blob "^3.1.4"
     formdata-polyfill "^4.0.10"
 
-nodemailer@~8.0.2:
-  version "8.0.2"
-  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-8.0.2.tgz#70a6f031314a33bac7147eb9c378cdaa35fb619b"
-  integrity sha512-zbj002pZAIkWQFxyAaqoxvn+zoIwRnS40hgjqTXudKOOJkiFFgBeNqjgD3/YCR12sZnrghWYBY+yP1ZucdDRpw==
+nodemailer@~9.0.5:
+  version "9.0.5"
+  resolved "https://registry.yarnpkg.com/nodemailer/-/nodemailer-9.0.5.tgz#edf488e2d25b1688614922d7e733f551114099fc"
+  integrity sha512-wvjiKvjczmsN7U/8006JOdXubgBk2XFAbioDMbT+sM7cPs0QrhJTa6KBRX7P5REGGkDcLUz/EarWidb8G8C1jQ==
 
 npm-run-path@^4.0.1:
   version "4.0.1"
