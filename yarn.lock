@@ -212,10 +212,10 @@
     retry-request "^7.0.0"
     teeny-request "^9.0.0"
 
-"@googleapis/drive@~20.1.0":
-  version "20.1.0"
-  resolved "https://registry.yarnpkg.com/@googleapis/drive/-/drive-20.1.0.tgz#5a31a6be869596286ef82dba5592c88a00ee8790"
-  integrity sha512-8/gapeLuZ3igooEGLE1AL3Zp5fjqigZQNmyjehb4QF7JVJh6FXF+72AcQGGsFypwJb2S68HIuQFomHBw4RJSOg==
+"@googleapis/drive@~21.0.0":
+  version "21.0.0"
+  resolved "https://registry.yarnpkg.com/@googleapis/drive/-/drive-21.0.0.tgz#866f2e363709e46dca8873e05de0e8143b5e3cd2"
+  integrity sha512-vebQpAqn+FZcmDWh1TEQTcYdkKftcSaHc7kO2ZxrINBb+ZMcFu1UybD3+maeqdLs60HrRDYwyzJ6TgZ7/Vn2Rg==
   dependencies:
     googleapis-common "^8.0.0"
 
