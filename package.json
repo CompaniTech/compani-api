@@ -35,7 +35,7 @@
     "@hapi/good": "~9.0.1",
     "@hapi/good-console": "~9.0.1",
     "@hapi/good-squeeze": "~6.0.0",
-    "@hapi/hapi": "~21.4.7",
+    "@hapi/hapi": "~21.4.10",
     "@hapi/inert": "~7.1.2",
     "@notionhq/client": "~5.22.0",
     "@sentry/node": "~10.47.0",
