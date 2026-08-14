@@ -1109,10 +1109,10 @@
     "@sinonjs/commons" "^3.0.1"
     type-detect "^4.1.0"
 
-"@standard-schema/spec@^1.0.0":
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/@standard-schema/spec/-/spec-1.0.0.tgz#f193b73dc316c4170f2e82a881da0f550d551b9c"
-  integrity sha512-m2bOd0f2RT9k8QJx1JN85cZYyH1RqFBdlwtkSlf4tBDYLCiiZnv1fIIwacK6cqwXavOydf0NPToMQgpKq+dVlA==
+"@standard-schema/spec@^1.1.0":
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/@standard-schema/spec/-/spec-1.1.0.tgz#a79b55dbaf8604812f52d140b2c9ab41bc150bb8"
+  integrity sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==
 
 "@tootallnate/once@2":
   version "2.0.0"
@@ -3936,10 +3936,10 @@ joi-objectid@~4.0.2:
   resolved "https://registry.yarnpkg.com/joi-objectid/-/joi-objectid-4.0.2.tgz#a4065aa91431bbc6959a57f7b4d1dd10bd95a4b7"
   integrity sha512-OjYM+wK/JGo2bSb9ADEyzxxROJPZYtrqIwBbywpJ2a98oKlbLtWTKvpzmrnXzou69Ey9EsjHsFvZYzpjeCdKuA==
 
-joi@~18.0.2:
-  version "18.0.2"
-  resolved "https://registry.yarnpkg.com/joi/-/joi-18.0.2.tgz#30ced6aed00a7848cc11f92859515258301dc3a4"
-  integrity sha512-RuCOQMIt78LWnktPoeBL0GErkNaJPTBGcYuyaBvUOQSpcpcLfWrHPPihYdOGbV5pam9VTWbeoF7TsGiHugcjGA==
+joi@~18.2.3:
+  version "18.2.3"
+  resolved "https://registry.yarnpkg.com/joi/-/joi-18.2.3.tgz#efdd1311496cd585730633fc57253a45641a3e85"
+  integrity sha512-N5A3KTWQpPWT4ExxxPlUx7WmykGXRzhNidWhV41d6Abu9YfI2NyWCJuxdPnslJCPWtbRpSVOWSnSS6GakLM/Rg==
   dependencies:
     "@hapi/address" "^5.1.1"
     "@hapi/formula" "^3.0.2"
@@ -3947,7 +3947,7 @@ joi@~18.0.2:
     "@hapi/pinpoint" "^2.0.1"
     "@hapi/tlds" "^1.1.1"
     "@hapi/topo" "^6.0.2"
-    "@standard-schema/spec" "^1.0.0"
+    "@standard-schema/spec" "^1.1.0"
 
 jpeg-exif@^1.1.4:
   version "1.1.4"
