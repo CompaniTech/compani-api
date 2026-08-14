@@ -30,7 +30,7 @@
   "dependencies": {
     "@google-cloud/storage": "~8.0.0",
     "@googleapis/drive": "~21.0.0",
-    "@googleapis/sheets": "~13.0.1",
+    "@googleapis/sheets": "~14.0.0",
     "@hapi/boom": "~10.0.1",
     "@hapi/good": "~9.0.1",
     "@hapi/good-console": "~9.0.1",

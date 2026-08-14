@@ -219,10 +219,10 @@
   dependencies:
     googleapis-common "^8.0.0"
 
-"@googleapis/sheets@~13.0.1":
-  version "13.0.1"
-  resolved "https://registry.yarnpkg.com/@googleapis/sheets/-/sheets-13.0.1.tgz#093554e36b94436b73fd094292b707b5b72811ba"
-  integrity sha512-XTYObncN5Rqexc0uITZIN9OWTEyE/ZR2S6c7wAniqHe2oGXW9gcHR9f9hQwPMHFUTHjH7Jkj8SLdt0O0u37y2A==
+"@googleapis/sheets@~14.0.0":
+  version "14.0.0"
+  resolved "https://registry.yarnpkg.com/@googleapis/sheets/-/sheets-14.0.0.tgz#0e8e28cfac676b7afae00875d268976e422f9461"
+  integrity sha512-fANEl4RQohsPYUWhcLSYyUyE8A8bRfvw/bp8h0t8VDQqTgdQ3itZBkty4nddtdqCAvNDpA+KM66OejVKDd6aFg==
   dependencies:
     googleapis-common "^8.0.0"
 
