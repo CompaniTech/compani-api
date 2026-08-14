@@ -691,10 +691,10 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@notionhq/client@~5.22.0":
-  version "5.22.0"
-  resolved "https://registry.yarnpkg.com/@notionhq/client/-/client-5.22.0.tgz#41be4c484596141f40483ae9ee96fc6c39660725"
-  integrity sha512-lZ3JGBCd6O6MNHWn/58QcUqX1FgmlcODcx/EaUEEpuxLXF5tSi+v29Vzoz8mZ6JgDWDn5pMzzjB69QevYjQQZA==
+"@notionhq/client@~5.25.2":
+  version "5.25.2"
+  resolved "https://registry.yarnpkg.com/@notionhq/client/-/client-5.25.2.tgz#b6c621cdcef97533313b56b9d47b484efc8431e4"
+  integrity sha512-kbaCZxiTxuWS7nTP29s3q9qbfMGd4cyfjMMdpVr7vK7SuB+0C6zBAP1sw8Gx/HKa+giWGnReuFovamN696Qy8w==
 
 "@opentelemetry/api-logs@0.207.0":
   version "0.207.0"
