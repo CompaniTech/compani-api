@@ -16,6 +16,10 @@ const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
 const { coach, noRoleNoCompany, trainerAndCoach } = require('../seed/authUsersSeed');
 
+const archivedProgram = programsList.find(p => p.archivedAt);
+const archivedProgramsCount = programsList.filter(p => p.archivedAt).length;
+const unarchivedProgramsCount = programsList.filter(p => !p.archivedAt).length;
+
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
     expect(process.env.NODE_ENV).toBe('test');
@@ -101,7 +105,7 @@ describe('PROGRAMS ROUTES - GET /programs', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should get all programs', async () => {
+    it('should get unarchived programs by default', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/programs',
@@ -109,7 +113,29 @@ describe('PROGRAMS ROUTES - GET /programs', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.programs.length).toEqual(programsList.length);
+      expect(response.result.data.programs.length).toEqual(unarchivedProgramsCount);
+    });
+
+    it('should get unarchived programs', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/programs?isArchived=false',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.programs.length).toEqual(unarchivedProgramsCount);
+    });
+
+    it('should get archived programs', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/programs?isArchived=true',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.programs.length).toEqual(archivedProgramsCount);
     });
   });
 
@@ -166,6 +192,19 @@ describe('PROGRAMS ROUTES - GET /programs/e-learning', () => {
       expect(response.statusCode).toBe(200);
       expect(response.result.data.programs.length).toEqual(1);
       expect(response.result.data.programs[0]._id).toEqual(programsList[2]._id);
+    });
+
+    it('should not get archived e-learning programs', async () => {
+      await Program.updateOne({ _id: programsList[2]._id }, { $set: { archivedAt: '2026-01-01T00:00:00.000Z' } });
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/programs/e-learning',
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.programs.length).toEqual(0);
     });
   });
 });
@@ -350,6 +389,67 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
 
         expect(response.statusCode).toBe(400);
       });
+    });
+
+    it('should archive program', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/programs/${programsList[0]._id}`,
+        payload: { archivedAt: '2026-08-17T00:00:00.000Z' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      const programUpdatedCount = await Program
+        .countDocuments({ _id: programsList[0]._id, archivedAt: { $exists: true } });
+      expect(response.statusCode).toBe(200);
+      expect(programUpdatedCount).toEqual(1);
+    });
+
+    it('should unarchive program', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/programs/${archivedProgram._id}`,
+        payload: { archivedAt: '' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      const programUpdatedCount = await Program
+        .countDocuments({ _id: archivedProgram._id, archivedAt: { $exists: false } });
+      expect(response.statusCode).toBe(200);
+      expect(programUpdatedCount).toEqual(1);
+    });
+
+    it('should return 403 if program is already archived', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/programs/${archivedProgram._id}`,
+        payload: { archivedAt: '2026-08-17T00:00:00.000Z' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if program is not archived and payload unarchives it', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/programs/${programsList[0]._id}`,
+        payload: { archivedAt: '' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if program is archived and payload updates another field', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/programs/${archivedProgram._id}`,
+        payload: { name: 'nouveau nom' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
   });
 

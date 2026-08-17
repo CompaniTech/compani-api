@@ -1,5 +1,6 @@
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
+const has = require('lodash/has');
 const Program = require('../../models/Program');
 const Category = require('../../models/Category');
 const User = require('../../models/User');
@@ -12,6 +13,24 @@ const { language } = translate;
 exports.checkProgramExists = async (req) => {
   const program = await Program.countDocuments({ _id: req.params._id });
   if (!program) throw Boom.notFound();
+
+  return null;
+};
+
+exports.authorizeProgramUpdate = async (req) => {
+  const { credentials } = req.auth;
+  const payload = req.payload || {};
+
+  const program = await Program.findOne({ _id: req.params._id }, { archivedAt: 1 }).lean();
+  if (!program) throw Boom.notFound();
+
+  const vendorRole = get(req, 'auth.credentials.role.vendor.name');
+  if (vendorRole === TRAINER && !credentials.isProgramEditor) throw Boom.forbidden();
+
+  const unarchiveProgram = has(payload, 'archivedAt') && payload.archivedAt === '';
+  if (program.archivedAt && !unarchiveProgram) throw Boom.forbidden();
+
+  if (has(payload, 'archivedAt') && !!payload.archivedAt === !!program.archivedAt) throw Boom.forbidden();
 
   return null;
 };
