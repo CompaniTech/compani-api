@@ -426,8 +426,26 @@ const coursesList = [
   },
 ];
 
+// `updatedAt` est piloté par les timestamps mongoose : `create` l'écraserait par la date du jour. Ces
+// historiques sont donc insérés directement en base (cf. populateDB) pour figer des dates comparables,
+// le répertoire des apprenants renvoyant l'`updatedAt` du plus récent d'entre eux.
 const activityHistoryList = [
-  { _id: new ObjectId(), activity: activityList[0]._id, user: usersSeedList[12]._id, date: '2021-01-25T10:05:32.582Z' },
+  {
+    _id: new ObjectId(),
+    activity: activityList[0]._id,
+    user: usersSeedList[12]._id,
+    date: new Date('2021-01-25T10:05:32.582Z'),
+    createdAt: new Date('2021-01-25T10:05:32.582Z'),
+    updatedAt: new Date('2021-01-25T10:05:32.582Z'),
+  },
+  {
+    _id: new ObjectId(),
+    activity: activityList[0]._id,
+    user: usersSeedList[12]._id,
+    date: new Date('2020-03-10T09:00:00.000Z'),
+    createdAt: new Date('2020-03-10T09:00:00.000Z'),
+    updatedAt: new Date('2020-03-10T09:00:00.000Z'),
+  },
 ];
 
 const identityVerifications = [
@@ -446,7 +464,7 @@ const populateDB = async () => {
 
   await Promise.all([
     Activity.create(activityList),
-    ActivityHistory.create(activityHistoryList),
+    ActivityHistory.collection.insertMany(activityHistoryList),
     Card.create(cardsList),
     Contract.create(contracts),
     Course.create(coursesList),
@@ -471,4 +489,5 @@ module.exports = {
   coachFromOtherCompany,
   auxiliaryFromOtherCompany,
   activityList,
+  activityHistoryList,
 };

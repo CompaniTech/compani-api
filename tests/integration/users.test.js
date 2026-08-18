@@ -31,6 +31,7 @@ const {
   helperFromOtherCompany,
   auxiliaryFromOtherCompany,
   coachFromOtherCompany,
+  activityHistoryList,
 } = require('./seed/usersSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const {
@@ -912,6 +913,28 @@ describe('USERS ROUTES - GET /users/learners', () => {
         )
       )
         .toBeTruthy();
+    });
+
+    it('should return last activity history of every learner', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/users/learners?action=directory',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(res.statusCode).toBe(200);
+
+      const learnerWithActivities = res.result.data.users
+        .find(user => UtilsHelper.areObjectIdsEquals(user._id, usersSeedList[12]._id));
+      // cet apprenant a deux historiques : on attend l'`updatedAt` du plus récent
+      const mostRecentActivityHistory = activityHistoryList[0];
+      expect(CompaniDate(learnerWithActivities.lastActivityHistory.updatedAt)
+        .isSame(mostRecentActivityHistory.updatedAt))
+        .toBeTruthy();
+
+      const learnersWithoutActivity = res.result.data.users
+        .filter(user => !UtilsHelper.areObjectIdsEquals(user._id, usersSeedList[12]._id));
+      expect(learnersWithoutActivity.every(user => !user.lastActivityHistory)).toBeTruthy();
     });
 
     it('should return future or current learners from a specific company (potential trainees list)', async () => {
