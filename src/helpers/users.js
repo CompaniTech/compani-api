@@ -2,6 +2,8 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
 const has = require('lodash/has');
+const keyBy = require('lodash/keyBy');
+const mapValues = require('lodash/mapValues');
 const pick = require('lodash/pick');
 const omit = require('lodash/omit');
 const uniqBy = require('lodash/uniqBy');
@@ -136,6 +138,18 @@ const formatQueryForLearnerList = async (query) => {
   };
 };
 
+// NB: on ne filtre les historiques par utilisateur que sur une liste restreinte. Sur le répertoire complet,
+// un $match avec un $in de tous les apprenants force le scan de la collection et coûte plus cher que le
+// regroupement global, dont on ne lit ensuite que les entrées présentes dans learnerList.
+const getLastActivityHistoryByUser = async (learnerList, isWholeDirectory) => {
+  const lastActivityHistories = await ActivityHistory.aggregate([
+    ...isWholeDirectory ? [] : [{ $match: { user: { $in: learnerList.map(learner => learner._id) } } }],
+    { $group: { _id: '$user', updatedAt: { $max: '$updatedAt' } } },
+  ]);
+
+  return mapValues(keyBy(lastActivityHistories, '_id'), history => pick(history, 'updatedAt'));
+};
+
 const computeCoursesCountByTrainee = async (learnerList, company) => {
   const learnersIdList = learnerList.map(learner => learner._id);
   const [blendedCourseRegistrationHistoriesForTrainees, eLearningCoursesForTrainees] = await Promise.all([
@@ -182,7 +196,6 @@ exports.getLearnerList = async (query, credentials) => {
   const learnerList = await User
     .find(userQuery, 'identity.firstname identity.lastname picture local.email', { autopopulate: false })
     .populate({ path: 'company', populate: { path: 'company', select: 'name' } })
-    .populate(isDirectory && { path: 'lastActivityHistory', select: 'updatedAt' })
     .populate({
       path: 'userCompanyList',
       populate: {
@@ -196,14 +209,17 @@ exports.getLearnerList = async (query, credentials) => {
 
   if (!isDirectory) return learnerList;
 
-  const {
-    eLearningCoursesCountByTrainee,
-    blendedCoursesCountByTrainee,
-  } = await computeCoursesCountByTrainee(learnerList, query.companies);
+  const [
+    lastActivityHistoryByUser,
+    { eLearningCoursesCountByTrainee, blendedCoursesCountByTrainee },
+  ] = await Promise.all([
+    getLastActivityHistoryByUser(learnerList, !query.companies),
+    computeCoursesCountByTrainee(learnerList, query.companies),
+  ]);
 
   return learnerList.map(learner => ({
     ...omit(learner, 'activityHistories'),
-    lastActivityHistory: learner.lastActivityHistory,
+    lastActivityHistory: lastActivityHistoryByUser[learner._id],
     eLearningCoursesCount: eLearningCoursesCountByTrainee[learner._id],
     blendedCoursesCount: blendedCoursesCountByTrainee[learner._id],
   }));
