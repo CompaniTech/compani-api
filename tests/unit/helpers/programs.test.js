@@ -41,25 +41,7 @@ describe('list', () => {
 
     find.returns(SinonMongoose.stubChainedQueries(programsList));
 
-    const result = await ProgramHelper.list();
-    expect(result).toMatchObject(programsList);
-    SinonMongoose.calledOnceWithExactly(
-      find,
-      [
-        { query: 'find', args: [{}] },
-        { query: 'populate', args: [{ path: 'subPrograms', populate: { path: 'steps', select: 'type' } }] },
-        { query: 'lean', args: [{ virtuals: true }] },
-      ]
-    );
-  });
-
-  it('should return unarchived programs', async () => {
-    const programsList = [{ name: 'name' }, { name: 'program' }];
-
-    find.returns(SinonMongoose.stubChainedQueries(programsList));
-
     const result = await ProgramHelper.list({ isArchived: false });
-
     expect(result).toMatchObject(programsList);
     SinonMongoose.calledOnceWithExactly(
       find,
@@ -111,7 +93,7 @@ describe('listELearning', () => {
     courseFind.returns(SinonMongoose.stubChainedQueries([{ subProgram: subPrograms[0] }], ['lean']));
     programFind.returns(SinonMongoose.stubChainedQueries(programsList));
 
-    const result = await ProgramHelper.listELearning(credentials);
+    const result = await ProgramHelper.listELearning(credentials, { isArchived: false });
     expect(result).toMatchObject([{ name: 'name' }, { name: 'program' }]);
 
     SinonMongoose.calledOnceWithExactly(
@@ -130,7 +112,7 @@ describe('listELearning', () => {
     SinonMongoose.calledOnceWithExactly(
       programFind,
       [
-        { query: 'find', args: [{ subPrograms: { $in: subPrograms } }] },
+        { query: 'find', args: [{ archivedAt: { $exists: false }, subPrograms: { $in: subPrograms } }] },
         {
           query: 'populate',
           args: [{
