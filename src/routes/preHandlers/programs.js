@@ -21,7 +21,7 @@ exports.authorizeProgramUpdate = async (req) => {
   const { credentials } = req.auth;
   const payload = req.payload || {};
 
-  const program = await Program.findOne({ _id: req.params._id }, { archivedAt: 1 }).lean();
+  const program = await Program.findOne({ _id: req.params._id }, { archivedAt: 1, image: 1 }).lean();
   if (!program) throw Boom.notFound();
 
   const vendorRole = get(req, 'auth.credentials.role.vendor.name');
@@ -32,15 +32,10 @@ exports.authorizeProgramUpdate = async (req) => {
 
   if (has(payload, 'archivedAt') && !!payload.archivedAt === !!program.archivedAt) throw Boom.forbidden();
 
-  return null;
+  return program;
 };
 
-exports.getProgramImagePublicId = async (req) => {
-  const program = await Program.findOne({ _id: req.params._id }).lean();
-  if (!program) throw Boom.notFound();
-
-  return get(program, 'image.publicId') || '';
-};
+exports.getProgramImagePublicId = req => get(req, 'pre.program.image.publicId') || '';
 
 exports.checkCategoryExists = async (req) => {
   const categoryId = get(req, 'payload.categories[0]') ||
@@ -74,10 +69,6 @@ exports.checkTesterInProgram = async (req) => {
 };
 
 exports.authorizeTradeNameAddition = async (req) => {
-  const { credentials } = req.auth;
-  const vendorRole = get(req, 'auth.credentials.role.vendor.name');
-  if (vendorRole === TRAINER && !credentials.isProgramEditor) throw Boom.forbidden();
-
   const tradeNameExists = await Program
     .countDocuments({
       _id: req.params._id,
@@ -91,11 +82,7 @@ exports.authorizeTradeNameAddition = async (req) => {
 };
 
 exports.authorizeTradeNameDeletion = async (req) => {
-  const { credentials } = req.auth;
   const { _id: programId, tradeNameId } = req.params;
-
-  const vendorRole = get(req, 'auth.credentials.role.vendor.name');
-  if (vendorRole === TRAINER && !credentials.isProgramEditor) throw Boom.forbidden();
 
   const program = await Program.countDocuments({ _id: programId, 'tradeNames._id': tradeNameId });
   if (!program) throw Boom.notFound();

@@ -3,25 +3,17 @@ const { get } = require('lodash');
 const has = require('lodash/has');
 const isEmpty = require('lodash/isEmpty');
 const omit = require('lodash/omit');
-const set = require('lodash/set');
 const Course = require('../models/Course');
 const Program = require('../models/Program');
 const User = require('../models/User');
 const GCloudStorageHelper = require('./gCloudStorage');
 const UsersHelper = require('./users');
+const UtilsHelper = require('./utils');
 const { STRICTLY_E_LEARNING, WEBAPP } = require('./constants');
-
-const formatQuery = (query = {}) => {
-  const formattedQuery = omit(query, ['isArchived']);
-
-  if (has(query, 'isArchived')) set(formattedQuery, 'archivedAt', { $exists: !!query.isArchived });
-
-  return formattedQuery;
-};
 
 exports.createProgram = async payload => Program.create(payload);
 
-exports.list = async query => Program.find(formatQuery(query))
+exports.list = async query => Program.find(UtilsHelper.formatQueryWithArchive(query))
   .populate({ path: 'subPrograms', populate: { path: 'steps', select: 'type' } })
   .lean({ virtuals: true });
 
@@ -34,7 +26,7 @@ exports.listELearning = async (credentials, query) => {
     .lean();
   const subPrograms = eLearningCourse.map(course => course.subProgram);
 
-  return Program.find({ ...formatQuery(query), subPrograms: { $in: subPrograms } })
+  return Program.find({ ...UtilsHelper.formatQueryWithArchive(query), subPrograms: { $in: subPrograms } })
     .populate({
       path: 'subPrograms',
       select: 'name',

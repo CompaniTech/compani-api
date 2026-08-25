@@ -171,7 +171,10 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: authorizeProgramUpdate }, { method: getProgramImagePublicId, assign: 'publicId' }],
+        pre: [
+          { method: authorizeProgramUpdate, assign: 'program' },
+          { method: getProgramImagePublicId, assign: 'publicId' },
+        ],
       },
     });
 
