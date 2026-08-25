@@ -13,6 +13,7 @@ const ProgramSchema = mongoose.Schema({
   },
   testers: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   tradeNames: [{ name: { type: String, required: true } }],
+  archivedAt: { type: Date },
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => ProgramSchema.pre(middleware, formatQuery));

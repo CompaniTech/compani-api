@@ -7,7 +7,7 @@ const { language } = translate;
 
 const list = async (req) => {
   try {
-    const programs = await ProgramHelper.list();
+    const programs = await ProgramHelper.list(req.query);
 
     return {
       message: programs.length ? translate[language].programsFound : translate[language].programsNotFound,

@@ -4,6 +4,7 @@ const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 const {
   checkProgramExists,
+  authorizeProgramUpdate,
   getProgramImagePublicId,
   checkCategoryExists,
   authorizeTesterAddition,
@@ -37,6 +38,9 @@ exports.plugin = {
       path: '/',
       options: {
         auth: { scope: ['programs:read'] },
+        validate: {
+          query: Joi.object({ isArchived: Joi.boolean().default(false) }),
+        },
       },
       handler: list,
     });
@@ -47,7 +51,7 @@ exports.plugin = {
       options: {
         auth: { mode: 'required' },
         validate: {
-          query: Joi.object({ _id: Joi.objectId() }),
+          query: Joi.object({ _id: Joi.objectId(), isArchived: Joi.boolean().default(false) }),
         },
       },
       handler: listELearning,
@@ -93,10 +97,11 @@ exports.plugin = {
             description: Joi.string(),
             learningGoals: Joi.string(),
             image: Joi.object().keys({ link: Joi.string().allow(null), publicId: Joi.string().allow(null) }),
+            archivedAt: Joi.date().allow(''),
           }).min(1),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }],
+        pre: [{ method: authorizeProgramUpdate }],
       },
       handler: update,
     });
@@ -110,7 +115,7 @@ exports.plugin = {
           payload: Joi.object({ categoryId: Joi.objectId().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }, { method: checkCategoryExists }],
+        pre: [{ method: authorizeProgramUpdate }, { method: checkCategoryExists }],
       },
       handler: addCategory,
     });
@@ -123,7 +128,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required(), categoryId: Joi.objectId().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }, { method: checkCategoryExists }],
+        pre: [{ method: authorizeProgramUpdate }, { method: checkCategoryExists }],
       },
       handler: removeCategory,
     });
@@ -137,7 +142,7 @@ exports.plugin = {
           payload: Joi.object({ name: Joi.string().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }],
+        pre: [{ method: authorizeProgramUpdate }],
       },
       handler: addSubProgram,
     });
@@ -153,7 +158,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }],
+        pre: [{ method: authorizeProgramUpdate }],
       },
     });
 
@@ -166,7 +171,10 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: getProgramImagePublicId, assign: 'publicId' }],
+        pre: [
+          { method: authorizeProgramUpdate, assign: 'program' },
+          { method: getProgramImagePublicId, assign: 'publicId' },
+        ],
       },
     });
 
@@ -186,7 +194,7 @@ exports.plugin = {
           }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }, { method: authorizeTesterAddition }],
+        pre: [{ method: authorizeProgramUpdate }, { method: authorizeTesterAddition }],
       },
       handler: addTester,
     });
@@ -200,7 +208,7 @@ exports.plugin = {
           payload: Joi.object({ tradeName: Joi.string().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }, { method: authorizeTradeNameAddition }],
+        pre: [{ method: authorizeProgramUpdate }, { method: authorizeTradeNameAddition }],
       },
       handler: addTradeName,
     });
@@ -213,7 +221,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required(), tradeNameId: Joi.objectId().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }, { method: authorizeTradeNameDeletion }],
+        pre: [{ method: authorizeProgramUpdate }, { method: authorizeTradeNameDeletion }],
       },
       handler: removeTradeName,
     });
@@ -226,7 +234,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required(), testerId: Joi.objectId().required() }),
         },
         auth: { scope: ['programs:edit'] },
-        pre: [{ method: checkProgramExists }, { method: checkTesterInProgram }],
+        pre: [{ method: authorizeProgramUpdate }, { method: checkTesterInProgram }],
       },
       handler: removeTester,
     });

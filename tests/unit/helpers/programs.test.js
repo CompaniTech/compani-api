@@ -41,12 +41,30 @@ describe('list', () => {
 
     find.returns(SinonMongoose.stubChainedQueries(programsList));
 
-    const result = await ProgramHelper.list();
+    const result = await ProgramHelper.list({ isArchived: false });
     expect(result).toMatchObject(programsList);
     SinonMongoose.calledOnceWithExactly(
       find,
       [
-        { query: 'find', args: [{}] },
+        { query: 'find', args: [{ archivedAt: { $exists: false } }] },
+        { query: 'populate', args: [{ path: 'subPrograms', populate: { path: 'steps', select: 'type' } }] },
+        { query: 'lean', args: [{ virtuals: true }] },
+      ]
+    );
+  });
+
+  it('should return archived programs', async () => {
+    const programsList = [{ name: 'archived program' }];
+
+    find.returns(SinonMongoose.stubChainedQueries(programsList));
+
+    const result = await ProgramHelper.list({ isArchived: true });
+
+    expect(result).toMatchObject(programsList);
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        { query: 'find', args: [{ archivedAt: { $exists: true } }] },
         { query: 'populate', args: [{ path: 'subPrograms', populate: { path: 'steps', select: 'type' } }] },
         { query: 'lean', args: [{ virtuals: true }] },
       ]
@@ -75,7 +93,7 @@ describe('listELearning', () => {
     courseFind.returns(SinonMongoose.stubChainedQueries([{ subProgram: subPrograms[0] }], ['lean']));
     programFind.returns(SinonMongoose.stubChainedQueries(programsList));
 
-    const result = await ProgramHelper.listELearning(credentials);
+    const result = await ProgramHelper.listELearning(credentials, { isArchived: false });
     expect(result).toMatchObject([{ name: 'name' }, { name: 'program' }]);
 
     SinonMongoose.calledOnceWithExactly(
@@ -94,7 +112,7 @@ describe('listELearning', () => {
     SinonMongoose.calledOnceWithExactly(
       programFind,
       [
-        { query: 'find', args: [{ subPrograms: { $in: subPrograms } }] },
+        { query: 'find', args: [{ archivedAt: { $exists: false }, subPrograms: { $in: subPrograms } }] },
         {
           query: 'populate',
           args: [{
@@ -287,7 +305,24 @@ describe('update', () => {
 
     await ProgramHelper.updateProgram(programId, payload);
 
-    programUpdateOne.calledOnceWithExactly({ _id: programId }, { $set: payload });
+    sinon.assert.calledOnceWithExactly(programUpdateOne, { _id: programId }, { $set: payload });
+  });
+
+  it('should archive program', async () => {
+    const programId = new ObjectId();
+    const payload = { archivedAt: '2026-08-17T00:00:00.000Z' };
+
+    await ProgramHelper.updateProgram(programId, payload);
+
+    sinon.assert.calledOnceWithExactly(programUpdateOne, { _id: programId }, { $set: payload });
+  });
+
+  it('should unarchive program', async () => {
+    const programId = new ObjectId();
+
+    await ProgramHelper.updateProgram(programId, { archivedAt: '' });
+
+    sinon.assert.calledOnceWithExactly(programUpdateOne, { _id: programId }, { $unset: { archivedAt: '' } });
   });
 });
 
