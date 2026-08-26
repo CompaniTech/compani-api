@@ -219,7 +219,7 @@ exports.getLearnerList = async (query, credentials) => {
 
   return learnerList.map(learner => ({
     ...omit(learner, 'activityHistories'),
-    lastActivityHistory: lastActivityHistoryByUser[learner._id],
+    lastActivityHistory: lastActivityHistoryByUser[learner._id] || null,
     eLearningCoursesCount: eLearningCoursesCountByTrainee[learner._id],
     blendedCoursesCount: blendedCoursesCountByTrainee[learner._id],
   }));

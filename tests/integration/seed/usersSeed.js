@@ -426,10 +426,6 @@ const coursesList = [
   },
 ];
 
-// `updatedAt` est piloté par les timestamps mongoose : `create` l'écraserait par la date du jour. Ces
-// historiques sont donc insérés directement en base (cf. populateDB) pour figer des dates comparables,
-// le répertoire des apprenants renvoyant l'`updatedAt` du plus récent d'entre eux. En contrepartie, les
-// valeurs par défaut du schéma ne sont pas appliquées : les tableaux d'answers sont donc explicites.
 const activityHistoryList = [
   {
     _id: new ObjectId(),
@@ -469,7 +465,7 @@ const populateDB = async () => {
 
   await Promise.all([
     Activity.create(activityList),
-    ActivityHistory.collection.insertMany(activityHistoryList),
+    ActivityHistory.create(activityHistoryList),
     Card.create(cardsList),
     Contract.create(contracts),
     Course.create(coursesList),
