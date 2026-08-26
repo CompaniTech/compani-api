@@ -436,12 +436,14 @@ describe('getLearnerList', () => {
   let findUserCompany;
   let findCourseHistory;
   let findCourse;
+  let aggregateActivityHistory;
   beforeEach(() => {
     findUser = sinon.stub(User, 'find');
     findRole = sinon.stub(Role, 'find');
     findUserCompany = sinon.stub(UserCompany, 'find');
     findCourseHistory = sinon.stub(CourseHistory, 'find');
     findCourse = sinon.stub(Course, 'find');
+    aggregateActivityHistory = sinon.stub(ActivityHistory, 'aggregate');
     UtilsMock.mockCurrentDate('2022-12-21T16:00:00.000Z');
   });
   afterEach(() => {
@@ -450,6 +452,7 @@ describe('getLearnerList', () => {
     findUserCompany.restore();
     findCourseHistory.restore();
     findCourse.restore();
+    aggregateActivityHistory.restore();
     UtilsMock.unmockCurrentDate();
   });
 
@@ -457,28 +460,24 @@ describe('getLearnerList', () => {
     const query = { action: DIRECTORY };
     const credentials = { role: { vendor: new ObjectId() } };
     const users = [
-      {
-        _id: new ObjectId(),
-        lastActivityHistory: { _id: new ObjectId() },
-        company: { name: 'Alenvi', holding: 'holding' },
-      },
-      {
-        _id: new ObjectId(),
-        lastActivityHistory: { _id: new ObjectId() },
-        company: { name: 'Fontainebleau', holding: 'holding' },
-      },
+      { _id: new ObjectId(), company: { name: 'Alenvi', holding: 'holding' } },
+      { _id: new ObjectId(), company: { name: 'Fontainebleau', holding: 'holding' } },
+    ];
+    const lastActivityHistories = [
+      { _id: users[0]._id, updatedAt: '2022-12-19T15:30:00.000Z' },
+      { _id: users[1]._id, updatedAt: '2022-12-20T15:30:00.000Z' },
     ];
     const learnerList = [
       {
         _id: users[0]._id,
-        lastActivityHistory: users[0].lastActivityHistory,
+        lastActivityHistory: { updatedAt: '2022-12-19T15:30:00.000Z' },
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: users[1]._id,
-        lastActivityHistory: users[1].lastActivityHistory,
+        lastActivityHistory: { updatedAt: '2022-12-20T15:30:00.000Z' },
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Fontainebleau', holding: 'holding' },
@@ -516,12 +515,17 @@ describe('getLearnerList', () => {
     findUser.returns(SinonMongoose.stubChainedQueries(users, ['populate', 'setOptions', 'lean']));
     findCourseHistory.returns(SinonMongoose.stubChainedQueries(courseHistories));
     findCourse.returns(SinonMongoose.stubChainedQueries(eLearningCourses, ['lean']));
+    aggregateActivityHistory.returns(lastActivityHistories);
 
     const result = await UsersHelper.getLearnerList(query, credentials);
 
     expect(result).toEqual(learnerList);
     sinon.assert.notCalled(findRole);
     sinon.assert.notCalled(findUserCompany);
+    sinon.assert.calledOnceWithExactly(
+      aggregateActivityHistory,
+      [{ $group: { _id: '$user', updatedAt: { $max: '$updatedAt' } } }]
+    );
     SinonMongoose.calledOnceWithExactly(
       findUser,
       [
@@ -530,7 +534,6 @@ describe('getLearnerList', () => {
           args: [{}, 'identity.firstname identity.lastname picture local.email', { autopopulate: false }],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        { query: 'populate', args: [{ path: 'lastActivityHistory', select: 'updatedAt' }] },
         {
           query: 'populate',
           args: [{
@@ -571,32 +574,28 @@ describe('getLearnerList', () => {
     const roleId2 = new ObjectId();
     const rolesToExclude = [{ _id: roleId1 }, { _id: roleId2 }];
     const users = [
-      {
-        _id: new ObjectId(),
-        lastActivityHistory: { _id: new ObjectId() },
-        company: { name: 'Alenvi', holding: 'holding' },
-      },
-      {
-        _id: new ObjectId(),
-        lastActivityHistory: { _id: new ObjectId() },
-        company: { name: 'Alenvi', holding: 'holding' },
-      },
+      { _id: new ObjectId(), company: { name: 'Alenvi', holding: 'holding' } },
+      { _id: new ObjectId(), company: { name: 'Alenvi', holding: 'holding' } },
     ];
     const usersCompany = [
       { user: users[0]._id, startDate: '2022-12-20T15:30:00.000Z' },
       { user: users[1]._id, startDate: '2022-12-19T15:30:00.000Z' },
     ];
+    const lastActivityHistories = [
+      { _id: users[0]._id, updatedAt: '2022-12-19T15:30:00.000Z' },
+      { _id: users[1]._id, updatedAt: '2022-12-20T15:30:00.000Z' },
+    ];
     const learnerList = [
       {
         _id: users[0]._id,
-        lastActivityHistory: users[0].lastActivityHistory,
+        lastActivityHistory: { updatedAt: '2022-12-19T15:30:00.000Z' },
         blendedCoursesCount: 1,
         eLearningCoursesCount: 1,
         company: { name: 'Alenvi', holding: 'holding' },
       },
       {
         _id: users[1]._id,
-        lastActivityHistory: users[1].lastActivityHistory,
+        lastActivityHistory: { updatedAt: '2022-12-20T15:30:00.000Z' },
         blendedCoursesCount: 1,
         eLearningCoursesCount: 2,
         company: { name: 'Alenvi', holding: 'holding' },
@@ -633,10 +632,18 @@ describe('getLearnerList', () => {
     findUser.returns(SinonMongoose.stubChainedQueries(users, ['populate', 'setOptions', 'lean']));
     findCourseHistory.returns(SinonMongoose.stubChainedQueries(courseHistories));
     findCourse.returns(SinonMongoose.stubChainedQueries(eLearningCourses, ['lean']));
+    aggregateActivityHistory.returns(lastActivityHistories);
 
     const result = await UsersHelper.getLearnerList(query, credentials);
 
     expect(result).toEqual(learnerList);
+    sinon.assert.calledOnceWithExactly(
+      aggregateActivityHistory,
+      [
+        { $match: { user: { $in: [users[0]._id, users[1]._id] } } },
+        { $group: { _id: '$user', updatedAt: { $max: '$updatedAt' } } },
+      ]
+    );
     SinonMongoose.calledOnceWithExactly(
       findRole,
       [{ query: 'find', args: [{ name: { $in: [HELPER, AUXILIARY_WITHOUT_COMPANY] } }] }, { query: 'lean' }]
@@ -670,7 +677,6 @@ describe('getLearnerList', () => {
           ],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        { query: 'populate', args: [{ path: 'lastActivityHistory', select: 'updatedAt' }] },
         {
           query: 'populate',
           args: [{
@@ -765,7 +771,6 @@ describe('getLearnerList', () => {
           ],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        { query: 'populate', args: [false] },
         {
           query: 'populate',
           args: [{
@@ -838,7 +843,6 @@ describe('getLearnerList', () => {
           ],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        { query: 'populate', args: [false] },
         {
           query: 'populate',
           args: [{
@@ -918,7 +922,6 @@ describe('getLearnerList', () => {
           ],
         },
         { query: 'populate', args: [{ path: 'company', populate: { path: 'company', select: 'name' } }] },
-        { query: 'populate', args: [false] },
         {
           query: 'populate',
           args: [{

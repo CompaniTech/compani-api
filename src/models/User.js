@@ -342,17 +342,6 @@ UserSchema.virtual(
   { ref: 'CompanyLinkRequest', localField: '_id', foreignField: 'user', justOne: true }
 );
 
-UserSchema.virtual(
-  'lastActivityHistory',
-  {
-    ref: 'ActivityHistory',
-    localField: '_id',
-    foreignField: 'user',
-    options: { sort: { updatedAt: -1 } },
-    justOne: true,
-  }
-);
-
 UserSchema.virtual('company', { ref: 'UserCompany', localField: '_id', foreignField: 'user' });
 
 UserSchema.virtual(

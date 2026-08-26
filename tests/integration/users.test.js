@@ -31,6 +31,7 @@ const {
   helperFromOtherCompany,
   auxiliaryFromOtherCompany,
   coachFromOtherCompany,
+  activityHistoryList,
 } = require('./seed/usersSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const {
@@ -911,6 +912,14 @@ describe('USERS ROUTES - GET /users/learners', () => {
           .every(key => Object.keys(user).includes(key))
         )
       )
+        .toBeTruthy();
+
+      const learnerWithActivities = res.result.data.users
+        .find(user => UtilsHelper.areObjectIdsEquals(user._id, usersSeedList[12]._id));
+      // cet apprenant a deux historiques : on attend l'`updatedAt` du plus récent
+      const mostRecentActivityHistory = activityHistoryList[0];
+      expect(CompaniDate(learnerWithActivities.lastActivityHistory.updatedAt)
+        .isSame(mostRecentActivityHistory.updatedAt))
         .toBeTruthy();
     });
 
