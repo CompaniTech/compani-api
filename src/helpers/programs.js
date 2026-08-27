@@ -9,12 +9,17 @@ const User = require('../models/User');
 const GCloudStorageHelper = require('./gCloudStorage');
 const UsersHelper = require('./users');
 const UtilsHelper = require('./utils');
+const SubProgramHelper = require('./subPrograms');
 const { STRICTLY_E_LEARNING, WEBAPP } = require('./constants');
 
 exports.createProgram = async payload => Program.create(payload);
 
 exports.list = async query => Program.find(UtilsHelper.formatQueryWithArchive(query))
-  .populate({ path: 'subPrograms', populate: { path: 'steps', select: 'type' } })
+  .populate({
+    path: 'subPrograms',
+    match: { archivedAt: { $exists: false } },
+    populate: { path: 'steps', select: 'type' },
+  })
   .lean({ virtuals: true });
 
 exports.listELearning = async (credentials, query) => {
@@ -88,7 +93,15 @@ exports.updateProgram = async (programId, payload) => {
     ...(unarchiveProgram && { $unset: { archivedAt: '' } }),
   };
 
-  return Program.updateOne({ _id: programId }, formattedPayload);
+  if (!has(payload, 'archivedAt')) {
+    await Program.updateOne({ _id: programId }, formattedPayload);
+    return;
+  }
+
+  const program = await Program
+    .findOneAndUpdate({ _id: programId }, formattedPayload, { projection: { subPrograms: 1, archivedAt: 1 } })
+    .lean();
+  await SubProgramHelper.archiveSubPrograms(program.subPrograms, payload.archivedAt, program.archivedAt);
 };
 
 exports.uploadImage = async (programId, payload) => {

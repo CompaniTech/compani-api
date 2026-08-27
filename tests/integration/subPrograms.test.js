@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const omit = require('lodash/omit');
 const app = require('../../server');
 const SubProgram = require('../../src/models/SubProgram');
+const Program = require('../../src/models/Program');
 const Course = require('../../src/models/Course');
 const Step = require('../../src/models/Step');
 const NotificationHelper = require('../../src/helpers/notifications');
@@ -58,6 +59,88 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(UtilsHelper.areObjectIdsEquals(subProgramUpdated.steps[0], payload.steps[0])).toBeTruthy();
       expect(UtilsHelper.areObjectIdsEquals(subProgramUpdated.steps[1], payload.steps[1])).toBeTruthy();
       expect(subProgramUpdated.subjectToVat).toBe(true);
+    });
+
+    it('should archive a published subProgram', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[4]._id}`,
+        payload: { archivedAt: '2026-08-18T09:00:00.000Z' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const subProgramUpdated = await SubProgram.findById(subProgramsList[4]._id).lean();
+      expect(subProgramUpdated.archivedAt).toEqual(new Date('2026-08-18T09:00:00.000Z'));
+    });
+
+    it('should unarchive a subProgram', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[11]._id}`,
+        payload: { archivedAt: '' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const subProgramUpdated = await SubProgram
+        .countDocuments({ _id: subProgramsList[11]._id, archivedAt: { $exists: true } });
+      expect(subProgramUpdated).toBeFalsy();
+    });
+
+    it('should return 403 if trying to unarchive a subProgram whose program is archived', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[12]._id}`,
+        payload: { archivedAt: '' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if trying to archive a draft subProgram', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${blendedSubProgramId}`,
+        payload: { archivedAt: '2026-08-18T09:00:00.000Z' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if subProgram is already archived', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[11]._id}`,
+        payload: { archivedAt: '2026-08-18T09:00:00.000Z' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if subProgram is not archived and payload unarchives it', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[4]._id}`,
+        payload: { archivedAt: '' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if updating name of an archived subProgram', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[11]._id}`,
+        payload: { name: 'nouveau nom' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should publish blended subProgram', async () => {
@@ -581,6 +664,84 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
   });
 });
 
+describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should delete a draft subProgram and remove it from its program', async () => {
+      const subProgramId = subProgramsList[0]._id;
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/subprograms/${subProgramId}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const subProgramCount = await SubProgram.countDocuments({ _id: subProgramId });
+      expect(subProgramCount).toBe(0);
+      const programCount = await Program.countDocuments({ subPrograms: subProgramId });
+      expect(programCount).toBe(0);
+    });
+
+    it('should return a 404 if subProgram does not exist', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/subprograms/${new ObjectId()}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+
+    it('should return a 403 if subProgram is published', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/subprograms/${subProgramsList[2]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return a 403 if subProgram\'s program is archived', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/subprograms/${subProgramsList[12]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 200 },
+    ];
+
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+        const response = await app.inject({
+          method: 'DELETE',
+          url: `/subprograms/${subProgramsList[3]._id.toHexString()}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
 describe('SUBPROGRAMS ROUTES - POST /subprograms/{_id}/step', () => {
   let authToken;
   beforeEach(populateDB);
@@ -695,6 +856,17 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}/steps', () => {
       expect(subProgramUpdated).toBeTruthy();
     });
 
+    it('should return 403 if subProgram is archived', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[10]._id}/steps`,
+        payload: { steps: [stepsList[3]._id] },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should attach several step to subProgram', async () => {
       const subProgramId = subProgramsList[0]._id;
       const response = await app.inject({
@@ -804,6 +976,16 @@ describe('SUBPROGRAMS ROUTES - DELETE /subprograms/{_id}/step/{stepId}', () => {
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return a 403 if subprogram is archived', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/subprograms/${subProgramsList[10]._id}/steps/${subProgramsList[10].steps[0]}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return a 403 if trying to remove step to a subprogram with status published', async () => {

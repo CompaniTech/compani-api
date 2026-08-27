@@ -5,6 +5,7 @@ const omit = require('lodash/omit');
 const pick = require('lodash/pick');
 const app = require('../../server');
 const Program = require('../../src/models/Program');
+const SubProgram = require('../../src/models/SubProgram');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const {
   populateDB,
@@ -363,7 +364,7 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
       });
     });
 
-    it('should archive program', async () => {
+    it('should archive program and cascade on its subPrograms', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/programs/${programsList[0]._id}`,
@@ -375,9 +376,13 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
       const programUpdatedCount = await Program
         .countDocuments({ _id: programsList[0]._id, archivedAt: { $exists: true } });
       expect(programUpdatedCount).toEqual(1);
+
+      const archivedSubProgramsCount = await SubProgram
+        .countDocuments({ _id: { $in: programsList[0].subPrograms }, archivedAt: { $exists: true } });
+      expect(archivedSubProgramsCount).toEqual(programsList[0].subPrograms.length);
     });
 
-    it('should unarchive program', async () => {
+    it('should unarchive program and cascade on its subPrograms', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/programs/${programsList[4]._id}`,
@@ -389,6 +394,10 @@ describe('PROGRAMS ROUTES - PUT /programs/{_id}', () => {
       const programUpdatedCount = await Program
         .countDocuments({ _id: programsList[4]._id, archivedAt: { $exists: false } });
       expect(programUpdatedCount).toEqual(1);
+
+      const unarchivedSubProgramsCount = await SubProgram
+        .countDocuments({ _id: { $in: programsList[4].subPrograms }, archivedAt: { $exists: false } });
+      expect(unarchivedSubProgramsCount).toEqual(programsList[4].subPrograms.length);
     });
 
     it('should return 403 if program is already archived', async () => {

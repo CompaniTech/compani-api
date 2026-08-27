@@ -6,6 +6,7 @@ const {
   authorizeStepDetachment,
   authorizeStepAddition,
   authorizeSubProgramUpdate,
+  authorizeSubProgramDeletion,
   authorizeGetSubProgram,
   authorizeGetDraftELearningSubPrograms,
   authorizeStepReuse,
@@ -13,6 +14,7 @@ const {
 } = require('./preHandlers/subPrograms');
 const {
   update,
+  remove,
   addStep,
   detachStep,
   listELearningDraft,
@@ -58,13 +60,25 @@ exports.plugin = {
                   otherwise: Joi.array().items(Joi.number().positive()).min(1).required(),
                 }),
               }).required(),
-            })
+            }),
+            Joi.object({ archivedAt: Joi.date().allow('') })
           ),
         },
         auth: { scope: ['programs:edit'] },
         pre: [{ method: authorizeSubProgramUpdate }],
       },
       handler: update,
+    });
+
+    server.route({
+      method: 'DELETE',
+      path: '/{_id}',
+      options: {
+        validate: { params: Joi.object({ _id: Joi.objectId().required() }) },
+        auth: { scope: ['programs:edit'] },
+        pre: [{ method: authorizeSubProgramDeletion }],
+      },
+      handler: remove,
     });
 
     server.route({
