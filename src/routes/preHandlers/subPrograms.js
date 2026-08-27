@@ -48,7 +48,7 @@ exports.authorizeStepAddition = async (req) => {
 
 exports.authorizeSubProgramUpdate = async (req) => {
   const subProgram = await SubProgram.findOne({ _id: req.params._id })
-    .populate({ path: 'program', select: '_id' })
+    .populate({ path: 'program', select: '_id archivedAt' })
     .populate({
       path: 'steps',
       select: '_id type theoreticalDuration',
@@ -64,8 +64,12 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
   const unarchiveSubProgram = has(req.payload, 'archivedAt') && req.payload.archivedAt === '';
   if (subProgram.archivedAt && !unarchiveSubProgram) throw Boom.forbidden();
+  if (unarchiveSubProgram && get(subProgram, 'program.archivedAt')) throw Boom.forbidden();
 
   if (has(req.payload, 'archivedAt') && !!req.payload.archivedAt === !!subProgram.archivedAt) throw Boom.forbidden();
+
+  const isArchiving = has(req.payload, 'archivedAt') && !unarchiveSubProgram;
+  if (isArchiving && subProgram.status !== PUBLISHED) throw Boom.forbidden();
 
   const allowedFieldsForPublishedSubProgram = req.payload.prices || req.payload.paymentPlan || req.payload.name ||
     has(req.payload, 'subjectToVat') || has(req.payload, 'archivedAt');
@@ -173,6 +177,21 @@ exports.authorizeGetDraftELearningSubPrograms = async (req) => {
   const testerRestrictedPrograms = await Program.find({ testers: loggedUserId }, { _id: 1 }).lean();
 
   return testerRestrictedPrograms.map(program => program._id);
+};
+
+exports.authorizeSubProgramDeletion = async (req) => {
+  const subProgram = await SubProgram.findOne({ _id: req.params._id })
+    .populate({ path: 'program', select: 'archivedAt' })
+    .lean();
+  if (!subProgram) throw Boom.notFound();
+
+  const vendorRole = get(req, 'auth.credentials.role.vendor.name');
+  if (vendorRole === TRAINER && !get(req, 'auth.credentials.isProgramEditor')) throw Boom.forbidden();
+
+  if (subProgram.status !== DRAFT) throw Boom.forbidden();
+  if (get(subProgram, 'program.archivedAt')) throw Boom.forbidden();
+
+  return null;
 };
 
 exports.authorizeStepReuse = async (req) => {

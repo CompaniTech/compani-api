@@ -582,6 +582,32 @@ describe('archiveSubPrograms', () => {
   });
 });
 
+describe('deleteSubProgram', () => {
+  let subProgramDeleteOne;
+  let programUpdateOne;
+  beforeEach(() => {
+    subProgramDeleteOne = sinon.stub(SubProgram, 'deleteOne');
+    programUpdateOne = sinon.stub(Program, 'updateOne');
+  });
+  afterEach(() => {
+    subProgramDeleteOne.restore();
+    programUpdateOne.restore();
+  });
+
+  it('should delete a subProgram and remove it from its program', async () => {
+    const subProgramId = new ObjectId();
+
+    await SubProgramHelper.deleteSubProgram(subProgramId);
+
+    sinon.assert.calledOnceWithExactly(subProgramDeleteOne, { _id: subProgramId });
+    sinon.assert.calledOnceWithExactly(
+      programUpdateOne,
+      { subPrograms: subProgramId },
+      { $pull: { subPrograms: subProgramId } }
+    );
+  });
+});
+
 describe('listELearningDraft', () => {
   let find;
   beforeEach(() => {

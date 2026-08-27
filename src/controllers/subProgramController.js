@@ -16,6 +16,17 @@ const update = async (req) => {
   }
 };
 
+const remove = async (req) => {
+  try {
+    await SubProgramHelper.deleteSubProgram(req.params._id);
+
+    return { message: translate[language].subProgramDeleted };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 const addStep = async (req) => {
   try {
     await StepsHelper.addStep(req.params._id, req.payload);
@@ -79,6 +90,7 @@ const getById = async (req) => {
 
 module.exports = {
   update,
+  remove,
   addStep,
   detachStep,
   listELearningDraft,

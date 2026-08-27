@@ -147,6 +147,13 @@ const subProgramsList = [
     steps: [stepsList[2]._id],
     archivedAt: '2026-08-01T09:00:00.000Z',
   },
+  { // 12 draft, its program is archived
+    _id: new ObjectId(),
+    name: 'subProgram 12',
+    status: DRAFT,
+    steps: [stepsList[0]._id],
+    archivedAt: '2026-08-01T09:00:00.000Z',
+  },
 ];
 
 const programsList = [
@@ -162,6 +169,12 @@ const programsList = [
     _id: new ObjectId(),
     name: 'program 3',
     subPrograms: [subProgramsList[10]._id, subProgramsList[11]._id],
+  },
+  {
+    _id: new ObjectId(),
+    name: 'program 4',
+    subPrograms: [subProgramsList[12]._id],
+    archivedAt: '2026-08-01T09:00:00.000Z',
   },
 ];
 

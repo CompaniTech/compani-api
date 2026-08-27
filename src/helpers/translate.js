@@ -96,6 +96,7 @@ module.exports = {
     subProgramFound: 'Sub-program found.',
     subProgramsNotFound: 'Sub-programs not found.',
     subProgramUpdated: 'Sub-program updated.',
+    subProgramDeleted: 'Sub-program deleted.',
     eLearningSubProgramAlreadyExists: 'A published eLearning sub-program already exists.',
     subProgramWrongPriceVersionDate: 'Forbidden: a version with a later effectiveDate exists.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Forbidden: a slot is paid after effectiveDate.',
@@ -451,6 +452,7 @@ module.exports = {
     categoryRemoved: 'Catégorie retirée.',
     /* SubPrograms */
     subProgramUpdated: 'Sous-Programme mis à jour.',
+    subProgramDeleted: 'Sous-Programme supprimé.',
     subProgramsFound: 'Sous-Programmes trouvés.',
     subProgramFound: 'Sous-Programme trouvé.',
     subProgramsNotFound: 'Sous-Programmes non trouvés.',

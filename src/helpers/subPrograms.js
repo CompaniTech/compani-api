@@ -22,6 +22,11 @@ exports.archiveSubPrograms = async (subProgramIds, archivedAt) => SubProgram.upd
   archivedAt ? { $set: { archivedAt } } : { $unset: { archivedAt: '' } }
 );
 
+exports.deleteSubProgram = async (subProgramId) => {
+  await SubProgram.deleteOne({ _id: subProgramId });
+  await Program.updateOne({ subPrograms: subProgramId }, { $pull: { subPrograms: subProgramId } });
+};
+
 exports.updateSubProgram = async (subProgramId, payload) => {
   if (has(payload, 'archivedAt')) {
     return payload.archivedAt
