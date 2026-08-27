@@ -133,6 +133,20 @@ const subProgramsList = [
     status: DRAFT,
     steps: [stepsList[7]._id],
   },
+  { // 10 archived, draft
+    _id: new ObjectId(),
+    name: 'subProgram 10',
+    status: DRAFT,
+    steps: [stepsList[1]._id],
+    archivedAt: '2026-08-01T09:00:00.000Z',
+  },
+  { // 11 archived, published
+    _id: new ObjectId(),
+    name: 'subProgram 11',
+    status: PUBLISHED,
+    steps: [stepsList[2]._id],
+    archivedAt: '2026-08-01T09:00:00.000Z',
+  },
 ];
 
 const programsList = [
@@ -143,6 +157,11 @@ const programsList = [
     subPrograms: [subProgramsList[3]._id, subProgramsList[4]._id],
     image: { publicId: '234', link: 'link' },
     testers: [tester._id],
+  },
+  {
+    _id: new ObjectId(),
+    name: 'program 3',
+    subPrograms: [subProgramsList[10]._id, subProgramsList[11]._id],
   },
 ];
 

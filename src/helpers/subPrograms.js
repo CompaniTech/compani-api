@@ -17,7 +17,18 @@ exports.addSubProgram = async (programId, payload) => {
   await Program.updateOne({ _id: programId }, { $push: { subPrograms: subProgram._id } });
 };
 
+exports.archiveSubPrograms = async (subProgramIds, archivedAt) => SubProgram.updateMany(
+  { _id: { $in: subProgramIds } },
+  archivedAt ? { $set: { archivedAt } } : { $unset: { archivedAt: '' } }
+);
+
 exports.updateSubProgram = async (subProgramId, payload) => {
+  if (has(payload, 'archivedAt')) {
+    return payload.archivedAt
+      ? SubProgram.updateOne({ _id: subProgramId }, { $set: { archivedAt: payload.archivedAt } })
+      : SubProgram.updateOne({ _id: subProgramId }, { $unset: { archivedAt: '' } });
+  }
+
   let query = {};
   if (payload.name || payload.steps) query = { $set: omit(payload, 'subjectToVat') };
   if (has(payload, 'subjectToVat') && !payload.subjectToVat) query.$unset = { subjectToVat: '' };
@@ -103,7 +114,7 @@ exports.listELearningDraft = async (testerRestrictedPrograms) => {
   let query = { path: 'program', select: '_id name description image' };
   if (testerRestrictedPrograms) query = { ...query, match: { _id: { $in: testerRestrictedPrograms } } };
 
-  const subPrograms = await SubProgram.find({ status: DRAFT })
+  const subPrograms = await SubProgram.find({ status: DRAFT, archivedAt: { $exists: false } })
     .populate(query)
     .populate({ path: 'steps', select: 'type theoreticalDuration' })
     .lean({ virtuals: true });

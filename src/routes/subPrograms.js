@@ -58,7 +58,8 @@ exports.plugin = {
                   otherwise: Joi.array().items(Joi.number().positive()).min(1).required(),
                 }),
               }).required(),
-            })
+            }),
+            Joi.object({ archivedAt: Joi.date().allow('') })
           ),
         },
         auth: { scope: ['programs:edit'] },
