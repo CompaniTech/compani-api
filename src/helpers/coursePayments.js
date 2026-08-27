@@ -34,7 +34,11 @@ exports.list = async query => CoursePayment
     path: 'courseBill',
     select: 'number payer course',
     populate: [
-      { path: 'payer.company', select: 'name bic iban debitMandates' },
+      {
+        path: 'payer.company',
+        select: 'name bic iban debitMandates',
+        populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+      },
       { path: 'payer.fundingOrganisation', select: 'name' },
       { path: 'course', select: 'type' },
     ],
