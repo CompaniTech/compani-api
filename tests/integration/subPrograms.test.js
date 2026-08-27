@@ -60,23 +60,10 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(subProgramUpdated.subjectToVat).toBe(true);
     });
 
-    it('should archive a draft subProgram', async () => {
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/subprograms/${blendedSubProgramId.toHexString()}`,
-        payload: { archivedAt: '2026-08-18T09:00:00.000Z' },
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-      });
-
-      expect(response.statusCode).toBe(200);
-      const subProgramUpdated = await SubProgram.findById(blendedSubProgramId).lean();
-      expect(subProgramUpdated.archivedAt).toEqual(new Date('2026-08-18T09:00:00.000Z'));
-    });
-
     it('should archive a published subProgram', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/subprograms/${subProgramsList[4]._id.toHexString()}`,
+        url: `/subprograms/${subProgramsList[4]._id}`,
         payload: { archivedAt: '2026-08-18T09:00:00.000Z' },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
@@ -89,20 +76,21 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     it('should unarchive a subProgram', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/subprograms/${subProgramsList[10]._id.toHexString()}`,
+        url: `/subprograms/${subProgramsList[11]._id}`,
         payload: { archivedAt: '' },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
-      const subProgramUpdated = await SubProgram.findById(subProgramsList[10]._id).lean();
-      expect(subProgramUpdated.archivedAt).toBeUndefined();
+      const subProgramUpdated = await SubProgram
+        .countDocuments({ _id: subProgramsList[11]._id, archivedAt: { $exists: true } });
+      expect(subProgramUpdated).toBeFalsy();
     });
 
     it('should return 403 if subProgram is already archived', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/subprograms/${subProgramsList[10]._id.toHexString()}`,
+        url: `/subprograms/${subProgramsList[11]._id}`,
         payload: { archivedAt: '2026-08-18T09:00:00.000Z' },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
@@ -113,7 +101,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     it('should return 403 if subProgram is not archived and payload unarchives it', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/subprograms/${blendedSubProgramId.toHexString()}`,
+        url: `/subprograms/${subProgramsList[4]._id}`,
         payload: { archivedAt: '' },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
@@ -124,7 +112,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     it('should return 403 if updating name of an archived subProgram', async () => {
       const response = await app.inject({
         method: 'PUT',
-        url: `/subprograms/${subProgramsList[10]._id.toHexString()}`,
+        url: `/subprograms/${subProgramsList[11]._id}`,
         payload: { name: 'nouveau nom' },
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });

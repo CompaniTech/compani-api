@@ -95,7 +95,6 @@ exports.updateProgram = async (programId, payload) => {
 
   await Program.updateOne({ _id: programId }, formattedPayload);
 
-  // l'archivage d'un programme se répercute sur ses sous-programmes, le désarchivage aussi
   if (has(payload, 'archivedAt')) {
     const program = await Program.findOne({ _id: programId }, { subPrograms: 1 }).lean();
     await SubProgramHelper.archiveSubPrograms(program.subPrograms, payload.archivedAt);

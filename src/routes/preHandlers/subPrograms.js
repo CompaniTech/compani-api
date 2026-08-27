@@ -62,7 +62,6 @@ exports.authorizeSubProgramUpdate = async (req) => {
   const vendorRole = get(req, 'auth.credentials.role.vendor.name');
   if (vendorRole === TRAINER && !get(req, 'auth.credentials.isProgramEditor')) throw Boom.forbidden();
 
-  // l'archivage prime sur le statut : un sous-programme archivé n'est modifiable que pour être désarchivé
   const unarchiveSubProgram = has(req.payload, 'archivedAt') && req.payload.archivedAt === '';
   if (subProgram.archivedAt && !unarchiveSubProgram) throw Boom.forbidden();
 
