@@ -85,6 +85,33 @@ describe('COMPANIES ROUTES - PUT /companies/:id', () => {
       expect(updatedCompany).toBe(1);
     });
 
+    it('should update billingInfos', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { billingInfos: 'Numéro de facturation 1234' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedCompany = await Company
+        .countDocuments({ _id: companies[0]._id, billingInfos: 'Numéro de facturation 1234' });
+      expect(updatedCompany).toBe(1);
+    });
+
+    it('should erase billingInfos', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/companies/${companies[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { billingInfos: '' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedCompany = await Company.countDocuments({ _id: companies[0]._id, billingInfos: '' });
+      expect(updatedCompany).toBe(1);
+    });
+
     it('should return 400 if iban is not valid', async () => {
       const payload = {
         name: 'Alenvi Alenvi',
