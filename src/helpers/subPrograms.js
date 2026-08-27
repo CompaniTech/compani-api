@@ -17,21 +17,28 @@ exports.addSubProgram = async (programId, payload) => {
   await Program.updateOne({ _id: programId }, { $push: { subPrograms: subProgram._id } });
 };
 
-exports.archiveSubPrograms = async (subProgramIds, archivedAt) => SubProgram.updateMany(
-  { _id: { $in: subProgramIds } },
-  archivedAt ? { $set: { archivedAt } } : { $unset: { archivedAt: '' } }
+exports.formatArchivedAtUpdate = archivedAt => (archivedAt
+  ? { $set: { archivedAt } }
+  : { $unset: { archivedAt: '' } });
+
+exports.archiveSubPrograms = async (subProgramIds, archivedAt, previousArchivedAt) => SubProgram.updateMany(
+  {
+    _id: { $in: subProgramIds },
+    archivedAt: archivedAt ? { $exists: false } : previousArchivedAt,
+  },
+  exports.formatArchivedAtUpdate(archivedAt)
 );
 
 exports.deleteSubProgram = async (subProgramId) => {
-  await SubProgram.deleteOne({ _id: subProgramId });
-  await Program.updateOne({ subPrograms: subProgramId }, { $pull: { subPrograms: subProgramId } });
+  await Promise.all([
+    SubProgram.deleteOne({ _id: subProgramId }),
+    Program.updateOne({ subPrograms: subProgramId }, { $pull: { subPrograms: subProgramId } }),
+  ]);
 };
 
 exports.updateSubProgram = async (subProgramId, payload) => {
   if (has(payload, 'archivedAt')) {
-    return payload.archivedAt
-      ? SubProgram.updateOne({ _id: subProgramId }, { $set: { archivedAt: payload.archivedAt } })
-      : SubProgram.updateOne({ _id: subProgramId }, { $unset: { archivedAt: '' } });
+    return SubProgram.updateOne({ _id: subProgramId }, exports.formatArchivedAtUpdate(payload.archivedAt));
   }
 
   let query = {};

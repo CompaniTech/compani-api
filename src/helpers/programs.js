@@ -93,12 +93,15 @@ exports.updateProgram = async (programId, payload) => {
     ...(unarchiveProgram && { $unset: { archivedAt: '' } }),
   };
 
-  await Program.updateOne({ _id: programId }, formattedPayload);
-
-  if (has(payload, 'archivedAt')) {
-    const program = await Program.findOne({ _id: programId }, { subPrograms: 1 }).lean();
-    await SubProgramHelper.archiveSubPrograms(program.subPrograms, payload.archivedAt);
+  if (!has(payload, 'archivedAt')) {
+    await Program.updateOne({ _id: programId }, formattedPayload);
+    return;
   }
+
+  const program = await Program
+    .findOneAndUpdate({ _id: programId }, formattedPayload, { projection: { subPrograms: 1, archivedAt: 1 } })
+    .lean();
+  await SubProgramHelper.archiveSubPrograms(program.subPrograms, payload.archivedAt, program.archivedAt);
 };
 
 exports.uploadImage = async (programId, payload) => {

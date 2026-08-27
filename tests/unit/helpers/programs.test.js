@@ -305,16 +305,16 @@ describe('getProgram', () => {
 
 describe('update', () => {
   let programUpdateOne;
-  let programFindOne;
+  let programFindOneAndUpdate;
   let archiveSubPrograms;
   beforeEach(() => {
     programUpdateOne = sinon.stub(Program, 'updateOne');
-    programFindOne = sinon.stub(Program, 'findOne');
+    programFindOneAndUpdate = sinon.stub(Program, 'findOneAndUpdate');
     archiveSubPrograms = sinon.stub(SubProgramHelper, 'archiveSubPrograms');
   });
   afterEach(() => {
     programUpdateOne.restore();
-    programFindOne.restore();
+    programFindOneAndUpdate.restore();
     archiveSubPrograms.restore();
   });
 
@@ -334,28 +334,51 @@ describe('update', () => {
     const subProgramIds = [new ObjectId(), new ObjectId()];
     const payload = { archivedAt: '2026-08-17T00:00:00.000Z' };
 
-    programFindOne.returns(SinonMongoose.stubChainedQueries({ subPrograms: subProgramIds }, ['lean']));
+    programFindOneAndUpdate.returns(
+      SinonMongoose.stubChainedQueries({ subPrograms: subProgramIds, archivedAt: '' }, ['lean'])
+    );
 
     await ProgramHelper.updateProgram(programId, payload);
 
-    sinon.assert.calledOnceWithExactly(programUpdateOne, { _id: programId }, { $set: payload });
-    sinon.assert.calledOnceWithExactly(archiveSubPrograms, subProgramIds, payload.archivedAt);
+    sinon.assert.calledOnceWithExactly(archiveSubPrograms, subProgramIds, payload.archivedAt, '');
     SinonMongoose.calledOnceWithExactly(
-      programFindOne,
-      [{ query: 'findOne', args: [{ _id: programId }, { subPrograms: 1 }] }, { query: 'lean' }]
+      programFindOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [{ _id: programId }, { $set: payload }, { projection: { subPrograms: 1, archivedAt: 1 } }],
+        },
+        { query: 'lean' },
+      ]
     );
   });
 
   it('should unarchive program and its subprograms', async () => {
     const programId = new ObjectId();
     const subProgramIds = [new ObjectId()];
+    const previousArchivedAt = '2026-08-17T00:00:00.000Z';
 
-    programFindOne.returns(SinonMongoose.stubChainedQueries({ subPrograms: subProgramIds }, ['lean']));
+    programFindOneAndUpdate.returns(
+      SinonMongoose.stubChainedQueries({ subPrograms: subProgramIds, archivedAt: previousArchivedAt }, ['lean'])
+    );
 
     await ProgramHelper.updateProgram(programId, { archivedAt: '' });
 
-    sinon.assert.calledOnceWithExactly(programUpdateOne, { _id: programId }, { $unset: { archivedAt: '' } });
-    sinon.assert.calledOnceWithExactly(archiveSubPrograms, subProgramIds, '');
+    SinonMongoose.calledOnceWithExactly(
+      programFindOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: programId },
+            { $unset: { archivedAt: '' } },
+            { projection: { subPrograms: 1, archivedAt: 1 } },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(archiveSubPrograms, subProgramIds, '', previousArchivedAt);
   });
 
   it('should not touch subprograms if payload has no archivedAt', async () => {
@@ -365,7 +388,7 @@ describe('update', () => {
 
     await ProgramHelper.updateProgram(programId, { name: 'toto' });
 
-    sinon.assert.notCalled(programFindOne);
+    sinon.assert.notCalled(programFindOneAndUpdate);
     sinon.assert.notCalled(archiveSubPrograms);
   });
 });

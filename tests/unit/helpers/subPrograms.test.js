@@ -564,21 +564,30 @@ describe('archiveSubPrograms', () => {
     updateMany.restore();
   });
 
-  it('should archive several subPrograms', async () => {
+  it('should archive several subPrograms that are not already archived', async () => {
     const subProgramIds = [new ObjectId(), new ObjectId()];
     const archivedAt = '2026-08-18T00:00:00.000Z';
 
     await SubProgramHelper.archiveSubPrograms(subProgramIds, archivedAt);
 
-    sinon.assert.calledOnceWithExactly(updateMany, { _id: { $in: subProgramIds } }, { $set: { archivedAt } });
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: subProgramIds }, archivedAt: { $exists: false } },
+      { $set: { archivedAt } }
+    );
   });
 
-  it('should unarchive several subPrograms', async () => {
+  it('should unarchive several subPrograms that were archived along with the program', async () => {
     const subProgramIds = [new ObjectId(), new ObjectId()];
+    const previousArchivedAt = '2026-08-17T00:00:00.000Z';
 
-    await SubProgramHelper.archiveSubPrograms(subProgramIds, '');
+    await SubProgramHelper.archiveSubPrograms(subProgramIds, '', previousArchivedAt);
 
-    sinon.assert.calledOnceWithExactly(updateMany, { _id: { $in: subProgramIds } }, { $unset: { archivedAt: '' } });
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: subProgramIds }, archivedAt: previousArchivedAt },
+      { $unset: { archivedAt: '' } }
+    );
   });
 });
 
