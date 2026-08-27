@@ -224,7 +224,7 @@ describe('list', () => {
         nature: PAYMENT,
         courseBill: {
           number: 'FACT_00001',
-          payer: { company: { name: 'Structure' }, holding: { _id: new ObjectId(), name: 'holding' } },
+          payer: { company: { name: 'Structure', holding: { _id: new ObjectId(), name: 'holding' } } },
           isPayerCompany: true,
           course: { type: INTRA },
         },
@@ -235,7 +235,7 @@ describe('list', () => {
         nature: PAYMENT,
         courseBill: {
           number: 'FACT_00002',
-          payer: { fundingOrganisation: { name: 'Financeur' }, holding: null },
+          payer: { fundingOrganisation: { name: 'Financeur', holding: null } },
           isPayerCompany: false,
           course: { type: INTRA },
         },
