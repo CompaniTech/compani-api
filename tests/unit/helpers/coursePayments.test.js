@@ -224,7 +224,7 @@ describe('list', () => {
         nature: PAYMENT,
         courseBill: {
           number: 'FACT_00001',
-          payer: { company: { name: 'Structure' } },
+          payer: { company: { name: 'Structure' }, holding: { _id: new ObjectId(), name: 'holding' } },
           isPayerCompany: true,
           course: { type: INTRA },
         },
@@ -235,7 +235,7 @@ describe('list', () => {
         nature: PAYMENT,
         courseBill: {
           number: 'FACT_00002',
-          payer: { company: { fundingOrganisation: 'Financeur' } },
+          payer: { fundingOrganisation: { name: 'Financeur' }, holding: null },
           isPayerCompany: false,
           course: { type: INTRA },
         },
@@ -270,7 +270,11 @@ describe('list', () => {
               path: 'courseBill',
               select: 'number payer course',
               populate: [
-                { path: 'payer.company', select: 'name bic iban debitMandates' },
+                {
+                  path: 'payer.company',
+                  select: 'name bic iban debitMandates',
+                  populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+                },
                 { path: 'payer.fundingOrganisation', select: 'name' },
                 { path: 'course', select: 'type' },
               ],
@@ -344,7 +348,11 @@ describe('list', () => {
               path: 'courseBill',
               select: 'number payer course',
               populate: [
-                { path: 'payer.company', select: 'name bic iban debitMandates' },
+                {
+                  path: 'payer.company',
+                  select: 'name bic iban debitMandates',
+                  populate: { path: 'holding', populate: { path: 'holding', select: 'name' } },
+                },
                 { path: 'payer.fundingOrganisation', select: 'name' },
                 { path: 'course', select: 'type' },
               ],
