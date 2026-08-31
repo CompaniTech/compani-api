@@ -28,7 +28,7 @@ const { auxiliaryRoleId, coachRoleId, trainingOrganisationManagerRoleId } = requ
 const { vendorAdmin, trainerOrganisationManager, trainer } = require('../../seed/authUsersSeed');
 
 const DETACHMENT_ALLOWED_COMPANY_IDS =
-  process.env.DETACHMENT_ALLOWED_COMPANY_IDS.split(';').map(id => new ObjectId(id));
+  process.env.DETACHMENT_ALLOWED_COMPANY_IDS.split(',').map(id => new ObjectId(id));
 
 const establishmentList = [
   {
