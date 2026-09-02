@@ -121,9 +121,10 @@ const getBillsInfos = (course) => {
       .sort((a, b) => a.localeCompare(b))
       .toString();
   const computedAmounts = validatedBillsWithoutCreditNote.map(bill => CourseBillHelper.computeAmounts(bill));
-  const draftComputedAmounts = draftBills.map(bill => CourseBillHelper.computeAmounts(bill));
-  const draftNetExclTaxes = draftComputedAmounts.length
-    ? draftComputedAmounts.map(amount => amount.netExclTaxes).reduce((acc, value) => acc + value, 0)
+  const draftNetExclTaxes = draftBills.length
+    ? draftBills
+      .map(bill => CourseBillHelper.getDetailWithTaxes(bill).netExclTaxes)
+      .reduce((acc, value) => acc + value, 0)
     : '';
 
   const amountsInfos = validatedBillsWithoutCreditNote.length
