@@ -130,6 +130,31 @@ describe('ACTIVITIES ROUTES - PUT /activity/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return a 403 if activity is only reachable through an archived subProgram', async () => {
+      const payload = { name: 'rigoler' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/activities/${activitiesList[4]._id}`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should update activity even if reachable through an archived subProgram, as long as another one is not',
+      async () => {
+        const payload = { name: 'rigoler' };
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/activities/${activitiesList[5]._id}`,
+          payload,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(200);
+      });
   });
 
   describe('Other roles', () => {
@@ -231,6 +256,29 @@ describe('ACTIVITIES ROUTES - POST /activities/{_id}/card', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return a 403 if activity is only reachable through an archived subProgram', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/activities/${activitiesList[4]._id}/cards`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should create card even if reachable through an archived subProgram, as long as another one is not',
+      async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: `/activities/${activitiesList[5]._id}/cards`,
+          payload,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(200);
+      });
   });
 
   describe('Other roles', () => {
@@ -304,6 +352,27 @@ describe('ACTIVITIES ROUTES - DELETE /activities/cards/{cardId}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return 403 if activity is only reachable through an archived subProgram', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/activities/cards/${activitiesList[4].cards[0]}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should delete card even if reachable through an archived subProgram, as long as another one is not',
+      async () => {
+        const response = await app.inject({
+          method: 'DELETE',
+          url: `/activities/cards/${activitiesList[5].cards[0]}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(200);
+      });
   });
 
   describe('Other roles', () => {

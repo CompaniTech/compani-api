@@ -40,6 +40,8 @@ const cardsList = [
       { _id: new ObjectId(), text: 'des choses' },
     ],
   },
+  { _id: new ObjectId(), template: TRANSITION, title: 'archivée' },
+  { _id: new ObjectId(), template: TRANSITION, title: 'partagée' },
 ];
 
 const activitiesList = [
@@ -59,6 +61,18 @@ const activitiesList = [
     status: PUBLISHED,
     cards: [cardsList[4]._id, cardsList[5]._id],
   },
+  { // 4 - only reachable through an archived subProgram
+    _id: new ObjectId(),
+    name: 'archivée',
+    type: 'lesson',
+    cards: [cardsList[8]._id],
+  },
+  { // 5 - reachable through both an archived and a non-archived subProgram
+    _id: new ObjectId(),
+    name: 'partagée',
+    type: 'lesson',
+    cards: [cardsList[9]._id],
+  },
 ];
 
 const stepsList = [
@@ -66,13 +80,30 @@ const stepsList = [
     _id: new ObjectId(),
     type: 'e_learning',
     name: 'rouge',
-    activities: [activitiesList[0]._id, activitiesList[1]._id],
+    activities: [activitiesList[0]._id, activitiesList[1]._id, activitiesList[5]._id],
+  },
+  { // 1 - only in an archived subProgram
+    _id: new ObjectId(),
+    type: 'e_learning',
+    name: 'noire - archivée',
+    activities: [activitiesList[4]._id, activitiesList[5]._id],
   },
 ];
 
-const subProgramsList = [{ _id: new ObjectId(), name: '2_7_4124', steps: [stepsList[0]._id] }];
+const subProgramsList = [
+  { _id: new ObjectId(), name: '2_7_4124', steps: [stepsList[0]._id] },
+  { // 1 - archived
+    _id: new ObjectId(),
+    name: 'archivé',
+    steps: [stepsList[1]._id],
+    archivedAt: '2026-08-01T09:00:00.000Z',
+  },
+];
 
-const programsList = [{ _id: new ObjectId(), name: 'au programme télévisé', subPrograms: [subProgramsList[0]._id] }];
+const programsList = [
+  { _id: new ObjectId(), name: 'au programme télévisé', subPrograms: [subProgramsList[0]._id] },
+  { _id: new ObjectId(), name: 'programme archivé test', subPrograms: [subProgramsList[1]._id] },
+];
 
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();

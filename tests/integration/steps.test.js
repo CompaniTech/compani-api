@@ -171,6 +171,30 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return a 403 if step\'s subProgram is archived', async () => {
+      const payload = { name: 'une nouvelle étape super innovante' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/steps/${stepsList[5]._id}`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should update step even if shared with an archived subProgram, as long as another one is not', async () => {
+      const payload = { name: 'une nouvelle étape super innovante' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/steps/${stepsList[6]._id}`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return a 400 if activities\' lengths from db and payload are not equal', async () => {
       const payload = { activities: [stepsList[0].activities[1]] };
       const response = await app.inject({
@@ -398,6 +422,31 @@ describe('STEPS ROUTES - POST /steps/{_id}/activity', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return a 403 if step\'s subProgram is archived', async () => {
+      const payload = { name: 'new activity', type: 'video' };
+      const response = await app.inject({
+        method: 'POST',
+        url: `/steps/${stepsList[5]._id}/activities`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should create activity even if step is shared with an archived subProgram, as long as another one is not',
+      async () => {
+        const payload = { name: 'new activity', type: 'video' };
+        const response = await app.inject({
+          method: 'POST',
+          url: `/steps/${stepsList[6]._id}/activities`,
+          payload,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(200);
+      });
   });
 
   describe('Other roles', () => {
@@ -504,6 +553,31 @@ describe('STEPS ROUTES - PUT /steps/{_id}/activities', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return a 403 if step\'s subProgram is archived', async () => {
+      const payload = { activities: activitiesList[0]._id };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/steps/${stepsList[5]._id}/activities`,
+        payload,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should reuse activity even if step is shared with an archived subProgram, as long as another one is not',
+      async () => {
+        const payload = { activities: activitiesList[0]._id };
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/steps/${stepsList[6]._id}/activities`,
+          payload,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(200);
+      });
 
     it('should return a 404 if invalid activity id', async () => {
       const payload = { activities: (new ObjectId()) };
@@ -614,6 +688,27 @@ describe('STEPS ROUTES - DELETE /steps/{_id}/activities/{activityId}', () => {
 
       expect(response.statusCode).toBe(403);
     });
+
+    it('should return a 403 if step\'s subProgram is archived', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/steps/${stepsList[5]._id}/activities/${activitiesList[4]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should detach activity even if step is shared with an archived subProgram, as long as another one is not',
+      async () => {
+        const response = await app.inject({
+          method: 'DELETE',
+          url: `/steps/${stepsList[6]._id}/activities/${activitiesList[1]._id}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(200);
+      });
   });
 
   describe('Other roles', () => {
@@ -663,6 +758,19 @@ describe('STEPS ROUTES - GET /steps', () => {
         { _id: expect.any(Object), name: 'etape 2', type: 'e_learning' },
         { _id: expect.any(Object), name: 'etape 3', type: 'e_learning' },
       ]));
+    });
+
+    it('should not return a step only reachable through an archived subProgram of the program', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/steps?program=${programsList[1]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const stepIds = response.result.data.steps.map(step => step._id);
+      expect(stepIds.some(id => UtilsHelper.areObjectIdsEquals(id, stepsList[5]._id))).toBeFalsy();
+      expect(stepIds.some(id => UtilsHelper.areObjectIdsEquals(id, stepsList[6]._id))).toBeTruthy();
     });
 
     it('should return a 404 if program doesn\'t exist', async () => {

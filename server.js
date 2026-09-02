@@ -12,6 +12,7 @@ const { mongooseConnection } = require('./src/config/mongoose');
 const { routes } = require('./src/routes/index');
 const { plugins } = require('./src/plugins/index');
 const { DEVELOPMENT, TEST, PRODUCTION } = require('./src/helpers/constants');
+const { SCAN_PATH_REGEX } = require('./src/helpers/scanPathGuard');
 
 const server = Hapi.server({
   port: process.env.NODE_ENV === TEST ? 3001 : (process.env.PORT || 3000),
@@ -54,6 +55,8 @@ const init = async () => {
   server.ext(
     'onRequest',
     (req, h) => {
+      if (SCAN_PATH_REGEX.test(req.path)) return h.response().code(403).takeover();
+
       console.log('memoryLog - onRequest', req.path, isDevelopment ? JSON.stringify(process.memoryUsage()) : '');
       return h.continue;
     }

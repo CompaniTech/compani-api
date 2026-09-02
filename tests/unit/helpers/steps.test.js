@@ -331,6 +331,7 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'subPrograms',
+            match: { archivedAt: { $exists: false } },
             select: 'program -steps',
             populate: { path: 'program', select: '_id' },
           }],
