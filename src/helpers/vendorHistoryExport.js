@@ -114,20 +114,28 @@ const getAttendancesCountInfos = (course) => {
 
 const getBillsInfos = (course) => {
   const validatedBillsWithoutCreditNote = course.bills.filter(bill => !bill.courseCreditNote && bill.billedAt);
+  const draftBills = course.bills.filter(bill => !bill.billedAt);
 
   const payerList =
     [...new Set(validatedBillsWithoutCreditNote.map(bill => get(bill, 'payer.name')))]
       .sort((a, b) => a.localeCompare(b))
       .toString();
   const computedAmounts = validatedBillsWithoutCreditNote.map(bill => CourseBillHelper.computeAmounts(bill));
+  const draftNetExclTaxes = draftBills.length
+    ? draftBills
+      .map(bill => CourseBillHelper.getDetailWithTaxes(bill).netExclTaxes)
+      .reduce((acc, value) => acc + value, 0)
+    : '';
+
   const amountsInfos = validatedBillsWithoutCreditNote.length
     ? {
       netInclTaxes: computedAmounts.map(amount => amount.netInclTaxes).reduce((acc, value) => acc + value, 0),
       netExclTaxes: computedAmounts.map(amount => amount.netExclTaxes).reduce((acc, value) => acc + value, 0),
+      draftNetExclTaxes,
       paid: computedAmounts.map(amount => amount.paid).reduce((acc, value) => acc + value, 0),
       total: computedAmounts.map(amount => amount.total).reduce((acc, value) => acc + value, 0),
     }
-    : { netExclTaxes: '', netInclTaxes: '', paid: '', total: '' };
+    : { netExclTaxes: '', netInclTaxes: '', paid: '', total: '', draftNetExclTaxes };
 
   if ([INTRA, SINGLE].includes(course.type)) {
     const billsCountForExport = {
@@ -231,6 +239,7 @@ const formatCourseForExport = async (
     payerList,
     netInclTaxes,
     netExclTaxes,
+    draftNetExclTaxes,
     paid,
     total,
   } = getBillsInfos(course);
@@ -322,6 +331,7 @@ const formatCourseForExport = async (
     'Nombre de factures validées': billsCountForExport.validatedBillsCount,
     'Nombre de factures attendues': billsCountForExport.expectedBillsCount,
     Facturée: isBilled ? 'Oui' : 'Non',
+    'Montant à facturer HT': UtilsHelper.formatFloatForExport(draftNetExclTaxes),
     'Montant facturé HT': UtilsHelper.formatFloatForExport(netExclTaxes),
     'Montant facturé TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
     'Montant réglé': UtilsHelper.formatFloatForExport(paid),
