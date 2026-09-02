@@ -43,12 +43,13 @@ exports.authorizeActivityReuse = async (req) => {
     .populate({ path: 'subPrograms', select: 'archivedAt' })
     .lean();
   if (!step) throw Boom.notFound();
-  if (step.status === PUBLISHED || step.type !== E_LEARNING) throw Boom.forbidden();
-  if (everySubProgramIsArchived(step.subPrograms)) throw Boom.forbidden();
 
   const { activities } = req.payload;
   const existingActivity = await Activity.countDocuments({ _id: activities });
   if (!existingActivity) throw Boom.notFound();
+
+  if (step.status === PUBLISHED || step.type !== E_LEARNING) throw Boom.forbidden();
+  if (everySubProgramIsArchived(step.subPrograms)) throw Boom.forbidden();
   if (step.activities.map(a => a.toHexString()).includes(activities)) throw Boom.badRequest();
 
   return null;

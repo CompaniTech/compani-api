@@ -33,8 +33,12 @@ describe('getActivity', () => {
         args: [{
           path: 'steps',
           select: '_id -activities',
-          populate:
-          { path: 'subPrograms', select: '_id -steps', populate: { path: 'program', select: 'name -subPrograms' } },
+          populate: {
+            path: 'subPrograms',
+            match: { archivedAt: { $exists: false } },
+            select: '_id -steps',
+            populate: { path: 'program', select: 'name -subPrograms' },
+          },
         }],
       },
       { query: 'lean', args: [{ virtuals: true }] },

@@ -10,7 +10,7 @@ const everySubProgramIsArchived = (steps) => {
 
 exports.authorizeActivityUpdate = async (req) => {
   const activity = await Activity.findOne({ _id: req.params._id })
-    .populate({ path: 'steps', populate: { path: 'subPrograms', select: 'archivedAt' } })
+    .populate({ path: 'steps', select: 'subPrograms', populate: { path: 'subPrograms', select: 'archivedAt' } })
     .lean();
   if (!activity) throw Boom.notFound();
   if (activity.status === PUBLISHED && Object.keys(req.payload).some(key => key !== 'name')) throw Boom.forbidden();
@@ -28,8 +28,8 @@ exports.authorizeActivityUpdate = async (req) => {
 };
 
 exports.authorizeCardAddition = async (req) => {
-  const activity = await Activity.findOne({ _id: req.params._id })
-    .populate({ path: 'steps', populate: { path: 'subPrograms', select: 'archivedAt' } })
+  const activity = await Activity.findOne({ _id: req.params._id }, { status: 1, steps: 1 })
+    .populate({ path: 'steps', select: 'subPrograms', populate: { path: 'subPrograms', select: 'archivedAt' } })
     .lean();
   if (!activity) throw Boom.notFound();
   if (activity.status === PUBLISHED) throw Boom.forbidden();
@@ -42,13 +42,11 @@ exports.authorizeCardDeletion = async (req) => {
   const card = await Card.countDocuments({ _id: req.params.cardId });
   if (!card) throw Boom.notFound();
 
-  const activity = await Activity.findOne({ cards: req.params.cardId })
-    .populate({ path: 'steps', populate: { path: 'subPrograms', select: 'archivedAt' } })
+  const activities = await Activity.find({ cards: req.params.cardId }, { status: 1, steps: 1 })
+    .populate({ path: 'steps', select: 'subPrograms', populate: { path: 'subPrograms', select: 'archivedAt' } })
     .lean();
-  if (activity) {
-    if (activity.status === PUBLISHED) throw Boom.forbidden();
-    if (everySubProgramIsArchived(activity.steps)) throw Boom.forbidden();
-  }
+  if (activities.some(activity => activity.status === PUBLISHED)) throw Boom.forbidden();
+  if (activities.some(activity => everySubProgramIsArchived(activity.steps))) throw Boom.forbidden();
 
   return null;
 };

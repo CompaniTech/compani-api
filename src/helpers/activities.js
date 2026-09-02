@@ -11,7 +11,12 @@ exports.getActivity = async activityId => Activity.findOne({ _id: activityId })
   .populate({
     path: 'steps',
     select: '_id -activities',
-    populate: { path: 'subPrograms', select: '_id -steps', populate: { path: 'program', select: 'name -subPrograms' } },
+    populate: {
+      path: 'subPrograms',
+      match: { archivedAt: { $exists: false } },
+      select: '_id -steps',
+      populate: { path: 'program', select: 'name -subPrograms' },
+    },
   })
   .lean({ virtuals: true });
 
