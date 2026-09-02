@@ -61,7 +61,12 @@ exports.getProgress = (step, slots = [], shouldComputePresence = false) => {
 
 exports.list = async (programId) => {
   const steps = await Step.find()
-    .populate({ path: 'subPrograms', select: 'program -steps', populate: { path: 'program', select: '_id' } })
+    .populate({
+      path: 'subPrograms',
+      match: { archivedAt: { $exists: false } },
+      select: 'program -steps',
+      populate: { path: 'program', select: '_id' },
+    })
     .lean();
 
   return steps

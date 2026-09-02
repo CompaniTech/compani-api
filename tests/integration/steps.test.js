@@ -760,6 +760,19 @@ describe('STEPS ROUTES - GET /steps', () => {
       ]));
     });
 
+    it('should not return a step only reachable through an archived subProgram of the program', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/steps?program=${programsList[1]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const stepIds = response.result.data.steps.map(step => step._id);
+      expect(stepIds.some(id => UtilsHelper.areObjectIdsEquals(id, stepsList[5]._id))).toBeFalsy();
+      expect(stepIds.some(id => UtilsHelper.areObjectIdsEquals(id, stepsList[6]._id))).toBeTruthy();
+    });
+
     it('should return a 404 if program doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'GET',
