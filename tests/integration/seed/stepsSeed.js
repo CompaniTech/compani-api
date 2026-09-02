@@ -65,7 +65,7 @@ const subProgramList = [
 
 const programsList = [
   { _id: new ObjectId(), name: 'program 1', subPrograms: [subProgramList[0]._id, subProgramList[1]._id] },
-  { _id: new ObjectId(), name: 'program 2', subProgram: [subProgramList[2]._id, subProgramList[3]._id] },
+  { _id: new ObjectId(), name: 'program 2', subPrograms: [subProgramList[2]._id, subProgramList[3]._id] },
 ];
 
 const populateDB = async () => {
