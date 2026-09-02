@@ -12,12 +12,7 @@ const { mongooseConnection } = require('./src/config/mongoose');
 const { routes } = require('./src/routes/index');
 const { plugins } = require('./src/plugins/index');
 const { DEVELOPMENT, TEST, PRODUCTION } = require('./src/helpers/constants');
-
-const SCAN_PATH_REGEX = new RegExp(
-  '\\.(php|phtml|cgi|asp|aspx|jsp)$|wp-content|wp-admin|wp-includes|wp-login|xmlrpc\\.php|'
-  + 'phpmyadmin|\\.(env|git|aws|ssh)(\\/|$)|\\.htaccess$',
-  'i'
-);
+const { SCAN_PATH_REGEX } = require('./src/helpers/scanPathGuard');
 
 const server = Hapi.server({
   port: process.env.NODE_ENV === TEST ? 3001 : (process.env.PORT || 3000),
@@ -96,8 +91,6 @@ const init = async () => {
   await server.start();
   server.log('info', `Server running at: ${server.info.uri}`);
 };
-
-server.scanPathRegex = SCAN_PATH_REGEX;
 
 module.exports = server;
 
