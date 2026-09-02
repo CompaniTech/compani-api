@@ -13,6 +13,12 @@ const { routes } = require('./src/routes/index');
 const { plugins } = require('./src/plugins/index');
 const { DEVELOPMENT, TEST, PRODUCTION } = require('./src/helpers/constants');
 
+const SCAN_PATH_REGEX = new RegExp(
+  '\\.(php|phtml|cgi|asp|aspx|jsp)$|wp-content|wp-admin|wp-includes|wp-login|xmlrpc\\.php|'
+  + 'phpmyadmin|\\.(env|git|aws|ssh)(\\/|$)|\\.htaccess$',
+  'i'
+);
+
 const server = Hapi.server({
   port: process.env.NODE_ENV === TEST ? 3001 : (process.env.PORT || 3000),
   routes: {
@@ -54,6 +60,8 @@ const init = async () => {
   server.ext(
     'onRequest',
     (req, h) => {
+      if (SCAN_PATH_REGEX.test(req.path)) return h.response().code(403).takeover();
+
       console.log('memoryLog - onRequest', req.path, isDevelopment ? JSON.stringify(process.memoryUsage()) : '');
       return h.continue;
     }
@@ -88,6 +96,8 @@ const init = async () => {
   await server.start();
   server.log('info', `Server running at: ${server.info.uri}`);
 };
+
+server.scanPathRegex = SCAN_PATH_REGEX;
 
 module.exports = server;
 
