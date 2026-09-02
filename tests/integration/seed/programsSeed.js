@@ -65,6 +65,12 @@ const subProgramsList = [
       stepsList[7]._id,
     ],
   },
+  { // 4 archivé, rattaché au programme archivé
+    _id: new ObjectId(),
+    name: 'sous-programme 5',
+    steps: [stepsList[2]._id],
+    archivedAt: '2026-01-01T00:00:00.000Z',
+  },
 ];
 
 const programsList = [
@@ -91,6 +97,15 @@ const programsList = [
     subPrograms: [subProgramsList[1]._id],
   },
   { _id: new ObjectId(), name: 'programme a vérifier', subPrograms: [subProgramsList[3]._id] },
+  {
+    _id: new ObjectId(),
+    name: 'programme archivé',
+    subPrograms: [subProgramsList[4]._id],
+    archivedAt: '2026-01-01T00:00:00.000Z',
+    tradeNames: [{ _id: new ObjectId(), name: 'marque archivée' }],
+    categories: [categoriesList[0]._id],
+    testers: [coach._id],
+  },
 ];
 
 const course = {

@@ -26,6 +26,7 @@ const SubProgramSchema = mongoose.Schema({
   subjectToVat: { type: Boolean },
   sheetTemplateId: { type: String },
   folderId: { type: String },
+  archivedAt: { type: Date },
 }, { timestamps: true, id: false });
 
 SubProgramSchema.virtual('program', {

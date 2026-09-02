@@ -51,6 +51,7 @@ exports.plugin = {
             iban: ibanValidation,
             bic: bicValidation,
             salesRepresentative: Joi.objectId(),
+            billingInfos: Joi.string().allow(''),
           }),
         },
         pre: [

@@ -226,7 +226,7 @@ exports.list = async (query, credentials) => {
   if (!query.isValidated) {
     const singleCourseBills = courseBills
       .filter(bill => !bill.course.archivedAt && bill.course.type === SINGLE);
-    const singleSubProgramIds = [...new Set(singleCourseBills.map(b => b.course.subProgram._id.toHexString()))];
+    const singleSubProgramIds = [...new Set(singleCourseBills.map(b => b.course.subProgram.toHexString()))];
     const subPrograms = await SubProgram
       .find({ _id: { $in: singleSubProgramIds } })
       .populate({ path: 'steps', select: 'activities' })

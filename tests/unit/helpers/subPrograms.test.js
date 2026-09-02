@@ -78,6 +78,27 @@ describe('updateSubProgram', () => {
     findOne.restore();
   });
 
+  it('should archive a subProgram', async () => {
+    const subProgramId = new ObjectId();
+    const payload = { archivedAt: '2026-08-18T00:00:00.000Z' };
+
+    await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgramId }, { $set: { archivedAt: payload.archivedAt } });
+    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(findOneAndUpdate);
+  });
+
+  it('should unarchive a subProgram', async () => {
+    const subProgramId = new ObjectId();
+
+    await SubProgramHelper.updateSubProgram(subProgramId, { archivedAt: '' });
+
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgramId }, { $unset: { archivedAt: '' } });
+    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(findOneAndUpdate);
+  });
+
   it('should update a subProgram name', async () => {
     const subProgram = { _id: new ObjectId(), name: 'non' };
     const payload = { name: 'si' };
@@ -534,6 +555,68 @@ describe('updateSubProgram', () => {
   });
 });
 
+describe('archiveSubPrograms', () => {
+  let updateMany;
+  beforeEach(() => {
+    updateMany = sinon.stub(SubProgram, 'updateMany');
+  });
+  afterEach(() => {
+    updateMany.restore();
+  });
+
+  it('should archive several subPrograms that are not already archived', async () => {
+    const subProgramIds = [new ObjectId(), new ObjectId()];
+    const archivedAt = '2026-08-18T00:00:00.000Z';
+
+    await SubProgramHelper.archiveSubPrograms(subProgramIds, archivedAt);
+
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: subProgramIds }, archivedAt: { $exists: false } },
+      { $set: { archivedAt } }
+    );
+  });
+
+  it('should unarchive several subPrograms that were archived along with the program', async () => {
+    const subProgramIds = [new ObjectId(), new ObjectId()];
+    const previousArchivedAt = '2026-08-17T00:00:00.000Z';
+
+    await SubProgramHelper.archiveSubPrograms(subProgramIds, '', previousArchivedAt);
+
+    sinon.assert.calledOnceWithExactly(
+      updateMany,
+      { _id: { $in: subProgramIds }, archivedAt: previousArchivedAt },
+      { $unset: { archivedAt: '' } }
+    );
+  });
+});
+
+describe('deleteSubProgram', () => {
+  let subProgramDeleteOne;
+  let programUpdateOne;
+  beforeEach(() => {
+    subProgramDeleteOne = sinon.stub(SubProgram, 'deleteOne');
+    programUpdateOne = sinon.stub(Program, 'updateOne');
+  });
+  afterEach(() => {
+    subProgramDeleteOne.restore();
+    programUpdateOne.restore();
+  });
+
+  it('should delete a subProgram and remove it from its program', async () => {
+    const subProgramId = new ObjectId();
+
+    await SubProgramHelper.deleteSubProgram(subProgramId);
+
+    sinon.assert.calledOnceWithExactly(subProgramDeleteOne, { _id: subProgramId });
+    sinon.assert.calledOnceWithExactly(
+      programUpdateOne,
+      { subPrograms: subProgramId },
+      { $pull: { subPrograms: subProgramId } }
+    );
+  });
+});
+
 describe('listELearningDraft', () => {
   let find;
   beforeEach(() => {
@@ -568,7 +651,7 @@ describe('listELearningDraft', () => {
     SinonMongoose.calledOnceWithExactly(
       find,
       [
-        { query: 'find', args: [{ status: 'draft' }] },
+        { query: 'find', args: [{ status: 'draft', archivedAt: { $exists: false } }] },
         { query: 'populate', args: [{ path: 'program', select: '_id name description image' }] },
         { query: 'populate', args: [{ path: 'steps', select: 'type theoreticalDuration' }] },
         { query: 'lean', args: [{ virtuals: true }] },
@@ -607,7 +690,7 @@ describe('listELearningDraft', () => {
     SinonMongoose.calledOnceWithExactly(
       find,
       [
-        { query: 'find', args: [{ status: 'draft' }] },
+        { query: 'find', args: [{ status: 'draft', archivedAt: { $exists: false } }] },
         {
           query: 'populate',
           args: [{

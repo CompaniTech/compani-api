@@ -4099,6 +4099,7 @@ describe('getCourse', () => {
           { identity: { firstname: 'titi', lastname: 'grosminet' }, local: { email: 'titi@compa.fr' } },
           { identity: { firstname: 'asterix', lastname: 'obelix' }, local: { email: 'aasterix@compa.fr' } },
         ],
+        subProgram: { _id: new ObjectId(), program: { _id: new ObjectId() } },
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(course));
@@ -4121,6 +4122,10 @@ describe('getCourse', () => {
           {
             query: 'populate',
             args: [{ path: 'trainees', select: 'identity.firstname identity.lastname local.email' }],
+          },
+          {
+            query: 'populate',
+            args: [{ path: 'subProgram', select: 'program', populate: [{ path: 'program', select: '_id' }] }],
           },
           { query: 'lean', args: [{ virtuals: true }] },
         ]

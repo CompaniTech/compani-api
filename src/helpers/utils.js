@@ -1,5 +1,7 @@
 const get = require('lodash/get');
 const omit = require('lodash/omit');
+const has = require('lodash/has');
+const set = require('lodash/set');
 const isEmpty = require('lodash/isEmpty');
 const flat = require('flat');
 const { ObjectId } = require('mongodb');
@@ -125,6 +127,14 @@ exports.formatFloatForExport = (number, decimals = 2) => {
 
 exports.formatArrayOrStringQueryParam = (param, keyName) =>
   (Array.isArray(param) ? param.map(id => ({ [keyName]: id })) : [{ [keyName]: param }]);
+
+exports.formatQueryWithArchive = (query) => {
+  const formattedQuery = omit(query, ['isArchived']);
+
+  if (has(query, 'isArchived')) set(formattedQuery, 'archivedAt', { $exists: !!query.isArchived });
+
+  return formattedQuery;
+};
 
 exports.capitalize = (s) => {
   if (typeof s !== 'string') return '';

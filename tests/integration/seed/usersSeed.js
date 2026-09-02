@@ -427,7 +427,26 @@ const coursesList = [
 ];
 
 const activityHistoryList = [
-  { _id: new ObjectId(), activity: activityList[0]._id, user: usersSeedList[12]._id, date: '2021-01-25T10:05:32.582Z' },
+  {
+    _id: new ObjectId(),
+    activity: activityList[0]._id,
+    user: usersSeedList[12]._id,
+    date: new Date('2021-01-25T10:05:32.582Z'),
+    createdAt: new Date('2021-01-25T10:05:32.582Z'),
+    updatedAt: new Date('2021-01-25T10:05:32.582Z'),
+    questionnaireAnswersList: [],
+    quizzAnswersList: [],
+  },
+  {
+    _id: new ObjectId(),
+    activity: activityList[0]._id,
+    user: usersSeedList[12]._id,
+    date: new Date('2020-03-10T09:00:00.000Z'),
+    createdAt: new Date('2020-03-10T09:00:00.000Z'),
+    updatedAt: new Date('2020-03-10T09:00:00.000Z'),
+    questionnaireAnswersList: [],
+    quizzAnswersList: [],
+  },
 ];
 
 const identityVerifications = [
@@ -471,4 +490,5 @@ module.exports = {
   coachFromOtherCompany,
   auxiliaryFromOtherCompany,
   activityList,
+  activityHistoryList,
 };
