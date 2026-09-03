@@ -7,6 +7,7 @@ const app = require('../../server');
 const Program = require('../../src/models/Program');
 const SubProgram = require('../../src/models/SubProgram');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
+const UtilsHelper = require('../../src/helpers/utils');
 const {
   populateDB,
   programsList,
@@ -252,6 +253,11 @@ describe('PROGRAMS ROUTES - GET /programs/{_id}', () => {
           areActivitiesValid: true,
         }),
       ]));
+
+      const step = response.result.data.program.subPrograms[0].steps.find(s => s.name === 'étape 3');
+      expect(step.subPrograms.length).toEqual(2);
+      expect(step.subPrograms.some(sp => UtilsHelper.areObjectIdsEquals(sp._id, subProgramsList[4]._id)))
+        .toBeFalsy();
     });
 
     it('should return a program strictly e-learning', async () => {
