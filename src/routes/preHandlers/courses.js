@@ -866,6 +866,19 @@ exports.authorizeTrainerDeletion = async (req) => {
   return null;
 };
 
+exports.authorizeTrainerRoleUpdate = async (req) => {
+  const { params } = req;
+
+  const course = await Course.findOne({ _id: params._id }, { trainers: 1, archivedAt: 1 }).lean();
+  if (!course) throw Boom.notFound();
+  if (course.archivedAt) throw Boom.forbidden();
+
+  const trainerIsCourseTrainer = UtilsHelper.doesArrayIncludeId(course.trainers, params.trainerId);
+  if (!trainerIsCourseTrainer) throw Boom.forbidden();
+
+  return null;
+};
+
 exports.authorizeTutorAddition = async (req) => {
   const { params, payload } = req;
 

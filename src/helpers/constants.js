@@ -297,6 +297,11 @@ module.exports = {
   TRAINER: 'trainer',
   // ROLE HOLDING
   HOLDING_ADMIN: 'holding_admin',
+  // TRAINER ROLES (fonction pédagogique sur une formation, distincte des rôles de permission ci-dessus)
+  VAEI_COACH: 'vaei_coach',
+  ARCHITECT: 'architect',
+  CODEV_REPRESENTATIVE: 'codev_representative',
+  get TRAINER_ROLES() { return [this.VAEI_COACH, this.ARCHITECT, this.CODEV_REPRESENTATIVE]; },
   // APP NAMES
   FORMATION: 'formation',
   // SUBSCRIPTIONS

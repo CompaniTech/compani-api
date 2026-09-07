@@ -30,6 +30,7 @@ const {
   generateTrainingContract,
   addTrainer,
   removeTrainer,
+  updateTrainerRole,
   addTutor,
   removeTutor,
   uploadTraineeCSV,
@@ -65,6 +66,7 @@ const {
   authorizeGetCompletionCertificates,
   authorizeTrainerAddition,
   authorizeTrainerDeletion,
+  authorizeTrainerRoleUpdate,
   authorizeTutorAddition,
   authorizeTutorDeletion,
   authorizeUploadTraineeCSV,
@@ -87,6 +89,7 @@ const {
   SINGLE,
   STRICTLY_E_LEARNING,
   INTER_B2B,
+  TRAINER_ROLES,
 } = require('../helpers/constants');
 const { dateToISOString, formDataPayload } = require('./validations/utils');
 
@@ -574,7 +577,10 @@ exports.plugin = {
         auth: { scope: 'courses:create' },
         validate: {
           params: Joi.object({ _id: Joi.objectId().required() }),
-          payload: Joi.object({ trainer: Joi.objectId().required() }),
+          payload: Joi.object({
+            trainer: Joi.objectId().required(),
+            role: Joi.string().valid(...TRAINER_ROLES),
+          }),
         },
         pre: [{ method: authorizeTrainerAddition }],
       },
@@ -592,6 +598,20 @@ exports.plugin = {
         pre: [{ method: authorizeTrainerDeletion }],
       },
       handler: removeTrainer,
+    });
+
+    server.route({
+      method: 'PUT',
+      path: '/{_id}/trainers/{trainerId}',
+      options: {
+        auth: { scope: 'courses:create' },
+        validate: {
+          params: Joi.object({ _id: Joi.objectId().required(), trainerId: Joi.objectId().required() }),
+          payload: Joi.object({ role: Joi.string().valid(...TRAINER_ROLES) }),
+        },
+        pre: [{ method: authorizeTrainerRoleUpdate }],
+      },
+      handler: updateTrainerRole,
     });
 
     server.route({

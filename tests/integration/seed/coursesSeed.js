@@ -75,6 +75,7 @@ const {
   COURSE,
   COURSE_BILL,
   TRAINER,
+  VAEI_COACH,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -766,6 +767,7 @@ const coursesList = [
     trainees: [traineeFromAuthFormerlyInOther._id],
     companies: [authCompany._id],
     trainers: [trainer._id],
+    rolePerTrainer: [{ trainer: trainer._id, role: VAEI_COACH }],
     operationsRepresentative: vendorAdmin._id,
     tutors: [noRole._id],
     certificateGenerationMode: MONTHLY,

@@ -77,6 +77,8 @@ const {
   SINGLE,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  VAEI_COACH,
+  ARCHITECT,
   COURSE_RESTART,
   COURSE_INTERRUPTION,
   MONTHLY,
@@ -9736,6 +9738,27 @@ describe('addTrainer', () => {
       credentials._id
     );
   });
+
+  it('should add trainer to course with a role', async () => {
+    const trainerId = new ObjectId();
+    const course = { _id: new ObjectId(), misc: 'Test', trainers: [new ObjectId()] };
+    const payload = { course: course._id, trainer: trainerId, role: VAEI_COACH, action: TRAINER_ADDITION };
+    const credentials = { _id: new ObjectId() };
+
+    await CourseHelper.addTrainer(course._id, payload, credentials);
+
+    sinon.assert.calledOnceWithExactly(
+      courseUpdateOne,
+      { _id: course._id },
+      { $addToSet: { trainers: trainerId }, $push: { rolePerTrainer: { trainer: trainerId, role: VAEI_COACH } } }
+    );
+
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnTrainerAdditionOrDeletion,
+      { course: course._id, trainerId, action: payload.action },
+      credentials._id
+    );
+  });
 });
 
 describe('removeTrainer', () => {
@@ -9796,12 +9819,81 @@ describe('removeTrainer', () => {
     sinon.assert.calledOnceWithExactly(
       courseUpdateOne,
       { _id: course._id },
-      { $pull: { trainers: trainerId }, $unset: { contact: '' } }
+      { $pull: { trainers: trainerId, rolePerTrainer: { trainer: trainerId } }, $unset: { contact: '' } }
     );
     sinon.assert.calledOnceWithExactly(
       createHistoryOnTrainerAdditionOrDeletion,
       { course: course._id, trainerId, action: payload.action },
       credentials._id
+    );
+  });
+});
+
+describe('updateTrainerRole', () => {
+  let courseFindOne;
+  let courseUpdateOne;
+
+  beforeEach(() => {
+    courseFindOne = sinon.stub(Course, 'findOne');
+    courseUpdateOne = sinon.stub(Course, 'updateOne');
+  });
+
+  afterEach(() => {
+    courseFindOne.restore();
+    courseUpdateOne.restore();
+  });
+
+  it('should push a new role for a trainer without one yet', async () => {
+    const courseId = new ObjectId();
+    const trainerId = new ObjectId();
+    const course = { _id: courseId, rolePerTrainer: [] };
+    const payload = { role: ARCHITECT };
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
+    await CourseHelper.updateTrainerRole(courseId, trainerId, payload);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { rolePerTrainer: 1 }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(
+      courseUpdateOne,
+      { _id: courseId },
+      { $push: { rolePerTrainer: { trainer: trainerId, role: ARCHITECT } } }
+    );
+  });
+
+  it('should update the existing role of a trainer', async () => {
+    const courseId = new ObjectId();
+    const trainerId = new ObjectId();
+    const course = { _id: courseId, rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }] };
+    const payload = { role: ARCHITECT };
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
+    await CourseHelper.updateTrainerRole(courseId, trainerId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      courseUpdateOne,
+      { _id: courseId },
+      { $set: { 'rolePerTrainer.$[elem].role': ARCHITECT } },
+      { arrayFilters: [{ 'elem.trainer': trainerId }] }
+    );
+  });
+
+  it('should remove the role of a trainer if no role is given', async () => {
+    const courseId = new ObjectId();
+    const trainerId = new ObjectId();
+    const payload = {};
+
+    await CourseHelper.updateTrainerRole(courseId, trainerId, payload);
+
+    sinon.assert.notCalled(courseFindOne);
+    sinon.assert.calledOnceWithExactly(
+      courseUpdateOne,
+      { _id: courseId },
+      { $pull: { rolePerTrainer: { trainer: trainerId } } }
     );
   });
 });
@@ -10151,8 +10243,18 @@ describe('uploadSingleCourseCSV', () => {
 
     sinon.assert.calledOnceWithExactly(createCompany, { name: 'Company' });
     sinon.assert.calledOnceWithExactly(createCourse, payload, credentials);
-    sinon.assert.calledWithExactly(addTrainer.getCall(0), courseId, { trainer: coach._id }, credentials);
-    sinon.assert.calledWithExactly(addTrainer.getCall(1), courseId, { trainer: architect._id }, credentials);
+    sinon.assert.calledWithExactly(
+      addTrainer.getCall(0),
+      courseId,
+      { trainer: coach._id, role: VAEI_COACH },
+      credentials
+    );
+    sinon.assert.calledWithExactly(
+      addTrainer.getCall(1),
+      courseId,
+      { trainer: architect._id, role: ARCHITECT },
+      credentials
+    );
     sinon.assert.notCalled(courseCountDocuments);
     sinon.assert.notCalled(userCompanyCountDocuments);
     sinon.assert.notCalled(createUserCompany);

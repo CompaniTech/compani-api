@@ -345,6 +345,17 @@ const removeTrainer = async (req) => {
   }
 };
 
+const updateTrainerRole = async (req) => {
+  try {
+    await CoursesHelper.updateTrainerRole(req.params._id, req.params.trainerId, req.payload);
+
+    return { message: translate[language].courseTrainerRoleUpdated };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 const addTutor = async (req) => {
   try {
     await CoursesHelper.addTutor(req.params._id, req.payload);
@@ -439,6 +450,7 @@ module.exports = {
   generateTrainingContract,
   addTrainer,
   removeTrainer,
+  updateTrainerRole,
   addTutor,
   removeTutor,
   uploadTraineeCSV,

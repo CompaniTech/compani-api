@@ -88,6 +88,8 @@ const {
   SECOND,
   MONTH,
   TRAINER_SALARY,
+  VAEI_COACH,
+  ARCHITECT,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -1931,7 +1933,10 @@ exports.composeCourseName = (course) => {
 };
 
 exports.addTrainer = async (courseId, payload, credentials) => {
-  await Course.updateOne({ _id: courseId }, { $addToSet: { trainers: payload.trainer } });
+  const update = { $addToSet: { trainers: payload.trainer } };
+  if (payload.role) update.$push = { rolePerTrainer: { trainer: payload.trainer, role: payload.role } };
+
+  await Course.updateOne({ _id: courseId }, update);
 
   await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(
     { course: courseId, trainerId: payload.trainer, action: TRAINER_ADDITION },
@@ -1952,8 +1957,8 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
   const trainerIsContact = UtilsHelper.areObjectIdsEquals(get(course, 'contact'), trainerId);
 
   const query = trainerIsContact
-    ? { $pull: { trainers: trainerId }, $unset: { contact: '' } }
-    : { $pull: { trainers: trainerId } };
+    ? { $pull: { trainers: trainerId, rolePerTrainer: { trainer: trainerId } }, $unset: { contact: '' } }
+    : { $pull: { trainers: trainerId, rolePerTrainer: { trainer: trainerId } } };
 
   await Course.updateOne({ _id: courseId }, query);
 
@@ -1961,6 +1966,30 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
     { course: courseId, trainerId, action: TRAINER_DELETION },
     credentials._id
   );
+};
+
+exports.updateTrainerRole = async (courseId, trainerId, payload) => {
+  if (!payload.role) {
+    await Course.updateOne({ _id: courseId }, { $pull: { rolePerTrainer: { trainer: trainerId } } });
+    return;
+  }
+
+  const course = await Course.findOne({ _id: courseId }, { rolePerTrainer: 1 }).lean();
+  const alreadyHasRole = (course.rolePerTrainer || [])
+    .some(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
+
+  if (alreadyHasRole) {
+    await Course.updateOne(
+      { _id: courseId },
+      { $set: { 'rolePerTrainer.$[elem].role': payload.role } },
+      { arrayFilters: [{ 'elem.trainer': trainerId }] }
+    );
+  } else {
+    await Course.updateOne(
+      { _id: courseId },
+      { $push: { rolePerTrainer: { trainer: trainerId, role: payload.role } } }
+    );
+  }
 };
 
 exports.addTutor = async (courseId, payload) => {
@@ -2060,8 +2089,8 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       tradeName,
     };
     const course = await exports.createCourse(payload, credentials);
-    if (coach) await exports.addTrainer(course._id, { trainer: coach._id }, credentials);
-    if (architect) await exports.addTrainer(course._id, { trainer: architect._id }, credentials);
+    if (coach) await exports.addTrainer(course._id, { trainer: coach._id, role: VAEI_COACH }, credentials);
+    if (architect) await exports.addTrainer(course._id, { trainer: architect._id, role: ARCHITECT }, credentials);
   }
 };
 
