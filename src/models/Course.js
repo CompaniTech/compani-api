@@ -12,6 +12,7 @@ const {
   GLOBAL,
   MONTHLY,
   SINGLE,
+  TRAINER_ROLES,
 } = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 
@@ -36,6 +37,14 @@ const CourseSchema = mongoose.Schema({
   type: { type: String, required: true, enum: COURSE_TYPES },
   format: { type: String, enum: COURSE_FORMATS, default: BLENDED },
   trainers: { type: [mongoose.Schema.Types.ObjectId], ref: 'User' },
+  rolePerTrainer: {
+    type: [{
+      trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      role: { type: String, enum: TRAINER_ROLES, required: true },
+    }],
+    _id: false,
+    default: undefined,
+  },
   trainees: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   contact: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   accessRules: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Company' }],
