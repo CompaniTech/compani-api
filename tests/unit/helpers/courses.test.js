@@ -9750,7 +9750,7 @@ describe('addTrainer', () => {
     sinon.assert.calledOnceWithExactly(
       courseUpdateOne,
       { _id: course._id },
-      { $addToSet: { trainers: trainerId }, $push: { rolePerTrainer: { trainer: trainerId, role: VAEI_COACH } } }
+      { $addToSet: { trainers: trainerId, rolePerTrainer: { trainer: trainerId, role: VAEI_COACH } } }
     );
 
     sinon.assert.calledOnceWithExactly(

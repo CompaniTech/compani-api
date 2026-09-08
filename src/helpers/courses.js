@@ -1933,8 +1933,12 @@ exports.composeCourseName = (course) => {
 };
 
 exports.addTrainer = async (courseId, payload, credentials) => {
-  const update = { $addToSet: { trainers: payload.trainer } };
-  if (payload.role) update.$push = { rolePerTrainer: { trainer: payload.trainer, role: payload.role } };
+  const update = {
+    $addToSet: {
+      trainers: payload.trainer,
+      ...payload.role && { rolePerTrainer: { trainer: payload.trainer, role: payload.role } },
+    },
+  };
 
   await Course.updateOne({ _id: courseId }, update);
 
