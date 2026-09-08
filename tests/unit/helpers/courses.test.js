@@ -9884,6 +9884,10 @@ describe('updateTrainerRole', () => {
 
     await CourseHelper.updateTrainerRole(courseId, trainerId, payload, credentials);
 
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { rolePerTrainer: 1 }] }, { query: 'lean' }]
+    );
     sinon.assert.calledOnceWithExactly(
       courseUpdateOne,
       { _id: courseId },
@@ -9900,12 +9904,18 @@ describe('updateTrainerRole', () => {
   it('should remove the role of a trainer if no role is given', async () => {
     const courseId = new ObjectId();
     const trainerId = new ObjectId();
+    const course = { _id: courseId, rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }] };
     const payload = {};
     const credentials = { _id: new ObjectId() };
 
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
     await CourseHelper.updateTrainerRole(courseId, trainerId, payload, credentials);
 
-    sinon.assert.notCalled(courseFindOne);
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { rolePerTrainer: 1 }] }, { query: 'lean' }]
+    );
     sinon.assert.calledOnceWithExactly(
       courseUpdateOne,
       { _id: courseId },
@@ -9916,6 +9926,25 @@ describe('updateTrainerRole', () => {
       { course: courseId, trainerId, role: undefined },
       credentials._id
     );
+  });
+
+  it('should not do anything if role in payload is same as existing role', async () => {
+    const courseId = new ObjectId();
+    const trainerId = new ObjectId();
+    const course = { _id: courseId, rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }] };
+    const payload = { role: VAEI_COACH };
+    const credentials = { _id: new ObjectId() };
+
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
+    await CourseHelper.updateTrainerRole(courseId, trainerId, payload, credentials);
+
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [{ query: 'findOne', args: [{ _id: courseId }, { rolePerTrainer: 1 }] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(courseUpdateOne);
+    sinon.assert.notCalled(createHistoryOnTrainerRoleUpdate);
   });
 });
 
