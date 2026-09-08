@@ -347,7 +347,7 @@ const removeTrainer = async (req) => {
 
 const updateTrainerRole = async (req) => {
   try {
-    await CoursesHelper.updateTrainerRole(req.params._id, req.params.trainerId, req.payload);
+    await CoursesHelper.updateTrainerRole(req.params._id, req.params.trainerId, req.payload, req.auth.credentials);
 
     return { message: translate[language].courseTrainerRoleUpdated };
   } catch (e) {

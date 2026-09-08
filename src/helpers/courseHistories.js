@@ -17,6 +17,7 @@ const {
   COMPANY_ADDITION,
   COMPANY_DELETION,
   SLOT_RESTRICTION,
+  TRAINER_ROLE_UPDATE,
 } = require('./constants');
 
 exports.createHistory = async (course, createdBy, action, payload = {}) =>
@@ -156,6 +157,14 @@ exports.getCompanyAtCourseRegistrationListByCourse = async (courses) => {
 
 exports.createHistoryOnTrainerAdditionOrDeletion = (payload, userId) =>
   exports.createHistory(payload.course, userId, payload.action, { trainer: payload.trainerId });
+
+exports.createHistoryOnTrainerRoleUpdate = (payload, userId) =>
+  exports.createHistory(
+    payload.course,
+    userId,
+    TRAINER_ROLE_UPDATE,
+    { trainer: payload.trainerId, ...(payload.role && { role: payload.role }) }
+  );
 
 exports.createHistoryOnCourseInterruptionOrRestart = (payload, userId) =>
   exports.createHistory(payload.courseId, userId, payload.action);

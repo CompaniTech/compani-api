@@ -853,20 +853,7 @@ exports.authorizeTrainerAddition = async (req) => {
   return null;
 };
 
-exports.authorizeTrainerDeletion = async (req) => {
-  const { params } = req;
-
-  const course = await Course.findOne({ _id: params._id }, { trainers: 1, archivedAt: 1 }).lean();
-  if (!course) throw Boom.notFound();
-  if (course.archivedAt) throw Boom.forbidden();
-
-  const trainerIsCourseTrainer = UtilsHelper.doesArrayIncludeId(course.trainers, params.trainerId);
-  if (!trainerIsCourseTrainer) throw Boom.forbidden();
-
-  return null;
-};
-
-exports.authorizeTrainerRoleUpdate = async (req) => {
+exports.authorizeTrainerEdition = async (req) => {
   const { params } = req;
 
   const course = await Course.findOne({ _id: params._id }, { trainers: 1, archivedAt: 1 }).lean();
@@ -1289,6 +1276,13 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
           };
         }
       }
+    }
+
+    const coachIsArchitect = formattedCoach && formattedArchitect &&
+      UtilsHelper.areObjectIdsEquals(formattedCoach._id, formattedArchitect._id);
+    if (coachIsArchitect) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].coachAndArchitectAreSame);
+      else errorsByTrainee[learnerName] = [translate[language].coachAndArchitectAreSame];
     }
 
     let formattedDate = '';

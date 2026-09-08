@@ -9832,15 +9832,18 @@ describe('removeTrainer', () => {
 describe('updateTrainerRole', () => {
   let courseFindOne;
   let courseUpdateOne;
+  let createHistoryOnTrainerRoleUpdate;
 
   beforeEach(() => {
     courseFindOne = sinon.stub(Course, 'findOne');
     courseUpdateOne = sinon.stub(Course, 'updateOne');
+    createHistoryOnTrainerRoleUpdate = sinon.stub(CourseHistoriesHelper, 'createHistoryOnTrainerRoleUpdate');
   });
 
   afterEach(() => {
     courseFindOne.restore();
     courseUpdateOne.restore();
+    createHistoryOnTrainerRoleUpdate.restore();
   });
 
   it('should push a new role for a trainer without one yet', async () => {
@@ -9848,10 +9851,11 @@ describe('updateTrainerRole', () => {
     const trainerId = new ObjectId();
     const course = { _id: courseId, rolePerTrainer: [] };
     const payload = { role: ARCHITECT };
+    const credentials = { _id: new ObjectId() };
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
 
-    await CourseHelper.updateTrainerRole(courseId, trainerId, payload);
+    await CourseHelper.updateTrainerRole(courseId, trainerId, payload, credentials);
 
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
@@ -9862,6 +9866,11 @@ describe('updateTrainerRole', () => {
       { _id: courseId },
       { $push: { rolePerTrainer: { trainer: trainerId, role: ARCHITECT } } }
     );
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnTrainerRoleUpdate,
+      { course: courseId, trainerId, role: ARCHITECT },
+      credentials._id
+    );
   });
 
   it('should update the existing role of a trainer', async () => {
@@ -9869,10 +9878,11 @@ describe('updateTrainerRole', () => {
     const trainerId = new ObjectId();
     const course = { _id: courseId, rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }] };
     const payload = { role: ARCHITECT };
+    const credentials = { _id: new ObjectId() };
 
     courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
 
-    await CourseHelper.updateTrainerRole(courseId, trainerId, payload);
+    await CourseHelper.updateTrainerRole(courseId, trainerId, payload, credentials);
 
     sinon.assert.calledOnceWithExactly(
       courseUpdateOne,
@@ -9880,20 +9890,31 @@ describe('updateTrainerRole', () => {
       { $set: { 'rolePerTrainer.$[elem].role': ARCHITECT } },
       { arrayFilters: [{ 'elem.trainer': trainerId }] }
     );
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnTrainerRoleUpdate,
+      { course: courseId, trainerId, role: ARCHITECT },
+      credentials._id
+    );
   });
 
   it('should remove the role of a trainer if no role is given', async () => {
     const courseId = new ObjectId();
     const trainerId = new ObjectId();
     const payload = {};
+    const credentials = { _id: new ObjectId() };
 
-    await CourseHelper.updateTrainerRole(courseId, trainerId, payload);
+    await CourseHelper.updateTrainerRole(courseId, trainerId, payload, credentials);
 
     sinon.assert.notCalled(courseFindOne);
     sinon.assert.calledOnceWithExactly(
       courseUpdateOne,
       { _id: courseId },
       { $pull: { rolePerTrainer: { trainer: trainerId } } }
+    );
+    sinon.assert.calledOnceWithExactly(
+      createHistoryOnTrainerRoleUpdate,
+      { course: courseId, trainerId, role: undefined },
+      credentials._id
     );
   });
 });

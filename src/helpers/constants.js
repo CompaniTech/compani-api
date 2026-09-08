@@ -505,6 +505,7 @@ module.exports = {
   COMPANY_DELETION: 'company_deletion',
   TRAINER_ADDITION: 'trainer_addition',
   TRAINER_DELETION: 'trainer_deletion',
+  TRAINER_ROLE_UPDATE: 'trainer_role_update',
   COURSE_INTERRUPTION: 'course_interruption',
   COURSE_RESTART: 'course_restart',
   SLOT_RESTRICTION: 'slot_restriction',

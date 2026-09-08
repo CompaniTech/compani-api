@@ -6306,6 +6306,22 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainers/{trainerId}', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should remove trainer\'s role from rolePerTrainer', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[25]._id}/trainers/${trainer._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const course = await Course.countDocuments({
+        _id: coursesList[25]._id,
+        rolePerTrainer: { $elemMatch: { trainer: trainer._id, role: VAEI_COACH } },
+      });
+      expect(course).toEqual(0);
+    });
+
     it('should return 404 if course\'s _id doesn\'t exist', async () => {
       const response = await app.inject({
         method: 'DELETE',
@@ -8542,6 +8558,40 @@ describe('COURSES ROUTES - POST /courses/single-courses-csv', () => {
       expect(response.statusCode).toBe(422);
       expect(Object.values(response.result.errorsByTrainee)[0])
         .toEqual(['le format de l\'email est incorrect pour l\'architecte']);
+    });
+
+    it('should return 422 if coach and architect are the same person', async () => {
+      const formData = { file: 'test' };
+      const form = generateFormData(formData);
+
+      parseCSV.returns([
+        {
+          firstname: 'Tom',
+          lastname: 'Sawyer',
+          email: '',
+          countryCode: '',
+          phone: '0687654321',
+          company: 'Nouvelle Structure',
+          suffix: '@test.fr',
+          subProgram: subProgramsList[4]._id,
+          operationsRepresentative: 'training-organisation-manager@alenvi.io',
+          coach: 'trainer@alenvi.io',
+          architect: 'trainer@alenvi.io',
+          estimatedStartDate: '2025-11-01',
+          tradeName: 'nom',
+        },
+      ]);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/courses/single-courses-csv',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsByTrainee)[0])
+        .toEqual(['le coach et l\'architecte doivent être des personnes différentes']);
     });
 
     it('should return 422 if estimated start date is incorrect', async () => {

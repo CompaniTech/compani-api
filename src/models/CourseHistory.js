@@ -10,9 +10,11 @@ const {
   COMPANY_DELETION,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  TRAINER_ROLE_UPDATE,
   COURSE_INTERRUPTION,
   COURSE_RESTART,
   SLOT_RESTRICTION,
+  TRAINER_ROLES,
 } = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
@@ -28,6 +30,7 @@ const ACTION_TYPES = [
   COMPANY_DELETION,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  TRAINER_ROLE_UPDATE,
   COURSE_INTERRUPTION,
   COURSE_RESTART,
   SLOT_RESTRICTION,
@@ -74,8 +77,9 @@ const CourseHistorySchema = mongoose.Schema({
   trainer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: () => [TRAINER_ADDITION, TRAINER_DELETION].includes(this.action),
+    required: () => [TRAINER_ADDITION, TRAINER_DELETION, TRAINER_ROLE_UPDATE].includes(this.action),
   },
+  role: { type: String, enum: TRAINER_ROLES },
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => CourseHistorySchema.pre(middleware, formatQuery));

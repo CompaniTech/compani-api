@@ -1968,28 +1968,32 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
   );
 };
 
-exports.updateTrainerRole = async (courseId, trainerId, payload) => {
+exports.updateTrainerRole = async (courseId, trainerId, payload, credentials) => {
   if (!payload.role) {
     await Course.updateOne({ _id: courseId }, { $pull: { rolePerTrainer: { trainer: trainerId } } });
-    return;
-  }
-
-  const course = await Course.findOne({ _id: courseId }, { rolePerTrainer: 1 }).lean();
-  const alreadyHasRole = (course.rolePerTrainer || [])
-    .some(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
-
-  if (alreadyHasRole) {
-    await Course.updateOne(
-      { _id: courseId },
-      { $set: { 'rolePerTrainer.$[elem].role': payload.role } },
-      { arrayFilters: [{ 'elem.trainer': trainerId }] }
-    );
   } else {
-    await Course.updateOne(
-      { _id: courseId },
-      { $push: { rolePerTrainer: { trainer: trainerId, role: payload.role } } }
-    );
+    const course = await Course.findOne({ _id: courseId }, { rolePerTrainer: 1 }).lean();
+    const alreadyHasRole = (course.rolePerTrainer || [])
+      .some(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
+
+    if (alreadyHasRole) {
+      await Course.updateOne(
+        { _id: courseId },
+        { $set: { 'rolePerTrainer.$[elem].role': payload.role } },
+        { arrayFilters: [{ 'elem.trainer': trainerId }] }
+      );
+    } else {
+      await Course.updateOne(
+        { _id: courseId },
+        { $push: { rolePerTrainer: { trainer: trainerId, role: payload.role } } }
+      );
+    }
   }
+
+  await CourseHistoriesHelper.createHistoryOnTrainerRoleUpdate(
+    { course: courseId, trainerId, role: payload.role },
+    credentials._id
+  );
 };
 
 exports.addTutor = async (courseId, payload) => {

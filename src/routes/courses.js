@@ -65,8 +65,7 @@ const {
   authorizeGenerateTrainingContract,
   authorizeGetCompletionCertificates,
   authorizeTrainerAddition,
-  authorizeTrainerDeletion,
-  authorizeTrainerRoleUpdate,
+  authorizeTrainerEdition,
   authorizeTutorAddition,
   authorizeTutorDeletion,
   authorizeUploadTraineeCSV,
@@ -595,7 +594,7 @@ exports.plugin = {
         validate: {
           params: Joi.object({ _id: Joi.objectId().required(), trainerId: Joi.objectId().required() }),
         },
-        pre: [{ method: authorizeTrainerDeletion }],
+        pre: [{ method: authorizeTrainerEdition }],
       },
       handler: removeTrainer,
     });
@@ -609,7 +608,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required(), trainerId: Joi.objectId().required() }),
           payload: Joi.object({ role: Joi.string().valid(...TRAINER_ROLES) }),
         },
-        pre: [{ method: authorizeTrainerRoleUpdate }],
+        pre: [{ method: authorizeTrainerEdition }],
       },
       handler: updateTrainerRole,
     });
