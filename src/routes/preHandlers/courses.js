@@ -35,6 +35,7 @@ const {
   OPERATIONS,
   CONVOCATION,
   COURSE,
+  TRAINER_SALARY,
   TRAINEE,
   PEDAGOGY,
   PUBLISHED,
@@ -1647,8 +1648,9 @@ exports.authorizeCourseBillingPurchaseEdition = async (req) => {
   if (!course) throw Boom.notFound();
   const billingPurchase = course.billingPurchaseList
     .find(p => UtilsHelper.areObjectIdsEquals(billingPurchaseId, p._id));
-  if (billingPurchase.billingItem.type !== COURSE) {
-    if (!req.payload) throw Boom.forbidden();
+  if (!req.payload) {
+    if (billingPurchase.billingItem.type !== COURSE) throw Boom.forbidden();
+  } else if (![COURSE, TRAINER_SALARY].includes(billingPurchase.billingItem.type)) {
     const { price, count } = req.payload;
     const isPriceOrCountEdited = price !== billingPurchase.price || count !== billingPurchase.count;
     if (isPriceOrCountEdited) throw Boom.forbidden();

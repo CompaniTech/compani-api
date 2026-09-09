@@ -108,6 +108,7 @@ const {
   PRESENT,
   COURSE,
   MINUTE,
+  TRAINER_SALARY,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -1211,10 +1212,10 @@ describe('SEEDS VERIFICATION', () => {
           expect(everyCoursePriceHasGlobalPrice).toBeTruthy();
         });
 
-        it('should pass if course billing items type is course', () => {
+        it('should pass if course billing items type is course, trainer, or trainer salary', () => {
           const everyCourseBillingItemHasCourseType = courseList
             .every(course => get(course, 'billingPurchaseList', [])
-              .every(purchase => [COURSE, TRAINER].includes(purchase.billingItem.type)));
+              .every(purchase => [COURSE, TRAINER, TRAINER_SALARY].includes(purchase.billingItem.type)));
           expect(everyCourseBillingItemHasCourseType).toBeTruthy();
         });
 
