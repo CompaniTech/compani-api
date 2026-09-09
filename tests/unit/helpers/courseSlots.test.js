@@ -15,6 +15,8 @@ const {
   SINGLE,
   NOT_INVOICED,
   PAID,
+  VAEI_COACH,
+  ARCHITECT,
 } = require('../../../src/helpers/constants');
 
 describe('list', () => {
@@ -617,7 +619,7 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees tradeName',
+            select: '_id misc subProgram trainees tradeName rolePerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
               { path: 'subProgram', select: 'priceVersions' },
@@ -777,7 +779,7 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees tradeName',
+            select: '_id misc subProgram trainees tradeName rolePerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
               { path: 'subProgram', select: 'priceVersions' },
@@ -945,7 +947,7 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees tradeName',
+            select: '_id misc subProgram trainees tradeName rolePerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
               { path: 'subProgram', select: 'priceVersions' },
@@ -1008,6 +1010,128 @@ describe('list', () => {
     });
     expect(result[trainerId].totalPaidSlotsAmount).toBe('50');
     expect(result[trainerId].totalNotInvoicedSlotsAmount).toBe('0');
+  });
+});
+
+describe('getHourlyAmount', () => {
+  const stepId = new ObjectId();
+  const trainerId = new ObjectId();
+
+  it('should return hourlyAmount if step price has no role', () => {
+    const slot = {
+      startDate: '2020-05-03T12:00:00.000Z',
+      step: { _id: stepId },
+      course: {
+        subProgram: {
+          priceVersions: [{ effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 50 }] }],
+        },
+        rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }],
+      },
+    };
+    const result = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
+
+    expect(result).toBe(50);
+  });
+
+  it('should return price matching trainer\'s role on the course', () => {
+    const slot = {
+      startDate: '2020-05-03T12:00:00.000Z',
+      step: { _id: stepId },
+      course: {
+        subProgram: {
+          priceVersions: [
+            {
+              effectiveDate: '2019-01-01T00:00:00.000Z',
+              prices: [
+                { step: stepId, role: VAEI_COACH, hourlyAmount: 50 },
+                { step: stepId, role: ARCHITECT, hourlyAmount: 55 },
+              ],
+            },
+          ],
+        },
+        rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }],
+      },
+    };
+
+    const result = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
+
+    expect(result).toBe(50);
+  });
+
+  it('should return 0 if step price is explicitly set to 0 and has no role', () => {
+    const slot = {
+      startDate: '2020-05-03T12:00:00.000Z',
+      step: { _id: stepId },
+      course: {
+        subProgram: {
+          priceVersions: [{ effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 0 }] }],
+        },
+      },
+    };
+
+    const result = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
+
+    expect(result).toBe(0);
+  });
+
+  it('should return null if no price matches the step', () => {
+    const slot = {
+      startDate: '2020-05-03T12:00:00.000Z',
+      step: { _id: stepId },
+      course: {
+        subProgram: {
+          priceVersions: [
+            { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: new ObjectId(), hourlyAmount: 50 }] },
+          ],
+        },
+        rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }],
+      },
+    };
+
+    const result = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null if trainer has no role on course and step price has roles', () => {
+    const slot = {
+      startDate: '2020-05-03T12:00:00.000Z',
+      step: { _id: stepId },
+      course: {
+        subProgram: {
+          priceVersions: [{
+            effectiveDate: '2019-01-01T00:00:00.000Z',
+            prices: [
+              { step: stepId, role: VAEI_COACH, hourlyAmount: 50 },
+              { step: stepId, role: ARCHITECT, hourlyAmount: 55 },
+            ],
+          }],
+        },
+      },
+    };
+
+    const result = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null if trainer\'s role does not match any price for the step', () => {
+    const slot = {
+      startDate: '2020-05-03T12:00:00.000Z',
+      step: { _id: stepId },
+      course: {
+        subProgram: {
+          priceVersions: [{
+            effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, role: ARCHITECT, hourlyAmount: 55 }],
+          }],
+        },
+        rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }],
+      },
+    };
+
+    const result = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
+
+    expect(result).toBeNull();
   });
 });
 

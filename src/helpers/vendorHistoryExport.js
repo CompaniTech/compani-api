@@ -431,7 +431,8 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
 
   const rows = [];
   for (const slot of filteredCourseSlots) {
-    const hourlyAmount = CourseSlotHelper.getHourlyAmount(slot);
+    // TODO (ticket 2d): this export doesn't have a trainer context yet, so role-based prices can't be resolved.
+    const hourlyAmount = CourseSlotHelper.getHourlyAmount(slot) || 0;
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
 
     let slotAmount = '';

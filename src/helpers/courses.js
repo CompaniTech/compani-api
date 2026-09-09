@@ -599,7 +599,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           },
           {
             path: 'slots',
-            select: 'step startDate endDate address meetingLink trainees trainers',
+            select: 'step startDate endDate address meetingLink trainees trainers trainerBillings',
             populate: [
               { path: 'trainers', select: 'identity' },
               ...(get(credentials, 'role.vendor.name')

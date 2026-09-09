@@ -30,17 +30,24 @@ const { CompaniDuration } = require('./dates/companiDurations');
 
 const filterPriceVersion = date => version => CompaniDate(version.effectiveDate).isSameOrBefore(date);
 
-exports.getHourlyAmount = (slot) => {
+exports.getHourlyAmount = (slot, trainerId) => {
   const matchingSubProgamPriceVersion = UtilsHelper.getMatchingVersion(
     slot.startDate,
     { ...omit(slot.course.subProgram, 'priceVersions'), versions: slot.course.subProgram.priceVersions || [] },
     'effectiveDate',
     filterPriceVersion
   );
-  const price = matchingSubProgamPriceVersion?.prices
-    .find(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
+  const stepPrices = (matchingSubProgamPriceVersion?.prices || [])
+    .filter(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
 
-  return price ? price.hourlyAmount : 0;
+  if (!stepPrices.length) return null;
+  if (!stepPrices[0].role) return stepPrices[0].hourlyAmount;
+
+  const trainerRole = (slot.course.rolePerTrainer || [])
+    .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
+  const price = trainerRole && stepPrices.find(p => p.role === trainerRole.role);
+
+  return price ? price.hourlyAmount : null;
 };
 
 const SLOT_STATUS = [NOT_INVOICED, INVOICED, PAID];
@@ -221,7 +228,7 @@ exports.list = async (query) => {
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
       path: 'course',
-      select: '_id misc subProgram trainees tradeName',
+      select: '_id misc subProgram trainees tradeName rolePerTrainer',
       populate: [
         { path: 'trainees', select: 'identity' },
         { path: 'subProgram', select: 'priceVersions' },
@@ -231,24 +238,23 @@ exports.list = async (query) => {
     .populate({ path: 'trainerBillings.trainerBill', select: 'status number' })
     .lean();
 
-  const filteredCourseSlots = courseSlots.reduce((acc, slot) => {
-    if (!slot.attendances.length) return acc;
-
-    const hourlyAmount = exports.getHourlyAmount(slot);
-    if (hourlyAmount) acc.push({ ...slot, hourlyAmount });
-    return acc;
-  }, []);
-
-  const trainers = uniqBy(filteredCourseSlots.flatMap(slot => (slot.trainers || [])), t => t._id.toHexString());
+  const filteredCourseSlots = courseSlots.filter(slot => slot.attendances.length);
 
   const collectiveStepIds = process.env.COLLECTIVE_STEP_IDS.split(',').map(id => new ObjectId(id));
-  const slotsByTrainer = filteredCourseSlots.reduce((acc, slot) => {
+  const slotTrainers = [];
+  const slotsByTrainer = {};
+  filteredCourseSlots.forEach((slot) => {
     (slot.trainers || []).forEach((t) => {
-      if (!acc[t._id]) acc[t._id] = [slot];
-      else acc[t._id].push(slot);
+      const hourlyAmount = exports.getHourlyAmount(slot, t._id);
+      if (!hourlyAmount) return;
+
+      slotTrainers.push(t);
+      if (!slotsByTrainer[t._id]) slotsByTrainer[t._id] = [{ ...slot, hourlyAmount }];
+      else slotsByTrainer[t._id].push({ ...slot, hourlyAmount });
     });
-    return acc;
-  }, {});
+  });
+
+  const trainers = uniqBy(slotTrainers, t => t._id.toHexString());
 
   const formattedSlotsGroupByTrainer = {};
   for (const trainer of trainers) {

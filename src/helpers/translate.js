@@ -102,6 +102,7 @@ module.exports = {
     subProgramInconsistentPriceRoles: 'Forbidden: prices for a step must either all have a role or none.',
     subProgramPriceELearningStep: 'Forbidden: an e-learning step cannot have a price.',
     subProgramMissingStepPrice: 'Forbidden: every non e-learning step must have a price.',
+    trainerBillHourlyAmountNotFound: 'Unprocessable: trainer\'s role does not match any price for this step.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Forbidden: a slot is paid after effectiveDate.',
     subProgramPaymentPlanNotFound: 'This payment plan does not exist.',
     subProgramPaymentPlanAlreadyExists: 'Forbidden: a payment plan with the same prices already exists.',
@@ -467,6 +468,8 @@ module.exports = {
       + 'aucun.',
     subProgramPriceELearningStep: 'Impossible : une étape e-learning ne peut pas avoir de tarif.',
     subProgramMissingStepPrice: 'Impossible : chaque étape non e-learning doit avoir un tarif.',
+    trainerBillHourlyAmountNotFound: 'Impossible : le rôle de l\'intervenant ne correspond à aucun tarif pour '
+      + 'cette étape.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Impossible: un créneau est noté réglé après la date d\'effet renseignée.',
     subProgramPaymentPlanNotFound: 'Cet échéancier n\'existe pas.',
     subProgramPaymentPlanAlreadyExists: 'Impossible : un échéancier avec les mêmes montants existe déjà.',
