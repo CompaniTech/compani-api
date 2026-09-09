@@ -30,15 +30,19 @@ const { CompaniDuration } = require('./dates/companiDurations');
 
 const filterPriceVersion = date => version => CompaniDate(version.effectiveDate).isSameOrBefore(date);
 
-exports.getHourlyAmount = (slot, trainerId) => {
+exports.getStepPrices = (stepId, subProgram, date) => {
   const matchingSubProgamPriceVersion = UtilsHelper.getMatchingVersion(
-    slot.startDate,
-    { ...omit(slot.course.subProgram, 'priceVersions'), versions: slot.course.subProgram.priceVersions || [] },
+    date,
+    { ...omit(subProgram, 'priceVersions'), versions: subProgram.priceVersions || [] },
     'effectiveDate',
     filterPriceVersion
   );
-  const stepPrices = (matchingSubProgamPriceVersion?.prices || [])
-    .filter(p => UtilsHelper.areObjectIdsEquals(p.step, slot.step._id));
+
+  return (matchingSubProgamPriceVersion?.prices || []).filter(p => UtilsHelper.areObjectIdsEquals(p.step, stepId));
+};
+
+exports.getHourlyAmount = (slot, trainerId) => {
+  const stepPrices = exports.getStepPrices(slot.step._id, slot.course.subProgram, slot.startDate);
 
   if (!stepPrices.length) return null;
   if (!stepPrices[0].role) return stepPrices[0].hourlyAmount;

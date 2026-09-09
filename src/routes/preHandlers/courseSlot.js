@@ -16,6 +16,7 @@ const User = require('../../models/User');
 const Geocode = require('../../models/Geocode');
 const translate = require('../../helpers/translate');
 const { checkAuthorization } = require('./courses');
+const CourseSlotsHelper = require('../../helpers/courseSlots');
 const {
   E_LEARNING,
   ON_SITE,
@@ -95,8 +96,8 @@ const checkPayload = async (courseSlot, payload) => {
   });
   if (completionCertificates) throw Boom.forbidden(translate[language].courseSlotDateInCompletionCertificate);
 
-  const course = await Course.findById(courseId, { subProgram: 1, trainees: 1 })
-    .populate({ path: 'subProgram', select: 'steps' })
+  const course = await Course.findById(courseId, { subProgram: 1, trainees: 1, rolePerTrainer: 1 })
+    .populate({ path: 'subProgram', select: 'steps priceVersions' })
     .lean();
 
   const editTrainers = (trainers || []).length > 0 && (
@@ -106,6 +107,21 @@ const checkPayload = async (courseSlot, payload) => {
   const editStartDate = startDate && (!initialStartDate || !CompaniDate(startDate).isSame(initialStartDate));
   const editEndDate = endDate && (!initialEndDate || !CompaniDate(endDate).isSame(initialEndDate));
   const editDates = editStartDate || editEndDate;
+
+  if (editTrainers) {
+    const stepPrices = CourseSlotsHelper.getStepPrices(step._id, course.subProgram, startDate);
+    const isRoleBasedStep = stepPrices.length > 0 && !!stepPrices[0].role;
+
+    if (isRoleBasedStep) {
+      const someTrainerRoleMismatch = trainers.some((trainerId) => {
+        const trainerRole = (course.rolePerTrainer || [])
+          .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
+
+        return !trainerRole || !stepPrices.some(p => p.role === trainerRole.role);
+      });
+      if (someTrainerRoleMismatch) throw Boom.forbidden(translate[language].courseSlotTrainerRoleMismatch);
+    }
+  }
 
   if (editTrainers || editDates || !hasOneDate) {
     const query = { courseSlot: courseSlot._id };

@@ -217,6 +217,7 @@ module.exports = {
     courseSlotDateInCompletionCertificate: 'Impossible to add course slot : completion certificate on this date.',
     courseSlotsLinkedToMissingAttendances: 'Course slots linked to missing attendances.',
     courseSlotWholeDayConflict: 'There is already a slot on the afternoon for this day.',
+    courseSlotTrainerRoleMismatch: 'Forbidden: trainer\'s role not allowed for this step.',
     noSlotLinkedToTrainerOnThisDay: 'No slot linked to trainer on this day.',
     trainerNotLinkedToSlot: 'Trainer is not linked to this slot.',
     /* Trainer bills */
@@ -588,6 +589,7 @@ module.exports = {
     courseSlotsLinkedToMissingAttendances: 'Certains émargements à inclure dans la feuille d\'émargement sont déjà'
     + ' notés comme absents.',
     courseSlotWholeDayConflict: 'Il existe déjà un créneau sur l\'après-midi pour cette journée.',
+    courseSlotTrainerRoleMismatch: 'Impossible : le rôle de l\'intervenant n\'est pas autorisé sur cette étape.',
     noSlotLinkedToTrainerOnThisDay: 'Il n\'y a pas de créneau lié à cet intervenant pour cette journée.',
     trainerNotLinkedToSlot: 'Certains créneaux ne sont pas liés à l\'intervenant.',
     /* Trainer bills */

@@ -2593,7 +2593,8 @@ describe('SEEDS VERIFICATION', () => {
             );
 
             const computedAmount = uniqueDateSlots.reduce((acc, slot) => {
-              const hourlyAmount = CourseSlotsHelper.getHourlyAmount(slot);
+              // TODO (ticket 2d): this check has no trainer context yet, so role-based prices can't be resolved.
+              const hourlyAmount = CourseSlotsHelper.getHourlyAmount(slot) || 0;
               const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
               const slotAmount = NumbersHelper
                 .toFixedToFloat(NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours()));

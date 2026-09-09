@@ -36,6 +36,8 @@ const {
   MOBILE,
   TRAINER_DELETION,
   PAID,
+  VAEI_COACH,
+  ARCHITECT,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { auxiliaryRoleId } = require('../../seed/authRolesSeed');
@@ -77,8 +79,15 @@ const stepsList = [
     theoreticalDuration: 60,
     activities: [activitiesList[0]._id],
   },
-  { _id: new ObjectId(), type: 'e_learning', name: 'encore une étape' },
-  { _id: new ObjectId(), type: 'on_site', name: 'encore une étape' },
+  {
+    _id: new ObjectId(),
+    type: 'e_learning',
+    name: 'encore une étape',
+    status: PUBLISHED,
+    theoreticalDuration: 60,
+    activities: [activitiesList[0]._id],
+  },
+  { _id: new ObjectId(), type: 'on_site', name: 'encore une étape', status: PUBLISHED, theoreticalDuration: 60 },
   { _id: new ObjectId(), type: 'remote', name: 'une étape de plus', status: PUBLISHED, theoreticalDuration: 60 },
 ];
 
@@ -107,7 +116,25 @@ const subProgramsList = [
       },
     ],
   },
-  { _id: new ObjectId(), name: 'sous-programme B', steps: [stepsList[2]._id, stepsList[3]._id] },
+  {
+    _id: new ObjectId(),
+    name: 'sous-programme B',
+    steps: [stepsList[2]._id, stepsList[3]._id],
+    status: PUBLISHED,
+    priceVersions: [
+      {
+        effectiveDate: '2022-01-01T00:00:00',
+        prices: [
+          { step: stepsList[3]._id, role: VAEI_COACH, hourlyAmount: 50 },
+          { step: stepsList[3]._id, role: ARCHITECT, hourlyAmount: 55 },
+        ],
+      },
+      {
+        effectiveDate: '2023-01-01T00:00:00',
+        prices: [{ step: stepsList[3]._id, role: ARCHITECT, hourlyAmount: 60 }],
+      },
+    ],
+  },
 ];
 
 const programsList = [
@@ -212,6 +239,20 @@ const coursesList = [
     certificateGenerationMode: MONTHLY,
     maxTrainees: 3,
     expectedBills: 0,
+    tradeName: 'nom',
+  },
+  { // 7 course with a role-priced step
+    _id: new ObjectId(),
+    subProgram: subProgramsList[1]._id,
+    trainees: [],
+    companies: [authCompany._id],
+    misc: 'role priced session',
+    type: INTRA,
+    maxTrainees: 8,
+    trainers: [trainer._id, trainerAndCoach._id, vendorAdmin._id],
+    rolePerTrainer: [{ trainer: trainer._id, role: VAEI_COACH }, { trainer: trainerAndCoach._id, role: ARCHITECT }],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
     tradeName: 'nom',
   },
 ];
@@ -362,6 +403,14 @@ const courseSlotsList = [
     step: stepsList[0]._id,
     trainers: [trainerAndCoach._id, trainer._id],
     trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillIds[1] }],
+  },
+  { // 17 slot on a role-priced step, trainer's role matches
+    _id: new ObjectId(),
+    startDate: '2022-06-10T09:00:00',
+    endDate: '2022-06-10T12:00:00',
+    course: coursesList[7]._id,
+    step: stepsList[3]._id,
+    trainers: [trainer._id],
   },
 ];
 

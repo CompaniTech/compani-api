@@ -24,6 +24,7 @@ const {
   auxiliary,
   trainer,
   trainerAndCoach,
+  vendorAdmin,
 } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
@@ -562,6 +563,22 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(slot).toBeTruthy();
     });
 
+    it('should update trainers if trainer\'s role matches the step price', async () => {
+      const payload = {
+        startDate: courseSlotsList[17].startDate,
+        endDate: courseSlotsList[17].endDate,
+        trainers: [trainerAndCoach._id],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[17]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return 400 if update dates and trainees', async () => {
       const payload = { trainees: [coach._id], startDate: '', endDate: '' };
       const response = await app.inject({
@@ -708,6 +725,22 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
       expect(response.result.message).toEqual('Impossible: ce créneau de formation est émargé.');
+    });
+
+    it('should return 403 if trainer\'s role does not match any allowed role for the step', async () => {
+      const payload = {
+        startDate: courseSlotsList[17].startDate,
+        endDate: courseSlotsList[17].endDate,
+        trainers: [vendorAdmin._id],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[17]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 403 as trying to update dates and course slot has attendance sheet', async () => {
