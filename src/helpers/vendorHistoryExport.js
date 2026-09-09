@@ -410,7 +410,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
-      select: 'type trainees misc subProgram companies tradeName',
+      select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
       match: { type: { $in: courseTypes } },
       populate: [
         { path: 'companies', select: 'name' },
@@ -431,15 +431,17 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
 
   const rows = [];
   for (const slot of filteredCourseSlots) {
-    // TODO (ticket 2d): this export doesn't have a trainer context yet, so role-based prices can't be resolved.
-    const hourlyAmount = CourseSlotHelper.getHourlyAmount(slot) || 0;
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
 
     let slotAmount = '';
     if (slot.course.type === SINGLE) {
       const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
       const durationObj = CompaniDuration(duration).asHours();
-      slotAmount = NumbersHelper.multiply(durationObj, hourlyAmount);
+      const totalHourlyAmount = (slot.trainers || []).reduce(
+        (acc, trainer) => NumbersHelper.add(acc, CourseSlotHelper.getHourlyAmount(slot, trainer._id) || 0),
+        0
+      );
+      slotAmount = NumbersHelper.multiply(durationObj, totalHourlyAmount);
     }
 
     const presences = [];

@@ -40,6 +40,8 @@ const {
   SURVEY,
   QUESTION_ANSWER,
   TRANSITION,
+  VAEI_COACH,
+  ARCHITECT,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseSlot = require('../../../src/models/CourseSlot');
@@ -1440,7 +1442,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName',
+            select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
             match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1618,7 +1620,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName',
+            select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
             match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1635,7 +1637,7 @@ describe('exportCourseSlotHistory', () => {
     );
   });
 
-  it('should return an array with the header and 4 rows (SINGLE COURSES)', async () => {
+  it('should return an array with the header and 5 rows (SINGLE COURSES)', async () => {
     const collectiveStepId = new ObjectId(process.env.COLLECTIVE_STEP_IDS);
     const collectiveStep = { _id: collectiveStepId, name: 'collectif', type: ON_SITE };
 
@@ -1759,6 +1761,39 @@ describe('exportCourseSlotHistory', () => {
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
         trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0003' } }],
+      },
+      { // individual slot with several trainers and differentiated prices (PRESENT)
+        _id: new ObjectId(),
+        course: {
+          _id: courseIdList[2],
+          trainees: [traineeList[3]],
+          type: SINGLE,
+          subProgram: {
+            _id: new ObjectId(),
+            program: { _id: new ObjectId(), name: 'Program 3' },
+            priceVersions: [{
+              effectiveDate: '2019-01-01T10:00:00.000Z',
+              prices: [
+                { step: stepList[0]._id, role: VAEI_COACH, hourlyAmount: 50 },
+                { step: stepList[0]._id, role: ARCHITECT, hourlyAmount: 55 },
+              ],
+            }],
+          },
+          companies: [],
+          trainers: [trainers[0]._id, trainers[1]._id],
+          rolePerTrainer: [
+            { trainer: trainers[0]._id, role: VAEI_COACH },
+            { trainer: trainers[1]._id, role: ARCHITECT },
+          ],
+          misc: 'Archie Pelle',
+          tradeName: 'Program 3',
+        },
+        startDate: '2022-06-02T08:00:00.000Z',
+        endDate: '2022-06-02T10:00:00.000Z',
+        createdAt: '2020-12-12T10:00:03.000Z',
+        step: stepList[0],
+        attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
+        trainers,
       },
     ];
 
@@ -1900,6 +1935,28 @@ describe('exportCourseSlotHistory', () => {
         'FACT_0003',
         '40,00',
       ],
+      [
+        slots[5]._id,
+        courseIdList[2],
+        'Program 3 - Archie Pelle',
+        'étape 1',
+        'présentiel',
+        'Emma STONE',
+        '12/12/2020 11:00:03',
+        '02/06/2022 10:00:00',
+        '02/06/2022 12:00:00',
+        '2,00',
+        '',
+        1,
+        0,
+        '0,00',
+        0,
+        0,
+        'Gilles FORMATEUR, Autre FORMATEUR',
+        'Gilles FORMATEUR : Non facturé, Autre FORMATEUR : Non facturé',
+        '',
+        '210,00',
+      ],
     ]);
     SinonMongoose.calledOnceWithExactly(
       findCourseSlot,
@@ -1913,7 +1970,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName',
+            select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
             match: { type: { $in: [SINGLE] } },
             populate: [
               { path: 'companies', select: 'name' },
