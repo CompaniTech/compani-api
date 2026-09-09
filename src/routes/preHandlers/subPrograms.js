@@ -1,6 +1,7 @@
 const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const has = require('lodash/has');
+const groupBy = require('lodash/groupBy');
 const SubProgram = require('../../models/SubProgram');
 const Program = require('../../models/Program');
 const Company = require('../../models/Company');
@@ -13,6 +14,7 @@ const {
   VENDOR_ADMIN,
   TRAINER,
   DD_MM_YYYY,
+  E_LEARNING,
 } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
@@ -111,6 +113,25 @@ exports.authorizeSubProgramUpdate = async (req) => {
     const someStepAreNotLinkedToSubprogram = req.payload.prices
       .some(p => !UtilsHelper.doesArrayIncludeId(subProgramStepIds, p.step));
     if (someStepAreNotLinkedToSubprogram) throw Boom.forbidden();
+
+    const nonELearningStepIds = subProgram.steps.filter(s => s.type !== E_LEARNING).map(s => s._id);
+    const someStepPricedIsELearning = req.payload.prices
+      .some(p => !UtilsHelper.doesArrayIncludeId(nonELearningStepIds, p.step));
+    if (someStepPricedIsELearning) throw Boom.forbidden(translate[language].subProgramPriceELearningStep);
+
+    const pricedStepIds = [...new Set(req.payload.prices.map(p => p.step))];
+    const isMissingSomeStepPrice = nonELearningStepIds
+      .some(stepId => !UtilsHelper.doesArrayIncludeId(pricedStepIds, stepId));
+    if (isMissingSomeStepPrice) throw Boom.forbidden(translate[language].subProgramMissingStepPrice);
+
+    const pricesByStep = groupBy(req.payload.prices, 'step');
+    const hasInconsistentRoles = Object.values(pricesByStep).some((stepPrices) => {
+      const roles = stepPrices.map(p => p.role).filter(Boolean);
+      if (stepPrices.length > 1 && roles.length !== stepPrices.length) return true;
+
+      return new Set(roles).size !== roles.length;
+    });
+    if (hasInconsistentRoles) throw Boom.badRequest(translate[language].subProgramInconsistentPriceRoles);
 
     const effectiveDate = CompaniDate(req.payload.effectiveDate);
     if (subProgram.priceVersions) {

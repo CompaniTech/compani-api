@@ -12,6 +12,7 @@ const NotificationHelper = require('../../../src/helpers/notifications');
 const UtilsHelper = require('../../../src/helpers/utils');
 const SinonMongoose = require('../sinonMongoose');
 const UtilsMock = require('../../utilsMock');
+const { VAEI_COACH, ARCHITECT } = require('../../../src/helpers/constants');
 
 describe('addSubProgram', () => {
   let updateOne;
@@ -457,6 +458,76 @@ describe('updateSubProgram', () => {
         }
       );
       sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should create a new price version if only the role changed for a step', async () => {
+      const stepIds = [new ObjectId(), new ObjectId()];
+      const subProgram = {
+        _id: new ObjectId(),
+        name: 'Un sous-programme',
+        status: 'published',
+        steps: [stepIds[0], stepIds[1]],
+        isStrictlyELearning: false,
+        priceVersions: [{
+          effectiveDate: '2026-02-01T14:00:00.000Z',
+          prices: [
+            { step: stepIds[0], role: VAEI_COACH, hourlyAmount: 50 },
+            { step: stepIds[1], hourlyAmount: 100 },
+          ],
+        }],
+      };
+      const payload = {
+        effectiveDate: '2026-02-25T14:00:00.000Z',
+        prices: [
+          { step: stepIds[0], role: ARCHITECT, hourlyAmount: 50 },
+          { step: stepIds[1], hourlyAmount: 100 },
+        ],
+      };
+
+      findOne.returns(SinonMongoose.stubChainedQueries(subProgram, ['lean']));
+      getLastVersion.returns(subProgram.priceVersions[0]);
+
+      await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgram._id },
+        { $push: { priceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
+      );
+    });
+
+    it('should create a new price version if a step price count changed', async () => {
+      const stepIds = [new ObjectId(), new ObjectId()];
+      const subProgram = {
+        _id: new ObjectId(),
+        name: 'Un sous-programme',
+        status: 'published',
+        steps: [stepIds[0], stepIds[1]],
+        isStrictlyELearning: false,
+        priceVersions: [{
+          effectiveDate: '2026-02-01T14:00:00.000Z',
+          prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
+        }],
+      };
+      const payload = {
+        effectiveDate: '2026-02-25T14:00:00.000Z',
+        prices: [
+          { step: stepIds[0], role: VAEI_COACH, hourlyAmount: 50 },
+          { step: stepIds[0], role: ARCHITECT, hourlyAmount: 55 },
+          { step: stepIds[1], hourlyAmount: 100 },
+        ],
+      };
+
+      findOne.returns(SinonMongoose.stubChainedQueries(subProgram, ['lean']));
+      getLastVersion.returns(subProgram.priceVersions[0]);
+
+      await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgram._id },
+        { $push: { priceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
+      );
     });
 
     it('should not create a new price version if payload.prices is identical to last version', async () => {
