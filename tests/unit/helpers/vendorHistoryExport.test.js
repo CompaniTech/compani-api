@@ -1739,7 +1739,7 @@ describe('exportCourseSlotHistory', () => {
         trainers: [trainers[0]],
         trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0002' } }],
       },
-      { // collective slot (PRESENT)
+      { // collective slot with an unresolvable role-based price (PRESENT)
         _id: new ObjectId(),
         course: { // Single
           _id: courseIdList[2],
@@ -1748,7 +1748,13 @@ describe('exportCourseSlotHistory', () => {
           subProgram: {
             _id: new ObjectId(),
             program: { _id: new ObjectId(), name: 'Program 3' },
-            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+            priceVersions: [{
+              effectiveDate: '2019-01-01T10:00:00.000Z',
+              prices: [
+                { step: stepList[0]._id, hourlyAmount: 12 },
+                { step: collectiveStepId, role: VAEI_COACH, hourlyAmount: 20 },
+              ],
+            }],
           },
           companies: [],
           trainers: [trainers[0]._id],
@@ -1935,7 +1941,7 @@ describe('exportCourseSlotHistory', () => {
         'Gilles FORMATEUR',
         'Réglé',
         'FACT_0003',
-        '40,00',
+        'Erreur',
       ],
       [
         slots[5]._id,
