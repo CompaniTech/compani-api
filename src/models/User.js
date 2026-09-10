@@ -156,7 +156,7 @@ const UserSchema = mongoose.Schema({
   firstMobileConnectionMode: {
     type: String,
     enum: MOBILE_CONNECTION_MODE,
-    required: () => !!this.firstMobileConnectionDate,
+    required() { return !!this.firstMobileConnectionDate; },
   },
   origin: { type: String, enum: ORIGIN_OPTIONS, required: true, immutable: true },
   formationExpoTokenList: [{ type: String }],

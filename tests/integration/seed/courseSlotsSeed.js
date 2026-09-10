@@ -89,6 +89,7 @@ const stepsList = [
   },
   { _id: new ObjectId(), type: 'on_site', name: 'encore une étape', status: PUBLISHED, theoreticalDuration: 60 },
   { _id: new ObjectId(), type: 'remote', name: 'une étape de plus', status: PUBLISHED, theoreticalDuration: 60 },
+  { _id: new ObjectId(), type: 'on_site', name: 'étape sans rôle', status: PUBLISHED, theoreticalDuration: 60 },
 ];
 
 const subProgramsList = [
@@ -119,7 +120,7 @@ const subProgramsList = [
   {
     _id: new ObjectId(),
     name: 'sous-programme B',
-    steps: [stepsList[2]._id, stepsList[3]._id],
+    steps: [stepsList[2]._id, stepsList[3]._id, stepsList[5]._id],
     status: PUBLISHED,
     priceVersions: [
       {
@@ -127,6 +128,7 @@ const subProgramsList = [
         prices: [
           { step: stepsList[3]._id, role: VAEI_COACH, hourlyAmount: 50 },
           { step: stepsList[3]._id, role: ARCHITECT, hourlyAmount: 55 },
+          { step: stepsList[5]._id, hourlyAmount: 45 },
         ],
       },
       {
