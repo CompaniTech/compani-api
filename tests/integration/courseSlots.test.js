@@ -24,6 +24,7 @@ const {
   auxiliary,
   trainer,
   trainerAndCoach,
+  vendorAdmin,
 } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
@@ -562,6 +563,22 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       expect(slot).toBeTruthy();
     });
 
+    it('should update trainers if trainer\'s role matches the step price', async () => {
+      const payload = {
+        startDate: courseSlotsList[17].startDate,
+        endDate: courseSlotsList[17].endDate,
+        trainers: [trainerAndCoach._id],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[17]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
     it('should return 400 if update dates and trainees', async () => {
       const payload = { trainees: [coach._id], startDate: '', endDate: '' };
       const response = await app.inject({
@@ -708,6 +725,22 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
 
       expect(response.statusCode).toBe(403);
       expect(response.result.message).toEqual('Impossible: ce créneau de formation est émargé.');
+    });
+
+    it('should return 403 if trainer\'s role does not match any allowed role for the step', async () => {
+      const payload = {
+        startDate: courseSlotsList[17].startDate,
+        endDate: courseSlotsList[17].endDate,
+        trainers: [vendorAdmin._id],
+      };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[17]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 403 as trying to update dates and course slot has attendance sheet', async () => {
@@ -1399,22 +1432,33 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should create a new course slot from csv', async () => {
-      const slotsCountBefore = await CourseSlot.countDocuments({ course: coursesList[0]._id, step: stepsList[0]._id });
+    it('should create course slots from csv', async () => {
+      const slotsCountBefore = await CourseSlot.countDocuments({ course: coursesList[7]._id });
 
-      const response = await injectCsv(coursesList[0]._id, [{
-        step: stepsList[0].name,
-        startDate: '2021-01-12T09:00:00',
-        endDate: '2021-01-12T11:00:00',
-        address: '',
-        meetingLink: '',
-        trainers: 'trainer@alenvi.io',
-        trainees: '',
-      }], authToken);
+      const response = await injectCsv(coursesList[7]._id, [
+        {
+          step: stepsList[3].name,
+          startDate: '2022-06-11T09:00:00',
+          endDate: '2022-06-11T11:00:00',
+          address: '',
+          meetingLink: '',
+          trainers: 'trainer@alenvi.io',
+          trainees: '',
+        },
+        {
+          step: stepsList[5].name,
+          startDate: '2022-06-11T14:00:00',
+          endDate: '2022-06-11T16:00:00',
+          address: '',
+          meetingLink: '',
+          trainers: 'trainer@alenvi.io',
+          trainees: '',
+        },
+      ], authToken);
 
       expect(response.statusCode).toBe(200);
-      const slotsCountAfter = await CourseSlot.countDocuments({ course: coursesList[0]._id, step: stepsList[0]._id });
-      expect(slotsCountAfter).toBe(slotsCountBefore + 1);
+      const slotsCountAfter = await CourseSlot.countDocuments({ course: coursesList[7]._id });
+      expect(slotsCountAfter).toBe(slotsCountBefore + 2);
     });
 
     it('should reuse an existing slot to plan and set trainees', async () => {
@@ -1507,7 +1551,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['l\'étape n\'existe pas']);
     });
 
     it('should return 422 if trainer is not linked to course', async () => {
@@ -1522,7 +1566,24 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['l\'intervenant n\'est pas rattaché à cette formation']);
+    });
+
+    it('should return 422 if trainer\'s role does not match any allowed role for the step', async () => {
+      const response = await injectCsv(coursesList[7]._id, [{
+        step: stepsList[3].name,
+        startDate: '2022-06-11T09:00:00',
+        endDate: '2022-06-11T11:00:00',
+        address: '',
+        meetingLink: '',
+        trainers: 'vendor-admin@alenvi.io',
+        trainees: '',
+      }], authToken);
+
+      expect(response.statusCode).toBe(422);
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['le rôle de l\'intervenant n\'est pas autorisé sur cette étape']);
     });
 
     it('should return 422 if trainee is not registered to course', async () => {
@@ -1537,7 +1598,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['l\'apprenant n\'est pas inscrit à cette formation']);
     });
 
     it('should return 422 if slot is in conflict with an existing slot', async () => {
@@ -1552,7 +1614,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['le créneau est en conflit avec un autre créneau']);
     });
 
     it('should return 422 if address is given for a remote step', async () => {
@@ -1567,7 +1630,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['l\'adresse n\'est pas autorisée pour ce type d\'étape']);
       sinon.assert.notCalled(geocodeSearch);
     });
 
@@ -1583,7 +1647,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['aucun créneau possible sur une étape eLearning']);
     });
 
     it('should return 422 if a date is incorrect', async () => {
@@ -1598,7 +1663,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['le format de la date est incorrect']);
     });
 
     it('should return 422 if startDate and endDate are not on the same day', async () => {
@@ -1613,7 +1678,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['les dates de début et de fin doivent être le même jour']);
     });
 
     it('should return 422 if startDate is after endDate', async () => {
@@ -1628,7 +1694,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['la date de début doit précéder la date de fin']);
     });
 
     it('should return 422 if both address and meetingLink are given', async () => {
@@ -1643,7 +1709,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['vous ne pouvez pas renseigner à la fois une adresse et un lien visio']);
     });
 
     it('should return 422 if meetingLink is given for an on site step', async () => {
@@ -1658,7 +1725,8 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0])
+        .toEqual(['le lien visio n\'est pas autorisé pour ce type d\'étape']);
     });
 
     it('should return 422 if address is not found by geocoding', async () => {
@@ -1675,7 +1743,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['l\'adresse est introuvable']);
     });
 
     it('should return 422 if the geocoding service is unreachable', async () => {
@@ -1692,7 +1760,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['l\'adresse est introuvable']);
     });
 
     it('should return 422 if trainers is missing', async () => {
@@ -1707,7 +1775,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['les intervenants sont manquants']);
     });
 
     it('should return 422 if trainer email is incorrect', async () => {
@@ -1722,7 +1790,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['l\'email de l\'intervenant est incorrect']);
     });
 
     it('should return 422 if trainer doesn\'t exist', async () => {
@@ -1737,7 +1805,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['l\'intervenant n\'existe pas']);
     });
 
     it('should return 422 if trainee email is incorrect', async () => {
@@ -1752,7 +1820,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['l\'email de l\'apprenant est incorrect']);
     });
 
     it('should return 422 if trainee doesn\'t exist', async () => {
@@ -1767,7 +1835,7 @@ describe('COURSE SLOTS ROUTES - POST /courseslots/csv', () => {
       }], authToken);
 
       expect(response.statusCode).toBe(422);
-      expect(response.result.errorsBySlot['Créneau 1']).toBeDefined();
+      expect(Object.values(response.result.errorsBySlot)[0]).toEqual(['l\'apprenant n\'existe pas']);
     });
 
     it('should return 403 if course is archived', async () => {

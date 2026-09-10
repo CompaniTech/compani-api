@@ -1,21 +1,27 @@
 const uniqBy = require('lodash/uniqBy');
+const Boom = require('@hapi/boom');
 const CourseSlot = require('../models/CourseSlot');
 const TrainerBill = require('../models/TrainerBill');
 const CourseSlotsHelper = require('./courseSlots');
 const EmailHelper = require('./email');
 const NumbersHelper = require('./numbers');
 const UtilsHelper = require('./utils');
+const translate = require('./translate');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 const { MINUTE, INVOICED } = require('./constants');
 
-const computeAmount = (courseSlots) => {
+const { language } = translate;
+
+const computeAmount = (courseSlots, trainerId) => {
   // A collective session is stored as one course slot document per attending trainee, all sharing
   // the same startDate/endDate : it must be counted once, not once per trainee, when summing the amount.
   const uniqueDateSlots = uniqBy(courseSlots, slot => `${slot.startDate.toISOString()}_${slot.endDate.toISOString()}`);
 
   return uniqueDateSlots.reduce((acc, slot) => {
-    const hourlyAmount = CourseSlotsHelper.getHourlyAmount(slot);
+    const hourlyAmount = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
+    if (hourlyAmount === null) throw Boom.badData(translate[language].trainerBillHourlyAmountNotFound);
+
     const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
     const slotAmount = NumbersHelper.toFixedToFloat(
       NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours())
@@ -31,11 +37,15 @@ exports.createBill = async (payload, credentials) => {
   const courseSlots = await CourseSlot
     .find({ _id: { $in: courseSlotIds } })
     .populate({ path: 'step', select: '_id' })
-    .populate({ path: 'course', select: 'subProgram', populate: { path: 'subProgram', select: 'priceVersions' } })
+    .populate({
+      path: 'course',
+      select: 'subProgram rolePerTrainer',
+      populate: { path: 'subProgram', select: 'priceVersions' },
+    })
     .sort({ startDate: 1 })
     .lean();
 
-  const amount = computeAmount(courseSlots);
+  const amount = computeAmount(courseSlots, credentials._id);
 
   const trainerBill = await TrainerBill.create({
     trainer: credentials._id,

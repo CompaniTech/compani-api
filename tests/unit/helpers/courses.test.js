@@ -171,7 +171,8 @@ describe('createCourse', () => {
       {
         effectiveDate: '2021-01-01T00:00:00.000Z',
         prices: [
-          { step: steps[0]._id, hourlyAmount: 100 },
+          { step: steps[0]._id, role: VAEI_COACH, hourlyAmount: 50 },
+          { step: steps[0]._id, role: ARCHITECT, hourlyAmount: 55 },
           { step: steps[1]._id, hourlyAmount: 50 },
         ],
       },
@@ -230,11 +231,11 @@ describe('createCourse', () => {
         { query: 'lean' },
       ]
     );
-    // last version : (100 * 2h) + (50 * 1h) = 250
+    // last version : step 0 is differentiated by role, (50 + 55) * 2h, plus step 1 (50 * 1h) = 260
     sinon.assert.calledOnceWithExactly(
       addBillingPurchase,
       courseId,
-      { billingItem: billingItemId, price: 250, count: 1 }
+      { billingItem: billingItemId, price: 260, count: 1 }
     );
     SinonMongoose.calledOnceWithExactly(
       findOneCourseBillingItem,
@@ -2902,7 +2903,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'slots',
-                select: 'step startDate endDate address meetingLink trainees trainers',
+                select: 'step startDate endDate address meetingLink trainees trainers trainerBillings',
                 populate: [
                   { path: 'trainers', select: 'identity' },
                   { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
@@ -3017,7 +3018,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'slots',
-                  select: 'step startDate endDate address meetingLink trainees trainers',
+                  select: 'step startDate endDate address meetingLink trainees trainers trainerBillings',
                   populate: [{ path: 'trainers', select: 'identity' }],
                 },
                 { path: 'slotsToPlan', select: '_id step' },
@@ -3125,7 +3126,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'slots',
-                  select: 'step startDate endDate address meetingLink trainees trainers',
+                  select: 'step startDate endDate address meetingLink trainees trainers trainerBillings',
                   populate: [{ path: 'trainers', select: 'identity' }],
                 },
                 { path: 'slotsToPlan', select: '_id step' },
@@ -3307,7 +3308,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'slots',
-                select: 'step startDate endDate address meetingLink trainees trainers',
+                select: 'step startDate endDate address meetingLink trainees trainers trainerBillings',
                 populate: [{ path: 'trainers', select: 'identity' }],
               },
               { path: 'slotsToPlan', select: '_id step' },

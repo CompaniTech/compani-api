@@ -1,13 +1,17 @@
 const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
 const { expect } = require('expect');
+const Boom = require('@hapi/boom');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const TrainerBill = require('../../../src/models/TrainerBill');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const EmailHelper = require('../../../src/helpers/email');
 const TrainerBillsHelper = require('../../../src/helpers/trainerBills');
 const SinonMongoose = require('../sinonMongoose');
+const translate = require('../../../src/helpers/translate');
 const { INVOICED, PAID } = require('../../../src/helpers/constants');
+
+const { language } = translate;
 
 describe('createBill', () => {
   let courseSlotFind;
@@ -69,7 +73,7 @@ describe('createBill', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram',
+            select: 'subProgram rolePerTrainer',
             populate: { path: 'subProgram', select: 'priceVersions' },
           }],
         },
@@ -94,6 +98,8 @@ describe('createBill', () => {
       { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBillId } } }
     );
     sinon.assert.calledOnceWithExactly(sendTrainerBillEmail, 'FACT_0001', '125', 'Jean DUPONT', courseSlots, 'file');
+    sinon.assert.calledWithExactly(getHourlyAmount.getCall(0), courseSlots[0], credentials._id);
+    sinon.assert.calledWithExactly(getHourlyAmount.getCall(1), courseSlots[1], credentials._id);
   });
 
   it('should count a collective session amount only once, whatever the number of attending trainees', async () => {
@@ -136,7 +142,7 @@ describe('createBill', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram',
+            select: 'subProgram rolePerTrainer',
             populate: { path: 'subProgram', select: 'priceVersions' },
           }],
         },
@@ -161,6 +167,71 @@ describe('createBill', () => {
       { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBillId } } }
     );
     sinon.assert.calledOnceWithExactly(sendTrainerBillEmail, 'FACT_0003', '170', 'Jean DUPONT', courseSlots, 'file');
+    sinon.assert.calledWithExactly(getHourlyAmount.getCall(0), courseSlots[0], credentials._id);
+    sinon.assert.calledWithExactly(getHourlyAmount.getCall(1), courseSlots[2], credentials._id);
+  });
+
+  it('should throw if a slot\'s hourly amount cannot be resolved', async () => {
+    try {
+      const credentials = { _id: new ObjectId(), identity: { firstname: 'Jean', lastname: 'Dupont' } };
+      const courseSlotIds = [new ObjectId()];
+      const payload = { courseSlots: courseSlotIds, number: 'FACT_0004', file: 'file' };
+
+      const courseSlots = [{
+        _id: courseSlotIds[0],
+        startDate: new Date('2020-01-01T10:00:00.000Z'),
+        endDate: new Date('2020-01-01T11:30:00.000Z'),
+      }];
+
+      courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlots, ['populate', 'sort', 'lean']));
+      getHourlyAmount.onCall(0).returns(null);
+
+      await TrainerBillsHelper.createBill(payload, credentials);
+
+      expect(false).toBe(true);
+    } catch (e) {
+      expect(e).toEqual(Boom.badData(translate[language].trainerBillHourlyAmountNotFound));
+      sinon.assert.notCalled(trainerBillCreate);
+    }
+  });
+
+  it('should not throw and should count 0 if a slot\'s step is legitimately not billed', async () => {
+    const credentials = { _id: new ObjectId(), identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const courseSlotIds = [new ObjectId(), new ObjectId()];
+    const trainerBillId = new ObjectId();
+    const payload = { courseSlots: courseSlotIds, number: 'FACT_0005', file: 'file' };
+
+    const courseSlots = [
+      {
+        _id: courseSlotIds[0],
+        startDate: new Date('2020-01-01T10:00:00.000Z'),
+        endDate: new Date('2020-01-01T11:30:00.000Z'),
+      },
+      {
+        _id: courseSlotIds[1],
+        startDate: new Date('2020-01-02T10:00:00.000Z'),
+        endDate: new Date('2020-01-02T11:00:00.000Z'),
+      },
+    ];
+
+    courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlots, ['populate', 'sort', 'lean']));
+    getHourlyAmount.onCall(0).returns(0);
+    getHourlyAmount.onCall(1).returns(50);
+    trainerBillCreate.returns({ _id: trainerBillId });
+
+    await TrainerBillsHelper.createBill(payload, credentials);
+
+    sinon.assert.calledOnceWithExactly(
+      trainerBillCreate,
+      {
+        trainer: credentials._id,
+        number: 'FACT_0005',
+        status: INVOICED,
+        courseSlots: courseSlotIds,
+        amount: '50',
+        submittedAt: sinon.match.string,
+      }
+    );
   });
 });
 

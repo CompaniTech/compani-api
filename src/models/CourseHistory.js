@@ -41,43 +41,49 @@ const CourseHistorySchema = mongoose.Schema({
   action: { type: String, required: true, enum: ACTION_TYPES, immutable: true },
   course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course', required: true, immutable: true },
   slot: {
-    startDate: { type: Date, required: () => [SLOT_CREATION, SLOT_DELETION, SLOT_RESTRICTION].includes(this.action) },
-    endDate: { type: Date, required: () => [SLOT_CREATION, SLOT_DELETION, SLOT_RESTRICTION].includes(this.action) },
+    startDate: {
+      type: Date,
+      required() { return [SLOT_CREATION, SLOT_DELETION, SLOT_RESTRICTION].includes(this.action); },
+    },
+    endDate: {
+      type: Date,
+      required() { return [SLOT_CREATION, SLOT_DELETION, SLOT_RESTRICTION].includes(this.action); },
+    },
     address: { type: mongoose.Schema(addressSchemaDefinition, { _id: false }) },
     meetingLink: { type: String },
   },
   update: {
     startDate: {
       type: mongoose.Schema({ from: { type: Date }, to: { type: Date } }),
-      required: () => this.action === SLOT_EDITION && !this.update.startHour,
+      required() { return this.action === SLOT_EDITION && !this.update.startHour; },
     },
     startHour: {
       type: mongoose.Schema({ from: { type: Date }, to: { type: Date } }),
-      required: () => this.action === SLOT_EDITION && !this.update.startDate,
+      required() { return this.action === SLOT_EDITION && !this.update.startDate; },
     },
     endHour: {
       type: mongoose.Schema({ from: { type: Date }, to: { type: Date } }),
-      required: () => this.action === SLOT_EDITION && this.update.startHour,
+      required() { return this.action === SLOT_EDITION && this.update.startHour; },
     },
     estimatedStartDate: {
       type: mongoose.Schema({ from: { type: Date }, to: { type: Date } }),
-      required: () => this.action === ESTIMATED_START_DATE_EDITION,
+      required() { return this.action === ESTIMATED_START_DATE_EDITION; },
     },
   },
   trainee: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: () => [TRAINEE_ADDITION, TRAINEE_DELETION].includes(this.action),
+    required() { return [TRAINEE_ADDITION, TRAINEE_DELETION].includes(this.action); },
   },
   company: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Company',
-    required: () => [COMPANY_ADDITION, COMPANY_DELETION, TRAINEE_ADDITION].includes(this.action),
+    required() { return [COMPANY_ADDITION, COMPANY_DELETION, TRAINEE_ADDITION].includes(this.action); },
   },
   trainer: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: () => [TRAINER_ADDITION, TRAINER_DELETION, TRAINER_ROLE_UPDATE].includes(this.action),
+    required() { return [TRAINER_ADDITION, TRAINER_DELETION, TRAINER_ROLE_UPDATE].includes(this.action); },
   },
   role: { type: String, enum: TRAINER_ROLES },
 }, { timestamps: true });

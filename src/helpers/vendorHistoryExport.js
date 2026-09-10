@@ -410,7 +410,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     .populate({ path: 'step', select: 'type name' })
     .populate({
       path: 'course',
-      select: 'type trainees misc subProgram companies tradeName',
+      select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
       match: { type: { $in: courseTypes } },
       populate: [
         { path: 'companies', select: 'name' },
@@ -431,14 +431,17 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
 
   const rows = [];
   for (const slot of filteredCourseSlots) {
-    const hourlyAmount = CourseSlotHelper.getHourlyAmount(slot);
     const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
 
     let slotAmount = '';
+    let hasUnresolvedHourlyAmount = false;
     if (slot.course.type === SINGLE) {
       const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
       const durationObj = CompaniDuration(duration).asHours();
-      slotAmount = NumbersHelper.multiply(durationObj, hourlyAmount);
+      const hourlyAmounts = (slot.trainers || []).map(trainer => CourseSlotHelper.getHourlyAmount(slot, trainer._id));
+      hasUnresolvedHourlyAmount = hourlyAmounts.includes(null);
+      const totalHourlyAmount = hourlyAmounts.reduce((acc, amount) => NumbersHelper.add(acc, amount || 0), 0);
+      slotAmount = NumbersHelper.multiply(durationObj, totalHourlyAmount);
     }
 
     const presences = [];
@@ -505,7 +508,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       ...(courseTypes.includes(SINGLE) && {
         Statut: trainersData.status,
         'Facture intervenant': trainersData.bills,
-        Montant: UtilsHelper.formatFloatForExport(slotAmount),
+        Montant: hasUnresolvedHourlyAmount ? 'Erreur' : UtilsHelper.formatFloatForExport(slotAmount),
       }),
     });
   }

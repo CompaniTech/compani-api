@@ -188,10 +188,13 @@ exports.createCourse = async (payload, credentials) => {
 
       if (hasPriceAndDurationForEveryStep) {
         const totalPrice = steps.reduce((acc, step) => {
-          const stepPrice = lastPriceVersion.prices.find(p => UtilsHelper.areObjectIdsEquals(p.step, step._id));
+          // Several prices for the same step mean it is differentiated by trainer role (e.g. co-intervention) :
+          // the step's total cost is the sum of every role's rate, not just one of them.
+          const stepPrices = lastPriceVersion.prices.filter(p => UtilsHelper.areObjectIdsEquals(p.step, step._id));
+          const stepHourlyAmount = stepPrices.reduce((sum, p) => NumbersHelper.add(sum, p.hourlyAmount), 0);
           const stepDurationInHours = CompaniDuration(step.theoreticalDuration).asHours();
 
-          return NumbersHelper.add(acc, NumbersHelper.multiply(stepPrice.hourlyAmount, stepDurationInHours));
+          return NumbersHelper.add(acc, NumbersHelper.multiply(stepHourlyAmount, stepDurationInHours));
         }, 0);
 
         const trainerSalaryBillingItem = await CourseBillingItem.findOne({ type: TRAINER_SALARY }, { _id: 1 }).lean();
@@ -599,7 +602,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           },
           {
             path: 'slots',
-            select: 'step startDate endDate address meetingLink trainees trainers',
+            select: 'step startDate endDate address meetingLink trainees trainers trainerBillings',
             populate: [
               { path: 'trainers', select: 'identity' },
               ...(get(credentials, 'role.vendor.name')
