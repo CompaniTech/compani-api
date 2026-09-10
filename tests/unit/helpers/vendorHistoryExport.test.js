@@ -1373,6 +1373,7 @@ describe('exportCourseSlotHistory', () => {
     { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } },
     { _id: new ObjectId(), identity: { firstname: 'Autre', lastname: 'FORMATEUR' } },
   ];
+  const trainerThree = { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } };
 
   const stepList = [
     { _id: new ObjectId(), name: 'étape 1', type: ON_SITE },
@@ -1637,7 +1638,7 @@ describe('exportCourseSlotHistory', () => {
     );
   });
 
-  it('should return an array with the header and 5 rows (SINGLE COURSES)', async () => {
+  it('should return an array with the header and 6 rows (SINGLE COURSES)', async () => {
     const collectiveStepId = new ObjectId(process.env.COLLECTIVE_STEP_IDS);
     const collectiveStep = { _id: collectiveStepId, name: 'collectif', type: ON_SITE };
 
@@ -1762,7 +1763,7 @@ describe('exportCourseSlotHistory', () => {
         trainers: [trainers[0]],
         trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0003' } }],
       },
-      { // individual slot with several trainers and differentiated prices (PRESENT)
+      { // individual slot with several trainers and differentiated prices, 2 of them sharing the same role (PRESENT)
         _id: new ObjectId(),
         course: {
           _id: courseIdList[2],
@@ -1780,10 +1781,11 @@ describe('exportCourseSlotHistory', () => {
             }],
           },
           companies: [],
-          trainers: [trainers[0]._id, trainers[1]._id],
+          trainers: [trainers[0]._id, trainers[1]._id, trainerThree._id],
           rolePerTrainer: [
             { trainer: trainers[0]._id, role: VAEI_COACH },
-            { trainer: trainers[1]._id, role: ARCHITECT },
+            { trainer: trainers[1]._id, role: VAEI_COACH },
+            { trainer: trainerThree._id, role: ARCHITECT },
           ],
           misc: 'Archie Pelle',
           tradeName: 'Program 3',
@@ -1793,7 +1795,7 @@ describe('exportCourseSlotHistory', () => {
         createdAt: '2020-12-12T10:00:03.000Z',
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
-        trainers,
+        trainers: [trainers[0], trainers[1], trainerThree],
       },
     ];
 
@@ -1952,10 +1954,10 @@ describe('exportCourseSlotHistory', () => {
         '0,00',
         0,
         0,
-        'Gilles FORMATEUR, Autre FORMATEUR',
-        'Gilles FORMATEUR : Non facturé, Autre FORMATEUR : Non facturé',
+        'Gilles FORMATEUR, Autre FORMATEUR, Cathy ARCHITECTE',
+        'Gilles FORMATEUR : Non facturé, Autre FORMATEUR : Non facturé, Cathy ARCHITECTE : Non facturé',
         '',
-        '210,00',
+        '310,00',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
