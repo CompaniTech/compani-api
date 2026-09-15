@@ -225,9 +225,21 @@ exports.computeExclTaxesWithDiscount = (inclTaxes, discount, vat) => {
   return exports.getExclTaxes(inclTaxesWithDiscount, vat);
 };
 
+exports.getSlotDurationMultiplier = (slot, step = slot.step) => {
+  if (!get(step, 'durationCountedPerTrainer')) return 1;
+
+  return get(slot, 'trainers.length') || 1;
+};
+
+const getMultipliedSlotDuration = (tp, unit) => {
+  const diff = CompaniDuration(CompaniDate(tp.endDate).diff(tp.startDate, unit)).asSeconds();
+
+  return CompaniDuration({ seconds: diff * exports.getSlotDurationMultiplier(tp) }).toISO();
+};
+
 exports.getTotalDuration = (timePeriods, isResFormatted = true) => {
   const totalDuration = timePeriods.reduce(
-    (acc, tp) => acc.add(CompaniDate(tp.endDate).diff(tp.startDate, 'minutes')),
+    (acc, tp) => acc.add(getMultipliedSlotDuration(tp, 'minutes')),
     CompaniDuration()
   );
 
@@ -236,7 +248,7 @@ exports.getTotalDuration = (timePeriods, isResFormatted = true) => {
 
 exports.getTotalDurationForExport = (timePeriods) => {
   const totalDuration = timePeriods.reduce(
-    (acc, tp) => acc.add(CompaniDate(tp.endDate).diff(tp.startDate, 'minutes')),
+    (acc, tp) => acc.add(getMultipliedSlotDuration(tp, 'minutes')),
     CompaniDuration()
   );
 
@@ -244,7 +256,7 @@ exports.getTotalDurationForExport = (timePeriods) => {
 };
 
 exports.getISOTotalDuration = timePeriods => timePeriods
-  .reduce((acc, tp) => acc.add(CompaniDate(tp.endDate).diff(tp.startDate, SECOND)), CompaniDuration())
+  .reduce((acc, tp) => acc.add(getMultipliedSlotDuration(tp, SECOND)), CompaniDuration())
   .toISO();
 
 exports.getDuration = (startDate, endDate) =>

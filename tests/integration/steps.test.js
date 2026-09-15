@@ -104,6 +104,21 @@ describe('STEPS ROUTES - PUT /steps/{_id}', () => {
       expect(stepUpdated).toBeTruthy();
     });
 
+    it('should update durationCountedPerTrainer', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/steps/${stepId}`,
+        payload: { durationCountedPerTrainer: true },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const stepUpdated = await Step.countDocuments({ _id: stepId, durationCountedPerTrainer: true });
+
+      expect(stepUpdated).toBeTruthy();
+    });
+
     it('should return 400 if theoreticalDuration is 0', async () => {
       const response = await app.inject({
         method: 'PUT',

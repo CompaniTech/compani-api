@@ -89,7 +89,7 @@ const formatAttendances = (course, specificCourseTrainees) =>
           !UtilsHelper.doesArrayIncludeId(course.trainees, a.trainee._id))
       .map(a => ({
         trainee: a.trainee,
-        courseSlot: pick(slot, ['step', 'startDate', 'endDate']),
+        courseSlot: pick(slot, ['step', 'startDate', 'endDate', 'trainers']),
         misc: course.misc,
         trainers: course.trainers,
       }));
@@ -109,17 +109,20 @@ exports.listUnsubscribed = async (query, credentials) => {
     .find({ format: BLENDED, subProgram: { $in: get(course, 'subProgram.program.subPrograms') } })
     .populate({
       path: 'slots',
-      select: 'attendances startDate endDate',
-      populate: {
-        path: 'attendances',
-        match: {
-          status: PRESENT,
-          ...(companies.length && { company: { $in: companies } }),
+      select: 'attendances startDate endDate step trainers',
+      populate: [
+        {
+          path: 'attendances',
+          match: {
+            status: PRESENT,
+            ...(companies.length && { company: { $in: companies } }),
+          },
+          select: 'trainee company',
+          populate: { path: 'trainee', select: 'identity' },
+          options: { isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) },
         },
-        select: 'trainee company',
-        populate: { path: 'trainee', select: 'identity' },
-        options: { isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) },
-      },
+        { path: 'step', select: 'durationCountedPerTrainer' },
+      ],
     })
     .populate({ path: 'trainers', select: 'identity' })
     .lean();
@@ -136,7 +139,7 @@ exports.getTraineeUnsubscribedAttendances = async (traineeId, credentials) => {
     .find({ trainee: traineeId, company: trainee.company, status: PRESENT })
     .populate({
       path: 'courseSlot',
-      select: 'course startDate endDate',
+      select: 'course startDate endDate step trainers',
       populate: [
         {
           path: 'course',
@@ -147,6 +150,7 @@ exports.getTraineeUnsubscribedAttendances = async (traineeId, credentials) => {
             { path: 'trainers', select: 'identity' },
           ],
         },
+        { path: 'step', select: 'durationCountedPerTrainer' },
       ],
     })
     .setOptions({ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) })
@@ -155,7 +159,7 @@ exports.getTraineeUnsubscribedAttendances = async (traineeId, credentials) => {
   const unsubscribedAttendances = attendances
     .filter(a => a.courseSlot.course)
     .map(a => ({
-      courseSlot: pick(a.courseSlot, ['startDate', 'endDate']),
+      courseSlot: pick(a.courseSlot, ['startDate', 'endDate', 'step', 'trainers']),
       course: {
         misc: get(a, 'courseSlot.course.misc'),
         trainers: get(a, 'courseSlot.course.trainers').map(t => ({ _id: t._id, identity: t.identity })),

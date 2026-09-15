@@ -20,6 +20,7 @@ const StepSchema = mongoose.Schema({
   activities: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Activity' }],
   status: { type: String, default: DRAFT, enum: STATUS_TYPES },
   theoreticalDuration: { type: Number },
+  durationCountedPerTrainer: { type: Boolean, default: undefined },
 }, { timestamps: true, id: false });
 
 StepSchema.virtual('subPrograms', { ref: 'SubProgram', localField: '_id', foreignField: 'steps' });
