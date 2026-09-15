@@ -222,7 +222,7 @@ exports.list = async (query, credentials) => {
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
     .lean();
 
-  let activityHistoriesByTrainee = {};
+  let aHDurationByTrainee = {};
   if (!query.isValidated) {
     const singleCourseBills = courseBills
       .filter(bill => !bill.course.archivedAt && bill.course.type === SINGLE);
@@ -241,11 +241,19 @@ exports.list = async (query, credentials) => {
         date: { $gte: query.startDate, $lte: query.endDate },
       })
       .lean();
-    activityHistoriesByTrainee = groupBy(activityHistories, 'user');
+    const activityHistoriesByTrainee = groupBy(activityHistories, 'user');
+    aHDurationByTrainee = Object.fromEntries(
+      Object.entries(activityHistoriesByTrainee)
+        .map(([userId, ah]) => ([
+          userId,
+          ah.reduce((acc, value) => acc.add(value.duration), CompaniDuration()).toISO(),
+        ]))
+    );
   }
 
   const hasCourseAction = bill => bill.course.type !== SINGLE ||
-    bill.course.trainees.some(t => activityHistoriesByTrainee[t._id]) ||
+    bill.course.trainees
+      .some(t => aHDurationByTrainee[t._id] && CompaniDuration(aHDurationByTrainee[t._id]).isLongerThan('PT900S')) ||
     bill.course.slots
       .filter(s => CompaniDate(s.startDate).isSameOrBetween(query.startDate, query.endDate))
       .some(s => s.attendances.length);
