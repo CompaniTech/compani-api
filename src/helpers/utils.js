@@ -231,15 +231,15 @@ exports.getSlotDurationMultiplier = (slot, step = slot.step) => {
   return get(slot, 'trainers.length') || 1;
 };
 
-const getMultipliedSlotDuration = (tp, unit) => {
+exports.getMultipliedSlotDuration = (tp, unit, step = tp.step) => {
   const diff = CompaniDuration(CompaniDate(tp.endDate).diff(tp.startDate, unit)).asSeconds();
 
-  return { seconds: diff * exports.getSlotDurationMultiplier(tp) };
+  return { seconds: diff * exports.getSlotDurationMultiplier(tp, step) };
 };
 
 exports.getTotalDuration = (timePeriods, isResFormatted = true) => {
   const totalDuration = timePeriods.reduce(
-    (acc, tp) => acc.add(getMultipliedSlotDuration(tp, 'minutes')),
+    (acc, tp) => acc.add(exports.getMultipliedSlotDuration(tp, 'minutes')),
     CompaniDuration()
   );
 
@@ -248,7 +248,7 @@ exports.getTotalDuration = (timePeriods, isResFormatted = true) => {
 
 exports.getTotalDurationForExport = (timePeriods) => {
   const totalDuration = timePeriods.reduce(
-    (acc, tp) => acc.add(getMultipliedSlotDuration(tp, 'minutes')),
+    (acc, tp) => acc.add(exports.getMultipliedSlotDuration(tp, 'minutes')),
     CompaniDuration()
   );
 
@@ -256,7 +256,7 @@ exports.getTotalDurationForExport = (timePeriods) => {
 };
 
 exports.getISOTotalDuration = timePeriods => timePeriods
-  .reduce((acc, tp) => acc.add(getMultipliedSlotDuration(tp, SECOND)), CompaniDuration())
+  .reduce((acc, tp) => acc.add(exports.getMultipliedSlotDuration(tp, SECOND)), CompaniDuration())
   .toISO();
 
 exports.getDuration = (startDate, endDate) =>

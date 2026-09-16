@@ -1473,10 +1473,7 @@ const computeAttendancesByStep = (traineeId, allAttendances, course, vaeSupportD
 
     if (!durationByStepId.has(step._id)) durationByStepId.set(step._id, { step, duration: CompaniDuration() });
     const entry = durationByStepId.get(step._id);
-    const slotDurationWithMultiplier = CompaniDuration(
-      CompaniDate(courseSlot.endDate).diff(courseSlot.startDate, 'minutes')
-    ).asSeconds() * UtilsHelper.getSlotDurationMultiplier(courseSlot, step);
-    entry.duration = entry.duration.add(CompaniDuration({ seconds: slotDurationWithMultiplier }).toISO());
+    entry.duration = entry.duration.add(UtilsHelper.getMultipliedSlotDuration(courseSlot, 'minutes', step));
   }
 
   if (vaeSupportDuration) {
