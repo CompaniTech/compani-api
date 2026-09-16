@@ -144,6 +144,8 @@ describe('getLiveStepProgress', () => {
 });
 
 describe('getPresenceStepProgress', () => {
+  const step = { durationCountedPerTrainer: false };
+
   it('should get presence progress', async () => {
     const slots = [
       {
@@ -158,14 +160,29 @@ describe('getPresenceStepProgress', () => {
       },
     ];
 
-    const result = StepsHelper.getPresenceStepProgress(slots);
-    expect(result).toEqual({ attendanceDuration: 'PT180M', maxDuration: 'PT360M' });
+    const result = StepsHelper.getPresenceStepProgress(step, slots);
+    expect(result).toEqual({ attendanceDuration: 'PT10800S', maxDuration: 'PT21600S' });
+  });
+
+  it('should double the duration of a slot with several trainers when step is countedPerTrainer', async () => {
+    const countedPerTrainerStep = { durationCountedPerTrainer: true };
+    const slots = [
+      {
+        startDate: '2020-11-03T09:00:00.000Z',
+        endDate: '2020-11-03T12:00:00.000Z',
+        trainers: [new ObjectId(), new ObjectId()],
+        attendances: [{ _id: new ObjectId(), status: PRESENT }],
+      },
+    ];
+
+    const result = StepsHelper.getPresenceStepProgress(countedPerTrainerStep, slots);
+    expect(result).toEqual({ attendanceDuration: 'PT21600S', maxDuration: 'PT21600S' });
   });
 
   it('should return presence at 0 if no slot', async () => {
     const slots = [];
 
-    const result = StepsHelper.getPresenceStepProgress(slots);
+    const result = StepsHelper.getPresenceStepProgress(step, slots);
     expect(result).toEqual({ attendanceDuration: PT0S, maxDuration: PT0S });
   });
 });
@@ -273,7 +290,7 @@ describe('getProgress', () => {
 
     expect(result).toEqual({ live: 1, presence: { attendanceDuration: 421, maxDuration: 601 } });
     sinon.assert.calledOnceWithExactly(getLiveStepProgress, slots);
-    sinon.assert.calledOnceWithExactly(getPresenceStepProgress, slots);
+    sinon.assert.calledOnceWithExactly(getPresenceStepProgress, step, slots);
   });
 });
 

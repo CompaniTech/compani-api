@@ -604,7 +604,12 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
+                {
+                  path: 'slots',
+                  select: 'startDate endDate trainers step',
+                  options: { sort: { startDate: 1 } },
+                  populate: { path: 'step', select: 'durationCountedPerTrainer' },
+                },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -665,12 +670,12 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -831,7 +836,12 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
+                {
+                  path: 'slots',
+                  select: 'startDate endDate trainers step',
+                  options: { sort: { startDate: 1 } },
+                  populate: { path: 'step', select: 'durationCountedPerTrainer' },
+                },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -892,12 +902,15 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
-              path: 'attendances',
-              match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
-              options: { isVendorUser: true },
-            },
+            select: 'attendances startDate endDate step trainers',
+            populate: [
+              {
+                path: 'attendances',
+                match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
+                options: { isVendorUser: true },
+              },
+              { path: 'step', select: 'durationCountedPerTrainer' },
+            ],
           }],
         },
         { query: 'lean' },
@@ -1054,7 +1067,12 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
+                {
+                  path: 'slots',
+                  select: 'startDate endDate trainers step',
+                  options: { sort: { startDate: 1 } },
+                  populate: { path: 'step', select: 'durationCountedPerTrainer' },
+                },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -1135,12 +1153,12 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -1302,7 +1320,12 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
+                {
+                  path: 'slots',
+                  select: 'startDate endDate trainers step',
+                  options: { sort: { startDate: 1 } },
+                  populate: { path: 'step', select: 'durationCountedPerTrainer' },
+                },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -1383,12 +1406,12 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -1547,7 +1570,12 @@ describe('generate', () => {
               path: 'course',
               select: 'subProgram slots companies trainees tradeName',
               populate: [
-                { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
+                {
+                  path: 'slots',
+                  select: 'startDate endDate trainers step',
+                  options: { sort: { startDate: 1 } },
+                  populate: { path: 'step', select: 'durationCountedPerTrainer' },
+                },
                 {
                   path: 'subProgram',
                   select: 'program steps',
@@ -1628,12 +1656,12 @@ describe('generate', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: { company: { $in: [companyId] }, trainee: { $in: [traineeId] }, status: PRESENT },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },

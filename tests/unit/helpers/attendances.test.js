@@ -497,14 +497,14 @@ describe('listUnsubscribed', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: { company: { $in: [companyId] }, status: PRESENT },
               select: 'trainee company',
               populate: { path: 'trainee', select: 'identity' },
               options: { isVendorUser },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -613,14 +613,14 @@ describe('listUnsubscribed', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: { company: { $in: holdingCompanies }, status: PRESENT },
               select: 'trainee company',
               populate: { path: 'trainee', select: 'identity' },
               options: { isVendorUser },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -727,14 +727,14 @@ describe('listUnsubscribed', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: { status: PRESENT },
               select: 'trainee company',
               populate: { path: 'trainee', select: 'identity' },
               options: { isVendorUser },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -890,7 +890,7 @@ describe('getTraineeUnsubscribedAttendances', () => {
           query: 'populate',
           args: [{
             path: 'courseSlot',
-            select: 'course startDate endDate',
+            select: 'course startDate endDate step trainers',
             populate: [
               {
                 path: 'course',
@@ -901,6 +901,7 @@ describe('getTraineeUnsubscribedAttendances', () => {
                   { path: 'trainers', select: 'identity' },
                 ],
               },
+              { path: 'step', select: 'durationCountedPerTrainer' },
             ],
           }],
         },

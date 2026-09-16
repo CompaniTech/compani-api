@@ -1355,7 +1355,7 @@ describe('list', () => {
                 { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
-                  select: 'name type activities theoreticalDuration',
+                  select: 'name type activities theoreticalDuration durationCountedPerTrainer',
                   populate: {
                     path: 'activities',
                     select: 'name type cards activityHistories',
@@ -1369,9 +1369,9 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step trainees',
+              select: 'startDate endDate step trainees trainers',
               populate: [
-                { path: 'step', select: 'type' },
+                { path: 'step', select: 'type durationCountedPerTrainer' },
                 {
                   path: 'attendances',
                   match: { trainee: traineeOrTutorId },
@@ -1628,7 +1628,7 @@ describe('list', () => {
                 { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
-                  select: 'name type activities theoreticalDuration',
+                  select: 'name type activities theoreticalDuration durationCountedPerTrainer',
                   populate: {
                     path: 'activities',
                     select: 'name type cards activityHistories',
@@ -1642,9 +1642,9 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step trainees',
+              select: 'startDate endDate step trainees trainers',
               populate: [
-                { path: 'step', select: 'type' },
+                { path: 'step', select: 'type durationCountedPerTrainer' },
                 {
                   path: 'attendances',
                   match: { trainee: traineeOrTutorId, company: { $in: [traineeCompany] } },
@@ -1910,7 +1910,7 @@ describe('list', () => {
                 { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
-                  select: 'name type activities theoreticalDuration',
+                  select: 'name type activities theoreticalDuration durationCountedPerTrainer',
                   populate: {
                     path: 'activities',
                     select: 'name type cards activityHistories',
@@ -1924,9 +1924,9 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step trainees',
+              select: 'startDate endDate step trainees trainers',
               populate: [
-                { path: 'step', select: 'type' },
+                { path: 'step', select: 'type durationCountedPerTrainer' },
                 {
                   path: 'attendances',
                   match: { trainee: traineeOrTutorId, company: { $in: credentials.holding.companies } },
@@ -2205,7 +2205,7 @@ describe('list', () => {
                 { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
-                  select: 'name type activities theoreticalDuration',
+                  select: 'name type activities theoreticalDuration durationCountedPerTrainer',
                   populate: {
                     path: 'activities',
                     select: 'name type cards activityHistories',
@@ -2219,9 +2219,9 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step trainees',
+              select: 'startDate endDate step trainees trainers',
               populate: [
-                { path: 'step', select: 'type' },
+                { path: 'step', select: 'type durationCountedPerTrainer' },
                 {
                   path: 'attendances',
                   match: { trainee: traineeOrTutorId },
@@ -2395,7 +2395,7 @@ describe('list', () => {
                 { path: 'program', select: 'image description' },
                 {
                   path: 'steps',
-                  select: 'name type activities theoreticalDuration',
+                  select: 'name type activities theoreticalDuration durationCountedPerTrainer',
                   populate: {
                     path: 'activities',
                     select: 'name type cards activityHistories',
@@ -2409,9 +2409,9 @@ describe('list', () => {
             query: 'populate',
             args: [{
               path: 'slots',
-              select: 'startDate endDate step trainees',
+              select: 'startDate endDate step trainees trainers',
               populate: [
-                { path: 'step', select: 'type' },
+                { path: 'step', select: 'type durationCountedPerTrainer' },
                 {
                   path: 'attendances',
                   match: { trainee: traineeOrTutorId },
@@ -2891,7 +2891,7 @@ describe('getCourse', () => {
                   { path: 'program', select: 'learningGoals' },
                   {
                     path: 'steps',
-                    select: 'name type theoreticalDuration',
+                    select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
                 ],
@@ -3006,7 +3006,7 @@ describe('getCourse', () => {
                     { path: 'program', select: 'learningGoals' },
                     {
                       path: 'steps',
-                      select: 'name type theoreticalDuration',
+                      select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
                   ],
@@ -3114,7 +3114,7 @@ describe('getCourse', () => {
                     { path: 'program', select: 'learningGoals' },
                     {
                       path: 'steps',
-                      select: 'name type theoreticalDuration',
+                      select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
                   ],
@@ -3296,7 +3296,7 @@ describe('getCourse', () => {
                   { path: 'program', select: 'learningGoals' },
                   {
                     path: 'steps',
-                    select: 'name type theoreticalDuration',
+                    select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
                 ],
@@ -3424,8 +3424,8 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink trainees',
-                populate: { path: 'step', select: 'type' },
+                select: 'startDate endDate step address meetingLink trainees trainers',
+                populate: { path: 'step', select: 'type durationCountedPerTrainer' },
                 options: { sort: { startDate: 1 } },
               },
             ],
@@ -3590,8 +3590,8 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink trainees',
-                populate: { path: 'step', select: 'type' },
+                select: 'startDate endDate step address meetingLink trainees trainers',
+                populate: { path: 'step', select: 'type durationCountedPerTrainer' },
                 options: { sort: { startDate: 1 } },
               },
             ],
@@ -3764,8 +3764,8 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink trainees',
-                populate: { path: 'step', select: 'type' },
+                select: 'startDate endDate step address meetingLink trainees trainers',
+                populate: { path: 'step', select: 'type durationCountedPerTrainer' },
                 options: { sort: { startDate: 1 } },
               },
             ],
@@ -3908,8 +3908,8 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink trainees',
-                populate: { path: 'step', select: 'type' },
+                select: 'startDate endDate step address meetingLink trainees trainers',
+                populate: { path: 'step', select: 'type durationCountedPerTrainer' },
                 options: { sort: { startDate: 1 } },
               },
             ],
@@ -4051,8 +4051,8 @@ describe('getCourse', () => {
             args: [
               {
                 path: 'slots',
-                select: 'startDate endDate step address meetingLink trainees',
-                populate: { path: 'step', select: 'type' },
+                select: 'startDate endDate step address meetingLink trainees trainers',
+                populate: { path: 'step', select: 'type durationCountedPerTrainer' },
                 options: { sort: { startDate: 1 } },
               },
             ],
@@ -6903,8 +6903,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'startDate endDate trainees step',
-            populate: { path: 'step', select: 'name' },
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'name durationCountedPerTrainer' },
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -6947,8 +6947,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: {
                 status: PRESENT,
@@ -6956,7 +6956,7 @@ describe('generateCompletionCertificates', () => {
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -6969,7 +6969,14 @@ describe('generateCompletionCertificates', () => {
           query: 'find',
           args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
         },
-        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'courseSlot',
+            select: 'startDate endDate trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
       ]);
@@ -7166,8 +7173,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'startDate endDate trainees step',
-            populate: { path: 'step', select: 'name' },
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'name durationCountedPerTrainer' },
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -7210,16 +7217,19 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
-              path: 'attendances',
-              match: {
-                status: PRESENT,
-                company: { $in: [companyId, otherCompanyId] },
-                trainee: { $in: traineesIds },
+            select: 'attendances startDate endDate step trainers',
+            populate: [
+              {
+                path: 'attendances',
+                match: {
+                  status: PRESENT,
+                  company: { $in: [companyId, otherCompanyId] },
+                  trainee: { $in: traineesIds },
+                },
+                options: { isVendorUser: true },
               },
-              options: { isVendorUser: true },
-            },
+              { path: 'step', select: 'durationCountedPerTrainer' },
+            ],
           }],
         },
         { query: 'lean' },
@@ -7232,7 +7242,14 @@ describe('generateCompletionCertificates', () => {
           query: 'find',
           args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
         },
-        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'courseSlot',
+            select: 'startDate endDate trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
       ]);
@@ -7466,8 +7483,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'startDate endDate trainees step',
-            populate: { path: 'step', select: 'name' },
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'name durationCountedPerTrainer' },
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -7510,8 +7527,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: {
                 status: PRESENT,
@@ -7519,7 +7536,7 @@ describe('generateCompletionCertificates', () => {
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -7532,7 +7549,14 @@ describe('generateCompletionCertificates', () => {
           query: 'find',
           args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
         },
-        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'courseSlot',
+            select: 'startDate endDate trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
       ]);
@@ -7749,8 +7773,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'startDate endDate trainees step',
-            populate: { path: 'step', select: 'name' },
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'name durationCountedPerTrainer' },
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -7793,8 +7817,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: {
                 status: PRESENT,
@@ -7802,7 +7826,7 @@ describe('generateCompletionCertificates', () => {
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -7815,7 +7839,14 @@ describe('generateCompletionCertificates', () => {
           query: 'find',
           args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
         },
-        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'courseSlot',
+            select: 'startDate endDate trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
       ]);
@@ -8000,8 +8031,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'startDate endDate trainees step',
-            populate: { path: 'step', select: 'name' },
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'name durationCountedPerTrainer' },
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -8044,8 +8075,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: {
                 status: PRESENT,
@@ -8053,7 +8084,7 @@ describe('generateCompletionCertificates', () => {
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: false },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -8066,7 +8097,14 @@ describe('generateCompletionCertificates', () => {
           query: 'find',
           args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
         },
-        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'courseSlot',
+            select: 'startDate endDate trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
       ]);
@@ -8198,8 +8236,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'startDate endDate trainees step',
-            populate: { path: 'step', select: 'name' },
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'name durationCountedPerTrainer' },
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -8242,8 +8280,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: {
                 status: PRESENT,
@@ -8251,7 +8289,7 @@ describe('generateCompletionCertificates', () => {
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: false },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -8264,7 +8302,14 @@ describe('generateCompletionCertificates', () => {
           query: 'find',
           args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
         },
-        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'courseSlot',
+            select: 'startDate endDate trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
       ]);
@@ -8515,8 +8560,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'startDate endDate trainees step',
-            populate: { path: 'step', select: 'name' },
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'name durationCountedPerTrainer' },
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -8559,8 +8604,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: {
                 status: PRESENT,
@@ -8568,7 +8613,7 @@ describe('generateCompletionCertificates', () => {
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -8581,7 +8626,14 @@ describe('generateCompletionCertificates', () => {
           query: 'find',
           args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
         },
-        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'courseSlot',
+            select: 'startDate endDate trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: VENDOR_ROLES.includes(get(credentials, 'role.vendor.name')) }] },
         { query: 'lean' },
       ]);
@@ -8607,8 +8659,9 @@ describe('generateCompletionCertificates', () => {
     const traineesIds = [new ObjectId(), new ObjectId()];
     const stepIds = [COACHING_STEP_ID, new ObjectId()];
     const slotIds = [new ObjectId(), new ObjectId()];
+    const coachingSlotTrainerIds = [new ObjectId(), new ObjectId()];
     const steps = [
-      { _id: stepIds[0], name: 'Coaching individuel', type: ON_SITE },
+      { _id: stepIds[0], name: 'Coaching individuel', type: ON_SITE, durationCountedPerTrainer: true },
       { _id: stepIds[1], name: 'Réunions tripartites', type: ON_SITE },
     ];
     const course = {
@@ -8630,7 +8683,8 @@ describe('generateCompletionCertificates', () => {
           _id: slotIds[0],
           startDate: '2019-10-15T07:00:00.000Z',
           endDate: '2019-10-15T10:00:00.000Z',
-          step: { _id: stepIds[0], name: 'Coaching individuel' },
+          trainers: coachingSlotTrainerIds,
+          step: { _id: stepIds[0], name: 'Coaching individuel', durationCountedPerTrainer: true },
         },
         {
           _id: slotIds[1],
@@ -8643,7 +8697,12 @@ describe('generateCompletionCertificates', () => {
     const attendances = [
       {
         trainee: traineesIds[0],
-        courseSlot: { _id: slotIds[0], startDate: '2019-10-15T07:00:00.000Z', endDate: '2019-10-15T10:00:00.000Z' },
+        courseSlot: {
+          _id: slotIds[0],
+          startDate: '2019-10-15T07:00:00.000Z',
+          endDate: '2019-10-15T10:00:00.000Z',
+          trainers: coachingSlotTrainerIds,
+        },
       },
       {
         trainee: traineesIds[0],
@@ -8651,7 +8710,12 @@ describe('generateCompletionCertificates', () => {
       },
       {
         trainee: traineesIds[1],
-        courseSlot: { _id: slotIds[0], startDate: '2019-10-15T07:00:00.000Z', endDate: '2019-10-15T10:00:00.000Z' },
+        courseSlot: {
+          _id: slotIds[0],
+          startDate: '2019-10-15T07:00:00.000Z',
+          endDate: '2019-10-15T10:00:00.000Z',
+          trainers: coachingSlotTrainerIds,
+        },
       },
     ];
     const query = { format: ALL_PDF, type: OFFICIAL };
@@ -8763,7 +8827,7 @@ describe('generateCompletionCertificates', () => {
         date: '20/01/2020',
         monthlyGlobalCertificateData: {
           attendancesByStep: [
-            { stepName: 'Coaching individuel', duration: '1h10' },
+            { stepName: 'Coaching individuel', duration: '4h10' },
             { stepName: 'Réunions tripartites', duration: '1h30' },
           ],
           vaeSupportDuration: 110,
@@ -8794,7 +8858,7 @@ describe('generateCompletionCertificates', () => {
         date: '20/01/2020',
         monthlyGlobalCertificateData: {
           attendancesByStep: [
-            { stepName: 'Coaching individuel', duration: '1h' },
+            { stepName: 'Coaching individuel', duration: '4h' },
           ],
           vaeSupportDuration: 120,
         },
@@ -8819,8 +8883,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'startDate endDate trainees step',
-            populate: { path: 'step', select: 'name' },
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'name durationCountedPerTrainer' },
           }],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
@@ -8863,8 +8927,8 @@ describe('generateCompletionCertificates', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: {
                 status: PRESENT,
@@ -8872,7 +8936,7 @@ describe('generateCompletionCertificates', () => {
                 trainee: { $in: traineesIds },
               },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -8885,7 +8949,14 @@ describe('generateCompletionCertificates', () => {
           query: 'find',
           args: [{ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT }],
         },
-        { query: 'populate', args: [{ path: 'courseSlot', select: 'startDate endDate' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'courseSlot',
+            select: 'startDate endDate trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
@@ -9568,10 +9639,14 @@ describe('generateTrainingContract', () => {
               select: 'program steps',
               populate: [
                 { path: 'program', select: 'learningGoals' },
-                { path: 'steps', select: 'theoreticalDuration type' },
+                { path: 'steps', select: 'theoreticalDuration type durationCountedPerTrainer' },
               ],
             },
-            { path: 'slots', select: 'startDate endDate address meetingLink' },
+            {
+              path: 'slots',
+              select: 'startDate endDate address meetingLink trainers step',
+              populate: { path: 'step', select: 'durationCountedPerTrainer' },
+            },
             { path: 'slotsToPlan', select: '_id' },
             { path: 'trainers', select: 'identity.firstname identity.lastname' },
             { path: 'trainees', select: 'identity.firstname identity.lastname' },
@@ -9688,10 +9763,14 @@ describe('generateTrainingContract', () => {
               select: 'program steps',
               populate: [
                 { path: 'program', select: 'learningGoals' },
-                { path: 'steps', select: 'theoreticalDuration type' },
+                { path: 'steps', select: 'theoreticalDuration type durationCountedPerTrainer' },
               ],
             },
-            { path: 'slots', select: 'startDate endDate address meetingLink' },
+            {
+              path: 'slots',
+              select: 'startDate endDate address meetingLink trainers step',
+              populate: { path: 'step', select: 'durationCountedPerTrainer' },
+            },
             { path: 'slotsToPlan', select: '_id' },
             { path: 'trainers', select: 'identity.firstname identity.lastname' },
             { path: 'trainees', select: 'identity.firstname identity.lastname' },
@@ -10665,7 +10744,14 @@ describe('downloadAllDocuments', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -10817,7 +10903,14 @@ describe('downloadAllDocuments', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',
@@ -10975,7 +11068,14 @@ describe('downloadAllDocuments', () => {
       courseFindOne,
       [
         { query: 'findOne', args: [{ _id: courseId }] },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate trainees' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainees trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         {
           query: 'populate',

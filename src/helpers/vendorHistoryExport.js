@@ -407,7 +407,7 @@ const getAddress = (slot) => {
 
 exports.exportCourseSlotHistory = async (startDate, endDate, credentials, courseTypes) => {
   const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
-    .populate({ path: 'step', select: 'type name' })
+    .populate({ path: 'step', select: 'type name durationCountedPerTrainer' })
     .populate({
       path: 'course',
       select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
@@ -431,7 +431,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
 
   const rows = [];
   for (const slot of filteredCourseSlots) {
-    const slotDuration = UtilsHelper.getDurationForExport(slot.startDate, slot.endDate);
+    const slotDuration = UtilsHelper.getDurationForExport(slot);
 
     let slotAmount = '';
     let hasUnresolvedHourlyAmount = false;

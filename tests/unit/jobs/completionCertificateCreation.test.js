@@ -229,8 +229,8 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: {
                 status: PRESENT,
@@ -238,7 +238,7 @@ describe('method', () => {
                 trainee: { $in: [traineeIds[0], traineeIds[2]] },
               },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },
@@ -261,12 +261,12 @@ describe('method', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate',
-            populate: {
+            select: 'attendances startDate endDate step trainers',
+            populate: [{
               path: 'attendances',
               match: { status: PRESENT, company: { $in: [companyIds[1]] }, trainee: { $in: [traineeIds[1]] } },
               options: { isVendorUser: true },
-            },
+            }, { path: 'step', select: 'durationCountedPerTrainer' }],
           }],
         },
         { query: 'lean' },

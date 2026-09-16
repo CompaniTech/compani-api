@@ -28,6 +28,7 @@ exports.plugin = {
             name: Joi.string(),
             activities: Joi.array().items(Joi.objectId()),
             theoreticalDuration: durationStrictlyPositive,
+            durationCountedPerTrainer: Joi.boolean(),
           }).min(1),
         },
         auth: { scope: ['programs:edit'] },

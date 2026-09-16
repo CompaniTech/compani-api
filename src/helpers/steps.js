@@ -33,10 +33,15 @@ exports.getLiveStepProgress = (slots) => {
   return liveProgress;
 };
 
-exports.getPresenceStepProgress = (slots) => {
+exports.getPresenceStepProgress = (step, slots) => {
   if (!slots.length) return { attendanceDuration: PT0S, maxDuration: PT0S };
 
-  const slotsWithDuration = slots.map(s => ({ ...s, duration: CompaniDate(s.endDate).diff(s.startDate, MINUTE) }));
+  const slotsWithDuration = slots.map((s) => {
+    const seconds = CompaniDuration(CompaniDate(s.endDate).diff(s.startDate, MINUTE)).asSeconds()
+      * UtilsHelper.getSlotDurationMultiplier(s, step);
+
+    return { ...s, duration: CompaniDuration({ seconds }).toISO() };
+  });
 
   const attendanceDuration = slotsWithDuration
     .filter(slot => slot.attendances.find(a => a.status === PRESENT))
@@ -55,7 +60,7 @@ exports.getProgress = (step, slots = [], shouldComputePresence = false) => {
   if (step.type === E_LEARNING) return { eLearning: exports.getElearningStepProgress(step) };
   return {
     live: exports.getLiveStepProgress(slots),
-    ...(shouldComputePresence && { presence: exports.getPresenceStepProgress(slots) }),
+    ...(shouldComputePresence && { presence: exports.getPresenceStepProgress(step, slots) }),
   };
 };
 

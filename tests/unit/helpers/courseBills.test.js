@@ -584,8 +584,9 @@ describe('list', () => {
       steps: [{ activities: [activitiesIds[0]] }, { activities: [activitiesIds[1]] }],
     };
     const histories = [
-      { date: '2025-05-11T22:00:00.000Z', user: traineesIds[1], activity: activitiesIds[0] },
-      { date: '2025-05-12T22:00:00.000Z', user: traineesIds[1], activity: activitiesIds[1] },
+      { date: '2025-05-15T22:00:00.000Z', user: traineesIds[0], activity: activitiesIds[0], duration: 'PT300S' },
+      { date: '2025-05-11T22:00:00.000Z', user: traineesIds[1], activity: activitiesIds[0], duration: 'PT600S' },
+      { date: '2025-05-12T22:00:00.000Z', user: traineesIds[1], activity: activitiesIds[1], duration: 'PT600S' },
     ];
 
     find.returns(SinonMongoose.stubChainedQueries(courseBills, ['populate', 'setOptions', 'lean']));

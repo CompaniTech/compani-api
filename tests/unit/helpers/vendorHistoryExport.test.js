@@ -543,7 +543,10 @@ describe('exportCourseHistory', () => {
             {
               path: 'subProgram',
               select: 'name steps program',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
+              populate: [
+                { path: 'program', select: 'name' },
+                { path: 'steps', select: 'type activities durationCountedPerTrainer' },
+              ],
             }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -553,14 +556,17 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate trainees',
-            populate: {
-              path: 'attendances',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
+            select: 'attendances startDate endDate trainees trainers step',
+            populate: [
+              {
+                path: 'attendances',
+                options: {
+                  isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
+                    .includes(get(credentials, 'role.vendor.name')),
+                },
               },
-            },
+              { path: 'step', select: 'durationCountedPerTrainer' },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
@@ -985,7 +991,10 @@ describe('exportCourseHistory', () => {
             {
               path: 'subProgram',
               select: 'name steps program',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
+              populate: [
+                { path: 'program', select: 'name' },
+                { path: 'steps', select: 'type activities durationCountedPerTrainer' },
+              ],
             }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -995,14 +1004,17 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate trainees',
-            populate: {
-              path: 'attendances',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
+            select: 'attendances startDate endDate trainees trainers step',
+            populate: [
+              {
+                path: 'attendances',
+                options: {
+                  isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
+                    .includes(get(credentials, 'role.vendor.name')),
+                },
               },
-            },
+              { path: 'step', select: 'durationCountedPerTrainer' },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
@@ -1262,7 +1274,10 @@ describe('exportCourseHistory', () => {
             {
               path: 'subProgram',
               select: 'name steps program',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
+              populate: [
+                { path: 'program', select: 'name' },
+                { path: 'steps', select: 'type activities durationCountedPerTrainer' },
+              ],
             }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -1272,14 +1287,17 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate trainees',
-            populate: {
-              path: 'attendances',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
+            select: 'attendances startDate endDate trainees trainers step',
+            populate: [
+              {
+                path: 'attendances',
+                options: {
+                  isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
+                    .includes(get(credentials, 'role.vendor.name')),
+                },
               },
-            },
+              { path: 'step', select: 'durationCountedPerTrainer' },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
@@ -1376,7 +1394,7 @@ describe('exportCourseSlotHistory', () => {
   const trainerThree = { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } };
 
   const stepList = [
-    { _id: new ObjectId(), name: 'étape 1', type: ON_SITE },
+    { _id: new ObjectId(), name: 'étape 1', type: ON_SITE, durationCountedPerTrainer: true },
     { _id: new ObjectId(), name: 'étape 2', type: REMOTE },
     { _id: new ObjectId(), name: 'étape 3', type: E_LEARNING },
   ];
@@ -1438,7 +1456,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'find',
           args: [{ startDate: { $lte: '2022-01-20T22:59:59.000Z' }, endDate: { $gte: '2021-01-14T23:00:00.000Z' } }],
         },
-        { query: 'populate', args: [{ path: 'step', select: 'type name' }] },
+        { query: 'populate', args: [{ path: 'step', select: 'type name durationCountedPerTrainer' }] },
         {
           query: 'populate',
           args: [{
@@ -1579,7 +1597,7 @@ describe('exportCourseSlotHistory', () => {
         '12/12/2020 11:00:02',
         '01/02/2021 09:00:00',
         '01/02/2021 11:00:00',
-        '2,00',
+        '4,00',
         '24 Avenue Daumesnil 75012 Paris',
         1,
         0,
@@ -1616,7 +1634,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'find',
           args: [{ startDate: { $lte: '2022-01-20T22:59:59.000Z' }, endDate: { $gte: '2021-01-14T23:00:00.000Z' } }],
         },
-        { query: 'populate', args: [{ path: 'step', select: 'type name' }] },
+        { query: 'populate', args: [{ path: 'step', select: 'type name durationCountedPerTrainer' }] },
         {
           query: 'populate',
           args: [{
@@ -1953,7 +1971,7 @@ describe('exportCourseSlotHistory', () => {
         '12/12/2020 11:00:03',
         '02/06/2022 10:00:00',
         '02/06/2022 12:00:00',
-        '2,00',
+        '6,00',
         '',
         1,
         0,
@@ -1973,7 +1991,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'find',
           args: [{ startDate: { $lte: '2022-01-20T22:59:59.000Z' }, endDate: { $gte: '2021-01-14T23:00:00.000Z' } }],
         },
-        { query: 'populate', args: [{ path: 'step', select: 'type name' }] },
+        { query: 'populate', args: [{ path: 'step', select: 'type name durationCountedPerTrainer' }] },
         {
           query: 'populate',
           args: [{
