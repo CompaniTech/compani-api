@@ -234,7 +234,7 @@ exports.getSlotDurationMultiplier = (slot, step = slot.step) => {
 const getMultipliedSlotDuration = (tp, unit) => {
   const diff = CompaniDuration(CompaniDate(tp.endDate).diff(tp.startDate, unit)).asSeconds();
 
-  return CompaniDuration({ seconds: diff * exports.getSlotDurationMultiplier(tp) }).toISO();
+  return { seconds: diff * exports.getSlotDurationMultiplier(tp) };
 };
 
 exports.getTotalDuration = (timePeriods, isResFormatted = true) => {
