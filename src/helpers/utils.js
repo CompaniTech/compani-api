@@ -262,8 +262,12 @@ exports.getISOTotalDuration = timePeriods => timePeriods
 exports.getDuration = (startDate, endDate) =>
   CompaniDuration(CompaniDate(endDate).diff(startDate, 'minutes')).format(SHORT_DURATION_H_MM);
 
-exports.getDurationForExport = (startDate, endDate) =>
-  exports.formatFloatForExport(CompaniDuration(CompaniDate(endDate).diff(startDate, 'minutes')).asHours());
+exports.getDurationForExport = (slot) => {
+  const hours = CompaniDuration(CompaniDate(slot.endDate).diff(slot.startDate, 'minutes')).asHours()
+    * exports.getSlotDurationMultiplier(slot);
+
+  return exports.formatFloatForExport(hours);
+};
 
 exports.getKeysOf2DepthObject = object => Object.entries(object).reduce((acc, [key, value]) => {
   const isPlainNestedObject = typeof value === 'object' && !isObjectIdOrHexString(value) && Object.keys(value).length &&

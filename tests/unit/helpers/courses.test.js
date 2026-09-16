@@ -8659,8 +8659,9 @@ describe('generateCompletionCertificates', () => {
     const traineesIds = [new ObjectId(), new ObjectId()];
     const stepIds = [COACHING_STEP_ID, new ObjectId()];
     const slotIds = [new ObjectId(), new ObjectId()];
+    const coachingSlotTrainerIds = [new ObjectId(), new ObjectId()];
     const steps = [
-      { _id: stepIds[0], name: 'Coaching individuel', type: ON_SITE },
+      { _id: stepIds[0], name: 'Coaching individuel', type: ON_SITE, durationCountedPerTrainer: true },
       { _id: stepIds[1], name: 'Réunions tripartites', type: ON_SITE },
     ];
     const course = {
@@ -8682,7 +8683,8 @@ describe('generateCompletionCertificates', () => {
           _id: slotIds[0],
           startDate: '2019-10-15T07:00:00.000Z',
           endDate: '2019-10-15T10:00:00.000Z',
-          step: { _id: stepIds[0], name: 'Coaching individuel' },
+          trainers: coachingSlotTrainerIds,
+          step: { _id: stepIds[0], name: 'Coaching individuel', durationCountedPerTrainer: true },
         },
         {
           _id: slotIds[1],
@@ -8695,7 +8697,12 @@ describe('generateCompletionCertificates', () => {
     const attendances = [
       {
         trainee: traineesIds[0],
-        courseSlot: { _id: slotIds[0], startDate: '2019-10-15T07:00:00.000Z', endDate: '2019-10-15T10:00:00.000Z' },
+        courseSlot: {
+          _id: slotIds[0],
+          startDate: '2019-10-15T07:00:00.000Z',
+          endDate: '2019-10-15T10:00:00.000Z',
+          trainers: coachingSlotTrainerIds,
+        },
       },
       {
         trainee: traineesIds[0],
@@ -8703,7 +8710,12 @@ describe('generateCompletionCertificates', () => {
       },
       {
         trainee: traineesIds[1],
-        courseSlot: { _id: slotIds[0], startDate: '2019-10-15T07:00:00.000Z', endDate: '2019-10-15T10:00:00.000Z' },
+        courseSlot: {
+          _id: slotIds[0],
+          startDate: '2019-10-15T07:00:00.000Z',
+          endDate: '2019-10-15T10:00:00.000Z',
+          trainers: coachingSlotTrainerIds,
+        },
       },
     ];
     const query = { format: ALL_PDF, type: OFFICIAL };
@@ -8815,7 +8827,7 @@ describe('generateCompletionCertificates', () => {
         date: '20/01/2020',
         monthlyGlobalCertificateData: {
           attendancesByStep: [
-            { stepName: 'Coaching individuel', duration: '1h10' },
+            { stepName: 'Coaching individuel', duration: '4h10' },
             { stepName: 'Réunions tripartites', duration: '1h30' },
           ],
           vaeSupportDuration: 110,
@@ -8846,7 +8858,7 @@ describe('generateCompletionCertificates', () => {
         date: '20/01/2020',
         monthlyGlobalCertificateData: {
           attendancesByStep: [
-            { stepName: 'Coaching individuel', duration: '1h' },
+            { stepName: 'Coaching individuel', duration: '4h' },
           ],
           vaeSupportDuration: 120,
         },
