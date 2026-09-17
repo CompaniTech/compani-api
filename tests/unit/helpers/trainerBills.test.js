@@ -73,7 +73,7 @@ describe('createBill', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram rolePerTrainer',
+            select: 'subProgram rolesPerTrainer',
             populate: { path: 'subProgram', select: 'priceVersions' },
           }],
         },
@@ -142,7 +142,7 @@ describe('createBill', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'subProgram rolePerTrainer',
+            select: 'subProgram rolesPerTrainer',
             populate: { path: 'subProgram', select: 'priceVersions' },
           }],
         },

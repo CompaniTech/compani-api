@@ -163,7 +163,7 @@ exports.createHistoryOnTrainerRoleUpdate = (payload, userId) =>
     payload.course,
     userId,
     TRAINER_ROLE_UPDATE,
-    { trainer: payload.trainerId, ...(payload.role && { role: payload.role }) }
+    { trainer: payload.trainerId, roles: { from: payload.previousRoles, to: payload.roles } }
   );
 
 exports.createHistoryOnCourseInterruptionOrRestart = (payload, userId) =>

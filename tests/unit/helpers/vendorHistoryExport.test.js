@@ -1390,8 +1390,9 @@ describe('exportCourseSlotHistory', () => {
   const trainers = [
     { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } },
     { _id: new ObjectId(), identity: { firstname: 'Autre', lastname: 'FORMATEUR' } },
+    { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } },
   ];
-  const trainerThree = { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } };
+  // const trainerThree = { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } };
 
   const stepList = [
     { _id: new ObjectId(), name: 'étape 1', type: ON_SITE, durationCountedPerTrainer: true },
@@ -1461,7 +1462,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
+            select: 'type trainees misc subProgram companies tradeName rolesPerTrainer',
             match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1512,7 +1513,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         address: slotAddress,
         attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
-        trainers,
+        trainers: [trainers[0], trainers[1]],
       },
       { // 3
         _id: new ObjectId(),
@@ -1639,7 +1640,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
+            select: 'type trainees misc subProgram companies tradeName rolesPerTrainer',
             match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1805,11 +1806,11 @@ describe('exportCourseSlotHistory', () => {
             }],
           },
           companies: [],
-          trainers: [trainers[0]._id, trainers[1]._id, trainerThree._id],
-          rolePerTrainer: [
-            { trainer: trainers[0]._id, role: VAEI_COACH },
-            { trainer: trainers[1]._id, role: VAEI_COACH },
-            { trainer: trainerThree._id, role: ARCHITECT },
+          trainers: [trainers[0]._id, trainers[1]._id, trainers[2]._id],
+          rolesPerTrainer: [
+            { trainer: trainers[0]._id, roles: [VAEI_COACH] },
+            { trainer: trainers[1]._id, roles: [VAEI_COACH] },
+            { trainer: trainers[2]._id, roles: [ARCHITECT] },
           ],
           misc: 'Archie Pelle',
           tradeName: 'Program 3',
@@ -1819,7 +1820,7 @@ describe('exportCourseSlotHistory', () => {
         createdAt: '2020-12-12T10:00:03.000Z',
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
-        trainers: [trainers[0], trainers[1], trainerThree],
+        trainers: [trainers[0], trainers[1], trainers[2]],
       },
     ];
 
@@ -1996,7 +1997,7 @@ describe('exportCourseSlotHistory', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
+            select: 'type trainees misc subProgram companies tradeName rolesPerTrainer',
             match: { type: { $in: [SINGLE] } },
             populate: [
               { path: 'companies', select: 'name' },

@@ -85,7 +85,13 @@ const CourseHistorySchema = mongoose.Schema({
     ref: 'User',
     required() { return [TRAINER_ADDITION, TRAINER_DELETION, TRAINER_ROLE_UPDATE].includes(this.action); },
   },
-  role: { type: String, enum: TRAINER_ROLES },
+  roles: {
+    type: mongoose.Schema({
+      from: { type: [{ type: String, enum: TRAINER_ROLES }] },
+      to: { type: [{ type: String, enum: TRAINER_ROLES }] },
+    }, { _id: false }),
+    required() { return this.action === TRAINER_ROLE_UPDATE; },
+  },
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => CourseHistorySchema.pre(middleware, formatQuery));

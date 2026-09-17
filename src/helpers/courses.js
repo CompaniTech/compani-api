@@ -1949,10 +1949,11 @@ exports.composeCourseName = (course) => {
 };
 
 exports.addTrainer = async (courseId, payload, credentials) => {
+  const roles = payload.roles && [...new Set(payload.roles)];
   const update = {
     $addToSet: {
       trainers: payload.trainer,
-      ...payload.role && { rolePerTrainer: { trainer: payload.trainer, role: payload.role } },
+      ...roles?.length && { rolesPerTrainer: { trainer: payload.trainer, roles } },
     },
   };
 
@@ -1977,8 +1978,8 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
   const trainerIsContact = UtilsHelper.areObjectIdsEquals(get(course, 'contact'), trainerId);
 
   const query = trainerIsContact
-    ? { $pull: { trainers: trainerId, rolePerTrainer: { trainer: trainerId } }, $unset: { contact: '' } }
-    : { $pull: { trainers: trainerId, rolePerTrainer: { trainer: trainerId } } };
+    ? { $pull: { trainers: trainerId, rolesPerTrainer: { trainer: trainerId } }, $unset: { contact: '' } }
+    : { $pull: { trainers: trainerId, rolesPerTrainer: { trainer: trainerId } } };
 
   await Course.updateOne({ _id: courseId }, query);
 
@@ -1988,31 +1989,31 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
   );
 };
 
-exports.updateTrainerRole = async (courseId, trainerId, payload, credentials) => {
-  const course = await Course.findOne({ _id: courseId }, { rolePerTrainer: 1 }).lean();
-  const previousRole = (course.rolePerTrainer || [])
+exports.updateTrainerRoles = async (courseId, trainerId, payload, credentials) => {
+  const course = await Course.findOne({ _id: courseId }, { rolesPerTrainer: 1 }).lean();
+  const previousEntry = (course.rolesPerTrainer || [])
     .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
-  if ((previousRole?.role !== payload.role)) {
-    if (!payload.role) {
-      await Course.updateOne({ _id: courseId }, { $pull: { rolePerTrainer: { trainer: trainerId } } });
-    } else if (previousRole) {
-      await Course.updateOne(
-        { _id: courseId },
-        { $set: { 'rolePerTrainer.$[elem].role': payload.role } },
-        { arrayFilters: [{ 'elem.trainer': trainerId }] }
-      );
-    } else {
-      await Course.updateOne(
-        { _id: courseId },
-        { $push: { rolePerTrainer: { trainer: trainerId, role: payload.role } } }
-      );
-    }
+  const previousRoles = previousEntry ? previousEntry.roles : [];
+  const roles = [...new Set(payload.roles)];
+  const hasSameRoles = previousRoles.length === roles.length && previousRoles.every(role => roles.includes(role));
+  if (hasSameRoles) return;
 
-    await CourseHistoriesHelper.createHistoryOnTrainerRoleUpdate(
-      { course: courseId, trainerId, role: payload.role },
-      credentials._id
+  if (!roles.length) {
+    await Course.updateOne({ _id: courseId }, { $pull: { rolesPerTrainer: { trainer: trainerId } } });
+  } else if (previousRoles.length) {
+    await Course.updateOne(
+      { _id: courseId },
+      { $set: { 'rolesPerTrainer.$[elem].roles': roles } },
+      { arrayFilters: [{ 'elem.trainer': trainerId }] }
     );
+  } else {
+    await Course.updateOne({ _id: courseId }, { $push: { rolesPerTrainer: { trainer: trainerId, roles } } });
   }
+
+  await CourseHistoriesHelper.createHistoryOnTrainerRoleUpdate(
+    { course: courseId, trainerId, previousRoles, roles },
+    credentials._id
+  );
 };
 
 exports.addTutor = async (courseId, payload) => {
@@ -2112,8 +2113,8 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       tradeName,
     };
     const course = await exports.createCourse(payload, credentials);
-    if (coach) await exports.addTrainer(course._id, { trainer: coach._id, role: VAEI_COACH }, credentials);
-    if (architect) await exports.addTrainer(course._id, { trainer: architect._id, role: ARCHITECT }, credentials);
+    if (coach) await exports.addTrainer(course._id, { trainer: coach._id, roles: [VAEI_COACH] }, credentials);
+    if (architect) await exports.addTrainer(course._id, { trainer: architect._id, roles: [ARCHITECT] }, credentials);
   }
 };
 

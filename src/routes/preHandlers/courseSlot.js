@@ -96,7 +96,7 @@ const checkPayload = async (courseSlot, payload) => {
   });
   if (completionCertificates) throw Boom.forbidden(translate[language].courseSlotDateInCompletionCertificate);
 
-  const course = await Course.findById(courseId, { subProgram: 1, trainees: 1, rolePerTrainer: 1 })
+  const course = await Course.findById(courseId, { subProgram: 1, trainees: 1, rolesPerTrainer: 1 })
     .populate({ path: 'subProgram', select: 'steps priceVersions' })
     .lean();
 
@@ -113,11 +113,15 @@ const checkPayload = async (courseSlot, payload) => {
     const isRoleBasedStep = stepPrices.length > 0 && !!stepPrices[0].role;
 
     if (isRoleBasedStep) {
+      const stepPriceRoles = stepPrices.map(p => p.role);
       const someTrainerRoleMismatch = trainers.some((trainerId) => {
-        const trainerRole = (course.rolePerTrainer || [])
+        const trainerRolesEntry = (course.rolesPerTrainer || [])
           .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
+        const matchingRolesCount = (trainerRolesEntry?.roles || [])
+          .filter(role => stepPriceRoles.includes(role))
+          .length;
 
-        return !trainerRole || !stepPrices.some(p => p.role === trainerRole.role);
+        return matchingRolesCount !== 1;
       });
       if (someTrainerRoleMismatch) throw Boom.forbidden(translate[language].courseSlotTrainerRoleMismatch);
     }
@@ -251,7 +255,7 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
     const { course: courseId, file } = req.payload;
 
     const course = await Course
-      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1, rolePerTrainer: 1 })
+      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1, rolesPerTrainer: 1 })
       .populate({
         path: 'subProgram',
         select: 'steps priceVersions',
@@ -386,11 +390,15 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
         const stepPrices = CourseSlotsHelper.getStepPrices(step._id, course.subProgram, formattedStartDate);
         const isRoleBasedStep = stepPrices.length > 0 && !!stepPrices[0].role;
         if (isRoleBasedStep) {
+          const stepPriceRoles = stepPrices.map(p => p.role);
           const someTrainerRoleMismatch = trainerIds.some((trainerId) => {
-            const trainerRole = (course.rolePerTrainer || [])
+            const trainerRolesEntry = (course.rolesPerTrainer || [])
               .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
+            const matchingRolesCount = (trainerRolesEntry.roles || [])
+              .filter(role => stepPriceRoles.includes(role))
+              .length;
 
-            return !trainerRole || !stepPrices.some(p => p.role === trainerRole.role);
+            return matchingRolesCount !== 1;
           });
           if (someTrainerRoleMismatch) addError(rowLabel, translate[language].trainerRoleMismatchCsv);
         }

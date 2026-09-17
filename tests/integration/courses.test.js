@@ -6196,19 +6196,19 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers', () => {
       expect(course).toEqual(1);
     });
 
-    it('should add trainer with a role to course', async () => {
+    it('should add trainer with roles to course', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[7]._id}/trainers`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { trainer: trainerAndCoach._id, role: VAEI_COACH },
+        payload: { trainer: trainerAndCoach._id, roles: [VAEI_COACH, ARCHITECT] },
       });
 
       expect(response.statusCode).toBe(200);
 
       const course = await Course.countDocuments({
         _id: coursesList[7]._id,
-        rolePerTrainer: { $elemMatch: { trainer: trainerAndCoach._id, role: VAEI_COACH } },
+        rolesPerTrainer: { $elemMatch: { trainer: trainerAndCoach._id, roles: VAEI_COACH } },
       });
       expect(course).toEqual(1);
     });
@@ -6218,7 +6218,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers', () => {
         method: 'PUT',
         url: `/courses/${coursesList[7]._id}/trainers`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { trainer: trainerAndCoach._id, role: 'wrong_role' },
+        payload: { trainer: trainerAndCoach._id, roles: ['wrong_role'] },
       });
 
       expect(response.statusCode).toBe(400);
@@ -6334,7 +6334,7 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainers/{trainerId}', () => {
       expect(response.statusCode).toBe(200);
     });
 
-    it('should remove trainer\'s role from rolePerTrainer', async () => {
+    it('should remove trainer\'s roles from rolesPerTrainer', async () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/courses/${coursesList[25]._id}/trainers/${trainer._id}`,
@@ -6345,7 +6345,7 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/trainers/{trainerId}', () => {
 
       const course = await Course.countDocuments({
         _id: coursesList[25]._id,
-        rolePerTrainer: { $elemMatch: { trainer: trainer._id, role: VAEI_COACH } },
+        rolesPerTrainer: { $elemMatch: { trainer: trainer._id, roles: VAEI_COACH } },
       });
       expect(course).toEqual(0);
     });
@@ -6413,24 +6413,41 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers/{trainerId}', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should add role to trainer', async () => {
+    it('should add roles to trainer', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[24]._id}/trainers/${trainer._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { role: ARCHITECT },
+        payload: { roles: [ARCHITECT] },
       });
 
       expect(response.statusCode).toBe(200);
 
       const course = await Course.countDocuments({
         _id: coursesList[24]._id,
-        rolePerTrainer: { $elemMatch: { trainer: trainer._id, role: ARCHITECT } },
+        rolesPerTrainer: { $elemMatch: { trainer: trainer._id, roles: ARCHITECT } },
       });
       expect(course).toEqual(1);
     });
 
-    it('should remove trainer role if role is not in payload', async () => {
+    it('should remove trainer roles if an empty array is given', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[25]._id}/trainers/${trainer._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { roles: [] },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const course = await Course.countDocuments({
+        _id: coursesList[25]._id,
+        rolesPerTrainer: { $elemMatch: { trainer: trainer._id } },
+      });
+      expect(course).toEqual(0);
+    });
+
+    it('should return 400 if roles is not in payload', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courses/${coursesList[25]._id}/trainers/${trainer._id}`,
@@ -6438,13 +6455,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers/{trainerId}', () => {
         payload: {},
       });
 
-      expect(response.statusCode).toBe(200);
-
-      const course = await Course.countDocuments({
-        _id: coursesList[25]._id,
-        rolePerTrainer: { $elemMatch: { trainer: trainer._id } },
-      });
-      expect(course).toEqual(0);
+      expect(response.statusCode).toBe(400);
     });
 
     it('should return 404 if course doesn\'t exist', async () => {
@@ -6452,7 +6463,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers/{trainerId}', () => {
         method: 'PUT',
         url: `/courses/${new ObjectId()}/trainers/${trainer._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { role: ARCHITECT },
+        payload: { roles: [ARCHITECT] },
       });
 
       expect(response.statusCode).toBe(404);
@@ -6463,7 +6474,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers/{trainerId}', () => {
         method: 'PUT',
         url: `/courses/${coursesList[24]._id}/trainers/${vendorAdmin._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { role: ARCHITECT },
+        payload: { roles: [ARCHITECT] },
       });
 
       expect(response.statusCode).toBe(403);
@@ -6474,7 +6485,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers/{trainerId}', () => {
         method: 'PUT',
         url: `/courses/${coursesList[14]._id}/trainers/${trainer._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { role: ARCHITECT },
+        payload: { roles: [ARCHITECT] },
       });
 
       expect(response.statusCode).toBe(403);
@@ -6485,7 +6496,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers/{trainerId}', () => {
         method: 'PUT',
         url: `/courses/${coursesList[24]._id}/trainers/${trainer._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { role: 'wrong_role' },
+        payload: { roles: ['wrong_role'] },
       });
 
       expect(response.statusCode).toBe(400);
@@ -6506,7 +6517,7 @@ describe('COURSES ROUTES - PUT /courses/{_id}/trainers/{trainerId}', () => {
           method: 'PUT',
           url: `/courses/${coursesList[0]._id}/trainers/${trainer._id}`,
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload: { role: ARCHITECT },
+          payload: { roles: [ARCHITECT] },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

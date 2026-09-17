@@ -252,7 +252,10 @@ const coursesList = [
     type: INTRA,
     maxTrainees: 8,
     trainers: [trainer._id, trainerAndCoach._id, vendorAdmin._id],
-    rolePerTrainer: [{ trainer: trainer._id, role: VAEI_COACH }, { trainer: trainerAndCoach._id, role: ARCHITECT }],
+    rolesPerTrainer: [
+      { trainer: trainer._id, roles: [VAEI_COACH] },
+      { trainer: trainerAndCoach._id, roles: [ARCHITECT] },
+    ],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
     tradeName: 'nom',

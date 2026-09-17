@@ -37,10 +37,10 @@ const CourseSchema = mongoose.Schema({
   type: { type: String, required: true, enum: COURSE_TYPES },
   format: { type: String, enum: COURSE_FORMATS, default: BLENDED },
   trainers: { type: [mongoose.Schema.Types.ObjectId], ref: 'User' },
-  rolePerTrainer: {
+  rolesPerTrainer: {
     type: [{
       trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-      role: { type: String, enum: TRAINER_ROLES, required: true },
+      roles: { type: [{ type: String, enum: TRAINER_ROLES }], required: true },
     }],
     _id: false,
     default: undefined,

@@ -410,7 +410,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     .populate({ path: 'step', select: 'type name durationCountedPerTrainer' })
     .populate({
       path: 'course',
-      select: 'type trainees misc subProgram companies tradeName rolePerTrainer',
+      select: 'type trainees misc subProgram companies tradeName rolesPerTrainer',
       match: { type: { $in: courseTypes } },
       populate: [
         { path: 'companies', select: 'name' },
