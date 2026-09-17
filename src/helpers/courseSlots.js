@@ -41,17 +41,26 @@ exports.getStepPrices = (stepId, subProgram, date) => {
   return (matchingSubProgamPriceVersion?.prices || []).filter(p => UtilsHelper.areObjectIdsEquals(p.step, stepId));
 };
 
+exports.getTrainerMatchingRoles = (rolesPerTrainer, trainerId, roles) => {
+  const trainerRolesEntry = (rolesPerTrainer || [])
+    .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
+
+  return (trainerRolesEntry?.roles || []).filter(role => roles.includes(role));
+};
+
 exports.getHourlyAmount = (slot, trainerId) => {
   const stepPrices = exports.getStepPrices(slot.step._id, slot.course.subProgram, slot.startDate);
 
   if (!stepPrices.length) return null;
   if (!stepPrices[0].role) return stepPrices[0].hourlyAmount;
 
-  const trainerRole = (slot.course.rolePerTrainer || [])
-    .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
-  const price = trainerRole && stepPrices.find(p => p.role === trainerRole.role);
+  const matchingRoles = exports.getTrainerMatchingRoles(
+    slot.course.rolesPerTrainer,
+    trainerId,
+    stepPrices.map(p => p.role)
+  );
 
-  return price ? price.hourlyAmount : null;
+  return matchingRoles.length === 1 ? stepPrices.find(p => p.role === matchingRoles[0]).hourlyAmount : null;
 };
 
 const SLOT_STATUS = [NOT_INVOICED, INVOICED, PAID];
@@ -232,7 +241,7 @@ exports.list = async (query) => {
     .populate({ path: 'trainers', select: 'identity' })
     .populate({
       path: 'course',
-      select: '_id misc subProgram trainees tradeName rolePerTrainer',
+      select: '_id misc subProgram trainees tradeName rolesPerTrainer',
       populate: [
         { path: 'trainees', select: 'identity' },
         { path: 'subProgram', select: 'priceVersions' },

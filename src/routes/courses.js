@@ -30,7 +30,7 @@ const {
   generateTrainingContract,
   addTrainer,
   removeTrainer,
-  updateTrainerRole,
+  updateTrainerRoles,
   addTutor,
   removeTutor,
   uploadTraineeCSV,
@@ -578,7 +578,7 @@ exports.plugin = {
           params: Joi.object({ _id: Joi.objectId().required() }),
           payload: Joi.object({
             trainer: Joi.objectId().required(),
-            role: Joi.string().valid(...TRAINER_ROLES),
+            roles: Joi.array().items(Joi.string().valid(...TRAINER_ROLES)),
           }),
         },
         pre: [{ method: authorizeTrainerAddition }],
@@ -606,11 +606,11 @@ exports.plugin = {
         auth: { scope: 'courses:create' },
         validate: {
           params: Joi.object({ _id: Joi.objectId().required(), trainerId: Joi.objectId().required() }),
-          payload: Joi.object({ role: Joi.string().valid(...TRAINER_ROLES) }),
+          payload: Joi.object({ roles: Joi.array().items(Joi.string().valid(...TRAINER_ROLES)).required() }),
         },
         pre: [{ method: authorizeTrainerEdition }],
       },
-      handler: updateTrainerRole,
+      handler: updateTrainerRoles,
     });
 
     server.route({

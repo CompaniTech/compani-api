@@ -619,7 +619,7 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees tradeName rolePerTrainer',
+            select: '_id misc subProgram trainees tradeName rolesPerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
               { path: 'subProgram', select: 'priceVersions' },
@@ -779,7 +779,7 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees tradeName rolePerTrainer',
+            select: '_id misc subProgram trainees tradeName rolesPerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
               { path: 'subProgram', select: 'priceVersions' },
@@ -947,7 +947,7 @@ describe('list', () => {
           query: 'populate',
           args: [{
             path: 'course',
-            select: '_id misc subProgram trainees tradeName rolePerTrainer',
+            select: '_id misc subProgram trainees tradeName rolesPerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
               { path: 'subProgram', select: 'priceVersions' },
@@ -1025,7 +1025,7 @@ describe('getHourlyAmount', () => {
         subProgram: {
           priceVersions: [{ effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 50 }] }],
         },
-        rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }],
+        rolesPerTrainer: [{ trainer: trainerId, roles: [VAEI_COACH] }],
       },
     };
     const result = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
@@ -1049,7 +1049,7 @@ describe('getHourlyAmount', () => {
             },
           ],
         },
-        rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }],
+        rolesPerTrainer: [{ trainer: trainerId, roles: [VAEI_COACH] }],
       },
     };
 
@@ -1084,7 +1084,7 @@ describe('getHourlyAmount', () => {
             { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: new ObjectId(), hourlyAmount: 50 }] },
           ],
         },
-        rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }],
+        rolesPerTrainer: [{ trainer: trainerId, roles: [VAEI_COACH] }],
       },
     };
 
@@ -1125,7 +1125,30 @@ describe('getHourlyAmount', () => {
             effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, role: ARCHITECT, hourlyAmount: 55 }],
           }],
         },
-        rolePerTrainer: [{ trainer: trainerId, role: VAEI_COACH }],
+        rolesPerTrainer: [{ trainer: trainerId, roles: [VAEI_COACH] }],
+      },
+    };
+
+    const result = CourseSlotsHelper.getHourlyAmount(slot, trainerId);
+
+    expect(result).toBeNull();
+  });
+
+  it('should return null if trainer holds several of the step\'s differentiated roles (ambiguous)', () => {
+    const slot = {
+      startDate: '2020-05-03T12:00:00.000Z',
+      step: { _id: stepId },
+      course: {
+        subProgram: {
+          priceVersions: [{
+            effectiveDate: '2019-01-01T00:00:00.000Z',
+            prices: [
+              { step: stepId, role: VAEI_COACH, hourlyAmount: 50 },
+              { step: stepId, role: ARCHITECT, hourlyAmount: 55 },
+            ],
+          }],
+        },
+        rolesPerTrainer: [{ trainer: trainerId, roles: [VAEI_COACH, ARCHITECT] }],
       },
     };
 
