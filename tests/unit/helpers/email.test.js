@@ -422,18 +422,14 @@ describe('sendBillEmail', async () => {
   let generateBillPdf;
   let sendMail;
   let sendinBlueTransporter;
-  let userFindOne;
   let updateManyCourseBill;
   let pendingCourseBillCreate;
-  const userId = new ObjectId();
 
   beforeEach(() => {
     generateBillPdf = sinon.stub(CourseBillHelper, 'generateBillPdf');
     sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter');
     sendMail = sinon.stub();
     process.env.MANAGEMENT_COMPANI_EMAIL = 'tech@compani.fr';
-    process.env.BILLING_USER_ID = userId.toHexString();
-    userFindOne = sinon.stub(User, 'findOne');
     updateManyCourseBill = sinon.stub(CourseBill, 'updateMany');
     UtilsMock.mockCurrentDate('2025-11-20T11:00:00.000Z');
     pendingCourseBillCreate = sinon.stub(PendingCourseBill, 'create');
@@ -443,8 +439,6 @@ describe('sendBillEmail', async () => {
     generateBillPdf.restore();
     sendinBlueTransporter.restore();
     process.env.MANAGEMENT_COMPANI_EMAIL = '';
-    process.env.BILLING_USER_ID = '';
-    userFindOne.restore();
     updateManyCourseBill.restore();
     UtilsMock.unmockCurrentDate();
     pendingCourseBillCreate.restore();
@@ -463,18 +457,8 @@ describe('sendBillEmail', async () => {
         payer,
       },
     ];
-    const financialUser = {
-      _id: userId,
-      identity: { firstname: 'Malo', lastname: 'Poirier' },
-      contact: { phone: '0987654321', countryCode: '+33' },
-    };
     const htmlContent = `<p>Bonjour<br> Ceci est un test</p>
       <p><br>
-    <p style="color: #005774; font-size: 14px;">
-      Malo POIRIER<br>
-      <span>Responsable administrative et financière</span><br>
-      +33 9 87 65 43 21
-    </p>
     <a href="https://www.compani.fr" target="_blank">
       <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
         style="width: 200px; height: auto; border: 0;">
@@ -486,7 +470,6 @@ describe('sendBillEmail', async () => {
     const sentObj = { msg: htmlContent };
     sendMail.returns(sentObj);
     sendinBlueTransporter.returns({ sendMail });
-    userFindOne.returns(SinonMongoose.stubChainedQueries(financialUser, ['lean']));
     generateBillPdf.returns({ pdf: 'pdf1' });
 
     const recipientEmails = ['test@compani.fr', 'testbis@compani.fr'];
@@ -506,13 +489,6 @@ describe('sendBillEmail', async () => {
       courseBillId,
       [companies[0], payer._id],
       credentials
-    );
-    SinonMongoose.calledOnceWithExactly(
-      userFindOne,
-      [
-        { query: 'findOne', args: [{ _id: userId }, { identity: 1, contact: 1 }] },
-        { query: 'lean' },
-      ]
     );
     sinon.assert.calledWithExactly(sendinBlueTransporter);
     sinon.assert.calledOnceWithExactly(
@@ -553,14 +529,8 @@ describe('sendBillEmail', async () => {
         payer,
       },
     ];
-    const financialUser = { _id: userId, identity: { firstname: 'Malo', lastname: 'Poirier' } };
     const htmlContent = `<p>Bonjour<br> Ceci est un test</p>
       <p><br>
-    <p style="color: #005774; font-size: 14px;">
-      Malo POIRIER<br>
-      <span>Responsable administrative et financière</span><br>
-      
-    </p>
     <a href="https://www.compani.fr" target="_blank">
       <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
         style="width: 200px; height: auto; border: 0;">
@@ -573,7 +543,6 @@ describe('sendBillEmail', async () => {
     sendMail.returns(sentObj);
     sendinBlueTransporter.returns({ sendMail });
 
-    userFindOne.returns(SinonMongoose.stubChainedQueries(financialUser, ['lean']));
     generateBillPdf.onCall(0).returns({ pdf: 'pdf1' });
     generateBillPdf.onCall(1).returns({ pdf: 'pdf2' });
 
@@ -600,13 +569,6 @@ describe('sendBillEmail', async () => {
       courseBillIds[1],
       [companies[1], payer._id],
       credentials
-    );
-    SinonMongoose.calledOnceWithExactly(
-      userFindOne,
-      [
-        { query: 'findOne', args: [{ _id: userId }, { identity: 1, contact: 1 }] },
-        { query: 'lean' },
-      ]
     );
     sinon.assert.calledWithExactly(sendinBlueTransporter);
     sinon.assert.calledOnceWithExactly(
@@ -665,7 +627,6 @@ describe('sendBillEmail', async () => {
       );
 
     sinon.assert.notCalled(generateBillPdf);
-    sinon.assert.notCalled(userFindOne);
     sinon.assert.notCalled(sendinBlueTransporter);
     sinon.assert.notCalled(sendMail);
     sinon.assert.notCalled(updateManyCourseBill);
