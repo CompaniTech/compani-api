@@ -21,6 +21,7 @@ describe('method', () => {
   const EVALUATION_STEP_IDS = new ObjectId();
   const CODEV_STEP_IDS = new ObjectId();
   const TRIPARTITE_STEP_IDS = new ObjectId();
+  const QUADRIPARTITE_STEP_IDS = new ObjectId();
   const COACHING_STEP_IDS = new ObjectId();
 
   // eslint-disable-next-line no-console
@@ -46,6 +47,7 @@ describe('method', () => {
     process.env.EVALUATION_STEP_IDS = EVALUATION_STEP_IDS.toHexString();
     process.env.CODEV_STEP_IDS = CODEV_STEP_IDS.toHexString();
     process.env.TRIPARTITE_STEP_IDS = TRIPARTITE_STEP_IDS.toHexString();
+    process.env.QUADRIPARTITE_STEP_IDS = QUADRIPARTITE_STEP_IDS.toHexString();
     process.env.COACHING_STEP_IDS = COACHING_STEP_IDS.toHexString();
     process.env.NOTION_TOKEN = 'notion-token';
     process.env.NOTION_TRAINEES_DATABASE = 'notion-db-id';
@@ -63,6 +65,7 @@ describe('method', () => {
     process.env.EVALUATION_STEP_IDS = '';
     process.env.CODEV_STEP_IDS = '';
     process.env.TRIPARTITE_STEP_IDS = '';
+    process.env.QUADRIPARTITE_STEP_IDS = '';
     process.env.COACHING_STEP_IDS = '';
     process.env.NOTION_TOKEN = '';
     process.env.NOTION_TRAINEES_DATABASE = '';
@@ -73,6 +76,7 @@ describe('method', () => {
     const activityIds = [new ObjectId(), new ObjectId()];
     const evalStepId = new ObjectId(EVALUATION_STEP_IDS);
     const codevStepId = new ObjectId(CODEV_STEP_IDS);
+    const quadripartiteStepId = new ObjectId(QUADRIPARTITE_STEP_IDS);
 
     const courses = [
       // skipped: no trainees
@@ -150,6 +154,12 @@ describe('method', () => {
             step: codevStepId,
             attendances: [{ status: 'missing' }],
           },
+          {
+            startDate: '2026-01-11T08:00:00.000Z',
+            endDate: '2026-01-11T09:15:00.000Z',
+            step: quadripartiteStepId,
+            attendances: [{ status: 'present' }],
+          },
         ],
       },
     ];
@@ -188,10 +198,12 @@ describe('method', () => {
         'Total h diag&eval': { number: 2 },
         'Tot Nb codev': { number: 2 },
         'Total h tripartites': { number: 0 },
+        'Total h quadripartites': { number: 0 },
         'Total h coaching': { number: 0 },
         'h diag&eval du mois dernier': { number: 2 },
         'Nb codev du mois dernier': { number: 2 },
         'h tripartites du mois dernier': { number: 0 },
+        'h quadripartites du mois dernier': { number: 0 },
         'h coaching du mois dernier': { number: 0 },
         'Total h e-learning': { number: 0 },
         'h e-learning du mois dernier': { number: 0 },
@@ -204,10 +216,12 @@ describe('method', () => {
         'Total h diag&eval': { number: 2.5 },
         'Tot Nb codev': { number: 0 },
         'Total h tripartites': { number: 0 },
+        'Total h quadripartites': { number: 1.25 },
         'Total h coaching': { number: 0 },
         'h diag&eval du mois dernier': { number: 2.5 },
         'Nb codev du mois dernier': { number: 0 },
         'h tripartites du mois dernier': { number: 0 },
+        'h quadripartites du mois dernier': { number: 1.25 },
         'h coaching du mois dernier': { number: 0 },
         'Total h e-learning': { number: 0.75 },
         'h e-learning du mois dernier': { number: 0.75 },
