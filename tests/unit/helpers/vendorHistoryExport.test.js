@@ -1392,7 +1392,6 @@ describe('exportCourseSlotHistory', () => {
     { _id: new ObjectId(), identity: { firstname: 'Autre', lastname: 'FORMATEUR' } },
     { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } },
   ];
-  // const trainerThree = { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } };
 
   const stepList = [
     { _id: new ObjectId(), name: 'étape 1', type: ON_SITE, durationCountedPerTrainer: true },

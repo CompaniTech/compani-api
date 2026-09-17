@@ -114,15 +114,8 @@ const checkPayload = async (courseSlot, payload) => {
 
     if (isRoleBasedStep) {
       const stepPriceRoles = stepPrices.map(p => p.role);
-      const someTrainerRoleMismatch = trainers.some((trainerId) => {
-        const trainerRolesEntry = (course.rolesPerTrainer || [])
-          .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
-        const matchingRolesCount = (trainerRolesEntry?.roles || [])
-          .filter(role => stepPriceRoles.includes(role))
-          .length;
-
-        return matchingRolesCount !== 1;
-      });
+      const someTrainerRoleMismatch = trainers.some(trainerId =>
+        CourseSlotsHelper.getTrainerMatchingRoles(course.rolesPerTrainer, trainerId, stepPriceRoles).length !== 1);
       if (someTrainerRoleMismatch) throw Boom.forbidden(translate[language].courseSlotTrainerRoleMismatch);
     }
   }
@@ -391,15 +384,8 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
         const isRoleBasedStep = stepPrices.length > 0 && !!stepPrices[0].role;
         if (isRoleBasedStep) {
           const stepPriceRoles = stepPrices.map(p => p.role);
-          const someTrainerRoleMismatch = trainerIds.some((trainerId) => {
-            const trainerRolesEntry = (course.rolesPerTrainer || [])
-              .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
-            const matchingRolesCount = (trainerRolesEntry.roles || [])
-              .filter(role => stepPriceRoles.includes(role))
-              .length;
-
-            return matchingRolesCount !== 1;
-          });
+          const someTrainerRoleMismatch = trainerIds.some(trainerId =>
+            CourseSlotsHelper.getTrainerMatchingRoles(course.rolesPerTrainer, trainerId, stepPriceRoles).length !== 1);
           if (someTrainerRoleMismatch) addError(rowLabel, translate[language].trainerRoleMismatchCsv);
         }
       }
