@@ -7,12 +7,21 @@ const ActivityHistory = require('../models/ActivityHistory');
 const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const SubProgram = require('../models/SubProgram');
+const CourseSlotsHelper = require('../helpers/courseSlots');
 const NumbersHelper = require('../helpers/numbers');
 const NotificationsHelper = require('../helpers/notifications');
 const SmsHelper = require('../helpers/sms');
 const UtilsHelper = require('../helpers/utils');
 const { CompaniDate } = require('../helpers/dates/companiDates');
-const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING, SINGLE } = require('../helpers/constants');
+const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING, SINGLE, VAEI_COACH, ARCHITECT } = require('../helpers/constants');
+
+const getTrainerByRole = (trainers, rolesPerTrainer, role) => trainers.find(
+  trainer => CourseSlotsHelper.getTrainerMatchingRoles(rolesPerTrainer, trainer._id, [role]).length
+);
+
+const formatTrainerPhone = trainer => (get(trainer, 'contact.phone')
+  ? ` (${trainer.contact.countryCode}${trainer.contact.phone.substring(1)})`
+  : '');
 
 const getEvaluationSlotsIn2W = async () => {
   const evaluationStepIds = UtilsHelper.getEnvObjectIds('EVALUATION_STEP_IDS');
@@ -64,12 +73,13 @@ const getSlotsIn1D = async () => {
   const evaluationStepIds = UtilsHelper.getEnvObjectIds('EVALUATION_STEP_IDS');
   const codevStepIds = UtilsHelper.getEnvObjectIds('CODEV_STEP_IDS');
   const tripartiteStepIds = UtilsHelper.getEnvObjectIds('TRIPARTITE_STEP_IDS');
+  const quadripartiteStepIds = UtilsHelper.getEnvObjectIds('QUADRIPARTITE_STEP_IDS');
   const VAESubProgramIds = UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS');
 
   const slotsIn1D = await CourseSlot
     .find({
       step: {
-        $in: [...evaluationStepIds, ...codevStepIds, ...tripartiteStepIds],
+        $in: [...evaluationStepIds, ...codevStepIds, ...tripartiteStepIds, ...quadripartiteStepIds],
       },
       startDate: {
         $gte: CompaniDate().add('P1D').startOf(DAY).toDate(),
@@ -78,7 +88,7 @@ const getSlotsIn1D = async () => {
     })
     .populate({
       path: 'course',
-      select: 'trainees tutors trainers interruptionDates archivedAt subProgram',
+      select: 'trainees tutors trainers rolesPerTrainer interruptionDates archivedAt subProgram',
       populate: [{ path: 'trainees', select: 'contact identity' }, { path: 'tutors', select: 'contact' }],
     })
     .populate({ path: 'trainers', select: 'identity contact' })
@@ -93,6 +103,10 @@ const getSlotsIn1D = async () => {
   const traineeTripartiteSlotsIn1DNotSentReminders = [];
   const tutorTripartiteSlotsIn1DSentReminders = [];
   const tutorTripartiteSlotsIn1DNotSentReminders = [];
+  const traineeQuadripartiteSlotsIn1DSentReminders = [];
+  const traineeQuadripartiteSlotsIn1DNotSentReminders = [];
+  const tutorQuadripartiteSlotsIn1DSentReminders = [];
+  const tutorQuadripartiteSlotsIn1DNotSentReminders = [];
   for (const slot of slotsIn1D) {
     const isCourseInterrupted = UtilsHelper.isCourseInterrupted(slot.course.interruptionDates);
     const isCourseSubProgramVAE = UtilsHelper.doesArrayIncludeId(VAESubProgramIds, slot.course.subProgram);
@@ -100,9 +114,7 @@ const getSlotsIn1D = async () => {
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     const trainer = slot.trainers[0];
-    const trainerPhone = get(trainer, 'contact.phone')
-      ? ` (${trainer.contact.countryCode}${trainer.contact.phone.substring(1)})`
-      : '';
+    const trainerPhone = formatTrainerPhone(trainer);
     if (get(traineeContact, 'phone')) {
       let content = '';
       switch (true) {
@@ -128,6 +140,19 @@ const getSlotsIn1D = async () => {
             + 'N\'oubliez pas votre rendez-vous tripartite avec votre coach et votre tuteur.ice qui aura lieu demain à '
             + `${CompaniDate(slot.startDate).format(HH_MM)}. Si besoin, contactez votre coach${trainerPhone}.`;
           break;
+        case UtilsHelper.doesArrayIncludeId(quadripartiteStepIds, slot.step): {
+          const coachTrainer = getTrainerByRole(slot.trainers, slot.course.rolesPerTrainer, VAEI_COACH);
+          const architectTrainer = getTrainerByRole(slot.trainers, slot.course.rolesPerTrainer, ARCHITECT);
+          const coachTrainerPhone = formatTrainerPhone(coachTrainer);
+          const architectTrainerPhone = formatTrainerPhone(architectTrainer);
+
+          traineeQuadripartiteSlotsIn1DSentReminders.push(trainee._id);
+          content = 'Formation :\n'
+            + 'N\'oubliez pas votre rendez-vous quadripartite avec votre coach, votre architecte et votre '
+            + `tuteur.ice qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)}. Si besoin, `
+            + `contactez votre coach${coachTrainerPhone} ou votre architecte${architectTrainerPhone}.`;
+          break;
+        }
       }
       promises.push(
         SmsHelper.send({
@@ -148,17 +173,38 @@ const getSlotsIn1D = async () => {
         case UtilsHelper.doesArrayIncludeId(tripartiteStepIds, slot.step):
           traineeTripartiteSlotsIn1DNotSentReminders.push(trainee._id);
           break;
+        case UtilsHelper.doesArrayIncludeId(quadripartiteStepIds, slot.step):
+          traineeQuadripartiteSlotsIn1DNotSentReminders.push(trainee._id);
+          break;
       }
     }
-    if (UtilsHelper.doesArrayIncludeId(tripartiteStepIds, slot.step) && slot.course.tutors) {
+    const isTripartiteSlot = UtilsHelper.doesArrayIncludeId(tripartiteStepIds, slot.step);
+    const isQuadripartiteSlot = UtilsHelper.doesArrayIncludeId(quadripartiteStepIds, slot.step);
+    if ((isTripartiteSlot || isQuadripartiteSlot) && slot.course.tutors) {
+      const coachTrainer = isQuadripartiteSlot
+        ? getTrainerByRole(slot.trainers, slot.course.rolesPerTrainer, VAEI_COACH)
+        : null;
+      const architectTrainer = isQuadripartiteSlot
+        ? getTrainerByRole(slot.trainers, slot.course.rolesPerTrainer, ARCHITECT)
+        : null;
+      const coachTrainerPhone = isQuadripartiteSlot ? formatTrainerPhone(coachTrainer) : trainerPhone;
+      const architectTrainerPhone = formatTrainerPhone(architectTrainer);
+
       for (const tutor of slot.course.tutors) {
         const tutorContact = get(tutor, 'contact');
         if (get(tutorContact, 'phone')) {
-          const content = 'Formation :\n'
-            + 'N\'oubliez pas le rendez-vous tripartite qui aura lieu demain à '
-            + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `
-            + `${UtilsHelper.formatIdentity(trainee.identity, 'FL')}. Si besoin, contactez le coach${trainerPhone}.`;
-          tutorTripartiteSlotsIn1DSentReminders.push(tutor._id);
+          const content = isQuadripartiteSlot
+            ? 'Formation :\n'
+              + 'N\'oubliez pas le rendez-vous quadripartite qui aura lieu demain à '
+              + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `
+              + `${UtilsHelper.formatIdentity(trainee.identity, 'FL')}. Si besoin, contactez le `
+              + `coach${coachTrainerPhone} ou l'architecte${architectTrainerPhone}.`
+            : 'Formation :\n'
+              + 'N\'oubliez pas le rendez-vous tripartite qui aura lieu demain à '
+              + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `
+              + `${UtilsHelper.formatIdentity(trainee.identity, 'FL')}. Si besoin, contactez le coach${trainerPhone}.`;
+          if (isQuadripartiteSlot) tutorQuadripartiteSlotsIn1DSentReminders.push(tutor._id);
+          else tutorTripartiteSlotsIn1DSentReminders.push(tutor._id);
           promises.push(
             SmsHelper.send({
               recipient: `${tutorContact.countryCode}${tutorContact.phone.substring(1)}`,
@@ -167,7 +213,8 @@ const getSlotsIn1D = async () => {
               tag: 'Formation',
             })
           );
-        } else tutorTripartiteSlotsIn1DNotSentReminders.push(tutor._id);
+        } else if (isQuadripartiteSlot) tutorQuadripartiteSlotsIn1DNotSentReminders.push(tutor._id);
+        else tutorTripartiteSlotsIn1DNotSentReminders.push(tutor._id);
       }
     }
   }
@@ -181,6 +228,10 @@ const getSlotsIn1D = async () => {
     traineeTripartiteSlotsIn1DNotSentReminders,
     tutorTripartiteSlotsIn1DSentReminders,
     tutorTripartiteSlotsIn1DNotSentReminders,
+    traineeQuadripartiteSlotsIn1DSentReminders,
+    traineeQuadripartiteSlotsIn1DNotSentReminders,
+    tutorQuadripartiteSlotsIn1DSentReminders,
+    tutorQuadripartiteSlotsIn1DNotSentReminders,
     promises,
   };
 };
@@ -398,6 +449,10 @@ const sendingSmsRemindersJob = {
         traineeTripartiteSlotsIn1DNotSentReminders,
         tutorTripartiteSlotsIn1DSentReminders,
         tutorTripartiteSlotsIn1DNotSentReminders,
+        traineeQuadripartiteSlotsIn1DSentReminders,
+        traineeQuadripartiteSlotsIn1DNotSentReminders,
+        tutorQuadripartiteSlotsIn1DSentReminders,
+        tutorQuadripartiteSlotsIn1DNotSentReminders,
         promises: vaeiSlotsIn1DPromises,
       } = await getSlotsIn1D();
       result['Veille d\'évaluation'] = {
@@ -418,6 +473,22 @@ const sendingSmsRemindersJob = {
         ...tutorTripartiteSlotsIn1DSentReminders.length && { sentReminders: tutorTripartiteSlotsIn1DSentReminders },
         ...tutorTripartiteSlotsIn1DNotSentReminders.length && {
           notSentReminders: tutorTripartiteSlotsIn1DNotSentReminders,
+        },
+      };
+      result['Veille de quadripartite (apprenant)'] = {
+        ...traineeQuadripartiteSlotsIn1DSentReminders.length && {
+          sentReminders: traineeQuadripartiteSlotsIn1DSentReminders,
+        },
+        ...traineeQuadripartiteSlotsIn1DNotSentReminders.length && {
+          notSentReminders: traineeQuadripartiteSlotsIn1DNotSentReminders,
+        },
+      };
+      result['Veille de quadripartite (tuteur)'] = {
+        ...tutorQuadripartiteSlotsIn1DSentReminders.length && {
+          sentReminders: tutorQuadripartiteSlotsIn1DSentReminders,
+        },
+        ...tutorQuadripartiteSlotsIn1DNotSentReminders.length && {
+          notSentReminders: tutorQuadripartiteSlotsIn1DNotSentReminders,
         },
       };
       if (vaeiSlotsIn1DPromises.length) promises.push(...vaeiSlotsIn1DPromises);

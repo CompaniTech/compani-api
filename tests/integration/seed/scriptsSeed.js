@@ -12,6 +12,8 @@ const {
   TRAINEE,
   START_COURSE,
   RESEND,
+  VAEI_COACH,
+  ARCHITECT,
 } = require('../../../src/helpers/constants');
 const User = require('../../../src/models/User');
 const Course = require('../../../src/models/Course');
@@ -60,6 +62,14 @@ const userList = [
     contact: { countryCode: '+33', phone: '0987654321' },
     origin: WEBAPP,
   },
+  { // 4
+    _id: new ObjectId(),
+    identity: { firstname: 'architect', lastname: 'trainer' },
+    local: { email: 'architect_trainer@compani.fr' },
+    role: { vendor: trainerRoleId },
+    contact: { countryCode: '+33', phone: '0611111111' },
+    origin: WEBAPP,
+  },
 ];
 
 const cardsList = [
@@ -105,6 +115,7 @@ const stepList = [
     theoreticalDuration: 60,
     activities: [activityList[1]._id],
   },
+  { _id: new ObjectId(), type: 'on_site', name: 'quadripartite', status: PUBLISHED, theoreticalDuration: 60 },
 ];
 
 const userCompanyList = [
@@ -117,7 +128,7 @@ const subProgramList = [
   {
     _id: new ObjectId(),
     name: 'Subprogram 2',
-    steps: [stepList[0]._id, stepList[1]._id, stepList[2]._id, stepList[3]._id],
+    steps: [stepList[0]._id, stepList[1]._id, stepList[2]._id, stepList[3]._id, stepList[6]._id],
     status: PUBLISHED,
   },
   { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[0]._id], status: PUBLISHED },
@@ -138,7 +149,11 @@ const courseList = [
     trainees: [userList[0]._id],
     tutors: [userList[3]._id],
     companies: [authCompany._id],
-    trainers: [userList[1]._id],
+    trainers: [userList[1]._id, userList[4]._id],
+    rolesPerTrainer: [
+      { trainer: userList[1]._id, roles: [VAEI_COACH] },
+      { trainer: userList[4]._id, roles: [ARCHITECT] },
+    ],
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: MONTHLY,
     folderId: 'folderId',
@@ -351,6 +366,14 @@ const slotList = [
     course: courseList[0]._id,
     step: stepList[0]._id,
     trainers: [userList[1]._id],
+  },
+  { // 16
+    _id: new ObjectId(),
+    startDate: '2023-01-09T15:00:00.000Z',
+    endDate: '2023-01-09T16:00:00.000Z',
+    course: courseList[0]._id,
+    step: stepList[6]._id,
+    trainers: [userList[1]._id, userList[4]._id],
   },
 ];
 

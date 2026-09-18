@@ -1,6 +1,5 @@
 const Boom = require('@hapi/boom');
 const { ObjectId } = require('mongodb');
-const get = require('lodash/get');
 const compact = require('lodash/compact');
 const uniqBy = require('lodash/uniqBy');
 const NodemailerHelper = require('./nodemailer');
@@ -13,7 +12,6 @@ const {
   CLIENT_ADMIN,
   TRAINEE,
   VAEI,
-  COPPER_600,
   COPPER_500,
   RESEND,
   DAY,
@@ -147,12 +145,7 @@ exports.completionCertificateCreationEmail = (certificateCreated, certificateUpd
   return NodemailerHelper.sendinBlueTransporter().sendMail(mailOptions);
 };
 
-const getSignature = billingUser => `<br>
-    <p style="color: ${COPPER_600}; font-size: 14px;">
-      ${UtilsHelper.formatIdentity(billingUser.identity, 'FL')}<br>
-      <span>Responsable administrative et financière</span><br>
-      ${get(billingUser, 'contact.phone') ? UtilsHelper.formatPhone(billingUser.contact) : ''}
-    </p>
+const signature = `<br>
     <a href="https://www.compani.fr" target="_blank">
       <img src="https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png" alt="Logo"
         style="width: 200px; height: auto; border: 0;">
@@ -178,8 +171,6 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
 
     const billNumbers = courseBills.map(cb => cb.number).join(', ');
     const senderEmail = process.env.MANAGEMENT_COMPANI_EMAIL;
-    const signatureBillingUserId = new ObjectId(process.env.BILLING_USER_ID);
-    const billingUser = await User.findOne({ _id: signatureBillingUserId }, { identity: 1, contact: 1 }).lean();
 
     const getSubject = () => {
       switch (type) {
@@ -201,7 +192,7 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
       subject: getSubject(),
       bcc: senderEmail,
       html: `<p>${content.replaceAll('\r\n', '<br>')}</p>
-      <p>${getSignature(billingUser)}</p>`,
+      <p>${signature}</p>`,
       attachments: billsPdf,
     };
 

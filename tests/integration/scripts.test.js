@@ -154,6 +154,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       process.env.EVALUATION_STEP_IDS = stepList[0]._id;
       process.env.CODEV_STEP_IDS = stepList[1]._id;
       process.env.TRIPARTITE_STEP_IDS = stepList[3]._id;
+      process.env.QUADRIPARTITE_STEP_IDS = stepList[6]._id;
       process.env.POEI_SUBPROGRAM_IDS = subProgramList[2]._id;
       process.env.COLLECTIVE_STEP_IDS = stepList[4]._id;
       process.env.VAE_SUBPROGRAM_IDS = subProgramList[1]._id;
@@ -167,6 +168,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
       process.env.EVALUATION_STEP_IDS = '';
       process.env.CODEV_STEP_IDS = '';
       process.env.TRIPARTITE_STEP_IDS = '';
+      process.env.QUADRIPARTITE_STEP_IDS = '';
       process.env.POEI_SUBPROGRAM_IDS = '';
       process.env.COLLECTIVE_STEP_IDS = '';
       process.env.VAE_SUBPROGRAM_IDS = '';
@@ -199,6 +201,12 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
           'Veille de tripartite (tuteur)': {
             sentReminders: [userList[3]._id],
           },
+          'Veille de quadripartite (apprenant)': {
+            sentReminders: [userList[0]._id],
+          },
+          'Veille de quadripartite (tuteur)': {
+            sentReminders: [userList[3]._id],
+          },
           '1 semaine avant 1er codev': {
             sentReminders: [userList[3]._id],
           },
@@ -209,7 +217,7 @@ describe('SCRIPTS ROUTES - GET /scripts/sending-sms-reminders', () => {
             sentReminders: [userList[1]._id],
           },
         });
-      sinon.assert.callCount(smsSend, 7);
+      sinon.assert.callCount(smsSend, 9);
       sinon.assert.callCount(sendAttendanceReminder, 1);
     });
   });
