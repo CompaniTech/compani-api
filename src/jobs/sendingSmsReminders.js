@@ -7,6 +7,7 @@ const ActivityHistory = require('../models/ActivityHistory');
 const Course = require('../models/Course');
 const CourseSlot = require('../models/CourseSlot');
 const SubProgram = require('../models/SubProgram');
+const CourseSlotsHelper = require('../helpers/courseSlots');
 const NumbersHelper = require('../helpers/numbers');
 const NotificationsHelper = require('../helpers/notifications');
 const SmsHelper = require('../helpers/sms');
@@ -14,12 +15,9 @@ const UtilsHelper = require('../helpers/utils');
 const { CompaniDate } = require('../helpers/dates/companiDates');
 const { DAY, DD_MM_YYYY, HH_MM, E_LEARNING, SINGLE, VAEI_COACH, ARCHITECT } = require('../helpers/constants');
 
-const getTrainerByRole = (trainers, rolesPerTrainer, role) => trainers.find((trainer) => {
-  const trainerRolesEntry = (rolesPerTrainer || [])
-    .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainer._id));
-
-  return trainerRolesEntry && trainerRolesEntry.roles.includes(role);
-});
+const getTrainerByRole = (trainers, rolesPerTrainer, role) => trainers.find(
+  trainer => CourseSlotsHelper.getTrainerMatchingRoles(rolesPerTrainer, trainer._id, [role]).length
+);
 
 const formatTrainerPhone = trainer => (get(trainer, 'contact.phone')
   ? ` (${trainer.contact.countryCode}${trainer.contact.phone.substring(1)})`
@@ -116,9 +114,7 @@ const getSlotsIn1D = async () => {
     const trainee = slot.course.trainees[0];
     const traineeContact = get(trainee, 'contact');
     const trainer = slot.trainers[0];
-    const trainerPhone = get(trainer, 'contact.phone')
-      ? ` (${trainer.contact.countryCode}${trainer.contact.phone.substring(1)})`
-      : '';
+    const trainerPhone = formatTrainerPhone(trainer);
     if (get(traineeContact, 'phone')) {
       let content = '';
       switch (true) {
@@ -154,7 +150,7 @@ const getSlotsIn1D = async () => {
           content = 'Formation :\n'
             + 'N\'oubliez pas votre rendez-vous quadripartite avec votre coach, votre architecte et votre '
             + `tuteur.ice qui aura lieu demain à ${CompaniDate(slot.startDate).format(HH_MM)}. Si besoin, `
-            + `contactez votre coach${coachTrainerPhone} ou votre architect${architectTrainerPhone}.`;
+            + `contactez votre coach${coachTrainerPhone} ou votre architecte${architectTrainerPhone}.`;
           break;
         }
       }
@@ -202,7 +198,7 @@ const getSlotsIn1D = async () => {
               + 'N\'oubliez pas le rendez-vous quadripartite qui aura lieu demain à '
               + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `
               + `${UtilsHelper.formatIdentity(trainee.identity, 'FL')}. Si besoin, contactez le `
-              + `coach${coachTrainerPhone} ou l'architect${architectTrainerPhone}.`
+              + `coach${coachTrainerPhone} ou l'architecte${architectTrainerPhone}.`
             : 'Formation :\n'
               + 'N\'oubliez pas le rendez-vous tripartite qui aura lieu demain à '
               + `${CompaniDate(slot.startDate).format(HH_MM)}, avec votre apprenant.e `

@@ -652,7 +652,7 @@ describe('method', () => {
         sender: 'Compani',
         content: 'Formation :\nN\'oubliez pas votre rendez-vous quadripartite avec votre coach, votre architecte'
         + ' et votre tuteur.ice qui aura lieu demain à 16:00. Si besoin, contactez votre coach (+33611111111)'
-        + ' ou votre architect (+33622222222).',
+        + ' ou votre architecte (+33622222222).',
         tag: 'Formation',
       }
     );
@@ -662,7 +662,7 @@ describe('method', () => {
         recipient: '+33987654321',
         sender: 'Compani',
         content: 'Formation :\nN\'oubliez pas le rendez-vous quadripartite qui aura lieu demain à 16:00, avec'
-        + ' votre apprenant.e Jeanne APP. Si besoin, contactez le coach (+33611111111) ou l\'architect'
+        + ' votre apprenant.e Jeanne APP. Si besoin, contactez le coach (+33611111111) ou l\'architecte'
         + ' (+33622222222).',
         tag: 'Formation',
       }
@@ -674,7 +674,7 @@ describe('method', () => {
         sender: 'Compani',
         content: 'Formation :\nN\'oubliez pas votre rendez-vous quadripartite avec votre coach, votre architecte'
         + ' et votre tuteur.ice qui aura lieu demain à 16:00. Si besoin, contactez votre coach (+33611111111)'
-        + ' ou votre architect (+33622222222).',
+        + ' ou votre architecte (+33622222222).',
         tag: 'Formation',
       }
     );
