@@ -143,7 +143,8 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 
       if (missingAttendances.length) throw Boom.conflict(translate[language].courseSlotsLinkedToMissingAttendances);
 
-      const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
+      const attendanceSheetCount = await AttendanceSheet
+        .countDocuments({ trainer: req.payload.trainer, 'slots.slotId': { $in: slotsIds } });
       if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
 
       const areSlotsSameDateAsDate = courseSlots
@@ -197,7 +198,11 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     if (missingAttendances.length) throw Boom.conflict(translate[language].courseSlotsLinkedToMissingAttendances);
 
     const attendanceSheetCount = await AttendanceSheet
-      .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slots } });
+      .countDocuments({
+        trainer: req.payload.trainer,
+        trainee: { $in: req.payload.trainees },
+        'slots.slotId': { $in: slots },
+      });
     if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
   }
 
@@ -256,7 +261,11 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     if (courseSlots.length !== req.payload.slots.length) throw Boom.notFound();
 
     const slotAlreadyLinkedToAS = await AttendanceSheet
-      .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
+      .countDocuments({
+        _id: { $ne: attendanceSheet._id },
+        trainer: attendanceSheet.trainer,
+        'slots.slotId': { $in: req.payload.slots },
+      });
     if (slotAlreadyLinkedToAS) throw Boom.conflict();
 
     const attendanceSheetSlots = (attendanceSheet.slots || []).map(s => s.slotId);
