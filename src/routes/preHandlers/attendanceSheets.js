@@ -217,7 +217,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
       select: 'type trainers slots',
       populate: {
         path: 'slots',
-        select: 'startDate trainees',
+        select: 'startDate trainees trainers',
         populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
       },
     })
@@ -234,7 +234,8 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     if (attendanceSheet.file) canGenerate = false;
     if (attendanceSheet.course.type === INTER_B2B) {
       const courseSlots = attendanceSheet.course.slots
-        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, attendanceSheet.trainee));
+        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, attendanceSheet.trainee))
+        .filter(s => UtilsHelper.doesArrayIncludeId(s.trainers || [], attendanceSheet.trainer));
       const lastSlot = courseSlots.sort(DatesUtilsHelper.descendingSortBy('startDate'))[0];
       if (CompaniDate().isBefore(lastSlot.startDate)) canGenerate = false;
       else {

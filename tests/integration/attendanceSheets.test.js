@@ -1736,7 +1736,11 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
         method: 'PUT',
         url: `/courseslots/${slotsList[26]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { startDate: CompaniDate().add('P1D').toISO(), endDate: CompaniDate().add('P1DT2H').toISO() },
+        payload: {
+          trainers: [trainer._id, trainerAndCoach._id],
+          startDate: CompaniDate().add('P1D').toISO(),
+          endDate: CompaniDate().add('P1DT2H').toISO(),
+        },
       });
 
       const response = await app.inject({
