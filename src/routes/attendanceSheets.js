@@ -72,6 +72,7 @@ exports.plugin = {
           payload: Joi.object({
             slots: Joi.array().items(Joi.objectId()).min(1),
             action: Joi.string().valid(GENERATION),
+            shouldDeleteAttendances: Joi.boolean(),
           }).xor('slots', 'action'),
         },
         pre: [{ method: authorizeAttendanceSheetEdit }],

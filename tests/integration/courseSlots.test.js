@@ -1015,6 +1015,7 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
           fullAddress: '37 rue de Ponthieu 75008 Paris',
           location: { type: 'Point', coordinates: [2.0987, 1.2345] },
         },
+        trainers: [trainer._id],
       };
       const response = await app.inject({
         method: 'PUT',
@@ -1133,7 +1134,11 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
     });
 
     it('should update course slot (intra_holding)', async () => {
-      const payload = { startDate: '2020-03-04T09:00:00.000Z', endDate: '2020-03-04T11:00:00.000Z' };
+      const payload = {
+        startDate: '2020-03-04T09:00:00.000Z',
+        endDate: '2020-03-04T11:00:00.000Z',
+        trainers: [trainer._id],
+      };
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[10]._id}`,
@@ -1178,6 +1183,18 @@ describe('COURSE SLOTS ROUTES - PUT /courseslots/{_id}', () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/courseslots/${courseSlotsList[0]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if slot has no trainer and course has several trainers', async () => {
+      const payload = { startDate: '2020-03-04T09:00:00.000Z', endDate: '2020-03-04T11:00:00.000Z' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courseslots/${courseSlotsList[18]._id}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload,
       });

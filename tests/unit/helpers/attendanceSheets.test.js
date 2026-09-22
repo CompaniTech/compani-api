@@ -1217,7 +1217,7 @@ describe('update', () => {
     const commonSlotId = new ObjectId();
     const attendanceSheetId = new ObjectId();
     const trainee = new ObjectId();
-    const payload = { slots: [slotIdToCreate, commonSlotId] };
+    const payload = { slots: [slotIdToCreate, commonSlotId], shouldDeleteAttendances: true };
     const attendanceSheet = {
       _id: attendanceSheetId,
       trainee,
@@ -1242,6 +1242,33 @@ describe('update', () => {
       updateOne,
       { _id: attendanceSheetId },
       { $set: { slots: [{ slotId: slotIdToCreate }, { slotId: commonSlotId }] } }
+    );
+  });
+
+  it('should not delete attendances if shouldDeleteAttendances is false', async () => {
+    const credentials = { _id: new ObjectId() };
+    const slotIdToDelete = new ObjectId();
+    const commonSlotId = new ObjectId();
+    const attendanceSheetId = new ObjectId();
+    const trainee = new ObjectId();
+    const payload = { slots: [commonSlotId] };
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      trainee,
+      slots: [{ slotId: slotIdToDelete }, { slotId: commonSlotId }],
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
+    AttendanceCountDocuments.onCall(0).returns(1);
+
+    await attendanceSheetHelper.update(attendanceSheetId, payload, credentials);
+
+    sinon.assert.notCalled(AttendanceHelperCreate);
+    sinon.assert.notCalled(AttendanceDeleteMany);
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      { $set: { slots: [{ slotId: commonSlotId }] } }
     );
   });
 });
