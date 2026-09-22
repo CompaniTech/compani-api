@@ -210,7 +210,9 @@ exports.update = async (attendanceSheetId, payload, credentials) => {
       promises.push(AttendanceHelper.create({ trainee, courseSlot: slot }, credentials));
     }
   }
-  promises.push(Attendance.deleteMany({ courseSlot: { $in: attendancesToDelete }, trainee }));
+  if (payload.shouldDeleteAttendances) {
+    promises.push(Attendance.deleteMany({ courseSlot: { $in: attendancesToDelete }, trainee }));
+  }
   promises.push(
     AttendanceSheet.updateOne({ _id: attendanceSheetId }, { $set: { slots: payload.slots.map(s => ({ slotId: s })) } })
   );

@@ -1574,7 +1574,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
 
     it('should update attendance sheet slots for a single course', async () => {
       const attendanceSheetId = attendanceSheetList[5]._id;
-      const payload = { slots: [slotsList[4]._id] };
+      const payload = { slots: [slotsList[4]._id], shouldDeleteAttendances: true };
 
       const response = await app.inject({
         method: 'PUT',
@@ -1595,6 +1595,23 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
         .countDocuments({ courseSlot: slotsList[4]._id, trainee: userList[1]._id });
       expect(createdAttendance).toEqual(1);
       sinon.assert.notCalled(uploadCourseFile);
+    });
+
+    it('should keep attendance if shouldDeleteAttendances is false', async () => {
+      const attendanceSheetId = attendanceSheetList[5]._id;
+      const payload = { slots: [slotsList[4]._id] };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/attendancesheets/${attendanceSheetId}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const attendance = await Attendance.countDocuments({ courseSlot: slotsList[5]._id, trainee: userList[1]._id });
+      expect(attendance).toEqual(1);
     });
 
     it('should generate attendance sheet file for a single course', async () => {
