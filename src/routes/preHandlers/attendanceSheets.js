@@ -236,20 +236,23 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
       const courseSlots = attendanceSheet.course.slots
         .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, attendanceSheet.trainee))
         .filter(s => UtilsHelper.doesArrayIncludeId(s.trainers || [], attendanceSheet.trainer));
-      const lastSlot = courseSlots.sort(DatesUtilsHelper.descendingSortBy('startDate'))[0];
-      if (CompaniDate().isBefore(lastSlot.startDate)) canGenerate = false;
+      if (!courseSlots.length) canGenerate = false;
       else {
-        const hasEmptyAttendances = courseSlots.some((slot) => {
-          const isSlotInAttendanceSheet = attendanceSheet.slots
-            .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot._id));
-          if (!isSlotInAttendanceSheet) {
-            const isTraineeMissing = (slot.missingAttendances || [])
-              .find(a => UtilsHelper.areObjectIdsEquals(a.trainee, attendanceSheet.trainee));
-            if (!isTraineeMissing) return true;
-          }
-          return false;
-        });
-        if (hasEmptyAttendances) canGenerate = false;
+        const lastSlot = courseSlots.sort(DatesUtilsHelper.descendingSortBy('startDate'))[0];
+        if (CompaniDate().isBefore(lastSlot.startDate)) canGenerate = false;
+        else {
+          const hasEmptyAttendances = courseSlots.some((slot) => {
+            const isSlotInAttendanceSheet = attendanceSheet.slots
+              .find(s => UtilsHelper.areObjectIdsEquals(s.slotId, slot._id));
+            if (!isSlotInAttendanceSheet) {
+              const isTraineeMissing = (slot.missingAttendances || [])
+                .find(a => UtilsHelper.areObjectIdsEquals(a.trainee, attendanceSheet.trainee));
+              if (!isTraineeMissing) return true;
+            }
+            return false;
+          });
+          if (hasEmptyAttendances) canGenerate = false;
+        }
       }
     }
     if (!canGenerate) throw Boom.forbidden();

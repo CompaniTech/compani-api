@@ -10,7 +10,6 @@ const { populateDB, coursesList, attendanceSheetList, slotsList, userList } = re
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
 const { WEBAPP, MOBILE, GENERATION, MISSING } = require('../../src/helpers/constants');
-const { CompaniDate } = require('../../src/helpers/dates/companiDates');
 const Attendance = require('../../src/models/Attendance');
 const AttendanceSheet = require('../../src/models/AttendanceSheet');
 const { holdingAdminFromOtherCompany, trainerAndCoach, trainer } = require('../seed/authUsersSeed');
@@ -1746,6 +1745,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
     });
 
     it('should return 403 if course is inter and not finished yet', async () => {
+      UtilsMock.mockCurrentDate('2025-12-14T09:00:00.000Z');
       const attendanceSheetId = attendanceSheetList[11]._id;
       const payload = { action: GENERATION };
 
@@ -1755,8 +1755,8 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: {
           trainers: [trainer._id, trainerAndCoach._id],
-          startDate: CompaniDate().add('P1D').toISO(),
-          endDate: CompaniDate().add('P1DT2H').toISO(),
+          startDate: '2025-12-16T09:00:00.000Z',
+          endDate: '2025-12-16T11:00:00.000Z',
         },
       });
 
@@ -1768,6 +1768,7 @@ describe('ATTENDANCE SHEETS ROUTES - PUT /attendancesheets/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(403);
+      UtilsMock.unmockCurrentDate();
     });
 
     it('should return 403 if try to add slot and course is not single', async () => {

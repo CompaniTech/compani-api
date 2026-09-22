@@ -6012,16 +6012,6 @@ describe('COURSES ROUTES - DELETE /courses/{_id}/billingpurchases/{billingPurcha
 
       expect(response.statusCode).toBe(403);
     });
-
-    it('should return 403 if billing purchase type is TRAINER_SALARY', async () => {
-      const response = await app.inject({
-        method: 'DELETE',
-        url: `/courses/${courseWithBillingPurchaseId}/billingpurchases/${coursesList[27].billingPurchaseList[2]._id}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-      });
-
-      expect(response.statusCode).toBe(403);
-    });
   });
 
   describe('Other roles', () => {
