@@ -439,7 +439,7 @@ const slotsList = [
     endDate: '2021-01-24T15:00:00.000Z',
     course: coursesList[0]._id,
     step: steps[0]._id,
-    trainers: [trainer._id],
+    trainers: [trainer._id, trainerAndCoach._id],
   },
   { // 18
     _id: new ObjectId(),
@@ -540,6 +540,14 @@ const slotsList = [
     step: steps[0]._id,
     trainers: [trainer._id],
     trainerBillings: [{ trainer: trainer._id, trainerBill: trainerBillId }],
+  },
+  { // 30
+    _id: new ObjectId(),
+    startDate: '2020-04-25T09:00:00.000Z',
+    endDate: '2020-04-25T11:00:00.000Z',
+    course: coursesList[7]._id,
+    step: steps[0]._id,
+    trainers: [trainer._id, trainerAndCoach._id],
   },
 ];
 
@@ -869,6 +877,16 @@ const attendanceSheetList = [
     origin: WEBAPP,
     trainer: trainer._id,
   },
+  { // 16
+    _id: new ObjectId(),
+    course: coursesList[7]._id,
+    file: { publicId: 'mon upload', link: 'www.test.com' },
+    trainee: userList[1]._id,
+    companies: [authCompany._id],
+    slots: [{ slotId: slotsList[30]._id }],
+    origin: WEBAPP,
+    trainer: trainerAndCoach._id,
+  },
 ];
 
 const attendancesList = [
@@ -1050,6 +1068,13 @@ const attendancesList = [
   { // 25
     _id: new ObjectId(),
     courseSlot: slotsList[29]._id,
+    trainee: userList[1]._id,
+    company: authCompany._id,
+    status: PRESENT,
+  },
+  { // 26
+    _id: new ObjectId(),
+    courseSlot: slotsList[30]._id,
     trainee: userList[1]._id,
     company: authCompany._id,
     status: PRESENT,

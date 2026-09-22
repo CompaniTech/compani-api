@@ -613,7 +613,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineesId[0], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineesId[0],
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ],
@@ -624,7 +630,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineesId[1], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineesId[1],
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ],
@@ -832,7 +844,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineesId[0], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineesId[0],
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ],
@@ -843,7 +861,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineesId[1], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineesId[1],
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ],
@@ -1124,7 +1148,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineeId, course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineeId,
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ]

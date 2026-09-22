@@ -82,7 +82,14 @@ exports.create = async (payload, credentials) => {
         const signatureCopy = cloneDeep(payload.signature);
         if (get(formationExpoTokenList, 'length')) formationExpoTokens[trainee] = formationExpoTokenList;
         const attendanceSheet = await AttendanceSheet
-          .findOne({ trainee, course: payload.course, slots: { $exists: true }, file: { $exists: false } }).lean();
+          .findOne({
+            trainee,
+            course: payload.course,
+            trainer: payload.trainer,
+            slots: { $exists: true },
+            file: { $exists: false },
+          })
+          .lean();
         let slotWithTrainerSignature = null;
         if (attendanceSheet && course.type === INTER_B2B) {
           slotWithTrainerSignature = attendanceSheet.slots

@@ -143,7 +143,8 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 
       if (missingAttendances.length) throw Boom.conflict(translate[language].courseSlotsLinkedToMissingAttendances);
 
-      const attendanceSheetCount = await AttendanceSheet.countDocuments({ 'slots.slotId': { $in: slotsIds } });
+      const attendanceSheetCount = await AttendanceSheet
+        .countDocuments({ trainer: req.payload.trainer, 'slots.slotId': { $in: slotsIds } });
       if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
 
       const areSlotsSameDateAsDate = courseSlots
@@ -197,7 +198,11 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
     if (missingAttendances.length) throw Boom.conflict(translate[language].courseSlotsLinkedToMissingAttendances);
 
     const attendanceSheetCount = await AttendanceSheet
-      .countDocuments({ trainee: { $in: req.payload.trainees }, 'slots.slotId': { $in: slots } });
+      .countDocuments({
+        trainer: req.payload.trainer,
+        trainee: { $in: req.payload.trainees },
+        'slots.slotId': { $in: slots },
+      });
     if (attendanceSheetCount) throw Boom.conflict(translate[language].courseSlotsAlreadyInAttendanceSheet);
   }
 
@@ -212,7 +217,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
       select: 'type trainers slots',
       populate: {
         path: 'slots',
-        select: 'startDate trainees',
+        select: 'startDate trainees trainers',
         populate: { path: 'missingAttendances', select: 'trainee', options: { isVendorUser: true } },
       },
     })
@@ -229,7 +234,8 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     if (attendanceSheet.file) canGenerate = false;
     if (attendanceSheet.course.type === INTER_B2B) {
       const courseSlots = attendanceSheet.course.slots
-        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, attendanceSheet.trainee));
+        .filter(s => !s.trainees || UtilsHelper.doesArrayIncludeId(s.trainees, attendanceSheet.trainee))
+        .filter(s => UtilsHelper.doesArrayIncludeId(s.trainers || [], attendanceSheet.trainer));
       const lastSlot = courseSlots.sort(DatesUtilsHelper.descendingSortBy('startDate'))[0];
       if (CompaniDate().isBefore(lastSlot.startDate)) canGenerate = false;
       else {
@@ -256,7 +262,11 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
     if (courseSlots.length !== req.payload.slots.length) throw Boom.notFound();
 
     const slotAlreadyLinkedToAS = await AttendanceSheet
-      .countDocuments({ _id: { $ne: attendanceSheet._id }, 'slots.slotId': { $in: req.payload.slots } });
+      .countDocuments({
+        _id: { $ne: attendanceSheet._id },
+        trainer: attendanceSheet.trainer,
+        'slots.slotId': { $in: req.payload.slots },
+      });
     if (slotAlreadyLinkedToAS) throw Boom.conflict();
 
     const attendanceSheetSlots = (attendanceSheet.slots || []).map(s => s.slotId);
