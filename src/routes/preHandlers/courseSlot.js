@@ -184,10 +184,10 @@ exports.authorizeUpdate = async (req) => {
       const courseTrainerIds = get(course, 'trainers', []);
       checkAuthorization(credentials, courseTrainerIds, courseCompanies, courseHolding);
 
+      const userVendorRole = get(credentials, 'role.vendor.name');
+
       if (has(req.payload, 'trainers')) {
         const { trainers } = req.payload;
-        const userVendorRole = get(credentials, 'role.vendor.name');
-        if (!userVendorRole) throw Boom.forbidden();
 
         const courseHistories = await CourseHistory.find({ course: courseId, action: TRAINER_DELETION }).lean();
         const trainerIds = [...courseTrainerIds, ...courseHistories.map(cH => cH.trainer)];
@@ -195,8 +195,18 @@ exports.authorizeUpdate = async (req) => {
         const everyTrainerIsOrWasInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(trainerIds, t));
         if (!everyTrainerIsOrWasInCourse) throw Boom.notFound();
 
-        const isTrainer = userVendorRole === TRAINER;
-        if (isTrainer && !UtilsHelper.doesArrayIncludeId(trainers, credentials._id)) throw Boom.forbidden();
+        if (userVendorRole) {
+          const isTrainer = userVendorRole === TRAINER;
+          if (isTrainer && !UtilsHelper.doesArrayIncludeId(trainers, credentials._id)) {
+            throw Boom.forbidden(translate[language].trainerNotLinkedToSlot);
+          }
+        } else {
+          const hasOneTrainer = courseTrainerIds.length === 1 && trainers.length === 1 &&
+            UtilsHelper.doesArrayIncludeId(trainers, courseTrainerIds[0]);
+          if (!hasOneTrainer) throw Boom.forbidden();
+        }
+      } else if (!userVendorRole && !get(courseSlot, 'trainers', []).length && courseTrainerIds.length > 1) {
+        throw Boom.forbidden();
       }
     }
     await checkPayload(courseSlot, req.payload);

@@ -219,7 +219,8 @@ module.exports = {
     courseSlotWholeDayConflict: 'There is already a slot on the afternoon for this day.',
     courseSlotTrainerRoleMismatch: 'Forbidden: trainer\'s role not allowed for this step.',
     noSlotLinkedToTrainerOnThisDay: 'No slot linked to trainer on this day.',
-    trainerNotLinkedToSlot: 'Trainer is not linked to this slot.',
+    trainerNotLinkedToASSlots: 'Trainer is not linked to this slot.',
+    trainerNotLinkedToSlot: 'Forbidden: trainer can\'t edit slot not related to them.',
     /* Trainer bills */
     trainerBillCreated: 'Trainer bill created.',
     trainerBillNumberAlreadyUsed: 'This bill number is already used.',
@@ -593,7 +594,8 @@ module.exports = {
     courseSlotWholeDayConflict: 'Il existe déjà un créneau sur l\'après-midi pour cette journée.',
     courseSlotTrainerRoleMismatch: 'Impossible : le rôle de l\'intervenant n\'est pas autorisé sur cette étape.',
     noSlotLinkedToTrainerOnThisDay: 'Il n\'y a pas de créneau lié à cet intervenant pour cette journée.',
-    trainerNotLinkedToSlot: 'Certains créneaux ne sont pas liés à l\'intervenant.',
+    trainerNotLinkedToASSlots: 'Certains créneaux ne sont pas liés à l\'intervenant.',
+    trainerNotLinkedToSlot: 'Vous ne pouvez pas éditer un créneau auquel vous n\'êtes pas rattaché.',
     /* Trainer bills */
     trainerBillCreated: 'Facture de l\'intervenant·e créée.',
     trainerBillNumberAlreadyUsed: 'Ce numéro de facture est déjà utilisé.',

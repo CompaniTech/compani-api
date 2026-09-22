@@ -417,6 +417,11 @@ const courseSlotsList = [
     step: stepsList[3]._id,
     trainers: [trainer._id],
   },
+  { // 18 slot to plan
+    _id: new ObjectId(),
+    course: coursesList[0]._id,
+    step: stepsList[0]._id,
+  },
 ];
 
 const trainerBillList = [

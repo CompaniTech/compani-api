@@ -185,7 +185,7 @@ exports.authorizeAttendanceSheetCreation = async (req) => {
 
     const trainerIsNotSlotTrainer = courseSlots
       .some(slot => !UtilsHelper.doesArrayIncludeId(slot.trainers || [], req.payload.trainer));
-    if (trainerIsNotSlotTrainer) throw Boom.forbidden(translate[language].trainerNotLinkedToSlot);
+    if (trainerIsNotSlotTrainer) throw Boom.forbidden(translate[language].trainerNotLinkedToASSlots);
 
     const slotsWithoutAttendances = courseSlots.filter(s => !s.attendances.length);
     await checkCompletionCertificates(slotsWithoutAttendances, course._id, traineesIds);

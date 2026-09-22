@@ -1471,8 +1471,9 @@ const computeAttendancesByStep = (traineeId, allAttendances, course, vaeSupportD
     const step = courseSlot._id ? slotStepMap.get(courseSlot._id.toHexString()) : courseSlot.step;
     if (!step) continue;
 
-    if (!durationByStepId.has(step._id)) durationByStepId.set(step._id, { step, duration: CompaniDuration() });
-    const entry = durationByStepId.get(step._id);
+    const stepId = step._id.toHexString();
+    if (!durationByStepId.has(stepId)) durationByStepId.set(stepId, { step, duration: CompaniDuration() });
+    const entry = durationByStepId.get(stepId);
     entry.duration = entry.duration.add(UtilsHelper.getMultipliedSlotDuration(courseSlot, 'minutes', step));
   }
 
@@ -1493,9 +1494,9 @@ const computeAttendancesByStep = (traineeId, allAttendances, course, vaeSupportD
   const processedStepIds = new Set();
 
   for (const step of steps) {
-    processedStepIds.add(step._id);
+    processedStepIds.add(step._id.toHexString());
 
-    const data = durationByStepId.get(step._id);
+    const data = durationByStepId.get(step._id.toHexString());
     if (data) result.push({ stepName: step.name, duration: data.duration.format(SHORT_DURATION_H_MM) });
   }
 
