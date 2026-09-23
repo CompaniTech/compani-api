@@ -22,7 +22,7 @@ const {
   reuseStep,
 } = require('../controllers/subProgramController');
 const { STEP_TYPES } = require('../models/Step');
-const { PUBLISHED } = require('../helpers/constants');
+const { PUBLISHED, TRAINER_ROLES } = require('../helpers/constants');
 
 exports.plugin = {
   name: 'routes-sub-programs',
@@ -46,7 +46,11 @@ exports.plugin = {
               }),
             Joi.object({
               prices: Joi.array()
-                .items({ step: Joi.objectId().required(), hourlyAmount: Joi.number().positive().required() })
+                .items({
+                  step: Joi.objectId().required(),
+                  role: Joi.string().valid(...TRAINER_ROLES),
+                  hourlyAmount: Joi.number().positive().required(),
+                })
                 .min(1)
                 .required(),
               effectiveDate: Joi.date().required(),

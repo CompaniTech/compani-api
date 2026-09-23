@@ -103,9 +103,16 @@ exports.generate = async (payload, credentials) => {
     .populate({
       path: 'subProgram',
       select: 'program steps',
-      populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'theoreticalDuration type' }],
+      populate: [
+        { path: 'program', select: 'name' },
+        { path: 'steps', select: 'theoreticalDuration type durationCountedPerTrainer' },
+      ],
     })
-    .populate({ path: 'slots', select: 'startDate endDate address' })
+    .populate({
+      path: 'slots',
+      select: 'startDate endDate address trainers step',
+      populate: { path: 'step', select: 'durationCountedPerTrainer' },
+    })
     .populate({ path: 'slotsToPlan', select: '_id' })
     .lean();
 

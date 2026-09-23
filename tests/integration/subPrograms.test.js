@@ -9,6 +9,7 @@ const Course = require('../../src/models/Course');
 const Step = require('../../src/models/Step');
 const NotificationHelper = require('../../src/helpers/notifications');
 const UtilsHelper = require('../../src/helpers/utils');
+const { VAEI_COACH, ARCHITECT } = require('../../src/helpers/constants');
 const { populateDB, subProgramsList, stepsList, tester, paymentPlanId } = require('./seed/subProgramsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { authCompany, otherCompany } = require('../seed/authCompaniesSeed');
@@ -228,19 +229,19 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
     it('should add first price version if none exist', async () => {
       const payload = {
-        prices: [{ step: subProgramsList[4].steps[0], hourlyAmount: 50 }],
+        prices: [{ step: subProgramsList[13].steps[0], hourlyAmount: 50 }],
         effectiveDate: '2026-01-31T09:00:00.000Z',
       };
 
       const response = await app.inject({
         method: 'PUT',
-        url: `/subprograms/${subProgramsList[4]._id.toHexString()}`,
+        url: `/subprograms/${subProgramsList[13]._id.toHexString()}`,
         payload,
         headers: { 'x-access-token': authToken },
       });
 
       expect(response.statusCode).toBe(200);
-      const updatedSubProgram = await SubProgram.findById(subProgramsList[4]._id).lean();
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[13]._id).lean();
       expect(updatedSubProgram.priceVersions.length).toBe(1);
     });
 
@@ -261,6 +262,105 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
       const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
       expect(updatedSubProgram.priceVersions.length).toBe(2);
+    });
+
+    it('should add a price version with a role on a single price', async () => {
+      const payload = {
+        prices: [{ step: subProgramsList[2].steps[0], role: VAEI_COACH, hourlyAmount: 50 }],
+        effectiveDate: '2026-03-01T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
+      expect(updatedSubProgram.priceVersions[1].prices[0].role).toEqual(VAEI_COACH);
+    });
+
+    it('should add a price version with several roles for the same step', async () => {
+      const payload = {
+        prices: [
+          { step: subProgramsList[2].steps[0], role: VAEI_COACH, hourlyAmount: 50 },
+          { step: subProgramsList[2].steps[0], role: ARCHITECT, hourlyAmount: 55 },
+        ],
+        effectiveDate: '2026-03-01T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
+      expect(updatedSubProgram.priceVersions.length).toBe(2);
+      expect(updatedSubProgram.priceVersions[1].prices.length).toBe(2);
+    });
+
+    it('should return 400 if prices for a step mix role and no role', async () => {
+      const payload = {
+        prices: [
+          { step: subProgramsList[2].steps[0], role: VAEI_COACH, hourlyAmount: 50 },
+          { step: subProgramsList[2].steps[0], hourlyAmount: 55 },
+        ],
+        effectiveDate: '2026-03-01T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if a step has several prices and none have a role', async () => {
+      const payload = {
+        prices: [
+          { step: subProgramsList[2].steps[0], hourlyAmount: 50 },
+          { step: subProgramsList[2].steps[0], hourlyAmount: 55 },
+        ],
+        effectiveDate: '2026-03-01T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if two prices for the same step have the same role', async () => {
+      const payload = {
+        prices: [
+          { step: subProgramsList[2].steps[0], role: VAEI_COACH, hourlyAmount: 50 },
+          { step: subProgramsList[2].steps[0], role: VAEI_COACH, hourlyAmount: 55 },
+        ],
+        effectiveDate: '2026-03-01T09:00:00.000Z',
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
     });
 
     it('should add a new payment plan', async () => {

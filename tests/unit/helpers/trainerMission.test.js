@@ -328,11 +328,21 @@ describe('generate', () => {
             {
               path: 'subProgram',
               select: 'program steps',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'theoreticalDuration type' }],
+              populate: [
+                { path: 'program', select: 'name' },
+                { path: 'steps', select: 'theoreticalDuration type durationCountedPerTrainer' },
+              ],
             },
           ],
         },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate address' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate address trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
         { query: 'lean' },
       ]
@@ -482,11 +492,21 @@ describe('generate', () => {
             {
               path: 'subProgram',
               select: 'program steps',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'theoreticalDuration type' }],
+              populate: [
+                { path: 'program', select: 'name' },
+                { path: 'steps', select: 'theoreticalDuration type durationCountedPerTrainer' },
+              ],
             },
           ],
         },
-        { query: 'populate', args: [{ path: 'slots', select: 'startDate endDate address' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate address trainers step',
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
         { query: 'lean' },
       ]

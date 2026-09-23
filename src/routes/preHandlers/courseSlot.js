@@ -16,6 +16,7 @@ const User = require('../../models/User');
 const Geocode = require('../../models/Geocode');
 const translate = require('../../helpers/translate');
 const { checkAuthorization } = require('./courses');
+const CourseSlotsHelper = require('../../helpers/courseSlots');
 const {
   E_LEARNING,
   ON_SITE,
@@ -95,8 +96,8 @@ const checkPayload = async (courseSlot, payload) => {
   });
   if (completionCertificates) throw Boom.forbidden(translate[language].courseSlotDateInCompletionCertificate);
 
-  const course = await Course.findById(courseId, { subProgram: 1, trainees: 1 })
-    .populate({ path: 'subProgram', select: 'steps' })
+  const course = await Course.findById(courseId, { subProgram: 1, trainees: 1, rolesPerTrainer: 1 })
+    .populate({ path: 'subProgram', select: 'steps priceVersions' })
     .lean();
 
   const editTrainers = (trainers || []).length > 0 && (
@@ -106,6 +107,18 @@ const checkPayload = async (courseSlot, payload) => {
   const editStartDate = startDate && (!initialStartDate || !CompaniDate(startDate).isSame(initialStartDate));
   const editEndDate = endDate && (!initialEndDate || !CompaniDate(endDate).isSame(initialEndDate));
   const editDates = editStartDate || editEndDate;
+
+  if (editTrainers) {
+    const stepPrices = CourseSlotsHelper.getStepPrices(step._id, course.subProgram, startDate);
+    const isRoleBasedStep = stepPrices.length > 0 && !!stepPrices[0].role;
+
+    if (isRoleBasedStep) {
+      const stepPriceRoles = stepPrices.map(p => p.role);
+      const someTrainerRoleMismatch = trainers.some(trainerId =>
+        CourseSlotsHelper.getTrainerMatchingRoles(course.rolesPerTrainer, trainerId, stepPriceRoles).length !== 1);
+      if (someTrainerRoleMismatch) throw Boom.forbidden(translate[language].courseSlotTrainerRoleMismatch);
+    }
+  }
 
   if (editTrainers || editDates || !hasOneDate) {
     const query = { courseSlot: courseSlot._id };
@@ -171,10 +184,10 @@ exports.authorizeUpdate = async (req) => {
       const courseTrainerIds = get(course, 'trainers', []);
       checkAuthorization(credentials, courseTrainerIds, courseCompanies, courseHolding);
 
+      const userVendorRole = get(credentials, 'role.vendor.name');
+
       if (has(req.payload, 'trainers')) {
         const { trainers } = req.payload;
-        const userVendorRole = get(credentials, 'role.vendor.name');
-        if (!userVendorRole) throw Boom.forbidden();
 
         const courseHistories = await CourseHistory.find({ course: courseId, action: TRAINER_DELETION }).lean();
         const trainerIds = [...courseTrainerIds, ...courseHistories.map(cH => cH.trainer)];
@@ -182,8 +195,18 @@ exports.authorizeUpdate = async (req) => {
         const everyTrainerIsOrWasInCourse = trainers.every(t => UtilsHelper.doesArrayIncludeId(trainerIds, t));
         if (!everyTrainerIsOrWasInCourse) throw Boom.notFound();
 
-        const isTrainer = userVendorRole === TRAINER;
-        if (isTrainer && !UtilsHelper.doesArrayIncludeId(trainers, credentials._id)) throw Boom.forbidden();
+        if (userVendorRole) {
+          const isTrainer = userVendorRole === TRAINER;
+          if (isTrainer && !UtilsHelper.doesArrayIncludeId(trainers, credentials._id)) {
+            throw Boom.forbidden(translate[language].trainerNotLinkedToSlot);
+          }
+        } else {
+          const hasOneTrainer = courseTrainerIds.length === 1 && trainers.length === 1 &&
+            UtilsHelper.doesArrayIncludeId(trainers, courseTrainerIds[0]);
+          if (!hasOneTrainer) throw Boom.forbidden();
+        }
+      } else if (!userVendorRole && !get(courseSlot, 'trainers', []).length && courseTrainerIds.length > 1) {
+        throw Boom.forbidden();
       }
     }
     await checkPayload(courseSlot, req.payload);
@@ -235,8 +258,12 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
     const { course: courseId, file } = req.payload;
 
     const course = await Course
-      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1 })
-      .populate({ path: 'subProgram', select: 'steps', populate: { path: 'steps', select: 'name type' } })
+      .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1, rolesPerTrainer: 1 })
+      .populate({
+        path: 'subProgram',
+        select: 'steps priceVersions',
+        populate: { path: 'steps', select: 'name type' },
+      })
       .lean();
     if (!course) throw Boom.notFound();
     if (course.archivedAt) throw Boom.forbidden();
@@ -362,6 +389,17 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
         trainerIds.push(user._id);
       });
 
+      if (step && formattedStartDate && trainerIds.length) {
+        const stepPrices = CourseSlotsHelper.getStepPrices(step._id, course.subProgram, formattedStartDate);
+        const isRoleBasedStep = stepPrices.length > 0 && !!stepPrices[0].role;
+        if (isRoleBasedStep) {
+          const stepPriceRoles = stepPrices.map(p => p.role);
+          const someTrainerRoleMismatch = trainerIds.some(trainerId =>
+            CourseSlotsHelper.getTrainerMatchingRoles(course.rolesPerTrainer, trainerId, stepPriceRoles).length !== 1);
+          if (someTrainerRoleMismatch) addError(rowLabel, translate[language].trainerRoleMismatchCsv);
+        }
+      }
+
       const traineeEmails = extractEmails(slot.trainees);
       const traineeIds = [];
       traineeEmails.forEach((email) => {
@@ -388,7 +426,7 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
           CompaniDate(candidateInterval.startDate).isBefore(interval.endDate) &&
           CompaniDate(candidateInterval.endDate).isAfter(interval.startDate)
         );
-        if (isInConflict) addError(rowLabel, translate[language].courseSlotConflict);
+        if (isInConflict) addError(rowLabel, translate[language].courseSlotConflictCsv);
       }
 
       if (!errorsBySlot[rowLabel]) {

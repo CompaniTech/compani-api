@@ -154,6 +154,12 @@ const subProgramsList = [
     steps: [stepsList[0]._id],
     archivedAt: '2026-08-01T09:00:00.000Z',
   },
+  { // 13 published, on site step, no price version yet
+    _id: new ObjectId(),
+    name: 'subProgram 13',
+    status: PUBLISHED,
+    steps: [stepsList[0]._id],
+  },
 ];
 
 const programsList = [

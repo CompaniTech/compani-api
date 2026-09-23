@@ -88,6 +88,8 @@ const {
   SECOND,
   MONTH,
   TRAINER_SALARY,
+  VAEI_COACH,
+  ARCHITECT,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -186,10 +188,13 @@ exports.createCourse = async (payload, credentials) => {
 
       if (hasPriceAndDurationForEveryStep) {
         const totalPrice = steps.reduce((acc, step) => {
-          const stepPrice = lastPriceVersion.prices.find(p => UtilsHelper.areObjectIdsEquals(p.step, step._id));
+          // Several prices for the same step mean it is differentiated by trainer role (e.g. co-intervention) :
+          // the step's total cost is the sum of every role's rate, not just one of them.
+          const stepPrices = lastPriceVersion.prices.filter(p => UtilsHelper.areObjectIdsEquals(p.step, step._id));
+          const stepHourlyAmount = stepPrices.reduce((sum, p) => NumbersHelper.add(sum, p.hourlyAmount), 0);
           const stepDurationInHours = CompaniDuration(step.theoreticalDuration).asHours();
 
-          return NumbersHelper.add(acc, NumbersHelper.multiply(stepPrice.hourlyAmount, stepDurationInHours));
+          return NumbersHelper.add(acc, NumbersHelper.multiply(stepHourlyAmount, stepDurationInHours));
         }, 0);
 
         const trainerSalaryBillingItem = await CourseBillingItem.findOne({ type: TRAINER_SALARY }, { _id: 1 }).lean();
@@ -400,7 +405,7 @@ const listForPedagogy = async (query, origin, credentials) => {
           { path: 'program', select: 'image description' },
           {
             path: 'steps',
-            select: 'name type activities theoreticalDuration',
+            select: 'name type activities theoreticalDuration durationCountedPerTrainer',
             populate: {
               path: 'activities',
               select: 'name type cards activityHistories',
@@ -411,9 +416,9 @@ const listForPedagogy = async (query, origin, credentials) => {
       })
       .populate({
         path: 'slots',
-        select: 'startDate endDate step trainees',
+        select: 'startDate endDate step trainees trainers',
         populate: [
-          { path: 'step', select: 'type' },
+          { path: 'step', select: 'type durationCountedPerTrainer' },
           {
             path: 'attendances',
             match: { trainee: traineeOrTutorId, ...(shouldQueryCompanies && { company: { $in: companies } }) },
@@ -581,7 +586,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           ...(origin === WEBAPP
             ? [{
               path: 'steps',
-              select: 'name type theoreticalDuration',
+              select: 'name type theoreticalDuration durationCountedPerTrainer',
               populate: { path: 'activities', select: 'name type' },
             }]
             : [{ path: 'steps', select: 'name' }]
@@ -597,7 +602,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           },
           {
             path: 'slots',
-            select: 'step startDate endDate address meetingLink trainees trainers',
+            select: 'step startDate endDate address meetingLink trainees trainers trainerBillings',
             populate: [
               { path: 'trainers', select: 'identity' },
               ...(get(credentials, 'role.vendor.name')
@@ -869,8 +874,8 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
     })
     .populate({
       path: 'slots',
-      select: 'startDate endDate step address meetingLink trainees',
-      populate: { path: 'step', select: 'type' },
+      select: 'startDate endDate step address meetingLink trainees trainers',
+      populate: { path: 'step', select: 'type durationCountedPerTrainer' },
       options: { sort: { startDate: 1 } },
     })
     .populate({ path: 'slotsToPlan', select: '_id' })
@@ -1466,10 +1471,10 @@ const computeAttendancesByStep = (traineeId, allAttendances, course, vaeSupportD
     const step = courseSlot._id ? slotStepMap.get(courseSlot._id.toHexString()) : courseSlot.step;
     if (!step) continue;
 
-    if (!durationByStepId.has(step._id)) durationByStepId.set(step._id, { step, duration: CompaniDuration() });
-    const entry = durationByStepId.get(step._id);
-    entry.duration = entry.duration
-      .add(CompaniDuration(CompaniDate(courseSlot.endDate).diff(courseSlot.startDate, 'minutes')));
+    const stepId = step._id.toHexString();
+    if (!durationByStepId.has(stepId)) durationByStepId.set(stepId, { step, duration: CompaniDuration() });
+    const entry = durationByStepId.get(stepId);
+    entry.duration = entry.duration.add(UtilsHelper.getMultipliedSlotDuration(courseSlot, 'minutes', step));
   }
 
   if (vaeSupportDuration) {
@@ -1489,9 +1494,9 @@ const computeAttendancesByStep = (traineeId, allAttendances, course, vaeSupportD
   const processedStepIds = new Set();
 
   for (const step of steps) {
-    processedStepIds.add(step._id);
+    processedStepIds.add(step._id.toHexString());
 
-    const data = durationByStepId.get(step._id);
+    const data = durationByStepId.get(step._id.toHexString());
     if (data) result.push({ stepName: step.name, duration: data.duration.format(SHORT_DURATION_H_MM) });
   }
 
@@ -1655,16 +1660,19 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
     })
     .populate({
       path: 'slots',
-      select: 'attendances startDate endDate',
-      populate: {
-        path: 'attendances',
-        match: {
-          status: PRESENT,
-          ...(course.companies.length && { company: { $in: course.companies } }),
-          ...(course.trainees.length && { trainee: { $in: course.trainees } }),
+      select: 'attendances startDate endDate step trainers',
+      populate: [
+        {
+          path: 'attendances',
+          match: {
+            status: PRESENT,
+            ...(course.companies.length && { company: { $in: course.companies } }),
+            ...(course.trainees.length && { trainee: { $in: course.trainees } }),
+          },
+          options: { isVendorUser },
         },
-        options: { isVendorUser },
-      },
+        { path: 'step', select: 'durationCountedPerTrainer' },
+      ],
     })
     .lean();
 
@@ -1676,7 +1684,10 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
       return attendanceList
         .filter(a => UtilsHelper.doesArrayIncludeId(course.trainees, a.trainee) &&
           !UtilsHelper.doesArrayIncludeId(c.trainees, a.trainee))
-        .map(a => ({ ...pick(a, ['trainee', 'company']), courseSlot: pick(slot, ['startDate', 'endDate', 'step']) }));
+        .map(a => ({
+          ...pick(a, ['trainee', 'company']),
+          courseSlot: pick(slot, ['startDate', 'endDate', 'step', 'trainers']),
+        }));
     }));
 
   return unsubscribedAttendances.flat(2);
@@ -1685,7 +1696,11 @@ exports.getUnsubscribedAttendances = async (course, isVendorUser) => {
 exports.getAllAttendances = async (course, courseTrainees, isVendorUser) => {
   const attendances = await Attendance
     .find({ courseSlot: course.slots.map(s => s._id), company: { $in: course.companies }, status: PRESENT })
-    .populate({ path: 'courseSlot', select: 'startDate endDate' })
+    .populate({
+      path: 'courseSlot',
+      select: 'startDate endDate trainers step',
+      populate: { path: 'step', select: 'durationCountedPerTrainer' },
+    })
     .setOptions({ isVendorUser })
     .lean();
 
@@ -1711,8 +1726,8 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
   const course = await Course.findOne({ _id: courseId })
     .populate({
       path: 'slots',
-      select: 'startDate endDate trainees step',
-      populate: { path: 'step', select: 'name' },
+      select: 'startDate endDate trainees trainers step',
+      populate: { path: 'step', select: 'name durationCountedPerTrainer' },
     })
     .populate({ path: 'trainees', select: 'identity' })
     .populate(
@@ -1904,10 +1919,14 @@ exports.generateTrainingContract = async (courseId, payload) => {
         select: 'program steps',
         populate: [
           { path: 'program', select: 'learningGoals' },
-          { path: 'steps', select: 'theoreticalDuration type' },
+          { path: 'steps', select: 'theoreticalDuration type durationCountedPerTrainer' },
         ],
       },
-      { path: 'slots', select: 'startDate endDate address meetingLink' },
+      {
+        path: 'slots',
+        select: 'startDate endDate address meetingLink trainers step',
+        populate: { path: 'step', select: 'durationCountedPerTrainer' },
+      },
       { path: 'slotsToPlan', select: '_id' },
       { path: 'trainers', select: 'identity.firstname identity.lastname' },
       { path: 'trainees', select: 'identity.firstname identity.lastname' },
@@ -1931,7 +1950,15 @@ exports.composeCourseName = (course) => {
 };
 
 exports.addTrainer = async (courseId, payload, credentials) => {
-  await Course.updateOne({ _id: courseId }, { $addToSet: { trainers: payload.trainer } });
+  const roles = payload.roles && [...new Set(payload.roles)];
+  const update = {
+    $addToSet: {
+      trainers: payload.trainer,
+      ...roles?.length && { rolesPerTrainer: { trainer: payload.trainer, roles } },
+    },
+  };
+
+  await Course.updateOne({ _id: courseId }, update);
 
   await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(
     { course: courseId, trainerId: payload.trainer, action: TRAINER_ADDITION },
@@ -1952,13 +1979,40 @@ exports.removeTrainer = async (courseId, trainerId, credentials) => {
   const trainerIsContact = UtilsHelper.areObjectIdsEquals(get(course, 'contact'), trainerId);
 
   const query = trainerIsContact
-    ? { $pull: { trainers: trainerId }, $unset: { contact: '' } }
-    : { $pull: { trainers: trainerId } };
+    ? { $pull: { trainers: trainerId, rolesPerTrainer: { trainer: trainerId } }, $unset: { contact: '' } }
+    : { $pull: { trainers: trainerId, rolesPerTrainer: { trainer: trainerId } } };
 
   await Course.updateOne({ _id: courseId }, query);
 
   await CourseHistoriesHelper.createHistoryOnTrainerAdditionOrDeletion(
     { course: courseId, trainerId, action: TRAINER_DELETION },
+    credentials._id
+  );
+};
+
+exports.updateTrainerRoles = async (courseId, trainerId, payload, credentials) => {
+  const course = await Course.findOne({ _id: courseId }, { rolesPerTrainer: 1 }).lean();
+  const previousEntry = (course.rolesPerTrainer || [])
+    .find(rpt => UtilsHelper.areObjectIdsEquals(rpt.trainer, trainerId));
+  const previousRoles = previousEntry ? previousEntry.roles : [];
+  const roles = [...new Set(payload.roles)];
+  const hasSameRoles = previousRoles.length === roles.length && previousRoles.every(role => roles.includes(role));
+  if (hasSameRoles) return;
+
+  if (!roles.length) {
+    await Course.updateOne({ _id: courseId }, { $pull: { rolesPerTrainer: { trainer: trainerId } } });
+  } else if (previousRoles.length) {
+    await Course.updateOne(
+      { _id: courseId },
+      { $set: { 'rolesPerTrainer.$[elem].roles': roles } },
+      { arrayFilters: [{ 'elem.trainer': trainerId }] }
+    );
+  } else {
+    await Course.updateOne({ _id: courseId }, { $push: { rolesPerTrainer: { trainer: trainerId, roles } } });
+  }
+
+  await CourseHistoriesHelper.createHistoryOnTrainerRoleUpdate(
+    { course: courseId, trainerId, previousRoles, roles },
     credentials._id
   );
 };
@@ -2060,8 +2114,8 @@ exports.uploadSingleCourseCSV = async (learnerList, credentials) => {
       tradeName,
     };
     const course = await exports.createCourse(payload, credentials);
-    if (coach) await exports.addTrainer(course._id, { trainer: coach._id }, credentials);
-    if (architect) await exports.addTrainer(course._id, { trainer: architect._id }, credentials);
+    if (coach) await exports.addTrainer(course._id, { trainer: coach._id, roles: [VAEI_COACH] }, credentials);
+    if (architect) await exports.addTrainer(course._id, { trainer: architect._id, roles: [ARCHITECT] }, credentials);
   }
 };
 
@@ -2084,7 +2138,11 @@ exports.downloadAllDocuments = async (courseId, credentials, query) => {
 
   const course = await Course
     .findOne({ _id: courseId })
-    .populate({ path: 'slots', select: 'startDate endDate trainees' })
+    .populate({
+      path: 'slots',
+      select: 'startDate endDate trainees trainers step',
+      populate: { path: 'step', select: 'durationCountedPerTrainer' },
+    })
     .populate({ path: 'trainees', select: 'identity' })
     .populate(
       {

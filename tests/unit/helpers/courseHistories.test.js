@@ -17,8 +17,11 @@ const {
   TRAINEE,
   TRAINER_ADDITION,
   TRAINER_DELETION,
+  TRAINER_ROLE_UPDATE,
   COURSE_INTERRUPTION,
   SLOT_RESTRICTION,
+  ARCHITECT,
+  VAEI_COACH,
 } = require('../../../src/helpers/constants');
 const SinonMongoose = require('../sinonMongoose');
 
@@ -475,6 +478,58 @@ describe('createHistoryOnTrainerAdditionOrDeletion', () => {
       userId,
       payload.action,
       { trainer: payload.trainerId }
+    );
+  });
+});
+
+describe('createHistoryOnTrainerRoleUpdate', () => {
+  let createHistory;
+
+  beforeEach(() => {
+    createHistory = sinon.stub(CourseHistoriesHelper, 'createHistory');
+  });
+
+  afterEach(() => {
+    createHistory.restore();
+  });
+
+  it('should create a courseHistory when a trainer role is set', async () => {
+    const payload = {
+      trainerId: new ObjectId(),
+      course: new ObjectId(),
+      previousRoles: [],
+      roles: [ARCHITECT],
+    };
+    const userId = new ObjectId();
+
+    await CourseHistoriesHelper.createHistoryOnTrainerRoleUpdate(payload, userId);
+
+    sinon.assert.calledOnceWithExactly(
+      createHistory,
+      payload.course,
+      userId,
+      TRAINER_ROLE_UPDATE,
+      { trainer: payload.trainerId, roles: { from: [], to: [ARCHITECT] } }
+    );
+  });
+
+  it('should create a courseHistory when a trainer role is removed', async () => {
+    const payload = {
+      trainerId: new ObjectId(),
+      course: new ObjectId(),
+      previousRoles: [VAEI_COACH],
+      roles: [],
+    };
+    const userId = new ObjectId();
+
+    await CourseHistoriesHelper.createHistoryOnTrainerRoleUpdate(payload, userId);
+
+    sinon.assert.calledOnceWithExactly(
+      createHistory,
+      payload.course,
+      userId,
+      TRAINER_ROLE_UPDATE,
+      { trainer: payload.trainerId, roles: { from: [VAEI_COACH], to: [] } }
     );
   });
 });

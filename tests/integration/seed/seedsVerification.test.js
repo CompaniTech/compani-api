@@ -108,6 +108,7 @@ const {
   PRESENT,
   COURSE,
   MINUTE,
+  TRAINER_SALARY,
 } = require('../../../src/helpers/constants');
 const attendancesSeed = require('./attendancesSeed');
 const activitiesSeed = require('./activitiesSeed');
@@ -1211,10 +1212,10 @@ describe('SEEDS VERIFICATION', () => {
           expect(everyCoursePriceHasGlobalPrice).toBeTruthy();
         });
 
-        it('should pass if course billing items type is course', () => {
+        it('should pass if course billing items type is course, trainer, or trainer salary', () => {
           const everyCourseBillingItemHasCourseType = courseList
             .every(course => get(course, 'billingPurchaseList', [])
-              .every(purchase => [COURSE, TRAINER].includes(purchase.billingItem.type)));
+              .every(purchase => [COURSE, TRAINER, TRAINER_SALARY].includes(purchase.billingItem.type)));
           expect(everyCourseBillingItemHasCourseType).toBeTruthy();
         });
 
@@ -2592,7 +2593,8 @@ describe('SEEDS VERIFICATION', () => {
             );
 
             const computedAmount = uniqueDateSlots.reduce((acc, slot) => {
-              const hourlyAmount = CourseSlotsHelper.getHourlyAmount(slot);
+              // TODO (ticket 2d): this check has no trainer context yet, so role-based prices can't be resolved.
+              const hourlyAmount = CourseSlotsHelper.getHourlyAmount(slot) || 0;
               const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
               const slotAmount = NumbersHelper
                 .toFixedToFloat(NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours()));

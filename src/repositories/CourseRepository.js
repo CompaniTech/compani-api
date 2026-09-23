@@ -23,13 +23,15 @@ exports.findCourseAndPopulate = (query, origin, populateVirtual = false) => Cour
       select: 'program',
       populate: [
         { path: 'program', select: origin === WEBAPP ? 'name' : 'name image description' },
-        { path: 'steps', select: 'theoreticalDuration type' },
+        { path: 'steps', select: 'theoreticalDuration type durationCountedPerTrainer' },
       ],
     },
     {
       path: 'slots',
-      select: origin === MOBILE ? 'startDate endDate step trainers' : 'startDate endDate step address',
-      populate: { path: 'step', select: 'type' },
+      select: origin === MOBILE
+        ? 'startDate endDate step trainers'
+        : 'startDate endDate step address trainers',
+      populate: { path: 'step', select: 'type durationCountedPerTrainer' },
       options: { sort: { startDate: 1 } },
     },
     { path: 'slotsToPlan', select: '_id' },
@@ -77,15 +79,21 @@ exports.findCoursesForExport = async (startDate, endDate, credentials, courseTyp
     .populate({
       path: 'subProgram',
       select: 'name steps program',
-      populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
+      populate: [
+        { path: 'program', select: 'name' },
+        { path: 'steps', select: 'type activities durationCountedPerTrainer' },
+      ],
     })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({ path: 'operationsRepresentative', select: 'identity' })
     .populate({ path: 'contact', select: 'identity' })
     .populate({
       path: 'slots',
-      select: 'attendances startDate endDate trainees',
-      populate: { path: 'attendances', options: { isVendorUser } },
+      select: 'attendances startDate endDate trainees trainers step',
+      populate: [
+        { path: 'attendances', options: { isVendorUser } },
+        { path: 'step', select: 'durationCountedPerTrainer' },
+      ],
     })
     .populate({ path: 'slotsToPlan', select: '_id' })
     .populate({ path: 'trainees', select: 'firstMobileConnectionDate' })

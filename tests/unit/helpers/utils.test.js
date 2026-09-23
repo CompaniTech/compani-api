@@ -580,39 +580,48 @@ describe('getDuration', () => {
 
 describe('getDurationForExport', () => {
   it('should return duration with minutes', () => {
-    const startDate = '2020-03-20T09:00:00.000Z';
-    const endDate = '2020-03-20T11:30:00.000Z';
+    const slot = { startDate: '2020-03-20T09:00:00.000Z', endDate: '2020-03-20T11:30:00.000Z' };
 
-    const result = UtilsHelper.getDurationForExport(startDate, endDate);
+    const result = UtilsHelper.getDurationForExport(slot);
 
     expect(result).toEqual('2,50');
   });
 
   it('should return duration without minutes', () => {
-    const startDate = '2020-03-20T09:00:00.000Z';
-    const endDate = '2020-03-20T11:00:00.000Z';
+    const slot = { startDate: '2020-03-20T09:00:00.000Z', endDate: '2020-03-20T11:00:00.000Z' };
 
-    const result = UtilsHelper.getDurationForExport(startDate, endDate);
+    const result = UtilsHelper.getDurationForExport(slot);
 
     expect(result).toEqual('2,00');
   });
 
   it('should return duration with days', () => {
-    const startDate = '2020-03-20T09:00:00.000Z';
-    const endDate = '2020-03-21T15:00:00.000Z';
+    const slot = { startDate: '2020-03-20T09:00:00.000Z', endDate: '2020-03-21T15:00:00.000Z' };
 
-    const result = UtilsHelper.getDurationForExport(startDate, endDate);
+    const result = UtilsHelper.getDurationForExport(slot);
 
     expect(result).toEqual('30,00');
   });
 
   it('should return duration with seconds', () => {
-    const startDate = '2020-03-20T09:00:00.000Z';
-    const endDate = '2020-03-20T11:00:31.230Z';
+    const slot = { startDate: '2020-03-20T09:00:00.000Z', endDate: '2020-03-20T11:00:31.230Z' };
 
-    const result = UtilsHelper.getDurationForExport(startDate, endDate);
+    const result = UtilsHelper.getDurationForExport(slot);
 
     expect(result).toEqual('2,01');
+  });
+
+  it('should double the duration if step is countedPerTrainer and slot has several trainers', () => {
+    const slot = {
+      startDate: '2020-03-20T09:00:00.000Z',
+      endDate: '2020-03-20T11:00:00.000Z',
+      trainers: [new ObjectId(), new ObjectId()],
+      step: { durationCountedPerTrainer: true },
+    };
+
+    const result = UtilsHelper.getDurationForExport(slot);
+
+    expect(result).toEqual('4,00');
   });
 });
 

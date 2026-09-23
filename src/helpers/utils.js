@@ -225,9 +225,21 @@ exports.computeExclTaxesWithDiscount = (inclTaxes, discount, vat) => {
   return exports.getExclTaxes(inclTaxesWithDiscount, vat);
 };
 
+exports.getSlotDurationMultiplier = (slot, step = slot.step) => {
+  if (!get(step, 'durationCountedPerTrainer')) return 1;
+
+  return get(slot, 'trainers.length') || 1;
+};
+
+exports.getMultipliedSlotDuration = (tp, unit, step = tp.step) => {
+  const diff = CompaniDuration(CompaniDate(tp.endDate).diff(tp.startDate, unit)).asSeconds();
+
+  return { seconds: diff * exports.getSlotDurationMultiplier(tp, step) };
+};
+
 exports.getTotalDuration = (timePeriods, isResFormatted = true) => {
   const totalDuration = timePeriods.reduce(
-    (acc, tp) => acc.add(CompaniDate(tp.endDate).diff(tp.startDate, 'minutes')),
+    (acc, tp) => acc.add(exports.getMultipliedSlotDuration(tp, 'minutes')),
     CompaniDuration()
   );
 
@@ -236,7 +248,7 @@ exports.getTotalDuration = (timePeriods, isResFormatted = true) => {
 
 exports.getTotalDurationForExport = (timePeriods) => {
   const totalDuration = timePeriods.reduce(
-    (acc, tp) => acc.add(CompaniDate(tp.endDate).diff(tp.startDate, 'minutes')),
+    (acc, tp) => acc.add(exports.getMultipliedSlotDuration(tp, 'minutes')),
     CompaniDuration()
   );
 
@@ -244,14 +256,18 @@ exports.getTotalDurationForExport = (timePeriods) => {
 };
 
 exports.getISOTotalDuration = timePeriods => timePeriods
-  .reduce((acc, tp) => acc.add(CompaniDate(tp.endDate).diff(tp.startDate, SECOND)), CompaniDuration())
+  .reduce((acc, tp) => acc.add(exports.getMultipliedSlotDuration(tp, SECOND)), CompaniDuration())
   .toISO();
 
 exports.getDuration = (startDate, endDate) =>
   CompaniDuration(CompaniDate(endDate).diff(startDate, 'minutes')).format(SHORT_DURATION_H_MM);
 
-exports.getDurationForExport = (startDate, endDate) =>
-  exports.formatFloatForExport(CompaniDuration(CompaniDate(endDate).diff(startDate, 'minutes')).asHours());
+exports.getDurationForExport = (slot) => {
+  const hours = CompaniDuration(CompaniDate(slot.endDate).diff(slot.startDate, 'minutes')).asHours()
+    * exports.getSlotDurationMultiplier(slot);
+
+  return exports.formatFloatForExport(hours);
+};
 
 exports.getKeysOf2DepthObject = object => Object.entries(object).reduce((acc, [key, value]) => {
   const isPlainNestedObject = typeof value === 'object' && !isObjectIdOrHexString(value) && Object.keys(value).length &&

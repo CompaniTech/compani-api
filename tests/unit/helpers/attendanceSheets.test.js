@@ -613,7 +613,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineesId[0], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineesId[0],
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ],
@@ -624,7 +630,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineesId[1], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineesId[1],
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ],
@@ -832,7 +844,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineesId[0], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineesId[0],
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ],
@@ -843,7 +861,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineesId[1], course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineesId[1],
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ],
@@ -1124,7 +1148,13 @@ describe('create', () => {
       [
         {
           query: 'findOne',
-          args: [{ trainee: traineeId, course: courseId, slots: { $exists: true }, file: { $exists: false } }],
+          args: [{
+            trainee: traineeId,
+            course: courseId,
+            trainer: credentials._id,
+            slots: { $exists: true },
+            file: { $exists: false },
+          }],
         },
         { query: 'lean' },
       ]
@@ -1187,7 +1217,7 @@ describe('update', () => {
     const commonSlotId = new ObjectId();
     const attendanceSheetId = new ObjectId();
     const trainee = new ObjectId();
-    const payload = { slots: [slotIdToCreate, commonSlotId] };
+    const payload = { slots: [slotIdToCreate, commonSlotId], shouldDeleteAttendances: true };
     const attendanceSheet = {
       _id: attendanceSheetId,
       trainee,
@@ -1212,6 +1242,33 @@ describe('update', () => {
       updateOne,
       { _id: attendanceSheetId },
       { $set: { slots: [{ slotId: slotIdToCreate }, { slotId: commonSlotId }] } }
+    );
+  });
+
+  it('should not delete attendances if shouldDeleteAttendances is false', async () => {
+    const credentials = { _id: new ObjectId() };
+    const slotIdToDelete = new ObjectId();
+    const commonSlotId = new ObjectId();
+    const attendanceSheetId = new ObjectId();
+    const trainee = new ObjectId();
+    const payload = { slots: [commonSlotId] };
+    const attendanceSheet = {
+      _id: attendanceSheetId,
+      trainee,
+      slots: [{ slotId: slotIdToDelete }, { slotId: commonSlotId }],
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(attendanceSheet, ['lean']));
+    AttendanceCountDocuments.onCall(0).returns(1);
+
+    await attendanceSheetHelper.update(attendanceSheetId, payload, credentials);
+
+    sinon.assert.notCalled(AttendanceHelperCreate);
+    sinon.assert.notCalled(AttendanceDeleteMany);
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: attendanceSheetId },
+      { $set: { slots: [{ slotId: commonSlotId }] } }
     );
   });
 });

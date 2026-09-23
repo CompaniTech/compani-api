@@ -35,6 +35,7 @@ const {
   OPERATIONS,
   CONVOCATION,
   COURSE,
+  TRAINER_SALARY,
   TRAINEE,
   PEDAGOGY,
   PUBLISHED,
@@ -853,7 +854,7 @@ exports.authorizeTrainerAddition = async (req) => {
   return null;
 };
 
-exports.authorizeTrainerDeletion = async (req) => {
+exports.authorizeTrainerEdition = async (req) => {
   const { params } = req;
 
   const course = await Course.findOne({ _id: params._id }, { trainers: 1, archivedAt: 1 }).lean();
@@ -1278,6 +1279,13 @@ exports.authorizeUploadSingleCourseCSV = async (req) => {
       }
     }
 
+    const coachIsArchitect = formattedCoach && formattedArchitect &&
+      UtilsHelper.areObjectIdsEquals(formattedCoach._id, formattedArchitect._id);
+    if (coachIsArchitect) {
+      if (errorsByTrainee[learnerName]) errorsByTrainee[learnerName].push(translate[language].coachAndArchitectAreSame);
+      else errorsByTrainee[learnerName] = [translate[language].coachAndArchitectAreSame];
+    }
+
     let formattedDate = '';
     if (learner.estimatedStartDate) {
       const date = new Date(learner.estimatedStartDate);
@@ -1640,8 +1648,9 @@ exports.authorizeCourseBillingPurchaseEdition = async (req) => {
   if (!course) throw Boom.notFound();
   const billingPurchase = course.billingPurchaseList
     .find(p => UtilsHelper.areObjectIdsEquals(billingPurchaseId, p._id));
-  if (billingPurchase.billingItem.type !== COURSE) {
-    if (!req.payload) throw Boom.forbidden();
+  if (!req.payload) {
+    if (billingPurchase.billingItem.type !== COURSE) throw Boom.forbidden();
+  } else if (![COURSE, TRAINER_SALARY].includes(billingPurchase.billingItem.type)) {
     const { price, count } = req.payload;
     const isPriceOrCountEdited = price !== billingPurchase.price || count !== billingPurchase.count;
     if (isPriceOrCountEdited) throw Boom.forbidden();

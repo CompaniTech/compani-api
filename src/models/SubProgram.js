@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const has = require('lodash/has');
 const mongooseLeanVirtuals = require('mongoose-lean-virtuals');
-const { DRAFT, PUBLISHED, E_LEARNING } = require('../helpers/constants');
+const { DRAFT, PUBLISHED, E_LEARNING, TRAINER_ROLES } = require('../helpers/constants');
 const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 
 const STATUS_TYPES = [DRAFT, PUBLISHED];
@@ -16,6 +16,7 @@ const SubProgramSchema = mongoose.Schema({
       prices: [{
         _id: false,
         step: { type: mongoose.Schema.Types.ObjectId, ref: 'Step', required: true },
+        role: { type: String, enum: TRAINER_ROLES },
         hourlyAmount: { type: Number, required: true },
       }],
       effectiveDate: { type: Date, required: true },

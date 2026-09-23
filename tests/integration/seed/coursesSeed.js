@@ -75,6 +75,8 @@ const {
   COURSE,
   COURSE_BILL,
   TRAINER,
+  TRAINER_SALARY,
+  VAEI_COACH,
 } = require('../../../src/helpers/constants');
 const {
   auxiliaryRoleId,
@@ -385,6 +387,7 @@ const courseBillingItemsList = [
   { _id: new ObjectId(), name: 'article formation', type: COURSE },
   { _id: new ObjectId(), name: 'article facture', type: COURSE_BILL },
   { _id: new ObjectId(), name: 'frais de formateur', type: TRAINER },
+  { _id: new ObjectId(), name: 'salaire formateur', type: TRAINER_SALARY },
 ];
 
 const coursesList = [
@@ -766,6 +769,7 @@ const coursesList = [
     trainees: [traineeFromAuthFormerlyInOther._id],
     companies: [authCompany._id],
     trainers: [trainer._id],
+    rolesPerTrainer: [{ trainer: trainer._id, roles: [VAEI_COACH] }],
     operationsRepresentative: vendorAdmin._id,
     tutors: [noRole._id],
     certificateGenerationMode: MONTHLY,
@@ -818,6 +822,12 @@ const coursesList = [
         price: 120,
         count: 1,
         trainer: trainer._id,
+      },
+      {
+        _id: new ObjectId(),
+        billingItem: courseBillingItemsList[3]._id,
+        price: 300,
+        count: 1,
       },
     ],
   },

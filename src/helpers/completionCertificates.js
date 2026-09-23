@@ -79,7 +79,12 @@ exports.generate = async (completionCertificateId) => {
         path: 'course',
         select: 'subProgram slots companies trainees tradeName',
         populate: [
-          { path: 'slots', select: 'startDate endDate', options: { sort: { startDate: 1 } } },
+          {
+            path: 'slots',
+            select: 'startDate endDate trainers step',
+            options: { sort: { startDate: 1 } },
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          },
           {
             path: 'subProgram',
             select: 'program steps',

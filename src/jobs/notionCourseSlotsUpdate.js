@@ -58,20 +58,29 @@ const notionCourseSlotsUpdateJob = {
       const evaluationStepIds = UtilsHelper.getEnvObjectIds('EVALUATION_STEP_IDS');
       const codevStepIds = UtilsHelper.getEnvObjectIds('CODEV_STEP_IDS');
       const tripartiteStepIds = UtilsHelper.getEnvObjectIds('TRIPARTITE_STEP_IDS');
+      const quadripartiteStepIds = UtilsHelper.getEnvObjectIds('QUADRIPARTITE_STEP_IDS');
       const coachingStepIds = UtilsHelper.getEnvObjectIds('COACHING_STEP_IDS');
-      const allStepIds = [...evaluationStepIds, ...codevStepIds, ...tripartiteStepIds, ...coachingStepIds];
+      const allStepIds = [
+        ...evaluationStepIds,
+        ...codevStepIds,
+        ...tripartiteStepIds,
+        ...quadripartiteStepIds,
+        ...coachingStepIds,
+      ];
 
       const notion = new notionSdk.Client({ auth: process.env.NOTION_TOKEN });
       const stepToColumn = {
         'Total h diag&eval': evaluationStepIds,
         'Tot Nb codev': codevStepIds,
         'Total h tripartites': tripartiteStepIds,
+        'Total h quadripartites': quadripartiteStepIds,
         'Total h coaching': coachingStepIds,
       };
       const stepToColumnPastMonth = {
         'h diag&eval du mois dernier': evaluationStepIds,
         'Nb codev du mois dernier': codevStepIds,
         'h tripartites du mois dernier': tripartiteStepIds,
+        'h quadripartites du mois dernier': quadripartiteStepIds,
         'h coaching du mois dernier': coachingStepIds,
       };
 

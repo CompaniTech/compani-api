@@ -40,6 +40,8 @@ const {
   SURVEY,
   QUESTION_ANSWER,
   TRANSITION,
+  VAEI_COACH,
+  ARCHITECT,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseSlot = require('../../../src/models/CourseSlot');
@@ -541,7 +543,10 @@ describe('exportCourseHistory', () => {
             {
               path: 'subProgram',
               select: 'name steps program',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
+              populate: [
+                { path: 'program', select: 'name' },
+                { path: 'steps', select: 'type activities durationCountedPerTrainer' },
+              ],
             }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -551,14 +556,17 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate trainees',
-            populate: {
-              path: 'attendances',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
+            select: 'attendances startDate endDate trainees trainers step',
+            populate: [
+              {
+                path: 'attendances',
+                options: {
+                  isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
+                    .includes(get(credentials, 'role.vendor.name')),
+                },
               },
-            },
+              { path: 'step', select: 'durationCountedPerTrainer' },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
@@ -983,7 +991,10 @@ describe('exportCourseHistory', () => {
             {
               path: 'subProgram',
               select: 'name steps program',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
+              populate: [
+                { path: 'program', select: 'name' },
+                { path: 'steps', select: 'type activities durationCountedPerTrainer' },
+              ],
             }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -993,14 +1004,17 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate trainees',
-            populate: {
-              path: 'attendances',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
+            select: 'attendances startDate endDate trainees trainers step',
+            populate: [
+              {
+                path: 'attendances',
+                options: {
+                  isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
+                    .includes(get(credentials, 'role.vendor.name')),
+                },
               },
-            },
+              { path: 'step', select: 'durationCountedPerTrainer' },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
@@ -1260,7 +1274,10 @@ describe('exportCourseHistory', () => {
             {
               path: 'subProgram',
               select: 'name steps program',
-              populate: [{ path: 'program', select: 'name' }, { path: 'steps', select: 'type activities' }],
+              populate: [
+                { path: 'program', select: 'name' },
+                { path: 'steps', select: 'type activities durationCountedPerTrainer' },
+              ],
             }],
         },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -1270,14 +1287,17 @@ describe('exportCourseHistory', () => {
           query: 'populate',
           args: [{
             path: 'slots',
-            select: 'attendances startDate endDate trainees',
-            populate: {
-              path: 'attendances',
-              options: {
-                isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
-                  .includes(get(credentials, 'role.vendor.name')),
+            select: 'attendances startDate endDate trainees trainers step',
+            populate: [
+              {
+                path: 'attendances',
+                options: {
+                  isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN]
+                    .includes(get(credentials, 'role.vendor.name')),
+                },
               },
-            },
+              { path: 'step', select: 'durationCountedPerTrainer' },
+            ],
           }],
         },
         { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
@@ -1370,10 +1390,11 @@ describe('exportCourseSlotHistory', () => {
   const trainers = [
     { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } },
     { _id: new ObjectId(), identity: { firstname: 'Autre', lastname: 'FORMATEUR' } },
+    { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } },
   ];
 
   const stepList = [
-    { _id: new ObjectId(), name: 'étape 1', type: ON_SITE },
+    { _id: new ObjectId(), name: 'étape 1', type: ON_SITE, durationCountedPerTrainer: true },
     { _id: new ObjectId(), name: 'étape 2', type: REMOTE },
     { _id: new ObjectId(), name: 'étape 3', type: E_LEARNING },
   ];
@@ -1435,12 +1456,12 @@ describe('exportCourseSlotHistory', () => {
           query: 'find',
           args: [{ startDate: { $lte: '2022-01-20T22:59:59.000Z' }, endDate: { $gte: '2021-01-14T23:00:00.000Z' } }],
         },
-        { query: 'populate', args: [{ path: 'step', select: 'type name' }] },
+        { query: 'populate', args: [{ path: 'step', select: 'type name durationCountedPerTrainer' }] },
         {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName',
+            select: 'type trainees misc subProgram companies tradeName rolesPerTrainer',
             match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1491,7 +1512,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         address: slotAddress,
         attendances: [{ trainee: traineeList[1]._id, status: PRESENT }, { trainee: traineeList[3]._id, status: PRESENT }],
-        trainers,
+        trainers: [trainers[0], trainers[1]],
       },
       { // 3
         _id: new ObjectId(),
@@ -1576,7 +1597,7 @@ describe('exportCourseSlotHistory', () => {
         '12/12/2020 11:00:02',
         '01/02/2021 09:00:00',
         '01/02/2021 11:00:00',
-        '2,00',
+        '4,00',
         '24 Avenue Daumesnil 75012 Paris',
         1,
         0,
@@ -1613,12 +1634,12 @@ describe('exportCourseSlotHistory', () => {
           query: 'find',
           args: [{ startDate: { $lte: '2022-01-20T22:59:59.000Z' }, endDate: { $gte: '2021-01-14T23:00:00.000Z' } }],
         },
-        { query: 'populate', args: [{ path: 'step', select: 'type name' }] },
+        { query: 'populate', args: [{ path: 'step', select: 'type name durationCountedPerTrainer' }] },
         {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName',
+            select: 'type trainees misc subProgram companies tradeName rolesPerTrainer',
             match: { type: { $in: [INTRA, INTRA_HOLDING, INTER_B2B] } },
             populate: [
               { path: 'companies', select: 'name' },
@@ -1635,7 +1656,7 @@ describe('exportCourseSlotHistory', () => {
     );
   });
 
-  it('should return an array with the header and 4 rows (SINGLE COURSES)', async () => {
+  it('should return an array with the header and 6 rows (SINGLE COURSES)', async () => {
     const collectiveStepId = new ObjectId(process.env.COLLECTIVE_STEP_IDS);
     const collectiveStep = { _id: collectiveStepId, name: 'collectif', type: ON_SITE };
 
@@ -1736,7 +1757,7 @@ describe('exportCourseSlotHistory', () => {
         trainers: [trainers[0]],
         trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0002' } }],
       },
-      { // collective slot (PRESENT)
+      { // collective slot with an unresolvable role-based price (PRESENT)
         _id: new ObjectId(),
         course: { // Single
           _id: courseIdList[2],
@@ -1745,7 +1766,13 @@ describe('exportCourseSlotHistory', () => {
           subProgram: {
             _id: new ObjectId(),
             program: { _id: new ObjectId(), name: 'Program 3' },
-            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+            priceVersions: [{
+              effectiveDate: '2019-01-01T10:00:00.000Z',
+              prices: [
+                { step: stepList[0]._id, hourlyAmount: 12 },
+                { step: collectiveStepId, role: VAEI_COACH, hourlyAmount: 20 },
+              ],
+            }],
           },
           companies: [],
           trainers: [trainers[0]._id],
@@ -1759,6 +1786,40 @@ describe('exportCourseSlotHistory', () => {
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
         trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0003' } }],
+      },
+      { // individual slot with several trainers and differentiated prices, 2 of them sharing the same role (PRESENT)
+        _id: new ObjectId(),
+        course: {
+          _id: courseIdList[2],
+          trainees: [traineeList[3]],
+          type: SINGLE,
+          subProgram: {
+            _id: new ObjectId(),
+            program: { _id: new ObjectId(), name: 'Program 3' },
+            priceVersions: [{
+              effectiveDate: '2019-01-01T10:00:00.000Z',
+              prices: [
+                { step: stepList[0]._id, role: VAEI_COACH, hourlyAmount: 50 },
+                { step: stepList[0]._id, role: ARCHITECT, hourlyAmount: 55 },
+              ],
+            }],
+          },
+          companies: [],
+          trainers: [trainers[0]._id, trainers[1]._id, trainers[2]._id],
+          rolesPerTrainer: [
+            { trainer: trainers[0]._id, roles: [VAEI_COACH] },
+            { trainer: trainers[1]._id, roles: [VAEI_COACH] },
+            { trainer: trainers[2]._id, roles: [ARCHITECT] },
+          ],
+          misc: 'Archie Pelle',
+          tradeName: 'Program 3',
+        },
+        startDate: '2022-06-02T08:00:00.000Z',
+        endDate: '2022-06-02T10:00:00.000Z',
+        createdAt: '2020-12-12T10:00:03.000Z',
+        step: stepList[0],
+        attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
+        trainers: [trainers[0], trainers[1], trainers[2]],
       },
     ];
 
@@ -1898,7 +1959,29 @@ describe('exportCourseSlotHistory', () => {
         'Gilles FORMATEUR',
         'Réglé',
         'FACT_0003',
-        '40,00',
+        'Erreur',
+      ],
+      [
+        slots[5]._id,
+        courseIdList[2],
+        'Program 3 - Archie Pelle',
+        'étape 1',
+        'présentiel',
+        'Emma STONE',
+        '12/12/2020 11:00:03',
+        '02/06/2022 10:00:00',
+        '02/06/2022 12:00:00',
+        '6,00',
+        '',
+        1,
+        0,
+        '0,00',
+        0,
+        0,
+        'Gilles FORMATEUR, Autre FORMATEUR, Cathy ARCHITECTE',
+        'Gilles FORMATEUR : Non facturé, Autre FORMATEUR : Non facturé, Cathy ARCHITECTE : Non facturé',
+        '',
+        '310,00',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1908,12 +1991,12 @@ describe('exportCourseSlotHistory', () => {
           query: 'find',
           args: [{ startDate: { $lte: '2022-01-20T22:59:59.000Z' }, endDate: { $gte: '2021-01-14T23:00:00.000Z' } }],
         },
-        { query: 'populate', args: [{ path: 'step', select: 'type name' }] },
+        { query: 'populate', args: [{ path: 'step', select: 'type name durationCountedPerTrainer' }] },
         {
           query: 'populate',
           args: [{
             path: 'course',
-            select: 'type trainees misc subProgram companies tradeName',
+            select: 'type trainees misc subProgram companies tradeName rolesPerTrainer',
             match: { type: { $in: [SINGLE] } },
             populate: [
               { path: 'companies', select: 'name' },

@@ -62,7 +62,12 @@ exports.getProgram = async (programId) => {
           path: 'steps',
           populate: [
             { path: 'activities', populate: 'cards' },
-            { path: 'subPrograms', select: 'name -steps', populate: { path: 'program', select: 'name -subPrograms' } },
+            {
+              path: 'subPrograms',
+              match: { archivedAt: { $exists: false } },
+              select: 'name -steps',
+              populate: { path: 'program', select: 'name -subPrograms' },
+            },
           ],
         },
         { path: 'courses', select: 'tradeName' },
