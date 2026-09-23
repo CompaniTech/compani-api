@@ -2266,6 +2266,17 @@ describe('ATTENDANCE SHEETS ROUTES - DELETE /attendancesheets/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if trainer tries to delete another trainer\'s attendance sheet (co-intervention)',
+      async () => {
+        const response = await app.inject({
+          method: 'DELETE',
+          url: `/attendancesheets/${attendanceSheetList[16]._id}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+
     it('should return a 403 if course is archived', async () => {
       const response = await app.inject({
         method: 'DELETE',
