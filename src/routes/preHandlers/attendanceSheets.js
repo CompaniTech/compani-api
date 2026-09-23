@@ -226,7 +226,7 @@ exports.authorizeAttendanceSheetEdit = async (req) => {
   if (!attendanceSheet) throw Boom.notFound();
 
   const { credentials } = req.auth;
-  if (!isVendorAndAuthorized(attendanceSheet.course.trainers, credentials)) throw Boom.forbidden();
+  if (!isVendorAndAuthorized([attendanceSheet.trainer], credentials)) throw Boom.forbidden();
 
   if (req.payload.action) {
     let canGenerate = attendanceSheet.slots.every(s => s.trainerSignature && s.traineesSignature &&
@@ -339,7 +339,7 @@ exports.authorizeAttendanceSheetDeletion = async (req) => {
 
   if (get(attendanceSheet, 'course.archivedAt')) throw Boom.forbidden();
 
-  if (!isVendorAndAuthorized(get(attendanceSheet, 'course.trainers'), credentials)) throw Boom.forbidden();
+  if (!isVendorAndAuthorized([attendanceSheet.trainer], credentials)) throw Boom.forbidden();
 
   if (req.query.shouldDeleteAttendances && !attendanceSheet.slots) throw Boom.badRequest();
 
