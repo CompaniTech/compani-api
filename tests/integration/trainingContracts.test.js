@@ -3,6 +3,7 @@ const sinon = require('sinon');
 const { ObjectId } = require('mongodb');
 const app = require('../../server');
 const TrainingContract = require('../../src/models/TrainingContract');
+const Drive = require('../../src/models/Google/Drive');
 const {
   authCompany,
   otherCompany,
@@ -14,6 +15,7 @@ const { populateDB, courseList, trainingContractList } = require('./seed/trainin
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
+const GDriveStorageHelper = require('../../src/helpers/gDriveStorage');
 const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 
 describe('NODE ENV', () => {
@@ -24,15 +26,24 @@ describe('NODE ENV', () => {
 
 describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
   let authToken;
-  let uploadCourseFileStub;
+  let gcsUploadCourseFileStub;
+  let driveGetUploadFolderId;
+  let driveAddFile;
+  let driveGetFileById;
 
   beforeEach(async () => {
     await populateDB();
-    uploadCourseFileStub = sinon.stub(GCloudStorageHelper, 'uploadCourseFile')
+    gcsUploadCourseFileStub = sinon.stub(GCloudStorageHelper, 'uploadCourseFile')
       .returns({ publicId: '123', link: 'ceciestunlien' });
+    driveGetUploadFolderId = sinon.stub(GDriveStorageHelper, 'getUploadFolderId').returns('upload_folder_id');
+    driveAddFile = sinon.stub(GDriveStorageHelper, 'addFile').returns({ id: 'drive_file_id2' });
+    driveGetFileById = sinon.stub(Drive, 'getFileById').returns({ webViewLink: 'https://drive.google.com/file2' });
   });
   afterEach(() => {
-    uploadCourseFileStub.restore();
+    gcsUploadCourseFileStub.restore();
+    driveGetUploadFolderId.restore();
+    driveAddFile.restore();
+    driveGetFileById.restore();
   });
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
@@ -40,14 +51,13 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should upload training contract', async () => {
+    it('should upload training contract (intra)', async () => {
       const formData = {
         course: courseList[0]._id.toHexString(),
         company: authCompany._id.toHexString(),
         file: 'test',
       };
       const form = generateFormData(formData);
-      uploadCourseFileStub.returns({ publicId: '1234567890', link: 'ceciestunautrelien' });
 
       const response = await app.inject({
         method: 'POST',
@@ -57,12 +67,44 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      const contractTraing = await TrainingContract.countDocuments({
+      const trainingContract = await TrainingContract.countDocuments({
         course: courseList[0]._id,
         company: authCompany._id,
-        file: { publicId: '1234567890', link: 'ceciestunautrelien' },
+        file: { publicId: '123', link: 'ceciestunlien' },
       });
-      expect(contractTraing).toBe(1);
+      expect(trainingContract).toBe(1);
+      sinon.assert.calledOnce(gcsUploadCourseFileStub);
+      sinon.assert.notCalled(driveGetUploadFolderId);
+      sinon.assert.notCalled(driveAddFile);
+      sinon.assert.notCalled(driveGetFileById);
+    });
+
+    it('should upload 2nd training contract (single)', async () => {
+      const formData = {
+        course: courseList[5]._id.toHexString(),
+        company: authCompany._id.toHexString(),
+        file: 'test',
+      };
+      const form = generateFormData(formData);
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/trainingcontracts',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(200);
+      const trainingContract = await TrainingContract.countDocuments({
+        course: courseList[5]._id,
+        company: authCompany._id,
+        file: { publicId: 'drive_file_id2', link: 'https://drive.google.com/file2' },
+      });
+      expect(trainingContract).toBe(1);
+      sinon.assert.calledOnce(driveAddFile);
+      sinon.assert.calledOnce(driveGetFileById);
+      sinon.assert.calledOnce(driveGetUploadFolderId);
+      sinon.assert.notCalled(gcsUploadCourseFileStub);
     });
 
     it('should return 404 if course with company not found', async () => {
@@ -72,7 +114,6 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
         file: 'test',
       };
       const form = generateFormData(formData);
-      uploadCourseFileStub.returns({ publicId: '1234567890', link: 'https://test.com/file.pdf' });
 
       const response = await app.inject({
         method: 'POST',
@@ -91,7 +132,6 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
         file: 'test',
       };
       const form = generateFormData(formData);
-      uploadCourseFileStub.returns({ publicId: '1234567890', link: 'https://test.com/file.pdf' });
 
       const response = await app.inject({
         method: 'POST',
@@ -124,7 +164,6 @@ describe('TRAINING CONTRACTS ROUTES - POST /trainingcontracts', () => {
         };
 
         const form = generateFormData(formData);
-        uploadCourseFileStub.returns({ publicId: '1234567890', link: 'https://test.com/file.pdf' });
 
         const response = await app.inject({
           method: 'POST',
@@ -302,19 +341,22 @@ describe('TRAINING CONTRACTS ROUTES - GET /trainingcontracts', () => {
 
 describe('TRAINING CONTRACTS ROUTES - DELETE /trainingcontracts/{_id}', () => {
   let authToken;
-  let deleteCourseFile;
+  let gcsDeleteCourseFile;
+  let driveDeleteFile;
 
   describe('TRAINING_ORGANISATION_MANAGER', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
       authToken = await getToken('training_organisation_manager');
-      deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+      gcsDeleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+      driveDeleteFile = sinon.stub(GDriveStorageHelper, 'deleteFile');
     });
     afterEach(() => {
-      deleteCourseFile.restore();
+      gcsDeleteCourseFile.restore();
+      driveDeleteFile.restore();
     });
 
-    it('should delete a training contract', async () => {
+    it('should delete a training contract (intra)', async () => {
       const trainingContractsLength = await TrainingContract.countDocuments();
       const response = await app.inject({
         method: 'DELETE',
@@ -324,7 +366,22 @@ describe('TRAINING CONTRACTS ROUTES - DELETE /trainingcontracts/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
       expect(await TrainingContract.countDocuments()).toEqual(trainingContractsLength - 1);
-      sinon.assert.calledOnce(deleteCourseFile);
+      sinon.assert.calledOnce(gcsDeleteCourseFile);
+      sinon.assert.notCalled(driveDeleteFile);
+    });
+
+    it('should delete a training contract (single)', async () => {
+      const trainingContractsLength = await TrainingContract.countDocuments();
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/trainingcontracts/${trainingContractList[2]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(await TrainingContract.countDocuments()).toEqual(trainingContractsLength - 1);
+      sinon.assert.calledOnce(driveDeleteFile);
+      sinon.assert.notCalled(gcsDeleteCourseFile);
     });
 
     it('should return 404 if training contract does not exist', async () => {
@@ -351,10 +408,12 @@ describe('TRAINING CONTRACTS ROUTES - DELETE /trainingcontracts/{_id}', () => {
   describe('Other roles', () => {
     beforeEach(populateDB);
     beforeEach(async () => {
-      deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+      gcsDeleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+      driveDeleteFile = sinon.stub(GDriveStorageHelper, 'deleteFile');
     });
     afterEach(() => {
-      deleteCourseFile.restore();
+      gcsDeleteCourseFile.restore();
+      driveDeleteFile.restore();
     });
 
     const roles = [

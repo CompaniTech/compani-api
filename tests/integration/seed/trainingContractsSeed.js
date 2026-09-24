@@ -7,7 +7,15 @@ const TrainingContract = require('../../../src/models/TrainingContract');
 const { authCompany, otherCompany, companyWithoutSubscription, otherHolding } = require('../../seed/authCompaniesSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { vendorAdmin, helper, clientAdmin, coach, trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
-const { INTRA, INTER_B2B, PUBLISHED, INTRA_HOLDING, GLOBAL } = require('../../../src/helpers/constants');
+const {
+  INTRA,
+  INTER_B2B,
+  PUBLISHED,
+  INTRA_HOLDING,
+  GLOBAL,
+  SINGLE,
+  MONTHLY,
+} = require('../../../src/helpers/constants');
 
 const steps = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 }];
 
@@ -96,6 +104,25 @@ const courseList = [
     certificateGenerationMode: GLOBAL,
     tradeName: 'nom',
   },
+  { // 5 Single course
+    _id: new ObjectId(),
+    subProgram: subProgram._id,
+    contact: trainer._id,
+    misc: 'single course',
+    type: SINGLE,
+    trainees: [coach._id],
+    companies: [authCompany._id],
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    tutors: [],
+    certificateGenerationMode: MONTHLY,
+    maxTrainees: 1,
+    expectedBillsCount: 0,
+    prices: [{ global: 1600, company: authCompany._id }],
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+    tradeName: 'nom',
+  },
 ];
 
 const trainingContractList = [
@@ -110,6 +137,12 @@ const trainingContractList = [
     course: courseList[3]._id,
     company: authCompany._id,
     file: { publicId: '124test', link: 'celaestunlien' },
+  },
+  {
+    _id: new ObjectId(),
+    course: courseList[5]._id,
+    company: authCompany._id,
+    file: { publicId: 'drive_file_id', link: 'https://drive.google.com/file' },
   },
 ];
 
