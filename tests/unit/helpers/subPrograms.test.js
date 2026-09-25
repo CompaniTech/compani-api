@@ -45,10 +45,13 @@ describe('addSubProgram', () => {
 describe('updateSubProgram', () => {
   let updateOne;
   let findOneAndUpdate;
+  let find;
   let stepUpdateManyStub;
   let activityUpdateManyStub;
   let userCompanyFind;
   let courseCreateStub;
+  let courseFindOne;
+  let courseUpdateOne;
   let sendNewElearningCourseNotification;
   let getLastVersion;
   let findOne;
@@ -60,6 +63,9 @@ describe('updateSubProgram', () => {
     activityUpdateManyStub = sinon.stub(Activity, 'updateMany');
     userCompanyFind = sinon.stub(UserCompany, 'find');
     courseCreateStub = sinon.stub(Course, 'create');
+    courseFindOne = sinon.stub(Course, 'findOne');
+    courseUpdateOne = sinon.stub(Course, 'updateOne');
+    find = sinon.stub(SubProgram, 'find');
     sendNewElearningCourseNotification = sinon.stub(NotificationHelper, 'sendNewElearningCourseNotification');
     UtilsMock.mockCurrentDate('2025-03-31T14:00:00.000Z');
     getLastVersion = sinon.stub(UtilsHelper, 'getLastVersion');
@@ -73,6 +79,9 @@ describe('updateSubProgram', () => {
     activityUpdateManyStub.restore();
     userCompanyFind.restore();
     courseCreateStub.restore();
+    courseFindOne.restore();
+    courseUpdateOne.restore();
+    find.restore();
     sendNewElearningCourseNotification.restore();
     UtilsMock.unmockCurrentDate();
     getLastVersion.restore();
@@ -88,17 +97,161 @@ describe('updateSubProgram', () => {
     sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgramId }, { $set: { archivedAt: payload.archivedAt } });
     sinon.assert.notCalled(findOne);
     sinon.assert.notCalled(findOneAndUpdate);
+    sinon.assert.notCalled(find);
+    sinon.assert.notCalled(courseFindOne);
+    sinon.assert.notCalled(courseUpdateOne);
   });
 
-  it('should unarchive a subProgram', async () => {
+  it('should unarchive a blended subProgram', async () => {
     const subProgramId = new ObjectId();
+    const subProgram = { _id: subProgramId, isStrictlyELearning: false };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(subProgram));
 
     await SubProgramHelper.updateSubProgram(subProgramId, { archivedAt: '' });
 
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [
+        { query: 'findOne', args: [{ _id: subProgramId }] },
+        { query: 'populate', args: [{ path: 'steps', select: 'type' }] },
+        { query: 'populate', args: [{ path: 'program', select: 'name subPrograms' }] },
+        { query: 'lean', args: [{ virtuals: true }] },
+      ]
+    );
     sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgramId }, { $unset: { archivedAt: '' } });
-    sinon.assert.notCalled(findOne);
+    sinon.assert.notCalled(find);
+    sinon.assert.notCalled(courseFindOne);
+    sinon.assert.notCalled(courseUpdateOne);
     sinon.assert.notCalled(findOneAndUpdate);
   });
+
+  it('should unarchive a strictly e-learning subProgram and reuse its own course', async () => {
+    const subProgramId = new ObjectId();
+    const programSubPrograms = [subProgramId, new ObjectId()];
+    const subProgram = {
+      _id: subProgramId,
+      status: 'published',
+      isStrictlyELearning: true,
+      program: { name: 'nom', subPrograms: programSubPrograms },
+    };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(subProgram));
+    find.returns(SinonMongoose.stubChainedQueries([]));
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+
+    await SubProgramHelper.updateSubProgram(subProgramId, { archivedAt: '' });
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $in: [programSubPrograms[1]] },
+            status: 'published',
+            archivedAt: { $exists: false },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'steps', select: 'type' }] },
+        { query: 'lean', args: [{ virtuals: true }] },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgramId }, { $unset: { archivedAt: '' } });
+    sinon.assert.notCalled(sendNewElearningCourseNotification);
+    sinon.assert.notCalled(courseUpdateOne);
+  });
+
+  it('should unarchive a strictly e-learning subProgram and update other archived subprogram course', async () => {
+    const subProgramId = new ObjectId();
+    const programSubPrograms = [subProgramId, new ObjectId()];
+    const subProgram = {
+      _id: subProgramId,
+      status: 'published',
+      isStrictlyELearning: true,
+      program: { name: 'nom', subPrograms: programSubPrograms },
+    };
+    const course = { _id: new ObjectId(), subProgram: programSubPrograms[1] };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(subProgram));
+    find.returns(SinonMongoose.stubChainedQueries([]));
+    courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
+    await SubProgramHelper.updateSubProgram(subProgramId, { archivedAt: '' });
+
+    SinonMongoose.calledOnceWithExactly(
+      find,
+      [
+        {
+          query: 'find',
+          args: [{
+            _id: { $in: [programSubPrograms[1]] },
+            status: 'published',
+            archivedAt: { $exists: false },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'steps', select: 'type' }] },
+        { query: 'lean', args: [{ virtuals: true }] },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseFindOne,
+      [
+        { query: 'findOne', args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      courseUpdateOne,
+      { _id: course._id },
+      { $set: { subProgram: subProgramId } }
+    );
+    sinon.assert.calledOnceWithExactly(updateOne, { _id: subProgramId }, { $unset: { archivedAt: '' } });
+    sinon.assert.notCalled(sendNewElearningCourseNotification);
+  });
+
+  it('should unarchive a strictly e-learning subProgram, archive the currently active one and update its course',
+    async () => {
+      const subProgramId = new ObjectId();
+      const activeSubProgramId = new ObjectId();
+      const programSubPrograms = [subProgramId, activeSubProgramId];
+      const subProgram = {
+        _id: subProgramId,
+        status: 'published',
+        isStrictlyELearning: true,
+        program: { name: 'nom', subPrograms: programSubPrograms },
+      };
+      const activeSubPrograms = [
+        { _id: activeSubProgramId, isStrictlyELearning: true, steps: [{ type: 'e_learning' }] },
+      ];
+      const course = { _id: new ObjectId(), subProgram: activeSubProgramId };
+
+      findOne.returns(SinonMongoose.stubChainedQueries(subProgram));
+      find.returns(SinonMongoose.stubChainedQueries(activeSubPrograms));
+      courseFindOne.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+
+      await SubProgramHelper.updateSubProgram(subProgramId, { archivedAt: '' });
+
+      sinon.assert.calledWithExactly(
+        updateOne.getCall(0),
+        { _id: activeSubProgramId },
+        { $set: { archivedAt: '2025-03-31T14:00:00.000Z' } }
+      );
+      sinon.assert.calledWithExactly(updateOne.getCall(1), { _id: subProgramId }, { $unset: { archivedAt: '' } });
+      sinon.assert.calledWithExactly(
+        courseUpdateOne,
+        { _id: course._id },
+        { $set: { subProgram: subProgramId } }
+      );
+      sinon.assert.notCalled(sendNewElearningCourseNotification);
+    });
 
   it('should update a subProgram name', async () => {
     const subProgram = { _id: new ObjectId(), name: 'non' };
@@ -192,7 +345,7 @@ describe('updateSubProgram', () => {
         [
           { query: 'findOneAndUpdate', args: [{ _id: subProgram._id }, { $set: payload }] },
           { query: 'populate', args: [{ path: 'steps', select: 'activities type' }] },
-          { query: 'populate', args: [{ path: 'program', select: 'name' }] },
+          { query: 'populate', args: [{ path: 'program', select: 'name subPrograms' }] },
           { query: 'lean', args: [{ virtuals: true }] },
         ]
       );
@@ -201,9 +354,12 @@ describe('updateSubProgram', () => {
       sinon.assert.notCalled(sendNewElearningCourseNotification);
       sinon.assert.notCalled(getLastVersion);
       sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(find);
+      sinon.assert.notCalled(courseFindOne);
+      sinon.assert.notCalled(courseUpdateOne);
     });
 
-    it('if subProgram is strictly e-learning, should also create new course', async () => {
+    it('if subProgram is strictly e-learning and no course exists yet, should create a new one', async () => {
       const payload = { status: 'published' };
       const subProgram = {
         _id: new ObjectId(),
@@ -213,6 +369,7 @@ describe('updateSubProgram', () => {
         isStrictlyELearning: true,
       };
       const activities = [new ObjectId()];
+      const programSubPrograms = [subProgram._id, new ObjectId()];
       const updatedSubProgram = {
         ...subProgram,
         status: 'published',
@@ -220,7 +377,7 @@ describe('updateSubProgram', () => {
           { _id: subProgram.steps[0], activities, type: 'e_learning' },
           { _id: subProgram.steps[1], activities: [], type: 'e_learning' },
         ],
-        program: { name: 'nom' },
+        program: { name: 'nom', subPrograms: programSubPrograms },
       };
       const course = {
         _id: new ObjectId(),
@@ -232,6 +389,7 @@ describe('updateSubProgram', () => {
 
       findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedSubProgram));
       stepUpdateManyStub.returns({ activities });
+      courseFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
       courseCreateStub.returns(course);
 
       await SubProgramHelper.updateSubProgram(subProgram._id, payload);
@@ -251,8 +409,15 @@ describe('updateSubProgram', () => {
         [
           { query: 'findOneAndUpdate', args: [{ _id: subProgram._id }, { $set: { status: payload.status } }] },
           { query: 'populate', args: [{ path: 'steps', select: 'activities type' }] },
-          { query: 'populate', args: [{ path: 'program', select: 'name' }] },
+          { query: 'populate', args: [{ path: 'program', select: 'name subPrograms' }] },
           { query: 'lean', args: [{ virtuals: true }] },
+        ]
+      );
+      SinonMongoose.calledOnceWithExactly(
+        courseFindOne,
+        [
+          { query: 'findOne', args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c' }] },
+          { query: 'lean' },
         ]
       );
       sinon.assert.calledWithExactly(
@@ -265,9 +430,65 @@ describe('updateSubProgram', () => {
           tradeName: 'nom',
         }
       );
+      sinon.assert.notCalled(courseUpdateOne);
+      sinon.assert.notCalled(find);
       sinon.assert.calledWithExactly(
         sendNewElearningCourseNotification,
         course._id,
+        { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
+      );
+      sinon.assert.notCalled(userCompanyFind);
+      sinon.assert.notCalled(getLastVersion);
+      sinon.assert.notCalled(findOne);
+    });
+
+    it('if subProgram is strictly e-learning and course already exists on the program, should update it', async () => {
+      const payload = { status: 'published' };
+      const otherSubProgramId = new ObjectId();
+      const subProgram = {
+        _id: new ObjectId(),
+        name: 'non',
+        status: 'draft',
+        steps: [new ObjectId(), new ObjectId()],
+        isStrictlyELearning: true,
+      };
+      const activities = [new ObjectId()];
+      const programSubPrograms = [subProgram._id, otherSubProgramId];
+      const updatedSubProgram = {
+        ...subProgram,
+        status: 'published',
+        steps: [
+          { _id: subProgram.steps[0], activities, type: 'e_learning' },
+          { _id: subProgram.steps[1], activities: [], type: 'e_learning' },
+        ],
+        program: { name: 'nom', subPrograms: programSubPrograms },
+      };
+      const existingCourse = { _id: new ObjectId(), subProgram: otherSubProgramId, accessRules: [new ObjectId()] };
+
+      findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedSubProgram));
+      stepUpdateManyStub.returns({ activities });
+      courseFindOne.returns(SinonMongoose.stubChainedQueries(existingCourse, ['lean']));
+
+      await SubProgramHelper.updateSubProgram(subProgram._id, payload);
+
+      SinonMongoose.calledOnceWithExactly(
+        courseFindOne,
+        [
+          { query: 'findOne', args: [{ subProgram: { $in: [otherSubProgramId] }, type: 'inter_b2c' }] },
+          { query: 'lean' },
+        ]
+      );
+      sinon.assert.calledOnceWithExactly(
+        courseUpdateOne,
+        { _id: existingCourse._id },
+        { $set: { subProgram: subProgram._id } }
+      );
+      sinon.assert.notCalled(courseCreateStub);
+      sinon.assert.notCalled(find);
+      sinon.assert.notCalled(updateOne);
+      sinon.assert.calledWithExactly(
+        sendNewElearningCourseNotification,
+        existingCourse._id,
         { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
       );
       sinon.assert.notCalled(userCompanyFind);
@@ -286,6 +507,7 @@ describe('updateSubProgram', () => {
           isStrictlyELearning: true,
         };
         const activities = [new ObjectId()];
+        const programSubPrograms = [subProgram._id, new ObjectId()];
         const updatedSubProgram = {
           ...subProgram,
           status: 'published',
@@ -293,7 +515,7 @@ describe('updateSubProgram', () => {
             { _id: subProgram.steps[0], activities, type: 'e_learning' },
             { _id: subProgram.steps[1], activities: [], type: 'e_learning' },
           ],
-          program: { name: 'nom' },
+          program: { name: 'nom', subPrograms: programSubPrograms },
         };
         const course = {
           _id: new ObjectId(),
@@ -309,6 +531,7 @@ describe('updateSubProgram', () => {
         findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedSubProgram));
         userCompanyFind.returns(SinonMongoose.stubChainedQueries(userCompanies, ['lean']));
         stepUpdateManyStub.returns({ activities });
+        courseFindOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
         courseCreateStub.returns(course);
 
         await SubProgramHelper.updateSubProgram(subProgram._id, payload);
@@ -328,8 +551,15 @@ describe('updateSubProgram', () => {
           [
             { query: 'findOneAndUpdate', args: [{ _id: subProgram._id }, { $set: { status: payload.status } }] },
             { query: 'populate', args: [{ path: 'steps', select: 'activities type' }] },
-            { query: 'populate', args: [{ path: 'program', select: 'name' }] },
+            { query: 'populate', args: [{ path: 'program', select: 'name subPrograms' }] },
             { query: 'lean', args: [{ virtuals: true }] },
+          ]
+        );
+        SinonMongoose.calledOnceWithExactly(
+          courseFindOne,
+          [
+            { query: 'findOne', args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c' }] },
+            { query: 'lean' },
           ]
         );
         sinon.assert.calledWithExactly(
@@ -342,6 +572,8 @@ describe('updateSubProgram', () => {
             tradeName: 'nom',
           }
         );
+        sinon.assert.notCalled(courseUpdateOne);
+        sinon.assert.notCalled(find);
         SinonMongoose.calledOnceWithExactly(
           userCompanyFind,
           [

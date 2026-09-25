@@ -144,6 +144,60 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should archive a published e-learning subProgram without changing its course', async () => {
+      const courseBefore = await Course.findOne({ subProgram: subProgramsList[16]._id }).lean();
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[16]._id}`,
+        payload: { archivedAt: '2026-08-18T09:00:00.000Z' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const courseAfter = await Course.findById(courseBefore._id).lean();
+      expect(UtilsHelper.areObjectIdsEquals(courseAfter.subProgram, subProgramsList[16]._id)).toBeTruthy();
+    });
+
+    it('should publish an e-learning subProgram when the program\'s previous e-learning subProgram is archived, '
+      + 'and reuse its course', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[14]._id}`,
+        payload: { status: 'published' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const previousSubProgram = await SubProgram.findById(subProgramsList[11]._id).lean();
+      expect(previousSubProgram.archivedAt).toEqual(new Date('2026-08-01T09:00:00.000Z'));
+      const course = await Course.findOne({ tradeName: 'program 3' }).lean();
+      expect(UtilsHelper.areObjectIdsEquals(course.subProgram, subProgramsList[14]._id)).toBeTruthy();
+      const courseCount = await Course.countDocuments({ tradeName: 'program 3' });
+      expect(courseCount).toBe(1);
+    });
+
+    it('should unarchive an e-learning subProgram, archive the currently active sibling and reuse the course',
+      async () => {
+        const response = await app.inject({
+          method: 'PUT',
+          url: `/subprograms/${subProgramsList[15]._id}`,
+          payload: { archivedAt: '' },
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(200);
+        const unarchived = await SubProgram
+          .countDocuments({ _id: subProgramsList[15]._id, archivedAt: { $exists: true } });
+        expect(unarchived).toBeFalsy();
+        const previouslyActive = await SubProgram.findById(subProgramsList[16]._id).lean();
+        expect(previouslyActive.archivedAt).toBeDefined();
+        const course = await Course.findOne({ tradeName: 'program 5' }).lean();
+        expect(UtilsHelper.areObjectIdsEquals(course.subProgram, subProgramsList[15]._id)).toBeTruthy();
+        const courseCount = await Course.countDocuments({ tradeName: 'program 5' });
+        expect(courseCount).toBe(1);
+      });
+
     it('should publish blended subProgram', async () => {
       const payload = { status: 'published' };
       const response = await app.inject({
@@ -1151,7 +1205,7 @@ describe('SUBPROGRAMS ROUTES - GET /subprograms/draft-e-learning', () => {
 
       expect(response.statusCode).toBe(200);
       const { subPrograms } = response.result.data;
-      expect(subPrograms.length).toEqual(2);
+      expect(subPrograms.length).toEqual(3);
 
       const stepsIds = subPrograms[0].steps.map(step => step._id);
       const countElearningSteps = await Step

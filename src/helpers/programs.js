@@ -70,7 +70,7 @@ exports.getProgram = async (programId) => {
             },
           ],
         },
-        { path: 'courses', select: 'tradeName' },
+        { path: 'courses', select: 'tradeName format' },
       ],
     })
     .populate({ path: 'testers', select: 'identity.firstname identity.lastname local.email contact' })
