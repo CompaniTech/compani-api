@@ -160,6 +160,25 @@ const subProgramsList = [
     status: PUBLISHED,
     steps: [stepsList[0]._id],
   },
+  { // 14 draft, e-learning - to be published on program 3, where subProgram 11 is already archived+published
+    _id: new ObjectId(),
+    name: 'subProgram 14',
+    status: DRAFT,
+    steps: [stepsList[1]._id],
+  },
+  { // 15 archived, published, e-learning - the previously active e-learning subProgram of program 5
+    _id: new ObjectId(),
+    name: 'subProgram 15',
+    status: PUBLISHED,
+    steps: [stepsList[2]._id],
+    archivedAt: '2026-08-01T09:00:00.000Z',
+  },
+  { // 16 published, non-archived, e-learning - the currently active e-learning subProgram of program 5
+    _id: new ObjectId(),
+    name: 'subProgram 16',
+    status: PUBLISHED,
+    steps: [stepsList[2]._id],
+  },
 ];
 
 const programsList = [
@@ -174,7 +193,7 @@ const programsList = [
   {
     _id: new ObjectId(),
     name: 'program 3',
-    subPrograms: [subProgramsList[10]._id, subProgramsList[11]._id],
+    subPrograms: [subProgramsList[10]._id, subProgramsList[11]._id, subProgramsList[14]._id],
   },
   {
     _id: new ObjectId(),
@@ -182,21 +201,46 @@ const programsList = [
     subPrograms: [subProgramsList[12]._id],
     archivedAt: '2026-08-01T09:00:00.000Z',
   },
+  {
+    _id: new ObjectId(),
+    name: 'program 5',
+    subPrograms: [subProgramsList[15]._id, subProgramsList[16]._id],
+  },
 ];
 
-const coursesList = [{
-  _id: new ObjectId(),
-  format: 'blended',
-  subProgram: subProgramsList[2]._id,
-  type: INTRA,
-  maxTrainees: 8,
-  trainees: [],
-  companies: [authCompany._id],
-  operationsRepresentative: vendorAdmin._id,
-  certificateGenerationMode: GLOBAL,
-  trainers: [trainer._id],
-  tradeName: 'nom',
-}];
+const coursesList = [
+  {
+    _id: new ObjectId(),
+    format: 'blended',
+    subProgram: subProgramsList[2]._id,
+    type: INTRA,
+    maxTrainees: 8,
+    trainees: [],
+    companies: [authCompany._id],
+    operationsRepresentative: vendorAdmin._id,
+    certificateGenerationMode: GLOBAL,
+    trainers: [trainer._id],
+    tradeName: 'nom',
+  },
+  { // e-learning course of program 3, currently pointing to the archived subProgram 11
+    _id: new ObjectId(),
+    format: 'strictly_e_learning',
+    subProgram: subProgramsList[11]._id,
+    type: 'inter_b2c',
+    trainees: [],
+    accessRules: [],
+    tradeName: 'program 3',
+  },
+  { // e-learning course of program 5, currently pointing to the active subProgram 16
+    _id: new ObjectId(),
+    format: 'strictly_e_learning',
+    subProgram: subProgramsList[16]._id,
+    type: 'inter_b2c',
+    trainees: [],
+    accessRules: [],
+    tradeName: 'program 5',
+  },
+];
 
 const trainerBillId = new ObjectId();
 

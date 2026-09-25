@@ -111,7 +111,7 @@ describe('PROGRAMS ROUTES - GET /programs', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.programs.length).toEqual(4);
+      expect(response.result.data.programs.length).toEqual(5);
     });
 
     it('should get archived programs', async () => {
@@ -167,6 +167,8 @@ describe('PROGRAMS ROUTES - GET /programs/e-learning', () => {
 
       expect(response.statusCode).toBe(200);
       expect(response.result.data.programs.length).toEqual(1);
+      const programNames = response.result.data.programs.map(p => p.name);
+      expect(programNames).not.toContain('programme eLearning avec sous-programme archivé');
     });
 
     it('should get a specific e-learning program', async () => {

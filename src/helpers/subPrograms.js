@@ -7,7 +7,7 @@ const Step = require('../models/Step');
 const Activity = require('../models/Activity');
 const Course = require('../models/Course');
 const UserCompany = require('../models/UserCompany');
-const { INTER_B2C, STRICTLY_E_LEARNING, DRAFT } = require('./constants');
+const { INTER_B2C, STRICTLY_E_LEARNING, DRAFT, PUBLISHED } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const NotificationHelper = require('./notifications');
 const UtilsHelper = require('./utils');
@@ -20,6 +20,19 @@ exports.addSubProgram = async (programId, payload) => {
 exports.formatArchivedAtUpdate = archivedAt => (archivedAt
   ? { $set: { archivedAt } }
   : { $unset: { archivedAt: '' } });
+
+const getActiveELearningSubProgram = async (subProgramIds) => {
+  const activeSubPrograms = await SubProgram
+    .find({ _id: { $in: subProgramIds }, status: PUBLISHED, archivedAt: { $exists: false } })
+    .populate({ path: 'steps', select: 'type' })
+    .lean({ virtuals: true });
+
+  return activeSubPrograms.find(sp => sp.isStrictlyELearning);
+};
+
+const updateExistingElearningCourse = async (courseId, subProgramId) => {
+  await Course.updateOne({ _id: courseId }, { $set: { subProgram: subProgramId } });
+};
 
 exports.archiveSubPrograms = async (subProgramIds, archivedAt, previousArchivedAt) => SubProgram.updateMany(
   {
@@ -38,6 +51,30 @@ exports.deleteSubProgram = async (subProgramId) => {
 
 exports.updateSubProgram = async (subProgramId, payload) => {
   if (has(payload, 'archivedAt')) {
+    if (!payload.archivedAt) {
+      const subProgramToUnarchive = await SubProgram.findOne({ _id: subProgramId })
+        .populate({ path: 'steps', select: 'type' })
+        .populate({ path: 'program', select: 'name subPrograms' })
+        .lean({ virtuals: true });
+
+      if (subProgramToUnarchive.isStrictlyELearning && subProgramToUnarchive.status === PUBLISHED) {
+        const otherSubProgramList = subProgramToUnarchive.program.subPrograms
+          .filter(sp => !UtilsHelper.areObjectIdsEquals(sp, subProgramId));
+        const activeElearningSubProgram = await getActiveELearningSubProgram(otherSubProgramList);
+        if (activeElearningSubProgram) {
+          await SubProgram.updateOne(
+            { _id: activeElearningSubProgram._id },
+            { $set: { archivedAt: CompaniDate().toISO() } }
+          );
+        }
+        const existingCourse = await Course
+          .findOne({ subProgram: { $in: otherSubProgramList }, type: INTER_B2C })
+          .lean();
+
+        if (existingCourse) await updateExistingElearningCourse(existingCourse._id, subProgramId);
+      }
+    }
+
     return SubProgram.updateOne({ _id: subProgramId }, exports.formatArchivedAtUpdate(payload.archivedAt));
   }
 
@@ -91,17 +128,29 @@ exports.updateSubProgram = async (subProgramId, payload) => {
   const subProgram = await SubProgram
     .findOneAndUpdate({ _id: subProgramId }, { $set: { status: payload.status } })
     .populate({ path: 'steps', select: 'activities type' })
-    .populate({ path: 'program', select: 'name' })
+    .populate({ path: 'program', select: 'name subPrograms' })
     .lean({ virtuals: true });
 
   if (subProgram.isStrictlyELearning) {
-    const course = await Course.create({
-      subProgram: subProgramId,
-      type: INTER_B2C,
-      format: STRICTLY_E_LEARNING,
-      accessRules: payload.accessCompanies || [],
-      tradeName: subProgram.program.name,
-    });
+    const otherSubProgramList = subProgram.program.subPrograms
+      .filter(sp => !UtilsHelper.areObjectIdsEquals(sp, subProgramId));
+    const existingCourse = await Course
+      .findOne({ subProgram: { $in: otherSubProgramList }, type: INTER_B2C })
+      .lean();
+    let courseId;
+    if (existingCourse) {
+      courseId = existingCourse._id;
+      await updateExistingElearningCourse(existingCourse._id, subProgramId);
+    } else {
+      const course = await Course.create({
+        subProgram: subProgramId,
+        type: INTER_B2C,
+        format: STRICTLY_E_LEARNING,
+        accessRules: payload.accessCompanies || [],
+        tradeName: subProgram.program.name,
+      });
+      courseId = course._id;
+    }
     query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
     if (payload.accessCompanies) {
       const userCompanies = await UserCompany
@@ -115,7 +164,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       const userIds = userCompanies.map(u => u.user);
       query._id = { $in: userIds };
     }
-    await NotificationHelper.sendNewElearningCourseNotification(course._id, query);
+    await NotificationHelper.sendNewElearningCourseNotification(courseId, query);
   }
 
   await Step.updateMany({ _id: { $in: subProgram.steps.map(step => step._id) } }, { $set: { status: payload.status } });
