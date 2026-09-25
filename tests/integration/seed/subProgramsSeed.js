@@ -177,7 +177,7 @@ const subProgramsList = [
     _id: new ObjectId(),
     name: 'subProgram 16',
     status: PUBLISHED,
-    steps: [stepsList[1]._id],
+    steps: [stepsList[2]._id],
   },
 ];
 
