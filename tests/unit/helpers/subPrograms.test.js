@@ -12,7 +12,7 @@ const NotificationHelper = require('../../../src/helpers/notifications');
 const UtilsHelper = require('../../../src/helpers/utils');
 const SinonMongoose = require('../sinonMongoose');
 const UtilsMock = require('../../utilsMock');
-const { VAEI_COACH, ARCHITECT } = require('../../../src/helpers/constants');
+const { VAEI_COACH, ARCHITECT, STRICTLY_E_LEARNING } = require('../../../src/helpers/constants');
 
 describe('addSubProgram', () => {
   let updateOne;
@@ -160,7 +160,10 @@ describe('updateSubProgram', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c' }] },
+        {
+          query: 'findOne',
+          args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c', format: STRICTLY_E_LEARNING }],
+        },
         { query: 'lean' },
       ]
     );
@@ -204,7 +207,10 @@ describe('updateSubProgram', () => {
     SinonMongoose.calledOnceWithExactly(
       courseFindOne,
       [
-        { query: 'findOne', args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c' }] },
+        {
+          query: 'findOne',
+          args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c', format: STRICTLY_E_LEARNING }],
+        },
         { query: 'lean' },
       ]
     );
@@ -383,7 +389,7 @@ describe('updateSubProgram', () => {
         _id: new ObjectId(),
         subProgram: subProgram._id,
         type: 'inter_b2c',
-        format: 'strictly_e_learning',
+        format: STRICTLY_E_LEARNING,
         accessRules: [],
       };
 
@@ -416,7 +422,10 @@ describe('updateSubProgram', () => {
       SinonMongoose.calledOnceWithExactly(
         courseFindOne,
         [
-          { query: 'findOne', args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c' }] },
+          {
+            query: 'findOne',
+            args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c', format: STRICTLY_E_LEARNING }],
+          },
           { query: 'lean' },
         ]
       );
@@ -425,7 +434,7 @@ describe('updateSubProgram', () => {
         {
           subProgram: subProgram._id,
           type: 'inter_b2c',
-          format: 'strictly_e_learning',
+          format: STRICTLY_E_LEARNING,
           accessRules: [],
           tradeName: 'nom',
         }
@@ -474,7 +483,10 @@ describe('updateSubProgram', () => {
       SinonMongoose.calledOnceWithExactly(
         courseFindOne,
         [
-          { query: 'findOne', args: [{ subProgram: { $in: [otherSubProgramId] }, type: 'inter_b2c' }] },
+          {
+            query: 'findOne',
+            args: [{ subProgram: { $in: [otherSubProgramId] }, type: 'inter_b2c', format: STRICTLY_E_LEARNING }],
+          },
           { query: 'lean' },
         ]
       );
@@ -521,7 +533,7 @@ describe('updateSubProgram', () => {
           _id: new ObjectId(),
           subProgram: subProgram._id,
           type: 'inter_b2c',
-          format: 'strictly_e_learning',
+          format: STRICTLY_E_LEARNING,
           accessRules: payload.accessCompanies,
         };
 
@@ -558,7 +570,10 @@ describe('updateSubProgram', () => {
         SinonMongoose.calledOnceWithExactly(
           courseFindOne,
           [
-            { query: 'findOne', args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c' }] },
+            {
+              query: 'findOne',
+              args: [{ subProgram: { $in: [programSubPrograms[1]] }, type: 'inter_b2c', format: STRICTLY_E_LEARNING }],
+            },
             { query: 'lean' },
           ]
         );
@@ -567,7 +582,7 @@ describe('updateSubProgram', () => {
           {
             subProgram: subProgram._id,
             type: 'inter_b2c',
-            format: 'strictly_e_learning',
+            format: STRICTLY_E_LEARNING,
             accessRules: payload.accessCompanies,
             tradeName: 'nom',
           }

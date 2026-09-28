@@ -68,7 +68,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
           );
         }
         const existingCourse = await Course
-          .findOne({ subProgram: { $in: otherSubProgramList }, type: INTER_B2C })
+          .findOne({ subProgram: { $in: otherSubProgramList }, type: INTER_B2C, format: STRICTLY_E_LEARNING })
           .lean();
 
         if (existingCourse) await updateExistingElearningCourse(existingCourse._id, subProgramId);
@@ -135,7 +135,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     const otherSubProgramList = subProgram.program.subPrograms
       .filter(sp => !UtilsHelper.areObjectIdsEquals(sp, subProgramId));
     const existingCourse = await Course
-      .findOne({ subProgram: { $in: otherSubProgramList }, type: INTER_B2C })
+      .findOne({ subProgram: { $in: otherSubProgramList }, type: INTER_B2C, format: STRICTLY_E_LEARNING })
       .lean();
     let courseId;
     if (existingCourse) {
