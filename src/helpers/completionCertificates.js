@@ -5,6 +5,7 @@ const groupBy = require('lodash/groupBy');
 const pick = require('lodash/pick');
 const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const CompletionCertificate = require('../models/CompletionCertificate');
+const TrainingContract = require('../models/TrainingContract');
 const ActivityHistory = require('../models/ActivityHistory');
 const Attendance = require('../models/Attendance');
 const { CompaniDate } = require('./dates/companiDates');
@@ -108,6 +109,22 @@ exports.generate = async (completionCertificateId) => {
     .lean();
 
   const { course, month, trainee } = completionCertificate;
+
+  const certificates = await CompletionCertificate
+    .find({ course: course._id, trainee: trainee._id, _id: { $ne: completionCertificate._id } }, { month: 1 })
+    .setOptions({ isVendorUser: true })
+    .lean();
+  const is1stCertificate = certificates.every(c => CompaniDate(month, MM_YYYY).isBefore(CompaniDate(c.month, MM_YYYY)));
+
+  let trainingContractStartDate;
+  if (is1stCertificate) {
+    const trainingContract = await TrainingContract
+      .findOne({ course: course._id, company: trainee.company._id }, { startDate: 1 })
+      .lean();
+    if (trainingContract && trainingContract.startDate) {
+      trainingContractStartDate = CompaniDate(trainingContract.startDate).format(DD_MM_YYYY);
+    }
+  }
 
   const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
   const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
@@ -227,6 +244,7 @@ exports.generate = async (completionCertificateId) => {
     certificateGenerationModeIsMonthly: true,
     programName: (course.tradeName || '').toUpperCase(),
     ...vaeSupportData && { vaeSupportData },
+    ...trainingContractStartDate && { trainingContractStartDate },
   };
 
   const pdf = await CompletionCertificatePdf.getPdf(data, OFFICIAL);

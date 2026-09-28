@@ -191,6 +191,7 @@ exports.getOfficialPdfContent = async (data) => {
     vaeSupportData = null,
     monthlyGlobalCertificateData = null,
     isAbandoned = false,
+    trainingContractStartDate = null,
   } = data;
   const traineeDuration = duration[trainee._id] || {};
   const isLargeProgramName = programName.length > 60;
@@ -279,7 +280,18 @@ exports.getOfficialPdfContent = async (data) => {
     else if (isPRISubProgram) natureLabel = 'action de Période de Reconversion Interne';
     else if (vaeSupportDuration) natureLabel = 'action de VAE';
     else natureLabel = 'action de formation';
+    const checkboxYOffset = trainingContractStartDate ? 22 : 0;
     actionDetailsSection = [
+      ...(trainingContractStartDate
+        ? [{
+          text: [
+            { text: 'Date de début de contrat :', bold: true },
+            { text: ` ${trainingContractStartDate}`, italics: true },
+          ],
+          marginLeft: 4,
+          marginBottom: 8,
+        }]
+        : []),
       {
         text: [{ text: 'Nature de l\'action :', bold: true }, { text: ` ${natureLabel}`, italics: true }],
         marginLeft: 4,
@@ -296,8 +308,15 @@ exports.getOfficialPdfContent = async (data) => {
         marginBottom: 8,
       },
       { text: [{ text: 'Motif de fin de formation :', bold: true }], marginLeft: 4, marginBottom: 4 },
-      ...defineCheckbox(59, 350, ' Parcours terminé', isLargeProgramName, !isAbandoned, false),
-      ...defineCheckbox(59, 368, ' Abandon en cours de parcours', isLargeProgramName, !!isAbandoned, false),
+      ...defineCheckbox(59, 350 + checkboxYOffset, ' Parcours terminé', isLargeProgramName, !isAbandoned, false),
+      ...defineCheckbox(
+        59,
+        368 + checkboxYOffset,
+        ' Abandon en cours de parcours',
+        isLargeProgramName,
+        !!isAbandoned,
+        false
+      ),
       { text: [{ text: 'Total des heures :', bold: true }], marginLeft: 4, marginBottom: 4, marginTop: 4 },
       ...attendancesByStep.map(({ stepName, duration: stepDuration }) => ({
         text: `${stepName} : ${stepDuration}`,
@@ -308,18 +327,46 @@ exports.getOfficialPdfContent = async (data) => {
       { text: `E-learning : ${trainee.eLearningDuration}`, marginLeft: 8, marginBottom: 8 },
     ];
   } else {
+    const checkboxYOffset = trainingContractStartDate ? 22 : 0;
     actionDetailsSection = [
+      ...(trainingContractStartDate
+        ? [{
+          text: [
+            { text: 'Date de début de contrat :', bold: true },
+            { text: ` ${trainingContractStartDate}`, italics: true },
+          ],
+          marginLeft: 4,
+          marginBottom: 8,
+        }]
+        : []),
       {
         text: [{ text: 'Nature de l\'action concourant au développement des compétences :', bold: true }],
         marginLeft: 4,
         marginBottom: 4,
       },
-      ...defineCheckbox(59, 306, ' action de formation', isLargeProgramName, !(isVAEISubProgram || isPRISubProgram)),
-      ...defineCheckbox(59, 324, ' bilan de compétences', isLargeProgramName),
-      ...defineCheckbox(59, 343, ' action de VAE', isLargeProgramName, !!vaeSupportData),
-      ...defineCheckbox(59, 361, ' action de formation par apprentissage', isLargeProgramName),
-      ...defineCheckbox(59, 380, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
-      ...defineCheckbox(59, 398, ' action de Période de Reconversion Interne', isLargeProgramName, isPRISubProgram),
+      ...defineCheckbox(
+        59,
+        306 + checkboxYOffset,
+        ' action de formation',
+        isLargeProgramName,
+        !(isVAEISubProgram || isPRISubProgram)
+      ),
+      ...defineCheckbox(59, 324 + checkboxYOffset, ' bilan de compétences', isLargeProgramName),
+      ...defineCheckbox(59, 343 + checkboxYOffset, ' action de VAE', isLargeProgramName, !!vaeSupportData),
+      ...defineCheckbox(
+        59,
+        361 + checkboxYOffset,
+        ' action de formation par apprentissage',
+        isLargeProgramName
+      ),
+      ...defineCheckbox(59, 380 + checkboxYOffset, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
+      ...defineCheckbox(
+        59,
+        398 + checkboxYOffset,
+        ' action de Période de Reconversion Interne',
+        isLargeProgramName,
+        isPRISubProgram
+      ),
       {
         text: [
           { text: 'qui s\'est déroulée du ', bold: true },
