@@ -99,17 +99,22 @@ describe('listELearning', () => {
     courseFind.restore();
   });
 
-  it('should return programs with elearning subprograms', async () => {
-    const programsList = [{ name: 'name' }, { name: 'program' }];
-    const subPrograms = [new ObjectId()];
+  it('should return programs with non archived elearning subprograms', async () => {
+    const programsList = [{ name: 'program' }];
+    const subProgramId = new ObjectId();
+    const archivedSubProgramId = new ObjectId();
+    const course = { subProgram: { _id: subProgramId } };
+    const archivedSubProgramCourse = {
+      subProgram: { _id: archivedSubProgramId, archivedAt: '2026-08-01T09:00:00.000Z' },
+    };
     const companyId = new ObjectId();
     const credentials = { _id: new ObjectId(), company: { _id: companyId } };
 
-    courseFind.returns(SinonMongoose.stubChainedQueries([{ subProgram: subPrograms[0] }], ['lean']));
+    courseFind.returns(SinonMongoose.stubChainedQueries([course, archivedSubProgramCourse]));
     programFind.returns(SinonMongoose.stubChainedQueries(programsList));
 
     const result = await ProgramHelper.listELearning(credentials, { isArchived: false });
-    expect(result).toMatchObject([{ name: 'name' }, { name: 'program' }]);
+    expect(result).toMatchObject([{ name: 'program' }]);
 
     SinonMongoose.calledOnceWithExactly(
       courseFind,
@@ -121,19 +126,20 @@ describe('listELearning', () => {
             'subProgram',
           ],
         },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'archivedAt' }] },
         { query: 'lean' },
       ]
     );
     SinonMongoose.calledOnceWithExactly(
       programFind,
       [
-        { query: 'find', args: [{ archivedAt: { $exists: false }, subPrograms: { $in: subPrograms } }] },
+        { query: 'find', args: [{ archivedAt: { $exists: false }, subPrograms: { $in: [subProgramId] } }] },
         {
           query: 'populate',
           args: [{
             path: 'subPrograms',
             select: 'name',
-            match: { _id: { $in: subPrograms } },
+            match: { _id: { $in: [subProgramId] } },
             populate: [
               { path: 'courses', select: '_id trainees', match: { format: 'strictly_e_learning' } },
               {
@@ -161,7 +167,7 @@ describe('listELearning', () => {
     const companyId = new ObjectId();
     const credentials = { _id: new ObjectId(), company: { _id: companyId } };
 
-    courseFind.returns(SinonMongoose.stubChainedQueries([{ subProgram: subPrograms[0] }], ['lean']));
+    courseFind.returns(SinonMongoose.stubChainedQueries([{ subProgram: { _id: subPrograms[0] } }]));
     programFind.returns(SinonMongoose.stubChainedQueries(programsList));
 
     const result = await ProgramHelper.listELearning(credentials, { _id: programId });
@@ -177,6 +183,7 @@ describe('listELearning', () => {
             'subProgram',
           ],
         },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'archivedAt' }] },
         { query: 'lean' },
       ]
     );
@@ -289,7 +296,7 @@ describe('getProgram', () => {
                   },
                 ],
               },
-              { path: 'courses', select: 'tradeName' },
+              { path: 'courses', select: 'tradeName format' },
             ],
           }],
         },

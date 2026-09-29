@@ -28,8 +28,11 @@ exports.listELearning = async (credentials, query) => {
       { format: STRICTLY_E_LEARNING, $or: [{ accessRules: [] }, { accessRules: get(credentials, 'company._id') }] },
       'subProgram'
     )
+    .populate({ path: 'subProgram', select: 'archivedAt' })
     .lean();
-  const subPrograms = eLearningCourse.map(course => course.subProgram);
+  const subPrograms = eLearningCourse
+    .filter(course => !course.subProgram.archivedAt)
+    .map(course => course.subProgram._id);
 
   return Program.find({ ...UtilsHelper.formatQueryWithArchive(query), subPrograms: { $in: subPrograms } })
     .populate({
@@ -70,7 +73,7 @@ exports.getProgram = async (programId) => {
             },
           ],
         },
-        { path: 'courses', select: 'tradeName' },
+        { path: 'courses', select: 'tradeName format' },
       ],
     })
     .populate({ path: 'testers', select: 'identity.firstname identity.lastname local.email contact' })

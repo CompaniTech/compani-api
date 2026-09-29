@@ -71,6 +71,13 @@ const subProgramsList = [
     steps: [stepsList[2]._id],
     archivedAt: '2026-01-01T00:00:00.000Z',
   },
+  { // 5 eLearning publié mais archivé
+    _id: new ObjectId(),
+    name: 'sous-programme 6',
+    steps: [stepsList[0]._id],
+    status: PUBLISHED,
+    archivedAt: '2026-01-01T00:00:00.000Z',
+  },
 ];
 
 const programsList = [
@@ -106,16 +113,31 @@ const programsList = [
     categories: [categoriesList[0]._id],
     testers: [coach._id],
   },
+  {
+    _id: new ObjectId(),
+    name: 'programme eLearning avec sous-programme archivé',
+    subPrograms: [subProgramsList[5]._id],
+  },
 ];
 
-const course = {
-  _id: new ObjectId(),
-  subProgram: subProgramsList[1]._id,
-  type: INTER_B2C,
-  format: 'strictly_e_learning',
-  trainees: [userList[0]._id, vendorAdmin._id],
-  tradeName: 'nom',
-};
+const courseList = [
+  {
+    _id: new ObjectId(),
+    subProgram: subProgramsList[1]._id,
+    type: INTER_B2C,
+    format: 'strictly_e_learning',
+    trainees: [userList[0]._id, vendorAdmin._id],
+    tradeName: 'nom',
+  },
+  { // sous-programme archivé
+    _id: new ObjectId(),
+    subProgram: subProgramsList[5]._id,
+    type: INTER_B2C,
+    format: 'strictly_e_learning',
+    trainees: [],
+    tradeName: 'nom',
+  },
+];
 
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
@@ -128,7 +150,7 @@ const populateDB = async () => {
     Category.create(categoriesList),
     ActivityHistory.create(activityHistoriesList),
     Card.create(cards),
-    Course.create(course),
+    Course.create(courseList),
   ]);
 };
 
@@ -136,7 +158,7 @@ module.exports = {
   populateDB,
   programsList,
   subProgramsList,
-  course,
+  courseList,
   activitiesList,
   activityHistoriesList,
   categoriesList,
