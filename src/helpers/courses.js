@@ -1784,7 +1784,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
           const vaeSupportDuration = await computeVAESupportDuration(course, trainee._id, credentials);
           const attendancesByStep = computeAttendancesByStep(trainee._id, allAttendances, course, vaeSupportDuration);
           const trainingContract = trainee.company
-            ? trainingContracts.find(tc => UtilsHelper.areObjectIdsEquals(tc.company, trainee.company))
+            ? trainingContracts.find(tc => UtilsHelper.areObjectIdsEquals(tc.company, trainee.company) && tc.startDate)
             : null;
           const trainingContractStartDate = trainingContract
             ? CompaniDate(trainingContract.startDate).format(DD_MM_YYYY)
