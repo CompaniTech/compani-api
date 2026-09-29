@@ -96,7 +96,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
       .populate({
         path: 'subPrograms',
         select: 'steps',
-        match: { status: PUBLISHED, _id: { $ne: subProgram._id } },
+        match: { status: PUBLISHED, archivedAt: { $exists: false }, _id: { $ne: subProgram._id } },
         populate: { path: 'steps', select: 'type' },
       })
       .lean({ virtuals: true });
