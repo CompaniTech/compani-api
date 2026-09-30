@@ -101,7 +101,10 @@ exports.list = async (params) => {
       includeItemsFromAllDrives: true,
     };
     if (params.folderId) {
-      query.q = `'${params.folderId}' in parents and mimeType != 'application/vnd.google-apps.folder'`;
+      const mimeTypeCondition = params.onlyFolders
+        ? 'mimeType = \'application/vnd.google-apps.folder\''
+        : 'mimeType != \'application/vnd.google-apps.folder\'';
+      query.q = `'${params.folderId}' in parents and ${mimeTypeCondition}`;
     }
 
     drive.files.list(query, (err, response) => {

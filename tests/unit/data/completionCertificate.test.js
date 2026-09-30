@@ -362,6 +362,7 @@ describe('getOfficialPdfContent', () => {
         totalDuration: '16h',
       },
       date: '22/03/2022',
+      trainingContractStartDate: '01/12/2021',
     };
 
     const imageList = [
@@ -386,60 +387,60 @@ describe('getOfficialPdfContent', () => {
 
     const checkBoxSection = [
       // Checkbox 1
-      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 306 } },
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 328 } },
       {
         text: [
-          { text: '√', position: { x: 59, y: 306 }, marginRight: 4 },
+          { text: '√', position: { x: 59, y: 328 }, marginRight: 4 },
           { text: [{ text: ' action de formation' }, { text: ' 1', fontSize: 8, bold: true }] },
         ],
         marginBottom: 4,
         marginLeft: 20,
       },
       // Checkbox 2
-      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 324 } },
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 346 } },
       {
         text: [
-          { text: '', position: { x: 59, y: 324 }, marginRight: 4 },
+          { text: '', position: { x: 59, y: 346 }, marginRight: 4 },
           { text: [{ text: ' bilan de compétences' }, { text: '', fontSize: 8, bold: true }] },
         ],
         marginBottom: 4,
         marginLeft: 32,
       },
       // Checkbox 3
-      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 343 } },
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 365 } },
       {
         text: [
-          { text: '', position: { x: 59, y: 343 }, marginRight: 4 },
+          { text: '', position: { x: 59, y: 365 }, marginRight: 4 },
           { text: [{ text: ' action de VAE' }, { text: '', fontSize: 8, bold: true }] },
         ],
         marginBottom: 4,
         marginLeft: 32,
       },
       // Checkbox 4
-      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 361 } },
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 383 } },
       {
         text: [
-          { text: '', position: { x: 59, y: 361 }, marginRight: 4 },
+          { text: '', position: { x: 59, y: 383 }, marginRight: 4 },
           { text: [{ text: ' action de formation par apprentissage' }, { text: '', fontSize: 8, bold: true }] },
         ],
         marginBottom: 4,
         marginLeft: 32,
       },
       // Checkbox 5
-      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 380 } },
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 402 } },
       {
         text: [
-          { text: '', position: { x: 59, y: 380 }, marginRight: 4 },
+          { text: '', position: { x: 59, y: 402 }, marginRight: 4 },
           { text: [{ text: ' action de VAE Inversée' }, { text: '', fontSize: 8, bold: true }] },
         ],
         marginBottom: 4,
         marginLeft: 32,
       },
       // Checkbox 6
-      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 398 } },
+      { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 420 } },
       {
         text: [
-          { text: '', position: { x: 59, y: 398 }, marginRight: 4 },
+          { text: '', position: { x: 59, y: 420 }, marginRight: 4 },
           { text: [{ text: ' action de Période de Reconversion Interne' }, { text: '', fontSize: 8, bold: true }] },
         ],
         marginBottom: 4,
@@ -472,6 +473,14 @@ describe('getOfficialPdfContent', () => {
       },
       {
         text: [{ text: 'a suivi l\'action ', bold: true }, { text: 'Programme', italics: true }],
+        marginLeft: 4,
+        marginBottom: 8,
+      },
+      {
+        text: [
+          { text: 'Date de début de contrat :', bold: true },
+          { text: ' 01/12/2021', italics: true },
+        ],
         marginLeft: 4,
         marginBottom: 8,
       },
@@ -1846,6 +1855,7 @@ describe('getOfficialPdfContent', () => {
           ],
           vaeSupportDuration: 110,
         },
+        trainingContractStartDate: '15/01/2025',
       };
 
       const imageList = [
@@ -1873,20 +1883,20 @@ describe('getOfficialPdfContent', () => {
 
       const checkBoxSection = [
       // Checkbox 1
-        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 350 } },
+        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 372 } },
         {
           text: [
-            { text: '√', position: { x: 59, y: 350 }, marginRight: 4 },
+            { text: '√', position: { x: 59, y: 372 }, marginRight: 4 },
             { text: [{ text: ' Parcours terminé' }, { text: '', fontSize: 8, bold: true }] },
           ],
           marginBottom: 4,
           marginLeft: 20,
         },
         // Checkbox 2
-        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 368 } },
+        { canvas: [{ type: 'rect', x: 0, y: 0, w: 8, h: 8, r: 0 }], absolutePosition: { x: 59, y: 390 } },
         {
           text: [
-            { text: '', position: { x: 59, y: 368 }, marginRight: 4 },
+            { text: '', position: { x: 59, y: 390 }, marginRight: 4 },
             { text: [{ text: ' Abandon en cours de parcours' }, { text: '', fontSize: 8, bold: true }] },
           ],
           marginBottom: 4,
@@ -1919,6 +1929,14 @@ describe('getOfficialPdfContent', () => {
         },
         {
           text: [{ text: 'a suivi l\'action ', bold: true }, { text: 'Programme', italics: true }],
+          marginLeft: 4,
+          marginBottom: 8,
+        },
+        {
+          text: [
+            { text: 'Date de début de contrat :', bold: true },
+            { text: ' 15/01/2025', italics: true },
+          ],
           marginLeft: 4,
           marginBottom: 8,
         },

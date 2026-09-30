@@ -32,6 +32,13 @@ exports.addFile = async (params) => {
 
 exports.deleteFile = async driveFileId => Gdrive.deleteFile({ fileId: driveFileId });
 
+exports.getUploadFolderId = async (folderId) => {
+  const { files } = await Gdrive.list({ folderId, onlyFolders: true });
+  const adminFolder = files.find(file => /admin/i.test(file.name));
+
+  return adminFolder ? adminFolder.id : folderId;
+};
+
 exports.createCourseFolderAndSheet = async ({
   traineeName,
   traineeEmail,
