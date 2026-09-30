@@ -424,7 +424,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
       },
     })
-    .populate({ path: 'trainers', select: 'identity' })
+    .populate({ path: 'trainers', select: 'identity contact' })
     .populate({ path: 'trainerBillings.trainerBill', select: 'status number' })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
@@ -463,6 +463,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       trainersData = {
         status: SLOT_STATUS[status],
         bills: get(trainerBilling, 'trainerBill') ? trainerBilling.trainerBill.number : '',
+        addresses: get(slot.trainers[0], 'contact.address.fullAddress', ''),
       };
     } else {
       trainersData = (slot.trainers || []).reduce((acc, trainer) => {
@@ -473,11 +474,15 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         if (get(trainerBilling, 'trainerBill')) {
           acc.bills.push(`${trainerIdentity} : ${trainerBilling.trainerBill.number}`);
         }
+        if (get(trainer, 'contact.address')) {
+          acc.addresses.push(`${trainerIdentity} : ${get(trainer, 'contact.address.fullAddress')}`);
+        }
 
         return acc;
-      }, { status: [], bills: [] });
+      }, { status: [], bills: [], addresses: [] });
       trainersData.status = trainersData.status.join(', ');
       trainersData.bills = trainersData.bills.join(', ');
+      trainersData.addresses = trainersData.addresses.join(', ');
     }
 
     rows.push({
@@ -510,6 +515,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         'Facture intervenant': trainersData.bills,
         Montant: hasUnresolvedHourlyAmount ? 'Erreur' : UtilsHelper.formatFloatForExport(slotAmount),
       }),
+      ...(!courseTypes.includes(SINGLE) && { 'Adresse(s) intervenant(s)': trainersData.addresses }),
     });
   }
 

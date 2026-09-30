@@ -1388,8 +1388,32 @@ describe('exportCourseSlotHistory', () => {
   ];
 
   const trainers = [
-    { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } },
-    { _id: new ObjectId(), identity: { firstname: 'Autre', lastname: 'FORMATEUR' } },
+    {
+      _id: new ObjectId(),
+      identity: { firstname: 'Gilles', lastname: 'FORMATEUR' },
+      contact: {
+        address: {
+          fullAddress: '37 rue de Ponthieu 75008 Paris',
+          zipCode: '75008',
+          city: 'Paris',
+          street: '37 rue de Ponthieu',
+          location: { type: 'Point', coordinates: [2.377133, 48.801389] },
+        },
+      },
+    },
+    {
+      _id: new ObjectId(),
+      identity: { firstname: 'Autre', lastname: 'FORMATEUR' },
+      contact: {
+        address: {
+          fullAddress: '12 rue du test 92160 Antony',
+          street: '12 rue du test',
+          zipCode: '92160',
+          city: 'Antony',
+          location: { type: 'Point', coordinates: [2.377133, 48.801389] },
+        },
+      },
+    },
     { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } },
   ];
 
@@ -1471,7 +1495,7 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
-        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
         { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
@@ -1549,6 +1573,7 @@ describe('exportCourseSlotHistory', () => {
         'Nombre d\'émargements non remplis',
         'Nombre d\'apprenants non concernés',
         'Intervenants',
+        'Adresse(s) intervenant(s)',
       ],
       [
         courseSlotList[0]._id,
@@ -1568,6 +1593,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         1,
         'Gilles FORMATEUR',
+        '37 rue de Ponthieu 75008 Paris',
       ],
       [
         courseSlotList[1]._id,
@@ -1587,6 +1613,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        '37 rue de Ponthieu 75008 Paris',
       ],
       [
         courseSlotList[2]._id,
@@ -1606,6 +1633,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR, Autre FORMATEUR',
+        'Gilles FORMATEUR : 37 rue de Ponthieu 75008 Paris, Autre FORMATEUR : 12 rue du test 92160 Antony',
       ],
       [
         courseSlotList[3]._id,
@@ -1625,6 +1653,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        '37 rue de Ponthieu 75008 Paris',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1649,7 +1678,7 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
-        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
         { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
@@ -2006,7 +2035,7 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
-        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
         { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
