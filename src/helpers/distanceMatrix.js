@@ -6,7 +6,7 @@ const { TRANSIT, WALKING } = require('./constants');
 exports.getDistanceMatrices = async credentials =>
   DistanceMatrix.find({ company: get(credentials, 'company._id') }).lean();
 
-const isDistanceMatrixDefine = res => (res.status === 200 && get(res, 'data.rows[0].elements[0].distance') &&
+exports.isDistanceMatrixDefine = res => (res.status === 200 && get(res, 'data.rows[0].elements[0].distance') &&
   get(res, 'data.rows[0].elements[0].duration'));
 
 exports.createDistanceMatrix = async (params, companyId) => {
@@ -16,10 +16,10 @@ exports.createDistanceMatrix = async (params, companyId) => {
     const transitRes = await maps.getDistanceMatrix(query);
     const walkingRes = await maps.getDistanceMatrix({ ...query, mode: WALKING });
 
-    if (!isDistanceMatrixDefine(transitRes) && !isDistanceMatrixDefine(walkingRes)) return null;
+    if (!exports.isDistanceMatrixDefine(transitRes) && !exports.isDistanceMatrixDefine(walkingRes)) return null;
 
-    if (!isDistanceMatrixDefine(transitRes)) res = walkingRes;
-    else if (!isDistanceMatrixDefine(walkingRes)) res = transitRes;
+    if (!exports.isDistanceMatrixDefine(transitRes)) res = walkingRes;
+    else if (!exports.isDistanceMatrixDefine(walkingRes)) res = transitRes;
     else {
       const transitDuration = transitRes.data.rows[0].elements[0].duration.value;
       const walkingDuration = walkingRes.data.rows[0].elements[0].duration.value;
@@ -29,7 +29,7 @@ exports.createDistanceMatrix = async (params, companyId) => {
     res = await maps.getDistanceMatrix(query);
   }
 
-  if (!isDistanceMatrixDefine(res)) return null;
+  if (!exports.isDistanceMatrixDefine(res)) return null;
 
   const payload = new DistanceMatrix({
     ...params,

@@ -42,6 +42,7 @@ const {
   TRANSITION,
   VAEI_COACH,
   ARCHITECT,
+  DRIVING,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseSlot = require('../../../src/models/CourseSlot');
@@ -55,6 +56,7 @@ const CourseCreditNote = require('../../../src/models/CourseCreditNote');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const CourseHistory = require('../../../src/models/CourseHistory');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
+const maps = require('../../../src/models/Google/Maps');
 const UtilsMock = require('../../utilsMock');
 
 describe('exportCourseHistory', () => {
@@ -1455,14 +1457,17 @@ describe('exportCourseSlotHistory', () => {
   };
 
   let findCourseSlot;
+  let getDistanceMatrix;
 
   beforeEach(() => {
     findCourseSlot = sinon.stub(CourseSlot, 'find');
+    getDistanceMatrix = sinon.stub(maps, 'getDistanceMatrix');
     process.env.COLLECTIVE_STEP_IDS = new ObjectId();
   });
 
   afterEach(() => {
     findCourseSlot.restore();
+    getDistanceMatrix.restore();
     process.env.COLLECTIVE_STEP_IDS = '';
   });
 
@@ -1550,6 +1555,18 @@ describe('exportCourseSlotHistory', () => {
       },
     ];
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList));
+    getDistanceMatrix.onCall(0).returns({
+      status: 200,
+      data: { rows: [{ elements: [{ distance: { text: '15 km', value: 15000 }, duration: { text: '20 mins', value: 1200 } }] }] },
+    });
+    getDistanceMatrix.onCall(1).returns({
+      status: 200,
+      data: { rows: [{ elements: [{ distance: { text: '15 km', value: 15000 }, duration: { text: '20 mins', value: 1200 } }] }] },
+    });
+    getDistanceMatrix.onCall(2).returns({
+      status: 200,
+      data: { rows: [{ elements: [{ distance: { text: '12 km', value: 12000 }, duration: { text: '15 mins', value: 900 } }] }] },
+    });
 
     const result = await ExportHelper
       .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
@@ -1574,6 +1591,7 @@ describe('exportCourseSlotHistory', () => {
         'Nombre d\'apprenants non concernés',
         'Intervenants',
         'Adresse(s) intervenant(s)',
+        'Distances',
       ],
       [
         courseSlotList[0]._id,
@@ -1594,6 +1612,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         'Gilles FORMATEUR',
         '37 rue de Ponthieu 75008 Paris',
+        '15 km',
       ],
       [
         courseSlotList[1]._id,
@@ -1614,6 +1633,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         'Gilles FORMATEUR',
         '37 rue de Ponthieu 75008 Paris',
+        '',
       ],
       [
         courseSlotList[2]._id,
@@ -1634,6 +1654,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         'Gilles FORMATEUR, Autre FORMATEUR',
         'Gilles FORMATEUR : 37 rue de Ponthieu 75008 Paris, Autre FORMATEUR : 12 rue du test 92160 Antony',
+        'Gilles FORMATEUR : 15 km, Autre FORMATEUR : 12 km',
       ],
       [
         courseSlotList[3]._id,
@@ -1654,6 +1675,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         'Gilles FORMATEUR',
         '37 rue de Ponthieu 75008 Paris',
+        '',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1682,6 +1704,20 @@ describe('exportCourseSlotHistory', () => {
         { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
+    );
+    sinon.assert.callCount(getDistanceMatrix, 3);
+    const key = process.env.GOOGLE_CLOUD_PLATFORM_API_KEY;
+    sinon.assert.calledWithExactly(
+      getDistanceMatrix.getCall(0),
+      { origins: '37 rue de Ponthieu 75008 Paris', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING, key }
+    );
+    sinon.assert.calledWithExactly(
+      getDistanceMatrix.getCall(1),
+      { origins: '37 rue de Ponthieu 75008 Paris', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING, key }
+    );
+    sinon.assert.calledWithExactly(
+      getDistanceMatrix.getCall(2),
+      { origins: '12 rue du test 92160 Antony', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING, key }
     );
   });
 
@@ -2040,6 +2076,7 @@ describe('exportCourseSlotHistory', () => {
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(getDistanceMatrix);
   });
 });
 
