@@ -184,7 +184,7 @@ exports.plugin = {
                 }
               ),
               countryCode: countryCodeValidation,
-              address: addressValidation,
+              address: Joi.alternatives().try(addressValidation, Joi.string().valid('')),
             }),
             biography: Joi.string().allow(''),
             holding: Joi.objectId(),

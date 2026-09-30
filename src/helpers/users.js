@@ -357,6 +357,12 @@ const formatUpdatePayload = async (updatedUser) => {
     payloadToSet = omit(payloadToSet, 'contact');
   }
 
+  const removeAddress = has(updatedUser, 'contact.address') && updatedUser.contact.address === '';
+  if (removeAddress) {
+    payloadToUnset = { $unset: { ...payloadToUnset.$unset, 'contact.address': '' } };
+    payloadToSet = omit(payloadToSet, 'contact');
+  }
+
   return { $set: UtilsHelper.flatQuery(payloadToSet), ...payloadToUnset };
 };
 
