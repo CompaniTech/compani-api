@@ -38,7 +38,6 @@ const {
   DRAFT,
   SLOT_STATUS,
   MINUTE,
-  DRIVING,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -472,15 +471,14 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         distances: '',
       };
       if (!courseTypes.includes(SINGLE) && slotAddress && trainerAddress) {
-        const transitRes = await maps
-          .getDistanceMatrix({
-            origins: trainerAddress,
-            destinations: slotAddress,
-            mode: DRIVING,
-            key: process.env.GOOGLE_CLOUD_PLATFORM_API_KEY,
-          });
+        const transitRes = await maps.getDistanceMatrix({
+          origins: [{ waypoint: { address: trainerAddress } }],
+          destinations: [{ waypoint: { address: slotAddress } }],
+          travelMode: 'DRIVE',
+          key: process.env.GOOGLE_CLOUD_PLATFORM_API_KEY,
+        });
         if (isDistanceMatrixDefine(transitRes)) {
-          trainersData.distances = transitRes.data.rows[0].elements[0].distance.text;
+          trainersData.distances = UtilsHelper.formatFloatForExport(transitRes.data[0].distanceMeters / 1000, 2);
         }
       }
     } else {
@@ -498,15 +496,15 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           trainersData.addresses.push(`${trainerIdentity} : ${trainerAddress}`);
           const slotAddress = get(slot, 'address.fullAddress');
           if (!courseTypes.includes(SINGLE) && slotAddress && trainerAddress) {
-            const transitRes = await maps
-              .getDistanceMatrix({
-                origins: trainerAddress,
-                destinations: slotAddress,
-                mode: DRIVING,
-                key: process.env.GOOGLE_CLOUD_PLATFORM_API_KEY,
-              });
+            const transitRes = await maps.getDistanceMatrix({
+              origins: [{ waypoint: { address: trainerAddress } }],
+              destinations: [{ waypoint: { address: slotAddress } }],
+              travelMode: 'DRIVE',
+              key: process.env.GOOGLE_CLOUD_PLATFORM_API_KEY,
+            });
             if (isDistanceMatrixDefine(transitRes)) {
-              trainersData.distances.push(`${trainerIdentity} : ${transitRes.data.rows[0].elements[0].distance.text}`);
+              const distance = UtilsHelper.formatFloatForExport(transitRes.data[0].distanceMeters / 1000, 2);
+              trainersData.distances.push(`${trainerIdentity} : ${distance}`);
             }
           }
         }

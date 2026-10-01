@@ -147,15 +147,15 @@ const vendorHistoryExportTypes = [
     exportType: COURSE_SLOT,
     expectedRows: [
       '\ufeff"Id Créneau";"Id Formation";"Formation";"Étape";"Type";"Date de création";"Date de début";"Date de fin";"Durée";"Adresse";"Nombre de présences";"Nombre d\'absences";"Durée absences";"Nombre de présences non prévues";"Nombre d\'émargements non remplis";"Nombre d\'apprenants non concernés";"Intervenants";"Adresse(s) intervenant(s)";"Distances"',
-      `${courseSlotList[0]._id};${coursesList[0]._id};"Test SAS - Nom 1 - group 1";"étape 1";"présentiel";"12/12/2020 11:00:00";"01/05/2021 10:00:00";"01/05/2021 12:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";1;1;"2,00";0;1;0;"Gilles FORMATEUR, Simon TRAINERANDCOACH";"Gilles FORMATEUR : 37 rue de Ponthieu 75008 Paris";"Gilles FORMATEUR : 15 km"`,
+      `${courseSlotList[0]._id};${coursesList[0]._id};"Test SAS - Nom 1 - group 1";"étape 1";"présentiel";"12/12/2020 11:00:00";"01/05/2021 10:00:00";"01/05/2021 12:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";1;1;"2,00";0;1;0;"Gilles FORMATEUR, Simon TRAINERANDCOACH";"Gilles FORMATEUR : 37 rue de Ponthieu 75008 Paris";"Gilles FORMATEUR : 15,00"`,
       `${courseSlotList[1]._id};${coursesList[0]._id};"Test SAS - Nom 1 - group 1";"étape 2";"distanciel";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";1;0;"0,00";0;2;0;"Gilles FORMATEUR, Simon TRAINERANDCOACH";"Gilles FORMATEUR : 37 rue de Ponthieu 75008 Paris";`,
-      `${courseSlotList[2]._id};${coursesList[1]._id};"Nom 2";"étape 1";"présentiel";"12/12/2020 11:00:02";"01/02/2021 09:00:00";"01/02/2021 11:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";1;0;"0,00";1;1;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15 km"`,
+      `${courseSlotList[2]._id};${coursesList[1]._id};"Nom 2";"étape 1";"présentiel";"12/12/2020 11:00:02";"01/02/2021 09:00:00";"01/02/2021 11:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";1;0;"0,00";1;1;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15,00"`,
       `${courseSlotList[3]._id};${coursesList[1]._id};"Nom 2";"étape 3";"eLearning";"12/12/2020 11:00:03";"02/02/2021 09:00:00";"02/02/2021 11:00:00";"2,00";;1;0;"0,00";1;1;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";`,
-      `${courseSlotList[5]._id};${coursesList[5]._id};"Test SAS - Nom 1 - group 6";"étape 1";"présentiel";"12/12/2020 11:00:04";"12/04/2021 12:00:00";"12/04/2021 14:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";0;0;"0,00";0;2;1;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15 km"`,
-      `${courseSlotList[6]._id};${coursesList[6]._id};"Test SAS - Nom 1 - group 7";"étape 1";"présentiel";"12/12/2020 11:00:04";"12/04/2021 12:00:00";"12/04/2021 14:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";0;0;"0,00";0;0;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15 km"`,
-      `${courseSlotList[8]._id};${coursesList[3]._id};"Test SAS - Nom 1 - group 4";"étape 1";"présentiel";"14/10/2020 23:00:00";"01/02/2021 10:00:00";"01/02/2021 13:00:00";"3,00";"24 Avenue Daumesnil 75012 Paris";0;0;"0,00";0;2;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15 km"`,
+      `${courseSlotList[5]._id};${coursesList[5]._id};"Test SAS - Nom 1 - group 6";"étape 1";"présentiel";"12/12/2020 11:00:04";"12/04/2021 12:00:00";"12/04/2021 14:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";0;0;"0,00";0;2;1;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15,00"`,
+      `${courseSlotList[6]._id};${coursesList[6]._id};"Test SAS - Nom 1 - group 7";"étape 1";"présentiel";"12/12/2020 11:00:04";"12/04/2021 12:00:00";"12/04/2021 14:00:00";"2,00";"24 Avenue Daumesnil 75012 Paris";0;0;"0,00";0;0;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15,00"`,
+      `${courseSlotList[8]._id};${coursesList[3]._id};"Test SAS - Nom 1 - group 4";"étape 1";"présentiel";"14/10/2020 23:00:00";"01/02/2021 10:00:00";"01/02/2021 13:00:00";"3,00";"24 Avenue Daumesnil 75012 Paris";0;0;"0,00";0;2;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15,00"`,
       `${courseSlotList[9]._id};${coursesList[3]._id};"Test SAS - Nom 1 - group 4";"étape 2";"distanciel";"14/10/2020 23:00:10";"10/02/2021 09:00:00";"10/02/2021 13:00:00";"4,00";;0;0;"0,00";0;2;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";`,
-      `${courseSlotList[10]._id};${coursesList[3]._id};"Test SAS - Nom 1 - group 4";"étape 1";"présentiel";"14/10/2020 23:00:30";"03/02/2021 09:00:00";"03/02/2021 13:00:00";"4,00";"24 Avenue Daumesnil 75012 Paris";0;0;"0,00";0;2;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15 km"`,
+      `${courseSlotList[10]._id};${coursesList[3]._id};"Test SAS - Nom 1 - group 4";"étape 1";"présentiel";"14/10/2020 23:00:30";"03/02/2021 09:00:00";"03/02/2021 13:00:00";"4,00";"24 Avenue Daumesnil 75012 Paris";0;0;"0,00";0;2;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";"15,00"`,
       `${courseSlotList[11]._id};${coursesList[8]._id};"Un autre SAS - Nom 1 - group 9";"étape 2";"distanciel";"12/12/2020 11:00:01";"01/05/2021 16:00:00";"01/05/2021 18:00:00";"2,00";"https://meet.google.com";1;0;"0,00";0;0;0;"Gilles FORMATEUR";"37 rue de Ponthieu 75008 Paris";`,
     ],
     query: 'startDate=2021-02-01T10:00:00.000Z&endDate=2022-01-20T10:00:00.000Z',
@@ -280,9 +280,7 @@ vendorHistoryExportTypes.forEach(({ exportType, expectedRows, query }) => {
     beforeEach(() => {
       getDistanceMatrix = sinon.stub(maps, 'getDistanceMatrix').returns({
         status: 200,
-        data: {
-          rows: [{ elements: [{ distance: { text: '15 km', value: 15000 }, duration: { text: '20 mins', value: 1200 } }] }],
-        },
+        data: [{ originIndex: 0, destinationIndex: 0, condition: 'ROUTE_EXISTS', distanceMeters: 15000, duration: '1200s' }],
       });
     });
 

@@ -42,7 +42,6 @@ const {
   TRANSITION,
   VAEI_COACH,
   ARCHITECT,
-  DRIVING,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseSlot = require('../../../src/models/CourseSlot');
@@ -1557,15 +1556,15 @@ describe('exportCourseSlotHistory', () => {
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList));
     getDistanceMatrix.onCall(0).returns({
       status: 200,
-      data: { rows: [{ elements: [{ distance: { text: '15 km', value: 15000 }, duration: { text: '20 mins', value: 1200 } }] }] },
+      data: [{ originIndex: 0, destinationIndex: 0, condition: 'ROUTE_EXISTS', distanceMeters: 15000, duration: '1200s' }],
     });
     getDistanceMatrix.onCall(1).returns({
       status: 200,
-      data: { rows: [{ elements: [{ distance: { text: '15 km', value: 15000 }, duration: { text: '20 mins', value: 1200 } }] }] },
+      data: [{ originIndex: 0, destinationIndex: 0, condition: 'ROUTE_EXISTS', distanceMeters: 15000, duration: '1200s' }],
     });
     getDistanceMatrix.onCall(2).returns({
       status: 200,
-      data: { rows: [{ elements: [{ distance: { text: '12 km', value: 12000 }, duration: { text: '15 mins', value: 900 } }] }] },
+      data: [{ originIndex: 0, destinationIndex: 0, condition: 'ROUTE_EXISTS', distanceMeters: 12000, duration: '900s' }],
     });
 
     const result = await ExportHelper
@@ -1612,7 +1611,7 @@ describe('exportCourseSlotHistory', () => {
         1,
         'Gilles FORMATEUR',
         '37 rue de Ponthieu 75008 Paris',
-        '15 km',
+        '15,00',
       ],
       [
         courseSlotList[1]._id,
@@ -1654,7 +1653,7 @@ describe('exportCourseSlotHistory', () => {
         0,
         'Gilles FORMATEUR, Autre FORMATEUR',
         'Gilles FORMATEUR : 37 rue de Ponthieu 75008 Paris, Autre FORMATEUR : 12 rue du test 92160 Antony',
-        'Gilles FORMATEUR : 15 km, Autre FORMATEUR : 12 km',
+        'Gilles FORMATEUR : 15,00, Autre FORMATEUR : 12,00',
       ],
       [
         courseSlotList[3]._id,
@@ -1709,15 +1708,30 @@ describe('exportCourseSlotHistory', () => {
     const key = process.env.GOOGLE_CLOUD_PLATFORM_API_KEY;
     sinon.assert.calledWithExactly(
       getDistanceMatrix.getCall(0),
-      { origins: '37 rue de Ponthieu 75008 Paris', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING, key }
+      {
+        origins: [{ waypoint: { address: '37 rue de Ponthieu 75008 Paris' } }],
+        destinations: [{ waypoint: { address: '24 Avenue Daumesnil 75012 Paris' } }],
+        travelMode: 'DRIVE',
+        key,
+      }
     );
     sinon.assert.calledWithExactly(
       getDistanceMatrix.getCall(1),
-      { origins: '37 rue de Ponthieu 75008 Paris', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING, key }
+      {
+        origins: [{ waypoint: { address: '37 rue de Ponthieu 75008 Paris' } }],
+        destinations: [{ waypoint: { address: '24 Avenue Daumesnil 75012 Paris' } }],
+        travelMode: 'DRIVE',
+        key,
+      }
     );
     sinon.assert.calledWithExactly(
       getDistanceMatrix.getCall(2),
-      { origins: '12 rue du test 92160 Antony', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING, key }
+      {
+        origins: [{ waypoint: { address: '12 rue du test 92160 Antony' } }],
+        destinations: [{ waypoint: { address: '24 Avenue Daumesnil 75012 Paris' } }],
+        travelMode: 'DRIVE',
+        key,
+      }
     );
   });
 
