@@ -13,8 +13,7 @@ const parseDurationSeconds = duration => parseFloat(duration.replace('s', ''));
 exports.isDistanceMatrixDefine = res => (res.status === 200 && get(res, 'data[0].condition') === 'ROUTE_EXISTS' &&
   get(res, 'data[0].distanceMeters') != null && !!get(res, 'data[0].duration'));
 
-exports.createDistanceMatrix = async (params, companyId) => {
-  let res;
+const computeDistance = async (params) => {
   const { origins, destinations, mode } = params;
   const query = {
     origins: [{ waypoint: { address: origins } }],
@@ -22,32 +21,38 @@ exports.createDistanceMatrix = async (params, companyId) => {
     travelMode: TRAVEL_MODE[mode],
     key: process.env.GOOGLE_CLOUD_PLATFORM_API_KEY,
   };
-  if (params.mode === TRANSIT) {
-    const transitRes = await maps.getDistanceMatrix(query);
-    const walkingRes = await maps.getDistanceMatrix({ ...query, travelMode: TRAVEL_MODE[WALKING] });
-
-    if (!exports.isDistanceMatrixDefine(transitRes) && !exports.isDistanceMatrixDefine(walkingRes)) return null;
-
-    if (!exports.isDistanceMatrixDefine(transitRes)) res = walkingRes;
-    else if (!exports.isDistanceMatrixDefine(walkingRes)) res = transitRes;
-    else {
-      const transitDuration = parseDurationSeconds(transitRes.data[0].duration);
-      const walkingDuration = parseDurationSeconds(walkingRes.data[0].duration);
-      res = transitDuration < walkingDuration ? transitRes : walkingRes;
-    }
-  } else {
-    res = await maps.getDistanceMatrix(query);
-  }
-
+  const res = await maps.getDistanceMatrix(query);
   if (!exports.isDistanceMatrixDefine(res)) return null;
 
-  const payload = new DistanceMatrix({
-    ...params,
-    company: companyId,
-    distance: res.data[0].distanceMeters,
-    duration: parseDurationSeconds(res.data[0].duration),
-  });
+  return { distance: res.data[0].distanceMeters, duration: parseDurationSeconds(res.data[0].duration) };
+};
+
+exports.createDistanceMatrix = async (params, companyId = null) => {
+  let res;
+  if (params.mode === TRANSIT) {
+    const transitRes = await computeDistance(params);
+    const walkingRes = await computeDistance({ ...params, mode: WALKING });
+
+    if (!transitRes && !walkingRes) return null;
+
+    if (!transitRes) res = walkingRes;
+    else if (!walkingRes) res = transitRes;
+    else res = transitRes.duration < walkingRes.duration ? transitRes : walkingRes;
+  } else {
+    res = await computeDistance(params);
+  }
+
+  if (!res) return null;
+
+  const payload = new DistanceMatrix({ ...params, ...companyId && { company: companyId }, ...res });
   const newDistanceMatrix = await payload.save();
 
   return newDistanceMatrix;
+};
+
+exports.getOrCreateDistanceMatrix = async (params) => {
+  const distanceMatrix = await DistanceMatrix.findOne(params).lean();
+  if (distanceMatrix) return distanceMatrix;
+
+  return exports.createDistanceMatrix(params);
 };

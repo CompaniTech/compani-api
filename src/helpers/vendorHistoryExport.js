@@ -38,6 +38,7 @@ const {
   DRAFT,
   SLOT_STATUS,
   MINUTE,
+  DRIVING,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -52,8 +53,7 @@ const CourseSmsHistory = require('../models/CourseSmsHistory');
 const CourseSlot = require('../models/CourseSlot');
 const CourseBill = require('../models/CourseBill');
 const CourseCreditNote = require('../models/CourseCreditNote');
-const maps = require('../models/Google/Maps');
-const { isDistanceMatrixDefine } = require('./distanceMatrix');
+const DistanceMatrixHelper = require('./distanceMatrix');
 const CourseRepository = require('../repositories/CourseRepository');
 const QuestionnaireHistory = require('../models/QuestionnaireHistory');
 const CourseHistory = require('../models/CourseHistory');
@@ -471,14 +471,10 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         distances: '',
       };
       if (!courseTypes.includes(SINGLE) && slotAddress && trainerAddress) {
-        const transitRes = await maps.getDistanceMatrix({
-          origins: [{ waypoint: { address: trainerAddress } }],
-          destinations: [{ waypoint: { address: slotAddress } }],
-          travelMode: 'DRIVE',
-          key: process.env.GOOGLE_CLOUD_PLATFORM_API_KEY,
-        });
-        if (isDistanceMatrixDefine(transitRes)) {
-          trainersData.distances = UtilsHelper.formatFloatForExport(transitRes.data[0].distanceMeters / 1000, 2);
+        const query = { origins: trainerAddress, destinations: slotAddress, mode: DRIVING };
+        const distanceMatrix = await DistanceMatrixHelper.getOrCreateDistanceMatrix(query);
+        if (distanceMatrix) {
+          trainersData.distances = UtilsHelper.formatFloatForExport(distanceMatrix.distance / 1000, 2);
         }
       }
     } else {
@@ -496,14 +492,10 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           trainersData.addresses.push(`${trainerIdentity} : ${trainerAddress}`);
           const slotAddress = get(slot, 'address.fullAddress');
           if (!courseTypes.includes(SINGLE) && slotAddress && trainerAddress) {
-            const transitRes = await maps.getDistanceMatrix({
-              origins: [{ waypoint: { address: trainerAddress } }],
-              destinations: [{ waypoint: { address: slotAddress } }],
-              travelMode: 'DRIVE',
-              key: process.env.GOOGLE_CLOUD_PLATFORM_API_KEY,
-            });
-            if (isDistanceMatrixDefine(transitRes)) {
-              const distance = UtilsHelper.formatFloatForExport(transitRes.data[0].distanceMeters / 1000, 2);
+            const query = { origins: trainerAddress, destinations: slotAddress, mode: DRIVING };
+            const distanceMatrix = await DistanceMatrixHelper.getOrCreateDistanceMatrix(query);
+            if (distanceMatrix) {
+              const distance = UtilsHelper.formatFloatForExport(distanceMatrix.distance / 1000, 2);
               trainersData.distances.push(`${trainerIdentity} : ${distance}`);
             }
           }

@@ -96,6 +96,23 @@ describe('createDistanceMatrix', () => {
     }));
   });
 
+  it('should return a new DistanceMatrix without company if none is given', async () => {
+    getDistanceMatrix.returns(distanceMatrixResult);
+
+    const result = await DistanceMatrixHelper.createDistanceMatrix(distanceMatrixRequest);
+
+    sinon.assert.calledOnce(save);
+    sinon.assert.calledOnceWithExactly(getDistanceMatrix, query);
+    expect(result).toEqual(expect.objectContaining({
+      _id: expect.any(Object),
+      destinations: 'New York City, NY',
+      distance: 363998,
+      duration: 13790,
+      origins: 'Washington, DC',
+      mode: 'driving',
+    }));
+  });
+
   it('should return minimum duration between walking and transit', async () => {
     getDistanceMatrix.onCall(0).returns(distanceMatrixResult);
     getDistanceMatrix.onCall(1).returns(distanceMatrixWalkingResult);
@@ -127,5 +144,53 @@ describe('createDistanceMatrix', () => {
     sinon.assert.notCalled(save);
     sinon.assert.calledOnceWithExactly(getDistanceMatrix, query);
     expect(result).toEqual(null);
+  });
+});
+
+describe('getOrCreateDistanceMatrix', () => {
+  let findOne;
+  let createDistanceMatrix;
+
+  const params = { origins: 'Washington, DC', destinations: 'New York City, NY', mode: 'driving' };
+
+  beforeEach(() => {
+    findOne = sinon.stub(DistanceMatrix, 'findOne');
+    createDistanceMatrix = sinon.stub(DistanceMatrixHelper, 'createDistanceMatrix');
+  });
+
+  afterEach(() => {
+    findOne.restore();
+    createDistanceMatrix.restore();
+  });
+
+  it('should return the existing distance matrix without calling the API', async () => {
+    const existingDistanceMatrix = { ...params, distance: 363998, duration: 13790 };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(existingDistanceMatrix, ['lean']));
+
+    const result = await DistanceMatrixHelper.getOrCreateDistanceMatrix(params);
+
+    expect(result).toEqual(existingDistanceMatrix);
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [params] }, { query: 'lean' }]
+    );
+    sinon.assert.notCalled(createDistanceMatrix);
+  });
+
+  it('should create a new distance matrix if none exists', async () => {
+    const newDistanceMatrix = { ...params, distance: 363998, duration: 13790 };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    createDistanceMatrix.returns(newDistanceMatrix);
+
+    const result = await DistanceMatrixHelper.getOrCreateDistanceMatrix(params);
+
+    expect(result).toEqual(newDistanceMatrix);
+    SinonMongoose.calledOnceWithExactly(
+      findOne,
+      [{ query: 'findOne', args: [params] }, { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(createDistanceMatrix, params);
   });
 });
