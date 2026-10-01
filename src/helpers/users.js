@@ -2,6 +2,7 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
 const has = require('lodash/has');
+const isEmpty = require('lodash/isEmpty');
 const keyBy = require('lodash/keyBy');
 const mapValues = require('lodash/mapValues');
 const pick = require('lodash/pick');
@@ -354,14 +355,15 @@ const formatUpdatePayload = async (updatedUser) => {
   const removePhone = has(updatedUser, 'contact.phone') && updatedUser.contact.phone === '';
   if (removePhone) {
     payloadToUnset = { $unset: { 'contact.phone': '', 'contact.countryCode': '' } };
-    payloadToSet = omit(payloadToSet, 'contact');
+    payloadToSet = omit(payloadToSet, ['contact.phone', 'contact.countryCode']);
   }
 
   const removeAddress = has(updatedUser, 'contact.address') && updatedUser.contact.address === '';
   if (removeAddress) {
     payloadToUnset = { $unset: { ...payloadToUnset.$unset, 'contact.address': '' } };
-    payloadToSet = omit(payloadToSet, 'contact');
+    payloadToSet = omit(payloadToSet, 'contact.address');
   }
+  if (isEmpty(payloadToSet.contact)) payloadToSet = omit(payloadToSet, 'contact');
 
   return { $set: UtilsHelper.flatQuery(payloadToSet), ...payloadToUnset };
 };

@@ -588,7 +588,7 @@ describe('generate', () => {
     );
     findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
     findOneTrainingContract.returns(
-      SinonMongoose.stubChainedQueries({ startDate: '2025-01-01T00:00:00.000Z' }, ['lean'])
+      SinonMongoose.stubChainedQueries({ startDate: '2025-01-01T00:00:00.000Z' }, ['sort', 'lean'])
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
@@ -739,7 +739,11 @@ describe('generate', () => {
     );
     SinonMongoose.calledOnceWithExactly(
       findOneTrainingContract,
-      [{ query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] }, { query: 'lean' }]
+      [
+        { query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
+        { query: 'lean' },
+      ]
     );
   });
 
@@ -1081,7 +1085,7 @@ describe('generate', () => {
     );
     findCompletionCertificate.onCall(0).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
     findCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'sort', 'lean']));
-    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -1169,7 +1173,11 @@ describe('generate', () => {
     );
     SinonMongoose.calledOnceWithExactly(
       findOneTrainingContract,
-      [{ query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] }, { query: 'lean' }]
+      [
+        { query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       findAttendance,
@@ -1353,7 +1361,7 @@ describe('generate', () => {
         ['setOptions', 'sort', 'lean']
       )
     );
-    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -1441,7 +1449,11 @@ describe('generate', () => {
     );
     SinonMongoose.calledOnceWithExactly(
       findOneTrainingContract,
-      [{ query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] }, { query: 'lean' }]
+      [
+        { query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       findAttendance,
@@ -1622,7 +1634,7 @@ describe('generate', () => {
     findCompletionCertificate.onCall(1).returns(
       SinonMongoose.stubChainedQueries([{ vaeSupportRemainingMinutes: 0 }], ['setOptions', 'sort', 'lean'])
     );
-    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['lean']));
+    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -1710,7 +1722,11 @@ describe('generate', () => {
     );
     SinonMongoose.calledOnceWithExactly(
       findOneTrainingContract,
-      [{ query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] }, { query: 'lean' }]
+      [
+        { query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
+        { query: 'lean' },
+      ]
     );
     SinonMongoose.calledOnceWithExactly(
       findAttendance,

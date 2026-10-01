@@ -407,7 +407,23 @@ const getAddress = (slot) => {
   return '';
 };
 
+const getDistanceForExport = async (query, cache) => {
+  const key = `${query.origins}|${query.destinations}|${query.mode}`;
+  if (!cache.has(key)) {
+    try {
+      const distanceMatrix = await DistanceMatrixHelper.getOrCreateDistanceMatrix(query);
+      cache.set(key, distanceMatrix ? UtilsHelper.formatFloatForExport(distanceMatrix.distance / 1000, 2) : '');
+    } catch (e) {
+      console.error(e);
+      cache.set(key, '');
+    }
+  }
+
+  return cache.get(key);
+};
+
 exports.exportCourseSlotHistory = async (startDate, endDate, credentials, courseTypes) => {
+  const distanceCache = new Map();
   const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
     .populate({ path: 'step', select: 'type name durationCountedPerTrainer' })
     .populate({
@@ -472,10 +488,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       };
       if (!courseTypes.includes(SINGLE) && slotAddress && trainerAddress) {
         const query = { origins: trainerAddress, destinations: slotAddress, mode: DRIVING };
-        const distanceMatrix = await DistanceMatrixHelper.getOrCreateDistanceMatrix(query);
-        if (distanceMatrix) {
-          trainersData.distances = UtilsHelper.formatFloatForExport(distanceMatrix.distance / 1000, 2);
-        }
+        trainersData.distances = await getDistanceForExport(query, distanceCache);
       }
     } else {
       trainersData = { status: [], bills: [], addresses: [], distances: [] };
@@ -493,11 +506,8 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
           const slotAddress = get(slot, 'address.fullAddress');
           if (!courseTypes.includes(SINGLE) && slotAddress && trainerAddress) {
             const query = { origins: trainerAddress, destinations: slotAddress, mode: DRIVING };
-            const distanceMatrix = await DistanceMatrixHelper.getOrCreateDistanceMatrix(query);
-            if (distanceMatrix) {
-              const distance = UtilsHelper.formatFloatForExport(distanceMatrix.distance / 1000, 2);
-              trainersData.distances.push(`${trainerIdentity} : ${distance}`);
-            }
+            const distance = await getDistanceForExport(query, distanceCache);
+            if (distance) trainersData.distances.push(`${trainerIdentity} : ${distance}`);
           }
         }
       }

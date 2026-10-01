@@ -8766,7 +8766,7 @@ describe('generateCompletionCertificates', () => {
     findTrainingContract.returns(
       SinonMongoose.stubChainedQueries(
         [{ company: companyId, startDate: '2019-09-01T00:00:00.000Z' }],
-        ['setOptions', 'lean']
+        ['sort', 'setOptions', 'lean']
       )
     );
 
@@ -8817,6 +8817,7 @@ describe('generateCompletionCertificates', () => {
       findTrainingContract,
       [
         { query: 'find', args: [{ course: courseId, startDate: { $exists: true } }, { company: 1, startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]

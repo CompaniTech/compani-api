@@ -1556,8 +1556,7 @@ describe('exportCourseSlotHistory', () => {
     ];
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList));
     getOrCreateDistanceMatrix.onCall(0).returns({ distance: 15000, duration: 1200 });
-    getOrCreateDistanceMatrix.onCall(1).returns({ distance: 15000, duration: 1200 });
-    getOrCreateDistanceMatrix.onCall(2).returns({ distance: 12000, duration: 900 });
+    getOrCreateDistanceMatrix.onCall(1).returns({ distance: 12000, duration: 900 });
 
     const result = await ExportHelper
       .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
@@ -1702,10 +1701,6 @@ describe('exportCourseSlotHistory', () => {
     );
     sinon.assert.calledWithExactly(
       getOrCreateDistanceMatrix.getCall(1),
-      { origins: '37 rue de Ponthieu 75008 Paris', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING }
-    );
-    sinon.assert.calledWithExactly(
-      getOrCreateDistanceMatrix.getCall(2),
       { origins: '12 rue du test 92160 Antony', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING }
     );
   });

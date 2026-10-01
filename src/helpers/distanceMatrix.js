@@ -11,7 +11,7 @@ const TRAVEL_MODE = { [DRIVING]: 'DRIVE', [WALKING]: 'WALK', [TRANSIT]: 'TRANSIT
 const parseDurationSeconds = duration => parseFloat(duration.replace('s', ''));
 
 exports.isDistanceMatrixDefine = res => (res.status === 200 && get(res, 'data[0].condition') === 'ROUTE_EXISTS' &&
-  get(res, 'data[0].distanceMeters') != null && !!get(res, 'data[0].duration'));
+  !!get(res, 'data[0].duration'));
 
 const computeDistance = async (params) => {
   const { origins, destinations, mode } = params;
@@ -24,7 +24,7 @@ const computeDistance = async (params) => {
   const res = await maps.getDistanceMatrix(query);
   if (!exports.isDistanceMatrixDefine(res)) return null;
 
-  return { distance: res.data[0].distanceMeters, duration: parseDurationSeconds(res.data[0].duration) };
+  return { distance: res.data[0].distanceMeters || 0, duration: parseDurationSeconds(res.data[0].duration) };
 };
 
 exports.createDistanceMatrix = async (params, companyId = null) => {
