@@ -243,6 +243,8 @@ const usersSeedList = [
     role: { vendor: trainerRoleId },
     refreshToken: uuidv4(),
     origin: WEBAPP,
+    iban: 'FR9210096000302523177152Q14',
+    bic: 'BPCEFRPP',
   },
   { // 12
     _id: new ObjectId(),

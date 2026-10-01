@@ -1519,6 +1519,20 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       expect(updatedTrainer).toBeTruthy();
     });
 
+    it('should remove iban and bic #tag', async () => {
+      const userId = usersSeedList[11]._id.toHexString();
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { iban: '', bic: '' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const userCount = await User.countDocuments({ _id: userId, iban: { $exists: false }, bic: { $exists: false } });
+      expect(userCount).toBe(1);
+    });
+
     it('should update user with holding', async () => {
       const res = await app.inject({
         method: 'PUT',
