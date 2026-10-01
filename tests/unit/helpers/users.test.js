@@ -1817,6 +1817,21 @@ describe('updateUser', () => {
     sinon.assert.notCalled(userHoldingCreate);
     sinon.assert.notCalled(roleFindOne);
   });
+
+  it('should remove a user address', async () => {
+    const payload = { contact: { address: '' } };
+
+    await UsersHelper.updateUser(userId, payload);
+
+    sinon.assert.calledOnceWithExactly(
+      userUpdateOne,
+      { _id: userId },
+      { $set: {}, $unset: { 'contact.address': '' } }
+    );
+    sinon.assert.notCalled(roleFindById);
+    sinon.assert.notCalled(userHoldingCreate);
+    sinon.assert.notCalled(roleFindOne);
+  });
 });
 
 describe('uploadPicture', () => {

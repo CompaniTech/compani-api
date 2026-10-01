@@ -120,6 +120,7 @@ exports.generate = async (completionCertificateId) => {
   if (is1stCertificate) {
     const trainingContract = await TrainingContract
       .findOne({ course: course._id, company: trainee.company._id }, { startDate: 1 })
+      .sort({ startDate: 1 })
       .lean();
     if (trainingContract && trainingContract.startDate) {
       trainingContractStartDate = CompaniDate(trainingContract.startDate).format(DD_MM_YYYY);

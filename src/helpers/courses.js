@@ -1776,6 +1776,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
 
       const trainingContracts = await TrainingContract
         .find({ course: course._id, startDate: { $exists: true } }, { company: 1, startDate: 1 })
+        .sort({ startDate: 1 })
         .setOptions({ isVendorUser: true })
         .lean();
 

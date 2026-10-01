@@ -1380,6 +1380,21 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       expect(userCount).toEqual(1);
     });
 
+    it('should remove user address', async () => {
+      const userId = usersSeedList[0]._id.toHexString();
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { contact: { address: '' } },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const userCount = await User.countDocuments({ _id: userId, 'contact.address': { $exists: false } });
+      expect(userCount).toEqual(1);
+    });
+
     it('should not update a user if title is not correct', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -1455,6 +1470,15 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         payload: {
           identity: { firstname: 'trainerUpdate' },
           biography: 'It\'s my life',
+          contact: {
+            address: {
+              street: '13, rue du test',
+              fullAddress: '13, rue du test 75007 Paris',
+              zipCode: '75007',
+              city: 'Paris',
+              location: { type: 'Point', coordinates: [4.849302, 2.90887] },
+            },
+          },
         },
       });
 

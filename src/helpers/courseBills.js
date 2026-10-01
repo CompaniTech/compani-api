@@ -561,27 +561,34 @@ exports.updateBillList = async (payload) => {
         maturityDateDurationToAdd = getMaturityDateDurationToAdd(courseBill.maturityDate, payload.maturityDate);
       }
 
-      for (let i = 0; i < payload._ids.length; i++) {
-        const currentId = payload._ids[i];
+      const otherBills = payload.maturityDate
+        ? await CourseBill.find({ _id: { $in: payload._ids.slice(1) } }, { maturityDate: 1 }).lean()
+        : [];
+      const maturityDateById = new Map(otherBills.map(bill => [bill._id.toString(), bill.maturityDate]));
+
+      const updatePromises = payload._ids.map((currentId, i) => {
         const isFirstBill = i === 0;
+        const billPayloadToSet = { ...payloadToSet };
 
         if (!isFirstBill && payload.maturityDate) {
-          const billToUpdate = await CourseBill.findOne({ _id: currentId }, { maturityDate: 1 }).lean();
-          const newMaturityDate = CompaniDate(billToUpdate.maturityDate).add(maturityDateDurationToAdd);
+          const previousMaturityDate = maturityDateById.get(currentId.toString());
+          const newMaturityDate = CompaniDate(previousMaturityDate).add(maturityDateDurationToAdd);
           const newDescription = UtilsHelper
             .formatSingleCourseBillDescription(newMaturityDate, course.trainees, course.trainers);
 
-          payloadToSet['mainFee.description'] = newDescription;
-          payloadToSet.maturityDate = newMaturityDate.toISO();
+          billPayloadToSet['mainFee.description'] = newDescription;
+          billPayloadToSet.maturityDate = newMaturityDate.toISO();
         }
 
         const formattedPayload = {
-          ...(Object.keys(payloadToSet).length && { $set: UtilsHelper.flatQuery(payloadToSet) }),
+          ...(Object.keys(billPayloadToSet).length && { $set: UtilsHelper.flatQuery(billPayloadToSet) }),
           ...(Object.keys(payloadToUnset).length && { $unset: payloadToUnset }),
         };
 
-        await CourseBill.updateOne({ _id: currentId }, formattedPayload);
-      }
+        return CourseBill.updateOne({ _id: currentId }, formattedPayload);
+      });
+
+      await Promise.all(updatePromises);
     }
   }
 };

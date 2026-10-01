@@ -1181,6 +1181,15 @@ const trainer = {
   origin: WEBAPP,
   local: { email: 'formateur@compani.fr' },
   role: { vendor: trainerRoleId },
+  contact: {
+    address: {
+      street: '37 rue de Ponthieu',
+      zipCode: '75008',
+      city: 'Paris',
+      fullAddress: '37 rue de Ponthieu 75008 Paris',
+      location: { type: 'Point', coordinates: [2.0987, 1.2345] },
+    },
+  },
 };
 const operationsRepresentative = {
   _id: new ObjectId(),

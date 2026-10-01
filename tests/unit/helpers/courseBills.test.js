@@ -1783,6 +1783,7 @@ describe('updateBillList', () => {
   let updateOneCourseBillsNumber;
   let updateManyCourseBill;
   let findOneCourseBill;
+  let findCourseBill;
   let findOneAndUpdateCoursePaymentNumber;
   let coursePaymentCreate;
   let formatIdentity;
@@ -1795,6 +1796,7 @@ describe('updateBillList', () => {
     updateOneCourseBillsNumber = sinon.stub(CourseBillsNumber, 'updateOne');
     updateManyCourseBill = sinon.stub(CourseBill, 'updateMany');
     findOneCourseBill = sinon.stub(CourseBill, 'findOne');
+    findCourseBill = sinon.stub(CourseBill, 'find');
     findOneAndUpdateCoursePaymentNumber = sinon.stub(CoursePaymentNumber, 'findOneAndUpdate');
     coursePaymentCreate = sinon.stub(CoursePayment, 'create');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
@@ -1808,6 +1810,7 @@ describe('updateBillList', () => {
     updateOneCourseBillsNumber.restore();
     updateManyCourseBill.restore();
     findOneCourseBill.restore();
+    findCourseBill.restore();
     findOneAndUpdateCoursePaymentNumber.restore();
     coursePaymentCreate.restore();
     formatIdentity.restore();
@@ -2057,7 +2060,7 @@ describe('updateBillList', () => {
       + 'Nom du / des intervenants: Toto Formateur, Architecte Parcours';
 
     findOneCourseBill.onCall(0).returns(SinonMongoose.stubChainedQueries(courseBills[0]));
-    findOneCourseBill.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBills[1], ['lean']));
+    findCourseBill.onCall(0).returns(SinonMongoose.stubChainedQueries([courseBills[1]], ['lean']));
     formatIdentity.onCall(0).returns('Lili Apprenante');
     formatIdentity.onCall(1).returns('Toto Formateur');
     formatIdentity.onCall(2).returns('Architecte Parcours');
@@ -2086,6 +2089,13 @@ describe('updateBillList', () => {
       ],
       0
     );
+    SinonMongoose.calledOnceWithExactly(
+      findCourseBill,
+      [
+        { query: 'find', args: [{ _id: { $in: [courseBillIds[1]] } }, { maturityDate: 1 }] },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.calledWithExactly(
       updateOneCourseBill.getCall(0),
       { _id: courseBillIds[0] },
@@ -2098,11 +2108,6 @@ describe('updateBillList', () => {
         },
         $unset: { 'payer.company': '' },
       }
-    );
-    SinonMongoose.calledWithExactly(
-      findOneCourseBill,
-      [{ query: 'findOne', args: [{ _id: courseBillIds[1] }, { maturityDate: 1 }] }, { query: 'lean' }],
-      1
     );
     sinon.assert.calledWithExactly(formatIdentity.getCall(0), { firstname: 'lili', lastname: 'apprenante' }, 'FL');
     sinon.assert.calledWithExactly(formatIdentity.getCall(1), { firstname: 'toto', lastname: 'formateur' }, 'FL');
@@ -2150,6 +2155,7 @@ describe('updateBillList', () => {
     sinon.assert.notCalled(findOneAndUpdateCourseBill);
     sinon.assert.notCalled(findOneAndUpdateCoursePaymentNumber);
     sinon.assert.notCalled(coursePaymentCreate);
+    sinon.assert.notCalled(findCourseBill);
     SinonMongoose.calledWithExactly(
       findOneCourseBill,
       [
