@@ -4,6 +4,7 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const moment = require('../extensions/moment');
+const { encrypt, decrypt } = require('../helpers/encryption');
 const { validateQuery, validateAggregation, formatQuery, formatQueryMiddlewareList } = require('./preHooks/validate');
 const {
   MONTHLY,
@@ -210,6 +211,28 @@ async function validate() {
   }
 }
 
+function cryptDatas() {
+  const { $set, $unset } = this.getUpdate() || { $set: {}, $unset: {} };
+  if (!Object.keys($set).length && !Object.keys($unset).length) return;
+
+  if ($set['payment.iban']) $set['payment.iban'] = encrypt($set['payment.iban']);
+
+  if ($set['payment.bic']) $set['payment.bic'] = encrypt($set['payment.bic']);
+}
+
+function decryptDatas(doc) {
+  if (!doc) return;
+
+  // eslint-disable-next-line no-param-reassign
+  if (get(doc, 'payment.iban', '').includes(':')) doc.payment.iban = decrypt(doc.payment.iban);
+  // eslint-disable-next-line no-param-reassign
+  if (get(doc, 'payment.bic', '').includes(':')) doc.payment.bic = decrypt(doc.payment.bic);
+}
+
+function decryptDatasList(docs) {
+  for (const doc of docs) decryptDatas(doc);
+}
+
 CustomerSchema.virtual(
   'firstIntervention',
   { ref: 'Event', localField: '_id', foreignField: 'customer', justOne: true, options: { sort: { startDate: 1 } } }
@@ -237,6 +260,8 @@ CustomerSchema.pre('validate', validate);
 CustomerSchema.pre('aggregate', validateAggregation);
 CustomerSchema.pre('find', validateQuery);
 CustomerSchema.pre('findOneAndUpdate', validateAddress);
+CustomerSchema.pre('findOneAndUpdate', cryptDatas);
+CustomerSchema.pre('updateOne', cryptDatas);
 formatQueryMiddlewareList().map(middleware => CustomerSchema.pre(middleware, formatQuery));
 
 CustomerSchema.post('findOne', isSubscriptionUsedInEvents);
@@ -247,6 +272,9 @@ CustomerSchema.post('find', populateHelpersForList);
 CustomerSchema.post('findOne', populateReferent);
 CustomerSchema.post('findOneAndUpdate', populateReferent);
 CustomerSchema.post('find', populateReferents);
+
+CustomerSchema.post('findOne', decryptDatas);
+CustomerSchema.post('find', decryptDatasList);
 
 CustomerSchema.plugin(mongooseLeanVirtuals);
 

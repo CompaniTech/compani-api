@@ -1235,6 +1235,8 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         identity: { firstname: 'Riri' },
         local: { email: 'riri@alenvi.io' },
         contact: { phone: '0987654321', countryCode: '+33' },
+        iban: 'FR3514508000505917721779B12',
+        bic: 'WERTFRPP',
       };
       const res = await app.inject({
         method: 'PUT',
@@ -1245,14 +1247,42 @@ describe('USERS ROUTES - PUT /users/:id', () => {
 
       expect(res.statusCode).toBe(200);
 
-      const userCount = await User.countDocuments({
-        _id: userId,
-        'identity.firstname': 'Riri',
-        'local.email': 'riri@alenvi.io',
-        'contact.phone': '0987654321',
-        'contact.countryCode': '+33',
+      const user = await User
+        .findOne({
+          _id: userId,
+          'identity.firstname': 'Riri',
+          'local.email': 'riri@alenvi.io',
+          'contact.phone': '0987654321',
+          'contact.countryCode': '+33',
+        })
+        .lean();
+      expect(user).toBeDefined();
+      expect(user.iban).toEqual(updatePayload.iban);
+      expect(user.bic).toEqual(updatePayload.bic);
+    });
+
+    it('should return 400 if iban is not valid', async () => {
+      const userId = usersSeedList[0]._id.toHexString();
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { iban: 'mauvaisIBAN', bic: 'WERTFRPP' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
-      expect(userCount).toEqual(1);
+
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('should return 400 if bic is not valid', async () => {
+      const userId = usersSeedList[0]._id.toHexString();
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { iban: 'FR3514508000505917721779B12', bic: 'AAAAAAAaaaaaaa' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(res.statusCode).toBe(400);
     });
 
     it('should update a user with vendor role', async () => {
