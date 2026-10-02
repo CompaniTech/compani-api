@@ -365,6 +365,18 @@ const formatUpdatePayload = async (updatedUser) => {
   }
   if (isEmpty(payloadToSet.contact)) payloadToSet = omit(payloadToSet, 'contact');
 
+  const removeIban = has(updatedUser, 'iban') && updatedUser.iban === '';
+  if (removeIban) {
+    payloadToUnset = { $unset: { ...payloadToUnset.$unset, iban: '' } };
+    payloadToSet = omit(payloadToSet, 'iban');
+  }
+
+  const removeBic = has(updatedUser, 'bic') && updatedUser.bic === '';
+  if (removeBic) {
+    payloadToUnset = { $unset: { ...payloadToUnset.$unset, bic: '' } };
+    payloadToSet = omit(payloadToSet, 'bic');
+  }
+
   return { $set: UtilsHelper.flatQuery(payloadToSet), ...payloadToUnset };
 };
 

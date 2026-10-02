@@ -38,6 +38,8 @@ const {
   expoTokenValidation,
   objectIdOrArray,
   countryCodeValidation,
+  ibanValidation,
+  bicValidation,
 } = require('./validations/utils');
 const { formDataPayload, dateToISOString } = require('./validations/utils');
 
@@ -188,6 +190,8 @@ exports.plugin = {
             }),
             biography: Joi.string().allow(''),
             holding: Joi.objectId(),
+            iban: Joi.alternatives().try(ibanValidation, Joi.string().valid('')),
+            bic: Joi.alternatives().try(bicValidation, Joi.string().valid('')),
           }).required(),
         },
         pre: [{ method: authorizeUserUpdate }],
