@@ -212,7 +212,7 @@ async function validate() {
 }
 
 function cryptDatas() {
-  const { $set, $unset } = this.getUpdate() || { $set: {}, $unset: {} };
+  const { $set = {}, $unset = {} } = this.getUpdate() || {};
   if (!Object.keys($set).length && !Object.keys($unset).length) return;
 
   if ($set['payment.iban']) $set['payment.iban'] = encrypt($set['payment.iban']);

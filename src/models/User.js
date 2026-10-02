@@ -231,7 +231,7 @@ async function findOneAndUpdate() {
 }
 
 function cryptDatas() {
-  const { $set, $unset } = this.getUpdate() || { $set: {}, $unset: {} };
+  const { $set = {}, $unset = {} } = this.getUpdate() || {};
   if (!Object.keys($set).length && !Object.keys($unset).length) return;
 
   if ($set.iban) $set.iban = encrypt($set.iban);
@@ -246,6 +246,10 @@ async function decryptDatas(doc) {
   if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
   // eslint-disable-next-line no-param-reassign
   if (doc.bic && doc.bic.includes(':')) doc.bic = decrypt(doc.bic);
+}
+
+function decryptDatasList(docs) {
+  for (const doc of docs) decryptDatas(doc);
 }
 
 // eslint-disable-next-line consistent-return
@@ -389,6 +393,7 @@ queryMiddlewareList.map(middleware => UserSchema.pre(middleware, formatQuery));
 UserSchema.post('find', populateSectors);
 UserSchema.post('find', populateCompanies);
 UserSchema.post('find', populateHoldings);
+UserSchema.post('find', decryptDatasList);
 UserSchema.post('findOne', populateSector);
 UserSchema.post('findOne', populateCustomers);
 UserSchema.post('findOne', populateCompany);
