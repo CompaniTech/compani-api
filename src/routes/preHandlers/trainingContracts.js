@@ -4,16 +4,19 @@ const Course = require('../../models/Course');
 const TrainingContract = require('../../models/TrainingContract');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
+const { SINGLE } = require('../../helpers/constants');
 
 const { language } = translate;
 
 exports.authorizeTrainingContractUpload = async (req) => {
   const { course: courseId, company } = req.payload;
-  const course = await Course.countDocuments({ _id: courseId, companies: company });
+  const course = await Course.findOne({ _id: courseId, companies: company }, { type: 1 }).lean();
   if (!course) throw Boom.notFound();
 
-  const trainingContractAlreadyExists = await TrainingContract.countDocuments({ course: courseId, company });
-  if (trainingContractAlreadyExists) throw Boom.forbidden(translate[language].trainingContractAlreadyExists);
+  if (course.type !== SINGLE) {
+    const trainingContractAlreadyExists = await TrainingContract.countDocuments({ course: courseId, company });
+    if (trainingContractAlreadyExists) throw Boom.forbidden(translate[language].trainingContractAlreadyExists);
+  }
 
   return null;
 };

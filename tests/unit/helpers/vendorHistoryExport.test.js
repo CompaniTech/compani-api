@@ -42,6 +42,7 @@ const {
   TRANSITION,
   VAEI_COACH,
   ARCHITECT,
+  DRIVING,
 } = require('../../../src/helpers/constants');
 const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const CourseSlot = require('../../../src/models/CourseSlot');
@@ -55,6 +56,7 @@ const CourseCreditNote = require('../../../src/models/CourseCreditNote');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const CourseHistory = require('../../../src/models/CourseHistory');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
+const DistanceMatrixHelper = require('../../../src/helpers/distanceMatrix');
 const UtilsMock = require('../../utilsMock');
 
 describe('exportCourseHistory', () => {
@@ -1388,8 +1390,32 @@ describe('exportCourseSlotHistory', () => {
   ];
 
   const trainers = [
-    { _id: new ObjectId(), identity: { firstname: 'Gilles', lastname: 'FORMATEUR' } },
-    { _id: new ObjectId(), identity: { firstname: 'Autre', lastname: 'FORMATEUR' } },
+    {
+      _id: new ObjectId(),
+      identity: { firstname: 'Gilles', lastname: 'FORMATEUR' },
+      contact: {
+        address: {
+          fullAddress: '37 rue de Ponthieu 75008 Paris',
+          zipCode: '75008',
+          city: 'Paris',
+          street: '37 rue de Ponthieu',
+          location: { type: 'Point', coordinates: [2.377133, 48.801389] },
+        },
+      },
+    },
+    {
+      _id: new ObjectId(),
+      identity: { firstname: 'Autre', lastname: 'FORMATEUR' },
+      contact: {
+        address: {
+          fullAddress: '12 rue du test 92160 Antony',
+          street: '12 rue du test',
+          zipCode: '92160',
+          city: 'Antony',
+          location: { type: 'Point', coordinates: [2.377133, 48.801389] },
+        },
+      },
+    },
     { _id: new ObjectId(), identity: { firstname: 'Cathy', lastname: 'ARCHITECTE' } },
   ];
 
@@ -1431,14 +1457,17 @@ describe('exportCourseSlotHistory', () => {
   };
 
   let findCourseSlot;
+  let getOrCreateDistanceMatrix;
 
   beforeEach(() => {
     findCourseSlot = sinon.stub(CourseSlot, 'find');
+    getOrCreateDistanceMatrix = sinon.stub(DistanceMatrixHelper, 'getOrCreateDistanceMatrix');
     process.env.COLLECTIVE_STEP_IDS = new ObjectId();
   });
 
   afterEach(() => {
     findCourseSlot.restore();
+    getOrCreateDistanceMatrix.restore();
     process.env.COLLECTIVE_STEP_IDS = '';
   });
 
@@ -1471,7 +1500,7 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
-        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
         { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
@@ -1526,6 +1555,8 @@ describe('exportCourseSlotHistory', () => {
       },
     ];
     findCourseSlot.returns(SinonMongoose.stubChainedQueries(courseSlotList));
+    getOrCreateDistanceMatrix.onCall(0).returns({ distance: 15000, duration: 1200 });
+    getOrCreateDistanceMatrix.onCall(1).returns({ distance: 12000, duration: 900 });
 
     const result = await ExportHelper
       .exportCourseSlotHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials, [INTRA, INTRA_HOLDING, INTER_B2B]);
@@ -1549,6 +1580,8 @@ describe('exportCourseSlotHistory', () => {
         'Nombre d\'émargements non remplis',
         'Nombre d\'apprenants non concernés',
         'Intervenants',
+        'Adresse(s) intervenant(s)',
+        'Distances',
       ],
       [
         courseSlotList[0]._id,
@@ -1568,6 +1601,8 @@ describe('exportCourseSlotHistory', () => {
         0,
         1,
         'Gilles FORMATEUR',
+        '37 rue de Ponthieu 75008 Paris',
+        '15,00',
       ],
       [
         courseSlotList[1]._id,
@@ -1587,6 +1622,8 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        '37 rue de Ponthieu 75008 Paris',
+        '',
       ],
       [
         courseSlotList[2]._id,
@@ -1606,6 +1643,8 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR, Autre FORMATEUR',
+        'Gilles FORMATEUR : 37 rue de Ponthieu 75008 Paris, Autre FORMATEUR : 12 rue du test 92160 Antony',
+        'Gilles FORMATEUR : 15,00, Autre FORMATEUR : 12,00',
       ],
       [
         courseSlotList[3]._id,
@@ -1625,6 +1664,8 @@ describe('exportCourseSlotHistory', () => {
         1,
         0,
         'Gilles FORMATEUR',
+        '37 rue de Ponthieu 75008 Paris',
+        '',
       ],
     ]);
     SinonMongoose.calledOnceWithExactly(
@@ -1649,10 +1690,18 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
-        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
         { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
+    );
+    sinon.assert.calledWithExactly(
+      getOrCreateDistanceMatrix.getCall(0),
+      { origins: '37 rue de Ponthieu 75008 Paris', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING }
+    );
+    sinon.assert.calledWithExactly(
+      getOrCreateDistanceMatrix.getCall(1),
+      { origins: '12 rue du test 92160 Antony', destinations: '24 Avenue Daumesnil 75012 Paris', mode: DRIVING }
     );
   });
 
@@ -2006,11 +2055,12 @@ describe('exportCourseSlotHistory', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
-        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
         { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
         { query: 'lean' },
       ]
     );
+    sinon.assert.notCalled(getOrCreateDistanceMatrix);
   });
 });
 

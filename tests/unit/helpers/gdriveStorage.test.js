@@ -135,6 +135,38 @@ describe('addFile', () => {
   });
 });
 
+describe('getUploadFolderId', () => {
+  let list;
+
+  beforeEach(() => {
+    list = sinon.stub(Gdrive, 'list');
+  });
+
+  afterEach(() => {
+    list.restore();
+  });
+
+  it('should return admin folder id if it exists', async () => {
+    list.returns({
+      files: [{ id: 'other_folder_id', name: 'Autre dossier' }, { id: 'admin_folder_id', name: 'Administratif' }],
+    });
+
+    const result = await GDriveStorageHelper.getUploadFolderId('folder_id');
+
+    expect(result).toBe('admin_folder_id');
+    sinon.assert.calledOnceWithExactly(list, { folderId: 'folder_id', onlyFolders: true });
+  });
+
+  it('should return given folder id if no admin folder exists', async () => {
+    list.returns({ files: [{ id: 'other_folder_id', name: 'Autre dossier' }] });
+
+    const result = await GDriveStorageHelper.getUploadFolderId('folder_id');
+
+    expect(result).toBe('folder_id');
+    sinon.assert.calledOnceWithExactly(list, { folderId: 'folder_id', onlyFolders: true });
+  });
+});
+
 describe('deleteFile', () => {
   let deleteFile;
 

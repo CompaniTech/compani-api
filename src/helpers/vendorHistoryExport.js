@@ -38,6 +38,7 @@ const {
   DRAFT,
   SLOT_STATUS,
   MINUTE,
+  DRIVING,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -52,6 +53,7 @@ const CourseSmsHistory = require('../models/CourseSmsHistory');
 const CourseSlot = require('../models/CourseSlot');
 const CourseBill = require('../models/CourseBill');
 const CourseCreditNote = require('../models/CourseCreditNote');
+const DistanceMatrixHelper = require('./distanceMatrix');
 const CourseRepository = require('../repositories/CourseRepository');
 const QuestionnaireHistory = require('../models/QuestionnaireHistory');
 const CourseHistory = require('../models/CourseHistory');
@@ -405,7 +407,23 @@ const getAddress = (slot) => {
   return '';
 };
 
+const getDistanceForExport = async (query, cache) => {
+  const key = `${query.origins}|${query.destinations}|${query.mode}`;
+  if (!cache.has(key)) {
+    try {
+      const distanceMatrix = await DistanceMatrixHelper.getOrCreateDistanceMatrix(query);
+      cache.set(key, distanceMatrix ? UtilsHelper.formatFloatForExport(distanceMatrix.distance / 1000, 2) : '');
+    } catch (e) {
+      console.error(e);
+      cache.set(key, '');
+    }
+  }
+
+  return cache.get(key);
+};
+
 exports.exportCourseSlotHistory = async (startDate, endDate, credentials, courseTypes) => {
+  const distanceCache = new Map();
   const courseSlots = await CourseSlot.find({ startDate: { $lte: endDate }, endDate: { $gte: startDate } })
     .populate({ path: 'step', select: 'type name durationCountedPerTrainer' })
     .populate({
@@ -424,7 +442,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         isVendorUser: [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name')),
       },
     })
-    .populate({ path: 'trainers', select: 'identity' })
+    .populate({ path: 'trainers', select: 'identity contact' })
     .populate({ path: 'trainerBillings.trainerBill', select: 'status number' })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
@@ -460,24 +478,43 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
     let trainersData;
     if (slot.trainers.length === 1) {
       const { status, trainerBilling } = CourseSlotHelper.getSlotStatus(slot, slot.trainers[0]._id);
+      const trainerAddress = get(slot.trainers[0], 'contact.address.fullAddress', '');
+      const slotAddress = get(slot, 'address.fullAddress');
       trainersData = {
         status: SLOT_STATUS[status],
         bills: get(trainerBilling, 'trainerBill') ? trainerBilling.trainerBill.number : '',
+        addresses: trainerAddress,
+        distances: '',
       };
+      if (!courseTypes.includes(SINGLE) && slotAddress && trainerAddress) {
+        const query = { origins: trainerAddress, destinations: slotAddress, mode: DRIVING };
+        trainersData.distances = await getDistanceForExport(query, distanceCache);
+      }
     } else {
-      trainersData = (slot.trainers || []).reduce((acc, trainer) => {
+      trainersData = { status: [], bills: [], addresses: [], distances: [] };
+      for (const trainer of (slot.trainers || [])) {
         const { status, trainerBilling } = CourseSlotHelper.getSlotStatus(slot, trainer._id);
         const trainerIdentity = UtilsHelper.formatIdentity(trainer.identity, 'FL');
 
-        acc.status.push(`${trainerIdentity} : ${SLOT_STATUS[status]}`);
+        trainersData.status.push(`${trainerIdentity} : ${SLOT_STATUS[status]}`);
         if (get(trainerBilling, 'trainerBill')) {
-          acc.bills.push(`${trainerIdentity} : ${trainerBilling.trainerBill.number}`);
+          trainersData.bills.push(`${trainerIdentity} : ${trainerBilling.trainerBill.number}`);
         }
-
-        return acc;
-      }, { status: [], bills: [] });
+        const trainerAddress = get(trainer, 'contact.address.fullAddress');
+        if (trainerAddress) {
+          trainersData.addresses.push(`${trainerIdentity} : ${trainerAddress}`);
+          const slotAddress = get(slot, 'address.fullAddress');
+          if (!courseTypes.includes(SINGLE) && slotAddress && trainerAddress) {
+            const query = { origins: trainerAddress, destinations: slotAddress, mode: DRIVING };
+            const distance = await getDistanceForExport(query, distanceCache);
+            if (distance) trainersData.distances.push(`${trainerIdentity} : ${distance}`);
+          }
+        }
+      }
       trainersData.status = trainersData.status.join(', ');
       trainersData.bills = trainersData.bills.join(', ');
+      trainersData.addresses = trainersData.addresses.join(', ');
+      trainersData.distances = trainersData.distances.join(', ');
     }
 
     rows.push({
@@ -509,6 +546,10 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
         Statut: trainersData.status,
         'Facture intervenant': trainersData.bills,
         Montant: hasUnresolvedHourlyAmount ? 'Erreur' : UtilsHelper.formatFloatForExport(slotAmount),
+      }),
+      ...(!courseTypes.includes(SINGLE) && {
+        'Adresse(s) intervenant(s)': trainersData.addresses,
+        Distances: trainersData.distances,
       }),
     });
   }

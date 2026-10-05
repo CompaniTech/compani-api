@@ -8,6 +8,7 @@ const TrainingContractSchema = mongoose.Schema({
     link: { type: String, trim: true, required: true },
   },
   company: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true },
+  startDate: { type: Date },
 }, { timestamps: true });
 
 TrainingContractSchema.pre('find', validateQuery);

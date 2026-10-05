@@ -1235,6 +1235,8 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         identity: { firstname: 'Riri' },
         local: { email: 'riri@alenvi.io' },
         contact: { phone: '0987654321', countryCode: '+33' },
+        iban: 'FR3514508000505917721779B12',
+        bic: 'WERTFRPP',
       };
       const res = await app.inject({
         method: 'PUT',
@@ -1245,14 +1247,42 @@ describe('USERS ROUTES - PUT /users/:id', () => {
 
       expect(res.statusCode).toBe(200);
 
-      const userCount = await User.countDocuments({
-        _id: userId,
-        'identity.firstname': 'Riri',
-        'local.email': 'riri@alenvi.io',
-        'contact.phone': '0987654321',
-        'contact.countryCode': '+33',
+      const user = await User
+        .findOne({
+          _id: userId,
+          'identity.firstname': 'Riri',
+          'local.email': 'riri@alenvi.io',
+          'contact.phone': '0987654321',
+          'contact.countryCode': '+33',
+        })
+        .lean();
+      expect(user).toBeDefined();
+      expect(user.iban).toEqual(updatePayload.iban);
+      expect(user.bic).toEqual(updatePayload.bic);
+    });
+
+    it('should return 400 if iban is not valid', async () => {
+      const userId = usersSeedList[0]._id.toHexString();
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { iban: 'mauvaisIBAN', bic: 'WERTFRPP' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
-      expect(userCount).toEqual(1);
+
+      expect(res.statusCode).toBe(400);
+    });
+
+    it('should return 400 if bic is not valid', async () => {
+      const userId = usersSeedList[0]._id.toHexString();
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { iban: 'FR3514508000505917721779B12', bic: 'AAAAAAAaaaaaaa' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(res.statusCode).toBe(400);
     });
 
     it('should update a user with vendor role', async () => {
@@ -1380,6 +1410,21 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       expect(userCount).toEqual(1);
     });
 
+    it('should remove user address', async () => {
+      const userId = usersSeedList[0]._id.toHexString();
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { contact: { address: '' } },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const userCount = await User.countDocuments({ _id: userId, 'contact.address': { $exists: false } });
+      expect(userCount).toEqual(1);
+    });
+
     it('should not update a user if title is not correct', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -1455,6 +1500,15 @@ describe('USERS ROUTES - PUT /users/:id', () => {
         payload: {
           identity: { firstname: 'trainerUpdate' },
           biography: 'It\'s my life',
+          contact: {
+            address: {
+              street: '13, rue du test',
+              fullAddress: '13, rue du test 75007 Paris',
+              zipCode: '75007',
+              city: 'Paris',
+              location: { type: 'Point', coordinates: [4.849302, 2.90887] },
+            },
+          },
         },
       });
 
@@ -1463,6 +1517,20 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       const updatedTrainer = await User
         .countDocuments({ _id: usersSeedList[11]._id, 'identity.firstname': 'trainerUpdate' });
       expect(updatedTrainer).toBeTruthy();
+    });
+
+    it('should remove iban and bic #tag', async () => {
+      const userId = usersSeedList[11]._id.toHexString();
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/users/${userId}`,
+        payload: { iban: '', bic: '' },
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const userCount = await User.countDocuments({ _id: userId, iban: { $exists: false }, bic: { $exists: false } });
+      expect(userCount).toBe(1);
     });
 
     it('should update user with holding', async () => {

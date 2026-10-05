@@ -4,6 +4,7 @@ const { ObjectId } = require('mongodb');
 const SinonMongoose = require('../sinonMongoose');
 const Attendance = require('../../../src/models/Attendance');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
+const TrainingContract = require('../../../src/models/TrainingContract');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Course = require('../../../src/models/Course');
 const CompletionCertificatesHelper = require('../../../src/helpers/completionCertificates');
@@ -423,6 +424,7 @@ describe('list', () => {
 describe('generate', () => {
   let findOneCompletionCertificate;
   let findCompletionCertificate;
+  let findOneTrainingContract;
   let findAttendance;
   let formatIdentity;
   let getPdf;
@@ -439,6 +441,7 @@ describe('generate', () => {
   beforeEach(() => {
     findOneCompletionCertificate = sinon.stub(CompletionCertificate, 'findOne');
     findCompletionCertificate = sinon.stub(CompletionCertificate, 'find');
+    findOneTrainingContract = sinon.stub(TrainingContract, 'findOne');
     findAttendance = sinon.stub(Attendance, 'find');
     formatIdentity = sinon.stub(UtilsHelper, 'formatIdentity');
     getPdf = sinon.stub(CompletionCertificatePdf, 'getPdf');
@@ -459,6 +462,7 @@ describe('generate', () => {
   afterEach(() => {
     findOneCompletionCertificate.restore();
     findCompletionCertificate.restore();
+    findOneTrainingContract.restore();
     findAttendance.restore();
     formatIdentity.restore();
     getPdf.restore();
@@ -582,6 +586,10 @@ describe('generate', () => {
     findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
+    findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
+    findOneTrainingContract.returns(
+      SinonMongoose.stubChainedQueries({ startDate: '2025-01-01T00:00:00.000Z' }, ['sort', 'lean'])
+    );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -704,6 +712,7 @@ describe('generate', () => {
         isPRISubProgram: false,
         certificateGenerationModeIsMonthly: true,
         programName: 'PROGRAM',
+        trainingContractStartDate: '01/01/2025',
       },
       OFFICIAL
     );
@@ -717,7 +726,25 @@ describe('generate', () => {
       { $set: { file: { publicId: '1234', link: 'tests/1234' } } }
     );
     sinon.assert.notCalled(getRealELearningDuration);
-    sinon.assert.notCalled(findCompletionCertificate);
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificate,
+      [
+        {
+          query: 'find',
+          args: [{ course: courseId, trainee: traineeId, _id: { $ne: completionCertificateId } }, { month: 1 }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneTrainingContract,
+      [
+        { query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
+        { query: 'lean' },
+      ]
+    );
   });
 
   it('should generate completion certificate (with real elearning duration)', async () => {
@@ -814,6 +841,7 @@ describe('generate', () => {
     findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
+    findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([{ month: '02-2025' }], ['setOptions', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -947,7 +975,18 @@ describe('generate', () => {
       { $set: { file: { publicId: '1234', link: 'tests/1234' } } }
     );
     sinon.assert.notCalled(getELearningDuration);
-    sinon.assert.notCalled(findCompletionCertificate);
+    SinonMongoose.calledOnceWithExactly(
+      findCompletionCertificate,
+      [
+        {
+          query: 'find',
+          args: [{ course: courseId, trainee: traineeId, _id: { $ne: completionCertificateId } }, { month: 1 }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(findOneTrainingContract);
   });
 
   it('should generate completion certificate in VAE period (attendance within remaining budget)', async () => {
@@ -1044,7 +1083,9 @@ describe('generate', () => {
     findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
-    findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'sort', 'lean']));
+    findCompletionCertificate.onCall(0).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
+    findCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'sort', 'lean']));
+    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -1097,7 +1138,19 @@ describe('generate', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
+      findCompletionCertificate,
+      [
+        {
+          query: 'find',
+          args: [{ course: courseId, trainee: traineeId, _id: { $ne: completionCertificateId } }, { month: 1 }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
       findCompletionCertificate,
       [
         {
@@ -1114,6 +1167,15 @@ describe('generate', () => {
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'sort', args: [{ vaeSupportRemainingMinutes: 1 }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneTrainingContract,
+      [
+        { query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
         { query: 'lean' },
       ]
     );
@@ -1292,12 +1354,14 @@ describe('generate', () => {
     findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
-    findCompletionCertificate.returns(
+    findCompletionCertificate.onCall(0).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
+    findCompletionCertificate.onCall(1).returns(
       SinonMongoose.stubChainedQueries(
         [{ vaeSupportRemainingMinutes: 240 }, { vaeSupportRemainingMinutes: 340 }],
         ['setOptions', 'sort', 'lean']
       )
     );
+    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -1350,7 +1414,19 @@ describe('generate', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
+      findCompletionCertificate,
+      [
+        {
+          query: 'find',
+          args: [{ course: courseId, trainee: traineeId, _id: { $ne: completionCertificateId } }, { month: 1 }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
       findCompletionCertificate,
       [
         {
@@ -1367,6 +1443,15 @@ describe('generate', () => {
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'sort', args: [{ vaeSupportRemainingMinutes: 1 }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneTrainingContract,
+      [
+        { query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
         { query: 'lean' },
       ]
     );
@@ -1545,9 +1630,11 @@ describe('generate', () => {
     findOneCompletionCertificate.returns(
       SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'setOptions', 'lean'])
     );
-    findCompletionCertificate.returns(
+    findCompletionCertificate.onCall(0).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
+    findCompletionCertificate.onCall(1).returns(
       SinonMongoose.stubChainedQueries([{ vaeSupportRemainingMinutes: 0 }], ['setOptions', 'sort', 'lean'])
     );
+    findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
@@ -1600,7 +1687,19 @@ describe('generate', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
+      findCompletionCertificate,
+      [
+        {
+          query: 'find',
+          args: [{ course: courseId, trainee: traineeId, _id: { $ne: completionCertificateId } }, { month: 1 }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
       findCompletionCertificate,
       [
         {
@@ -1617,6 +1716,15 @@ describe('generate', () => {
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'sort', args: [{ vaeSupportRemainingMinutes: 1 }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findOneTrainingContract,
+      [
+        { query: 'findOne', args: [{ course: courseId, company: companyId }, { startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
         { query: 'lean' },
       ]
     );

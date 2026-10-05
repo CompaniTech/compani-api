@@ -1573,14 +1573,16 @@ exports.generateOfficialCompletionCertificatePdf = async (courseData, courseAtte
     courseData.monthlyGlobalCertificateData && courseData.monthlyGlobalCertificateData[trainee._id].vaeSupportDuration
   );
 
+  const { trainingContractStartDate, ...monthlyGlobalCertificateData } =
+    (courseData.monthlyGlobalCertificateData && courseData.monthlyGlobalCertificateData[_id]) || {};
+
   const pdf = await CompletionCertificatePdf.getPdf(
     {
       ...omit(courseData, ['companyNamesById', 'steps', 'certificateGenerationModeIsMonthly']),
       trainee: { _id, identity, attendanceDuration, companyName, eLearningDuration, totalDuration },
       date: CompaniDate().format(DD_MM_YYYY),
-      ...(courseData.certificateGenerationModeIsMonthly && {
-        monthlyGlobalCertificateData: courseData.monthlyGlobalCertificateData[_id],
-      }),
+      ...(courseData.certificateGenerationModeIsMonthly && { monthlyGlobalCertificateData }),
+      ...(trainingContractStartDate && { trainingContractStartDate }),
     },
     OFFICIAL
   );
@@ -1772,18 +1774,35 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
       courseData.isVAEISubProgram = UtilsHelper.doesArrayIncludeId(VAEI_SUBPROGRAM_IDS, courseData.subProgramId);
       courseData.isPRISubProgram = UtilsHelper.doesArrayIncludeId(PRI_SUBPROGRAM_IDS, courseData.subProgramId);
 
+      const trainingContracts = await TrainingContract
+        .find({ course: course._id, startDate: { $exists: true } }, { company: 1, startDate: 1 })
+        .sort({ startDate: 1 })
+        .setOptions({ isVendorUser: true })
+        .lean();
+
       const monthlyGlobalCertificateData = await Promise.all(
         traineeList.map(async (trainee) => {
           const vaeSupportDuration = await computeVAESupportDuration(course, trainee._id, credentials);
           const attendancesByStep = computeAttendancesByStep(trainee._id, allAttendances, course, vaeSupportDuration);
-          return { traineeId: trainee._id, attendancesByStep, vaeSupportDuration };
+          const trainingContract = trainee.company
+            ? trainingContracts.find(tc => UtilsHelper.areObjectIdsEquals(tc.company, trainee.company) && tc.startDate)
+            : null;
+          const trainingContractStartDate = trainingContract
+            ? CompaniDate(trainingContract.startDate).format(DD_MM_YYYY)
+            : undefined;
+
+          return { traineeId: trainee._id, attendancesByStep, vaeSupportDuration, trainingContractStartDate };
         })
       );
 
       courseData.monthlyGlobalCertificateData = Object.fromEntries(
         monthlyGlobalCertificateData.map(d => [
           d.traineeId,
-          { attendancesByStep: d.attendancesByStep, vaeSupportDuration: d.vaeSupportDuration },
+          {
+            attendancesByStep: d.attendancesByStep,
+            vaeSupportDuration: d.vaeSupportDuration,
+            ...(d.trainingContractStartDate && { trainingContractStartDate: d.trainingContractStartDate }),
+          },
         ])
       );
     }

@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const Joi = require('joi');
 const moment = require('moment');
 const get = require('lodash/get');
+const { encrypt, decrypt } = require('../helpers/encryption');
 const { PHONE_VALIDATION, COUNTRY_CODE_VALIDATION } = require('./utils');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
 const { identitySchemaDefinition } = require('./schemaDefinitions/identity');
@@ -108,6 +109,8 @@ const UserSchema = mongoose.Schema({
     countryCode: { type: String, validate: COUNTRY_CODE_VALIDATION },
   },
   mentor: { type: String },
+  iban: { type: String },
+  bic: { type: String },
   contracts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Contract' }],
   administrative: {
     driveFolder: driveResourceSchemaDefinition,
@@ -116,12 +119,6 @@ const UserSchema = mongoose.Schema({
       secondSmsDate: { type: Date },
       step: { type: String, default: 'first' },
       complete: { type: Boolean, default: false },
-    },
-    payment: {
-      rib: {
-        iban: { type: String },
-        bic: { type: String },
-      },
     },
     idCardRecto: driveResourceSchemaDefinition,
     idCardVerso: driveResourceSchemaDefinition,
@@ -231,6 +228,28 @@ async function findOneAndUpdate() {
   } catch (e) {
     console.error('error', e);
   }
+}
+
+function cryptDatas() {
+  const { $set = {}, $unset = {} } = this.getUpdate() || {};
+  if (!Object.keys($set).length && !Object.keys($unset).length) return;
+
+  if ($set.iban) $set.iban = encrypt($set.iban);
+
+  if ($set.bic) $set.bic = encrypt($set.bic);
+}
+
+async function decryptDatas(doc) {
+  if (!doc) return;
+
+  // eslint-disable-next-line no-param-reassign
+  if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
+  // eslint-disable-next-line no-param-reassign
+  if (doc.bic && doc.bic.includes(':')) doc.bic = decrypt(doc.bic);
+}
+
+function decryptDatasList(docs) {
+  for (const doc of docs) decryptDatas(doc);
 }
 
 // eslint-disable-next-line consistent-return
@@ -367,11 +386,14 @@ UserSchema.pre('validate', validate);
 UserSchema.pre('save', save);
 UserSchema.pre('findOneAndUpdate', findOneAndUpdate);
 UserSchema.pre('updateOne', findOneAndUpdate);
+UserSchema.pre('findOneAndUpdate', cryptDatas);
+UserSchema.pre('updateOne', cryptDatas);
 queryMiddlewareList.map(middleware => UserSchema.pre(middleware, formatQuery));
 
 UserSchema.post('find', populateSectors);
 UserSchema.post('find', populateCompanies);
 UserSchema.post('find', populateHoldings);
+UserSchema.post('find', decryptDatasList);
 UserSchema.post('findOne', populateSector);
 UserSchema.post('findOne', populateCustomers);
 UserSchema.post('findOne', populateCompany);
@@ -380,6 +402,7 @@ UserSchema.post('findOneAndUpdate', populateCompany);
 UserSchema.post('findOneAndUpdate', populateHolding);
 UserSchema.post('findOneAndUpdate', populateSector);
 UserSchema.post('findOneAndUpdate', populateCustomers);
+UserSchema.post('findOne', decryptDatas);
 UserSchema.post('save', formatPayload);
 
 UserSchema.plugin(mongooseLeanVirtuals);

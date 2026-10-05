@@ -3,11 +3,13 @@ const omit = require('lodash/omit');
 const keyBy = require('lodash/keyBy');
 const mapValues = require('lodash/mapValues');
 const GCloudStorageHelper = require('./gCloudStorage');
+const GDriveStorageHelper = require('./gDriveStorage');
+const Drive = require('../models/Google/Drive');
 const UtilsHelper = require('./utils');
 const StepsHelper = require('./steps');
 const CourseSlotsHelper = require('./courseSlots');
 const NumbersHelper = require('./numbers');
-const { E_LEARNING, SHORT_DURATION_H_MM, COURSE, TRAINEE, INTER_B2B } = require('./constants');
+const { E_LEARNING, SHORT_DURATION_H_MM, COURSE, TRAINEE, INTER_B2B, SINGLE } = require('./constants');
 const { CompaniDuration } = require('./dates/companiDurations');
 const Course = require('../models/Course');
 const TrainingContract = require('../models/TrainingContract');
@@ -15,7 +17,7 @@ const CourseHistoriesHelper = require('./courseHistories');
 
 exports.create = async (payload) => {
   const course = await Course
-    .findOne({ _id: payload.course }, { companies: 1, tradeName: 1 })
+    .findOne({ _id: payload.course }, { companies: 1, tradeName: 1, type: 1, folderId: 1 })
     .populate([
       { path: 'companies', select: 'name' },
     ])
@@ -25,12 +27,23 @@ exports.create = async (payload) => {
   const companyName = course.companies.find(c => UtilsHelper.areObjectIdsEquals(c._id, payload.company)).name;
 
   const fileName = `convention_${programName}_${companyName}`;
-  const fileUploaded = await GCloudStorageHelper.uploadCourseFile({
-    fileName,
-    file: payload.file,
-  });
 
-  await TrainingContract.create({ ...omit(payload, 'file'), file: fileUploaded });
+  let file;
+  if (course.type === SINGLE && course.folderId) {
+    const uploadFolderId = await GDriveStorageHelper.getUploadFolderId(course.folderId);
+    const uploadedFile = await GDriveStorageHelper.addFile({
+      parentFolderId: uploadFolderId,
+      name: fileName,
+      type: 'application/pdf',
+      body: payload.file,
+    });
+    const driveFileInfo = await Drive.getFileById({ fileId: uploadedFile.id });
+    file = { publicId: uploadedFile.id, link: driveFileInfo.webViewLink };
+  } else {
+    file = await GCloudStorageHelper.uploadCourseFile({ fileName, file: payload.file });
+  }
+
+  await TrainingContract.create({ ...omit(payload, 'file'), file });
 };
 
 exports.list = async (query, credentials) => {
@@ -53,7 +66,11 @@ exports.deleteMany = async (trainingContractIdList) => {
 
   await TrainingContract.deleteMany({ _id: { $in: trainingContractIdList } });
 
-  return Promise.all([trainingContracts.map(tc => GCloudStorageHelper.deleteCourseFile(tc.file.publicId))]);
+  return Promise.all(trainingContracts.map(tc => (
+    tc.file.link.includes('drive.google.com')
+      ? GDriveStorageHelper.deleteFile(tc.file.publicId)
+      : GCloudStorageHelper.deleteCourseFile(tc.file.publicId)
+  )));
 };
 
 const computeElearnigDuration = (steps) => {

@@ -23,6 +23,7 @@ exports.plugin = {
             course: Joi.objectId().required(),
             file: Joi.any().required(),
             company: Joi.objectId().required(),
+            startDate: Joi.date(),
           }),
         },
         pre: [{ method: authorizeTrainingContractUpload }],

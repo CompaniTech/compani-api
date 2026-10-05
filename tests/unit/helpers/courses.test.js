@@ -6626,6 +6626,7 @@ describe('generateCompletionCertificates', () => {
   let getCompanyAtCourseRegistrationList;
   let completionCertificateFind;
   let getVAESupportConfigs;
+  let findTrainingContract;
   const REAL_ELEARNING_DURATION_SUBPROGRAM_ID = new ObjectId();
   const PRI_SUBPROGRAM_IDS = new ObjectId();
   const COACHING_STEP_ID = new ObjectId();
@@ -6648,6 +6649,7 @@ describe('generateCompletionCertificates', () => {
       .stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
     completionCertificateFind = sinon.stub(CompletionCertificate, 'find');
     getVAESupportConfigs = sinon.stub(UtilsHelper, 'getVAESupportConfigs');
+    findTrainingContract = sinon.stub(TrainingContract, 'find');
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
     process.env.VAEI_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
     process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS;
@@ -6670,6 +6672,7 @@ describe('generateCompletionCertificates', () => {
     getCompanyAtCourseRegistrationList.restore();
     completionCertificateFind.restore();
     getVAESupportConfigs.restore();
+    findTrainingContract.restore();
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = '';
     process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.PRI_SUBPROGRAM_IDS = '';
@@ -8760,6 +8763,12 @@ describe('generateCompletionCertificates', () => {
     completionCertificateFind.onCall(0)
       .returns(SinonMongoose.stubChainedQueries([completionCertificateWithRemainingMinutes], ['setOptions', 'lean']));
     completionCertificateFind.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
+    findTrainingContract.returns(
+      SinonMongoose.stubChainedQueries(
+        [{ company: companyId, startDate: '2019-09-01T00:00:00.000Z' }],
+        ['sort', 'setOptions', 'lean']
+      )
+    );
 
     await CourseHelper.generateCompletionCertificates(courseId, credentials, query);
 
@@ -8804,6 +8813,15 @@ describe('generateCompletionCertificates', () => {
       ],
       1
     );
+    SinonMongoose.calledOnceWithExactly(
+      findTrainingContract,
+      [
+        { query: 'find', args: [{ course: courseId, startDate: { $exists: true } }, { company: 1, startDate: 1 }] },
+        { query: 'sort', args: [{ startDate: 1 }] },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
     sinon.assert.calledWithExactly(
       getPdf.getCall(0),
       {
@@ -8832,6 +8850,7 @@ describe('generateCompletionCertificates', () => {
           ],
           vaeSupportDuration: 110,
         },
+        trainingContractStartDate: '01/09/2019',
       },
       OFFICIAL
     );
@@ -8862,6 +8881,7 @@ describe('generateCompletionCertificates', () => {
           ],
           vaeSupportDuration: 120,
         },
+        trainingContractStartDate: '01/09/2019',
       },
       OFFICIAL
     );

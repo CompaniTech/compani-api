@@ -133,7 +133,17 @@ const usersSeedList = [
     role: { client: auxiliaryRoleId },
     refreshToken: uuidv4(),
     administrative: { certificates: [{ driveId: '1234567890' }], driveFolder: { driveId: '0987654321' } },
-    contact: { phone: '0987654321', countryCode: '+33' },
+    contact: {
+      phone: '0987654321',
+      countryCode: '+33',
+      address: {
+        street: '24, rue du test',
+        fullAddress: '24, rue du test 75007 Paris',
+        zipCode: '75007',
+        city: 'Paris',
+        location: { type: 'Point', coordinates: [4.849302, 2.90887] },
+      },
+    },
     contracts: [contractId],
     establishment: establishmentList[0]._id,
     picture: { publicId: 'a/public/id', link: 'https://the.complete.com/link/to/the/picture/storage/location' },
@@ -233,6 +243,8 @@ const usersSeedList = [
     role: { vendor: trainerRoleId },
     refreshToken: uuidv4(),
     origin: WEBAPP,
+    iban: 'FR9210096000302523177152Q14',
+    bic: 'BPCEFRPP',
   },
   { // 12
     _id: new ObjectId(),
