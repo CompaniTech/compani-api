@@ -199,6 +199,7 @@ exports.getOfficialPdfContent = async (data) => {
 
   const attendancesByStep = monthlyGlobalCertificateData?.attendancesByStep || [];
   const vaeSupportDuration = monthlyGlobalCertificateData?.vaeSupportDuration || null;
+  const yOffset = trainingContractStartDate ? 22 : 0;
 
   const imageList = [
     { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
@@ -280,7 +281,6 @@ exports.getOfficialPdfContent = async (data) => {
     else if (isPRISubProgram) natureLabel = 'action de Période de Reconversion Interne';
     else if (vaeSupportDuration) natureLabel = 'action de VAE';
     else natureLabel = 'action de formation';
-    const checkboxYOffset = trainingContractStartDate ? 22 : 0;
     actionDetailsSection = [
       ...(trainingContractStartDate
         ? [{
@@ -308,10 +308,10 @@ exports.getOfficialPdfContent = async (data) => {
         marginBottom: 8,
       },
       { text: [{ text: 'Motif de fin de formation :', bold: true }], marginLeft: 4, marginBottom: 4 },
-      ...defineCheckbox(59, 350 + checkboxYOffset, ' Parcours terminé', isLargeProgramName, !isAbandoned, false),
+      ...defineCheckbox(59, 350 + yOffset, ' Parcours terminé', isLargeProgramName, !isAbandoned, false),
       ...defineCheckbox(
         59,
-        368 + checkboxYOffset,
+        368 + yOffset,
         ' Abandon en cours de parcours',
         isLargeProgramName,
         !!isAbandoned,
@@ -327,7 +327,6 @@ exports.getOfficialPdfContent = async (data) => {
       { text: `E-learning : ${trainee.eLearningDuration}`, marginLeft: 8, marginBottom: 8 },
     ];
   } else {
-    const checkboxYOffset = trainingContractStartDate ? 22 : 0;
     actionDetailsSection = [
       ...(trainingContractStartDate
         ? [{
@@ -346,23 +345,23 @@ exports.getOfficialPdfContent = async (data) => {
       },
       ...defineCheckbox(
         59,
-        306 + checkboxYOffset,
+        306 + yOffset,
         ' action de formation',
         isLargeProgramName,
         !(isVAEISubProgram || isPRISubProgram)
       ),
-      ...defineCheckbox(59, 324 + checkboxYOffset, ' bilan de compétences', isLargeProgramName),
-      ...defineCheckbox(59, 343 + checkboxYOffset, ' action de VAE', isLargeProgramName, !!vaeSupportData),
+      ...defineCheckbox(59, 324 + yOffset, ' bilan de compétences', isLargeProgramName),
+      ...defineCheckbox(59, 343 + yOffset, ' action de VAE', isLargeProgramName, !!vaeSupportData),
       ...defineCheckbox(
         59,
-        361 + checkboxYOffset,
+        361 + yOffset,
         ' action de formation par apprentissage',
         isLargeProgramName
       ),
-      ...defineCheckbox(59, 380 + checkboxYOffset, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
+      ...defineCheckbox(59, 380 + yOffset, ' action de VAE Inversée', isLargeProgramName, isVAEISubProgram),
       ...defineCheckbox(
         59,
-        398 + checkboxYOffset,
+        398 + yOffset,
         ' action de Période de Reconversion Interne',
         isLargeProgramName,
         isPRISubProgram
@@ -433,19 +432,19 @@ exports.getOfficialPdfContent = async (data) => {
         [
           {
             text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-            absolutePosition: { x: 35, y: 568 },
+            absolutePosition: { x: 35, y: 568 + yOffset },
             marginLeft: 46,
           },
           {
             text: [{ text: 'Le : ', bold: true }, { text: `${date}`, italics: true }],
-            absolutePosition: { x: 35, y: 588 },
+            absolutePosition: { x: 35, y: 588 + yOffset },
             marginLeft: 46,
           },
         ],
         [
           {
-            canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
-            absolutePosition: { y: 573 },
+            canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160 - yOffset, r: 0 }],
+            absolutePosition: { y: 573 + yOffset },
             alignment: 'right',
           },
           {
@@ -461,12 +460,12 @@ exports.getOfficialPdfContent = async (data) => {
             alignment: 'center',
             fontSize: 10,
           },
-          { image: signature, width: 125, absolutePosition: { x: 380, y: 636 } },
+          { image: signature, width: 125, absolutePosition: { x: 380, y: 636 + yOffset } },
         ],
       ],
       marginLeft: 40,
       marginRight: 40,
-      absolutePosition: { x: 37, y: 583 },
+      absolutePosition: { x: 37, y: 583 + yOffset },
     },
     ...!monthlyGlobalCertificateData ? [{
       text: [
