@@ -532,19 +532,19 @@ describe('getOfficialPdfContent', () => {
           [
             {
               text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-              absolutePosition: { x: 35, y: 568 },
+              absolutePosition: { x: 35, y: 590 },
               marginLeft: 46,
             },
             {
               text: [{ text: 'Le : ', bold: true }, { text: '22/03/2022', italics: true }],
-              absolutePosition: { x: 35, y: 588 },
+              absolutePosition: { x: 35, y: 610 },
               marginLeft: 46,
             },
           ],
           [
             {
-              canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
-              absolutePosition: { y: 573 },
+              canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 138, r: 0 }],
+              absolutePosition: { y: 595 },
               alignment: 'right',
             },
             {
@@ -560,12 +560,12 @@ describe('getOfficialPdfContent', () => {
               alignment: 'center',
               fontSize: 10,
             },
-            { image: paths[0], width: 125, absolutePosition: { x: 380, y: 636 } },
+            { image: paths[0], width: 125, absolutePosition: { x: 380, y: 658 } },
           ],
         ],
         marginLeft: 40,
         marginRight: 40,
-        absolutePosition: { x: 37, y: 583 },
+        absolutePosition: { x: 37, y: 605 },
       },
       {
         text: [
@@ -1985,19 +1985,19 @@ describe('getOfficialPdfContent', () => {
             [
               {
                 text: [{ text: 'Fait à : ', bold: true }, { text: 'Paris', italics: true }],
-                absolutePosition: { x: 35, y: 568 },
+                absolutePosition: { x: 35, y: 590 },
                 marginLeft: 46,
               },
               {
                 text: [{ text: 'Le : ', bold: true }, { text: '26/03/2025', italics: true }],
-                absolutePosition: { x: 35, y: 588 },
+                absolutePosition: { x: 35, y: 610 },
                 marginLeft: 46,
               },
             ],
             [
               {
-                canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 160, r: 0 }],
-                absolutePosition: { y: 573 },
+                canvas: [{ type: 'rect', x: 0, y: 0, w: 250, h: 138, r: 0 }],
+                absolutePosition: { y: 595 },
                 alignment: 'right',
               },
               {
@@ -2013,12 +2013,12 @@ describe('getOfficialPdfContent', () => {
                 alignment: 'center',
                 fontSize: 10,
               },
-              { image: paths[0], width: 125, absolutePosition: { x: 380, y: 636 } },
+              { image: paths[0], width: 125, absolutePosition: { x: 380, y: 658 } },
             ],
           ],
           marginLeft: 40,
           marginRight: 40,
-          absolutePosition: { x: 37, y: 583 },
+          absolutePosition: { x: 37, y: 605 },
         },
       ];
 
