@@ -2,7 +2,7 @@ const moment = require('moment');
 const fs = require('fs');
 const path = require('path');
 const util = require('util');
-const PdfPrinter = require('pdfmake');
+const pdfmake = require('pdfmake');
 const FileHelper = require('./file');
 
 exports.readFile = util.promisify(fs.readFile);
@@ -43,8 +43,8 @@ const fonts = () => {
 };
 
 exports.generatePdf = async (template, images = []) => {
-  const printer = new PdfPrinter(fonts());
-  const doc = printer.createPdfKitDocument(template);
+  pdfmake.setFonts(fonts());
+  const doc = await pdfmake.createPdf(template).getStream();
   doc.end();
   FileHelper.deleteImages(images);
 

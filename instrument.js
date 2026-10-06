@@ -8,6 +8,5 @@ if (['staging', 'production'].includes(process.env.NODE_ENV)) {
     integrations: [nodeProfilingIntegration()],
     tracesSampleRate: 0.1,
     profileSessionSampleRate: 0.1,
-    enableLogs: true,
   });
 }
