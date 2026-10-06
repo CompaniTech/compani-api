@@ -19,6 +19,7 @@ const {
   MIDDLE_COURSE,
   RESEND,
   DAY,
+  OTHER,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const UserCompaniesHelper = require('../../helpers/userCompanies');
@@ -80,7 +81,7 @@ exports.authorizeSendEmailBillList = async (req) => {
     throw Boom.forbidden(translate[language].wrongCourseBills.someCoursesAreNotVAEI);
   }
 
-  if (type !== RESEND) {
+  if (![RESEND, OTHER].includes(type)) {
     const everyCourseIsVAEI = courseBills.every(cb => isVAEICourse(cb.course));
     const noneCourseIsVAEI = courseBills.every(cb => !isVAEICourse(cb.course));
 
@@ -107,7 +108,7 @@ exports.authorizeSendEmailBillList = async (req) => {
     if (type !== VAEI && someCoursesAreVAEI) {
       throw Boom.forbidden(translate[language].wrongCourseBills.someCoursesAreVAEI);
     }
-  } else if (courseBills.some(cb => !cb.sendingDates)) {
+  } else if (type === RESEND && courseBills.some(cb => !cb.sendingDates)) {
     throw Boom.forbidden(translate[language].wrongCourseBills.someBillsHaveNotBeenSent);
   }
 
