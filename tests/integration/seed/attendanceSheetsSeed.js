@@ -10,8 +10,10 @@ const Step = require('../../../src/models/Step');
 const Program = require('../../../src/models/Program');
 const SubProgram = require('../../../src/models/SubProgram');
 const TrainerBill = require('../../../src/models/TrainerBill');
+const TrainerPayment = require('../../../src/models/TrainerPayment');
 const { authCompany, otherCompany, companyWithoutSubscription, otherHolding } = require('../../seed/authCompaniesSeed');
 const {
+  PAID,
   WEBAPP,
   INTRA,
   INTER_B2B,
@@ -24,7 +26,6 @@ const {
   SINGLE,
   PRESENT,
   MISSING,
-  PAID,
 } = require('../../../src/helpers/constants');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const UserCompany = require('../../../src/models/UserCompany');
@@ -556,10 +557,19 @@ const trainerBillList = [
     _id: trainerBillId,
     trainer: trainer._id,
     number: 'FAC-0001',
-    status: PAID,
     courseSlots: [slotsList[29]._id],
     amount: 0,
     submittedAt: '2022-06-03T10:00:00.000Z',
+  },
+];
+
+const trainerPaymentList = [
+  {
+    _id: new ObjectId(),
+    number: 'REG-00001',
+    trainerBill: trainerBillId,
+    amount: 0,
+    status: PAID,
   },
 ];
 
@@ -1118,6 +1128,7 @@ const populateDB = async () => {
     Program.create(programsList),
     CompletionCertificate.create(completionCertificates),
     TrainerBill.create(trainerBillList),
+    TrainerPayment.create(trainerPaymentList),
   ]);
 };
 

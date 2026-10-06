@@ -109,7 +109,7 @@ describe('list', () => {
   it('should query every status when status is an array', async () => {
     const trainerPayments = [{ _id: new ObjectId(), status: PAID }, { _id: new ObjectId(), status: PENDING }];
 
-    trainerPaymentFind.returns(SinonMongoose.stubChainedQueries([trainerPayments], ['populate', 'sort', 'lean']));
+    trainerPaymentFind.returns(SinonMongoose.stubChainedQueries(trainerPayments, ['populate', 'sort', 'lean']));
 
     const result = await TrainerPaymentsHelper.list({ status: [PENDING, PAID] });
     expect(result).toEqual(trainerPayments);

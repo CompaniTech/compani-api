@@ -14,6 +14,7 @@ const CompletionCertificate = require('../../../src/models/CompletionCertificate
 const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const CourseHistory = require('../../../src/models/CourseHistory');
 const TrainerBill = require('../../../src/models/TrainerBill');
+const TrainerPayment = require('../../../src/models/TrainerPayment');
 const { authCompany, otherCompany, companyWithoutSubscription, authHolding } = require('../../seed/authCompaniesSeed');
 const {
   vendorAdmin,
@@ -24,6 +25,7 @@ const {
   trainerOrganisationManager,
 } = require('../../seed/authUsersSeed');
 const {
+  PAID,
   WEBAPP,
   INTRA,
   PUBLISHED,
@@ -35,7 +37,6 @@ const {
   PRESENT,
   MOBILE,
   TRAINER_DELETION,
-  PAID,
   VAEI_COACH,
   ARCHITECT,
 } = require('../../../src/helpers/constants');
@@ -429,7 +430,6 @@ const trainerBillList = [
     _id: trainerBillIds[0],
     trainer: trainerAndCoach._id,
     number: 'FACT_0012',
-    status: PAID,
     courseSlots: [courseSlotsList[12]._id],
     amount: 90,
     submittedAt: '2020-05-15T10:00:00.000Z',
@@ -438,10 +438,26 @@ const trainerBillList = [
     _id: trainerBillIds[1],
     trainer: trainer._id,
     number: 'Fact_test',
-    status: PAID,
     courseSlots: [courseSlotsList[16]._id],
     amount: 90,
     submittedAt: '2020-05-15T10:00:00.000Z',
+  },
+];
+
+const trainerPaymentList = [
+  {
+    _id: new ObjectId(),
+    number: 'REG-00001',
+    trainerBill: trainerBillIds[0],
+    amount: 90,
+    status: PAID,
+  },
+  {
+    _id: new ObjectId(),
+    number: 'REG-00002',
+    trainerBill: trainerBillIds[1],
+    amount: 90,
+    status: PAID,
   },
 ];
 
@@ -561,6 +577,7 @@ const populateDB = async () => {
     AttendanceSheet.create(attendanceSheets),
     UserCompany.create(userCompanies),
     TrainerBill.create(trainerBillList),
+    TrainerPayment.create(trainerPaymentList),
   ]);
 };
 
