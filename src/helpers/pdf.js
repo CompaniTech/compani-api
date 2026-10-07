@@ -22,25 +22,29 @@ exports.formatEventSurchargesForPdf = (eventSurcharges) => {
   return formattedSurcharges;
 };
 
-const fonts = () => {
-  const fontAbsolutePath = path.resolve(__dirname, '../data/pdf/fonts');
+const FONTS_PATH = path.resolve(__dirname, '../data/pdf/fonts');
+const TMP_IMAGES_PATH = path.resolve(__dirname, '../data/pdf/tmp');
 
-  return {
-    SourceSans: {
-      normal: `${fontAbsolutePath}/SourceSansPro-Regular.ttf`,
-      bold: `${fontAbsolutePath}/SourceSansPro-Bold.ttf`,
-      italics: `${fontAbsolutePath}/SourceSansPro-Italic.ttf`,
-    },
-    Calibri: {
-      normal: `${fontAbsolutePath}/Calibri-Regular.ttf`,
-      bold: `${fontAbsolutePath}/Calibri-Bold.TTF`,
-      italics: `${fontAbsolutePath}/Calibri-Italic.ttf`,
-    },
-    icon: {
-      normal: `${fontAbsolutePath}/icon.ttf`,
-    },
-  };
-};
+const fonts = () => ({
+  SourceSans: {
+    normal: `${FONTS_PATH}/SourceSansPro-Regular.ttf`,
+    bold: `${FONTS_PATH}/SourceSansPro-Bold.ttf`,
+    italics: `${FONTS_PATH}/SourceSansPro-Italic.ttf`,
+  },
+  Calibri: {
+    normal: `${FONTS_PATH}/Calibri-Regular.ttf`,
+    bold: `${FONTS_PATH}/Calibri-Bold.TTF`,
+    italics: `${FONTS_PATH}/Calibri-Italic.ttf`,
+  },
+  icon: {
+    normal: `${FONTS_PATH}/icon.ttf`,
+  },
+});
+
+pdfmake.setUrlAccessPolicy(() => false);
+
+pdfmake.setLocalAccessPolicy(filePath => [FONTS_PATH, TMP_IMAGES_PATH]
+  .some(dir => path.resolve(filePath).startsWith(`${dir}/`)));
 
 exports.generatePdf = async (template, images = []) => {
   pdfmake.setFonts(fonts());
