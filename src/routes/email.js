@@ -17,6 +17,7 @@ const {
   MIDDLE_COURSE,
   END_COURSE,
   RESEND,
+  OTHER,
 } = require('../helpers/constants');
 
 exports.plugin = {
@@ -49,7 +50,7 @@ exports.plugin = {
           payload: Joi.object().keys({
             bills: Joi.array().items(Joi.objectId()).min(1).required(),
             content: Joi.string().required(),
-            type: Joi.string().valid(VAEI, START_COURSE, MIDDLE_COURSE, END_COURSE, RESEND).required(),
+            type: Joi.string().valid(VAEI, START_COURSE, MIDDLE_COURSE, END_COURSE, RESEND, OTHER).required(),
             recipientEmails: Joi.array().items(Joi.string().email()).min(1).required(),
             sendingDate: Joi.date().required(),
           }),
