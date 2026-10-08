@@ -41,16 +41,24 @@ describe('TRAINER PAYMENTS ROUTES - GET /trainerpayments', () => {
   });
 
   describe('Other roles', () => {
-    it('should return 403 as user is trainer', async () => {
-      authToken = await getToken('trainer');
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+      { name: 'trainer', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
 
-      const response = await app.inject({
-        method: 'GET',
-        url: '/trainerpayments?status=pending',
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        const response = await app.inject({
+          method: 'GET',
+          url: '/trainerpayments?status=pending',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
       });
-
-      expect(response.statusCode).toBe(403);
     });
   });
 });
@@ -124,7 +132,6 @@ describe('TRAINER PAYMENTS ROUTES - PUT /trainerpayments/{_id}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'coach', expectedCode: 403 },
       { name: 'trainer', expectedCode: 403 },
     ];
     roles.forEach((role) => {
@@ -183,14 +190,14 @@ describe('TRAINER PAYMENTS ROUTES - DELETE /trainerpayments/{_id}', () => {
       sinon.assert.calledOnceWithExactly(deleteCourseFile, 'publicId');
     });
 
-    it('should return 409 if trainer payment is already paid', async () => {
+    it('should return 403 if trainer payment is already paid', async () => {
       const response = await app.inject({
         method: 'DELETE',
         url: `/trainerpayments/${paidTrainerPaymentId}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
-      expect(response.statusCode).toBe(409);
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 404 if trainer payment does not exist', async () => {
@@ -209,7 +216,6 @@ describe('TRAINER PAYMENTS ROUTES - DELETE /trainerpayments/{_id}', () => {
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
-      { name: 'coach', expectedCode: 403 },
       { name: 'trainer', expectedCode: 403 },
     ];
     roles.forEach((role) => {

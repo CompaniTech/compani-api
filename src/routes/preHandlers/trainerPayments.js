@@ -22,7 +22,7 @@ exports.authorizeTrainerPaymentDeletion = async (req) => {
     const trainerPayment = await TrainerPayment.findOne({ _id: req.params._id }, { status: 1 }).lean();
     if (!trainerPayment) throw Boom.notFound();
 
-    if (trainerPayment.status !== PENDING) throw Boom.conflict(translate[language].trainerBillStatusConflict);
+    if (trainerPayment.status !== PENDING) throw Boom.forbidden(translate[language].trainerPaymentWrongStatus);
 
     return null;
   } catch (e) {
