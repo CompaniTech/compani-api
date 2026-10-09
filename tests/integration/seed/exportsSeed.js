@@ -119,6 +119,7 @@ const Holding = require('../../../src/models/Holding');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const VendorCompany = require('../../../src/models/VendorCompany');
 const TrainerBill = require('../../../src/models/TrainerBill');
+const TrainerPayment = require('../../../src/models/TrainerPayment');
 
 const sector = { _id: new ObjectId(), name: 'Etoile', company: authCompany._id };
 
@@ -1860,7 +1861,6 @@ const trainerBillList = [
     _id: trainerBillIds[0],
     trainer: trainer._id,
     number: 'FACT_0001',
-    status: PAID,
     courseSlots: [courseSlotList[0]._id, courseSlotList[5]._id, courseSlotList[6]._id],
     amount: 0,
     submittedAt: '2021-05-03T10:00:00.000Z',
@@ -1869,7 +1869,6 @@ const trainerBillList = [
     _id: trainerBillIds[1],
     trainer: trainerAndCoach._id,
     number: 'FACT_01234',
-    status: PAID,
     courseSlots: [courseSlotList[1]._id],
     amount: 200,
     submittedAt: '2021-05-03T10:00:00.000Z',
@@ -1878,7 +1877,6 @@ const trainerBillList = [
     _id: trainerBillIds[2],
     trainer: trainer._id,
     number: 'FACT_0002',
-    status: PAID,
     courseSlots: [courseSlotList[2]._id, courseSlotList[3]._id],
     amount: 0,
     submittedAt: '2021-05-03T10:00:00.000Z',
@@ -1887,7 +1885,6 @@ const trainerBillList = [
     _id: trainerBillIds[3],
     trainer: trainer._id,
     number: 'FACT_00012',
-    status: PAID,
     courseSlots: [courseSlotList[12]._id],
     amount: 200,
     submittedAt: '2021-05-03T10:00:00.000Z',
@@ -1896,10 +1893,47 @@ const trainerBillList = [
     _id: trainerBillIds[4],
     trainer: trainerAndCoach._id,
     number: 'FACT_234w',
-    status: PAID,
     courseSlots: [courseSlotList[12]._id],
     amount: 200,
     submittedAt: '2021-05-03T10:00:00.000Z',
+  },
+];
+
+const trainerPaymentList = [
+  {
+    _id: new ObjectId(),
+    number: 'REG-00001',
+    trainerBill: trainerBillIds[0],
+    amount: 0,
+    status: PAID,
+  },
+  {
+    _id: new ObjectId(),
+    number: 'REG-00002',
+    trainerBill: trainerBillIds[1],
+    amount: 200,
+    status: PAID,
+  },
+  {
+    _id: new ObjectId(),
+    number: 'REG-00003',
+    trainerBill: trainerBillIds[2],
+    amount: 0,
+    status: PAID,
+  },
+  {
+    _id: new ObjectId(),
+    number: 'REG-00004',
+    trainerBill: trainerBillIds[3],
+    amount: 200,
+    status: PAID,
+  },
+  {
+    _id: new ObjectId(),
+    number: 'REG-00005',
+    trainerBill: trainerBillIds[4],
+    amount: 200,
+    status: PAID,
   },
 ];
 
@@ -2540,6 +2574,7 @@ const populateDB = async () => {
     SubProgram.create(subProgramList),
     ThirdPartyPayer.create(thirdPartyPayer),
     TrainerBill.create(trainerBillList),
+    TrainerPayment.create(trainerPaymentList),
     User.create([...auxiliaryList, ...traineeList, user, trainer, operationsRepresentative]),
     UserCompany.create(userCompanies),
     XmlSEPAFileInfos.create(xmlSEPAFileInfos),

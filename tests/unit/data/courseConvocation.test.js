@@ -172,10 +172,10 @@ describe('getPdfContent', () => {
     expect(result.images).toEqual(paths);
 
     const imageList = [
-      { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
-      { url: 'https://storage.googleapis.com/compani-main/doct-explication.png', name: 'doct-explication.png' },
-      { url: 'https://storage.googleapis.com/compani-main/doct-quizz.png', name: 'doct-quizz.png' },
-      { url: 'https://storage.googleapis.com/compani-main/aux-perplexite.png', name: 'aux-perplexite.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_doct-explication.png', name: 'doct-explication.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_doct-quizz.png', name: 'doct-quizz.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-perplexite.png', name: 'aux-perplexite.png' },
     ];
     sinon.assert.calledOnceWithExactly(downloadImages, imageList);
   });
@@ -327,10 +327,10 @@ describe('getPdfContent', () => {
     expect(result.images).toEqual(paths);
 
     const imageList = [
-      { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
-      { url: 'https://storage.googleapis.com/compani-main/doct-explication.png', name: 'doct-explication.png' },
-      { url: 'https://storage.googleapis.com/compani-main/doct-quizz.png', name: 'doct-quizz.png' },
-      { url: 'https://storage.googleapis.com/compani-main/aux-perplexite.png', name: 'aux-perplexite.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_doct-explication.png', name: 'doct-explication.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_doct-quizz.png', name: 'doct-quizz.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-perplexite.png', name: 'aux-perplexite.png' },
     ];
     sinon.assert.calledOnceWithExactly(downloadImages, imageList);
   });
@@ -393,10 +393,10 @@ describe('getPdf', () => {
       },
     };
     const images = [
-      { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
-      { url: 'https://storage.googleapis.com/compani-main/doct-explication.png', name: 'doct-explication.png' },
-      { url: 'https://storage.googleapis.com/compani-main/doct-quizz.png', name: 'doct-quizz.png' },
-      { url: 'https://storage.googleapis.com/compani-main/aux-perplexite.png', name: 'aux-perplexite.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_doct-explication.png', name: 'doct-explication.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_doct-quizz.png', name: 'doct-quizz.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-perplexite.png', name: 'aux-perplexite.png' },
     ];
     getPdfContent.returns({ template, images });
     generatePdf.returns('pdf');

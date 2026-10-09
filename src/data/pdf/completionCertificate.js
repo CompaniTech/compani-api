@@ -1,13 +1,13 @@
 const { CompaniDuration } = require('../../helpers/dates/companiDurations');
 const FileHelper = require('../../helpers/file');
 const PdfHelper = require('../../helpers/pdf');
-const { COPPER_500, ORANGE_500, COPPER_50, CUSTOM, SHORT_DURATION_H_MM } = require('../../helpers/constants');
+const { COPPER_500, ORANGE_500, COPPER_100, CUSTOM, SHORT_DURATION_H_MM } = require('../../helpers/constants');
 
 const getImages = async () => {
   const imageList = [
-    { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
+    { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
     { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
-    { url: 'https://storage.googleapis.com/compani-main/aux-eclaire.png', name: 'aux-eclaire.png' },
+    { url: 'https://storage.googleapis.com/compani-main/copper_aux-eclaire.png', name: 'aux-eclaire.png' },
     { url: 'https://storage.googleapis.com/compani-main/smiling-emoji.png', name: 'smiling-emoji.png' },
     { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
   ];
@@ -57,7 +57,7 @@ exports.getCustomPdfContent = async (data) => {
       marginBottom: 16,
     },
     {
-      canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: isLargeProgramName ? 32 : 24, r: 0, color: COPPER_50 }],
+      canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: isLargeProgramName ? 32 : 24, r: 0, color: COPPER_100 }],
       absolutePosition: { x: 40, y: 240 },
       marginBottom: 8,
     },

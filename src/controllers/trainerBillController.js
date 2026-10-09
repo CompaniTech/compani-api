@@ -23,26 +23,4 @@ const create = async (req) => {
   }
 };
 
-const update = async (req) => {
-  try {
-    await TrainerBillsHelper.update(req.params._id, req.payload);
-
-    return { message: translate[language].trainerBillUpdated };
-  } catch (e) {
-    req.log('error', e);
-    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
-  }
-};
-
-const remove = async (req) => {
-  try {
-    await TrainerBillsHelper.remove(req.params._id);
-
-    return { message: translate[language].trainerBillRemoved };
-  } catch (e) {
-    req.log('error', e);
-    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
-  }
-};
-
-module.exports = { create, update, remove };
+module.exports = { create };

@@ -1501,7 +1501,14 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1691,7 +1698,14 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1732,7 +1746,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0001' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0001', payment: { status: PAID } } }],
       },
       { // individual slot (MISSING)
         _id: new ObjectId(),
@@ -1756,7 +1770,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0001' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0001', payment: { status: PAID } } }],
       },
       { // collective slot (MISSING)
         _id: new ObjectId(),
@@ -1780,7 +1794,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0002' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0002', payment: { status: PAID } } }],
       },
       { // collective slot (MISSING)
         _id: new ObjectId(),
@@ -1804,7 +1818,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0002' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0002', payment: { status: PAID } } }],
       },
       { // collective slot with an unresolvable role-based price (PRESENT)
         _id: new ObjectId(),
@@ -1834,7 +1848,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0003' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0003', payment: { status: PAID } } }],
       },
       { // individual slot with several trainers and differentiated prices, 2 of them sharing the same role (PRESENT)
         _id: new ObjectId(),
@@ -2056,7 +2070,14 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );

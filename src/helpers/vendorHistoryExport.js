@@ -443,7 +443,11 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       },
     })
     .populate({ path: 'trainers', select: 'identity contact' })
-    .populate({ path: 'trainerBillings.trainerBill', select: 'status number' })
+    .populate({
+      path: 'trainerBillings.trainerBill',
+      select: 'number',
+      populate: { path: 'payment', select: 'status' },
+    })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 

@@ -3,9 +3,9 @@ const FileHelper = require('../../../helpers/file');
 
 exports.getImages = async () => {
   const imageList = [
-    { url: 'https://storage.googleapis.com/compani-main/aux-conscience-eclairee.png', name: 'conscience.png' },
+    { url: 'https://storage.googleapis.com/compani-main/copper_aux-conscience-eclairee.png', name: 'conscience.png' },
     { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
-    { url: 'https://storage.googleapis.com/compani-main/aux-prisededecision.png', name: 'decision.png' },
+    { url: 'https://storage.googleapis.com/compani-main/copper_aux-prisededecision.png', name: 'decision.png' },
     { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
   ];
 

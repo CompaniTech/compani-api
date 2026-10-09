@@ -4,7 +4,7 @@ const { expect } = require('expect');
 const FileHelper = require('../../../src/helpers/file');
 const PdfHelper = require('../../../src/helpers/pdf');
 const CompletionCertificate = require('../../../src/data/pdf/completionCertificate');
-const { COPPER_50, COPPER_500, ORANGE_500, OFFICIAL } = require('../../../src/helpers/constants');
+const { COPPER_100, COPPER_500, ORANGE_500, OFFICIAL } = require('../../../src/helpers/constants');
 
 describe('getCustomPdfContent', () => {
   let downloadImages;
@@ -77,7 +77,7 @@ describe('getCustomPdfContent', () => {
         marginBottom: 16,
       },
       {
-        canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 24, r: 0, color: COPPER_50 }],
+        canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 24, r: 0, color: COPPER_100 }],
         absolutePosition: { x: 40, y: 240 },
         marginBottom: 8,
       },
@@ -170,9 +170,9 @@ describe('getCustomPdfContent', () => {
     expect(result.images).toEqual(paths);
 
     const imageList = [
-      { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
-      { url: 'https://storage.googleapis.com/compani-main/aux-eclaire.png', name: 'aux-eclaire.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-eclaire.png', name: 'aux-eclaire.png' },
       { url: 'https://storage.googleapis.com/compani-main/smiling-emoji.png', name: 'smiling-emoji.png' },
       { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
     ];
@@ -238,7 +238,7 @@ describe('getCustomPdfContent', () => {
         marginBottom: 16,
       },
       {
-        canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 24, r: 0, color: COPPER_50 }],
+        canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: 24, r: 0, color: COPPER_100 }],
         absolutePosition: { x: 40, y: 240 },
         marginBottom: 8,
       },
@@ -327,9 +327,9 @@ describe('getCustomPdfContent', () => {
     expect(result.images).toEqual(paths);
 
     const imageList = [
-      { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
-      { url: 'https://storage.googleapis.com/compani-main/aux-eclaire.png', name: 'aux-eclaire.png' },
+      { url: 'https://storage.googleapis.com/compani-main/copper_aux-eclaire.png', name: 'aux-eclaire.png' },
       { url: 'https://storage.googleapis.com/compani-main/smiling-emoji.png', name: 'smiling-emoji.png' },
       { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
     ];
@@ -2080,7 +2080,7 @@ describe('getPdf', () => {
         programName: { fontSize: 12, alignment: 'center', color: COPPER_500, marginBottom: 16 },
       },
     };
-    const images = [{ url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'logo.png' }];
+    const images = [{ url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'logo.png' }];
     getCustomPdfContent.returns({ template, images });
     generatePdf.returns('pdf');
 

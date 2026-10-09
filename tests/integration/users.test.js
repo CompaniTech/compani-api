@@ -1519,7 +1519,7 @@ describe('USERS ROUTES - PUT /users/:id', () => {
       expect(updatedTrainer).toBeTruthy();
     });
 
-    it('should remove iban and bic #tag', async () => {
+    it('should remove iban and bic', async () => {
       const userId = usersSeedList[11]._id.toHexString();
       const res = await app.inject({
         method: 'PUT',

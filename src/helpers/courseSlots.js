@@ -87,7 +87,10 @@ exports.getSlotStatus = (slot, trainerId) => {
   if (!trainerBilling) return { status: NOT_INVOICED, trainerBilling: null };
 
   // A trainerBilling with no trainerBill is a slot paid before this billing system existed.
-  return { status: trainerBilling.trainerBill ? trainerBilling.trainerBill.status : PAID, trainerBilling };
+  if (!trainerBilling.trainerBill) return { status: PAID, trainerBilling };
+
+  const isPaid = get(trainerBilling, 'trainerBill.payment.status') === PAID;
+  return { status: isPaid ? PAID : INVOICED, trainerBilling };
 };
 
 const formatSingleTraineeSlots = (singleTraineeSlots, trainerId) => {
@@ -248,7 +251,11 @@ exports.list = async (query) => {
       ],
     })
     .populate({ path: 'attendances', select: 'status', options: { isVendorUser: true } })
-    .populate({ path: 'trainerBillings.trainerBill', select: 'status number' })
+    .populate({
+      path: 'trainerBillings.trainerBill',
+      select: 'number',
+      populate: { path: 'payment', select: 'status' },
+    })
     .lean();
 
   const filteredCourseSlots = courseSlots.filter(slot => slot.attendances.length);
