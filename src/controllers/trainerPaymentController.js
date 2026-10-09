@@ -19,7 +19,7 @@ const update = async (req) => {
   try {
     await TrainerPaymentsHelper.update(req.params._id, req.payload);
 
-    return { message: translate[language].trainerBillUpdated };
+    return { message: translate[language].trainerPaymentUpdated };
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);
@@ -30,7 +30,7 @@ const remove = async (req) => {
   try {
     await TrainerPaymentsHelper.remove(req.params._id);
 
-    return { message: translate[language].trainerBillRemoved };
+    return { message: translate[language].trainerPaymentRemoved };
   } catch (e) {
     req.log('error', e);
     return Boom.isBoom(e) ? e : Boom.badImplementation(e);

@@ -226,6 +226,8 @@ module.exports = {
     trainerBillNumberAlreadyUsed: 'This bill number is already used.',
     trainerBillUpdated: 'Trainer bill updated.',
     trainerBillRemoved: 'Trainer bill removed.',
+    trainerPaymentUpdated: 'Trainer payment updated.',
+    trainerPaymentRemoved: 'Trainer payment removed.',
     trainerPaymentWrongStatus: 'Impossible : trainer payment is not pending.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Course funding organisations found.',
@@ -601,7 +603,9 @@ module.exports = {
     trainerBillNumberAlreadyUsed: 'Ce numéro de facture est déjà utilisé.',
     trainerBillUpdated: 'Facture de l\'intervenant·e modifiée.',
     trainerBillRemoved: 'Facture de l\'intervenant·e annulée.',
-    trainerPaymentStatusConflict: 'Suppression impossible : le paiement n\'est pas en attente.',
+    trainerPaymentUpdated: 'Paiement de l\'intervenant·e modifié.',
+    trainerPaymentRemoved: 'Paiement de l\'intervenant·e supprimé.',
+    trainerPaymentWrongStatus: 'Suppression impossible : le paiement n\'est pas en attente.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
     courseFundingOrganisationsNotFound: 'Financeurs non trouvés.',
