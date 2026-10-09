@@ -8,7 +8,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { vendorAdmin, trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
-const { INTRA, PUBLISHED, GLOBAL, INVOICED, PAID } = require('../../../src/helpers/constants');
+const { INTRA, PUBLISHED, GLOBAL } = require('../../../src/helpers/constants');
 
 const step = { _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 };
 
@@ -89,19 +89,19 @@ const trainerBillList = [
     _id: trainerBillId,
     trainer: trainer._id,
     number: 'FACT_0001',
-    status: INVOICED,
     courseSlots: [courseSlotsList[2]._id],
     amount: 100,
     submittedAt: '2023-01-01T10:00:00.000Z',
+    file: { publicId: 'publicId', link: 'link' },
   },
   {
     _id: paidTrainerBillId,
     trainer: trainer._id,
     number: 'FACT_0099',
-    status: PAID,
     courseSlots: [courseSlotsList[4]._id],
     amount: 100,
     submittedAt: '2023-01-02T10:00:00.000Z',
+    file: { publicId: 'publicId2', link: 'link2' },
   },
 ];
 

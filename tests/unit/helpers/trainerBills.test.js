@@ -4,12 +4,14 @@ const { expect } = require('expect');
 const Boom = require('@hapi/boom');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const TrainerBill = require('../../../src/models/TrainerBill');
+const TrainerPayment = require('../../../src/models/TrainerPayment');
+const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
-const EmailHelper = require('../../../src/helpers/email');
+const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
 const TrainerBillsHelper = require('../../../src/helpers/trainerBills');
 const SinonMongoose = require('../sinonMongoose');
 const translate = require('../../../src/helpers/translate');
-const { INVOICED, PAID } = require('../../../src/helpers/constants');
+const { PAYMENT, PENDING } = require('../../../src/helpers/constants');
 
 const { language } = translate;
 
@@ -18,14 +20,21 @@ describe('createBill', () => {
   let trainerBillCreate;
   let courseSlotUpdateMany;
   let getHourlyAmount;
-  let sendTrainerBillEmail;
+  let uploadCourseFile;
+  let coursePaymentNumberFindOneAndUpdate;
+  let trainerPaymentCreate;
 
   beforeEach(() => {
     courseSlotFind = sinon.stub(CourseSlot, 'find');
     trainerBillCreate = sinon.stub(TrainerBill, 'create');
     courseSlotUpdateMany = sinon.stub(CourseSlot, 'updateMany');
     getHourlyAmount = sinon.stub(CourseSlotsHelper, 'getHourlyAmount');
-    sendTrainerBillEmail = sinon.stub(EmailHelper, 'sendTrainerBillEmail');
+    uploadCourseFile = sinon.stub(GCloudStorageHelper, 'uploadCourseFile');
+    coursePaymentNumberFindOneAndUpdate = sinon.stub(CoursePaymentNumber, 'findOneAndUpdate');
+    trainerPaymentCreate = sinon.stub(TrainerPayment, 'create');
+
+    uploadCourseFile.returns({ link: 'link', publicId: 'publicId' });
+    coursePaymentNumberFindOneAndUpdate.returns({ lean: sinon.stub().returns({ seq: 7 }) });
   });
 
   afterEach(() => {
@@ -33,7 +42,9 @@ describe('createBill', () => {
     trainerBillCreate.restore();
     courseSlotUpdateMany.restore();
     getHourlyAmount.restore();
-    sendTrainerBillEmail.restore();
+    uploadCourseFile.restore();
+    coursePaymentNumberFindOneAndUpdate.restore();
+    trainerPaymentCreate.restore();
   });
 
   it('should create a trainer bill and link it to the course slots', async () => {
@@ -82,14 +93,18 @@ describe('createBill', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(
+      uploadCourseFile,
+      { fileName: 'facture Jean DUPONT FACT_0001', file: 'file', contentType: 'application/pdf' }
+    );
+    sinon.assert.calledOnceWithExactly(
       trainerBillCreate,
       {
         trainer: credentials._id,
         number: 'FACT_0001',
-        status: INVOICED,
         courseSlots: courseSlotIds,
         amount: '125',
         submittedAt: sinon.match.string,
+        file: { link: 'link', publicId: 'publicId' },
       }
     );
     sinon.assert.calledOnceWithExactly(
@@ -97,7 +112,21 @@ describe('createBill', () => {
       { _id: { $in: courseSlotIds } },
       { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBillId } } }
     );
-    sinon.assert.calledOnceWithExactly(sendTrainerBillEmail, 'FACT_0001', '125', 'Jean DUPONT', courseSlots, 'file');
+    sinon.assert.calledOnceWithExactly(
+      coursePaymentNumberFindOneAndUpdate,
+      { nature: PAYMENT },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    sinon.assert.calledOnceWithExactly(
+      trainerPaymentCreate,
+      {
+        number: 'REG-00007',
+        trainerBill: trainerBillId,
+        amount: '125',
+        status: PENDING,
+      }
+    );
     sinon.assert.calledWithExactly(getHourlyAmount.getCall(0), courseSlots[0], credentials._id);
     sinon.assert.calledWithExactly(getHourlyAmount.getCall(1), courseSlots[1], credentials._id);
   });
@@ -155,10 +184,10 @@ describe('createBill', () => {
       {
         trainer: credentials._id,
         number: 'FACT_0003',
-        status: INVOICED,
         courseSlots: courseSlotIds,
         amount: '170',
         submittedAt: sinon.match.string,
+        file: { link: 'link', publicId: 'publicId' },
       }
     );
     sinon.assert.calledOnceWithExactly(
@@ -166,7 +195,7 @@ describe('createBill', () => {
       { _id: { $in: courseSlotIds } },
       { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBillId } } }
     );
-    sinon.assert.calledOnceWithExactly(sendTrainerBillEmail, 'FACT_0003', '170', 'Jean DUPONT', courseSlots, 'file');
+    sinon.assert.calledOnceWithExactly(trainerPaymentCreate, sinon.match({ number: 'REG-00007', amount: '170' }));
     sinon.assert.calledWithExactly(getHourlyAmount.getCall(0), courseSlots[0], credentials._id);
     sinon.assert.calledWithExactly(getHourlyAmount.getCall(1), courseSlots[2], credentials._id);
   });
@@ -226,59 +255,11 @@ describe('createBill', () => {
       {
         trainer: credentials._id,
         number: 'FACT_0005',
-        status: INVOICED,
         courseSlots: courseSlotIds,
         amount: '50',
         submittedAt: sinon.match.string,
+        file: { link: 'link', publicId: 'publicId' },
       }
     );
-  });
-});
-
-describe('update', () => {
-  let trainerBillUpdateOne;
-
-  beforeEach(() => {
-    trainerBillUpdateOne = sinon.stub(TrainerBill, 'updateOne');
-  });
-
-  afterEach(() => {
-    trainerBillUpdateOne.restore();
-  });
-
-  it('should update the trainer bill status', async () => {
-    const trainerBillId = new ObjectId();
-
-    await TrainerBillsHelper.update(trainerBillId, { status: PAID });
-
-    sinon.assert.calledOnceWithExactly(trainerBillUpdateOne, { _id: trainerBillId }, { $set: { status: PAID } });
-  });
-});
-
-describe('remove', () => {
-  let courseSlotUpdateMany;
-  let trainerBillDeleteOne;
-
-  beforeEach(() => {
-    courseSlotUpdateMany = sinon.stub(CourseSlot, 'updateMany');
-    trainerBillDeleteOne = sinon.stub(TrainerBill, 'deleteOne');
-  });
-
-  afterEach(() => {
-    courseSlotUpdateMany.restore();
-    trainerBillDeleteOne.restore();
-  });
-
-  it('should unlink the course slots and delete the trainer bill', async () => {
-    const trainerBillId = new ObjectId();
-
-    await TrainerBillsHelper.remove(trainerBillId);
-
-    sinon.assert.calledOnceWithExactly(
-      courseSlotUpdateMany,
-      { 'trainerBillings.trainerBill': trainerBillId },
-      { $pull: { trainerBillings: { trainerBill: trainerBillId } } }
-    );
-    sinon.assert.calledOnceWithExactly(trainerBillDeleteOne, { _id: trainerBillId });
   });
 });

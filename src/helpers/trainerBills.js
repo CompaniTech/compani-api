@@ -2,14 +2,16 @@ const uniqBy = require('lodash/uniqBy');
 const Boom = require('@hapi/boom');
 const CourseSlot = require('../models/CourseSlot');
 const TrainerBill = require('../models/TrainerBill');
+const TrainerPayment = require('../models/TrainerPayment');
+const CoursePaymentNumber = require('../models/CoursePaymentNumber');
 const CourseSlotsHelper = require('./courseSlots');
-const EmailHelper = require('./email');
+const GCloudStorageHelper = require('./gCloudStorage');
 const NumbersHelper = require('./numbers');
 const UtilsHelper = require('./utils');
 const translate = require('./translate');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
-const { MINUTE, INVOICED } = require('./constants');
+const { MINUTE, PAYMENT, PENDING } = require('./constants');
 
 const { language } = translate;
 
@@ -47,13 +49,20 @@ exports.createBill = async (payload, credentials) => {
 
   const amount = computeAmount(courseSlots, credentials._id);
 
+  const trainerName = UtilsHelper.formatIdentity(credentials.identity, 'FL');
+  const fileUploaded = await GCloudStorageHelper.uploadCourseFile({
+    fileName: `facture ${trainerName} ${payload.number}`,
+    file: payload.file,
+    contentType: 'application/pdf',
+  });
+
   const trainerBill = await TrainerBill.create({
     trainer: credentials._id,
     number: payload.number,
-    status: INVOICED,
     courseSlots: courseSlotIds,
     amount,
     submittedAt: CompaniDate().toISO(),
+    file: fileUploaded,
   });
 
   await CourseSlot.updateMany(
@@ -61,25 +70,20 @@ exports.createBill = async (payload, credentials) => {
     { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBill._id } } }
   );
 
-  await EmailHelper.sendTrainerBillEmail(
-    payload.number,
+  const lastPaymentNumber = await CoursePaymentNumber
+    .findOneAndUpdate(
+      { nature: PAYMENT },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    )
+    .lean();
+
+  await TrainerPayment.create({
+    number: `REG-${lastPaymentNumber.seq.toString().padStart(5, '0')}`,
+    trainerBill: trainerBill._id,
     amount,
-    UtilsHelper.formatIdentity(credentials.identity, 'FL'),
-    courseSlots,
-    payload.file
-  );
+    status: PENDING,
+  });
 
   return trainerBill;
-};
-
-exports.update = async (trainerBillId, payload) => TrainerBill
-  .updateOne({ _id: trainerBillId }, { $set: payload });
-
-exports.remove = async (trainerBillId) => {
-  await CourseSlot.updateMany(
-    { 'trainerBillings.trainerBill': trainerBillId },
-    { $pull: { trainerBillings: { trainerBill: trainerBillId } } }
-  );
-
-  await TrainerBill.deleteOne({ _id: trainerBillId });
 };
