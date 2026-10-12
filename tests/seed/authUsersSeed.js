@@ -98,6 +98,8 @@ const userList = [
     role: { vendor: trainerRoleId },
     origin: WEBAPP,
     isProgramEditor: true,
+    iban: 'FR7630006000011234567890189',
+    bic: 'BNPAFRPP',
   },
   { // 9
     _id: new ObjectId(),

@@ -12,6 +12,11 @@ const TrainerPaymentSchema = mongoose.Schema({
   status: { type: String, enum: TRAINER_PAYMENT_STATUS, required: true },
 }, { timestamps: true });
 
+TrainerPaymentSchema.virtual(
+  'trainerPaymentsXmlFileInfos',
+  { ref: 'TrainerPaymentsXmlFileInfos', localField: '_id', foreignField: 'trainerPayments', justOne: true }
+);
+
 queryMiddlewareList.map(middleware => TrainerPaymentSchema.pre(middleware, formatQuery));
 
 module.exports = mongoose.model('TrainerPayment', TrainerPaymentSchema);

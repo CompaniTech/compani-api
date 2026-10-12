@@ -11,6 +11,7 @@ const {
   trainerBillId,
   trainerPaymentId,
   paidTrainerPaymentId,
+  linkedPaymentId,
 } = require('./seed/trainerPaymentsSeed');
 const { getToken } = require('./helpers/authentication');
 const { PENDING, XML_GENERATED, PAID } = require('../../src/helpers/constants');
@@ -35,8 +36,11 @@ describe('TRAINER PAYMENTS ROUTES - GET /trainerpayments', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.trainerPayments.map(p => p.number)).toEqual(['REG-00101']);
-      expect(response.result.data.trainerPayments[0].trainerBill.number).toBe('FACT_0099');
+      const paymentNumbers = response.result.data.trainerPayments.map(p => p.number).sort();
+      expect(paymentNumbers).toEqual(['REG-00101', 'REG-00102'].sort());
+
+      const paidTrainerPayment = response.result.data.trainerPayments.find(p => p.number === 'REG-00101');
+      expect(paidTrainerPayment.trainerBill.number).toBe('FACT_0099');
     });
   });
 
@@ -88,20 +92,7 @@ describe('TRAINER PAYMENTS ROUTES - PUT /trainerpayments/{_id}', () => {
       expect(trainerPaymentCount).toBe(1);
     });
 
-    it('should return 400 if status is XML_GENERATED', async () => {
-      const response = await app.inject({
-        method: 'PUT',
-        url: `/trainerpayments/${trainerPaymentId}`,
-        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: { status: XML_GENERATED },
-      });
-
-      expect(response.statusCode).toBe(400);
-      const trainerPaymentCount = await TrainerPayment.countDocuments({ _id: trainerPaymentId, status: PENDING });
-      expect(trainerPaymentCount).toBe(1);
-    });
-
-    it('should update a paid trainer payment back to pending', async () => {
+    it('should update a paid trainer payment (without xml) back to pending', async () => {
       const response = await app.inject({
         method: 'PUT',
         url: `/trainerpayments/${paidTrainerPaymentId}`,
@@ -115,6 +106,30 @@ describe('TRAINER PAYMENTS ROUTES - PUT /trainerpayments/{_id}', () => {
       expect(trainerPaymentCount).toBe(1);
     });
 
+    it('should update payment status linked to a xml file to paid', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/trainerpayments/${linkedPaymentId}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { status: PAID },
+      });
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should return 400 if status is XML_GENERATED', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/trainerpayments/${trainerPaymentId}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { status: XML_GENERATED },
+      });
+
+      expect(response.statusCode).toBe(400);
+      const trainerPaymentCount = await TrainerPayment.countDocuments({ _id: trainerPaymentId, status: PENDING });
+      expect(trainerPaymentCount).toBe(1);
+    });
+
     it('should return 404 if trainer payment does not exist', async () => {
       const response = await app.inject({
         method: 'PUT',
@@ -124,6 +139,17 @@ describe('TRAINER PAYMENTS ROUTES - PUT /trainerpayments/{_id}', () => {
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 409 if trying to set a payment linked to xml file back to pending', async () => {
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/trainerpayments/${linkedPaymentId}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { status: PENDING },
+      });
+
+      expect(response.statusCode).toBe(409);
     });
   });
 
