@@ -9,7 +9,7 @@ const CoursePayment = require('../models/CoursePayment');
 const VendorCompany = require('../models/VendorCompany');
 const xmlSEPAFileInfos = require('../models/XmlSEPAFileInfos');
 const XmlHelper = require('./xml');
-const { XML_GENERATED, YYYY_MM_DD } = require('./constants');
+const { XML_GENERATED, YYYY_MM_DD, DIRECT_DEBIT } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const UtilsHelper = require('./utils');
 const NumbersHelper = require('./numbers');
@@ -79,7 +79,7 @@ exports.generateTransactionInfos = transaction => ({
 });
 
 exports.generateSEPAFile = async (paymentIds, name) => {
-  const xmlContent = XmlHelper.createDocument();
+  const xmlContent = XmlHelper.createDocument(DIRECT_DEBIT);
   const outputPath = path.join(os.tmpdir(), UtilsHelper.sanitizeFileName(name));
 
   const payments = await CoursePayment
@@ -102,7 +102,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
   const paymentsGroupByPayer = groupBy(paymentsWithDecryptedPayer, 'courseBill.payer._id');
   const vendorCompany = await VendorCompany.findOne().lean();
   const randomId = randomize('0', 21);
-  const totalSum = UtilsHelper.getFixedNumber(
+  const totalSum = NumbersHelper.toFixedToFloat(
     NumbersHelper.toNumber(payments.reduce((acc, next) => NumbersHelper.add(acc, next.netInclTaxes), 0)),
     2
   );
@@ -133,7 +133,7 @@ exports.generateSEPAFile = async (paymentIds, name) => {
 
   for (const payer of Object.keys(paymentsGroupByPayer)) {
     const payerPayments = paymentsGroupByPayer[payer];
-    const transactionAmount = UtilsHelper.getFixedNumber(
+    const transactionAmount = NumbersHelper.toFixedToFloat(
       NumbersHelper.toNumber(payerPayments.reduce((acc, next) => NumbersHelper.add(acc, next.netInclTaxes), 0)),
       2
     );

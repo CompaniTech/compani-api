@@ -5,8 +5,9 @@ const path = require('path');
 const os = require('os');
 const XmlSEPAFileInfosHelper = require('../../../src/helpers/xmlSEPAFileInfos');
 const UtilsHelper = require('../../../src/helpers/utils');
+const NumbersHelper = require('../../../src/helpers/numbers');
 const XmlHelper = require('../../../src/helpers/xml');
-const { XML_GENERATED } = require('../../../src/helpers/constants');
+const { XML_GENERATED, DIRECT_DEBIT } = require('../../../src/helpers/constants');
 const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const CoursePayment = require('../../../src/models/CoursePayment');
 const VendorCompany = require('../../../src/models/VendorCompany');
@@ -148,14 +149,14 @@ describe('generateSEPAFile', () => {
   let createDocument;
   let coursePaymentFind;
   let vendorCompanyFindOne;
-  let getFixedNumber;
+  let toFixedToFloat;
   let getLastVersion;
   let generateXML;
   beforeEach(() => {
     createDocument = sinon.stub(XmlHelper, 'createDocument');
     coursePaymentFind = sinon.stub(CoursePayment, 'find');
     vendorCompanyFindOne = sinon.stub(VendorCompany, 'findOne');
-    getFixedNumber = sinon.stub(UtilsHelper, 'getFixedNumber');
+    toFixedToFloat = sinon.stub(NumbersHelper, 'toFixedToFloat');
     getLastVersion = sinon.stub(UtilsHelper, 'getLastVersion');
     generateXML = sinon.stub(XmlHelper, 'generateXML');
     UtilsMock.mockCurrentDate('2025-09-29T13:45:25.437Z');
@@ -164,7 +165,7 @@ describe('generateSEPAFile', () => {
     createDocument.restore();
     coursePaymentFind.restore();
     vendorCompanyFindOne.restore();
-    getFixedNumber.restore();
+    toFixedToFloat.restore();
     getLastVersion.restore();
     generateXML.restore();
     UtilsMock.unmockCurrentDate();
@@ -370,15 +371,15 @@ describe('generateSEPAFile', () => {
     });
     coursePaymentFind.returns(SinonMongoose.stubChainedQueries(payments, ['populate', 'setOptions', 'lean']));
     vendorCompanyFindOne.returns(SinonMongoose.stubChainedQueries(vendorCompany, ['lean']));
-    getFixedNumber.onCall(0).returns(2500.00);
-    getFixedNumber.onCall(1).returns(1000.00);
+    toFixedToFloat.onCall(0).returns(2500.00);
+    toFixedToFloat.onCall(1).returns(1000.00);
     getLastVersion.onCall(0).returns({
       rum: 'R-1234567865',
       signedAt: '2024-07-23T22:00:00.000Z',
       file: { driveId: '12355', link: 'unLien/12355' },
       createdAt: '2024-06-23T22:00:00.000Z',
     });
-    getFixedNumber.onCall(2).returns(1500.00);
+    toFixedToFloat.onCall(2).returns(1500.00);
     getLastVersion.onCall(1).returns({
       rum: 'R-123456789',
       signedAt: '2025-08-23T22:00:00.000Z',
@@ -391,7 +392,7 @@ describe('generateSEPAFile', () => {
 
     expect(result).toEqual('SEPA.xml');
 
-    sinon.assert.calledOnceWithExactly(createDocument);
+    sinon.assert.calledOnceWithExactly(createDocument, DIRECT_DEBIT);
     SinonMongoose.calledOnceWithExactly(
       coursePaymentFind,
       [
@@ -411,8 +412,8 @@ describe('generateSEPAFile', () => {
       ]
     );
     SinonMongoose.calledOnceWithExactly(vendorCompanyFindOne, [{ query: 'findOne', args: [] }, { query: 'lean' }]);
-    sinon.assert.calledWithExactly(getFixedNumber.getCall(0), 2500, 2);
-    sinon.assert.calledWithExactly(getFixedNumber.getCall(1), 1000, 2);
+    sinon.assert.calledWithExactly(toFixedToFloat.getCall(0), 2500, 2);
+    sinon.assert.calledWithExactly(toFixedToFloat.getCall(1), 1000, 2);
     sinon.assert.calledWithExactly(
       getLastVersion.getCall(0),
       [{
@@ -423,7 +424,7 @@ describe('generateSEPAFile', () => {
       }],
       'createdAt'
     );
-    sinon.assert.calledWithExactly(getFixedNumber.getCall(2), 1500, 2);
+    sinon.assert.calledWithExactly(toFixedToFloat.getCall(2), 1500, 2);
     sinon.assert.calledWithExactly(
       getLastVersion.getCall(1),
       [

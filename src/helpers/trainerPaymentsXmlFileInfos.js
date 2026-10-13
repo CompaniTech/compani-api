@@ -7,7 +7,7 @@ const TrainerPayment = require('../models/TrainerPayment');
 const VendorCompany = require('../models/VendorCompany');
 const TrainerPaymentsXmlFileInfos = require('../models/TrainerPaymentsXmlFileInfos');
 const XmlHelper = require('./xml');
-const { XML_GENERATED, YYYY_MM_DD } = require('./constants');
+const { XML_GENERATED, YYYY_MM_DD, BANK_TRANSFER } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const UtilsHelper = require('./utils');
 const NumbersHelper = require('./numbers');
@@ -59,7 +59,7 @@ exports.generateTransactionInfos = transaction => ({
 });
 
 exports.generateCreditTransferFile = async (paymentIds, name) => {
-  const xmlContent = XmlHelper.createCreditTransferDocument();
+  const xmlContent = XmlHelper.createDocument(BANK_TRANSFER);
   const outputPath = path.join(os.tmpdir(), UtilsHelper.sanitizeFileName(name));
 
   const payments = await TrainerPayment
@@ -81,7 +81,7 @@ exports.generateCreditTransferFile = async (paymentIds, name) => {
 
   const vendorCompany = await VendorCompany.findOne().lean();
   const randomId = randomize('0', 21);
-  const totalSum = UtilsHelper.getFixedNumber(
+  const totalSum = NumbersHelper.toFixedToFloat(
     NumbersHelper.toNumber(payments.reduce((acc, next) => NumbersHelper.add(acc, next.amount), 0)),
     2
   );
@@ -104,7 +104,7 @@ exports.generateCreditTransferFile = async (paymentIds, name) => {
 
   for (const payment of paymentsWithDecryptedTrainer) {
     const { trainer, number: trainerBillNumber } = payment.trainerBill;
-    const transactionAmount = UtilsHelper.getFixedNumber(NumbersHelper.toNumber(payment.amount), 2);
+    const transactionAmount = NumbersHelper.toFixedToFloat(NumbersHelper.toNumber(payment.amount), 2);
 
     const formattedTransaction = {
       _id: new ObjectId().toHexString(),
