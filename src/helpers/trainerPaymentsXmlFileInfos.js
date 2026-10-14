@@ -58,7 +58,7 @@ exports.generateTransactionInfos = transaction => ({
   RmtInf: { Ustrd: transaction.trainerBillNumber },
 });
 
-exports.generateCreditTransferFile = async (paymentIds, name) => {
+exports.generateBankTransferFile = async (paymentIds, name) => {
   const xmlContent = XmlHelper.createDocument(BANK_TRANSFER);
   const outputPath = path.join(os.tmpdir(), UtilsHelper.sanitizeFileName(name));
 
@@ -126,7 +126,7 @@ exports.generateCreditTransferFile = async (paymentIds, name) => {
 exports.create = async (payload) => {
   const { payments, name } = payload;
 
-  const file = await exports.generateCreditTransferFile(payments, name);
+  const file = await exports.generateBankTransferFile(payments, name);
 
   await TrainerPaymentsXmlFileInfos.create({ trainerPayments: payments, name });
   await TrainerPayment.updateMany({ _id: { $in: payments } }, { $set: { status: XML_GENERATED } });

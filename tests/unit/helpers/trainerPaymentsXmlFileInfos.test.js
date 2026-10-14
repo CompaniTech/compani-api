@@ -106,7 +106,7 @@ describe('generateTransactionInfos', () => {
   });
 });
 
-describe('generateCreditTransferFile', () => {
+describe('generateBankTransferFile', () => {
   let createDocument;
   let trainerPaymentFind;
   let vendorCompanyFindOne;
@@ -231,7 +231,7 @@ describe('generateCreditTransferFile', () => {
     generateXML.returns('creditTransfer.xml');
 
     const result = await TrainerPaymentsXmlFileInfosHelper
-      .generateCreditTransferFile(paymentIds, 'Virement - Septembre 2025');
+      .generateBankTransferFile(paymentIds, 'Virement - Septembre 2025');
 
     expect(result).toEqual('creditTransfer.xml');
 
@@ -262,34 +262,30 @@ describe('generateCreditTransferFile', () => {
 describe('create', () => {
   let create;
   let paymentUpdateMany;
-  let generateCreditTransferFile;
+  let generateBankTransferFile;
 
   beforeEach(() => {
     create = sinon.stub(TrainerPaymentsXmlFileInfos, 'create');
     paymentUpdateMany = sinon.stub(TrainerPayment, 'updateMany');
-    generateCreditTransferFile = sinon.stub(TrainerPaymentsXmlFileInfosHelper, 'generateCreditTransferFile');
+    generateBankTransferFile = sinon.stub(TrainerPaymentsXmlFileInfosHelper, 'generateBankTransferFile');
   });
 
   afterEach(() => {
     create.restore();
     paymentUpdateMany.restore();
-    generateCreditTransferFile.restore();
+    generateBankTransferFile.restore();
   });
 
   it('should create trainerPaymentsXmlFileInfos and update trainerPayment status', async () => {
     const trainerPaymentIds = [new ObjectId(), new ObjectId()];
     const payload = { payments: trainerPaymentIds, name: 'Virement - Septembre 2025' };
-    generateCreditTransferFile.returns('/tmp/Virement - Septembre 2025.xml');
+    generateBankTransferFile.returns('/tmp/Virement - Septembre 2025.xml');
 
     const result = await TrainerPaymentsXmlFileInfosHelper.create(payload);
 
     expect(result).toEqual('/tmp/Virement - Septembre 2025.xml');
 
-    sinon.assert.calledOnceWithExactly(
-      generateCreditTransferFile,
-      trainerPaymentIds,
-      'Virement - Septembre 2025'
-    );
+    sinon.assert.calledOnceWithExactly(generateBankTransferFile, trainerPaymentIds, 'Virement - Septembre 2025');
     sinon.assert.calledOnceWithExactly(
       create,
       { trainerPayments: trainerPaymentIds, name: 'Virement - Septembre 2025' }
