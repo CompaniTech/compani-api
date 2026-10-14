@@ -1,5 +1,6 @@
 const builder = require('xmlbuilder');
 const fs = require('fs');
+const { DIRECT_DEBIT } = require('./constants');
 
 exports.generateXML = async (data, outputPath) => new Promise((resolve, reject) => {
   const finalDoc = builder.create(data, { encoding: 'utf-8' });
@@ -10,14 +11,17 @@ exports.generateXML = async (data, outputPath) => new Promise((resolve, reject) 
   file.on('error', err => reject(err));
 });
 
-exports.createDocument = () => ({
-  Document: {
-    '@xmlns': 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02',
-    '@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-    '@xsi:schemaLocation': 'urn:iso:std:iso:20022:tech:xsd:pain.008.001.02 pain.008.001.02.xsd',
-    CstmrDrctDbtInitn: {
-      GrpHdr: {},
-      PmtInf: [],
+exports.createDocument = (type) => {
+  const ISOMessage = type === DIRECT_DEBIT ? 'pain.008.001.02' : 'pain.001.001.03';
+  const initObject = type === DIRECT_DEBIT
+    ? { CstmrDrctDbtInitn: { GrpHdr: {}, PmtInf: [] } }
+    : { CstmrCdtTrfInitn: { GrpHdr: {}, PmtInf: [] } };
+  return {
+    Document: {
+      '@xmlns': `urn:iso:std:iso:20022:tech:xsd:${ISOMessage}`,
+      '@xmlns:xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+      '@xsi:schemaLocation': `urn:iso:std:iso:20022:tech:xsd:${ISOMessage} ${ISOMessage}.xsd`,
+      ...initObject,
     },
-  },
-});
+  };
+};

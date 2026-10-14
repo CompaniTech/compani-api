@@ -100,6 +100,10 @@ describe('list', () => {
           query: 'populate',
           args: [{ path: 'trainerBill', select: 'number file', populate: { path: 'trainer', select: 'identity' } }],
         },
+        {
+          query: 'populate',
+          args: [{ path: 'trainerPaymentsXmlFileInfos', select: 'name', options: { isVendorUser: true } }],
+        },
         { query: 'sort', args: [{ date: -1 }] },
         { query: 'lean' },
       ]

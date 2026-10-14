@@ -14,6 +14,7 @@ exports.list = async (query) => {
       select: 'number file',
       populate: { path: 'trainer', select: 'identity' },
     })
+    .populate({ path: 'trainerPaymentsXmlFileInfos', select: 'name', options: { isVendorUser: true } })
     .sort({ date: -1 })
     .lean();
 };

@@ -229,6 +229,10 @@ module.exports = {
     trainerPaymentUpdated: 'Trainer payment updated.',
     trainerPaymentRemoved: 'Trainer payment removed.',
     trainerPaymentWrongStatus: 'Impossible : trainer payment is not pending.',
+    trainerPaymentStatusConflict: 'Impossible : payment is linked to a xml file and can only be set to paid.',
+    trainerPaymentsXmlFileWrongPayment: 'Forbidden : wrong payment status.',
+    trainerPaymentsXmlFileGenerationFailedMissingBankDetails: 'Forbidden : trainer has no BIC or IBAN.',
+    trainerPaymentsXmlFileGenerationFailedMissingVendorInfos: 'Forbidden : vendor company has no BIC or IBAN.',
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Course funding organisations found.',
     courseFundingOrganisationsNotFound: 'Course funding organisations not found.',
@@ -606,6 +610,13 @@ module.exports = {
     trainerPaymentUpdated: 'Paiement de l\'intervenant·e modifié.',
     trainerPaymentRemoved: 'Paiement de l\'intervenant·e supprimé.',
     trainerPaymentWrongStatus: 'Suppression impossible : le paiement n\'est pas en attente.',
+    trainerPaymentStatusConflict: `Impossible : ce paiement est associé à un fichier XML, il ne peut être passé
+      qu'au statut "Réglé".`,
+    trainerPaymentsXmlFileWrongPayment: 'Impossible : un des paiements sélectionnés n\'est pas en attente.',
+    trainerPaymentsXmlFileGenerationFailedMissingBankDetails: `Impossible : un intervenant·e associé à un des
+      paiements n'a pas de BIC ou d'IBAN renseigné.`,
+    trainerPaymentsXmlFileGenerationFailedMissingVendorInfos: `Impossible : le BIC ou l'IBAN de la structure vendeuse
+      est manquant.`,
     /* Course funding organisation */
     courseFundingOrganisationsFound: 'Financeurs trouvés.',
     courseFundingOrganisationsNotFound: 'Financeurs non trouvés.',
