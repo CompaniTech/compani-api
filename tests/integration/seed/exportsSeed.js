@@ -1903,15 +1903,15 @@ const trainerBillList = [
 const trainerPaymentList = [
   {
     _id: new ObjectId(),
-    number: 'REG-00001',
+    number: 'REG-00007',
     trainerBill: trainerBillIds[0],
     amount: 0,
     date: '2022-03-09T10:00:00.000Z',
-    status: PAID,
+    status: XML_GENERATED,
   },
   {
     _id: new ObjectId(),
-    number: 'REG-00002',
+    number: 'REG-00008',
     trainerBill: trainerBillIds[1],
     amount: 200,
     date: '2022-03-09T10:00:00.000Z',
@@ -1919,7 +1919,7 @@ const trainerPaymentList = [
   },
   {
     _id: new ObjectId(),
-    number: 'REG-00003',
+    number: 'REG-00009',
     trainerBill: trainerBillIds[2],
     amount: 0,
     date: '2022-01-01T10:00:00.000Z',
@@ -1927,7 +1927,7 @@ const trainerPaymentList = [
   },
   {
     _id: new ObjectId(),
-    number: 'REG-00004',
+    number: 'REG-00010',
     trainerBill: trainerBillIds[3],
     amount: 200,
     date: '2022-03-10T10:00:00.000Z',
@@ -1935,7 +1935,7 @@ const trainerPaymentList = [
   },
   {
     _id: new ObjectId(),
-    number: 'REG-00005',
+    number: 'REG-00011',
     trainerBill: trainerBillIds[4],
     amount: 200,
     date: '2022-05-01T10:00:00.000Z',

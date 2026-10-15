@@ -2971,7 +2971,7 @@ describe('exportCoursePaymentHistory', () => {
     const result = await ExportHelper.exportCoursePaymentHistory('2022-01-07T23:00:00.000Z', '2022-01-30T22:59:59.000Z', credentials);
 
     expect(result).toEqual([
-      ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant', 'Statut', 'Nom de lot fichier XML', 'Date de prélèvement', 'Apprenant'],
+      ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant', 'Statut', 'Nom de lot fichier XML', 'Date d\'effet du prélèvement', 'Apprenant'],
       ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00', 'Reçu', 'LOT-002', '22/01/2022', 'Archie PELLE'],
       ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', payerId, 1, 'Chèque', '200,00', 'Reçu', '', '', ''],
     ]);
@@ -3069,7 +3069,7 @@ describe('exportTrainerPaymentHistory', () => {
     const result = await ExportHelper.exportTrainerPaymentHistory('2022-01-07T23:00:00.000Z', '2022-01-30T22:59:59.000Z', credentials);
 
     expect(result).toEqual([
-      ['Identifiant du paiement', 'Date du paiement', 'Facture associée', 'Id Intervenant', 'Nom de l\'intervenant', 'Montant du paiement', 'Statut du paiement', 'Nom de lot fichier XML', 'Date de virement'],
+      ['Identifiant du paiement', 'Date du paiement', 'Facture associée', 'Id Intervenant', 'Nom de l\'intervenant', 'Montant du paiement', 'Statut du paiement', 'Nom de lot fichier XML', 'Date d\'effet du virement'],
       ['REG-00001', '11/01/2022', 'FACT_0001', trainerId, 'Archie PELLE', '120,00', 'Réglé', 'LOT-001', '15/01/2022'],
       ['REG-00002', '21/01/2022', 'FACT_0002', trainerId, 'Archie PELLE', '80,00', 'En attente', '', ''],
     ]);

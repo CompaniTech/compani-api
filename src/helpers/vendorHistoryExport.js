@@ -934,7 +934,7 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
             Montant: UtilsHelper.formatFloatForExport(payment.netInclTaxes),
             Statut: PAYMENT_STATUS_LIST[payment.status],
             'Nom de lot fichier XML': get(payment, 'xmlSEPAFileInfos.name', ''),
-            'Date de prélèvement': get(payment, 'xmlSEPAFileInfos.createdAt')
+            'Date d\'effet du prélèvement': get(payment, 'xmlSEPAFileInfos.createdAt')
               ? CompaniDate(payment.xmlSEPAFileInfos.createdAt).add('P2D').format(DD_MM_YYYY)
               : '',
             Apprenant: payment.courseBill.course.type === SINGLE
@@ -967,7 +967,7 @@ exports.exportTrainerPaymentHistory = async (startDate, endDate, credentials) =>
     'Montant du paiement': UtilsHelper.formatFloatForExport(payment.amount),
     'Statut du paiement': PAYMENT_STATUS_LIST[payment.status],
     'Nom de lot fichier XML': get(payment, 'trainerPaymentsXmlFileInfos.name', ''),
-    'Date de virement': get(payment, 'trainerPaymentsXmlFileInfos.createdAt')
+    'Date d\'effet du virement': get(payment, 'trainerPaymentsXmlFileInfos.createdAt')
       ? CompaniDate(payment.trainerPaymentsXmlFileInfos.createdAt).format(DD_MM_YYYY)
       : '',
   }));
