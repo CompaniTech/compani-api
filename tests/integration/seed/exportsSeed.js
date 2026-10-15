@@ -120,6 +120,7 @@ const XmlSEPAFileInfos = require('../../../src/models/XmlSEPAFileInfos');
 const VendorCompany = require('../../../src/models/VendorCompany');
 const TrainerBill = require('../../../src/models/TrainerBill');
 const TrainerPayment = require('../../../src/models/TrainerPayment');
+const TrainerPaymentsXmlFileInfos = require('../../../src/models/TrainerPaymentsXmlFileInfos');
 
 const sector = { _id: new ObjectId(), name: 'Etoile', company: authCompany._id };
 
@@ -1905,6 +1906,7 @@ const trainerPaymentList = [
     number: 'REG-00001',
     trainerBill: trainerBillIds[0],
     amount: 0,
+    date: '2022-03-09T10:00:00.000Z',
     status: PAID,
   },
   {
@@ -1912,6 +1914,7 @@ const trainerPaymentList = [
     number: 'REG-00002',
     trainerBill: trainerBillIds[1],
     amount: 200,
+    date: '2022-03-09T10:00:00.000Z',
     status: PAID,
   },
   {
@@ -1919,6 +1922,7 @@ const trainerPaymentList = [
     number: 'REG-00003',
     trainerBill: trainerBillIds[2],
     amount: 0,
+    date: '2022-01-01T10:00:00.000Z',
     status: PAID,
   },
   {
@@ -1926,6 +1930,7 @@ const trainerPaymentList = [
     number: 'REG-00004',
     trainerBill: trainerBillIds[3],
     amount: 200,
+    date: '2022-03-10T10:00:00.000Z',
     status: PAID,
   },
   {
@@ -1933,9 +1938,17 @@ const trainerPaymentList = [
     number: 'REG-00005',
     trainerBill: trainerBillIds[4],
     amount: 200,
+    date: '2022-05-01T10:00:00.000Z',
     status: PAID,
   },
 ];
+
+const trainerPaymentsXmlFileInfos = {
+  _id: new ObjectId(),
+  trainerPayments: [trainerPaymentList[0]._id],
+  name: 'Virements Mars 2022',
+  createdAt: '2022-03-11T10:00:00.000Z',
+};
 
 const attendanceList = [
   { trainee: traineeList[0]._id, courseSlot: courseSlotList[0]._id, company: authCompany._id, status: PRESENT },
@@ -2575,6 +2588,7 @@ const populateDB = async () => {
     ThirdPartyPayer.create(thirdPartyPayer),
     TrainerBill.create(trainerBillList),
     TrainerPayment.create(trainerPaymentList),
+    TrainerPaymentsXmlFileInfos.create(trainerPaymentsXmlFileInfos),
     User.create([...auxiliaryList, ...traineeList, user, trainer, operationsRepresentative]),
     UserCompany.create(userCompanies),
     XmlSEPAFileInfos.create(xmlSEPAFileInfos),
@@ -2598,4 +2612,5 @@ module.exports = {
   distanceMatrixList,
   courseFundingOrganisation,
   programList,
+  trainer,
 };

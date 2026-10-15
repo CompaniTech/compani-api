@@ -29,6 +29,7 @@ const {
   SINGLE_COURSE,
   SINGLE_COURSE_SLOT,
   DRAFT_COURSE_BILL,
+  TRAINER_PAYMENT,
 } = require('../../src/helpers/constants');
 const { getToken } = require('./helpers/authentication');
 const {
@@ -45,8 +46,9 @@ const {
   courseSlotList,
   courseFundingOrganisation,
   programList,
+  trainer,
 } = require('./seed/exportsSeed');
-const { helper, userList } = require('../seed/authUsersSeed');
+const { helper, userList, trainerAndCoach } = require('../seed/authUsersSeed');
 const { formatPrice } = require('../../src/helpers/utils');
 const { authCustomer } = require('../seed/authCustomers');
 const { authCompany } = require('../seed/authCompaniesSeed');
@@ -194,11 +196,11 @@ const vendorHistoryExportTypes = [
   {
     exportType: COURSE_PAYMENT,
     expectedRows: [
-      '\ufeff"Nature";"Identifiant";"Date";"Facture associée";"Id payeur facture";"Numéro du paiement (parmi ceux de la même facture)";"Moyen de paiement";"Montant";"Statut";"Nom de lot fichier XML";"Apprenant"',
-      `"Paiement";"REG-00001";"09/03/2022";"FACT-00001";${authCompany._id};1;"Prélèvement";"1100,00";"Fichier XML associé";"Prélèvements Septembre 2025";`,
-      `"Paiement";"REG-00003";"09/03/2022";"FACT-00005";${courseFundingOrganisation._id};1;"Espèces";"300,00";"Reçu";;`,
-      `"Paiement";"REG-00006";"01/04/2022";"FACT-00001";${authCompany._id};2;"Prélèvement";"50,00";"En attente";;`,
-      `"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";${courseFundingOrganisation._id};2;"Chèque";"200,00";"Reçu";;`,
+      '\ufeff"Nature";"Identifiant";"Date";"Facture associée";"Id payeur facture";"Numéro du paiement (parmi ceux de la même facture)";"Moyen de paiement";"Montant";"Statut";"Nom de lot fichier XML";"Date de prélèvement";"Apprenant"',
+      `"Paiement";"REG-00001";"09/03/2022";"FACT-00001";${authCompany._id};1;"Prélèvement";"1100,00";"Fichier XML associé";"Prélèvements Septembre 2025";"14/03/2022";`,
+      `"Paiement";"REG-00003";"09/03/2022";"FACT-00005";${courseFundingOrganisation._id};1;"Espèces";"300,00";"Reçu";;;`,
+      `"Paiement";"REG-00006";"01/04/2022";"FACT-00001";${authCompany._id};2;"Prélèvement";"50,00";"En attente";;;`,
+      `"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";${courseFundingOrganisation._id};2;"Chèque";"200,00";"Reçu";;;`,
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
   },
@@ -210,6 +212,16 @@ const vendorHistoryExportTypes = [
       `${coursesList[9]._id};"Program 1";${coursesList[9].trainees[0]};"Paul TRAINEE";"Un autre SAS";"Other Holding";"20/05/2022";;"300,00";"300,00";"0,00";;"Non";`,
     ],
     query: 'startDate=2022-05-01T10:00:00.000Z&endDate=2022-05-31T10:00:00.000Z',
+  },
+  {
+    exportType: TRAINER_PAYMENT,
+    expectedRows: [
+      '\ufeff"Identifiant du paiement";"Date du paiement";"Facture associée";"Id Intervenant";"Nom de l\'intervenant";"Montant du paiement";"Statut du paiement";"Nom de lot fichier XML";"Date de virement"',
+      `"REG-00001";"09/03/2022";"FACT_0001";${trainer._id};"Gilles FORMATEUR";"0,00";"Réglé";"Virements Mars 2022";"11/03/2022"`,
+      `"REG-00002";"09/03/2022";"FACT_01234";${trainerAndCoach._id};"Simon TRAINERANDCOACH";"200,00";"Réglé";;`,
+      `"REG-00004";"10/03/2022";"FACT_00012";${trainer._id};"Gilles FORMATEUR";"200,00";"Réglé";;`,
+    ],
+    query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
   },
   {
     exportType: SELF_POSITIONNING,
