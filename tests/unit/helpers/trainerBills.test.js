@@ -8,6 +8,7 @@ const TrainerPayment = require('../../../src/models/TrainerPayment');
 const CoursePaymentNumber = require('../../../src/models/CoursePaymentNumber');
 const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
+const UtilsMock = require('../../utilsMock');
 const TrainerBillsHelper = require('../../../src/helpers/trainerBills');
 const SinonMongoose = require('../sinonMongoose');
 const translate = require('../../../src/helpers/translate');
@@ -35,6 +36,7 @@ describe('createBill', () => {
 
     uploadCourseFile.returns({ link: 'link', publicId: 'publicId' });
     coursePaymentNumberFindOneAndUpdate.returns({ lean: sinon.stub().returns({ seq: 7 }) });
+    UtilsMock.mockCurrentDate('2025-09-29T13:45:25.437Z');
   });
 
   afterEach(() => {
@@ -45,6 +47,7 @@ describe('createBill', () => {
     uploadCourseFile.restore();
     coursePaymentNumberFindOneAndUpdate.restore();
     trainerPaymentCreate.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should create a trainer bill and link it to the course slots', async () => {
@@ -103,7 +106,7 @@ describe('createBill', () => {
         number: 'FACT_0001',
         courseSlots: courseSlotIds,
         amount: '125',
-        submittedAt: sinon.match.string,
+        submittedAt: '2025-09-29T13:45:25.437Z',
         file: { link: 'link', publicId: 'publicId' },
       }
     );
@@ -186,7 +189,7 @@ describe('createBill', () => {
         number: 'FACT_0003',
         courseSlots: courseSlotIds,
         amount: '170',
-        submittedAt: sinon.match.string,
+        submittedAt: '2025-09-29T13:45:25.437Z',
         file: { link: 'link', publicId: 'publicId' },
       }
     );
@@ -257,9 +260,39 @@ describe('createBill', () => {
         number: 'FACT_0005',
         courseSlots: courseSlotIds,
         amount: '50',
-        submittedAt: sinon.match.string,
+        submittedAt: '2025-09-29T13:45:25.437Z',
         file: { link: 'link', publicId: 'publicId' },
       }
+    );
+  });
+
+  it('should create a trainer bill with no course slots, using the given amount', async () => {
+    const credentials = { _id: new ObjectId(), identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const trainerBillId = new ObjectId();
+    const payload = { number: 'FACT_0006', file: 'file', amount: 80 };
+
+    trainerBillCreate.returns({ _id: trainerBillId });
+
+    const result = await TrainerBillsHelper.createBill(payload, credentials);
+
+    expect(result).toEqual({ _id: trainerBillId });
+
+    sinon.assert.notCalled(courseSlotFind);
+    sinon.assert.notCalled(getHourlyAmount);
+    sinon.assert.notCalled(courseSlotUpdateMany);
+    sinon.assert.calledOnceWithExactly(
+      trainerBillCreate,
+      {
+        trainer: credentials._id,
+        number: 'FACT_0006',
+        amount: 80,
+        submittedAt: '2025-09-29T13:45:25.437Z',
+        file: { link: 'link', publicId: 'publicId' },
+      }
+    );
+    sinon.assert.calledOnceWithExactly(
+      trainerPaymentCreate,
+      { number: 'REG-00007', trainerBill: trainerBillId, amount: 80, status: PENDING }
     );
   });
 });

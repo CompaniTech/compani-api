@@ -92,6 +92,50 @@ describe('TRAINER BILLS ROUTES - POST /trainerbills', () => {
       expect(trainerBillCount).toBe(1);
     });
 
+    it('should create a trainer bill with no course slots, using the given amount', async () => {
+      const form = generateFormData({ number: 'FACT_0010', file: 'test', amount: 80 });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/trainerbills',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const trainerBillCount = await TrainerBill
+        .countDocuments({ trainer: trainer._id, number: 'FACT_0010', amount: 80, courseSlots: { $exists: false } });
+      expect(trainerBillCount).toBe(1);
+    });
+
+    it('should return 400 if both courseSlots and amount are provided', async () => {
+      const form = generateFormData({ number: 'FACT_0011', file: 'test', amount: 80 });
+      form.append('courseSlots', courseSlotsList[0]._id.toHexString());
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/trainerbills',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if neither courseSlots nor amount are provided', async () => {
+      const form = generateFormData({ number: 'FACT_0012', file: 'test' });
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/trainerbills',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 400 if number is missing', async () => {
       const form = generateFormData({ file: 'test' });
       form.append('courseSlots', courseSlotsList[0]._id.toHexString());

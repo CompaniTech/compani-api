@@ -4,7 +4,7 @@ const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
 const TrainerBillSchema = mongoose.Schema({
   trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   number: { type: String, required: true },
-  courseSlots: { type: [mongoose.Schema.Types.ObjectId], ref: 'CourseSlot', required: true },
+  courseSlots: { type: [mongoose.Schema.Types.ObjectId], ref: 'CourseSlot', default: undefined },
   amount: { type: Number, required: true },
   submittedAt: { type: Date, required: true },
   file: {

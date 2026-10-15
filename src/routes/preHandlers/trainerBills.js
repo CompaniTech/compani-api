@@ -9,17 +9,22 @@ const { language } = translate;
 exports.authorizeTrainerBillCreation = async (req) => {
   try {
     const { credentials } = req.auth;
-    const courseSlotIds = Array.isArray(req.payload.courseSlots) ? req.payload.courseSlots : [req.payload.courseSlots];
 
-    const courseSlots = await CourseSlot
-      .find({ _id: { $in: courseSlotIds }, trainers: credentials._id })
-      .lean();
-    if (courseSlots.length !== courseSlotIds.length) throw Boom.notFound();
+    if (req.payload.courseSlots) {
+      const courseSlotIds = Array.isArray(req.payload.courseSlots)
+        ? req.payload.courseSlots
+        : [req.payload.courseSlots];
 
-    const someSlotsAreAlreadyBilled = courseSlots.some(slot => (slot.trainerBillings || []).some(
-      billing => UtilsHelper.areObjectIdsEquals(billing.trainer, credentials._id)
-    ));
-    if (someSlotsAreAlreadyBilled) throw Boom.forbidden();
+      const courseSlots = await CourseSlot
+        .find({ _id: { $in: courseSlotIds }, trainers: credentials._id })
+        .lean();
+      if (courseSlots.length !== courseSlotIds.length) throw Boom.notFound();
+
+      const someSlotsAreAlreadyBilled = courseSlots.some(slot => (slot.trainerBillings || []).some(
+        billing => UtilsHelper.areObjectIdsEquals(billing.trainer, credentials._id)
+      ));
+      if (someSlotsAreAlreadyBilled) throw Boom.forbidden();
+    }
 
     const billNumberAlreadyUsed = await TrainerBill
       .countDocuments({ trainer: credentials._id, number: req.payload.number });

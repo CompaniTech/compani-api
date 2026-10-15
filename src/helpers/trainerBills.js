@@ -34,20 +34,27 @@ const computeAmount = (courseSlots, trainerId) => {
 };
 
 exports.createBill = async (payload, credentials) => {
-  const courseSlotIds = Array.isArray(payload.courseSlots) ? payload.courseSlots : [payload.courseSlots];
+  const courseSlotIds = payload.courseSlots
+    ? [...Array.isArray(payload.courseSlots) ? payload.courseSlots : [payload.courseSlots]]
+    : [];
 
-  const courseSlots = await CourseSlot
-    .find({ _id: { $in: courseSlotIds } })
-    .populate({ path: 'step', select: '_id' })
-    .populate({
-      path: 'course',
-      select: 'subProgram rolesPerTrainer',
-      populate: { path: 'subProgram', select: 'priceVersions' },
-    })
-    .sort({ startDate: 1 })
-    .lean();
+  let amount;
+  if (courseSlotIds.length) {
+    const courseSlots = await CourseSlot
+      .find({ _id: { $in: courseSlotIds } })
+      .populate({ path: 'step', select: '_id' })
+      .populate({
+        path: 'course',
+        select: 'subProgram rolesPerTrainer',
+        populate: { path: 'subProgram', select: 'priceVersions' },
+      })
+      .sort({ startDate: 1 })
+      .lean();
 
-  const amount = computeAmount(courseSlots, credentials._id);
+    amount = computeAmount(courseSlots, credentials._id);
+  } else {
+    amount = payload.amount;
+  }
 
   const trainerName = UtilsHelper.formatIdentity(credentials.identity, 'FL');
   const fileUploaded = await GCloudStorageHelper.uploadCourseFile({
@@ -59,16 +66,18 @@ exports.createBill = async (payload, credentials) => {
   const trainerBill = await TrainerBill.create({
     trainer: credentials._id,
     number: payload.number,
-    courseSlots: courseSlotIds,
+    ...(courseSlotIds.length && { courseSlots: courseSlotIds }),
     amount,
     submittedAt: CompaniDate().toISO(),
     file: fileUploaded,
   });
 
-  await CourseSlot.updateMany(
-    { _id: { $in: courseSlotIds } },
-    { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBill._id } } }
-  );
+  if (courseSlotIds.length) {
+    await CourseSlot.updateMany(
+      { _id: { $in: courseSlotIds } },
+      { $push: { trainerBillings: { trainer: credentials._id, trainerBill: trainerBill._id } } }
+    );
+  }
 
   const lastPaymentNumber = await CoursePaymentNumber
     .findOneAndUpdate(
