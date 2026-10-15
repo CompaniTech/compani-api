@@ -170,9 +170,9 @@ describe('getCustomPdfContent', () => {
     expect(result.images).toEqual(paths);
 
     const imageList = [
-      { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
+      { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
-      { url: 'https://storage.googleapis.com/compani-main/copper_aux-eclaire.png', name: 'aux-eclaire.png' },
+      { url: 'https://storage.googleapis.com/compani-main/aux-eclaire.png', name: 'aux-eclaire.png' },
       { url: 'https://storage.googleapis.com/compani-main/smiling-emoji.png', name: 'smiling-emoji.png' },
       { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
     ];
@@ -327,9 +327,9 @@ describe('getCustomPdfContent', () => {
     expect(result.images).toEqual(paths);
 
     const imageList = [
-      { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
+      { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
-      { url: 'https://storage.googleapis.com/compani-main/copper_aux-eclaire.png', name: 'aux-eclaire.png' },
+      { url: 'https://storage.googleapis.com/compani-main/aux-eclaire.png', name: 'aux-eclaire.png' },
       { url: 'https://storage.googleapis.com/compani-main/smiling-emoji.png', name: 'smiling-emoji.png' },
       { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
     ];
@@ -2080,7 +2080,7 @@ describe('getPdf', () => {
         programName: { fontSize: 12, alignment: 'center', color: COPPER_500, marginBottom: 16 },
       },
     };
-    const images = [{ url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'logo.png' }];
+    const images = [{ url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'logo.png' }];
     getCustomPdfContent.returns({ template, images });
     generatePdf.returns('pdf');
 

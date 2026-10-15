@@ -5,10 +5,10 @@ const { COPPER_500, COPPER_GREY_200 } = require('../../helpers/constants');
 
 const getImages = async () => {
   const imageList = [
-    { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
-    { url: 'https://storage.googleapis.com/compani-main/copper_doct-explication.png', name: 'doct-explication.png' },
-    { url: 'https://storage.googleapis.com/compani-main/copper_doct-quizz.png', name: 'doct-quizz.png' },
-    { url: 'https://storage.googleapis.com/compani-main/copper_aux-perplexite.png', name: 'aux-perplexite.png' },
+    { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
+    { url: 'https://storage.googleapis.com/compani-main/doct-explication.png', name: 'doct-explication.png' },
+    { url: 'https://storage.googleapis.com/compani-main/doct-quizz.png', name: 'doct-quizz.png' },
+    { url: 'https://storage.googleapis.com/compani-main/aux-perplexite.png', name: 'aux-perplexite.png' },
   ];
 
   return FileHelper.downloadImages(imageList);

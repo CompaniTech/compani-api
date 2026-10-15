@@ -10,7 +10,7 @@ const NodemailerHelper = require('../../../src/helpers/nodemailer');
 const UtilsHelper = require('../../../src/helpers/utils');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
 const translate = require('../../../src/helpers/translate');
-const { VAEI, VENDOR_ADMIN, START_COURSE, RESEND } = require('../../../src/helpers/constants');
+const { VAEI, VENDOR_ADMIN, START_COURSE, RESEND, COPPER_500 } = require('../../../src/helpers/constants');
 const User = require('../../../src/models/User');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
@@ -464,7 +464,7 @@ describe('sendBillEmail', async () => {
         style="width: 200px; height: auto; border: 0;">
     </a>
     <a href="https://app.compani.fr/login">
-      <p style="color: #004D66;">Cliquer ici pour accéder à l'espace Compani</p>
+      <p style="color: ${COPPER_500};">Cliquer ici pour accéder à l'espace Compani</p>
     </a></p>`;
 
     const sentObj = { msg: htmlContent };
@@ -536,7 +536,7 @@ describe('sendBillEmail', async () => {
         style="width: 200px; height: auto; border: 0;">
     </a>
     <a href="https://app.compani.fr/login">
-      <p style="color: #004D66;">Cliquer ici pour accéder à l'espace Compani</p>
+      <p style="color: ${COPPER_500};">Cliquer ici pour accéder à l'espace Compani</p>
     </a></p>`;
 
     const sentObj = { msg: htmlContent };

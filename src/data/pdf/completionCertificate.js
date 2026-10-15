@@ -5,9 +5,9 @@ const { COPPER_500, ORANGE_500, COPPER_100, CUSTOM, SHORT_DURATION_H_MM } = requ
 
 const getImages = async () => {
   const imageList = [
-    { url: 'https://storage.googleapis.com/compani-main/copper_aux-pouce.png', name: 'aux-pouce.png' },
+    { url: 'https://storage.googleapis.com/compani-main/aux-pouce.png', name: 'aux-pouce.png' },
     { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },
-    { url: 'https://storage.googleapis.com/compani-main/copper_aux-eclaire.png', name: 'aux-eclaire.png' },
+    { url: 'https://storage.googleapis.com/compani-main/aux-eclaire.png', name: 'aux-eclaire.png' },
     { url: 'https://storage.googleapis.com/compani-main/smiling-emoji.png', name: 'smiling-emoji.png' },
     { url: 'https://storage.googleapis.com/compani-main/tsb_signature.png', name: 'signature.png' },
   ];
