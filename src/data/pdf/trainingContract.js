@@ -3,7 +3,7 @@ const PdfHelper = require('../../helpers/pdf');
 const NumbersHelper = require('../../helpers/numbers');
 const FileHelper = require('../../helpers/file');
 const UtilsHelper = require('../../helpers/utils');
-const { COPPER_600, COPPER_100, INTER_B2B } = require('../../helpers/constants');
+const { COPPER_500, COPPER_100, INTER_B2B } = require('../../helpers/constants');
 
 const getImages = async () => {
   const imageList = [
@@ -19,7 +19,7 @@ const getHeader = (data, compani) => [
   { text: 'CONVENTION DE FORMATION', alignment: 'center', fontSize: 24, bold: true, marginBottom: 24 },
   {
     stack: [
-      { text: 'Entre l\'organisme de formation', color: COPPER_600 },
+      { text: 'Entre l\'organisme de formation', color: COPPER_500 },
       { text: get(data, 'vendorCompany.name'), bold: true },
       { text: get(data, 'vendorCompany.address.fullAddress') || '' },
       { text: `SIRET : ${UtilsHelper.formatSiret(get(data, 'vendorCompany.siret') || '')}` },
@@ -29,7 +29,7 @@ const getHeader = (data, compani) => [
   },
   {
     stack: [
-      { text: 'Et', color: COPPER_600 },
+      { text: 'Et', color: COPPER_500 },
       { text: get(data, 'company.name') },
       { text: get(data, 'company.address') || '' },
     ],
@@ -42,14 +42,14 @@ const getFooter = (data, signature) => [
     columns: [
       {
         stack: [
-          { text: get(data, 'vendorCompany.name') || '', color: COPPER_600 },
+          { text: get(data, 'vendorCompany.name') || '', color: COPPER_500 },
           { text: 'Thibault de Saint Blancard, Directeur général de Compani' },
           { image: signature, width: 132, marginTop: 8 },
         ],
       },
       {
         stack: [
-          { text: 'Le client', color: COPPER_600 },
+          { text: 'Le client', color: COPPER_500 },
           { text: 'Votre signature implique l\'acceptation des annexes 1 et 2', italics: true },
           { text: 'Prénom + Nom, poste et cachet de la structure', fontSize: 8 },
         ],

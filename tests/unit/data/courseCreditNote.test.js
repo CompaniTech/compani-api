@@ -5,7 +5,7 @@ const FileHelper = require('../../../src/helpers/file');
 const PdfHelper = require('../../../src/helpers/pdf');
 const UtilsHelper = require('../../../src/helpers/utils');
 const CourseCreditNote = require('../../../src/data/pdf/courseBilling/courseCreditNote');
-const { COPPER_GREY_200, ORANGE_600, GROUP } = require('../../../src/helpers/constants');
+const { COPPER_GREY_200, ORANGE_500, GROUP } = require('../../../src/helpers/constants');
 
 describe('getPdfContent', () => {
   let downloadImages;
@@ -183,7 +183,7 @@ describe('getPdfContent', () => {
       ],
       defaultStyle: { font: 'SourceSans', fontSize: 10 },
       styles: {
-        header: { fillColor: ORANGE_600, color: 'white' },
+        header: { fillColor: ORANGE_500, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
       footer: {
@@ -347,7 +347,7 @@ describe('getPdfContent', () => {
       ],
       defaultStyle: { font: 'SourceSans', fontSize: 10 },
       styles: {
-        header: { fillColor: ORANGE_600, color: 'white' },
+        header: { fillColor: ORANGE_500, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
       footer: {
@@ -546,7 +546,7 @@ describe('getPdfContent', () => {
       ],
       defaultStyle: { font: 'SourceSans', fontSize: 10 },
       styles: {
-        header: { fillColor: ORANGE_600, color: 'white' },
+        header: { fillColor: ORANGE_500, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
       footer: {

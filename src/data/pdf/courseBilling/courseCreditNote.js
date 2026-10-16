@@ -1,4 +1,4 @@
-const { ORANGE_600 } = require('../../../helpers/constants');
+const { ORANGE_500 } = require('../../../helpers/constants');
 const UtilsPdfHelper = require('./utils');
 const PdfHelper = require('../../../helpers/pdf');
 const CourseBillHelper = require('../../../helpers/courseBills');
@@ -28,7 +28,7 @@ exports.getPdfContent = async (creditNote) => {
       content: content.flat(),
       defaultStyle: { font: 'SourceSans', fontSize: 10 },
       styles: {
-        header: { fillColor: ORANGE_600, color: 'white' },
+        header: { fillColor: ORANGE_500, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
       footer: UtilsPdfHelper.getFooter(creditNote.vendorCompany),
