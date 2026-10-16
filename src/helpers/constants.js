@@ -226,6 +226,7 @@ module.exports = {
       [this.PENDING]: 'En attente',
       [this.RECEIVED]: 'Reçu',
       [this.XML_GENERATED]: 'Fichier XML associé',
+      [this.PAID]: 'Réglé',
     };
   },
   NOT_INVOICED: 'not_invoiced',
@@ -641,6 +642,7 @@ module.exports = {
   COURSE_PAYMENT: 'course_payment',
   TRAINER_SALARY: 'trainer_salary',
   DRAFT_COURSE_BILL: 'draft_course_bill',
+  TRAINER_PAYMENT: 'trainer_payment',
   get HISTORY_EXPORT_TYPES() {
     return [
       this.WORKING_EVENT,
@@ -659,6 +661,7 @@ module.exports = {
       this.COURSE_PAYMENT,
       this.SELF_POSITIONNING,
       this.DRAFT_COURSE_BILL,
+      this.TRAINER_PAYMENT,
     ];
   },
   get CLIENT_EXPORT_TYPES() {
@@ -692,6 +695,7 @@ module.exports = {
       this.COURSE_PAYMENT,
       this.SELF_POSITIONNING,
       this.DRAFT_COURSE_BILL,
+      this.TRAINER_PAYMENT,
     ];
   },
   // COURSE BILLING
