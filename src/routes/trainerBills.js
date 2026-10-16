@@ -18,9 +18,8 @@ exports.plugin = {
             courseSlots: objectIdOrArray,
             number: Joi.string().required(),
             file: Joi.any().required(),
-            amount: Joi.number().positive()
-              .when('courseSlots', { is: Joi.exist(), then: Joi.forbidden(), otherwise: Joi.required() }),
-          }),
+            amount: Joi.number().positive(),
+          }).xor('amount', 'courseSlots'),
         },
         pre: [{ method: authorizeTrainerBillCreation }],
       },

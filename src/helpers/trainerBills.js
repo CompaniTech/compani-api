@@ -34,9 +34,7 @@ const computeAmount = (courseSlots, trainerId) => {
 };
 
 exports.createBill = async (payload, credentials) => {
-  const courseSlotIds = payload.courseSlots
-    ? [...Array.isArray(payload.courseSlots) ? payload.courseSlots : [payload.courseSlots]]
-    : [];
+  const courseSlotIds = payload.courseSlots ? UtilsHelper.formatIdsArray(payload.courseSlots) : [];
 
   let amount;
   if (courseSlotIds.length) {
