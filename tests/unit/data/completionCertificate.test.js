@@ -592,7 +592,7 @@ describe('getOfficialPdfContent', () => {
       content: [header, body, footer].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 14 },
       pageMargins: [40, 40, 40, 40],
-      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
     };
     expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
     expect(result.images).toEqual(paths);
@@ -832,7 +832,7 @@ describe('getOfficialPdfContent', () => {
       content: [header, body, footer].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 14 },
       pageMargins: [40, 40, 40, 40],
-      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
     };
     expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
     expect(result.images).toEqual(paths);
@@ -1079,7 +1079,7 @@ describe('getOfficialPdfContent', () => {
       content: [header, body, footer].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 14 },
       pageMargins: [40, 40, 40, 40],
-      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
     };
     expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
     expect(result.images).toEqual(paths);
@@ -1327,7 +1327,7 @@ describe('getOfficialPdfContent', () => {
       content: [header, body, footer].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 14 },
       pageMargins: [40, 40, 40, 40],
-      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
     };
     expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
     expect(result.images).toEqual(paths);
@@ -1574,7 +1574,7 @@ describe('getOfficialPdfContent', () => {
       content: [header, body, footer].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 14 },
       pageMargins: [40, 40, 40, 40],
-      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
     };
     expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
     expect(result.images).toEqual(paths);
@@ -1825,7 +1825,7 @@ describe('getOfficialPdfContent', () => {
         content: [header, body, footer].flat(),
         defaultStyle: { font: 'Calibri', fontSize: 14 },
         pageMargins: [40, 40, 40, 40],
-        styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+        styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
       };
       expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
       expect(result.images).toEqual(paths);
@@ -2026,7 +2026,7 @@ describe('getOfficialPdfContent', () => {
         content: [header, body, footer].flat(),
         defaultStyle: { font: 'Calibri', fontSize: 14 },
         pageMargins: [40, 40, 40, 40],
-        styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+        styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
       };
       expect(JSON.stringify(result.template)).toEqual(JSON.stringify(pdf));
       expect(result.images).toEqual(paths);
@@ -2114,7 +2114,7 @@ describe('getPdf', () => {
       ],
       defaultStyle: { font: 'Calibri', fontSize: 14 },
       pageMargins: [40, 40, 40, 40],
-      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
     };
     const images = [
       { url: 'https://storage.googleapis.com/compani-main/icons/compani_texte_bleu.png', name: 'compani.png' },

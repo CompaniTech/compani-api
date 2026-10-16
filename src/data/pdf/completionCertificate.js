@@ -494,7 +494,7 @@ exports.getOfficialPdfContent = async (data) => {
       content: [header, body, footer].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 14 },
       pageMargins: [40, 40, 40, 40],
-      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
     },
     images: [signature, compani, logo],
   };
