@@ -15,10 +15,11 @@ exports.plugin = {
         payload: formDataPayload(),
         validate: {
           payload: Joi.object({
-            courseSlots: objectIdOrArray.required(),
+            courseSlots: objectIdOrArray,
             number: Joi.string().required(),
             file: Joi.any().required(),
-          }),
+            amount: Joi.number().positive(),
+          }).xor('amount', 'courseSlots'),
         },
         pre: [{ method: authorizeTrainerBillCreation }],
       },
