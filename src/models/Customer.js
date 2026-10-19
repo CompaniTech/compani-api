@@ -4,7 +4,7 @@ const Boom = require('@hapi/boom');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const moment = require('../extensions/moment');
-const { encrypt, decrypt } = require('../helpers/encryption');
+const { encrypt, decrypt, encryptObject, decryptObject } = require('../helpers/encryption');
 const { validateQuery, validateAggregation, formatQuery, formatQueryMiddlewareList } = require('./preHooks/validate');
 const {
   MONTHLY,
@@ -218,6 +218,16 @@ function cryptDatas() {
   if ($set['payment.iban']) $set['payment.iban'] = encrypt($set['payment.iban']);
 
   if ($set['payment.bic']) $set['payment.bic'] = encrypt($set['payment.bic']);
+
+  if ($set['contact.phone']) $set['contact.phone'] = encrypt($set['contact.phone']);
+
+  for (const addressKey of ['primaryAddress', 'secondaryAddress']) {
+    const path = `contact.${addressKey}`;
+    if ($set[path]) $set[path] = encryptObject($set[path]);
+    for (const key of Object.keys($set).filter(k => k.startsWith(`${path}.`))) {
+      $set[key] = encryptObject($set[key]);
+    }
+  }
 }
 
 function decryptDatas(doc) {
@@ -227,6 +237,14 @@ function decryptDatas(doc) {
   if (get(doc, 'payment.iban', '').includes(':')) doc.payment.iban = decrypt(doc.payment.iban);
   // eslint-disable-next-line no-param-reassign
   if (get(doc, 'payment.bic', '').includes(':')) doc.payment.bic = decrypt(doc.payment.bic);
+
+  // eslint-disable-next-line no-param-reassign
+  if (get(doc, 'contact.phone', '').includes(':')) doc.contact.phone = decrypt(doc.contact.phone);
+
+  for (const addressKey of ['primaryAddress', 'secondaryAddress']) {
+    // eslint-disable-next-line no-param-reassign
+    if (get(doc, `contact.${addressKey}`)) doc.contact[addressKey] = decryptObject(doc.contact[addressKey]);
+  }
 }
 
 function decryptDatasList(docs) {

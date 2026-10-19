@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const Joi = require('joi');
 const moment = require('moment');
 const get = require('lodash/get');
-const { encrypt, decrypt } = require('../helpers/encryption');
+const { encrypt, decrypt, encryptObject, decryptObject } = require('../helpers/encryption');
 const { PHONE_VALIDATION, COUNTRY_CODE_VALIDATION } = require('./utils');
 const addressSchemaDefinition = require('./schemaDefinitions/address');
 const { identitySchemaDefinition } = require('./schemaDefinitions/identity');
@@ -237,6 +237,13 @@ function cryptDatas() {
   if ($set.iban) $set.iban = encrypt($set.iban);
 
   if ($set.bic) $set.bic = encrypt($set.bic);
+
+  if ($set['contact.phone']) $set['contact.phone'] = encrypt($set['contact.phone']);
+
+  if ($set['contact.address']) $set['contact.address'] = encryptObject($set['contact.address']);
+  for (const key of Object.keys($set).filter(k => k.startsWith('contact.address.'))) {
+    $set[key] = encryptObject($set[key]);
+  }
 }
 
 async function decryptDatas(doc) {
@@ -246,6 +253,11 @@ async function decryptDatas(doc) {
   if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
   // eslint-disable-next-line no-param-reassign
   if (doc.bic && doc.bic.includes(':')) doc.bic = decrypt(doc.bic);
+
+  // eslint-disable-next-line no-param-reassign
+  if (get(doc, 'contact.phone', '').includes(':')) doc.contact.phone = decrypt(doc.contact.phone);
+  // eslint-disable-next-line no-param-reassign
+  if (get(doc, 'contact.address')) doc.contact.address = decryptObject(doc.contact.address);
 }
 
 function decryptDatasList(docs) {

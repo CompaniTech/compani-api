@@ -12,6 +12,19 @@ exports.encrypt = (text) => {
   return `${iv.toString('hex')}:${encrypted}`;
 };
 
+exports.encryptObject = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object' || Array.isArray(obj)) {
+    if (isEncrypted(obj)) return obj;
+    return exports.encrypt(JSON.stringify(obj));
+  }
+
+  const result = {};
+  for (const key of Object.keys(obj)) result[key] = exports.encryptObject(obj[key]);
+
+  return result;
+};
+
 exports.decrypt = (data) => {
   const ENCRYPTION_KEY = crypto.scryptSync(process.env.ENCRYPTION_KEY, 'salt', 32);
 
@@ -24,3 +37,16 @@ exports.decrypt = (data) => {
 
   return decrypted;
 };
+
+exports.decryptObject = (obj) => {
+  if (obj === null || obj === undefined) return obj;
+  if (typeof obj !== 'object') return isEncrypted(obj) ? JSON.parse(exports.decrypt(obj)) : obj;
+
+  const plain = typeof obj.toObject === 'function' ? obj.toObject({ virtuals: false }) : obj;
+  const result = {};
+  for (const key of Object.keys(plain)) result[key] = exports.decryptObject(plain[key]);
+
+  return result;
+};
+
+const isEncrypted = value => typeof value === 'string' && value.includes(':');
