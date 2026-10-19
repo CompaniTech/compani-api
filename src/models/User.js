@@ -8,7 +8,7 @@ const moment = require('moment');
 const get = require('lodash/get');
 const { encrypt, decrypt, encryptObject, decryptObject } = require('../helpers/encryption');
 const { PHONE_VALIDATION, COUNTRY_CODE_VALIDATION } = require('./utils');
-const addressSchemaDefinition = require('./schemaDefinitions/address');
+const addressSchemaDefinition = require('./schemaDefinitions/encryptedAddress');
 const { identitySchemaDefinition } = require('./schemaDefinitions/identity');
 const driveResourceSchemaDefinition = require('./schemaDefinitions/driveResource');
 const {

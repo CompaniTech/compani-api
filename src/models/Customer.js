@@ -25,7 +25,7 @@ const {
 } = require('../helpers/constants');
 const Event = require('./Event');
 const { PHONE_VALIDATION } = require('./utils');
-const addressSchemaDefinition = require('./schemaDefinitions/address');
+const addressSchemaDefinition = require('./schemaDefinitions/encryptedAddress');
 const { identitySchemaDefinition } = require('./schemaDefinitions/identity');
 const driveResourceSchemaDefinition = require('./schemaDefinitions/driveResource');
 const subscriptionSchemaDefinition = require('./schemaDefinitions/subscription');
