@@ -15,7 +15,7 @@ jobs:
       # Install Node.js
       - uses: actions/setup-node@v3
         with:
-          node-version: 22.20.0
+          node-version: 24.21.0
 
       # Install your dependencies
       - run: yarn install

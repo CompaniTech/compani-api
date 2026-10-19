@@ -3,9 +3,8 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 
-const { sendWelcome, sendBillEmail, sendTrainerFeesBill } = require('../controllers/emailController');
+const { sendWelcome, sendBillEmail } = require('../controllers/emailController');
 const { authorizeSendEmail, authorizeSendEmailBillList } = require('./preHandlers/email');
-const { formDataPayload } = require('./validations/utils');
 const {
   HELPER,
   TRAINER,
@@ -17,6 +16,7 @@ const {
   MIDDLE_COURSE,
   END_COURSE,
   RESEND,
+  OTHER,
 } = require('../helpers/constants');
 
 exports.plugin = {
@@ -49,7 +49,7 @@ exports.plugin = {
           payload: Joi.object().keys({
             bills: Joi.array().items(Joi.objectId()).min(1).required(),
             content: Joi.string().required(),
-            type: Joi.string().valid(VAEI, START_COURSE, MIDDLE_COURSE, END_COURSE, RESEND).required(),
+            type: Joi.string().valid(VAEI, START_COURSE, MIDDLE_COURSE, END_COURSE, RESEND, OTHER).required(),
             recipientEmails: Joi.array().items(Joi.string().email()).min(1).required(),
             sendingDate: Joi.date().required(),
           }),
@@ -57,22 +57,6 @@ exports.plugin = {
         pre: [{ method: authorizeSendEmailBillList, assign: 'courseBills' }],
       },
       handler: sendBillEmail,
-    });
-
-    server.route({
-      method: 'POST',
-      path: '/send-trainer-fees-bill',
-      options: {
-        auth: { scope: ['trainerbills:create'] },
-        payload: formDataPayload(),
-        validate: {
-          payload: Joi.object({
-            number: Joi.string().required(),
-            file: Joi.any().required(),
-          }),
-        },
-      },
-      handler: sendTrainerFeesBill,
     });
   },
 };

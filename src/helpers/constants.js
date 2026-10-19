@@ -5,14 +5,11 @@ module.exports = {
   TEST: 'test',
   // COLOR
   BLACK: 'black',
-  COPPER_50: '#F0FAF7',
-  COPPER_100: '#DAF2EE',
-  COPPER_500: '#1D7C8F',
-  COPPER_600: '#005774',
-  COPPER_GREY_200: '#E2ECF0',
-  PEACH_100: '#FFEDDA',
-  ORANGE_500: '#ED8936',
-  ORANGE_600: '#DD6B20',
+  COPPER_100: '#D7F4F6',
+  COPPER_500: '#004D66',
+  COPPER_GREY_200: '#E5E9EA',
+  PEACH_100: '#FFF3EB',
+  ORANGE_500: '#FF6A00',
   SENDER_MAIL: 'nepasrepondre@compani.fr',
   REJECTED: 'rejected',
   // Time
@@ -226,6 +223,7 @@ module.exports = {
       [this.PENDING]: 'En attente',
       [this.RECEIVED]: 'Reçu',
       [this.XML_GENERATED]: 'Fichier XML associé',
+      [this.PAID]: 'Réglé',
     };
   },
   NOT_INVOICED: 'not_invoiced',
@@ -641,6 +639,7 @@ module.exports = {
   COURSE_PAYMENT: 'course_payment',
   TRAINER_SALARY: 'trainer_salary',
   DRAFT_COURSE_BILL: 'draft_course_bill',
+  TRAINER_PAYMENT: 'trainer_payment',
   get HISTORY_EXPORT_TYPES() {
     return [
       this.WORKING_EVENT,
@@ -659,6 +658,7 @@ module.exports = {
       this.COURSE_PAYMENT,
       this.SELF_POSITIONNING,
       this.DRAFT_COURSE_BILL,
+      this.TRAINER_PAYMENT,
     ];
   },
   get CLIENT_EXPORT_TYPES() {
@@ -692,6 +692,7 @@ module.exports = {
       this.COURSE_PAYMENT,
       this.SELF_POSITIONNING,
       this.DRAFT_COURSE_BILL,
+      this.TRAINER_PAYMENT,
     ];
   },
   // COURSE BILLING

@@ -1,4 +1,4 @@
-const { COPPER_600, PAYMENT } = require('../../../helpers/constants');
+const { COPPER_500, PAYMENT } = require('../../../helpers/constants');
 const UtilsPdfHelper = require('./utils');
 const PdfHelper = require('../../../helpers/pdf');
 const NumbersHelper = require('../../../helpers/numbers');
@@ -56,7 +56,7 @@ exports.getPdfContent = async (bill) => {
       content: content.flat(),
       defaultStyle: { font: 'SourceSans', fontSize: 10 },
       styles: {
-        header: { fillColor: COPPER_600, color: 'white' },
+        header: { fillColor: COPPER_500, color: 'white' },
         description: { alignment: 'left', marginLeft: 8, fontSize: 10 },
       },
       footer: UtilsPdfHelper.getFooter(bill.vendorCompany),

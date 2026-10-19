@@ -3,7 +3,7 @@ const { expect } = require('expect');
 const FileHelper = require('../../../src/helpers/file');
 const PdfHelper = require('../../../src/helpers/pdf');
 const TrainingContract = require('../../../src/data/pdf/trainingContract');
-const { COPPER_600, COPPER_100, INTRA, INTER_B2B } = require('../../../src/helpers/constants');
+const { COPPER_500, COPPER_100, INTRA, INTER_B2B } = require('../../../src/helpers/constants');
 
 describe('getPdfContent', () => {
   let downloadImages;
@@ -51,7 +51,7 @@ describe('getPdfContent', () => {
       { text: 'CONVENTION DE FORMATION', alignment: 'center', fontSize: 24, bold: true, marginBottom: 24 },
       {
         stack: [
-          { text: 'Entre l\'organisme de formation', color: COPPER_600 },
+          { text: 'Entre l\'organisme de formation', color: COPPER_500 },
           { text: 'Compani', bold: true },
           { text: '12 rue Daumesnil 75012 Paris' },
           { text: 'SIRET : 912 343 958 05325' },
@@ -61,7 +61,7 @@ describe('getPdfContent', () => {
       },
       {
         stack: [
-          { text: 'Et', color: COPPER_600 },
+          { text: 'Et', color: COPPER_500 },
           { text: 'Alenvi' },
           { text: '12 rue de ponthieu 75008 Paris' },
         ],
@@ -115,14 +115,14 @@ describe('getPdfContent', () => {
         columns: [
           {
             stack: [
-              { text: 'Compani', color: COPPER_600 },
+              { text: 'Compani', color: COPPER_500 },
               { text: 'Thibault de Saint Blancard, Directeur général de Compani' },
               { image: paths[1], width: 132, marginTop: 8 },
             ],
           },
           {
             stack: [
-              { text: 'Le client', color: COPPER_600 },
+              { text: 'Le client', color: COPPER_500 },
               { text: 'Votre signature implique l\'acceptation des annexes 1 et 2', italics: true },
               { text: 'Prénom + Nom, poste et cachet de la structure', fontSize: 8 },
             ],
@@ -186,7 +186,7 @@ describe('getPdfContent', () => {
       { text: 'CONVENTION DE FORMATION', alignment: 'center', fontSize: 24, bold: true, marginBottom: 24 },
       {
         stack: [
-          { text: 'Entre l\'organisme de formation', color: COPPER_600 },
+          { text: 'Entre l\'organisme de formation', color: COPPER_500 },
           { text: 'Compani', bold: true },
           { text: '12 rue Daumesnil 75012 Paris' },
           { text: 'SIRET : 912 343 958 05325' },
@@ -196,7 +196,7 @@ describe('getPdfContent', () => {
       },
       {
         stack: [
-          { text: 'Et', color: COPPER_600 },
+          { text: 'Et', color: COPPER_500 },
           { text: 'Alenvi' },
           { text: '12 rue de ponthieu 75008 Paris' },
         ],
@@ -243,14 +243,14 @@ describe('getPdfContent', () => {
         columns: [
           {
             stack: [
-              { text: 'Compani', color: COPPER_600 },
+              { text: 'Compani', color: COPPER_500 },
               { text: 'Thibault de Saint Blancard, Directeur général de Compani' },
               { image: paths[1], width: 132, marginTop: 8 },
             ],
           },
           {
             stack: [
-              { text: 'Le client', color: COPPER_600 },
+              { text: 'Le client', color: COPPER_500 },
               { text: 'Votre signature implique l\'acceptation des annexes 1 et 2', italics: true },
               { text: 'Prénom + Nom, poste et cachet de la structure', fontSize: 8 },
             ],

@@ -17,10 +17,10 @@ const {
 } = require('./seed/emailSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const NodemailerHelper = require('../../src/helpers/nodemailer');
-const { TRAINEE, START_COURSE, VAEI, END_COURSE, RESEND } = require('../../src/helpers/constants');
+const PendingCourseBill = require('../../src/models/PendingCourseBill');
+const { TRAINEE, START_COURSE, VAEI, END_COURSE, RESEND, OTHER } = require('../../src/helpers/constants');
 const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 const UtilsMock = require('../utilsMock');
-const { generateFormData, getStream } = require('./utils');
 
 describe('NODE ENV', () => {
   it('should be \'test\'', () => {
@@ -262,6 +262,35 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
       expect(response.statusCode).toBe(200);
     });
 
+    it('should send bill list by email with OTHER type (bills linked to VAEI and non VAEI courses)', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { ...payload, type: OTHER, bills: [courseBillsList[0]._id, courseBillsList[1]._id] },
+      });
+
+      expect(response.result.data.mailInfo).toEqual('emailSent');
+      sinon.assert.calledWithExactly(sendinBlueTransporter);
+
+      expect(response.statusCode).toBe(200);
+    });
+
+    it('should schedule bill list email with OTHER type', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { ...payload, type: OTHER, sendingDate: '2021-04-10T18:45:25.437Z' },
+      });
+
+      expect(response.statusCode).toBe(200);
+      sinon.assert.notCalled(sendinBlueTransporter);
+      const pendingCourseBillCount = await PendingCourseBill
+        .countDocuments({ courseBills: courseBillsList[0]._id, type: OTHER });
+      expect(pendingCourseBillCount).toBe(1);
+    });
+
     it('should return a 404 if a bill does not exist', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -348,6 +377,20 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
         url: '/email/send-coursebill-list',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         payload: { ...payload, bills: [courseBillsList[0]._id, courseBillsList[2]._id] },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.result.message)
+        .toEqual('Impossible: certaines factures ont été envoyées au moins une fois mais pas toutes.');
+      sinon.assert.notCalled(sendinBlueTransporter);
+    });
+
+    it('should return 403 if type is OTHER and some bills have been sent but not all of them', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: '/email/send-coursebill-list',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { ...payload, type: OTHER, bills: [courseBillsList[0]._id, courseBillsList[2]._id] },
       });
 
       expect(response.statusCode).toBe(403);
@@ -460,93 +503,6 @@ describe('EMAIL ROUTES - POST emails/send-coursebill-list', () => {
           url: '/email/send-coursebill-list',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload,
-        });
-
-        expect(response.statusCode).toBe(role.expectedCode);
-      });
-    });
-  });
-});
-
-describe('EMAIL ROUTES - POST emails/send-trainer-fees-bill', () => {
-  let authToken;
-  let sendinBlueTransporter;
-
-  beforeEach(async () => {
-    await populateDB();
-    sendinBlueTransporter = sinon.stub(NodemailerHelper, 'sendinBlueTransporter')
-      .returns({ sendMail: sinon.stub().returns('emailSent') });
-  });
-
-  afterEach(() => {
-    sendinBlueTransporter.restore();
-  });
-
-  describe('TRAINER', () => {
-    beforeEach(async () => {
-      authToken = await getToken('trainer');
-    });
-
-    it('should send an email with trainer fees invoice attached', async () => {
-      const form = generateFormData({ number: 'FACT_0001', file: 'test' });
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/email/send-trainer-fees-bill',
-        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: getStream(form),
-      });
-
-      expect(response.statusCode).toBe(200);
-      sinon.assert.calledOnce(sendinBlueTransporter);
-    });
-
-    it('should return 400 if number is missing', async () => {
-      const form = generateFormData({ file: 'test' });
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/email/send-trainer-fees-bill',
-        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: getStream(form),
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-
-    it('should return 400 if file is missing', async () => {
-      const form = generateFormData({ number: 'FACT_0001' });
-
-      const response = await app.inject({
-        method: 'POST',
-        url: '/email/send-trainer-fees-bill',
-        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-        payload: getStream(form),
-      });
-
-      expect(response.statusCode).toBe(400);
-    });
-  });
-
-  describe('other roles', () => {
-    const roles = [
-      { name: 'helper', expectedCode: 403 },
-      { name: 'client_admin', expectedCode: 403 },
-      { name: 'planning_referent', expectedCode: 403 },
-      { name: 'coach', expectedCode: 403 },
-      { name: 'vendor_admin', expectedCode: 200 },
-      { name: 'training_organisation_manager', expectedCode: 200 },
-    ];
-    roles.forEach((role) => {
-      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
-        authToken = await getToken(role.name);
-        const form = generateFormData({ number: 'FACT_0001', file: 'test' });
-
-        const response = await app.inject({
-          method: 'POST',
-          url: '/email/send-trainer-fees-bill',
-          headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload: getStream(form),
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

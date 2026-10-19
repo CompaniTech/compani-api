@@ -1,7 +1,7 @@
 const { CompaniDuration } = require('../../helpers/dates/companiDurations');
 const FileHelper = require('../../helpers/file');
 const PdfHelper = require('../../helpers/pdf');
-const { COPPER_500, ORANGE_500, COPPER_50, CUSTOM, SHORT_DURATION_H_MM } = require('../../helpers/constants');
+const { COPPER_500, ORANGE_500, COPPER_100, CUSTOM, SHORT_DURATION_H_MM } = require('../../helpers/constants');
 
 const getImages = async () => {
   const imageList = [
@@ -57,7 +57,7 @@ exports.getCustomPdfContent = async (data) => {
       marginBottom: 16,
     },
     {
-      canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: isLargeProgramName ? 32 : 24, r: 0, color: COPPER_50 }],
+      canvas: [{ type: 'rect', x: 0, y: 0, w: 515, h: isLargeProgramName ? 32 : 24, r: 0, color: COPPER_100 }],
       absolutePosition: { x: 40, y: 240 },
       marginBottom: 8,
     },
@@ -494,7 +494,7 @@ exports.getOfficialPdfContent = async (data) => {
       content: [header, body, footer].flat(),
       defaultStyle: { font: 'Calibri', fontSize: 14 },
       pageMargins: [40, 40, 40, 40],
-      styles: { title: { fontSize: 24, bold: true, color: '#0404B4' } },
+      styles: { title: { fontSize: 24, bold: true, color: COPPER_500 } },
     },
     images: [signature, compani, logo],
   };

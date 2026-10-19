@@ -59,6 +59,7 @@ const QuestionnaireHistory = require('../models/QuestionnaireHistory');
 const CourseHistory = require('../models/CourseHistory');
 const Questionnaire = require('../models/Questionnaire');
 const CoursePayment = require('../models/CoursePayment');
+const TrainerPayment = require('../models/TrainerPayment');
 const ActivityHistory = require('../models/ActivityHistory');
 const Course = require('../models/Course');
 
@@ -443,7 +444,11 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       },
     })
     .populate({ path: 'trainers', select: 'identity contact' })
-    .populate({ path: 'trainerBillings.trainerBill', select: 'status number' })
+    .populate({
+      path: 'trainerBillings.trainerBill',
+      select: 'number',
+      populate: { path: 'payment', select: 'status' },
+    })
     .lean();
   const filteredCourseSlots = courseSlots.filter(s => s.course);
 
@@ -907,7 +912,7 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
       select: 'number payer course',
       populate: { path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } },
     })
-    .populate({ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser } })
+    .populate({ path: 'xmlSEPAFileInfos', select: 'name createdAt', options: { isVendorUser } })
     .setOptions({ isVendorUser })
     .lean();
 
@@ -929,6 +934,9 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
             Montant: UtilsHelper.formatFloatForExport(payment.netInclTaxes),
             Statut: PAYMENT_STATUS_LIST[payment.status],
             'Nom de lot fichier XML': get(payment, 'xmlSEPAFileInfos.name', ''),
+            'Date d\'effet du prélèvement': get(payment, 'xmlSEPAFileInfos.createdAt')
+              ? CompaniDate(payment.xmlSEPAFileInfos.createdAt).add('P2D').format(DD_MM_YYYY)
+              : '',
             Apprenant: payment.courseBill.course.type === SINGLE
               ? UtilsHelper.formatIdentity(payment.courseBill.course.trainees[0].identity, 'FL')
               : '',
@@ -937,6 +945,32 @@ exports.exportCoursePaymentHistory = async (startDate, endDate, credentials) => 
         return acc;
       }, [])
     );
+
+  return [Object.keys(rows[0]), ...rows.map(d => Object.values(d))];
+};
+
+exports.exportTrainerPaymentHistory = async (startDate, endDate, credentials) => {
+  const isVendorUser = [TRAINING_ORGANISATION_MANAGER, VENDOR_ADMIN].includes(get(credentials, 'role.vendor.name'));
+  const payments = await TrainerPayment.find({ date: { $lte: endDate, $gte: startDate } })
+    .populate({ path: 'trainerBill', select: 'number trainer', populate: { path: 'trainer', select: 'identity' } })
+    .populate({ path: 'trainerPaymentsXmlFileInfos', select: 'name createdAt', options: { isVendorUser } })
+    .lean();
+
+  if (!payments.length) return [[NO_DATA]];
+
+  const rows = payments.map(payment => ({
+    'Identifiant du paiement': payment.number,
+    'Date du paiement': CompaniDate(payment.date).format(DD_MM_YYYY),
+    'Facture associée': payment.trainerBill.number,
+    'Id Intervenant': payment.trainerBill.trainer._id,
+    'Nom de l\'intervenant': UtilsHelper.formatIdentity(payment.trainerBill.trainer.identity, 'FL'),
+    'Montant du paiement': UtilsHelper.formatFloatForExport(payment.amount),
+    'Statut du paiement': PAYMENT_STATUS_LIST[payment.status],
+    'Nom de lot fichier XML': get(payment, 'trainerPaymentsXmlFileInfos.name', ''),
+    'Date d\'effet du virement': get(payment, 'trainerPaymentsXmlFileInfos.createdAt')
+      ? CompaniDate(payment.trainerPaymentsXmlFileInfos.createdAt).format(DD_MM_YYYY)
+      : '',
+  }));
 
   return [Object.keys(rows[0]), ...rows.map(d => Object.values(d))];
 };

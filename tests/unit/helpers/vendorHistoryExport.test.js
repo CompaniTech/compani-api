@@ -54,6 +54,7 @@ const AttendanceSheet = require('../../../src/models/AttendanceSheet');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseCreditNote = require('../../../src/models/CourseCreditNote');
 const CoursePayment = require('../../../src/models/CoursePayment');
+const TrainerPayment = require('../../../src/models/TrainerPayment');
 const CourseHistory = require('../../../src/models/CourseHistory');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const DistanceMatrixHelper = require('../../../src/helpers/distanceMatrix');
@@ -1501,7 +1502,14 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1691,7 +1699,14 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -1732,7 +1747,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0001' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0001', payment: { status: PAID } } }],
       },
       { // individual slot (MISSING)
         _id: new ObjectId(),
@@ -1756,7 +1771,7 @@ describe('exportCourseSlotHistory', () => {
         step: stepList[0],
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0001' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0001', payment: { status: PAID } } }],
       },
       { // collective slot (MISSING)
         _id: new ObjectId(),
@@ -1780,7 +1795,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0002' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0002', payment: { status: PAID } } }],
       },
       { // collective slot (MISSING)
         _id: new ObjectId(),
@@ -1804,7 +1819,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: MISSING }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0002' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0002', payment: { status: PAID } } }],
       },
       { // collective slot with an unresolvable role-based price (PRESENT)
         _id: new ObjectId(),
@@ -1834,7 +1849,7 @@ describe('exportCourseSlotHistory', () => {
         step: collectiveStep,
         attendances: [{ trainee: traineeList[3]._id, status: PRESENT }],
         trainers: [trainers[0]],
-        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { status: PAID, number: 'FACT_0003' } }],
+        trainerBillings: [{ trainer: trainers[0]._id, trainerBill: { number: 'FACT_0003', payment: { status: PAID } } }],
       },
       { // individual slot with several trainers and differentiated prices, 2 of them sharing the same role (PRESENT)
         _id: new ObjectId(),
@@ -2056,7 +2071,14 @@ describe('exportCourseSlotHistory', () => {
         },
         { query: 'populate', args: [{ path: 'attendances', options: { isVendorUser } }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity contact' }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -2901,6 +2923,7 @@ describe('exportCoursePaymentHistory', () => {
         type: CHECK,
         netInclTaxes: 22,
         status: RECEIVED,
+        xmlSEPAFileInfos: { name: 'LOT-002', createdAt: '2022-01-20T00:00:00.000Z' },
       },
       {
         _id: new ObjectId(),
@@ -2948,9 +2971,9 @@ describe('exportCoursePaymentHistory', () => {
     const result = await ExportHelper.exportCoursePaymentHistory('2022-01-07T23:00:00.000Z', '2022-01-30T22:59:59.000Z', credentials);
 
     expect(result).toEqual([
-      ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant', 'Statut', 'Nom de lot fichier XML', 'Apprenant'],
-      ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00', 'Reçu', '', 'Archie PELLE'],
-      ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', payerId, 1, 'Chèque', '200,00', 'Reçu', '', ''],
+      ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant', 'Statut', 'Nom de lot fichier XML', 'Date d\'effet du prélèvement', 'Apprenant'],
+      ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00', 'Reçu', 'LOT-002', '22/01/2022', 'Archie PELLE'],
+      ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', payerId, 1, 'Chèque', '200,00', 'Reçu', '', '', ''],
     ]);
     SinonMongoose.calledWithExactly(
       findCoursePayment,
@@ -2980,11 +3003,88 @@ describe('exportCoursePaymentHistory', () => {
             populate: { path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } },
           }],
         },
-        { query: 'populate', args: [{ path: 'xmlSEPAFileInfos', select: 'name', options: { isVendorUser: true } }] },
+        { query: 'populate', args: [{ path: 'xmlSEPAFileInfos', select: 'name createdAt', options: { isVendorUser: true } }] },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ],
       1
+    );
+  });
+});
+
+describe('exportTrainerPaymentHistory', () => {
+  let findTrainerPayment;
+  const credentials = { role: { vendor: { name: 'training_organisation_manager' } } };
+
+  beforeEach(() => {
+    findTrainerPayment = sinon.stub(TrainerPayment, 'find');
+  });
+
+  afterEach(() => {
+    findTrainerPayment.restore();
+  });
+
+  it('should return an empty array if no trainer payment', async () => {
+    findTrainerPayment.returns(SinonMongoose.stubChainedQueries([], ['populate', 'populate', 'lean']));
+
+    const result = await ExportHelper.exportTrainerPaymentHistory('2021-01-14T23:00:00.000Z', '2022-01-20T22:59:59.000Z', credentials);
+
+    expect(result).toEqual([[NO_DATA]]);
+
+    SinonMongoose.calledOnceWithExactly(
+      findTrainerPayment,
+      [
+        { query: 'find', args: [{ date: { $lte: '2022-01-20T22:59:59.000Z', $gte: '2021-01-14T23:00:00.000Z' } }] },
+        {
+          query: 'populate',
+          args: [{ path: 'trainerBill', select: 'number trainer', populate: { path: 'trainer', select: 'identity' } }],
+        },
+        { query: 'populate', args: [{ path: 'trainerPaymentsXmlFileInfos', select: 'name createdAt', options: { isVendorUser: true } }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should return an array with the header and 2 rows', async () => {
+    const trainerId = new ObjectId();
+    const trainerPaymentList = [
+      {
+        number: 'REG-00001',
+        date: '2022-01-10T23:00:00.000Z',
+        trainerBill: { number: 'FACT_0001', trainer: { _id: trainerId, identity: { firstname: 'Archie', lastname: 'Pelle' } } },
+        amount: 120,
+        status: PAID,
+        trainerPaymentsXmlFileInfos: { name: 'LOT-001', createdAt: '2022-01-15T00:00:00.000Z' },
+      },
+      {
+        number: 'REG-00002',
+        date: '2022-01-20T23:00:00.000Z',
+        trainerBill: { number: 'FACT_0002', trainer: { _id: trainerId, identity: { firstname: 'Archie', lastname: 'Pelle' } } },
+        amount: 80,
+        status: PENDING,
+      },
+    ];
+    findTrainerPayment.returns(SinonMongoose.stubChainedQueries(trainerPaymentList, ['populate', 'populate', 'lean']));
+
+    const result = await ExportHelper.exportTrainerPaymentHistory('2022-01-07T23:00:00.000Z', '2022-01-30T22:59:59.000Z', credentials);
+
+    expect(result).toEqual([
+      ['Identifiant du paiement', 'Date du paiement', 'Facture associée', 'Id Intervenant', 'Nom de l\'intervenant', 'Montant du paiement', 'Statut du paiement', 'Nom de lot fichier XML', 'Date d\'effet du virement'],
+      ['REG-00001', '11/01/2022', 'FACT_0001', trainerId, 'Archie PELLE', '120,00', 'Réglé', 'LOT-001', '15/01/2022'],
+      ['REG-00002', '21/01/2022', 'FACT_0002', trainerId, 'Archie PELLE', '80,00', 'En attente', '', ''],
+    ]);
+
+    SinonMongoose.calledOnceWithExactly(
+      findTrainerPayment,
+      [
+        { query: 'find', args: [{ date: { $lte: '2022-01-30T22:59:59.000Z', $gte: '2022-01-07T23:00:00.000Z' } }] },
+        {
+          query: 'populate',
+          args: [{ path: 'trainerBill', select: 'number trainer', populate: { path: 'trainer', select: 'identity' } }],
+        },
+        { query: 'populate', args: [{ path: 'trainerPaymentsXmlFileInfos', select: 'name createdAt', options: { isVendorUser: true } }] },
+        { query: 'lean' },
+      ]
     );
   });
 });

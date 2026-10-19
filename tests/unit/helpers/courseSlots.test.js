@@ -39,7 +39,7 @@ describe('list', () => {
     const traineeIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
     const trainerBillId = new ObjectId();
-    const trainerBill = { _id: trainerBillId, status: PAID, number: 'FACT_0001' };
+    const trainerBill = { _id: trainerBillId, number: 'FACT_0001', payment: { status: PAID } };
     const subProgramId = new ObjectId();
     const stepIds = [new ObjectId(), new ObjectId(), new ObjectId()];
 
@@ -627,7 +627,14 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -787,7 +794,14 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
@@ -799,7 +813,7 @@ describe('list', () => {
     const traineeIds = [new ObjectId(), new ObjectId()];
     const trainerId = new ObjectId();
     const trainerBillId = new ObjectId();
-    const trainerBill = { _id: trainerBillId, status: PAID, number: 'FACT_0001' };
+    const trainerBill = { _id: trainerBillId, number: 'FACT_0001', payment: { status: PAID } };
     const subProgramId = new ObjectId();
 
     const slots = [
@@ -955,7 +969,14 @@ describe('list', () => {
           }],
         },
         { query: 'populate', args: [{ path: 'attendances', select: 'status', options: { isVendorUser: true } }] },
-        { query: 'populate', args: [{ path: 'trainerBillings.trainerBill', select: 'status number' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBillings.trainerBill',
+            select: 'number',
+            populate: { path: 'payment', select: 'status' },
+          }],
+        },
         { query: 'lean' },
       ]
     );
