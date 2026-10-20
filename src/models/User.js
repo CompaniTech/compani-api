@@ -230,6 +230,9 @@ async function findOneAndUpdate() {
   }
 }
 
+// biography is free text and can contain ':', so we check the iv prefix (32 hex characters)
+const isEncryptedText = text => /^[0-9a-f]{32}:/.test(text);
+
 function cryptDatas() {
   const { $set = {}, $unset = {} } = this.getUpdate() || {};
   if (!Object.keys($set).length && !Object.keys($unset).length) return;
@@ -237,6 +240,8 @@ function cryptDatas() {
   if ($set.iban) $set.iban = encrypt($set.iban);
 
   if ($set.bic) $set.bic = encrypt($set.bic);
+
+  if ($set.biography) $set.biography = encrypt($set.biography);
 
   if ($set['contact.phone']) $set['contact.phone'] = encrypt($set['contact.phone']);
 
@@ -253,6 +258,9 @@ async function decryptDatas(doc) {
   if (doc.iban && doc.iban.includes(':')) doc.iban = decrypt(doc.iban);
   // eslint-disable-next-line no-param-reassign
   if (doc.bic && doc.bic.includes(':')) doc.bic = decrypt(doc.bic);
+
+  // eslint-disable-next-line no-param-reassign
+  if (doc.biography && isEncryptedText(doc.biography)) doc.biography = decrypt(doc.biography);
 
   // eslint-disable-next-line no-param-reassign
   if (get(doc, 'contact.phone', '').includes(':')) doc.contact.phone = decrypt(doc.contact.phone);
