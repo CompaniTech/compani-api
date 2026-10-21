@@ -694,6 +694,8 @@ describe('exportCourseHistory', () => {
         'Solde',
         'Frais de formateur',
         'Support pédagogique',
+        'Marge brute (€)',
+        'Marge brute (%)',
         'Date de création',
       ],
       [
@@ -745,6 +747,8 @@ describe('exportCourseHistory', () => {
         '-22,00',
         '30,00',
         '30,00',
+        '2960,00',
+        '98,67',
         '07/01/2018',
       ],
       [
@@ -796,6 +800,8 @@ describe('exportCourseHistory', () => {
         '-230,00',
         '0,00',
         '0,00',
+        '2750,00',
+        '100,00',
         '07/01/2018',
       ],
       [
@@ -845,6 +851,8 @@ describe('exportCourseHistory', () => {
         '',
         '',
         '',
+        '0,00',
+        '0,00',
         '0,00',
         '0,00',
         '07/01/2018',
@@ -898,6 +906,8 @@ describe('exportCourseHistory', () => {
         '-440,00',
         '0,00',
         '0,00',
+        '0,00',
+        '0,00',
         '07/01/2018',
       ],
       [
@@ -947,6 +957,8 @@ describe('exportCourseHistory', () => {
         '120,00',
         '10,00',
         '-110,00',
+        '0,00',
+        '0,00',
         '0,00',
         '0,00',
         '07/01/2018',

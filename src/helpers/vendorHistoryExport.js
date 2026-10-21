@@ -286,6 +286,9 @@ const formatCourseForExport = async (
   const companiesHolding = [...new Set(compact(course.companies.map(c => get(c, 'holding.name'))))];
 
   const billingPurchaseColumns = getBillingPurchasesAmounts(course, billingItemNames);
+  const totalCost = (course.billingPurchaseList || []).reduce((acc, value) => NumbersHelper.add(acc, value.price), 0) ||
+    0;
+  const grossMargin = price - totalCost;
 
   return {
     Identifiant: course._id,
@@ -340,6 +343,10 @@ const formatCourseForExport = async (
     'Montant réglé': UtilsHelper.formatFloatForExport(paid),
     Solde: UtilsHelper.formatFloatForExport(total),
     ...billingPurchaseColumns,
+    ...course.type !== SINGLE && {
+      'Marge brute (€)': UtilsHelper.formatFloatForExport(grossMargin),
+      'Marge brute (%)': UtilsHelper.formatFloatForExport(price ? (grossMargin / price) * 100 : 0),
+    },
     'Date de création': CompaniDate(course.createdAt).format(DD_MM_YYYY),
   };
 };
