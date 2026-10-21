@@ -1252,11 +1252,11 @@ describe('USERS ROUTES - PUT /users/:id', () => {
           _id: userId,
           'identity.firstname': 'Riri',
           'local.email': 'riri@alenvi.io',
-          'contact.phone': '0987654321',
           'contact.countryCode': '+33',
         })
         .lean();
       expect(user).toBeDefined();
+      expect(user.contact.phone).toEqual(updatePayload.contact.phone);
       expect(user.iban).toEqual(updatePayload.iban);
       expect(user.bic).toEqual(updatePayload.bic);
     });
