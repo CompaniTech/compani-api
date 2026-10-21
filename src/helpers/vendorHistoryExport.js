@@ -288,7 +288,8 @@ const formatCourseForExport = async (
   const billingPurchaseColumns = getBillingPurchasesAmounts(course, billingItemNames);
   const totalCost = (course.billingPurchaseList || []).reduce((acc, value) => NumbersHelper.add(acc, value.price), 0) ||
     0;
-  const grossMargin = price - totalCost;
+  const grossMargin = price ? NumbersHelper.subtract(price, totalCost) : '';
+  const grossMarginRatio = grossMargin ? NumbersHelper.multiply(NumbersHelper.divide(grossMargin, price), 100) : '';
 
   return {
     Identifiant: course._id,
@@ -345,7 +346,7 @@ const formatCourseForExport = async (
     ...billingPurchaseColumns,
     ...course.type !== SINGLE && {
       'Marge brute (€)': UtilsHelper.formatFloatForExport(grossMargin),
-      'Marge brute (%)': UtilsHelper.formatFloatForExport(price ? (grossMargin / price) * 100 : 0),
+      'Marge brute (%)': UtilsHelper.formatFloatForExport(grossMarginRatio),
     },
     'Date de création': CompaniDate(course.createdAt).format(DD_MM_YYYY),
   };
