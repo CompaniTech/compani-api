@@ -642,7 +642,7 @@ describe('list', () => {
     ];
 
     find.onCall(0).returns(SinonMongoose.stubChainedQueries(periodBills, ['populate', 'setOptions', 'lean']));
-    find.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBillList, ['setOptions', 'lean']));
+    find.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBillList, ['populate', 'setOptions', 'lean']));
     subProgramFind.returns(SinonMongoose.stubChainedQueries([singleSubProgram]));
     activityHistoryFind.returns(SinonMongoose.stubChainedQueries(histories, ['lean']));
     getCompanyAtCourseRegistrationListByCourse.returns({
@@ -858,6 +858,10 @@ describe('list', () => {
             { course: 1, companies: 1, billedAt: 1, maturityDate: 1 },
           ],
         },
+        {
+          query: 'populate',
+          args: [{ path: 'courseCreditNote', select: 'courseBill', options: { isVendorUser: true } }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ],
@@ -924,7 +928,7 @@ describe('list', () => {
     ];
 
     find.onCall(0).returns(SinonMongoose.stubChainedQueries(periodBills, ['populate', 'setOptions', 'lean']));
-    find.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBillList, ['setOptions', 'lean']));
+    find.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBillList, ['populate', 'setOptions', 'lean']));
     getCompanyAtCourseRegistrationListByCourse.returns({
       [courseId]: [
         { trainee: traineesIds[0], company: companies[0]._id },
@@ -1020,6 +1024,10 @@ describe('list', () => {
           query: 'find',
           args: [{ course: { $in: [courseId] } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 }],
         },
+        {
+          query: 'populate',
+          args: [{ path: 'courseCreditNote', select: 'courseBill', options: { isVendorUser: true } }],
+        },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ],
@@ -1067,10 +1075,17 @@ describe('list', () => {
         maturityDate: '2025-07-10T22:00:00.000Z',
       },
       { _id: new ObjectId(), course: courseId, companies: [otherCompany] },
+      {
+        _id: new ObjectId(),
+        course: courseId,
+        companies: [company._id, otherCompany],
+        billedAt: '2025-04-10T22:00:00.000Z',
+        courseCreditNote: { _id: new ObjectId() },
+      },
     ];
 
     find.onCall(0).returns(SinonMongoose.stubChainedQueries(periodBills, ['populate', 'setOptions', 'lean']));
-    find.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBillList, ['setOptions', 'lean']));
+    find.onCall(1).returns(SinonMongoose.stubChainedQueries(courseBillList, ['populate', 'setOptions', 'lean']));
 
     const result = await CourseBillHelper.list({ action: DASHBOARD, isValidated: true }, credentials);
 
@@ -1114,6 +1129,10 @@ describe('list', () => {
         {
           query: 'find',
           args: [{ course: { $in: [courseId] } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 }],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'courseCreditNote', select: 'courseBill', options: { isVendorUser: true } }],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },

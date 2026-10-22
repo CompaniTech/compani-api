@@ -153,10 +153,12 @@ const getBillRanks = async (courseIds, isVendorUser) => {
 
   const bills = await CourseBill
     .find({ course: { $in: courseIds } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 })
+    .populate({ path: 'courseCreditNote', select: 'courseBill', options: { isVendorUser } })
     .setOptions({ isVendorUser })
     .lean();
 
   const sortedBills = bills
+    .filter(bill => !bill.courseCreditNote)
     .map((bill) => {
       const date = bill.billedAt || bill.maturityDate;
       return { ...bill, time: date ? new Date(date).getTime() : Number.MAX_SAFE_INTEGER };
