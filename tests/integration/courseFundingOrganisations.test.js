@@ -61,9 +61,9 @@ describe('COURSE FUNDING ORGANISATION ROUTES - POST /coursefundingorganisations'
   beforeEach(populateDB);
   const payload = { name: 'mon organisation', address: '37 rue de Ponthieu 75008 Paris' };
 
-  describe('TRAINING_ORGANISATION_MANAGER', () => {
+  describe('VENDOR_ADMIN', () => {
     beforeEach(async () => {
-      authToken = await getToken('training_organisation_manager');
+      authToken = await getToken('vendor_admin');
     });
 
     it('should create a course funding organisation', async () => {
@@ -111,6 +111,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - POST /coursefundingorganisations'
 
   describe('Other roles', () => {
     const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
@@ -137,9 +138,9 @@ describe('COURSE FUNDING ORGANISATION ROUTES - DELETE /coursefundingorganisation
   let authToken;
   beforeEach(populateDB);
 
-  describe('TRAINING_ORGANISATION_MANAGER', () => {
+  describe('VENDOR_ADMIN', () => {
     beforeEach(async () => {
-      authToken = await getToken('training_organisation_manager');
+      authToken = await getToken('vendor_admin');
     });
 
     it('should delete course funding organisation', async () => {
@@ -178,6 +179,7 @@ describe('COURSE FUNDING ORGANISATION ROUTES - DELETE /coursefundingorganisation
 
   describe('Other roles', () => {
     const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
