@@ -36,7 +36,6 @@ const {
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
-const DatesUtilsHelper = require('./dates/utils');
 
 exports.getDetailWithTaxes = (bill) => {
   const vatPercentage = bill.vat || 0;
@@ -157,12 +156,12 @@ const getBillRanks = async (courseIds, isVendorUser) => {
     .setOptions({ isVendorUser })
     .lean();
 
-  const sortedBills = bills.sort((a, b) => {
-    const dateA = a.billedAt || a.maturityDate;
-    const dateB = b.billedAt || b.maturityDate;
-    if (!dateA || !dateB) return !dateA - !dateB;
-    return DatesUtilsHelper.ascendingSort(dateA, dateB);
-  });
+  const sortedBills = bills
+    .map((bill) => {
+      const date = bill.billedAt || bill.maturityDate;
+      return { ...bill, time: date ? new Date(date).getTime() : Number.MAX_SAFE_INTEGER };
+    })
+    .sort((a, b) => a.time - b.time);
 
   const billsGroupedByCourse = groupBy(sortedBills, bill => `${bill.course}-${[...bill.companies].sort().join(',')}`);
 
