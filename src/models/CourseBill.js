@@ -68,6 +68,8 @@ function formatPayers(docs) {
   }
 }
 
+CourseBillSchema.index({ course: 1 });
+
 CourseBillSchema.virtual('coursePayments', { ref: 'CoursePayment', localField: '_id', foreignField: 'courseBill' });
 
 CourseBillSchema.virtual(

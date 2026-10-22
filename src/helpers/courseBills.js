@@ -148,6 +148,35 @@ const formatCourse = (course, traineesCompanyAtCourseRegistrationByCourse) => {
   return { ...course, trainees: courseTrainees, prices: coursePrices };
 };
 
+const getBillRanks = async (courseIds, isVendorUser) => {
+  if (!courseIds.length) return {};
+
+  const bills = await CourseBill
+    .find({ course: { $in: courseIds } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 })
+    .populate({ path: 'courseCreditNote', select: 'courseBill', options: { isVendorUser } })
+    .setOptions({ isVendorUser })
+    .lean();
+
+  const sortedBills = bills
+    .filter(bill => !bill.courseCreditNote)
+    .map((bill) => {
+      const date = bill.billedAt || bill.maturityDate;
+      return { ...bill, time: date ? new Date(date).getTime() : Number.MAX_SAFE_INTEGER };
+    })
+    .sort((a, b) => a.time - b.time);
+
+  const billsGroupedByCourse = groupBy(sortedBills, bill => `${bill.course}-${[...bill.companies].sort().join(',')}`);
+
+  const ranks = {};
+  for (const billsGroupedByCompanies of Object.values(billsGroupedByCourse)) {
+    for (let i = 0; i < billsGroupedByCompanies.length; i++) {
+      ranks[billsGroupedByCompanies[i]._id] = { index: i + 1, billsCount: billsGroupedByCompanies.length };
+    }
+  }
+
+  return ranks;
+};
+
 exports.list = async (query, credentials) => {
   if (query.action === LIST) {
     const courseBills = await CourseBill
@@ -272,11 +301,15 @@ exports.list = async (query, credentials) => {
       .getCompanyAtCourseRegistrationListByCourse(filteredCourseBills.map(bill => bill.course));
   }
 
+  const courseIds = filteredCourseBills.map(bill => bill.course._id);
+  const billRanks = await getBillRanks(courseIds, !!get(credentials, 'role.vendor'));
+
   return filteredCourseBills.map((bill) => {
     const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
 
     return {
       ...bill,
+      rank: billRanks[bill._id],
       ...(query.startDate && query.endDate
         ? {
           course: formatCourse(bill.course, traineesCompanyAtCourseRegistrationByCourse),
