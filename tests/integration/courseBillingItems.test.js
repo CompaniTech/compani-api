@@ -83,9 +83,9 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
   beforeEach(populateDB);
   const payload = { name: 'article', type: COURSE };
 
-  describe('TRAINING_ORGANISATION_MANAGER', () => {
+  describe('VENDOR_ADMIN', () => {
     beforeEach(async () => {
-      authToken = await getToken('training_organisation_manager');
+      authToken = await getToken('vendor_admin');
     });
 
     it('should create a course billing item', async () => {
@@ -171,6 +171,7 @@ describe('COURSE BILLING ITEM ROUTES - POST /coursebillingitems', () => {
 
   describe('Other roles', () => {
     const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
@@ -197,9 +198,9 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems', () => {
   let authToken;
   beforeEach(populateDB);
 
-  describe('TRAINING_ORGANISATION_MANAGER', () => {
+  describe('VENDOR_ADMIN', () => {
     beforeEach(async () => {
-      authToken = await getToken('training_organisation_manager');
+      authToken = await getToken('vendor_admin');
     });
 
     it('should delete course billing item', async () => {
@@ -238,6 +239,7 @@ describe('COURSE BILLING ITEM ROUTES - DELETE /coursebillingitems', () => {
 
   describe('Other roles', () => {
     const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
       { name: 'trainer', expectedCode: 403 },
     ];
