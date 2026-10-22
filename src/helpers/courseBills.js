@@ -36,6 +36,7 @@ const {
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
+const DatesUtilsHelper = require('./dates/utils');
 
 exports.getDetailWithTaxes = (bill) => {
   const vatPercentage = bill.vat || 0;
@@ -146,6 +147,33 @@ const formatCourse = (course, traineesCompanyAtCourseRegistrationByCourse) => {
     return companyPrice;
   });
   return { ...course, trainees: courseTrainees, prices: coursePrices };
+};
+
+const getBillRanks = async (courseIds, isVendorUser) => {
+  if (!courseIds.length) return {};
+
+  const bills = await CourseBill
+    .find({ course: { $in: courseIds } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 })
+    .setOptions({ isVendorUser })
+    .lean();
+
+  const sortedBills = bills.sort((a, b) => {
+    const dateA = a.billedAt || a.maturityDate;
+    const dateB = b.billedAt || b.maturityDate;
+    if (!dateA || !dateB) return !dateA - !dateB;
+    return DatesUtilsHelper.ascendingSort(dateA, dateB);
+  });
+
+  const billsGroupedByCourse = groupBy(sortedBills, bill => `${bill.course}-${[...bill.companies].sort().join(',')}`);
+
+  const ranks = {};
+  for (const billsGroupedByCompanies of Object.values(billsGroupedByCourse)) {
+    for (let i = 0; i < billsGroupedByCompanies.length; i++) {
+      ranks[billsGroupedByCompanies[i]._id] = { index: i + 1, billsCount: billsGroupedByCompanies.length };
+    }
+  }
+
+  return ranks;
 };
 
 exports.list = async (query, credentials) => {
@@ -272,11 +300,15 @@ exports.list = async (query, credentials) => {
       .getCompanyAtCourseRegistrationListByCourse(filteredCourseBills.map(bill => bill.course));
   }
 
+  const courseIds = filteredCourseBills.map(bill => bill.course._id);
+  const billRanks = await getBillRanks(courseIds, !!get(credentials, 'role.vendor'));
+
   return filteredCourseBills.map((bill) => {
     const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
 
     return {
       ...bill,
+      rank: billRanks[bill._id],
       ...(query.startDate && query.endDate
         ? {
           course: formatCourse(bill.course, traineesCompanyAtCourseRegistrationByCourse),
