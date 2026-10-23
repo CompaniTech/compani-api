@@ -92,7 +92,10 @@ const notionCourseSlotsUpdateJob = {
         ...UtilsHelper.getEnvObjectIds('VAE_SUBPROGRAM_IDS'),
       ];
       const courses = await Course
-        .find({ subProgram: { $in: subProgramIds }, archivedAt: { $exists: false } })
+        .find({
+          subProgram: { $in: subProgramIds },
+          $or: [{ archivedAt: { $exists: false } }, { archivedAt: { $gte: pastMonthStart.toDate() } }],
+        })
         .populate({
           path: 'slots',
           select: 'startDate endDate step attendances',

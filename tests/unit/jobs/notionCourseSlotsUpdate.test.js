@@ -235,7 +235,10 @@ describe('method', () => {
         query: 'find',
         args: [{
           subProgram: { $in: [VAEI_SUBPROGRAM_IDS, PRI_SUBPROGRAM_IDS, VAE_SUBPROGRAM_IDS] },
-          archivedAt: { $exists: false },
+          $or: [
+            { archivedAt: { $exists: false } },
+            { archivedAt: { $gte: new Date('2025-12-31T23:00:00.000Z') } },
+          ],
         }],
       },
       {
