@@ -134,8 +134,8 @@ exports.authorizeSubProgramUpdate = async (req) => {
     if (hasInconsistentRoles) throw Boom.badRequest(translate[language].subProgramInconsistentPriceRoles);
 
     const effectiveDate = CompaniDate(req.payload.effectiveDate);
-    if (subProgram.priceVersions) {
-      const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
+    if (subProgram.trainerPriceVersions) {
+      const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.trainerPriceVersions, 'effectiveDate');
       const effectiveDateIsAfterLastVersionDate = effectiveDate.isAfter(lastPriceVersion.effectiveDate);
       if (!effectiveDateIsAfterLastVersionDate) {
         throw Boom.forbidden(translate[language].subProgramWrongPriceVersionDate);

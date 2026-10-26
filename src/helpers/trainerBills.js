@@ -44,7 +44,7 @@ exports.createBill = async (payload, credentials) => {
       .populate({
         path: 'course',
         select: 'subProgram rolesPerTrainer',
-        populate: { path: 'subProgram', select: 'priceVersions' },
+        populate: { path: 'subProgram', select: 'trainerPriceVersions' },
       })
       .sort({ startDate: 1 })
       .lean();

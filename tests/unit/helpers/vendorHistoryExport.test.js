@@ -1508,7 +1508,7 @@ describe('exportCourseSlotHistory', () => {
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program priceVersions', populate: [{ path: 'program', select: 'name' }] },
+              { path: 'subProgram', select: 'program trainerPriceVersions', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
         },
@@ -1705,7 +1705,7 @@ describe('exportCourseSlotHistory', () => {
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program priceVersions', populate: [{ path: 'program', select: 'name' }] },
+              { path: 'subProgram', select: 'program trainerPriceVersions', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
         },
@@ -1746,7 +1746,7 @@ describe('exportCourseSlotHistory', () => {
           subProgram: {
             _id: new ObjectId(),
             program: { _id: new ObjectId(), name: 'Program 3' },
-            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+            trainerPriceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
           },
           companies: [],
           trainers: [trainers[0]._id],
@@ -1770,7 +1770,7 @@ describe('exportCourseSlotHistory', () => {
           subProgram: {
             _id: new ObjectId(),
             program: { _id: new ObjectId(), name: 'Program 3' },
-            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+            trainerPriceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
           },
           companies: [],
           trainers: [trainers[0]._id],
@@ -1794,7 +1794,7 @@ describe('exportCourseSlotHistory', () => {
           subProgram: {
             _id: new ObjectId(),
             program: { _id: new ObjectId(), name: 'Program 3' },
-            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+            trainerPriceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
           },
           companies: [],
           trainers: [trainers[0]._id],
@@ -1818,7 +1818,7 @@ describe('exportCourseSlotHistory', () => {
           subProgram: {
             _id: new ObjectId(),
             program: { _id: new ObjectId(), name: 'Program 3' },
-            priceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
+            trainerPriceVersions: [{ effectiveDate: '2019-01-01T10:00:00.000Z', prices: [{ step: stepList[0]._id, hourlyAmount: 12 }, { step: collectiveStepId, hourlyAmount: 20 }] }],
           },
           companies: [],
           trainers: [trainers[0]._id],
@@ -1842,7 +1842,7 @@ describe('exportCourseSlotHistory', () => {
           subProgram: {
             _id: new ObjectId(),
             program: { _id: new ObjectId(), name: 'Program 3' },
-            priceVersions: [{
+            trainerPriceVersions: [{
               effectiveDate: '2019-01-01T10:00:00.000Z',
               prices: [
                 { step: stepList[0]._id, hourlyAmount: 12 },
@@ -1872,7 +1872,7 @@ describe('exportCourseSlotHistory', () => {
           subProgram: {
             _id: new ObjectId(),
             program: { _id: new ObjectId(), name: 'Program 3' },
-            priceVersions: [{
+            trainerPriceVersions: [{
               effectiveDate: '2019-01-01T10:00:00.000Z',
               prices: [
                 { step: stepList[0]._id, role: VAEI_COACH, hourlyAmount: 50 },
@@ -2077,7 +2077,7 @@ describe('exportCourseSlotHistory', () => {
             populate: [
               { path: 'companies', select: 'name' },
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'program priceVersions', populate: [{ path: 'program', select: 'name' }] },
+              { path: 'subProgram', select: 'program trainerPriceVersions', populate: [{ path: 'program', select: 'name' }] },
             ],
           }],
         },

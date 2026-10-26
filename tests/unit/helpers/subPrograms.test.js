@@ -616,7 +616,7 @@ describe('updateSubProgram', () => {
   });
 
   describe('add price version', () => {
-    it('should create a new price version if subProgram.priceVersions does not exist', async () => {
+    it('should create a new price version if subProgram.trainerPriceVersions does not exist', async () => {
       const stepIds = [new ObjectId(), new ObjectId()];
       const subProgram = {
         _id: new ObjectId(),
@@ -636,14 +636,14 @@ describe('updateSubProgram', () => {
 
       SinonMongoose.calledOnceWithExactly(
         findOne,
-        [{ query: 'findOne', args: [{ _id: subProgram._id }, { priceVersions: 1 }] }, { query: 'lean' }]
+        [{ query: 'findOne', args: [{ _id: subProgram._id }, { trainerPriceVersions: 1 }] }, { query: 'lean' }]
       );
       sinon.assert.calledOnceWithExactly(
         updateOne,
         { _id: subProgram._id },
         {
           $push: {
-            priceVersions: {
+            trainerPriceVersions: {
               prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
               effectiveDate: '2026-02-01T14:00:00.000Z',
             },
@@ -662,7 +662,7 @@ describe('updateSubProgram', () => {
         status: 'published',
         steps: [stepIds[0], stepIds[1]],
         isStrictlyELearning: false,
-        priceVersions: [{
+        trainerPriceVersions: [{
           effectiveDate: '2026-02-01T14:00:00.000Z',
           prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
         }],
@@ -682,7 +682,7 @@ describe('updateSubProgram', () => {
 
       SinonMongoose.calledOnceWithExactly(
         findOne,
-        [{ query: 'findOne', args: [{ _id: subProgram._id }, { priceVersions: 1 }] }, { query: 'lean' }]
+        [{ query: 'findOne', args: [{ _id: subProgram._id }, { trainerPriceVersions: 1 }] }, { query: 'lean' }]
       );
       sinon.assert.calledOnceWithExactly(
         getLastVersion,
@@ -697,7 +697,7 @@ describe('updateSubProgram', () => {
         { _id: subProgram._id },
         {
           $push: {
-            priceVersions: {
+            trainerPriceVersions: {
               prices: [{ step: stepIds[0], hourlyAmount: 100 }, { step: stepIds[1], hourlyAmount: 200 }],
               effectiveDate: '2026-02-25T14:00:00.000Z',
             },
@@ -715,7 +715,7 @@ describe('updateSubProgram', () => {
         status: 'published',
         steps: [stepIds[0], stepIds[1]],
         isStrictlyELearning: false,
-        priceVersions: [{
+        trainerPriceVersions: [{
           effectiveDate: '2026-02-01T14:00:00.000Z',
           prices: [
             { step: stepIds[0], role: VAEI_COACH, hourlyAmount: 50 },
@@ -732,14 +732,14 @@ describe('updateSubProgram', () => {
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(subProgram, ['lean']));
-      getLastVersion.returns(subProgram.priceVersions[0]);
+      getLastVersion.returns(subProgram.trainerPriceVersions[0]);
 
       await SubProgramHelper.updateSubProgram(subProgram._id, payload);
 
       sinon.assert.calledOnceWithExactly(
         updateOne,
         { _id: subProgram._id },
-        { $push: { priceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
+        { $push: { trainerPriceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
       );
     });
 
@@ -751,7 +751,7 @@ describe('updateSubProgram', () => {
         status: 'published',
         steps: [stepIds[0], stepIds[1]],
         isStrictlyELearning: false,
-        priceVersions: [{
+        trainerPriceVersions: [{
           effectiveDate: '2026-02-01T14:00:00.000Z',
           prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
         }],
@@ -766,14 +766,14 @@ describe('updateSubProgram', () => {
       };
 
       findOne.returns(SinonMongoose.stubChainedQueries(subProgram, ['lean']));
-      getLastVersion.returns(subProgram.priceVersions[0]);
+      getLastVersion.returns(subProgram.trainerPriceVersions[0]);
 
       await SubProgramHelper.updateSubProgram(subProgram._id, payload);
 
       sinon.assert.calledOnceWithExactly(
         updateOne,
         { _id: subProgram._id },
-        { $push: { priceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
+        { $push: { trainerPriceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
       );
     });
 
@@ -785,7 +785,7 @@ describe('updateSubProgram', () => {
         status: 'published',
         steps: [stepIds[0], stepIds[1]],
         isStrictlyELearning: false,
-        priceVersions: [{
+        trainerPriceVersions: [{
           effectiveDate: '2026-02-01T14:00:00.000Z',
           prices: [{ step: stepIds[0], hourlyAmount: 50 }, { step: stepIds[1], hourlyAmount: 100 }],
         }],
@@ -805,7 +805,7 @@ describe('updateSubProgram', () => {
 
       SinonMongoose.calledOnceWithExactly(
         findOne,
-        [{ query: 'findOne', args: [{ _id: subProgram._id }, { priceVersions: 1 }] }, { query: 'lean' }]
+        [{ query: 'findOne', args: [{ _id: subProgram._id }, { trainerPriceVersions: 1 }] }, { query: 'lean' }]
       );
       sinon.assert.calledOnceWithExactly(
         getLastVersion,

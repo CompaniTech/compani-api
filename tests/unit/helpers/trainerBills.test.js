@@ -88,7 +88,7 @@ describe('createBill', () => {
           args: [{
             path: 'course',
             select: 'subProgram rolesPerTrainer',
-            populate: { path: 'subProgram', select: 'priceVersions' },
+            populate: { path: 'subProgram', select: 'trainerPriceVersions' },
           }],
         },
         { query: 'sort', args: [{ startDate: 1 }] },
@@ -175,7 +175,7 @@ describe('createBill', () => {
           args: [{
             path: 'course',
             select: 'subProgram rolesPerTrainer',
-            populate: { path: 'subProgram', select: 'priceVersions' },
+            populate: { path: 'subProgram', select: 'trainerPriceVersions' },
           }],
         },
         { query: 'sort', args: [{ startDate: 1 }] },

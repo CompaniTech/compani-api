@@ -160,7 +160,7 @@ describe('createCourse', () => {
       { _id: new ObjectId(), type: REMOTE, theoreticalDuration: 'PT3600S' },
       { _id: new ObjectId(), type: E_LEARNING, theoreticalDuration: 'PT1800S' },
     ];
-    const priceVersions = [
+    const trainerPriceVersions = [
       {
         effectiveDate: '2020-01-01T00:00:00.000Z',
         prices: [
@@ -177,7 +177,7 @@ describe('createCourse', () => {
         ],
       },
     ];
-    const subProgram = { _id: new ObjectId(), steps, priceVersions };
+    const subProgram = { _id: new ObjectId(), steps, trainerPriceVersions };
     const payload = {
       misc: 'name',
       company: new ObjectId(),
@@ -225,7 +225,7 @@ describe('createCourse', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, priceVersions: 1 }],
+          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, trainerPriceVersions: 1 }],
         },
         { query: 'populate', args: [{ path: 'steps', select: '_id type theoreticalDuration' }] },
         { query: 'lean' },
@@ -245,7 +245,7 @@ describe('createCourse', () => {
 
   it('should create a vaei single course (no user with same name)', async () => {
     const steps = [{ _id: new ObjectId(), type: ON_SITE, theoreticalDuration: 'PT7200S' }];
-    const priceVersions = [
+    const trainerPriceVersions = [
       {
         effectiveDate: '2020-01-01T00:00:00.000Z',
         prices: [
@@ -256,7 +256,7 @@ describe('createCourse', () => {
     const subProgram = {
       _id: new ObjectId(),
       steps,
-      priceVersions,
+      trainerPriceVersions,
       sheetTemplateId: 'vaei_templateId',
       folderId: 'vaei_parent_folder_id',
     };
@@ -353,7 +353,7 @@ describe('createCourse', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, priceVersions: 1 }],
+          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, trainerPriceVersions: 1 }],
         },
         { query: 'populate', args: [{ path: 'steps', select: '_id type theoreticalDuration' }] },
         { query: 'lean' },
@@ -483,7 +483,7 @@ describe('createCourse', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, priceVersions: 1 }],
+          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, trainerPriceVersions: 1 }],
         },
         { query: 'populate', args: [{ path: 'steps', select: '_id type theoreticalDuration' }] },
         { query: 'lean' },
@@ -547,7 +547,7 @@ describe('createCourse', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, priceVersions: 1 }],
+          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, trainerPriceVersions: 1 }],
         },
         { query: 'populate', args: [{ path: 'steps', select: '_id type theoreticalDuration' }] },
         { query: 'lean' },
@@ -557,8 +557,8 @@ describe('createCourse', () => {
 
   it('should call CourseHistoryHelper for history save when creating a course with estimatedStartDate', async () => {
     const step = { _id: new ObjectId(), type: ON_SITE, theoreticalDuration: 'PT7200S' };
-    const priceVersions = [{ effectiveDate: '2021-01-01T00:00:00.000Z', prices: [] }]; // no price matching step
-    const subProgram = { _id: new ObjectId(), steps: [step], priceVersions };
+    const trainerPriceVersions = [{ effectiveDate: '2021-01-01T00:00:00.000Z', prices: [] }]; // no price matching step
+    const subProgram = { _id: new ObjectId(), steps: [step], trainerPriceVersions };
     const payload = {
       misc: 'avec une date de début prévu',
       company: new ObjectId(),
@@ -586,7 +586,7 @@ describe('createCourse', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, priceVersions: 1 }],
+          args: [{ _id: subProgram._id }, { steps: 1, sheetTemplateId: 1, folderId: 1, trainerPriceVersions: 1 }],
         },
         { query: 'populate', args: [{ path: 'steps', select: '_id type theoreticalDuration' }] },
         { query: 'lean' },

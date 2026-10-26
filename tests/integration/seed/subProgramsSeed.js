@@ -111,7 +111,7 @@ const subProgramsList = [
     name: 'subProgram 2',
     status: PUBLISHED,
     steps: [stepsList[0]._id, stepsList[2]._id],
-    priceVersions: [
+    trainerPriceVersions: [
       { prices: [{ step: stepsList[0]._id, hourlyAmount: 50 }], effectiveDate: '2026-02-01T09:00:00.000Z' },
     ],
     paymentPlans: [{ _id: paymentPlanId, prices: [100, 200] }],

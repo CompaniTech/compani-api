@@ -117,7 +117,7 @@ exports.createCourse = async (payload, credentials) => {
     : omit(payload, ['coach', 'architect']);
 
   const subProgram = await SubProgram
-    .findOne({ _id: payload.subProgram }, { steps: 1, sheetTemplateId: 1, folderId: 1, priceVersions: 1 })
+    .findOne({ _id: payload.subProgram }, { steps: 1, sheetTemplateId: 1, folderId: 1, trainerPriceVersions: 1 })
     .populate({ path: 'steps', select: '_id type theoreticalDuration' })
     .lean();
 
@@ -181,7 +181,7 @@ exports.createCourse = async (payload, credentials) => {
 
   const steps = subProgram.steps.filter(step => [REMOTE, ON_SITE].includes(step.type));
   if (course.type !== SINGLE) {
-    const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.priceVersions || [], 'effectiveDate');
+    const lastPriceVersion = UtilsHelper.getLastVersion(subProgram.trainerPriceVersions || [], 'effectiveDate');
     if (lastPriceVersion) {
       const hasPriceAndDurationForEveryStep = steps.length && steps.every(step => step.theoreticalDuration &&
         lastPriceVersion.prices.some(p => UtilsHelper.areObjectIdsEquals(p.step, step._id)));
