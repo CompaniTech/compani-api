@@ -14,7 +14,7 @@ exports.plugin = {
     server.route({
       method: 'GET',
       path: '/',
-      options: { auth: { scope: ['vendorcompanies:edit'] } },
+      options: { auth: { scope: ['coursebills:edit'] } },
       handler: list,
     });
 

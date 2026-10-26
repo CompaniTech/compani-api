@@ -98,7 +98,9 @@ describe('list', () => {
         { query: 'find', args: [{ status: { $in: [PAID] } }] },
         {
           query: 'populate',
-          args: [{ path: 'trainerBill', select: 'number file', populate: { path: 'trainer', select: 'identity' } }],
+          args: [
+            { path: 'trainerBill', select: 'number file', populate: { path: 'trainer', select: 'identity bic iban' } },
+          ],
         },
         {
           query: 'populate',

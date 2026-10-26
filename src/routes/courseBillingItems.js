@@ -19,7 +19,7 @@ exports.plugin = {
         validate: {
           query: Joi.object({ type: Joi.string().valid(...COURSE_BILLING_ITEM_TYPES) }),
         },
-        auth: { scope: ['vendorcompanies:edit'] },
+        auth: { scope: ['coursebills:edit'] },
       },
       handler: list,
     });

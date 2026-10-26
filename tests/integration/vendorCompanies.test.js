@@ -115,9 +115,9 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
   let authToken;
   beforeEach(populateDB);
 
-  describe('TRAINING_ORGANISATION_MANAGER', () => {
+  describe('VENDOR_ADMIN', () => {
     beforeEach(async () => {
-      authToken = await getToken('training_organisation_manager');
+      authToken = await getToken('vendor_admin');
     });
 
     const payloads = [
@@ -219,6 +219,7 @@ describe('VENDOR COMPANY ROUTES - PUT /vendorcompanies', () => {
 
   describe('Other roles', () => {
     const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
       { name: 'helper', expectedCode: 403 },
       { name: 'planning_referent', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
@@ -256,9 +257,9 @@ describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
     getFileByIdStub.restore();
   });
 
-  describe('TRAINING_ORGANISATION_MANAGER', () => {
+  describe('VENDOR_ADMIN', () => {
     beforeEach(async () => {
-      authToken = await getToken('training_organisation_manager');
+      authToken = await getToken('vendor_admin');
     });
 
     it('should upload mandate template', async () => {
@@ -284,6 +285,7 @@ describe('VENDOR COMPANY ROUTES - POST /vendorcompanies/mandate/upload', () => {
 
   describe('Other roles', () => {
     const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
       { name: 'trainer', expectedCode: 403 },
     ];
@@ -325,9 +327,9 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
     getFileByIdStub.restore();
   });
 
-  describe('TRAINING_ORGANISATION_MANAGER', () => {
+  describe('VENDOR_ADMIN', () => {
     beforeEach(async () => {
-      authToken = await getToken('training_organisation_manager');
+      authToken = await getToken('vendor_admin');
     });
 
     it('should remove mandate template', async () => {
@@ -377,6 +379,7 @@ describe('VENDOR COMPANY ROUTES - DELETE /vendorcompanies/mandate/upload', () =>
 
   describe('Other roles', () => {
     const roles = [
+      { name: 'training_organisation_manager', expectedCode: 403 },
       { name: 'client_admin', expectedCode: 403 },
       { name: 'trainer', expectedCode: 403 },
     ];
