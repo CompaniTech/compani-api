@@ -12,7 +12,7 @@ exports.list = async (query) => {
     .populate({
       path: 'trainerBill',
       select: 'number file',
-      populate: { path: 'trainer', select: 'identity' },
+      populate: { path: 'trainer', select: 'identity bic iban' },
     })
     .populate({ path: 'trainerPaymentsXmlFileInfos', select: 'name', options: { isVendorUser: true } })
     .sort({ date: -1 })
