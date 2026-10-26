@@ -497,7 +497,6 @@ describe('sendBillEmail', async () => {
         from: 'Compani <tech@compani.fr>',
         to: ['test@compani.fr', 'testbis@compani.fr'],
         subject: 'Compani : avis de facture en VAE Inversée [FACT-00001]',
-        bcc: 'tech@compani.fr',
         html: htmlContent,
         attachments: [{ filename: 'Structure_FACT-00001.pdf', content: 'pdf1', contentType: 'application/pdf' }],
       }
@@ -577,7 +576,6 @@ describe('sendBillEmail', async () => {
         from: 'Compani <tech@compani.fr>',
         to: ['test@compani.fr', 'testbis@compani.fr'],
         subject: 'Compani : avis de factures [FACT-00001, FACT-00002]',
-        bcc: 'tech@compani.fr',
         html: htmlContent,
         attachments: [
           { filename: 'Structure_FACT-00001.pdf', content: 'pdf1', contentType: 'application/pdf' },
