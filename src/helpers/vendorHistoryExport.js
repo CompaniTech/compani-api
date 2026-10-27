@@ -442,7 +442,7 @@ exports.exportCourseSlotHistory = async (startDate, endDate, credentials, course
       populate: [
         { path: 'companies', select: 'name' },
         { path: 'trainees', select: 'identity' },
-        { path: 'subProgram', select: 'program priceVersions', populate: [{ path: 'program', select: 'name' }] },
+        { path: 'subProgram', select: 'program trainerPriceVersions', populate: [{ path: 'program', select: 'name' }] },
       ],
     })
     .populate({

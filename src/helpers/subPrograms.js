@@ -85,11 +85,11 @@ exports.updateSubProgram = async (subProgramId, payload) => {
   if (!isEmpty(query)) return SubProgram.updateOne({ _id: subProgramId }, query);
 
   if (payload.prices) {
-    const subProgram = await SubProgram.findOne({ _id: subProgramId }, { priceVersions: 1 }).lean();
+    const subProgram = await SubProgram.findOne({ _id: subProgramId }, { trainerPriceVersions: 1 }).lean();
 
-    let shouldCreateNewVersion = !subProgram.priceVersions;
-    if (subProgram.priceVersions) {
-      const lastVersion = UtilsHelper.getLastVersion(subProgram.priceVersions, 'effectiveDate');
+    let shouldCreateNewVersion = !subProgram.trainerPriceVersions;
+    if (subProgram.trainerPriceVersions) {
+      const lastVersion = UtilsHelper.getLastVersion(subProgram.trainerPriceVersions, 'effectiveDate');
       shouldCreateNewVersion = payload.prices.length !== lastVersion.prices.length || payload.prices.some((p) => {
         const matchingPrice = lastVersion.prices
           .find(lvp => UtilsHelper.areObjectIdsEquals(lvp.step, p.step) && lvp.role === p.role);
@@ -101,7 +101,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     if (shouldCreateNewVersion) {
       return SubProgram.updateOne(
         { _id: subProgramId },
-        { $push: { priceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
+        { $push: { trainerPriceVersions: { prices: payload.prices, effectiveDate: payload.effectiveDate } } }
       );
     }
 

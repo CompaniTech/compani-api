@@ -188,7 +188,6 @@ exports.sendBillEmail = async (courseBills, type, content, recipientEmails, send
       from: `Compani <${senderEmail}>`,
       to: recipientEmails,
       subject: getSubject(),
-      bcc: senderEmail,
       html: `<p>${content.replaceAll('\r\n', '<br>')}</p>
       <p>${signature}</p>`,
       attachments: billsPdf,

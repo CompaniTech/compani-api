@@ -56,7 +56,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -94,7 +94,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -131,7 +131,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -168,7 +168,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -205,7 +205,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -242,7 +242,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -279,7 +279,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -316,7 +316,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -353,7 +353,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -390,7 +390,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               {
                 effectiveDate: '2019-01-01T00:00:00.000Z',
                 prices: [
@@ -622,7 +622,7 @@ describe('list', () => {
             select: '_id misc subProgram trainees tradeName rolesPerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'priceVersions' },
+              { path: 'subProgram', select: 'trainerPriceVersions' },
             ],
           }],
         },
@@ -660,7 +660,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
               { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
             ],
@@ -681,7 +681,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
               { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
             ],
@@ -789,7 +789,7 @@ describe('list', () => {
             select: '_id misc subProgram trainees tradeName rolesPerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'priceVersions' },
+              { path: 'subProgram', select: 'trainerPriceVersions' },
             ],
           }],
         },
@@ -829,7 +829,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
               { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
             ],
@@ -851,7 +851,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 100 }] },
               { effectiveDate: '2020-05-04T08:00:00.000Z', prices: [{ step: collectiveStepId, hourlyAmount: 110 }] },
             ],
@@ -964,7 +964,7 @@ describe('list', () => {
             select: '_id misc subProgram trainees tradeName rolesPerTrainer',
             populate: [
               { path: 'trainees', select: 'identity' },
-              { path: 'subProgram', select: 'priceVersions' },
+              { path: 'subProgram', select: 'trainerPriceVersions' },
             ],
           }],
         },
@@ -1002,7 +1002,7 @@ describe('list', () => {
           tradeName: 'program',
           subProgram: {
             _id: subProgramId,
-            priceVersions: [
+            trainerPriceVersions: [
               { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 50 }] },
             ],
           },
@@ -1044,7 +1044,9 @@ describe('getHourlyAmount', () => {
       step: { _id: stepId },
       course: {
         subProgram: {
-          priceVersions: [{ effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 50 }] }],
+          trainerPriceVersions: [
+            { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 50 }] },
+          ],
         },
         rolesPerTrainer: [{ trainer: trainerId, roles: [VAEI_COACH] }],
       },
@@ -1060,7 +1062,7 @@ describe('getHourlyAmount', () => {
       step: { _id: stepId },
       course: {
         subProgram: {
-          priceVersions: [
+          trainerPriceVersions: [
             {
               effectiveDate: '2019-01-01T00:00:00.000Z',
               prices: [
@@ -1085,7 +1087,9 @@ describe('getHourlyAmount', () => {
       step: { _id: stepId },
       course: {
         subProgram: {
-          priceVersions: [{ effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 0 }] }],
+          trainerPriceVersions: [
+            { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, hourlyAmount: 0 }] },
+          ],
         },
       },
     };
@@ -1101,7 +1105,7 @@ describe('getHourlyAmount', () => {
       step: { _id: stepId },
       course: {
         subProgram: {
-          priceVersions: [
+          trainerPriceVersions: [
             { effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: new ObjectId(), hourlyAmount: 50 }] },
           ],
         },
@@ -1120,7 +1124,7 @@ describe('getHourlyAmount', () => {
       step: { _id: stepId },
       course: {
         subProgram: {
-          priceVersions: [{
+          trainerPriceVersions: [{
             effectiveDate: '2019-01-01T00:00:00.000Z',
             prices: [
               { step: stepId, role: VAEI_COACH, hourlyAmount: 50 },
@@ -1142,7 +1146,7 @@ describe('getHourlyAmount', () => {
       step: { _id: stepId },
       course: {
         subProgram: {
-          priceVersions: [{
+          trainerPriceVersions: [{
             effectiveDate: '2019-01-01T00:00:00.000Z', prices: [{ step: stepId, role: ARCHITECT, hourlyAmount: 55 }],
           }],
         },
@@ -1161,7 +1165,7 @@ describe('getHourlyAmount', () => {
       step: { _id: stepId },
       course: {
         subProgram: {
-          priceVersions: [{
+          trainerPriceVersions: [{
             effectiveDate: '2019-01-01T00:00:00.000Z',
             prices: [
               { step: stepId, role: VAEI_COACH, hourlyAmount: 50 },

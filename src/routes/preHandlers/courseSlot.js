@@ -97,7 +97,7 @@ const checkPayload = async (courseSlot, payload) => {
   if (completionCertificates) throw Boom.forbidden(translate[language].courseSlotDateInCompletionCertificate);
 
   const course = await Course.findById(courseId, { subProgram: 1, trainees: 1, rolesPerTrainer: 1 })
-    .populate({ path: 'subProgram', select: 'steps priceVersions' })
+    .populate({ path: 'subProgram', select: 'steps trainerPriceVersions' })
     .lean();
 
   const editTrainers = (trainers || []).length > 0 && (
@@ -261,7 +261,7 @@ exports.authorizeUploadCourseSlotsCSV = async (req) => {
       .findOne({ _id: courseId }, { trainers: 1, trainees: 1, archivedAt: 1, rolesPerTrainer: 1 })
       .populate({
         path: 'subProgram',
-        select: 'steps priceVersions',
+        select: 'steps trainerPriceVersions',
         populate: { path: 'steps', select: 'name type' },
       })
       .lean();
