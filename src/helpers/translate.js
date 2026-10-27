@@ -105,6 +105,11 @@ module.exports = {
     trainerBillHourlyAmountNotFound: 'Unprocessable: trainer\'s role does not match any price for this step.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Forbidden: a slot is paid after effectiveDate.',
     subProgramPaymentPlanNotFound: 'This payment plan does not exist.',
+    subProgramHourlyPaymentPlanNotFound: 'This hourly payment plan does not exist.',
+    subProgramHourlyPaymentPlanAlreadyExists: 'Forbidden: an identical hourly payment plan already exists.',
+    subProgramHourlyPaymentPlanNoELearningStep: 'Forbidden: this sub-program has no e-learning step.',
+    subProgramHasPaymentPlan: 'Forbidden: this sub-program already has payment plans.',
+    subProgramHasHourlyPaymentPlan: 'Forbidden: this sub-program already has hourly payment plans.',
     subProgramPaymentPlanAlreadyExists: 'Forbidden: a payment plan with the same prices already exists.',
     /* Steps */
     stepUpdated: 'Step updated.',
@@ -482,6 +487,11 @@ module.exports = {
       + 'cette étape.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Impossible: un créneau est noté réglé après la date d\'effet renseignée.',
     subProgramPaymentPlanNotFound: 'Cet échéancier n\'existe pas.',
+    subProgramHourlyPaymentPlanNotFound: 'Cette tarification n\'existe pas.',
+    subProgramHourlyPaymentPlanAlreadyExists: 'Impossible : une tarification identique existe déjà.',
+    subProgramHourlyPaymentPlanNoELearningStep: 'Impossible : ce sous-programme n\'a pas d\'étape e-learning.',
+    subProgramHasPaymentPlan: 'Impossible : ce sous-programme a déjà des échéanciers.',
+    subProgramHasHourlyPaymentPlan: 'Impossible : ce sous-programme a déjà des tarifications au réel.',
     subProgramPaymentPlanAlreadyExists: 'Impossible : un échéancier avec les mêmes montants existe déjà.',
     /* Steps */
     stepsFound: 'Liste des étapes trouvée.',

@@ -10,7 +10,14 @@ const Step = require('../../src/models/Step');
 const NotificationHelper = require('../../src/helpers/notifications');
 const UtilsHelper = require('../../src/helpers/utils');
 const { VAEI_COACH, ARCHITECT } = require('../../src/helpers/constants');
-const { populateDB, subProgramsList, stepsList, tester, paymentPlanId } = require('./seed/subProgramsSeed');
+const {
+  populateDB,
+  subProgramsList,
+  stepsList,
+  tester,
+  paymentPlanId,
+  hourlyPaymentPlanId,
+} = require('./seed/subProgramsSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { authCompany, otherCompany } = require('../seed/authCompaniesSeed');
 
@@ -480,6 +487,78 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(200);
       const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
       expect(updatedSubProgram.paymentPlans.length).toBe(2);
+    });
+
+    it('should add a new hourly payment plan', async () => {
+      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[13]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[13]._id).lean();
+      expect(updatedSubProgram.hourlyPaymentPlans.length).toBe(2);
+    });
+
+    it('should update an existing hourly payment plan', async () => {
+      const payload = {
+        hourlyPaymentPlan: { hourlyPaymentPlanId, prices: [{ step: stepsList[0]._id, hourlyAmount: 70 }] },
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[13]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const updatedSubProgram = await SubProgram.findById(subProgramsList[13]._id).lean();
+      expect(updatedSubProgram.hourlyPaymentPlans.length).toBe(1);
+      expect(updatedSubProgram.hourlyPaymentPlans[0].prices[0].hourlyAmount).toBe(70);
+    });
+
+    it('should return 403 if an identical hourly payment plan already exists', async () => {
+      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 40 }] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[13]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if adding payment plan on a subProgram with hourly payment plans', async () => {
+      const payload = { paymentPlan: { prices: [100, 200] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[13]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if adding hourly payment plan on a subProgram with payment plans', async () => {
+      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[2]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 404 if payment plan _id does not exist', async () => {

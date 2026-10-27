@@ -20,13 +20,31 @@ const {
 const { language } = translate;
 
 exports.authorizeCourseBillListCreation = async (req) => {
-  const { course: courseId, companies: companiesIds, payer, mainFee, quantity, maturityDate } = req.payload;
+  const {
+    course: courseId,
+    companies: companiesIds,
+    payer,
+    mainFee,
+    quantity,
+    maturityDate,
+    hourlyPaymentPlanId,
+  } = req.payload;
 
   const course = await Course
     .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptionDates: 1 })
+    .populate({ path: 'subProgram', select: 'hourlyPaymentPlans' })
     .lean();
 
   if (!course) throw Boom.notFound();
+
+  if (hourlyPaymentPlanId) {
+    if (course.type !== SINGLE) throw Boom.forbidden();
+
+    const hourlyPaymentPlans = get(course, 'subProgram.hourlyPaymentPlans') || [];
+    if (!UtilsHelper.doesArrayIncludeId(hourlyPaymentPlans.map(hpp => hpp._id), hourlyPaymentPlanId)) {
+      throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
+    }
+  }
 
   const isCourseInterrupted = UtilsHelper.isCourseInterrupted(course.interruptionDates);
   if (isCourseInterrupted) throw Boom.forbidden();
