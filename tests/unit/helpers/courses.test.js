@@ -2894,6 +2894,7 @@ describe('getCourse', () => {
                     select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
+                  { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                 ],
               },
               {
@@ -3009,6 +3010,7 @@ describe('getCourse', () => {
                       select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
+                    { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                   ],
                 },
                 {
@@ -3117,6 +3119,7 @@ describe('getCourse', () => {
                       select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
+                    { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                   ],
                 },
                 {
@@ -3299,6 +3302,7 @@ describe('getCourse', () => {
                     select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
+                  { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                 ],
               },
               {

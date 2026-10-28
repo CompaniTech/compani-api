@@ -182,8 +182,8 @@ exports.authorizeSubProgramUpdate = async (req) => {
 
     const { hourlyPaymentPlanId, prices, elearningPrice } = req.payload.hourlyPaymentPlan;
     if (hourlyPaymentPlanId) {
-      const hourlyPaymentPlanExists = UtilsHelper
-        .doesArrayIncludeId((subProgram.hourlyPaymentPlans || []).map(hpp => hpp._id), hourlyPaymentPlanId);
+      const subProgramHppIds = (subProgram.hourlyPaymentPlans || []).map(hpp => hpp._id);
+      const hourlyPaymentPlanExists = UtilsHelper.doesArrayIncludeId(subProgramHppIds, hourlyPaymentPlanId);
       if (!hourlyPaymentPlanExists) throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
 
       const isUsedByCourse = !prices.length && subProgram.courses

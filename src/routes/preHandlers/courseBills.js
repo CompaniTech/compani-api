@@ -48,7 +48,8 @@ exports.authorizeCourseBillListCreation = async (req) => {
     if (course.type !== SINGLE) throw Boom.forbidden();
 
     const hourlyPaymentPlans = get(course, 'subProgram.hourlyPaymentPlans') || [];
-    if (!UtilsHelper.doesArrayIncludeId(hourlyPaymentPlans.map(hpp => hpp._id), hourlyPaymentPlanId)) {
+    const subProgramHppIds = hourlyPaymentPlans.map(hpp => hpp._id);
+    if (!UtilsHelper.doesArrayIncludeId(subProgramHppIds, hourlyPaymentPlanId)) {
       throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
     }
 
