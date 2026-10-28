@@ -31,7 +31,14 @@ exports.authorizeCourseBillListCreation = async (req) => {
   } = req.payload;
 
   const course = await Course
-    .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptionDates: 1 })
+    .findOne({ _id: courseId }, {
+      type: 1,
+      expectedBillsCount: 1,
+      companies: 1,
+      prices: 1,
+      interruptionDates: 1,
+      hourlyPaymentPlan: 1,
+    })
     .populate({ path: 'subProgram', select: 'hourlyPaymentPlans' })
     .lean();
 
@@ -43,6 +50,10 @@ exports.authorizeCourseBillListCreation = async (req) => {
     const hourlyPaymentPlans = get(course, 'subProgram.hourlyPaymentPlans') || [];
     if (!UtilsHelper.doesArrayIncludeId(hourlyPaymentPlans.map(hpp => hpp._id), hourlyPaymentPlanId)) {
       throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
+    }
+
+    if (course.hourlyPaymentPlan && !UtilsHelper.areObjectIdsEquals(course.hourlyPaymentPlan, hourlyPaymentPlanId)) {
+      throw Boom.forbidden();
     }
   }
 

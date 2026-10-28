@@ -12,7 +12,7 @@ const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const { vendorAdmin, trainer } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL, PAID } = require('../../../src/helpers/constants');
+const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL, PAID, MONTHLY } = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 
 const tester = {
@@ -241,6 +241,20 @@ const coursesList = [
     trainees: [],
     accessRules: [],
     tradeName: 'program 5',
+  },
+  { // course using the hourly payment plan of subProgram 13
+    _id: new ObjectId(),
+    format: 'blended',
+    subProgram: subProgramsList[13]._id,
+    hourlyPaymentPlan: hourlyPaymentPlanId,
+    type: INTRA,
+    trainees: [],
+    accessRules: [],
+    companies: [authCompany._id],
+    operationsRepresentative: vendorAdmin._id,
+    tradeName: 'hourly plan',
+    certificateGenerationMode: MONTHLY,
+    maxTrainees: 3,
   },
 ];
 

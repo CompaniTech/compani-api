@@ -522,6 +522,19 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(updatedSubProgram.hourlyPaymentPlans[0].prices[0].hourlyAmount).toBe(70);
     });
 
+    it('should return 403 if deleting an hourly payment plan used by a course', async () => {
+      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, prices: [] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[13]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 if an identical hourly payment plan already exists', async () => {
       const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 40 }] } };
 

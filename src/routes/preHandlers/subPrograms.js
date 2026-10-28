@@ -185,6 +185,10 @@ exports.authorizeSubProgramUpdate = async (req) => {
       const hourlyPaymentPlanExists = UtilsHelper
         .doesArrayIncludeId((subProgram.hourlyPaymentPlans || []).map(hpp => hpp._id), hourlyPaymentPlanId);
       if (!hourlyPaymentPlanExists) throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
+
+      const isUsedByCourse = !prices.length && subProgram.courses
+        .some(c => UtilsHelper.areObjectIdsEquals(c.hourlyPaymentPlan, hourlyPaymentPlanId));
+      if (isUsedByCourse) throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanUsed);
     }
 
     if (prices.length) {

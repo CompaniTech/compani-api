@@ -911,6 +911,19 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(response.statusCode).toBe(404);
       });
 
+      it('should return 403 if the course already has another hourly payment plan', async () => {
+        await Course.updateOne({ _id: coursesList[12]._id }, { $set: { hourlyPaymentPlan: new ObjectId() } });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, hourlyPaymentPlanId },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+
       it('should return 403 if hourly payment plan is sent for a non SINGLE course', async () => {
         const response = await app.inject({
           method: 'POST',
