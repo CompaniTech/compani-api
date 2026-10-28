@@ -296,7 +296,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
 
       expect(response.statusCode).toBe(200);
       const updatedSubProgram = await SubProgram.findById(subProgramsList[13]._id).lean();
-      expect(updatedSubProgram.priceVersions.length).toBe(1);
+      expect(updatedSubProgram.trainerPriceVersions.length).toBe(1);
     });
 
     it('should add a new price version', async () => {
@@ -315,7 +315,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(200);
 
       const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
-      expect(updatedSubProgram.priceVersions.length).toBe(2);
+      expect(updatedSubProgram.trainerPriceVersions.length).toBe(2);
     });
 
     it('should add a price version with a role on a single price', async () => {
@@ -334,7 +334,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(200);
 
       const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
-      expect(updatedSubProgram.priceVersions[1].prices[0].role).toEqual(VAEI_COACH);
+      expect(updatedSubProgram.trainerPriceVersions[1].prices[0].role).toEqual(VAEI_COACH);
     });
 
     it('should add a price version with several roles for the same step', async () => {
@@ -356,8 +356,8 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(200);
 
       const updatedSubProgram = await SubProgram.findById(subProgramsList[2]._id).lean();
-      expect(updatedSubProgram.priceVersions.length).toBe(2);
-      expect(updatedSubProgram.priceVersions[1].prices.length).toBe(2);
+      expect(updatedSubProgram.trainerPriceVersions.length).toBe(2);
+      expect(updatedSubProgram.trainerPriceVersions[1].prices.length).toBe(2);
     });
 
     it('should return 400 if prices for a step mix role and no role', async () => {

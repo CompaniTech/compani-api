@@ -10,7 +10,7 @@ const SubProgramSchema = mongoose.Schema({
   name: { type: String, required: true },
   steps: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Step' }],
   status: { type: String, default: DRAFT, enum: STATUS_TYPES },
-  priceVersions: {
+  trainerPriceVersions: {
     type: [{
       _id: false,
       prices: [{

@@ -33,7 +33,7 @@ const filterPriceVersion = date => version => CompaniDate(version.effectiveDate)
 exports.getStepPrices = (stepId, subProgram, date) => {
   const matchingSubProgamPriceVersion = UtilsHelper.getMatchingVersion(
     date,
-    { ...omit(subProgram, 'priceVersions'), versions: subProgram.priceVersions || [] },
+    { ...omit(subProgram, 'trainerPriceVersions'), versions: subProgram.trainerPriceVersions || [] },
     'effectiveDate',
     filterPriceVersion
   );
@@ -247,7 +247,7 @@ exports.list = async (query) => {
       select: '_id misc subProgram trainees tradeName rolesPerTrainer',
       populate: [
         { path: 'trainees', select: 'identity' },
-        { path: 'subProgram', select: 'priceVersions' },
+        { path: 'subProgram', select: 'trainerPriceVersions' },
       ],
     })
     .populate({ path: 'attendances', select: 'status', options: { isVendorUser: true } })

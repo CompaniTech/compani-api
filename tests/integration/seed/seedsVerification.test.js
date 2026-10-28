@@ -2567,7 +2567,7 @@ describe('SEEDS VERIFICATION', () => {
                 {
                   path: 'course',
                   select: 'subProgram',
-                  populate: { path: 'subProgram', select: 'priceVersions' },
+                  populate: { path: 'subProgram', select: 'trainerPriceVersions' },
                 },
               ],
             })

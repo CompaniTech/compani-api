@@ -17,7 +17,7 @@ const subProgram = {
   name: 'sous-programme',
   status: PUBLISHED,
   steps: [step._id],
-  priceVersions: [{ effectiveDate: '2020-01-01T00:00:00', prices: [{ step: step._id, hourlyAmount: 50 }] }],
+  trainerPriceVersions: [{ effectiveDate: '2020-01-01T00:00:00', prices: [{ step: step._id, hourlyAmount: 50 }] }],
 };
 
 const program = { _id: new ObjectId(), name: 'program', subPrograms: [subProgram._id] };

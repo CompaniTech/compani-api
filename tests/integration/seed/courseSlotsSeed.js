@@ -99,7 +99,7 @@ const subProgramsList = [
     name: 'sous-programme A',
     steps: [stepsList[0]._id, stepsList[1]._id, stepsList[4]._id],
     status: PUBLISHED,
-    priceVersions: [
+    trainerPriceVersions: [
       {
         effectiveDate: '2020-02-01T23:00:00',
         prices: [
@@ -123,7 +123,7 @@ const subProgramsList = [
     name: 'sous-programme B',
     steps: [stepsList[2]._id, stepsList[3]._id, stepsList[5]._id],
     status: PUBLISHED,
-    priceVersions: [
+    trainerPriceVersions: [
       {
         effectiveDate: '2022-01-01T00:00:00',
         prices: [
