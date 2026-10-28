@@ -25,7 +25,7 @@ const create = async (req) => {
 
 const list = async (req) => {
   try {
-    const trainerBills = await TrainerBillsHelper.list(req.query);
+    const trainerBills = await TrainerBillsHelper.list(req.auth.credentials);
 
     return {
       message: trainerBills.length ? translate[language].trainerBillsFound : translate[language].trainerBillsNotFound,

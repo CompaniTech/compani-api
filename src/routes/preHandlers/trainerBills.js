@@ -1,7 +1,6 @@
 const Boom = require('@hapi/boom');
 const CourseSlot = require('../../models/CourseSlot');
 const TrainerBill = require('../../models/TrainerBill');
-const User = require('../../models/User');
 const UtilsHelper = require('../../helpers/utils');
 const translate = require('../../helpers/translate');
 
@@ -30,18 +29,6 @@ exports.authorizeTrainerBillCreation = async (req) => {
     const billNumberAlreadyUsed = await TrainerBill
       .countDocuments({ trainer: credentials._id, number: req.payload.number });
     if (billNumberAlreadyUsed) throw Boom.conflict(translate[language].trainerBillNumberAlreadyUsed);
-
-    return null;
-  } catch (e) {
-    req.log('error', e);
-    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
-  }
-};
-
-exports.authorizeTrainerBillsGet = async (req) => {
-  try {
-    const trainer = await User.countDocuments({ _id: req.query.trainer, 'role.vendor': { $exists: true } });
-    if (!trainer) throw Boom.notFound();
 
     return null;
   } catch (e) {

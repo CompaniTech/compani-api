@@ -1,7 +1,7 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
 const { create, list } = require('../controllers/trainerBillController');
-const { authorizeTrainerBillCreation, authorizeTrainerBillsGet } = require('./preHandlers/trainerBills');
+const { authorizeTrainerBillCreation } = require('./preHandlers/trainerBills');
 const { formDataPayload, objectIdOrArray } = require('./validations/utils');
 
 exports.plugin = {
@@ -30,11 +30,7 @@ exports.plugin = {
       method: 'GET',
       path: '/',
       options: {
-        auth: { scope: ['user:read-{query.trainer}'] },
-        validate: {
-          query: Joi.object({ trainer: Joi.objectId().required() }),
-        },
-        pre: [{ method: authorizeTrainerBillsGet }],
+        auth: { scope: ['trainerbills:create'] },
       },
       handler: list,
     });

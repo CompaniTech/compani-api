@@ -95,8 +95,8 @@ exports.createBill = async (payload, credentials) => {
   return trainerBill;
 };
 
-exports.list = async query => TrainerBill
-  .find({ trainer: query.trainer }, { number: 1, amount: 1, submittedAt: 1, file: 1 })
+exports.list = async credentials => TrainerBill
+  .find({ trainer: credentials._id }, { number: 1, amount: 1, submittedAt: 1, file: 1 })
   .populate({ path: 'payment', select: 'status' })
   .sort({ submittedAt: -1 })
   .lean();
