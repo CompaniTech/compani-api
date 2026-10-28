@@ -2,14 +2,13 @@ const { ObjectId } = require('mongodb');
 const Course = require('../../../src/models/Course');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const TrainerBill = require('../../../src/models/TrainerBill');
-const TrainerPayment = require('../../../src/models/TrainerPayment');
 const Program = require('../../../src/models/Program');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
 const { vendorAdmin, trainer, trainerAndCoach } = require('../../seed/authUsersSeed');
-const { INTRA, PUBLISHED, GLOBAL, PENDING, PAID } = require('../../../src/helpers/constants');
+const { INTRA, PUBLISHED, GLOBAL } = require('../../../src/helpers/constants');
 
 const step = { _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 };
 
@@ -106,11 +105,6 @@ const trainerBillList = [
   },
 ];
 
-const trainerPaymentList = [
-  { _id: new ObjectId(), number: 'REG-00098', trainerBill: trainerBillId, amount: 100, status: PENDING },
-  { _id: new ObjectId(), number: 'REG-00099', trainerBill: paidTrainerBillId, amount: 100, status: PAID },
-];
-
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
@@ -121,7 +115,6 @@ const populateDB = async () => {
     Step.create(step),
     CourseSlot.create(courseSlotsList),
     TrainerBill.create(trainerBillList),
-    TrainerPayment.create(trainerPaymentList),
   ]);
 };
 
