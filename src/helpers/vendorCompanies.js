@@ -1,11 +1,22 @@
 const VendorCompany = require('../models/VendorCompany');
 const drive = require('../models/Google/Drive');
 const GDriveStorageHelper = require('./gDriveStorage');
+const UtilsHelper = require('./utils');
 
-exports.get = async () => VendorCompany
-  .findOne()
-  .populate({ path: 'billingRepresentative', select: '_id picture contact identity local' })
-  .lean();
+exports.get = async (shouldMaskBankInfos = false) => {
+  const vendorCompany = await VendorCompany
+    .findOne()
+    .populate({ path: 'billingRepresentative', select: '_id picture contact identity local' })
+    .lean();
+
+  if (!shouldMaskBankInfos) return vendorCompany;
+
+  return {
+    ...vendorCompany,
+    iban: UtilsHelper.maskBankInfo(vendorCompany.iban),
+    bic: UtilsHelper.maskBankInfo(vendorCompany.bic),
+  };
+};
 
 exports.update = async payload => VendorCompany.updateOne({}, { $set: payload });
 
