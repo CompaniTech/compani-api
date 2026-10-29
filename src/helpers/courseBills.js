@@ -15,6 +15,9 @@ const CoursePayment = require('../models/CoursePayment');
 const SubProgram = require('../models/SubProgram');
 const BalanceHelper = require('./balances');
 const UtilsHelper = require('./utils');
+const HourlyPaymentPlansHelper = require('./hourlyPaymentPlans');
+const CoursesHelper = require('./courses');
+const CourseSlotsHelper = require('./courseSlots');
 const CourseHistoriesHelper = require('./courseHistories');
 const VendorCompaniesHelper = require('./vendorCompanies');
 const CourseBillPdf = require('../data/pdf/courseBilling/courseBill');
@@ -33,6 +36,7 @@ const {
   BANK_TRANSFER,
   DIRECT_DEBIT,
   PRESENT,
+  GLOBAL,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -323,9 +327,45 @@ exports.list = async (query, credentials) => {
   });
 };
 
+exports.computePriceFromDurations = async (courseId, hourlyPaymentPlanId) => {
+  const course = await Course
+    .findOne({ _id: courseId }, { subProgram: 1, slots: 1, trainees: 1 })
+    .populate({
+      path: 'slots',
+      select: 'startDate endDate trainers step',
+      populate: { path: 'step', select: 'durationCountedPerTrainer' },
+    })
+    .populate({
+      path: 'subProgram',
+      select: 'steps hourlyPaymentPlans',
+      populate: { path: 'steps', select: 'activities type theoreticalDuration' },
+    })
+    .lean();
+
+  const { slotsWithAttendance, eLearningDuration } = await CoursesHelper
+    .getTraineeDurations(course, course.trainees[0]);
+
+  const durationPerStep = CourseSlotsHelper.getDurationPerStep(slotsWithAttendance);
+  const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
+    .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, hourlyPaymentPlanId));
+
+  return HourlyPaymentPlansHelper.getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
+};
+
 exports.createBillList = async (payload) => {
   const course = await Course
-    .findOne({ _id: payload.course }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 })
+    .findOne(
+      { _id: payload.course },
+      {
+        type: 1,
+        prices: 1,
+        trainees: 1,
+        trainers: 1,
+        subProgram: 1,
+        hourlyPaymentPlan: 1,
+        certificateGenerationMode: 1,
+      }
+    )
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({ path: 'subProgram', select: 'subjectToVat' })
@@ -342,8 +382,17 @@ exports.createBillList = async (payload) => {
   }
 
   if (payload.quantity === 1) {
-    const billCreated = await CourseBill
-      .create({ ...omit(payload, ['quantity', 'hourlyPaymentPlanId']), ...vat && { vat } });
+    const isGlobalCertificationCourseWithPriceFromDurations = payload.hourlyPaymentPlanId &&
+      course.certificateGenerationMode === GLOBAL;
+    const mainFee = isGlobalCertificationCourseWithPriceFromDurations
+      ? { ...payload.mainFee, price: await exports.computePriceFromDurations(course._id, payload.hourlyPaymentPlanId) }
+      : payload.mainFee;
+
+    const billCreated = await CourseBill.create({
+      ...omit(payload, ['quantity', 'hourlyPaymentPlanId']),
+      mainFee,
+      ...vat && { vat },
+    });
 
     if (payload.mainFee.percentage) {
       const trainerFees = (course.prices || []).reduce((acc, price) => {

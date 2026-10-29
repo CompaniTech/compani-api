@@ -891,13 +891,28 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload: { ...singleCoursePayload, hourlyPaymentPlanId },
+          payload: {
+            ...singleCoursePayload,
+            mainFee: omit(singleCoursePayload.mainFee, 'price'),
+            hourlyPaymentPlanId,
+          },
         });
 
         expect(response.statusCode).toBe(200);
 
         const course = await Course.findOne({ _id: coursesList[12]._id }, { hourlyPaymentPlan: 1 }).lean();
         expect(course.hourlyPaymentPlan).toEqual(hourlyPaymentPlanId);
+      });
+
+      it('should return 400 if price sent with an hourly payment plan', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, hourlyPaymentPlanId },
+        });
+
+        expect(response.statusCode).toBe(400);
       });
 
       it('should return 404 if hourly payment plan does not exist on the subProgram', async () => {

@@ -13,6 +13,7 @@ const {
   BALANCE,
   INTRA,
   GROUP,
+  GLOBAL,
   TRAINEE,
   SINGLE,
 } = require('../../helpers/constants');
@@ -38,6 +39,7 @@ exports.authorizeCourseBillListCreation = async (req) => {
       prices: 1,
       interruptionDates: 1,
       hourlyPaymentPlan: 1,
+      certificateGenerationMode: 1,
     })
     .populate({ path: 'subProgram', select: 'hourlyPaymentPlans' })
     .lean();
@@ -57,6 +59,10 @@ exports.authorizeCourseBillListCreation = async (req) => {
       throw Boom.forbidden();
     }
   }
+
+  const shouldComputePriceFromDuration = hourlyPaymentPlanId && course.certificateGenerationMode === GLOBAL;
+  if (quantity === 1 && !mainFee.price && !shouldComputePriceFromDuration) throw Boom.badRequest();
+  if (shouldComputePriceFromDuration && mainFee.price) throw Boom.badRequest();
 
   const isCourseInterrupted = UtilsHelper.isCourseInterrupted(course.interruptionDates);
   if (isCourseInterrupted) throw Boom.forbidden();

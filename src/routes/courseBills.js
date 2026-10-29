@@ -81,7 +81,12 @@ exports.plugin = {
                 'quantity',
                 {
                   is: 1,
-                  then: Joi.object({ price: Joi.required() }),
+                  then: Joi.object({
+                    price: Joi.when(
+                      '/hourlyPaymentPlanId',
+                      { is: Joi.exist(), then: Joi.any(), otherwise: Joi.required() }
+                    ),
+                  }),
                   otherwise: Joi.object({ percentage: Joi.forbidden() }),
                 }
               ),
