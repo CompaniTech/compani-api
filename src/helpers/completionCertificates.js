@@ -231,7 +231,11 @@ exports.generate = async (completionCertificateId) => {
   if (course.hourlyPaymentPlan) {
     const billsToUpdate = await CourseBill
       .find(
-        { course: course._id, maturityDate: { $gte: startOfMonth, $lte: endOfMonth }, 'mainFee.price': 0 },
+        {
+          course: course._id,
+          maturityDate: { $gte: startOfMonth, $lte: endOfMonth },
+          'mainFee.price': { $in: [0, null] },
+        },
         { _id: 1 }
       )
       .setOptions({ isVendorUser: true })
@@ -257,9 +261,35 @@ exports.deleteFile = async (completionCertificateId) => {
     .populate({ path: 'course', select: 'hourlyPaymentPlan' })
     .lean();
 
-  if (completionCertificate.course.hourlyPaymentPlan) {
-    const { month, trainee } = completionCertificate;
+  let certificatesToDelete = [completionCertificate];
+  if (completionCertificate.vaeSupportRemainingMinutes) {
+    const { course, trainee, vaeSupportRemainingMinutes } = completionCertificate;
+    const completionCertificateWithRemainingMinutes = await CompletionCertificate
+      .find({
+        course: course._id,
+        trainee,
+        vaeSupportRemainingMinutes: { $lt: vaeSupportRemainingMinutes },
+      })
+      .setOptions({ isVendorUser: true })
+      .lean();
+    certificatesToDelete = [completionCertificate, ...completionCertificateWithRemainingMinutes];
+    await CompletionCertificate.updateMany(
+      { _id: { $in: certificatesToDelete.map(c => c._id) } },
+      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+    );
+    for (const certificate of certificatesToDelete) {
+      await GCloudStorageHelper.deleteCourseFile(certificate.file.publicId);
+    }
+  } else {
+    await CompletionCertificate.updateOne(
+      { _id: completionCertificateId },
+      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+    );
 
+    await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
+  }
+
+  if (completionCertificate.course.hourlyPaymentPlan) {
     const course = await Course
       .findOne(
         { _id: completionCertificate.course._id },
@@ -280,51 +310,26 @@ exports.deleteFile = async (completionCertificateId) => {
       })
       .lean();
 
-    const durations = await computeMonthDurations(course, month, trainee);
-    const { startOfMonth, endOfMonth, durationPerStep, eLearningDuration } = durations;
+    for (const certificate of certificatesToDelete) {
+      const durations = await computeMonthDurations(course, certificate.month, certificate.trainee);
+      const { startOfMonth, endOfMonth, durationPerStep, eLearningDuration } = durations;
 
-    const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
-      .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, course.hourlyPaymentPlan));
-    const price = HourlyPaymentPlansHelper
-      .getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
+      const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
+        .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, course.hourlyPaymentPlan));
+      const price = HourlyPaymentPlansHelper
+        .getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
 
-    const billsToReset = await CourseBill
-      .find(
-        { course: course._id, maturityDate: { $gte: startOfMonth, $lte: endOfMonth }, 'mainFee.price': price },
-        { _id: 1 }
-      )
-      .setOptions({ isVendorUser: true })
-      .lean();
+      const billsToReset = await CourseBill
+        .find(
+          { course: course._id, maturityDate: { $gte: startOfMonth, $lte: endOfMonth }, 'mainFee.price': price },
+          { _id: 1 }
+        )
+        .setOptions({ isVendorUser: true })
+        .lean();
 
-    if (billsToReset.length) {
-      await CourseBill.updateMany({ _id: { $in: billsToReset.map(b => b._id) } }, { $set: { 'mainFee.price': 0 } });
+      if (billsToReset.length) {
+        await CourseBill.updateMany({ _id: { $in: billsToReset.map(b => b._id) } }, { $set: { 'mainFee.price': 0 } });
+      }
     }
-  }
-
-  if (completionCertificate.vaeSupportRemainingMinutes) {
-    const { course, trainee, vaeSupportRemainingMinutes } = completionCertificate;
-    const completionCertificateWithRemainingMinutes = await CompletionCertificate
-      .find({
-        course: course._id,
-        trainee,
-        vaeSupportRemainingMinutes: { $lt: vaeSupportRemainingMinutes },
-      })
-      .setOptions({ isVendorUser: true })
-      .lean();
-    const certificateToDelete = [completionCertificate, ...completionCertificateWithRemainingMinutes];
-    await CompletionCertificate.updateMany(
-      { _id: { $in: certificateToDelete.map(c => c._id) } },
-      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
-    );
-    for (const certificate of certificateToDelete) {
-      await GCloudStorageHelper.deleteCourseFile(certificate.file.publicId);
-    }
-  } else {
-    await CompletionCertificate.updateOne(
-      { _id: completionCertificateId },
-      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
-    );
-
-    await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
   }
 };

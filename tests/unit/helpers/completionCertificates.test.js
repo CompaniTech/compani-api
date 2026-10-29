@@ -774,7 +774,7 @@ describe('generate', () => {
                 $gte: CompaniDate(month, MM_YYYY).startOf(MONTH).toISO(),
                 $lte: CompaniDate(month, MM_YYYY).endOf(MONTH).toISO(),
               },
-              'mainFee.price': 0,
+              'mainFee.price': { $in: [0, null] },
             },
             { _id: 1 },
           ],
@@ -2056,5 +2056,69 @@ describe('deleteFile', () => {
       { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
     );
     sinon.assert.calledOnceWithExactly(deleteCourseFile, 'completionCertificateTest');
+    sinon.assert.callOrder(deleteCourseFile, updateManyBills);
+  });
+
+  it('should remove the real price of the bills of every certificate deleted in cascade (VAE)', async () => {
+    const courseId = new ObjectId();
+    const traineeId = new ObjectId();
+    const stepId = new ObjectId();
+    const hourlyPaymentPlan = { _id: new ObjectId(), prices: [{ step: stepId, hourlyAmount: 50 }] };
+    const completionCertificates = [
+      {
+        _id: new ObjectId(),
+        month: '03-2025',
+        trainee: traineeId,
+        course: { _id: courseId, hourlyPaymentPlan: hourlyPaymentPlan._id },
+        file: { publicId: 'certif_03', link: 'test/certif_03' },
+        vaeSupportRemainingMinutes: 100,
+      },
+      {
+        _id: new ObjectId(),
+        month: '04-2025',
+        trainee: traineeId,
+        course: courseId,
+        file: { publicId: 'certif_04', link: 'test/certif_04' },
+        vaeSupportRemainingMinutes: 0,
+      },
+    ];
+    const course = {
+      _id: courseId,
+      slots: [],
+      hourlyPaymentPlan: hourlyPaymentPlan._id,
+      subProgram: { _id: new ObjectId(), steps: [], hourlyPaymentPlans: [hourlyPaymentPlan] },
+    };
+    const bills = [{ _id: new ObjectId() }, { _id: new ObjectId() }];
+    const eLearningDuration = CompaniDuration('PT3600S');
+    const durationPerStep = { [stepId]: CompaniDuration('PT7200S') };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(completionCertificates[0], ['populate', 'lean']));
+    find.returns(SinonMongoose.stubChainedQueries([completionCertificates[1]], ['setOptions', 'lean']));
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'lean']));
+    getUnsubscribedAttendances.returns([]);
+    getTraineeDurations.returns({ slotsWithAttendance: [], eLearningDuration });
+    getDurationPerStep.returns(durationPerStep);
+    getPriceFromDurations.onFirstCall().returns(150);
+    getPriceFromDurations.onSecondCall().returns(90);
+    findBills.onFirstCall().returns(SinonMongoose.stubChainedQueries([bills[0]], ['setOptions', 'lean']));
+    findBills.onSecondCall().returns(SinonMongoose.stubChainedQueries([bills[1]], ['setOptions', 'lean']));
+
+    await CompletionCertificatesHelper.deleteFile(completionCertificates[0]._id);
+
+    sinon.assert.calledTwice(getPriceFromDurations);
+    sinon.assert.calledTwice(findBills);
+    sinon.assert.calledTwice(updateManyBills);
+    sinon.assert.calledWithExactly(
+      updateManyBills.getCall(0),
+      { _id: { $in: [bills[0]._id] } },
+      { $set: { 'mainFee.price': 0 } }
+    );
+    sinon.assert.calledWithExactly(
+      updateManyBills.getCall(1),
+      { _id: { $in: [bills[1]._id] } },
+      { $set: { 'mainFee.price': 0 } }
+    );
+    sinon.assert.calledTwice(deleteCourseFile);
+    sinon.assert.callOrder(deleteCourseFile, updateManyBills);
   });
 });
