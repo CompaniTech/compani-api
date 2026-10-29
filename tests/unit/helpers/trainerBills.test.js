@@ -296,3 +296,37 @@ describe('createBill', () => {
     );
   });
 });
+
+describe('list', () => {
+  let trainerBillFind;
+
+  beforeEach(() => {
+    trainerBillFind = sinon.stub(TrainerBill, 'find');
+  });
+
+  afterEach(() => {
+    trainerBillFind.restore();
+  });
+
+  it('should return the trainer bills', async () => {
+    const trainerId = new ObjectId();
+    const credentials = { _id: trainerId };
+    const trainerBills = [
+      { _id: new ObjectId(), number: 'FACT_0001', payment: { status: PENDING }, trainer: trainerId },
+    ];
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'sort', 'lean']));
+
+    const result = await TrainerBillsHelper.list(credentials);
+
+    expect(result).toEqual(trainerBills);
+    SinonMongoose.calledOnceWithExactly(
+      trainerBillFind,
+      [
+        { query: 'find', args: [{ trainer: credentials._id }, { number: 1, amount: 1, submittedAt: 1, file: 1 }] },
+        { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
+        { query: 'sort', args: [{ submittedAt: -1 }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+});

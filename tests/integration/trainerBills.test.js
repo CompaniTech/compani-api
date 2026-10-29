@@ -7,7 +7,7 @@ const TrainerPayment = require('../../src/models/TrainerPayment');
 const CourseSlot = require('../../src/models/CourseSlot');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const { trainer, trainerAndCoach } = require('../seed/authUsersSeed');
-const { populateDB, courseSlotsList } = require('./seed/trainerBillsSeed');
+const { populateDB, courseSlotsList, paidTrainerBillId } = require('./seed/trainerBillsSeed');
 const { PENDING } = require('../../src/helpers/constants');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
@@ -258,6 +258,81 @@ describe('TRAINER BILLS ROUTES - POST /trainerbills', () => {
           url: '/trainerbills',
           headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: getStream(form),
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('TRAINER BILLS ROUTES - GET /trainerbills', () => {
+  let authToken;
+
+  beforeEach(async () => {
+    await populateDB();
+  });
+
+  describe('TRAINER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('trainer');
+    });
+
+    it('should get own trainer bills, sorted by submission date', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/trainerbills',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.trainerBills.length).toBe(2);
+      expect(response.result.data.trainerBills[0]._id).toEqual(paidTrainerBillId);
+    });
+  });
+
+  describe('Other trainer', () => {
+    it('should not get other trainer\'s bills', async () => {
+      authToken = await getTokenByCredentials(trainerAndCoach.local);
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/trainerbills',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.trainerBills.length).toBe(0);
+    });
+
+    it('should not get other trainer\'s bills as user is training_organisation_manager', async () => {
+      authToken = await getToken('training_organisation_manager');
+
+      const response = await app.inject({
+        method: 'GET',
+        url: '/trainerbills',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.trainerBills.length).toBe(0);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'client_admin', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const response = await app.inject({
+          method: 'GET',
+          url: '/trainerbills',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 
         expect(response.statusCode).toBe(role.expectedCode);

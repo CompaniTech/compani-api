@@ -1,6 +1,6 @@
 const Joi = require('joi');
 Joi.objectId = require('joi-objectid')(Joi);
-const { create } = require('../controllers/trainerBillController');
+const { create, list } = require('../controllers/trainerBillController');
 const { authorizeTrainerBillCreation } = require('./preHandlers/trainerBills');
 const { formDataPayload, objectIdOrArray } = require('./validations/utils');
 
@@ -24,6 +24,15 @@ exports.plugin = {
         pre: [{ method: authorizeTrainerBillCreation }],
       },
       handler: create,
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/',
+      options: {
+        auth: { scope: ['trainerbills:create'] },
+      },
+      handler: list,
     });
   },
 };
