@@ -224,7 +224,12 @@ describe('list', () => {
         nature: PAYMENT,
         courseBill: {
           number: 'FACT_00001',
-          payer: { company: { name: 'Structure', holding: { _id: new ObjectId(), name: 'holding' } } },
+          payer: {
+            name: 'Structure',
+            holding: { _id: new ObjectId(), name: 'holding' },
+            bic: 'WERTFRPP',
+            iban: 'FR3514508000505917721779B12',
+          },
           isPayerCompany: true,
           course: { type: INTRA },
         },
@@ -257,7 +262,26 @@ describe('list', () => {
 
     const result = await CoursePaymentsHelper.list({ status: [RECEIVED, XML_GENERATED] });
 
-    expect(result).toEqual(paymentList);
+    expect(result).toEqual([
+      {
+        ...paymentList[0],
+        courseBill: {
+          ...paymentList[0].courseBill,
+          payer: { name: 'Structure', holding: paymentList[0].courseBill.payer.holding, hasBankDetails: true },
+        },
+      },
+      {
+        ...paymentList[1],
+        courseBill: {
+          ...paymentList[1].courseBill,
+          payer: { fundingOrganisation: { name: 'Financeur', holding: null }, hasBankDetails: false },
+        },
+      },
+      {
+        ...paymentList[2],
+        courseBill: { ...paymentList[2].courseBill, payer: { company: { name: 'Structure' }, hasBankDetails: false } },
+      },
+    ]);
 
     SinonMongoose.calledOnceWithExactly(
       find,
@@ -335,7 +359,19 @@ describe('list', () => {
 
     const result = await CoursePaymentsHelper.list({ status: RECEIVED });
 
-    expect(result).toEqual([paymentList[0], paymentList[1]]);
+    expect(result).toEqual([
+      {
+        ...paymentList[0],
+        courseBill: { ...paymentList[0].courseBill, payer: { company: { name: 'Structure' }, hasBankDetails: false } },
+      },
+      {
+        ...paymentList[1],
+        courseBill: {
+          ...paymentList[1].courseBill,
+          payer: { company: { fundingOrganisation: 'Financeur' }, hasBankDetails: false },
+        },
+      },
+    ]);
 
     SinonMongoose.calledOnceWithExactly(
       find,

@@ -1,3 +1,4 @@
+const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const sinon = require('sinon');
 const VendorCompany = require('../../../src/models/VendorCompany');
@@ -28,8 +29,9 @@ describe('get', () => {
     };
     findOne.returns(SinonMongoose.stubChainedQueries(vendorCompany));
 
-    await VendorCompaniesHelper.get();
+    const result = await VendorCompaniesHelper.get();
 
+    expect(result).toEqual(vendorCompany);
     SinonMongoose.calledOnceWithExactly(
       findOne,
       [
@@ -40,6 +42,15 @@ describe('get', () => {
         },
         { query: 'lean' },
       ]);
+  });
+
+  it('should return vendor company infos with masked iban and bic', async () => {
+    const vendorCompany = { name: 'Company', iban: 'FR3514508000505917721779B12', bic: 'WERTFRPP' };
+    findOne.returns(SinonMongoose.stubChainedQueries(vendorCompany));
+
+    const result = await VendorCompaniesHelper.get(true);
+
+    expect(result).toEqual({ name: 'Company', iban: 'FR***********************12', bic: 'WE****PP' });
   });
 });
 
