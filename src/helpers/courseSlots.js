@@ -3,6 +3,7 @@ const compact = require('lodash/compact');
 const get = require('lodash/get');
 const groupBy = require('lodash/groupBy');
 const has = require('lodash/has');
+const mapValues = require('lodash/mapValues');
 const pick = require('lodash/pick');
 const omit = require('lodash/omit');
 const uniqBy = require('lodash/uniqBy');
@@ -484,4 +485,10 @@ exports.formatSlotDates = (slots) => {
     .map(slot => CompaniDate(slot.startDate).format(DD_MM_YYYY));
 
   return [...new Set(slotDatesWithDuplicate)];
+};
+
+exports.getDurationPerStep = (slots) => {
+  const slotsPerStep = groupBy(slots, slot => get(slot, 'step._id') || slot.step);
+
+  return mapValues(slotsPerStep, stepSlots => UtilsHelper.getTotalDuration(stepSlots, false));
 };

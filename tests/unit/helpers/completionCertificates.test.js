@@ -7,12 +7,16 @@ const CompletionCertificate = require('../../../src/models/CompletionCertificate
 const TrainingContract = require('../../../src/models/TrainingContract');
 const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Course = require('../../../src/models/Course');
+const CourseBill = require('../../../src/models/CourseBill');
 const CompletionCertificatesHelper = require('../../../src/helpers/completionCertificates');
 const GCloudStorageHelper = require('../../../src/helpers/gCloudStorage');
 const CoursesHelper = require('../../../src/helpers/courses');
+const HourlyPaymentPlansHelper = require('../../../src/helpers/hourlyPaymentPlans');
+const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
 const CompletionCertificatePdf = require('../../../src/data/pdf/completionCertificate');
-const { OFFICIAL, BLENDED, E_LEARNING, PRESENT } = require('../../../src/helpers/constants');
+const { OFFICIAL, BLENDED, E_LEARNING, PRESENT, MM_YYYY, MONTH } = require('../../../src/helpers/constants');
 const UtilsHelper = require('../../../src/helpers/utils');
+const { CompaniDate } = require('../../../src/helpers/dates/companiDates');
 const { CompaniDuration } = require('../../../src/helpers/dates/companiDurations');
 const UtilsMock = require('../../utilsMock');
 
@@ -431,11 +435,15 @@ describe('generate', () => {
   let uploadCourseFile;
   let updateOne;
   let findActivityHistories;
-  let getTotalDuration;
+  let getDurationPerStep;
   let courseFind;
   let getELearningDuration;
   let getRealELearningDuration;
+  let findBills;
+  let updateManyBills;
+  let getPriceFromDurations;
   const PRI_SUBPROGRAM_IDS = new ObjectId();
+  const stepId = new ObjectId();
   const REAL_ELEARNING_DURATION_SUBPROGRAM_ID = new ObjectId();
 
   beforeEach(() => {
@@ -449,10 +457,13 @@ describe('generate', () => {
     updateOne = sinon.stub(CompletionCertificate, 'updateOne');
     UtilsMock.mockCurrentDate('2025-03-24T10:00:00.000Z');
     findActivityHistories = sinon.stub(ActivityHistory, 'find');
-    getTotalDuration = sinon.stub(UtilsHelper, 'getTotalDuration');
+    getDurationPerStep = sinon.stub(CourseSlotsHelper, 'getDurationPerStep');
     courseFind = sinon.stub(Course, 'find');
     getELearningDuration = sinon.stub(CoursesHelper, 'getELearningDuration');
     getRealELearningDuration = sinon.stub(CoursesHelper, 'getRealELearningDuration');
+    findBills = sinon.stub(CourseBill, 'find');
+    updateManyBills = sinon.stub(CourseBill, 'updateMany');
+    getPriceFromDurations = sinon.stub(HourlyPaymentPlansHelper, 'getPriceFromDurations');
     process.env.VAEI_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
     process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS;
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
@@ -470,22 +481,28 @@ describe('generate', () => {
     updateOne.restore();
     UtilsMock.unmockCurrentDate();
     findActivityHistories.restore();
-    getTotalDuration.restore();
+    getDurationPerStep.restore();
     courseFind.restore();
     getELearningDuration.restore();
     getRealELearningDuration.restore();
+    findBills.restore();
+    updateManyBills.restore();
+    getPriceFromDurations.restore();
     process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.PRI_SUBPROGRAM_IDS = '';
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = '';
     process.env.VAE_SUPPORT_CONFIGS = '';
   });
 
-  it('should generate completion certificate (with theoretical elearning duration)', async () => {
+  it('should generate completion certificate (with theoretical elearning duration) (and add bill price)', async () => {
     const completionCertificateId = new ObjectId();
     const traineeId = new ObjectId();
     const companyId = new ObjectId();
     const courseId = new ObjectId();
     const month = '03-2025';
+    const hourlyPaymentPlan = { _id: new ObjectId(), prices: [{ step: stepId, hourlyAmount: 40 }] };
+    const billId = new ObjectId();
+    const durationPerStep = { [stepId]: CompaniDuration({ minutes: 390 }) };
     const slotList = [
       { _id: new ObjectId(), startDate: '2025-01-20T10:00:00.000Z', endDate: '2025-01-20T14:00:00.000Z' },
       { _id: new ObjectId(), startDate: '2025-03-14T10:00:00.000Z', endDate: '2025-03-14T14:00:00.000Z' },
@@ -530,6 +547,7 @@ describe('generate', () => {
         subProgram: {
           _id: subProgramIds[0],
           program: { subPrograms: subProgramIds },
+          hourlyPaymentPlans: [hourlyPaymentPlan],
           steps: [
             {
               type: E_LEARNING,
@@ -540,6 +558,7 @@ describe('generate', () => {
         },
         companies: [companyId],
         trainees: [traineeId],
+        hourlyPaymentPlan: hourlyPaymentPlan._id,
       },
       month,
       trainee: {
@@ -591,7 +610,9 @@ describe('generate', () => {
       SinonMongoose.stubChainedQueries({ startDate: '2025-01-01T00:00:00.000Z' }, ['sort', 'lean'])
     );
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
+    getDurationPerStep.returns(durationPerStep);
+    findBills.returns(SinonMongoose.stubChainedQueries([{ _id: billId }], ['setOptions', 'lean']));
+    getPriceFromDurations.returns(260);
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getELearningDuration.returns('PT3H30M');
@@ -610,7 +631,7 @@ describe('generate', () => {
           args: [[
             {
               path: 'course',
-              select: 'subProgram slots companies trainees tradeName',
+              select: 'subProgram slots companies trainees tradeName hourlyPaymentPlan',
               populate: [
                 {
                   path: 'slots',
@@ -620,13 +641,10 @@ describe('generate', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps',
+                  select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    {
-                      path: 'steps',
-                      select: 'activities type theoreticalDuration',
-                    },
+                    { path: 'steps', select: 'activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -658,9 +676,8 @@ describe('generate', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(
-      getTotalDuration,
-      [slotList[1], { startDate: '2025-03-22T07:00:00.000Z', endDate: '2025-03-22T09:30:00.000Z' }],
-      false
+      getDurationPerStep,
+      [slotList[1], { startDate: '2025-03-22T07:00:00.000Z', endDate: '2025-03-22T09:30:00.000Z' }]
     );
     SinonMongoose.calledWithExactly(
       courseFind,
@@ -744,6 +761,33 @@ describe('generate', () => {
         { query: 'sort', args: [{ startDate: 1 }] },
         { query: 'lean' },
       ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findBills,
+      [
+        {
+          query: 'find',
+          args: [
+            {
+              course: courseId,
+              maturityDate: {
+                $gte: CompaniDate(month, MM_YYYY).startOf(MONTH).toISO(),
+                $lte: CompaniDate(month, MM_YYYY).endOf(MONTH).toISO(),
+              },
+              'mainFee.price': 0,
+            },
+            { _id: 1 },
+          ],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(getPriceFromDurations, hourlyPaymentPlan, durationPerStep, 'PT3H30M');
+    sinon.assert.calledOnceWithExactly(
+      updateManyBills,
+      { _id: { $in: [billId] } },
+      { $set: { 'mainFee.price': 260 } }
     );
   });
 
@@ -843,7 +887,7 @@ describe('generate', () => {
     );
     findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([{ month: '02-2025' }], ['setOptions', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
+    getDurationPerStep.returns({ [stepId]: CompaniDuration({ minutes: 390 }) });
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getRealELearningDuration.returns('PT200S');
@@ -862,7 +906,7 @@ describe('generate', () => {
           args: [[
             {
               path: 'course',
-              select: 'subProgram slots companies trainees tradeName',
+              select: 'subProgram slots companies trainees tradeName hourlyPaymentPlan',
               populate: [
                 {
                   path: 'slots',
@@ -872,13 +916,10 @@ describe('generate', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps',
+                  select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    {
-                      path: 'steps',
-                      select: 'activities type theoreticalDuration',
-                    },
+                    { path: 'steps', select: 'activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -910,9 +951,8 @@ describe('generate', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(
-      getTotalDuration,
-      [slotList[1], { startDate: '2025-03-22T07:00:00.000Z', endDate: '2025-03-22T09:30:00.000Z' }],
-      false
+      getDurationPerStep,
+      [slotList[1], { startDate: '2025-03-22T07:00:00.000Z', endDate: '2025-03-22T09:30:00.000Z' }]
     );
     SinonMongoose.calledWithExactly(
       courseFind,
@@ -987,6 +1027,9 @@ describe('generate', () => {
       ]
     );
     sinon.assert.notCalled(findOneTrainingContract);
+    sinon.assert.notCalled(findBills);
+    sinon.assert.notCalled(updateManyBills);
+    sinon.assert.notCalled(getPriceFromDurations);
   });
 
   it('should generate completion certificate in VAE period (attendance within remaining budget)', async () => {
@@ -1087,7 +1130,7 @@ describe('generate', () => {
     findCompletionCertificate.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'sort', 'lean']));
     findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
+    getDurationPerStep.returns({ [stepId]: CompaniDuration({ minutes: 390 }) });
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getRealELearningDuration.returns('PT200S');
@@ -1106,7 +1149,7 @@ describe('generate', () => {
           args: [[
             {
               path: 'course',
-              select: 'subProgram slots companies trainees tradeName',
+              select: 'subProgram slots companies trainees tradeName hourlyPaymentPlan',
               populate: [
                 {
                   path: 'slots',
@@ -1116,13 +1159,10 @@ describe('generate', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps',
+                  select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    {
-                      path: 'steps',
-                      select: 'activities type theoreticalDuration',
-                    },
+                    { path: 'steps', select: 'activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -1195,9 +1235,8 @@ describe('generate', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(
-      getTotalDuration,
-      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }],
-      false
+      getDurationPerStep,
+      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }]
     );
     SinonMongoose.calledWithExactly(
       courseFind,
@@ -1258,6 +1297,9 @@ describe('generate', () => {
       { $set: { file: { publicId: '1234', link: 'tests/1234' }, vaeSupportRemainingMinutes: 330 } }
     );
     sinon.assert.notCalled(getELearningDuration);
+    sinon.assert.notCalled(findBills);
+    sinon.assert.notCalled(updateManyBills);
+    sinon.assert.notCalled(getPriceFromDurations);
   });
 
   it('should generate completion certificate in VAE period (attendance exceeds remaining budget)', async () => {
@@ -1363,7 +1405,7 @@ describe('generate', () => {
     );
     findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
+    getDurationPerStep.returns({ [stepId]: CompaniDuration({ minutes: 390 }) });
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getRealELearningDuration.returns('PT200S');
@@ -1382,7 +1424,7 @@ describe('generate', () => {
           args: [[
             {
               path: 'course',
-              select: 'subProgram slots companies trainees tradeName',
+              select: 'subProgram slots companies trainees tradeName hourlyPaymentPlan',
               populate: [
                 {
                   path: 'slots',
@@ -1392,13 +1434,10 @@ describe('generate', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps',
+                  select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    {
-                      path: 'steps',
-                      select: 'activities type theoreticalDuration',
-                    },
+                    { path: 'steps', select: 'activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -1471,9 +1510,8 @@ describe('generate', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(
-      getTotalDuration,
-      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }],
-      false
+      getDurationPerStep,
+      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }]
     );
     SinonMongoose.calledWithExactly(
       courseFind,
@@ -1534,6 +1572,9 @@ describe('generate', () => {
       { $set: { file: { publicId: '1234', link: 'tests/1234' }, vaeSupportRemainingMinutes: 0 } }
     );
     sinon.assert.notCalled(getELearningDuration);
+    sinon.assert.notCalled(findBills);
+    sinon.assert.notCalled(updateManyBills);
+    sinon.assert.notCalled(getPriceFromDurations);
   });
 
   it('should generate completion certificate normally when VAE period budget is exhausted', async () => {
@@ -1636,7 +1677,7 @@ describe('generate', () => {
     );
     findOneTrainingContract.returns(SinonMongoose.stubChainedQueries(null, ['sort', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getTotalDuration.returns(CompaniDuration({ minutes: 390 }));
+    getDurationPerStep.returns({ [stepId]: CompaniDuration({ minutes: 390 }) });
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getRealELearningDuration.returns('PT200S');
@@ -1655,7 +1696,7 @@ describe('generate', () => {
           args: [[
             {
               path: 'course',
-              select: 'subProgram slots companies trainees tradeName',
+              select: 'subProgram slots companies trainees tradeName hourlyPaymentPlan',
               populate: [
                 {
                   path: 'slots',
@@ -1665,13 +1706,10 @@ describe('generate', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps',
+                  select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    {
-                      path: 'steps',
-                      select: 'activities type theoreticalDuration',
-                    },
+                    { path: 'steps', select: 'activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -1744,9 +1782,8 @@ describe('generate', () => {
       ]
     );
     sinon.assert.calledOnceWithExactly(
-      getTotalDuration,
-      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }],
-      false
+      getDurationPerStep,
+      [slotList[1], { startDate: '2026-03-22T07:00:00.000Z', endDate: '2026-03-22T09:30:00.000Z' }]
     );
     SinonMongoose.calledWithExactly(
       courseFind,
@@ -1806,6 +1843,9 @@ describe('generate', () => {
       { $set: { file: { publicId: '1234', link: 'tests/1234' } } }
     );
     sinon.assert.notCalled(getELearningDuration);
+    sinon.assert.notCalled(findBills);
+    sinon.assert.notCalled(updateManyBills);
+    sinon.assert.notCalled(getPriceFromDurations);
   });
 });
 
@@ -1831,41 +1871,69 @@ describe('create', () => {
 
 describe('deleteFile', () => {
   let findOne;
+  let findOneCourse;
   let find;
   let updateOne;
   let updateMany;
   let deleteCourseFile;
+  let getUnsubscribedAttendances;
+  let getTraineeDurations;
+  let getDurationPerStep;
+  let getPriceFromDurations;
+  let findBills;
+  let updateManyBills;
   beforeEach(() => {
     findOne = sinon.stub(CompletionCertificate, 'findOne');
+    findOneCourse = sinon.stub(Course, 'findOne');
     find = sinon.stub(CompletionCertificate, 'find');
     updateOne = sinon.stub(CompletionCertificate, 'updateOne');
     updateMany = sinon.stub(CompletionCertificate, 'updateMany');
     deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
+    getUnsubscribedAttendances = sinon.stub(CoursesHelper, 'getUnsubscribedAttendances');
+    getTraineeDurations = sinon.stub(CoursesHelper, 'getTraineeDurations');
+    getDurationPerStep = sinon.stub(CourseSlotsHelper, 'getDurationPerStep');
+    getPriceFromDurations = sinon.stub(HourlyPaymentPlansHelper, 'getPriceFromDurations');
+    findBills = sinon.stub(CourseBill, 'find');
+    updateManyBills = sinon.stub(CourseBill, 'updateMany');
   });
   afterEach(() => {
     findOne.restore();
+    findOneCourse.restore();
     find.restore();
     updateOne.restore();
     updateMany.restore();
     deleteCourseFile.restore();
+    getUnsubscribedAttendances.restore();
+    getTraineeDurations.restore();
+    getDurationPerStep.restore();
+    getPriceFromDurations.restore();
+    findBills.restore();
+    updateManyBills.restore();
   });
 
   it('should remove the file of a completion certificat', async () => {
     const completionCertificateId = new ObjectId();
     const completionCertificate = {
       _id: completionCertificateId,
-      trainee: new ObjectId(),
-      course: new ObjectId(),
+      trainee: { _id: new ObjectId() },
+      course: { _id: new ObjectId() },
       month: '03-2025',
       file: { publicId: 'completionCertificateTest', link: 'test/completionCertificateTest' },
     };
-    findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['lean']));
+    findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'lean']));
 
     await CompletionCertificatesHelper.deleteFile(completionCertificateId);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
-      [{ query: 'findOne', args: [{ _id: completionCertificateId }] }, { query: 'lean' }]
+      [
+        { query: 'findOne', args: [{ _id: completionCertificateId }] },
+        {
+          query: 'populate',
+          args: [{ path: 'course', select: 'hourlyPaymentPlan' }],
+        },
+        { query: 'lean' },
+      ]
     );
     sinon.assert.calledOnceWithExactly(
       updateOne,
@@ -1875,6 +1943,13 @@ describe('deleteFile', () => {
     sinon.assert.calledOnceWithExactly(deleteCourseFile, 'completionCertificateTest');
     sinon.assert.notCalled(find);
     sinon.assert.notCalled(updateMany);
+    sinon.assert.notCalled(findOneCourse);
+    sinon.assert.notCalled(getUnsubscribedAttendances);
+    sinon.assert.notCalled(getTraineeDurations);
+    sinon.assert.notCalled(getDurationPerStep);
+    sinon.assert.notCalled(getPriceFromDurations);
+    sinon.assert.notCalled(findBills);
+    sinon.assert.notCalled(updateManyBills);
   });
 
   it('should remove the file of a completion certificat', async () => {
@@ -1884,7 +1959,7 @@ describe('deleteFile', () => {
     const completionCertificate = {
       _id: completionCertificateIds[0],
       trainee: traineeId,
-      course: courseId,
+      course: { _id: courseId },
       month: '03-2025',
       file: { publicId: 'completionCertificateTest', link: 'test/completionCertificateTest' },
       vaeSupportRemainingMinutes: 100,
@@ -1897,14 +1972,21 @@ describe('deleteFile', () => {
       file: { publicId: 'completionCertificateTest_2', link: 'test/completionCertificateTest_2' },
       vaeSupportRemainingMinutes: 0,
     }];
-    findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['lean']));
+    findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'lean']));
     find.returns(SinonMongoose.stubChainedQueries(completionCertificatesWithRemaingMinutes, ['setOptions', 'lean']));
 
     await CompletionCertificatesHelper.deleteFile(completionCertificateIds[0]);
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
-      [{ query: 'findOne', args: [{ _id: completionCertificateIds[0] }] }, { query: 'lean' }]
+      [
+        { query: 'findOne', args: [{ _id: completionCertificateIds[0] }] },
+        {
+          query: 'populate',
+          args: [{ path: 'course', select: 'hourlyPaymentPlan' }],
+        },
+        { query: 'lean' },
+      ]
     );
 
     SinonMongoose.calledOnceWithExactly(
@@ -1923,5 +2005,56 @@ describe('deleteFile', () => {
     sinon.assert.calledWithExactly(deleteCourseFile.getCall(0), 'completionCertificateTest');
     sinon.assert.calledWithExactly(deleteCourseFile.getCall(1), 'completionCertificateTest_2');
     sinon.assert.notCalled(updateOne);
+    sinon.assert.notCalled(findOneCourse);
+    sinon.assert.notCalled(getUnsubscribedAttendances);
+    sinon.assert.notCalled(getTraineeDurations);
+    sinon.assert.notCalled(getDurationPerStep);
+    sinon.assert.notCalled(getPriceFromDurations);
+    sinon.assert.notCalled(findBills);
+    sinon.assert.notCalled(updateManyBills);
+  });
+
+  it('should remove the real price of the bills and the file of a completion certificat', async () => {
+    const completionCertificateId = new ObjectId();
+    const courseId = new ObjectId();
+    const traineeId = new ObjectId();
+    const stepId = new ObjectId();
+    const hourlyPaymentPlanId = new ObjectId();
+    const hourlyPaymentPlan = { _id: hourlyPaymentPlanId, prices: [{ step: stepId, hourlyAmount: 50 }] };
+    const completionCertificate = {
+      _id: completionCertificateId,
+      month: '03-2025',
+      file: { publicId: 'completionCertificateTest', link: 'test/completionCertificateTest' },
+      trainee: traineeId,
+      course: { _id: courseId, hourlyPaymentPlan: hourlyPaymentPlanId },
+    };
+    const course = {
+      _id: courseId,
+      slots: [],
+      hourlyPaymentPlan: hourlyPaymentPlanId,
+      subProgram: { _id: new ObjectId(), steps: [], hourlyPaymentPlans: [hourlyPaymentPlan] },
+    };
+    const billId = new ObjectId();
+    const eLearningDuration = CompaniDuration('PT3600S');
+    const durationPerStep = { [stepId]: CompaniDuration('PT7200S') };
+
+    findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['populate', 'lean']));
+    getUnsubscribedAttendances.returns([]);
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'lean']));
+    getTraineeDurations.returns({ slotsWithAttendance: [], eLearningDuration });
+    getDurationPerStep.returns(durationPerStep);
+    getPriceFromDurations.returns(150);
+    findBills.returns(SinonMongoose.stubChainedQueries([{ _id: billId }], ['setOptions', 'lean']));
+
+    await CompletionCertificatesHelper.deleteFile(completionCertificateId);
+
+    sinon.assert.calledOnceWithExactly(getPriceFromDurations, hourlyPaymentPlan, durationPerStep, eLearningDuration);
+    sinon.assert.calledOnceWithExactly(updateManyBills, { _id: { $in: [billId] } }, { $set: { 'mainFee.price': 0 } });
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: completionCertificateId },
+      { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
+    );
+    sinon.assert.calledOnceWithExactly(deleteCourseFile, 'completionCertificateTest');
   });
 });

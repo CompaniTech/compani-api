@@ -4,10 +4,16 @@ const { ObjectId } = require('mongodb');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const app = require('../../server');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
-const { populateDB, courseList, completionCertificateList } = require('./seed/completionCertificatesSeed');
+const {
+  populateDB,
+  courseList,
+  completionCertificateList,
+  courseBillsList,
+} = require('./seed/completionCertificatesSeed');
 const { auxiliary, noRole } = require('../seed/authUsersSeed');
 const { GENERATION } = require('../../src/helpers/constants');
 const CompletionCertificate = require('../../src/models/CompletionCertificate');
+const CourseBill = require('../../src/models/CourseBill');
 const { authCompany, otherCompany, companyWithoutSubscription } = require('../seed/authCompaniesSeed');
 const { holdingAdminFromOtherCompany } = require('../seed/authUsersSeed');
 
@@ -219,6 +225,22 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
       sinon.assert.calledOnce(uploadCourseFile);
     });
 
+    it('should generate completion certificates file and set the real price on the month bills', async () => {
+      const payload = { action: GENERATION };
+      uploadCourseFile.returns({ publicId: '1234', link: 'https://test.com/completionCertificate.pdf' });
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/completioncertificates/${completionCertificateList[9]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const billCount = await CourseBill.countDocuments({ _id: courseBillsList[0]._id, 'mainFee.price': 200 });
+      expect(billCount).toBe(1);
+    });
+
     it('should return 404 if completion certificate does not exist', async () => {
       const payload = { action: GENERATION };
       const response = await app.inject({
@@ -389,6 +411,18 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
         .countDocuments({ _id: completionCertificateId, file: { $exists: true } });
       expect(completionCertificatesCountAfter).toEqual(0);
       sinon.assert.calledOnce(deleteCourseFile);
+    });
+
+    it('should delete completion certificate file and reset the real price of the month bills', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/completioncertificates/${completionCertificateList[10]._id}/file`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const billCount = await CourseBill.countDocuments({ _id: courseBillsList[1]._id, 'mainFee.price': 0 });
+      expect(billCount).toBe(1);
     });
 
     it('should return 404 if completion certificate does not exist', async () => {
