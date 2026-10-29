@@ -3,6 +3,7 @@ const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const set = require('lodash/set');
 const omit = require('lodash/omit');
+const Course = require('../../src/models/Course');
 const CourseBill = require('../../src/models/CourseBill');
 const app = require('../../server');
 const {
@@ -11,6 +12,7 @@ const {
   coursesList,
   courseFundingOrganisationList,
   billingItemList,
+  hourlyPaymentPlanId,
 } = require('./seed/courseBillsSeed');
 const { authCompany, otherCompany, companyWithoutSubscription } = require('../seed/authCompaniesSeed');
 
@@ -882,6 +884,55 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
 
         const billsCountAfter = await CourseBill.countDocuments({ course: coursesList[12]._id });
         expect(billsCountAfter).toBe(billsCountBefore + 2);
+      });
+
+      it('should create a bill and link the hourly payment plan to a SINGLE course', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, hourlyPaymentPlanId },
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const course = await Course.findOne({ _id: coursesList[12]._id }, { hourlyPaymentPlan: 1 }).lean();
+        expect(course.hourlyPaymentPlan).toEqual(hourlyPaymentPlanId);
+      });
+
+      it('should return 404 if hourly payment plan does not exist on the subProgram', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, hourlyPaymentPlanId: new ObjectId() },
+        });
+
+        expect(response.statusCode).toBe(404);
+      });
+
+      it('should return 403 if the course already has another hourly payment plan', async () => {
+        await Course.updateOne({ _id: coursesList[12]._id }, { $set: { hourlyPaymentPlan: new ObjectId() } });
+
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, hourlyPaymentPlanId },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+
+      it('should return 403 if hourly payment plan is sent for a non SINGLE course', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...intraCoursePayload, hourlyPaymentPlanId },
+        });
+
+        expect(response.statusCode).toBe(403);
       });
 
       it('should create several bills for SINGLE course with prices array', async () => {

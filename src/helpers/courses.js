@@ -580,15 +580,18 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       },
       {
         path: 'subProgram',
-        select: origin === WEBAPP ? 'program steps paymentPlans' : 'program steps',
+        select: origin === WEBAPP ? 'program steps paymentPlans hourlyPaymentPlans' : 'program steps',
         populate: [
           { path: 'program', select: 'learningGoals' },
           ...(origin === WEBAPP
-            ? [{
-              path: 'steps',
-              select: 'name type theoreticalDuration durationCountedPerTrainer',
-              populate: { path: 'activities', select: 'name type' },
-            }]
+            ? [
+              {
+                path: 'steps',
+                select: 'name type theoreticalDuration durationCountedPerTrainer',
+                populate: { path: 'activities', select: 'name type' },
+              },
+              { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
+            ]
             : [{ path: 'steps', select: 'name' }]
           ),
         ],

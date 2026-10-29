@@ -2886,7 +2886,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps paymentPlans',
+                select: 'program steps paymentPlans hourlyPaymentPlans',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
@@ -2894,6 +2894,7 @@ describe('getCourse', () => {
                     select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
+                  { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                 ],
               },
               {
@@ -3001,7 +3002,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps paymentPlans',
+                  select: 'program steps paymentPlans hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3009,6 +3010,7 @@ describe('getCourse', () => {
                       select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
+                    { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                   ],
                 },
                 {
@@ -3109,7 +3111,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps paymentPlans',
+                  select: 'program steps paymentPlans hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3117,6 +3119,7 @@ describe('getCourse', () => {
                       select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
+                    { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                   ],
                 },
                 {
@@ -3291,7 +3294,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps paymentPlans',
+                select: 'program steps paymentPlans hourlyPaymentPlans',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
@@ -3299,6 +3302,7 @@ describe('getCourse', () => {
                     select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
+                  { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                 ],
               },
               {

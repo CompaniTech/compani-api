@@ -92,6 +92,7 @@ exports.plugin = {
             }).xor('company', 'fundingOrganisation')
               .required(),
             maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString, otherwise: dateToISOString }),
+            hourlyPaymentPlanId: Joi.objectId(),
           }),
         },
         pre: [{ method: authorizeCourseBillListCreation }],

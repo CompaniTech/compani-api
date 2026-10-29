@@ -337,8 +337,13 @@ exports.createBillList = async (payload) => {
     vat = vendorCompany.vat;
   }
 
+  if (payload.hourlyPaymentPlanId) {
+    await Course.updateOne({ _id: payload.course }, { $set: { hourlyPaymentPlan: payload.hourlyPaymentPlanId } });
+  }
+
   if (payload.quantity === 1) {
-    const billCreated = await CourseBill.create({ ...omit(payload, 'quantity'), ...vat && { vat } });
+    const billCreated = await CourseBill
+      .create({ ...omit(payload, ['quantity', 'hourlyPaymentPlanId']), ...vat && { vat } });
 
     if (payload.mainFee.percentage) {
       const trainerFees = (course.prices || []).reduce((acc, price) => {
