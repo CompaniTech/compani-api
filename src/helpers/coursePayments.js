@@ -51,7 +51,7 @@ exports.list = async (query) => {
     .sort({ updatedAt: -1 })
     .lean();
 
-  return coursePayments.map((payment) => {
+  const formattedPayments = coursePayments.map((payment) => {
     const payer = get(payment, 'courseBill.payer');
     if (!payer) return payment;
 
@@ -59,6 +59,8 @@ exports.list = async (query) => {
 
     return { ...payment, courseBill: { ...payment.courseBill, payer: formattedPayer } };
   });
+
+  return formattedPayments;
 };
 
 exports.updateList = async payload => CoursePayment

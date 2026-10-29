@@ -19,7 +19,7 @@ exports.list = async (query) => {
     .sort({ date: -1 })
     .lean();
 
-  return trainerPayments.map((payment) => {
+  const formattedPayments = trainerPayments.map((payment) => {
     const trainer = get(payment, 'trainerBill.trainer');
     if (!trainer) return payment;
 
@@ -27,6 +27,8 @@ exports.list = async (query) => {
 
     return { ...payment, trainerBill: { ...payment.trainerBill, trainer: formattedTrainer } };
   });
+
+  return formattedPayments;
 };
 
 exports.update = async (trainerPaymentId, payload) => TrainerPayment
