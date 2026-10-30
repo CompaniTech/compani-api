@@ -407,6 +407,7 @@ const coursesList = [
     operationsRepresentative: vendorAdmin._id,
     certificateGenerationMode: GLOBAL,
     tradeName: 'nom',
+    trainers: [trainer._id],
   },
   {
     _id: new ObjectId(),

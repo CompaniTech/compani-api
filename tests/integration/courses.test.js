@@ -10092,3 +10092,64 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
     });
   });
 });
+
+describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('trainer');
+    });
+
+    it('should return trainer\'s collective courses with billing infos', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?trainer=${trainer._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.trainers.length).toBe(1);
+      const { courses } = response.result.data.trainers[0];
+      expect(courses.length).toBeGreaterThan(0);
+      expect(courses.every(c => c.type !== SINGLE)).toBeTruthy();
+      expect(courses[0]).toEqual(expect.objectContaining({
+        invoicedAmount: 0,
+        paidAmount: 0,
+        status: 'not_invoiced',
+      }));
+    });
+
+    it('should return 403 if trainer is not the logged user', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?trainer=${trainerAndCoach._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'coach', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const response = await app.inject({
+          method: 'GET',
+          url: `/courses/trainers-billing?trainer=${trainer._id}`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});

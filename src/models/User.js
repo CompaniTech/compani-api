@@ -402,6 +402,16 @@ UserSchema.virtual(
     match: { type: SINGLE },
   });
 
+UserSchema.virtual(
+  'isCollectiveCourseTrainer',
+  {
+    ref: 'Course',
+    localField: '_id',
+    foreignField: 'trainers',
+    count: true,
+    match: { type: { $ne: SINGLE } },
+  });
+
 UserSchema.pre('validate', validate);
 UserSchema.pre('save', save);
 UserSchema.pre('findOneAndUpdate', findOneAndUpdate);

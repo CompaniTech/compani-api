@@ -7,7 +7,7 @@ const TrainerPayment = require('../../src/models/TrainerPayment');
 const CourseSlot = require('../../src/models/CourseSlot');
 const GCloudStorageHelper = require('../../src/helpers/gCloudStorage');
 const { trainer, trainerAndCoach } = require('../seed/authUsersSeed');
-const { populateDB, courseSlotsList, paidTrainerBillId } = require('./seed/trainerBillsSeed');
+const { populateDB, course, courseSlotsList, paidTrainerBillId } = require('./seed/trainerBillsSeed');
 const { PENDING } = require('../../src/helpers/constants');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { generateFormData, getStream } = require('./utils');
@@ -109,6 +109,30 @@ describe('TRAINER BILLS ROUTES - POST /trainerbills', () => {
       expect(trainerBillCount).toBe(1);
     });
 
+    it('should create a trainer bill with course, using the given amount', async () => {
+      const form = generateFormData({ number: 'FACT_0010', file: 'test', amount: 80 });
+      form.append('course', course._id.toHexString());
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/trainerbills',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(200);
+
+      const trainerBillCount = await TrainerBill
+        .countDocuments({
+          trainer: trainer._id,
+          number: 'FACT_0010',
+          amount: 80,
+          course: course._id,
+          courseSlots: { $exists: false },
+        });
+      expect(trainerBillCount).toBe(1);
+    });
+
     it('should return 400 if both courseSlots and amount are provided', async () => {
       const form = generateFormData({ number: 'FACT_0011', file: 'test', amount: 80 });
       form.append('courseSlots', courseSlotsList[0]._id.toHexString());
@@ -121,6 +145,35 @@ describe('TRAINER BILLS ROUTES - POST /trainerbills', () => {
       });
 
       expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if both course and courseSlots are provided', async () => {
+      const form = generateFormData({ number: 'FACT_0013', file: 'test' });
+      form.append('course', course._id.toHexString());
+      form.append('courseSlots', courseSlotsList[0]._id.toHexString());
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/trainerbills',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if course does not exist', async () => {
+      const form = generateFormData({ number: 'FACT_0014', file: 'test', amount: 80 });
+      form.append('course', new ObjectId().toHexString());
+
+      const response = await app.inject({
+        method: 'POST',
+        url: '/trainerbills',
+        headers: { ...form.getHeaders(), Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: getStream(form),
+      });
+
+      expect(response.statusCode).toBe(404);
     });
 
     it('should return 400 if neither courseSlots nor amount are provided', async () => {

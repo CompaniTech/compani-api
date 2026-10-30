@@ -65,6 +65,7 @@ exports.createBill = async (payload, credentials) => {
     trainer: credentials._id,
     number: payload.number,
     ...(courseSlotIds.length && { courseSlots: courseSlotIds }),
+    ...(payload.course && { course: payload.course }),
     amount,
     submittedAt: CompaniDate().toISO(),
     file: fileUploaded,
