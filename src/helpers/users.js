@@ -244,6 +244,7 @@ exports.getUser = async (userId, credentials) => {
     .populate({ path: 'companyLinkRequest', populate: { path: 'company', select: '_id name' } })
     .populate({ path: 'userCompanyList' })
     .populate({ path: 'isSingleCourseTrainer' })
+    .populate({ path: 'isCollectiveCourseTrainer' })
     .lean({ autopopulate: true, virtuals: true });
 
   if (!user) throw Boom.notFound(translate[language].userNotFound);

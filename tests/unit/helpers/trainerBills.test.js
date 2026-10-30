@@ -269,7 +269,8 @@ describe('createBill', () => {
   it('should create a trainer bill with no course slots, using the given amount', async () => {
     const credentials = { _id: new ObjectId(), identity: { firstname: 'Jean', lastname: 'Dupont' } };
     const trainerBillId = new ObjectId();
-    const payload = { number: 'FACT_0006', file: 'file', amount: 80 };
+    const courseId = new ObjectId();
+    const payload = { number: 'FACT_0006', file: 'file', amount: 80, course: courseId };
 
     trainerBillCreate.returns({ _id: trainerBillId });
 
@@ -285,6 +286,7 @@ describe('createBill', () => {
       {
         trainer: credentials._id,
         number: 'FACT_0006',
+        course: courseId,
         amount: 80,
         submittedAt: '2025-09-29T13:45:25.437Z',
         file: { link: 'link', publicId: 'publicId' },

@@ -1,4 +1,5 @@
 const Boom = require('@hapi/boom');
+const Course = require('../../models/Course');
 const CourseSlot = require('../../models/CourseSlot');
 const TrainerBill = require('../../models/TrainerBill');
 const UtilsHelper = require('../../helpers/utils');
@@ -9,6 +10,11 @@ const { language } = translate;
 exports.authorizeTrainerBillCreation = async (req) => {
   try {
     const { credentials } = req.auth;
+
+    if (req.payload.course) {
+      const courseCount = await Course.countDocuments({ _id: req.payload.course, trainers: credentials._id });
+      if (!courseCount) throw Boom.notFound();
+    }
 
     if (req.payload.courseSlots) {
       const courseSlotIds = Array.isArray(req.payload.courseSlots)

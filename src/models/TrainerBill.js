@@ -5,6 +5,7 @@ const TrainerBillSchema = mongoose.Schema({
   trainer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   number: { type: String, required: true },
   courseSlots: { type: [mongoose.Schema.Types.ObjectId], ref: 'CourseSlot', default: undefined },
+  course: { type: mongoose.Schema.Types.ObjectId, ref: 'Course' },
   amount: { type: Number, required: true },
   submittedAt: { type: Date, required: true },
   file: {

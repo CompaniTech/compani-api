@@ -229,6 +229,7 @@ module.exports = {
   NOT_INVOICED: 'not_invoiced',
   INVOICED: 'invoiced',
   PAID: 'paid',
+  PARTIALLY_INVOICED: 'partially_invoiced',
   get SLOT_STATUS() {
     return {
       [this.NOT_INVOICED]: 'Non facturé',
