@@ -105,6 +105,12 @@ module.exports = {
     trainerBillHourlyAmountNotFound: 'Unprocessable: trainer\'s role does not match any price for this step.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Forbidden: a slot is paid after effectiveDate.',
     subProgramPaymentPlanNotFound: 'This payment plan does not exist.',
+    subProgramHourlyPaymentPlanNotFound: 'This hourly payment plan does not exist.',
+    subProgramHourlyPaymentPlanUsed: 'Forbidden: this hourly payment plan is used by a course.',
+    subProgramHourlyPaymentPlanAlreadyExists: 'Forbidden: an identical hourly payment plan already exists.',
+    subProgramHourlyPaymentPlanNoELearningStep: 'Forbidden: this sub-program has no e-learning step.',
+    subProgramHasPaymentPlan: 'Forbidden: this sub-program already has payment plans.',
+    subProgramHasHourlyPaymentPlan: 'Forbidden: this sub-program already has hourly payment plans.',
     subProgramPaymentPlanAlreadyExists: 'Forbidden: a payment plan with the same prices already exists.',
     /* Steps */
     stepUpdated: 'Step updated.',
@@ -262,6 +268,7 @@ module.exports = {
     someSlotsAreLinkedToCompletionCertificate: 'Edition forbidden : some slots are linked to completion certificate.',
     traineeNotConcernedBySlot: 'Operation forbidden : trainee not concerned by slot.',
     someAttendancesAreEmpty: 'Operation forbidden : some attendances are empty.',
+    courseNotOver: 'Operation forbidden : the course is not over.',
     slotIsLinkedToTrainerBill: 'Operation forbidden : slot is paid and linked to a trainerBill.',
     /* Questionnaires */
     questionnairesFound: 'Questionnaires found.',
@@ -484,6 +491,12 @@ module.exports = {
       + 'cette étape.',
     paidSlotsBeforeSubProgramEffectiveDate: 'Impossible: un créneau est noté réglé après la date d\'effet renseignée.',
     subProgramPaymentPlanNotFound: 'Cet échéancier n\'existe pas.',
+    subProgramHourlyPaymentPlanNotFound: 'Cette tarification n\'existe pas.',
+    subProgramHourlyPaymentPlanUsed: 'Impossible : cette tarification est utilisée par une formation.',
+    subProgramHourlyPaymentPlanAlreadyExists: 'Impossible : une tarification identique existe déjà.',
+    subProgramHourlyPaymentPlanNoELearningStep: 'Impossible : ce sous-programme n\'a pas d\'étape e-learning.',
+    subProgramHasPaymentPlan: 'Impossible : ce sous-programme a déjà des échéanciers.',
+    subProgramHasHourlyPaymentPlan: 'Impossible : ce sous-programme a déjà des tarifications au réel.',
     subProgramPaymentPlanAlreadyExists: 'Impossible : un échéancier avec les mêmes montants existe déjà.',
     /* Steps */
     stepsFound: 'Liste des étapes trouvée.',
@@ -650,6 +663,7 @@ module.exports = {
     + 'certificat de réalisation.',
     traineeNotConcernedBySlot: 'Opération impossible : l\'apprenant n\'est pas concerné par le créneau.',
     someAttendancesAreEmpty: 'Opération impossible : certains émargements n\'ont pas été remplis.',
+    courseNotOver: 'Opération impossible : la formation n\'est pas terminée.',
     slotIsLinkedToTrainerBill: 'Opération impossible : le créneau est réglé et relié à une facture d\'un intervenant.',
     /* Questionnaires */
     questionnairesFound: 'Liste des questionnaires trouvée.',

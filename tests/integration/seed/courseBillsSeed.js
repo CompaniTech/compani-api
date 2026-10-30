@@ -7,12 +7,16 @@ const {
   PUBLISHED,
   GROUP,
   GLOBAL,
+  MONTHLY,
   SINGLE,
   TRAINEE,
   COURSE_BILL,
+  PRESENT,
 } = require('../../../src/helpers/constants');
 const Company = require('../../../src/models/Company');
+const Attendance = require('../../../src/models/Attendance');
 const Course = require('../../../src/models/Course');
+const CourseSlot = require('../../../src/models/CourseSlot');
 const CourseBill = require('../../../src/models/CourseBill');
 const CourseBillingItem = require('../../../src/models/CourseBillingItem');
 const CourseBillsNumber = require('../../../src/models/CourseBillsNumber');
@@ -32,7 +36,17 @@ const { trainer, vendorAdmin, auxiliary } = require('../../seed/authUsersSeed');
 
 const steps = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 }];
 
-const subProgramList = [{ _id: new ObjectId(), name: 'subProgram 1', steps: [steps[0]._id], status: PUBLISHED }];
+const hourlyPaymentPlanId = new ObjectId();
+
+const subProgramList = [
+  {
+    _id: new ObjectId(),
+    name: 'subProgram 1',
+    steps: [steps[0]._id],
+    status: PUBLISHED,
+    hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, prices: [{ step: steps[0]._id, hourlyAmount: 50 }] }],
+  },
+];
 
 const programList = [{ _id: new ObjectId(), name: 'Program 1', subPrograms: [subProgramList[0]._id] }];
 
@@ -372,6 +386,78 @@ const coursesList = [
     folderId: 'folderId',
     gSheetId: 'gSheetId',
     tradeName: 'nom',
+  }, { // 17 - single course with monthly certificates, expectedBillsCount is 4
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 4',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [traineeFromOtherCompany._id],
+    expectedBillsCount: 4,
+    companies: [otherCompany._id],
+    certificateGenerationMode: MONTHLY,
+    prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+    tradeName: 'nom',
+  },
+  { // 18 - single course with global certificate, last slot not over
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 5',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [traineeFromOtherCompany._id],
+    expectedBillsCount: 4,
+    companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
+    prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+    tradeName: 'nom',
+  },
+  { // 19 - single course with global certificate, with a slot without attendance
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 7',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [traineeFromOtherCompany._id],
+    expectedBillsCount: 4,
+    companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
+    prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+    tradeName: 'nom',
+  },
+  { // 20 - single course with global certificate, already linked to another hourly payment plan
+    _id: new ObjectId(),
+    type: SINGLE,
+    maxTrainees: 1,
+    subProgram: subProgramList[0]._id,
+    misc: 'group 8',
+    trainers: [trainer._id],
+    operationsRepresentative: vendorAdmin._id,
+    contact: vendorAdmin._id,
+    trainees: [traineeFromOtherCompany._id],
+    expectedBillsCount: 4,
+    companies: [otherCompany._id],
+    certificateGenerationMode: GLOBAL,
+    hourlyPaymentPlan: new ObjectId(),
+    prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
+    folderId: 'folderId',
+    gSheetId: 'gSheetId',
+    tradeName: 'nom',
   },
 ];
 
@@ -601,12 +687,73 @@ const courseCreditNoteList = [
 
 const courseCreditNoteNumber = { _id: new ObjectId(), seq: 2 };
 
+const slotsList = [
+  { // course 12 (single), over
+    _id: new ObjectId(),
+    course: coursesList[12]._id,
+    startDate: '2024-01-10T09:00:00.000Z',
+    endDate: '2024-01-10T12:00:00.000Z',
+    step: steps[0]._id,
+    trainers: [trainer._id],
+  },
+  { // 1 course 18, not over
+    _id: new ObjectId(),
+    course: coursesList[18]._id,
+    startDate: '2999-01-10T09:00:00.000Z',
+    endDate: '2999-01-10T12:00:00.000Z',
+    step: steps[0]._id,
+    trainers: [trainer._id],
+  },
+  { // 2 course 19, over
+    _id: new ObjectId(),
+    course: coursesList[19]._id,
+    startDate: '2024-01-10T09:00:00.000Z',
+    endDate: '2024-01-10T12:00:00.000Z',
+    step: steps[0]._id,
+    trainers: [trainer._id],
+  },
+  { // 3 course 19, over, without attendance
+    _id: new ObjectId(),
+    course: coursesList[19]._id,
+    startDate: '2023-01-10T09:00:00.000Z',
+    endDate: '2023-01-10T12:00:00.000Z',
+    step: steps[0]._id,
+    trainers: [trainer._id],
+  },
+];
+
+const attendancesList = [
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[0]._id,
+    trainee: traineeFromOtherCompany._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[1]._id,
+    trainee: traineeFromOtherCompany._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+  {
+    _id: new ObjectId(),
+    courseSlot: slotsList[2]._id,
+    trainee: traineeFromOtherCompany._id,
+    company: otherCompany._id,
+    status: PRESENT,
+  },
+];
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
   await Promise.all([
     Company.create(companyWithoutAddress),
+    Attendance.create(attendancesList),
     Course.create(coursesList),
+    CourseSlot.create(slotsList),
     CourseBill.create(courseBillsList),
     CourseBillingItem.create(billingItemList),
     CourseBillsNumber.create(courseBillNumber),
@@ -628,4 +775,6 @@ module.exports = {
   courseFundingOrganisationList,
   coursesList,
   billingItemList,
+  hourlyPaymentPlanId,
+  slotsList,
 };

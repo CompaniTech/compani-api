@@ -3,9 +3,12 @@ const { get, omit, has } = require('lodash');
 const Company = require('../../models/Company');
 const Course = require('../../models/Course');
 const CourseBill = require('../../models/CourseBill');
+const Attendance = require('../../models/Attendance');
+const CourseSlot = require('../../models/CourseSlot');
 const CourseBillingItem = require('../../models/CourseBillingItem');
 const CourseFundingOrganisation = require('../../models/CourseFundingOrganisation');
 const UtilsHelper = require('../../helpers/utils');
+const { CompaniDate } = require('../../helpers/dates/companiDates');
 const translate = require('../../helpers/translate');
 const {
   TRAINING_ORGANISATION_MANAGER,
@@ -13,6 +16,7 @@ const {
   BALANCE,
   INTRA,
   GROUP,
+  GLOBAL,
   TRAINEE,
   SINGLE,
 } = require('../../helpers/constants');
@@ -20,13 +24,67 @@ const {
 const { language } = translate;
 
 exports.authorizeCourseBillListCreation = async (req) => {
-  const { course: courseId, companies: companiesIds, payer, mainFee, quantity, maturityDate } = req.payload;
+  const {
+    course: courseId,
+    companies: companiesIds,
+    payer,
+    mainFee,
+    quantity,
+    maturityDate,
+    hourlyPaymentPlanId,
+  } = req.payload;
 
   const course = await Course
-    .findOne({ _id: courseId }, { type: 1, expectedBillsCount: 1, companies: 1, prices: 1, interruptionDates: 1 })
+    .findOne({ _id: courseId }, {
+      type: 1,
+      expectedBillsCount: 1,
+      companies: 1,
+      prices: 1,
+      interruptionDates: 1,
+      hourlyPaymentPlan: 1,
+      certificateGenerationMode: 1,
+      trainees: 1,
+    })
+    .populate({ path: 'subProgram', select: 'hourlyPaymentPlans' })
     .lean();
 
   if (!course) throw Boom.notFound();
+
+  if (hourlyPaymentPlanId) {
+    if (course.type !== SINGLE) throw Boom.forbidden();
+
+    const hourlyPaymentPlans = get(course, 'subProgram.hourlyPaymentPlans') || [];
+    const subProgramHppIds = hourlyPaymentPlans.map(hpp => hpp._id);
+    if (!UtilsHelper.doesArrayIncludeId(subProgramHppIds, hourlyPaymentPlanId)) {
+      throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
+    }
+
+    if (course.hourlyPaymentPlan && !UtilsHelper.areObjectIdsEquals(course.hourlyPaymentPlan, hourlyPaymentPlanId)) {
+      throw Boom.forbidden();
+    }
+  }
+
+  const shouldComputePriceFromDuration = hourlyPaymentPlanId && course.certificateGenerationMode === GLOBAL;
+  if (quantity === 1 && !mainFee.price && !shouldComputePriceFromDuration) throw Boom.badRequest();
+  if (shouldComputePriceFromDuration && mainFee.price) throw Boom.badRequest();
+
+  if (shouldComputePriceFromDuration) {
+    if (quantity !== 1) throw Boom.badRequest();
+
+    const slots = await CourseSlot
+      .find({ course: courseId, startDate: { $exists: true } }, { endDate: 1 })
+      .sort({ endDate: 1 })
+      .lean();
+    if (!slots.length) throw Boom.forbidden(translate[language].courseNotOver);
+
+    if (CompaniDate(slots[slots.length - 1].endDate).isAfter(CompaniDate())) {
+      throw Boom.forbidden(translate[language].courseNotOver);
+    }
+
+    const attendancesCount = await Attendance
+      .countDocuments({ courseSlot: { $in: slots.map(slot => slot._id) }, trainee: course.trainees[0] });
+    if (attendancesCount !== slots.length) throw Boom.forbidden(translate[language].someAttendancesAreEmpty);
+  }
 
   const isCourseInterrupted = UtilsHelper.isCourseInterrupted(course.interruptionDates);
   if (isCourseInterrupted) throw Boom.forbidden();

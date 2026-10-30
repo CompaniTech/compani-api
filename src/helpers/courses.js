@@ -23,6 +23,7 @@ const UserCompany = require('../models/UserCompany');
 const Questionnaire = require('../models/Questionnaire');
 const QuestionnaireHistory = require('../models/QuestionnaireHistory');
 const CourseSmsHistory = require('../models/CourseSmsHistory');
+const ActivityHistory = require('../models/ActivityHistory');
 const Attendance = require('../models/Attendance');
 const SubProgram = require('../models/SubProgram');
 const TrainingContract = require('../models/TrainingContract');
@@ -580,15 +581,18 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       },
       {
         path: 'subProgram',
-        select: origin === WEBAPP ? 'program steps paymentPlans' : 'program steps',
+        select: origin === WEBAPP ? 'program steps paymentPlans hourlyPaymentPlans' : 'program steps',
         populate: [
           { path: 'program', select: 'learningGoals' },
           ...(origin === WEBAPP
-            ? [{
-              path: 'steps',
-              select: 'name type theoreticalDuration durationCountedPerTrainer',
-              populate: { path: 'activities', select: 'name type' },
-            }]
+            ? [
+              {
+                path: 'steps',
+                select: 'name type theoreticalDuration durationCountedPerTrainer',
+                populate: { path: 'activities', select: 'name type' },
+              },
+              { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
+            ]
             : [{ path: 'steps', select: 'name' }]
           ),
         ],
@@ -1404,6 +1408,45 @@ exports.getRealELearningDuration = (activityHistories) => {
     .reduce((acc, val) => acc.add(CompaniDuration(val)), CompaniDuration());
 
   return eLearningDuration;
+};
+
+exports.getTraineeDurations = async (course, traineeId, dates) => {
+  const REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS
+    .split(',')
+    .map(id => new ObjectId(id));
+
+  const slots = dates
+    ? course.slots.filter(slot => CompaniDate(slot.startDate).isSameOrBetween(dates.startDate, dates.endDate))
+    : course.slots;
+
+  const attendances = await Attendance
+    .find({ trainee: traineeId, courseSlot: { $in: slots.map(s => s._id) }, status: PRESENT })
+    .setOptions({ isVendorUser: true })
+    .lean();
+  const slotsWithAttendance = slots
+    .filter(slot => UtilsHelper.doesArrayIncludeId(attendances.map(a => a.courseSlot), slot._id));
+
+  const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
+  const activityHistories = await ActivityHistory
+    .find({ activity: { $in: eLearningSteps.flatMap(s => s.activities) }, user: traineeId })
+    .lean();
+
+  let eLearningDuration;
+  if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, course.subProgram._id)) {
+    const filteredActivityHistories = dates
+      ? activityHistories.filter(aH => CompaniDate(aH.date).isSameOrBetween(dates.startDate, dates.endDate))
+      : activityHistories;
+    eLearningDuration = exports.getRealELearningDuration(filteredActivityHistories);
+  } else {
+    const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
+    const eLearningStepsWithAH = eLearningSteps.map(s => ({
+      ...s,
+      activities: s.activities.map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
+    }));
+    eLearningDuration = exports.getELearningDuration(eLearningStepsWithAH, traineeId, dates);
+  }
+
+  return { slotsWithAttendance, eLearningDuration };
 };
 
 const getTraineeInformations = (

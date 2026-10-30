@@ -12,6 +12,7 @@ const Company = require('../../../src/models/Company');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const SubProgram = require('../../../src/models/SubProgram');
+const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Attendance = require('../../../src/models/Attendance');
 const User = require('../../../src/models/User');
 const CourseHistory = require('../../../src/models/CourseHistory');
@@ -23,6 +24,7 @@ const Questionnaire = require('../../../src/models/Questionnaire');
 const TrainingContract = require('../../../src/models/TrainingContract');
 const CompanyHelper = require('../../../src/helpers/companies');
 const CourseHelper = require('../../../src/helpers/courses');
+const { CompaniDuration } = require('../../../src/helpers/dates/companiDurations');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
 const CourseCreditNoteHelper = require('../../../src/helpers/courseCreditNotes');
 const EmailHelper = require('../../../src/helpers/email');
@@ -2886,7 +2888,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps paymentPlans',
+                select: 'program steps paymentPlans hourlyPaymentPlans',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
@@ -2894,6 +2896,7 @@ describe('getCourse', () => {
                     select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
+                  { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                 ],
               },
               {
@@ -3001,7 +3004,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps paymentPlans',
+                  select: 'program steps paymentPlans hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3009,6 +3012,7 @@ describe('getCourse', () => {
                       select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
+                    { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                   ],
                 },
                 {
@@ -3109,7 +3113,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps paymentPlans',
+                  select: 'program steps paymentPlans hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3117,6 +3121,7 @@ describe('getCourse', () => {
                       select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
+                    { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                   ],
                 },
                 {
@@ -3291,7 +3296,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps paymentPlans',
+                select: 'program steps paymentPlans hourlyPaymentPlans',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
@@ -3299,6 +3304,7 @@ describe('getCourse', () => {
                     select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
+                  { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                 ],
               },
               {
@@ -11249,6 +11255,75 @@ describe('downloadAllDocuments', () => {
         { file: 'pdf_certif_1', name: 'certif_1' },
         { file: 'pdf_certif_2', name: 'certif_2' },
       ]
+    );
+  });
+});
+
+describe('getTraineeDurations', () => {
+  let findAttendance;
+  let findActivityHistories;
+  let getELearningDuration;
+
+  beforeEach(() => {
+    process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = new ObjectId().toHexString();
+    findAttendance = sinon.stub(Attendance, 'find');
+    findActivityHistories = sinon.stub(ActivityHistory, 'find');
+    getELearningDuration = sinon.stub(CourseHelper, 'getELearningDuration');
+  });
+
+  afterEach(() => {
+    findAttendance.restore();
+    findActivityHistories.restore();
+    getELearningDuration.restore();
+  });
+
+  it('should return the slots with attendance on the period and the e-learning duration', async () => {
+    const traineeId = new ObjectId();
+    const activityId = new ObjectId();
+    const slots = [
+      { _id: new ObjectId(), startDate: '2025-02-10T08:00:00.000Z', endDate: '2025-02-10T10:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2025-03-10T08:00:00.000Z', endDate: '2025-03-10T10:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2025-03-11T08:00:00.000Z', endDate: '2025-03-11T10:00:00.000Z' },
+    ];
+    const course = {
+      _id: new ObjectId(),
+      slots,
+      subProgram: {
+        _id: new ObjectId(),
+        steps: [{ type: 'e_learning', activities: [activityId] }, { type: 'on_site' }],
+      },
+    };
+    const dates = { startDate: '2025-03-01T00:00:00.000Z', endDate: '2025-03-31T23:59:59.000Z' };
+    const activityHistories = [{ _id: new ObjectId(), activity: activityId, user: traineeId }];
+    const eLearningDuration = CompaniDuration({ minutes: 90 });
+
+    findAttendance.returns(SinonMongoose.stubChainedQueries([{ courseSlot: slots[1]._id }], ['setOptions', 'lean']));
+    findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    getELearningDuration.returns(eLearningDuration);
+
+    const result = await CourseHelper.getTraineeDurations(course, traineeId, dates);
+
+    expect(result).toEqual({ slotsWithAttendance: [slots[1]], eLearningDuration });
+    SinonMongoose.calledOnceWithExactly(
+      findAttendance,
+      [
+        {
+          query: 'find',
+          args: [{ trainee: traineeId, courseSlot: { $in: [slots[1]._id, slots[2]._id] }, status: 'present' }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findActivityHistories,
+      [{ query: 'find', args: [{ activity: { $in: [activityId] }, user: traineeId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getELearningDuration,
+      [{ type: 'e_learning', activities: [{ _id: activityId, activityHistories }] }],
+      traineeId,
+      dates
     );
   });
 });
