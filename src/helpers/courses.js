@@ -2308,6 +2308,7 @@ exports.listTrainersBilling = async (query) => {
     })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({ path: 'billingPurchaseList.billingItem', select: 'type' })
+    .sort({ createdAt: -1 })
     .lean();
   if (!courses.length) return [];
 

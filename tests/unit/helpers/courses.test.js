@@ -11363,7 +11363,7 @@ describe('listTrainersBilling', () => {
 
   it('should return an empty array if no course found', async () => {
     const trainerId = new ObjectId();
-    courseFind.returns(SinonMongoose.stubChainedQueries([], ['populate', 'lean']));
+    courseFind.returns(SinonMongoose.stubChainedQueries([], ['populate', 'sort', 'lean']));
 
     const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
 
@@ -11381,7 +11381,7 @@ describe('listTrainersBilling', () => {
       { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
       { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
     ];
-    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'lean']));
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
     getCourseTrainerSalary.returns(100);
     const trainerBills = [
       { course: courses[1]._id, amount: 40, payment: { status: 'pending' } },
