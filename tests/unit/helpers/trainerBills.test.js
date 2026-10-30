@@ -269,6 +269,36 @@ describe('createBill', () => {
   it('should create a trainer bill with no course slots, using the given amount', async () => {
     const credentials = { _id: new ObjectId(), identity: { firstname: 'Jean', lastname: 'Dupont' } };
     const trainerBillId = new ObjectId();
+    const payload = { number: 'FACT_0006', file: 'file', amount: 80 };
+
+    trainerBillCreate.returns({ _id: trainerBillId });
+
+    const result = await TrainerBillsHelper.createBill(payload, credentials);
+
+    expect(result).toEqual({ _id: trainerBillId });
+
+    sinon.assert.notCalled(courseSlotFind);
+    sinon.assert.notCalled(getHourlyAmount);
+    sinon.assert.notCalled(courseSlotUpdateMany);
+    sinon.assert.calledOnceWithExactly(
+      trainerBillCreate,
+      {
+        trainer: credentials._id,
+        number: 'FACT_0006',
+        amount: 80,
+        submittedAt: '2025-09-29T13:45:25.437Z',
+        file: { link: 'link', publicId: 'publicId' },
+      }
+    );
+    sinon.assert.calledOnceWithExactly(
+      trainerPaymentCreate,
+      { number: 'REG-00007', trainerBill: trainerBillId, amount: 80, status: PENDING }
+    );
+  });
+
+  it('should create a trainer bill with course, using the given amount', async () => {
+    const credentials = { _id: new ObjectId(), identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const trainerBillId = new ObjectId();
     const courseId = new ObjectId();
     const payload = { number: 'FACT_0006', file: 'file', amount: 80, course: courseId };
 
