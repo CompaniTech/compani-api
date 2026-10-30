@@ -802,6 +802,49 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
 
         expect(response.statusCode).toBe(409);
       });
+
+      it('should return 400 if price sent with an hourly payment plan', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, hourlyPaymentPlanId },
+        });
+
+        expect(response.statusCode).toBe(400);
+      });
+
+      it('should return 403 if the last slot of the course is not over', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: {
+            ...singleCoursePayload,
+            course: coursesList[18]._id,
+            mainFee: omit(singleCoursePayload.mainFee, 'price'),
+            hourlyPaymentPlanId,
+          },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
+
+      it('should return 403 if some slots of the course have no attendance', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: {
+            ...singleCoursePayload,
+            course: coursesList[19]._id,
+            mainFee: omit(singleCoursePayload.mainFee, 'price'),
+            hourlyPaymentPlanId,
+          },
+        });
+
+        expect(response.statusCode).toBe(403);
+      });
     });
 
     describe('Quantity > 1', () => {
@@ -886,30 +929,32 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(billsCountAfter).toBe(billsCountBefore + 2);
       });
 
-      it('should create a bill and link the hourly payment plan to a SINGLE course', async () => {
+      it('should create several bills and link the hourly payment plan (MONTHLY certification)', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: { ...singleCoursePayload, course: coursesList[17]._id, hourlyPaymentPlanId },
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const courseCount = await Course
+          .countDocuments({ _id: coursesList[17]._id, hourlyPaymentPlan: hourlyPaymentPlanId });
+        expect(courseCount).toBe(1);
+      });
+
+      it('should return 400 if several bills are created with an hourly payment plan (GLOBAL)', async () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
           payload: {
             ...singleCoursePayload,
+            quantity: 2,
             mainFee: omit(singleCoursePayload.mainFee, 'price'),
             hourlyPaymentPlanId,
           },
-        });
-
-        expect(response.statusCode).toBe(200);
-
-        const course = await Course.findOne({ _id: coursesList[12]._id }, { hourlyPaymentPlan: 1 }).lean();
-        expect(course.hourlyPaymentPlan).toEqual(hourlyPaymentPlanId);
-      });
-
-      it('should return 400 if price sent with an hourly payment plan', async () => {
-        const response = await app.inject({
-          method: 'POST',
-          url: '/coursebills/list-creation',
-          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload: { ...singleCoursePayload, hourlyPaymentPlanId },
         });
 
         expect(response.statusCode).toBe(400);
@@ -927,13 +972,11 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
       });
 
       it('should return 403 if the course already has another hourly payment plan', async () => {
-        await Course.updateOne({ _id: coursesList[12]._id }, { $set: { hourlyPaymentPlan: new ObjectId() } });
-
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload: { ...singleCoursePayload, hourlyPaymentPlanId },
+          payload: { ...singleCoursePayload, course: coursesList[20]._id, hourlyPaymentPlanId },
         });
 
         expect(response.statusCode).toBe(403);
