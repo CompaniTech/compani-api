@@ -1771,6 +1771,38 @@ describe('createBillList', () => {
     sinon.assert.notCalled(insertManyCourseBills);
     sinon.assert.notCalled(getVendorCompany);
   });
+
+  it('should create one bill for SINGLE course with prices array', async () => {
+    const companyId = new ObjectId();
+    const payerId = new ObjectId();
+    const course = { _id: new ObjectId(), type: SINGLE, prices: [], subProgram: { subjectToVat: false } };
+    const payload = {
+      course: course._id,
+      quantity: 1,
+      mainFee: { count: 1, countUnit: TRAINEE, price: [9000], description: 'test' },
+      companies: [companyId],
+      payer: { fundingOrganisation: payerId },
+      maturityDate: '2025-04-29T22:00:00.000Z',
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+
+    await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledOnceWithExactly(
+      createCourseBill,
+      {
+        course: course._id,
+        mainFee: { count: 1, countUnit: TRAINEE, price: 9000, description: 'test' },
+        companies: [companyId],
+        payer: { fundingOrganisation: payerId },
+        maturityDate: '2025-04-29T22:00:00.000Z',
+      }
+    );
+    sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(insertManyCourseBills);
+    sinon.assert.notCalled(getVendorCompany);
+  });
 });
 
 describe('updateCourseBill', () => {

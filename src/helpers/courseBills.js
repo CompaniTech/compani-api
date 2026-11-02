@@ -387,10 +387,11 @@ exports.createBillList = async (payload) => {
     const mainFee = isGlobalCertificationCourseWithPriceFromDurations
       ? { ...payload.mainFee, price: await exports.computePriceFromDurations(course._id, payload.hourlyPaymentPlanId) }
       : payload.mainFee;
+    const { price: mainFeePrice } = mainFee;
 
     const billCreated = await CourseBill.create({
       ...omit(payload, ['quantity', 'hourlyPaymentPlanId']),
-      mainFee,
+      mainFee: { ...mainFee, ...Array.isArray(mainFeePrice) && { price: mainFeePrice[0] } },
       ...vat && { vat },
     });
 
