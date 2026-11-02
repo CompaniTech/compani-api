@@ -80,6 +80,12 @@ const getEditedField = (payload) => {
   return null;
 };
 
+const maskInfos = company => ({
+  ...company,
+  ...company.iban && { iban: UtilsHelper.maskBankInfo(company.iban) },
+  ...company.bic && { bic: UtilsHelper.maskBankInfo(company.bic) },
+});
+
 exports.updateCompany = async (companyId, payload) => {
   let debitMandate = {};
   const company = await Company.findOne({ _id: companyId }).lean();
@@ -96,18 +102,24 @@ exports.updateCompany = async (companyId, payload) => {
     debitMandate = { _id: new ObjectId(), rum, createdAt: today.toISO() };
   }
 
-  return Company.findOneAndUpdate(
+  const updatedCompany = await Company.findOneAndUpdate(
     { _id: companyId },
     { $set: flat(payload), ...Object.keys(debitMandate).length && { $addToSet: { debitMandates: debitMandate } } },
     { new: true }
   ).lean();
+
+  return updatedCompany && maskInfos(updatedCompany);
 };
 
-exports.getCompany = async companyId => Company
-  .findOne({ _id: companyId })
-  .populate({ path: 'billingRepresentatives', select: '_id picture contact identity local' })
-  .populate({ path: 'salesRepresentative', select: '_id picture contact identity local' })
-  .lean();
+exports.getCompany = async (companyId) => {
+  const company = await Company
+    .findOne({ _id: companyId })
+    .populate({ path: 'billingRepresentatives', select: '_id picture contact identity local' })
+    .populate({ path: 'salesRepresentative', select: '_id picture contact identity local' })
+    .lean();
+
+  return company && maskInfos(company);
+};
 
 exports.generateMandate = async (companyId, mandateId) => {
   const vendorCompany = await VendorCompany.findOne().lean();

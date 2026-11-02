@@ -1,4 +1,5 @@
 const get = require('lodash/get');
+const omit = require('lodash/omit');
 const CourseSlot = require('../models/CourseSlot');
 const TrainerBill = require('../models/TrainerBill');
 const TrainerPayment = require('../models/TrainerPayment');
@@ -7,7 +8,7 @@ const GCloudStorageHelper = require('./gCloudStorage');
 exports.list = async (query) => {
   const status = Array.isArray(query.status) ? query.status : [query.status];
 
-  return TrainerPayment
+  const trainerPayments = await TrainerPayment
     .find({ status: { $in: status } })
     .populate({
       path: 'trainerBill',
@@ -17,6 +18,17 @@ exports.list = async (query) => {
     .populate({ path: 'trainerPaymentsXmlFileInfos', select: 'name', options: { isVendorUser: true } })
     .sort({ date: -1 })
     .lean();
+
+  const formattedPayments = trainerPayments.map((payment) => {
+    const trainer = get(payment, 'trainerBill.trainer');
+    if (!trainer) return payment;
+
+    const formattedTrainer = { ...omit(trainer, ['bic', 'iban']), hasBankDetails: !!(trainer.bic && trainer.iban) };
+
+    return { ...payment, trainerBill: { ...payment.trainerBill, trainer: formattedTrainer } };
+  });
+
+  return formattedPayments;
 };
 
 exports.update = async (trainerPaymentId, payload) => TrainerPayment

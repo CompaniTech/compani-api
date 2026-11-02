@@ -86,12 +86,19 @@ describe('list', () => {
   });
 
   it('should return the trainer payments with the given status', async () => {
-    const trainerPayments = [{ _id: new ObjectId(), status: PAID }];
+    const trainerPayments = [{
+      _id: new ObjectId(),
+      status: PAID,
+      trainerBill: { number: 'FACT', trainer: { identity: { lastname: 'Trainer' }, bic: 'WERTFRPP', iban: 'FR35' } },
+    }];
     trainerPaymentFind.returns(SinonMongoose.stubChainedQueries(trainerPayments, ['populate', 'sort', 'lean']));
 
     const result = await TrainerPaymentsHelper.list({ status: PAID });
 
-    expect(result).toEqual(trainerPayments);
+    expect(result).toEqual([{
+      ...trainerPayments[0],
+      trainerBill: { number: 'FACT', trainer: { identity: { lastname: 'Trainer' }, hasBankDetails: true } },
+    }]);
     SinonMongoose.calledOnceWithExactly(
       trainerPaymentFind,
       [

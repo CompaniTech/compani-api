@@ -102,7 +102,7 @@ exports.formatQueryForUsersList = async (query) => {
 exports.getUsersList = async (query, credentials) => {
   const params = await exports.formatQueryForUsersList(query);
 
-  return User.find(params, {}, { autopopulate: false })
+  return User.find(params, { iban: 0, bic: 0 }, { autopopulate: false })
     .populate({ path: 'role.client', select: '-__v -createdAt -updatedAt' })
     .populate({ path: 'role.holding', select: '-__v -createdAt -updatedAt' })
     .populate({ path: 'company', populate: { path: 'company' }, select: '-__v -createdAt -updatedAt' })
@@ -248,10 +248,16 @@ exports.getUser = async (userId, credentials) => {
 
   if (!user) throw Boom.notFound(translate[language].userNotFound);
 
+  const maskedUser = {
+    ...user,
+    ...user.iban && { iban: UtilsHelper.maskBankInfo(user.iban) },
+    ...user.bic && { bic: UtilsHelper.maskBankInfo(user.bic) },
+  };
+
   return isVendorUser || requestingOwnInfos
-    ? user
+    ? maskedUser
     : {
-      ...user,
+      ...maskedUser,
       userCompanyList: user.userCompanyList
         .filter(uc => UtilsHelper.hasUserAccessToCompany(credentials, get(uc, 'company'))),
     };
