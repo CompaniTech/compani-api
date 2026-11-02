@@ -10112,7 +10112,7 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       expect(response.statusCode).toBe(200);
       expect(response.result.data.trainers.length).toBe(1);
       const { courses } = response.result.data.trainers[0];
-      expect(courses.length).toBeGreaterThan(0);
+      expect(courses.length).toEqual(15);
       expect(courses.every(c => c.type !== SINGLE)).toBeTruthy();
       expect(courses[0]).toEqual(expect.objectContaining({
         invoicedAmount: 0,
