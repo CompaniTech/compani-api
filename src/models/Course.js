@@ -129,6 +129,7 @@ const CourseSchema = mongoose.Schema({
     })],
     default: undefined,
   },
+  hourlyPaymentPlan: { type: mongoose.Schema.Types.ObjectId },
 }, { timestamps: true });
 
 CourseSchema.virtual('slots', {

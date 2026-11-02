@@ -23,6 +23,17 @@ const SubProgramSchema = mongoose.Schema({
     }],
     default: undefined,
   },
+  hourlyPaymentPlans: {
+    type: [{
+      prices: [{
+        _id: false,
+        step: { type: mongoose.Schema.Types.ObjectId, ref: 'Step', required: true },
+        hourlyAmount: { type: Number, required: true },
+      }],
+      elearningPrice: { type: Number },
+    }],
+    default: undefined,
+  },
   paymentPlans: { type: [{ prices: { type: [Number], required: true } }], default: undefined },
   subjectToVat: { type: Boolean },
   sheetTemplateId: { type: String },

@@ -32,7 +32,17 @@ const { trainer, vendorAdmin, auxiliary } = require('../../seed/authUsersSeed');
 
 const steps = [{ _id: new ObjectId(), type: 'on_site', name: 'étape', status: PUBLISHED, theoreticalDuration: 60 }];
 
-const subProgramList = [{ _id: new ObjectId(), name: 'subProgram 1', steps: [steps[0]._id], status: PUBLISHED }];
+const hourlyPaymentPlanId = new ObjectId();
+
+const subProgramList = [
+  {
+    _id: new ObjectId(),
+    name: 'subProgram 1',
+    steps: [steps[0]._id],
+    status: PUBLISHED,
+    hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, prices: [{ step: steps[0]._id, hourlyAmount: 50 }] }],
+  },
+];
 
 const programList = [{ _id: new ObjectId(), name: 'Program 1', subPrograms: [subProgramList[0]._id] }];
 
@@ -628,4 +638,5 @@ module.exports = {
   courseFundingOrganisationList,
   coursesList,
   billingItemList,
+  hourlyPaymentPlanId,
 };

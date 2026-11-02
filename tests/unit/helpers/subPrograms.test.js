@@ -820,6 +820,60 @@ describe('updateSubProgram', () => {
     });
   });
 
+  describe('update hourly payment plan', () => {
+    it('should add a new plan if payload.hourlyPaymentPlan has no id', async () => {
+      const subProgramId = new ObjectId();
+      const stepId = new ObjectId();
+      const payload = { hourlyPaymentPlan: { prices: [{ step: stepId, hourlyAmount: 50 }], elearningPrice: 30 } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId },
+        { $push: { hourlyPaymentPlans: { prices: [{ step: stepId, hourlyAmount: 50 }], elearningPrice: 30 } } }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should update an existing plan if payload.hourlyPaymentPlan has an id and prices', async () => {
+      const subProgramId = new ObjectId();
+      const hourlyPaymentPlanId = new ObjectId();
+      const prices = [{ step: new ObjectId(), hourlyAmount: 60 }];
+      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, prices } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId, 'hourlyPaymentPlans._id': hourlyPaymentPlanId },
+        {
+          $set: { 'hourlyPaymentPlans.$.prices': prices },
+          $unset: { 'hourlyPaymentPlans.$.elearningPrice': '' },
+        }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should delete a plan if payload.hourlyPaymentPlan has an id and empty prices', async () => {
+      const subProgramId = new ObjectId();
+      const hourlyPaymentPlanId = new ObjectId();
+      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, prices: [] } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId },
+        { $pull: { hourlyPaymentPlans: { _id: hourlyPaymentPlanId } } }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+  });
+
   describe('update payment plan', () => {
     it('should add a new payment plan if payload.paymentPlan has no _id', async () => {
       const subProgramId = new ObjectId();

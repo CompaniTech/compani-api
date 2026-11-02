@@ -73,7 +73,8 @@ exports.authorizeSubProgramUpdate = async (req) => {
   const isArchiving = has(req.payload, 'archivedAt') && !unarchiveSubProgram;
   if (isArchiving && subProgram.status !== PUBLISHED) throw Boom.forbidden();
 
-  const allowedFieldsForPublishedSubProgram = req.payload.prices || req.payload.paymentPlan || req.payload.name ||
+  const allowedFieldsForPublishedSubProgram = req.payload.prices || req.payload.paymentPlan ||
+    req.payload.hourlyPaymentPlan || req.payload.name ||
     has(req.payload, 'subjectToVat') || has(req.payload, 'archivedAt');
   if (subProgram.status !== DRAFT && !allowedFieldsForPublishedSubProgram) throw Boom.forbidden();
 
@@ -159,6 +160,10 @@ exports.authorizeSubProgramUpdate = async (req) => {
   if (req.payload.paymentPlan) {
     if (subProgram.status !== PUBLISHED) throw Boom.forbidden();
 
+    if ((subProgram.hourlyPaymentPlans || []).length) {
+      throw Boom.forbidden(translate[language].subProgramHasHourlyPaymentPlan);
+    }
+
     const { paymentPlanId, prices } = req.payload.paymentPlan;
     if (paymentPlanId) {
       const paymentPlanExists = UtilsHelper
@@ -169,6 +174,42 @@ exports.authorizeSubProgramUpdate = async (req) => {
       .some(pp => pp.prices.length === prices.length && !UtilsHelper.areObjectIdsEquals(pp._id, paymentPlanId) &&
         pp.prices.every((value, i) => value === prices[i]));
     if (isDuplicate) throw Boom.forbidden(translate[language].subProgramPaymentPlanAlreadyExists);
+  }
+
+  if (req.payload.hourlyPaymentPlan) {
+    if (subProgram.status !== PUBLISHED) throw Boom.forbidden();
+    if ((subProgram.paymentPlans || []).length) throw Boom.forbidden(translate[language].subProgramHasPaymentPlan);
+
+    const { hourlyPaymentPlanId, prices, elearningPrice } = req.payload.hourlyPaymentPlan;
+    if (hourlyPaymentPlanId) {
+      const subProgramHppIds = (subProgram.hourlyPaymentPlans || []).map(hpp => hpp._id);
+      const hourlyPaymentPlanExists = UtilsHelper.doesArrayIncludeId(subProgramHppIds, hourlyPaymentPlanId);
+      if (!hourlyPaymentPlanExists) throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
+
+      const isUsedByCourse = !prices.length && subProgram.courses
+        .some(c => UtilsHelper.areObjectIdsEquals(c.hourlyPaymentPlan, hourlyPaymentPlanId));
+      if (isUsedByCourse) throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanUsed);
+    }
+
+    if (prices.length) {
+      const nonELearningStepIds = subProgram.steps.filter(s => s.type !== E_LEARNING).map(s => s._id);
+      const pricedStepIds = prices.map(p => p.step);
+      const areStepsInvalid = pricedStepIds.length !== nonELearningStepIds.length ||
+        nonELearningStepIds.some(stepId => !UtilsHelper.doesArrayIncludeId(pricedStepIds, stepId));
+      if (areStepsInvalid) throw Boom.forbidden(translate[language].subProgramMissingStepPrice);
+
+      const isDuplicate = (subProgram.hourlyPaymentPlans || [])
+        .some(hpp => !UtilsHelper.areObjectIdsEquals(hpp._id, hourlyPaymentPlanId) &&
+        hpp.elearningPrice === elearningPrice &&
+        hpp.prices.length === prices.length &&
+        hpp.prices.every(hp => prices
+          .some(p => UtilsHelper.areObjectIdsEquals(p.step, hp.step) && p.hourlyAmount === hp.hourlyAmount)));
+      if (isDuplicate) throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanAlreadyExists);
+    }
+
+    if (elearningPrice && !subProgram.steps.some(s => s.type === E_LEARNING)) {
+      throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanNoELearningStep);
+    }
   }
 
   return null;

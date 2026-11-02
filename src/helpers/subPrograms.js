@@ -125,6 +125,30 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     return SubProgram.updateOne({ _id: subProgramId }, { $push: { paymentPlans: { prices } } });
   }
 
+  if (payload.hourlyPaymentPlan) {
+    const { hourlyPaymentPlanId, prices, elearningPrice } = payload.hourlyPaymentPlan;
+
+    if (hourlyPaymentPlanId && prices.length) {
+      const updateQuery = elearningPrice
+        ? { $set: { 'hourlyPaymentPlans.$.prices': prices, 'hourlyPaymentPlans.$.elearningPrice': elearningPrice } }
+        : { $set: { 'hourlyPaymentPlans.$.prices': prices }, $unset: { 'hourlyPaymentPlans.$.elearningPrice': '' } };
+
+      return SubProgram.updateOne({ _id: subProgramId, 'hourlyPaymentPlans._id': hourlyPaymentPlanId }, updateQuery);
+    }
+
+    if (hourlyPaymentPlanId && !prices.length) {
+      return SubProgram.updateOne(
+        { _id: subProgramId },
+        { $pull: { hourlyPaymentPlans: { _id: hourlyPaymentPlanId } } }
+      );
+    }
+
+    return SubProgram.updateOne(
+      { _id: subProgramId },
+      { $push: { hourlyPaymentPlans: { prices, ...elearningPrice && { elearningPrice } } } }
+    );
+  }
+
   const subProgram = await SubProgram
     .findOneAndUpdate({ _id: subProgramId }, { $set: { status: payload.status } })
     .populate({ path: 'steps', select: 'activities type' })

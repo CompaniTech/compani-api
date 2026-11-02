@@ -1147,6 +1147,7 @@ describe('list', () => {
 
 describe('createBillList', () => {
   let findOneCourse;
+  let updateOneCourse;
   let createCourseBill;
   let insertManyCourseBills;
   let addBillingPurchase;
@@ -1155,6 +1156,7 @@ describe('createBillList', () => {
 
   beforeEach(() => {
     findOneCourse = sinon.stub(Course, 'findOne');
+    updateOneCourse = sinon.stub(Course, 'updateOne');
     createCourseBill = sinon.stub(CourseBill, 'create');
     insertManyCourseBills = sinon.stub(CourseBill, 'insertMany');
     addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
@@ -1164,6 +1166,7 @@ describe('createBillList', () => {
 
   afterEach(() => {
     findOneCourse.restore();
+    updateOneCourse.restore();
     createCourseBill.restore();
     insertManyCourseBills.restore();
     addBillingPurchase.restore();
@@ -1180,11 +1183,18 @@ describe('createBillList', () => {
       companies: [new ObjectId()],
       payer: { fundingOrganisation: new ObjectId() },
       maturityDate: '2025-04-29T22:00:00.000Z',
+      hourlyPaymentPlanId: new ObjectId(),
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
 
     await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledOnceWithExactly(
+      updateOneCourse,
+      { _id: payload.course },
+      { $set: { hourlyPaymentPlan: payload.hourlyPaymentPlanId } }
+    );
 
     sinon.assert.calledOnceWithExactly(
       createCourseBill,

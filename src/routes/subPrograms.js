@@ -65,6 +65,26 @@ exports.plugin = {
                 }),
               }).required(),
             }),
+            Joi.object({
+              hourlyPaymentPlan: Joi.object({
+                hourlyPaymentPlanId: Joi.objectId(),
+                prices: Joi.when('hourlyPaymentPlanId', {
+                  is: Joi.exist(),
+                  then: Joi.array().items({
+                    step: Joi.objectId().required(),
+                    hourlyAmount: Joi.number().positive().required(),
+                  }),
+                  otherwise: Joi.array()
+                    .items({
+                      step: Joi.objectId().required(),
+                      hourlyAmount: Joi.number().positive().required(),
+                    })
+                    .min(1)
+                    .required(),
+                }),
+                elearningPrice: Joi.number().positive(),
+              }).required(),
+            }),
             Joi.object({ archivedAt: Joi.date().allow('') })
           ),
         },
