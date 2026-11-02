@@ -7,12 +7,22 @@ const Card = require('../../../src/models/Card');
 const Course = require('../../../src/models/Course');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const CompletionCertificate = require('../../../src/models/CompletionCertificate');
+const CourseBill = require('../../../src/models/CourseBill');
 const Step = require('../../../src/models/Step');
 const SubProgram = require('../../../src/models/SubProgram');
 const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const Program = require('../../../src/models/Program');
-const { INTER_B2B, PUBLISHED, MONTHLY, VIDEO, E_LEARNING, WEBAPP, PRESENT } = require('../../../src/helpers/constants');
+const {
+  INTER_B2B,
+  PUBLISHED,
+  MONTHLY,
+  VIDEO,
+  E_LEARNING,
+  WEBAPP,
+  PRESENT,
+  GROUP,
+} = require('../../../src/helpers/constants');
 const { authCompany, otherCompany, companyWithoutSubscription } = require('../../seed/authCompaniesSeed');
 const {
   trainer,
@@ -54,9 +64,17 @@ const stepList = [
   },
 ];
 
+const hourlyPaymentPlanId = new ObjectId();
+
 const subProgramList = [
   { _id: new ObjectId(), name: 'Subprogram 1', steps: [stepList[0]._id], status: PUBLISHED },
-  { _id: new ObjectId(), name: 'Subprogram 2', steps: [stepList[1]._id], status: PUBLISHED },
+  {
+    _id: new ObjectId(),
+    name: 'Subprogram 2',
+    steps: [stepList[1]._id],
+    status: PUBLISHED,
+    hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, prices: [{ step: stepList[1]._id, hourlyAmount: 50 }] }],
+  },
   { _id: new ObjectId(), name: 'Subprogram 3', steps: [stepList[2]._id], status: PUBLISHED },
 ];
 
@@ -130,6 +148,7 @@ const courseList = [
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
+    hourlyPaymentPlan: hourlyPaymentPlanId,
     tradeName: 'nom',
   },
   { // 3 Archived course with monthly certificateGenerationMode
@@ -275,6 +294,38 @@ const completionCertificateList = [
     month: '12-2024',
     file: { publicId: 'certif12', link: 'https://test.com/certif1234' },
   },
+  { // 9 hourly payment plan
+    _id: new ObjectId(),
+    course: courseList[2]._id,
+    trainee: auxiliary._id,
+    month: '01-2020',
+  },
+  { // 10 hourly payment plan, with file
+    _id: new ObjectId(),
+    course: courseList[2]._id,
+    trainee: auxiliary._id,
+    month: '01-2020',
+    file: { publicId: 'certif2020', link: 'https://test.com/certif2020' },
+  },
+];
+
+const courseBillsList = [
+  { // 0 bill to update when the certificate is generated
+    _id: new ObjectId(),
+    course: courseList[2]._id,
+    companies: [authCompany._id],
+    payer: { company: authCompany._id },
+    mainFee: { price: 0, count: 1, countUnit: GROUP },
+    maturityDate: '2020-01-15T10:00:00.000Z',
+  },
+  { // 1 bill with the real price, to reset when the certificate file is deleted
+    _id: new ObjectId(),
+    course: courseList[2]._id,
+    companies: [authCompany._id],
+    payer: { company: authCompany._id },
+    mainFee: { price: 200, count: 1, countUnit: GROUP },
+    maturityDate: '2020-01-20T10:00:00.000Z',
+  },
 ];
 
 const populateDB = async () => {
@@ -288,6 +339,7 @@ const populateDB = async () => {
     Course.create(courseList),
     CourseSlot.create(slotsList),
     CompletionCertificate.create(completionCertificateList),
+    CourseBill.create(courseBillsList),
     Step.create(stepList),
     SubProgram.create(subProgramList),
     Program.create(programsList),
@@ -296,4 +348,4 @@ const populateDB = async () => {
   ]);
 };
 
-module.exports = { populateDB, courseList, completionCertificateList };
+module.exports = { populateDB, courseList, completionCertificateList, courseBillsList };
