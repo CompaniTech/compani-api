@@ -1232,11 +1232,7 @@ describe('SEEDS VERIFICATION', () => {
         before(async () => {
           courseBillList = await CourseBill
             .find()
-            .populate({
-              path: 'course',
-              select: 'type format companies type expectedBillsCount prices hourlyPaymentPlan',
-              transform,
-            })
+            .populate({ path: 'course', select: 'type format companies type expectedBillsCount prices', transform })
             .populate({ path: 'companies', transform })
             .populate({ path: 'payer.company', transform })
             .populate({ path: 'payer.fundingOrganisation', transform })
@@ -1259,7 +1255,7 @@ describe('SEEDS VERIFICATION', () => {
         it('should pass if every price is positive', () => {
           const everyPriceIsValid = courseBillList.every(bill =>
             !has(bill, 'mainFee.price') || bill.mainFee.price > 0 ||
-            (bill.mainFee.price === 0 && has(bill, 'course.hourlyPaymentPlan')));
+            (bill.mainFee.price === 0 && has(bill, 'hourlyPaymentPlan')));
 
           expect(everyPriceIsValid).toBeTruthy();
         });

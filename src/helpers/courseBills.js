@@ -362,7 +362,6 @@ exports.createBillList = async (payload) => {
         trainees: 1,
         trainers: 1,
         subProgram: 1,
-        hourlyPaymentPlan: 1,
         certificateGenerationMode: 1,
       }
     )
@@ -377,10 +376,6 @@ exports.createBillList = async (payload) => {
     vat = vendorCompany.vat;
   }
 
-  if (payload.hourlyPaymentPlanId) {
-    await Course.updateOne({ _id: payload.course }, { $set: { hourlyPaymentPlan: payload.hourlyPaymentPlanId } });
-  }
-
   if (payload.quantity === 1) {
     const isGlobalCertificationCourseWithPriceFromDurations = payload.hourlyPaymentPlanId &&
       course.certificateGenerationMode === GLOBAL;
@@ -392,6 +387,7 @@ exports.createBillList = async (payload) => {
     const billCreated = await CourseBill.create({
       ...omit(payload, ['quantity', 'hourlyPaymentPlanId']),
       mainFee: { ...mainFee, ...Array.isArray(mainFeePrice) && { price: mainFeePrice[0] } },
+      ...payload.hourlyPaymentPlanId && { hourlyPaymentPlan: payload.hourlyPaymentPlanId },
       ...vat && { vat },
     });
 
@@ -453,8 +449,9 @@ exports.createBillList = async (payload) => {
         .formatSingleCourseBillDescription(billMaturityDate, course.trainees, get(course, 'trainers', []));
 
       await CourseBill.create({
-        ...omit(payload, ['quantity', 'maturityDate']),
+        ...omit(payload, ['quantity', 'maturityDate', 'hourlyPaymentPlanId']),
         mainFee: { ...payload.mainFee, description, ...payload.mainFee.price && { price: payload.mainFee.price[i] } },
+        ...payload.hourlyPaymentPlanId && { hourlyPaymentPlan: payload.hourlyPaymentPlanId },
         maturityDate: billMaturityDate.toISO(),
         ...vat && { vat },
       });
