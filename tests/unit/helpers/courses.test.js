@@ -11456,14 +11456,15 @@ describe('listTrainersBilling', () => {
       { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
       { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
     ];
+    const trainerBills = [
+      { course: courses[1]._id, trainer: trainerId, amount: 40, payment: { status: 'pending' } },
+      { course: courses[2]._id, trainer: trainerId, amount: 100, payment: { status: 'pending' } },
+      { course: courses[3]._id, trainer: trainerId, amount: 60, payment: { status: 'paid' } },
+      { course: courses[3]._id, trainer: trainerId, amount: 40, payment: { status: 'paid' } },
+    ];
+
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
     getCourseTrainerSalary.returns(100);
-    const trainerBills = [
-      { course: courses[1]._id, amount: 40, payment: { status: 'pending' } },
-      { course: courses[2]._id, amount: 100, payment: { status: 'pending' } },
-      { course: courses[3]._id, amount: 60, payment: { status: 'paid' } },
-      { course: courses[3]._id, amount: 40, payment: { status: 'paid' } },
-    ];
     trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
 
     const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
@@ -11486,8 +11487,84 @@ describe('listTrainersBilling', () => {
       [
         {
           query: 'find',
-          args: [{ course: { $in: courses.map(c => c._id) }, trainer: trainerId }, { course: 1, amount: 1 }],
+          args: [
+            { course: { $in: courses.map(c => c._id) }, trainer: trainerId },
+            { course: 1, amount: 1, trainer: 1 },
+          ],
         },
+        { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should return all trainers with their courses and billing status if no trainer in query', async () => {
+    const firstTrainerId = new ObjectId();
+    const secondTrainerId = new ObjectId();
+    const firstTrainer = { _id: firstTrainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const secondTrainer = { _id: secondTrainerId, identity: { firstname: 'Paul', lastname: 'Martin' } };
+    const courses = [
+      { _id: new ObjectId(), trainers: [firstTrainer, secondTrainer], tradeName: 'prog' },
+      { _id: new ObjectId(), trainers: [secondTrainer], tradeName: 'prog' },
+    ];
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
+    getCourseTrainerSalary.returns(100);
+    const trainerBills = [
+      { course: courses[0]._id, trainer: firstTrainerId, amount: 100, payment: { status: 'paid' } },
+      { course: courses[0]._id, trainer: secondTrainerId, amount: 40, payment: { status: 'pending' } },
+      { course: courses[1]._id, trainer: secondTrainerId, amount: 100, payment: { status: 'pending' } },
+    ];
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+
+    const result = await CourseHelper.listTrainersBilling({});
+
+    expect(result).toEqual([
+      {
+        ...firstTrainer,
+        courses: [
+          { ...courses[0], plannedSalary: 100, invoicedAmount: 100, paidAmount: 100, status: 'paid' },
+        ],
+      },
+      {
+        ...secondTrainer,
+        courses: [
+          { ...courses[0], plannedSalary: 100, invoicedAmount: 40, paidAmount: 0, status: 'partially_invoiced' },
+          { ...courses[1], plannedSalary: 100, invoicedAmount: 100, paidAmount: 0, status: 'invoiced' },
+        ],
+      },
+    ]);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(0), courses[0], firstTrainerId);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(1), courses[0], secondTrainerId);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(2), courses[1], secondTrainerId);
+    SinonMongoose.calledOnceWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { type: { $ne: 'single' } },
+            { trainers: 1, rolesPerTrainer: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'subProgram',
+            select: 'program trainerPriceVersions',
+            populate: { path: 'program', select: 'name' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'billingPurchaseList.billingItem', select: 'type' }] },
+        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      trainerBillFind,
+      [
+        { query: 'find', args: [{ course: { $in: courses.map(c => c._id) } }, { course: 1, amount: 1, trainer: 1 }] },
         { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
         { query: 'lean' },
       ]
