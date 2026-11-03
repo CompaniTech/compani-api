@@ -991,6 +991,7 @@ describe('getUser', () => {
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
         { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+        { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1041,6 +1042,7 @@ describe('getUser', () => {
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
         { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+        { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1088,6 +1090,7 @@ describe('getUser', () => {
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
         { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+        { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1129,6 +1132,7 @@ describe('getUser', () => {
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
         { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+        { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1175,6 +1179,7 @@ describe('getUser', () => {
           },
           { query: 'populate', args: [{ path: 'userCompanyList' }] },
           { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+          { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
           { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
         ]
       );
