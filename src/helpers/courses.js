@@ -2340,7 +2340,10 @@ exports.getCourseTrainerSalary = async (course, trainerId) => {
 exports.listTrainersBilling = async (query) => {
   const courses = await Course
     .find(
-      { ...(query.trainer && { trainers: query.trainer }), type: { $ne: SINGLE } },
+      {
+        ...(query.trainer ? { trainers: query.trainer } : { 'trainers.0': { $exists: true } }),
+        type: { $ne: SINGLE },
+      },
       { trainers: 1, rolesPerTrainer: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 }
     )
     .populate({ path: 'companies', select: 'name' })

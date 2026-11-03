@@ -11542,7 +11542,7 @@ describe('listTrainersBilling', () => {
         {
           query: 'find',
           args: [
-            { type: { $ne: 'single' } },
+            { 'trainers.0': { $exists: true }, type: { $ne: 'single' } },
             { trainers: 1, rolesPerTrainer: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 },
           ],
         },
