@@ -356,14 +356,7 @@ exports.createBillList = async (payload) => {
   const course = await Course
     .findOne(
       { _id: payload.course },
-      {
-        type: 1,
-        prices: 1,
-        trainees: 1,
-        trainers: 1,
-        subProgram: 1,
-        certificateGenerationMode: 1,
-      }
+      { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1, certificateGenerationMode: 1 }
     )
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })

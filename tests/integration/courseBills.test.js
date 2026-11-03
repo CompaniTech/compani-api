@@ -539,6 +539,29 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(billsCountAfter).toBe(billsCountBefore + 1);
       });
 
+      it('should create a bill without price when an hourly payment plan is sent (MONTHLY)', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: {
+            ...singleCoursePayload,
+            course: coursesList[17]._id,
+            mainFee: omit(singleCoursePayload.mainFee, 'price'),
+            hourlyPaymentPlanId,
+          },
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const billsWithPlanAndWithoutPriceCount = await CourseBill.countDocuments({
+          course: coursesList[17]._id,
+          hourlyPaymentPlan: hourlyPaymentPlanId,
+          'mainFee.price': { $exists: false },
+        });
+        expect(billsWithPlanAndWithoutPriceCount).toBe(1);
+      });
+
       it('should return 403 if payload has percentage but some companies have no price', async () => {
         const response = await app.inject({
           method: 'POST',

@@ -492,7 +492,7 @@ module.exports = {
     paidSlotsBeforeSubProgramEffectiveDate: 'Impossible: un créneau est noté réglé après la date d\'effet renseignée.',
     subProgramPaymentPlanNotFound: 'Cet échéancier n\'existe pas.',
     subProgramHourlyPaymentPlanNotFound: 'Cette tarification n\'existe pas.',
-    subProgramHourlyPaymentPlanUsed: 'Impossible : cette tarification est utilisée par une formation.',
+    subProgramHourlyPaymentPlanUsed: 'Impossible : cette tarification est utilisée par des factures.',
     subProgramHourlyPaymentPlanAlreadyExists: 'Impossible : une tarification identique existe déjà.',
     subProgramHourlyPaymentPlanNoELearningStep: 'Impossible : ce sous-programme n\'a pas d\'étape e-learning.',
     subProgramHasPaymentPlan: 'Impossible : ce sous-programme a déjà des échéanciers.',
