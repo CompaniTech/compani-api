@@ -105,7 +105,11 @@ exports.getUsersList = async (query, credentials) => {
   return User.find(params, { iban: 0, bic: 0 }, { autopopulate: false })
     .populate({ path: 'role.client', select: '-__v -createdAt -updatedAt' })
     .populate({ path: 'role.holding', select: '-__v -createdAt -updatedAt' })
-    .populate({ path: 'company', populate: { path: 'company' }, select: '-__v -createdAt -updatedAt' })
+    .populate({
+      path: 'company',
+      populate: { path: 'company', select: '_id name' },
+      select: '-__v -createdAt -updatedAt',
+    })
     .setOptions({ isVendorUser: has(credentials, 'role.vendor') })
     .lean({ virtuals: true, autopopulate: true });
 };
@@ -233,7 +237,11 @@ exports.getUser = async (userId, credentials) => {
   const user = await User.findOne({ _id: userId })
     .populate({
       path: 'company',
-      populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+      populate: {
+        path: 'company',
+        select: '-iban -bic',
+        populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+      },
       select: '-__v -createdAt -updatedAt',
     })
     .populate({

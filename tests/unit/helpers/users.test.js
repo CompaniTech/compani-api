@@ -391,7 +391,11 @@ describe('getUsersList', () => {
         { query: 'populate', args: [{ path: 'role.holding', select: '-__v -createdAt -updatedAt' }] },
         {
           query: 'populate',
-          args: [{ path: 'company', populate: { path: 'company' }, select: '-__v -createdAt -updatedAt' }],
+          args: [{
+            path: 'company',
+            populate: { path: 'company', select: '_id name' },
+            select: '-__v -createdAt -updatedAt',
+          }],
         },
         { query: 'setOptions', args: [{ isVendorUser: false }] },
         { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
@@ -421,7 +425,11 @@ describe('getUsersList', () => {
 
         {
           query: 'populate',
-          args: [{ path: 'company', populate: { path: 'company' }, select: '-__v -createdAt -updatedAt' }],
+          args: [{
+            path: 'company',
+            populate: { path: 'company', select: '_id name' },
+            select: '-__v -createdAt -updatedAt',
+          }],
         },
         { query: 'setOptions', args: [{ isVendorUser: false }] },
         { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
@@ -973,7 +981,11 @@ describe('getUser', () => {
           query: 'populate',
           args: [{
             path: 'company',
-            populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+            populate: {
+              path: 'company',
+              select: '-iban -bic',
+              populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+            },
             select: '-__v -createdAt -updatedAt',
           }],
         },
@@ -1024,7 +1036,11 @@ describe('getUser', () => {
           query: 'populate',
           args: [{
             path: 'company',
-            populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+            populate: {
+              path: 'company',
+              select: '-iban -bic',
+              populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+            },
             select: '-__v -createdAt -updatedAt',
           }],
         },
@@ -1072,7 +1088,11 @@ describe('getUser', () => {
           query: 'populate',
           args: [{
             path: 'company',
-            populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+            populate: {
+              path: 'company',
+              select: '-iban -bic',
+              populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+            },
             select: '-__v -createdAt -updatedAt',
           }],
         },
@@ -1114,7 +1134,11 @@ describe('getUser', () => {
           query: 'populate',
           args: [{
             path: 'company',
-            populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+            populate: {
+              path: 'company',
+              select: '-iban -bic',
+              populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+            },
             select: '-__v -createdAt -updatedAt',
           }],
         },
@@ -1161,7 +1185,11 @@ describe('getUser', () => {
             query: 'populate',
             args: [{
               path: 'company',
-              populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+              populate: {
+                path: 'company',
+                select: '-iban -bic',
+                populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+              },
               select: '-__v -createdAt -updatedAt',
             }],
           },
