@@ -2332,9 +2332,18 @@ exports.getCourseTrainerSalaryFromSlots = (course, trainerId, courseSlots) => {
 };
 
 exports.listTrainersBilling = async (query) => {
+  let courseIdsWithSlotsInPeriod;
+  if (query.startDate) {
+    const slotsInPeriod = await CourseSlot
+      .find({ startDate: { $gte: query.startDate }, endDate: { $lte: query.endDate } }, { course: 1 })
+      .lean();
+    courseIdsWithSlotsInPeriod = uniqBy(slotsInPeriod.map(slot => slot.course), id => id.toHexString());
+  }
+
   const courses = await Course
     .find(
       {
+        ...(courseIdsWithSlotsInPeriod && { _id: { $in: courseIdsWithSlotsInPeriod } }),
         ...(query.trainer ? { trainers: query.trainer } : { 'trainers.0': { $exists: true } }),
         type: { $nin: [SINGLE, INTER_B2C] },
       },

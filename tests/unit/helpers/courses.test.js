@@ -11551,6 +11551,120 @@ describe('listTrainersBilling', () => {
     sinon.assert.notCalled(courseSlotFind);
   });
 
+  it('should only return courses with slots in period', async () => {
+    const trainerId = new ObjectId();
+    const trainer = { _id: trainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const query = { trainer: trainerId, startDate: '2024-02-01T00:00:00.000Z', endDate: '2024-02-29T23:59:59.999Z' };
+    const courses = [
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: TRAINER_SALARY }, price: 100, count: 1 }],
+      },
+      { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog 2' },
+    ];
+    const courseSlotsInPeriod = [
+      {
+        course: courses[0]._id,
+        startDate: '2024-02-01T08:00:00.000Z',
+        endDate: '2024-02-01T10:00:00.000Z',
+        trainers: [trainerId],
+      },
+      {
+        course: courses[1]._id,
+        startDate: '2024-02-06T08:00:00.000Z',
+        endDate: '2024-02-06T10:00:00.000Z',
+        trainers: [trainerId],
+      },
+    ];
+
+    courseSlotFind.onCall(0).returns(SinonMongoose.stubChainedQueries(courseSlotsInPeriod, ['lean']));
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries([], ['populate', 'lean']));
+    courseSlotFind.onCall(1).returns(SinonMongoose.stubChainedQueries([courseSlotsInPeriod[1]], ['lean']));
+    getCourseTrainerSalaryFromSlots.returns(50);
+
+    const result = await CourseHelper.listTrainersBilling(query);
+
+    expect(result).toEqual([{
+      ...trainer,
+      courses: [
+        {
+          ...omit(courses[0], ['billingPurchaseList']),
+          plannedSalary: 100,
+          invoicedAmount: 0,
+          paidAmount: 0,
+          status: 'not_invoiced',
+        },
+        { ...courses[1], plannedSalary: 50, invoicedAmount: 0, paidAmount: 0, status: 'not_invoiced' },
+      ],
+    }]);
+    sinon.assert.calledOnceWithExactly(
+      getCourseTrainerSalaryFromSlots,
+      courses[1],
+      trainerId,
+      [courseSlotsInPeriod[1]]
+    );
+    SinonMongoose.calledWithExactly(
+      courseSlotFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { startDate: { $gte: query.startDate }, endDate: { $lte: query.endDate } },
+            { course: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      courseSlotFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: [courses[1]._id] }, trainers: trainerId },
+            { course: 1, step: 1, startDate: 1, endDate: 1, trainers: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ],
+      1
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [
+            {
+              _id: { $in: [courses[0]._id, courses[1]._id] },
+              trainers: trainerId,
+              type: { $nin: ['single', 'inter_b2c'] },
+            },
+            { trainers: 1, rolesPerTrainer: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'subProgram',
+            select: 'program trainerPriceVersions',
+            populate: { path: 'program', select: 'name' },
+          }],
+        },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'billingPurchaseList.billingItem', select: 'type' }] },
+        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'lean' },
+      ]
+    );
+  });
+
   it('should return all trainers with their courses and billing status if no trainer in query', async () => {
     const firstTrainerId = new ObjectId();
     const secondTrainerId = new ObjectId();
