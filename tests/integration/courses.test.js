@@ -10102,7 +10102,7 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       authToken = await getToken('training_organisation_manager');
     });
 
-    it('should return all trainers with their collective courses and billing infos #tag', async () => {
+    it('should return all trainers with their collective courses and billing infos', async () => {
       const response = await app.inject({
         method: 'GET',
         url: '/courses/trainers-billing',

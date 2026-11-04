@@ -11330,72 +11330,67 @@ describe('getTraineeDurations', () => {
   });
 });
 
-describe('getCourseTrainerSalary', () => {
-  let courseSlotFind;
+describe('getCourseTrainerSalaryFromSlots', () => {
   let getHourlyAmount;
 
   beforeEach(() => {
-    courseSlotFind = sinon.stub(CourseSlot, 'find');
     getHourlyAmount = sinon.stub(CourseSlotsHelper, 'getHourlyAmount');
   });
 
   afterEach(() => {
-    courseSlotFind.restore();
     getHourlyAmount.restore();
   });
 
-  it('should return trainer salary billing purchase amount if only one trainer', async () => {
+  it('should return 0 if no slot', () => {
     const trainerId = new ObjectId();
     const course = {
       _id: new ObjectId(),
       trainers: [trainerId],
-      billingPurchaseList: [
-        { billingItem: { type: 'course' }, price: 1000, count: 1 },
-        { billingItem: { type: 'trainer_salary' }, price: 100, count: 2 },
-      ],
-    };
-
-    const result = await CourseHelper.getCourseTrainerSalary(course, trainerId);
-
-    expect(result).toEqual(200);
-    sinon.assert.notCalled(courseSlotFind);
-  });
-
-  it('should compute salary from slots if only one trainer and no trainer salary billing purchase', async () => {
-    const trainerId = new ObjectId();
-    const course = {
-      _id: new ObjectId(),
-      trainers: [trainerId],
-      billingPurchaseList: [{ billingItem: { type: 'course' }, price: 1000, count: 1 }],
       createdAt: '2024-01-01T00:00:00.000Z',
     };
-    courseSlotFind.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
-    const result = await CourseHelper.getCourseTrainerSalary(course, trainerId);
+    const result = CourseHelper.getCourseTrainerSalaryFromSlots(course, trainerId, []);
 
     expect(result).toEqual(0);
-    sinon.assert.calledOnce(courseSlotFind);
+    sinon.assert.notCalled(getHourlyAmount);
   });
 
-  it('should compute salary from slots if several trainers', async () => {
+  it('should compute salary from trainer slots', () => {
     const trainerId = new ObjectId();
+    const otherTrainerId = new ObjectId();
     const stepId = new ObjectId();
     const course = {
       _id: new ObjectId(),
-      trainers: [trainerId, new ObjectId()],
+      trainers: [trainerId, otherTrainerId],
       createdAt: '2024-01-01T00:00:00.000Z',
     };
-    const slots = [
-      { step: stepId, startDate: new Date('2024-02-01T08:00:00.000Z'), endDate: new Date('2024-02-01T10:00:00.000Z') },
-      { step: stepId, startDate: new Date('2024-02-02T08:00:00.000Z'), endDate: new Date('2024-02-02T09:30:00.000Z') },
+    const courseSlots = [
+      {
+        step: stepId,
+        trainers: [trainerId],
+        startDate: new Date('2024-02-01T08:00:00.000Z'),
+        endDate: new Date('2024-02-01T10:00:00.000Z'),
+      },
+      {
+        step: stepId,
+        trainers: [otherTrainerId],
+        startDate: new Date('2024-02-01T14:00:00.000Z'),
+        endDate: new Date('2024-02-01T16:00:00.000Z'),
+      },
+      {
+        step: stepId,
+        trainers: [trainerId, otherTrainerId],
+        startDate: new Date('2024-02-02T08:00:00.000Z'),
+        endDate: new Date('2024-02-02T09:30:00.000Z'),
+      },
     ];
-    courseSlotFind.returns(SinonMongoose.stubChainedQueries(slots, ['lean']));
     getHourlyAmount.onCall(0).returns(40);
     getHourlyAmount.onCall(1).returns(60);
 
-    const result = await CourseHelper.getCourseTrainerSalary(course, trainerId);
+    const result = CourseHelper.getCourseTrainerSalaryFromSlots(course, trainerId, courseSlots);
 
     expect(result).toEqual(170);
+    sinon.assert.calledTwice(getHourlyAmount);
     sinon.assert.calledWithExactly(
       getHourlyAmount.getCall(0),
       { step: { _id: stepId }, startDate: course.createdAt, course },
@@ -11406,34 +11401,27 @@ describe('getCourseTrainerSalary', () => {
       { step: { _id: stepId }, startDate: course.createdAt, course },
       trainerId
     );
-    SinonMongoose.calledOnceWithExactly(
-      courseSlotFind,
-      [
-        {
-          query: 'find',
-          args: [{ course: course._id, trainers: trainerId }, { step: 1, startDate: 1, endDate: 1 }],
-        },
-        { query: 'lean' },
-      ]
-    );
   });
 });
 
 describe('listTrainersBilling', () => {
   let courseFind;
   let trainerBillFind;
-  let getCourseTrainerSalary;
+  let courseSlotFind;
+  let getCourseTrainerSalaryFromSlots;
 
   beforeEach(() => {
     courseFind = sinon.stub(Course, 'find');
     trainerBillFind = sinon.stub(TrainerBill, 'find');
-    getCourseTrainerSalary = sinon.stub(CourseHelper, 'getCourseTrainerSalary');
+    courseSlotFind = sinon.stub(CourseSlot, 'find');
+    getCourseTrainerSalaryFromSlots = sinon.stub(CourseHelper, 'getCourseTrainerSalaryFromSlots');
   });
 
   afterEach(() => {
     courseFind.restore();
     trainerBillFind.restore();
-    getCourseTrainerSalary.restore();
+    courseSlotFind.restore();
+    getCourseTrainerSalaryFromSlots.restore();
   });
 
   it('should return an empty array if no course found', async () => {
@@ -11444,7 +11432,8 @@ describe('listTrainersBilling', () => {
 
     expect(result).toEqual([]);
     sinon.assert.notCalled(trainerBillFind);
-    sinon.assert.notCalled(getCourseTrainerSalary);
+    sinon.assert.notCalled(courseSlotFind);
+    sinon.assert.notCalled(getCourseTrainerSalaryFromSlots);
   });
 
   it('should return trainer with its courses and billing status', async () => {
@@ -11454,7 +11443,12 @@ describe('listTrainersBilling', () => {
       { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
       { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
       { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
-      { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: 'trainer_salary' }, price: 40, count: 2 }],
+      },
     ];
     const trainerBills = [
       { course: courses[1]._id, trainer: trainerId, amount: 40, payment: { status: 'pending' } },
@@ -11464,8 +11458,14 @@ describe('listTrainersBilling', () => {
     ];
 
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
-    getCourseTrainerSalary.returns(100);
+    getCourseTrainerSalaryFromSlots.returns(100);
     trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+    const courseSlots = [
+      { course: courses[0]._id, trainers: [trainerId] },
+      { course: courses[0]._id, trainers: [trainerId] },
+      { course: courses[2]._id, trainers: [trainerId] },
+    ];
+    courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlots, ['lean']));
 
     const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
 
@@ -11475,13 +11475,24 @@ describe('listTrainersBilling', () => {
         { ...courses[0], plannedSalary: 100, invoicedAmount: 0, paidAmount: 0, status: 'not_invoiced' },
         { ...courses[1], plannedSalary: 100, invoicedAmount: 40, paidAmount: 0, status: 'partially_invoiced' },
         { ...courses[2], plannedSalary: 100, invoicedAmount: 100, paidAmount: 0, status: 'invoiced' },
-        { ...courses[3], plannedSalary: 100, invoicedAmount: 100, paidAmount: 100, status: 'paid' },
+        {
+          ...omit(courses[3], ['billingPurchaseList']),
+          plannedSalary: 80,
+          invoicedAmount: 100,
+          paidAmount: 100,
+          status: 'paid',
+        },
       ],
     }]);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(0), courses[0], trainerId);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(1), courses[1], trainerId);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(2), courses[2], trainerId);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(3), courses[3], trainerId);
+    sinon.assert.calledWithExactly(
+      getCourseTrainerSalaryFromSlots.getCall(0),
+      courses[0],
+      trainerId,
+      [courseSlots[0], courseSlots[1]]
+    );
+    sinon.assert.calledWithExactly(getCourseTrainerSalaryFromSlots.getCall(1), courses[1], trainerId, []);
+    sinon.assert.calledWithExactly(getCourseTrainerSalaryFromSlots.getCall(2), courses[2], trainerId, [courseSlots[2]]);
+    sinon.assert.calledThrice(getCourseTrainerSalaryFromSlots);
     SinonMongoose.calledOnceWithExactly(
       trainerBillFind,
       [
@@ -11496,6 +11507,48 @@ describe('listTrainersBilling', () => {
         { query: 'lean' },
       ]
     );
+    SinonMongoose.calledOnceWithExactly(
+      courseSlotFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: [courses[0]._id, courses[1]._id, courses[2]._id] }, trainers: trainerId },
+            { course: 1, step: 1, startDate: 1, endDate: 1, trainers: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should not get slots if all courses have a trainer salary billing purchase', async () => {
+    const trainerId = new ObjectId();
+    const trainer = { _id: trainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const courses = [{
+      _id: new ObjectId(),
+      trainers: [trainer],
+      tradeName: 'prog',
+      billingPurchaseList: [{ billingItem: { type: 'trainer_salary' }, price: 60, count: 2 }],
+    }];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries([], ['populate', 'lean']));
+
+    const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
+
+    expect(result).toEqual([{
+      ...trainer,
+      courses: [{
+        ...omit(courses[0], ['billingPurchaseList']),
+        plannedSalary: 120,
+        invoicedAmount: 0,
+        paidAmount: 0,
+        status: 'not_invoiced',
+      }],
+    }]);
+    sinon.assert.notCalled(getCourseTrainerSalaryFromSlots);
+    sinon.assert.notCalled(courseSlotFind);
   });
 
   it('should return all trainers with their courses and billing status if no trainer in query', async () => {
@@ -11504,17 +11557,27 @@ describe('listTrainersBilling', () => {
     const firstTrainer = { _id: firstTrainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
     const secondTrainer = { _id: secondTrainerId, identity: { firstname: 'Paul', lastname: 'Martin' } };
     const courses = [
-      { _id: new ObjectId(), trainers: [firstTrainer, secondTrainer], tradeName: 'prog' },
+      {
+        _id: new ObjectId(),
+        trainers: [firstTrainer, secondTrainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: 'trainer_salary' }, price: 40, count: 2 }],
+      },
       { _id: new ObjectId(), trainers: [secondTrainer], tradeName: 'prog' },
     ];
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
-    getCourseTrainerSalary.returns(100);
+    getCourseTrainerSalaryFromSlots.returns(100);
     const trainerBills = [
       { course: courses[0]._id, trainer: firstTrainerId, amount: 100, payment: { status: 'paid' } },
       { course: courses[0]._id, trainer: secondTrainerId, amount: 40, payment: { status: 'pending' } },
       { course: courses[1]._id, trainer: secondTrainerId, amount: 100, payment: { status: 'pending' } },
     ];
     trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+    const courseSlots = [
+      { course: courses[0]._id, trainers: [firstTrainerId, secondTrainerId] },
+      { course: courses[1]._id, trainers: [secondTrainerId] },
+    ];
+    courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlots, ['lean']));
 
     const result = await CourseHelper.listTrainersBilling({});
 
@@ -11522,27 +11585,54 @@ describe('listTrainersBilling', () => {
       {
         ...firstTrainer,
         courses: [
-          { ...courses[0], plannedSalary: 100, invoicedAmount: 100, paidAmount: 100, status: 'paid' },
+          {
+            ...omit(courses[0], ['billingPurchaseList']),
+            plannedSalary: 100,
+            invoicedAmount: 100,
+            paidAmount: 100,
+            status: 'paid',
+          },
         ],
       },
       {
         ...secondTrainer,
         courses: [
-          { ...courses[0], plannedSalary: 100, invoicedAmount: 40, paidAmount: 0, status: 'partially_invoiced' },
+          {
+            ...omit(courses[0], ['billingPurchaseList']),
+            plannedSalary: 100,
+            invoicedAmount: 40,
+            paidAmount: 0,
+            status: 'partially_invoiced',
+          },
           { ...courses[1], plannedSalary: 100, invoicedAmount: 100, paidAmount: 0, status: 'invoiced' },
         ],
       },
     ]);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(0), courses[0], firstTrainerId);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(1), courses[0], secondTrainerId);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(2), courses[1], secondTrainerId);
+    sinon.assert.calledWithExactly(
+      getCourseTrainerSalaryFromSlots.getCall(0),
+      courses[0],
+      firstTrainerId,
+      [courseSlots[0]]
+    );
+    sinon.assert.calledWithExactly(
+      getCourseTrainerSalaryFromSlots.getCall(1),
+      courses[0],
+      secondTrainerId,
+      [courseSlots[0]]
+    );
+    sinon.assert.calledWithExactly(
+      getCourseTrainerSalaryFromSlots.getCall(2),
+      courses[1],
+      secondTrainerId,
+      [courseSlots[1]]
+    );
     SinonMongoose.calledOnceWithExactly(
       courseFind,
       [
         {
           query: 'find',
           args: [
-            { 'trainers.0': { $exists: true }, type: { $ne: 'single' } },
+            { 'trainers.0': { $exists: true }, type: { $nin: ['single', 'inter_b2c'] } },
             { trainers: 1, rolesPerTrainer: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 },
           ],
         },
@@ -11566,6 +11656,19 @@ describe('listTrainersBilling', () => {
       [
         { query: 'find', args: [{ course: { $in: courses.map(c => c._id) } }, { course: 1, amount: 1, trainer: 1 }] },
         { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseSlotFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: courses.map(c => c._id) } },
+            { course: 1, step: 1, startDate: 1, endDate: 1, trainers: 1 },
+          ],
+        },
         { query: 'lean' },
       ]
     );

@@ -97,6 +97,7 @@ const {
   PAID,
   VAEI_COACH,
   ARCHITECT,
+  INTER_B2C,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -2311,15 +2312,8 @@ exports.deleteBillingPurchase = async (courseId, billingPurchaseId) => Course.up
   { $pull: { billingPurchaseList: { _id: billingPurchaseId } } }
 );
 
-exports.getCourseTrainerSalary = async (course, trainerId) => {
-  if (course.trainers.length === 1) {
-    const salaryItem = (course.billingPurchaseList || []).find(item => item.billingItem?.type === TRAINER_SALARY);
-    if (salaryItem) return NumbersHelper.toNumber(NumbersHelper.multiply(salaryItem.price, salaryItem.count));
-  }
-
-  const slots = await CourseSlot
-    .find({ course: course._id, trainers: trainerId }, { step: 1, startDate: 1, endDate: 1 })
-    .lean();
+exports.getCourseTrainerSalaryFromSlots = (course, trainerId, courseSlots) => {
+  const slots = courseSlots.filter(slot => UtilsHelper.doesArrayIncludeId(slot.trainers, trainerId));
 
   const salary = slots.reduce((acc, slot) => {
     const hourlyAmount = CourseSlotsHelper
@@ -2342,7 +2336,7 @@ exports.listTrainersBilling = async (query) => {
     .find(
       {
         ...(query.trainer ? { trainers: query.trainer } : { 'trainers.0': { $exists: true } }),
-        type: { $ne: SINGLE },
+        type: { $nin: [SINGLE, INTER_B2C] },
       },
       { trainers: 1, rolesPerTrainer: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 }
     )
@@ -2358,13 +2352,35 @@ exports.listTrainersBilling = async (query) => {
     .lean();
   if (!courses.length) return [];
 
-  const trainerBills = await TrainerBill
-    .find(
-      { course: { $in: courses.map(c => c._id) }, ...(query.trainer && { trainer: query.trainer }) },
-      { course: 1, amount: 1, trainer: 1 }
-    )
-    .populate({ path: 'payment', select: 'status' })
-    .lean();
+  const trainerSalaryByCourse = {};
+  const courseIdsWithoutTrainerSalary = [];
+  for (const course of courses) {
+    const salaryItem = course.trainers.length === 1 &&
+      (course.billingPurchaseList || []).find(item => item.billingItem?.type === TRAINER_SALARY);
+    if (salaryItem) {
+      trainerSalaryByCourse[course._id] = NumbersHelper
+        .toNumber(NumbersHelper.multiply(salaryItem.price, salaryItem.count));
+    } else courseIdsWithoutTrainerSalary.push(course._id);
+  }
+  const [trainerBills, courseSlots] = await Promise.all([
+    TrainerBill
+      .find(
+        { course: { $in: courses.map(c => c._id) }, ...(query.trainer && { trainer: query.trainer }) },
+        { course: 1, amount: 1, trainer: 1 }
+      )
+      .populate({ path: 'payment', select: 'status' })
+      .lean(),
+    courseIdsWithoutTrainerSalary.length
+      ? CourseSlot
+        .find(
+          { course: { $in: courseIdsWithoutTrainerSalary }, ...(query.trainer && { trainers: query.trainer }) },
+          { course: 1, step: 1, startDate: 1, endDate: 1, trainers: 1 }
+        )
+        .lean()
+      : [],
+  ]);
+  const billsByTrainerAndCourse = groupBy(trainerBills, bill => `${bill.trainer}-${bill.course}`);
+  const courseSlotsByCourse = groupBy(courseSlots, slot => slot.course);
 
   const trainers = query.trainer
     ? [courses[0].trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, query.trainer))]
@@ -2372,15 +2388,15 @@ exports.listTrainersBilling = async (query) => {
 
   const trainersBilling = [];
   for (const trainer of trainers) {
-    const filteredTrainerBills = trainerBills.filter(bill => UtilsHelper.areObjectIdsEquals(bill.trainer, trainer._id));
-    const trainerBillsByCourse = groupBy(filteredTrainerBills, bill => bill.course);
     const filteredTrainerCourses = courses
       .filter(course => UtilsHelper.doesArrayIncludeId(course.trainers.map(t => t._id), trainer._id));
 
     const trainerCourses = [];
     for (const course of filteredTrainerCourses) {
-      const plannedSalary = await exports.getCourseTrainerSalary(course, trainer._id);
-      const courseBills = trainerBillsByCourse[course._id] || [];
+      const plannedSalary = trainerSalaryByCourse[course._id]
+        ? trainerSalaryByCourse[course._id]
+        : exports.getCourseTrainerSalaryFromSlots(course, trainer._id, courseSlotsByCourse[course._id] || []);
+      const courseBills = billsByTrainerAndCourse[`${trainer._id}-${course._id}`] || [];
       let invoicedAmount = 0;
       let paidAmount = 0;
       for (const bill of courseBills) {
