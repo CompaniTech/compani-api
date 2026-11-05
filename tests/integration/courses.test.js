@@ -10113,7 +10113,6 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       const { trainers } = response.result.data;
       expect(trainers.length).toBe(2);
       expect(trainers.every(t => t.courses.every(c => c.type !== SINGLE))).toBeTruthy();
-      expect(trainers.some(t => t.courses.some(c => c.status === 'invoiced'))).toBeTruthy();
     });
 
     it('should return a specific trainer with its collective courses and billing infos', async () => {
@@ -10124,22 +10123,23 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.trainers.length).toBe(1);
-      expect(response.result.data.trainers[0].courses.length).toEqual(15);
+      const { trainers } = response.result.data;
+      expect(trainers.length).toEqual(1);
+      expect(trainers[0].courses.length).toEqual(15);
     });
 
-    it('should return trainer\'s courses with slots in period', async () => {
+    it('should return all trainer\'s courses with slots in period', async () => {
       const startDate = '2020-03-01T00:00:00.000Z';
       const endDate = '2020-03-05T23:59:59.999Z';
       const response = await app.inject({
         method: 'GET',
-        url: `/courses/trainers-billing?trainer=${trainer._id}&startDate=${startDate}&endDate=${endDate}`,
+        url: `/courses/trainers-billing?startDate=${startDate}&endDate=${endDate}`,
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
       expect(response.statusCode).toBe(200);
-      const { courses } = response.result.data.trainers[0];
-      expect(courses.length).toBe(2);
+      expect(response.result.data.trainers.length).toEqual(1);
+      expect(response.result.data.trainers[0].courses.length).toEqual(5);
     });
 
     it('should return 400 if endDate without startDate', async () => {

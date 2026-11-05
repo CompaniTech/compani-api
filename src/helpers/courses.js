@@ -2402,7 +2402,7 @@ exports.listTrainersBilling = async (query) => {
 
     const trainerCourses = [];
     for (const course of filteredTrainerCourses) {
-      const plannedSalary = trainerSalaryByCourse[course._id]
+      const plannedSalary = has(trainerSalaryByCourse, course._id)
         ? trainerSalaryByCourse[course._id]
         : exports.getCourseTrainerSalaryFromSlots(course, trainer._id, courseSlotsByCourse[course._id] || []);
       const courseBills = billsByTrainerAndCourse[`${trainer._id}-${course._id}`] || [];

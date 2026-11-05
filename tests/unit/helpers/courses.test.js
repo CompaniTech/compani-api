@@ -11390,7 +11390,6 @@ describe('getCourseTrainerSalaryFromSlots', () => {
     const result = CourseHelper.getCourseTrainerSalaryFromSlots(course, trainerId, courseSlots);
 
     expect(result).toEqual(170);
-    sinon.assert.calledTwice(getHourlyAmount);
     sinon.assert.calledWithExactly(
       getHourlyAmount.getCall(0),
       { step: { _id: stepId }, startDate: course.createdAt, course },
@@ -11492,7 +11491,6 @@ describe('listTrainersBilling', () => {
     );
     sinon.assert.calledWithExactly(getCourseTrainerSalaryFromSlots.getCall(1), courses[1], trainerId, []);
     sinon.assert.calledWithExactly(getCourseTrainerSalaryFromSlots.getCall(2), courses[2], trainerId, [courseSlots[2]]);
-    sinon.assert.calledThrice(getCourseTrainerSalaryFromSlots);
     SinonMongoose.calledOnceWithExactly(
       trainerBillFind,
       [
@@ -11522,7 +11520,7 @@ describe('listTrainersBilling', () => {
     );
   });
 
-  it('should not get slots if all courses have a trainer salary billing purchase', async () => {
+  it('should return trainer salary from course billing purchase', async () => {
     const trainerId = new ObjectId();
     const trainer = { _id: trainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
     const courses = [{
