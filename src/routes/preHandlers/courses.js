@@ -1663,8 +1663,10 @@ exports.authorizeTrainerBillsGet = async (req) => {
   try {
     const { trainer: trainerId } = req.query;
 
-    const trainer = await User.countDocuments({ _id: trainerId, 'role.vendor': { $exists: true } });
-    if (!trainer) throw Boom.notFound();
+    if (trainerId) {
+      const trainer = await User.countDocuments({ _id: trainerId, 'role.vendor': { $exists: true } });
+      if (!trainer) throw Boom.notFound();
+    }
 
     return null;
   } catch (e) {

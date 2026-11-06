@@ -34,7 +34,6 @@ const DatesUtilsHelper = require('./dates/utils');
 const ZipHelper = require('./zip');
 const SmsHelper = require('./sms');
 const CourseBillsHelper = require('./courseBills');
-const CourseSlotsHelper = require('./courseSlots');
 const CourseCreditNotesHelper = require('./courseCreditNotes');
 const DocxHelper = require('./docx');
 const FileHelper = require('./file');
@@ -90,13 +89,13 @@ const {
   SECOND,
   MONTH,
   TRAINER_SALARY,
-  MINUTE,
   PARTIALLY_INVOICED,
   NOT_INVOICED,
   INVOICED,
   PAID,
   VAEI_COACH,
   ARCHITECT,
+  INTER_B2C,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -2315,44 +2314,42 @@ exports.deleteBillingPurchase = async (courseId, billingPurchaseId) => Course.up
   { $pull: { billingPurchaseList: { _id: billingPurchaseId } } }
 );
 
-exports.getCourseTrainerSalary = async (course, trainerId) => {
-  if (course.trainers.length === 1) {
-    const salaryItem = (course.billingPurchaseList || []).find(item => item.billingItem?.type === TRAINER_SALARY);
-    if (salaryItem) return NumbersHelper.toNumber(NumbersHelper.multiply(salaryItem.price, salaryItem.count));
+exports.getCoursePlannedSalary = (course) => {
+  if (course.trainers.length !== 1) return undefined;
+
+  const billingPurchaseList = course.billingPurchaseList || [];
+  let salaryItem = billingPurchaseList.find(item => item.billingItem?.type === TRAINER_SALARY);
+  if (!salaryItem) {
+    const CONSULTING_PROGRAM_IDS = (process.env.CONSULTING_PROGRAM_IDS || '').split(',');
+    if (UtilsHelper.doesArrayIncludeId(CONSULTING_PROGRAM_IDS, get(course, 'subProgram.program._id'))) {
+      salaryItem = billingPurchaseList
+        .find(item => UtilsHelper.areObjectIdsEquals(item.billingItem?._id, process.env.CONSULTING_BILLING_ITEM));
+    }
   }
 
-  const slots = await CourseSlot
-    .find({ course: course._id, trainers: trainerId }, { step: 1, startDate: 1, endDate: 1 })
-    .lean();
-
-  const salary = slots.reduce((acc, slot) => {
-    const hourlyAmount = CourseSlotsHelper
-      .getHourlyAmount({ step: { _id: slot.step }, startDate: course.createdAt, course }, trainerId);
-    if (!hourlyAmount) return acc;
-
-    const duration = CompaniDate(slot.endDate).diff(slot.startDate, MINUTE);
-    const slotAmount = NumbersHelper.toFixedToFloat(
-      NumbersHelper.multiply(hourlyAmount, CompaniDuration(duration).asHours())
-    );
-
-    return NumbersHelper.add(acc, slotAmount);
-  }, 0);
-
-  return NumbersHelper.toNumber(salary);
+  return salaryItem ? NumbersHelper.toNumber(NumbersHelper.multiply(salaryItem.price, salaryItem.count)) : undefined;
 };
 
 exports.listTrainersBilling = async (query) => {
+  let courseIdsWithSlotsInPeriod;
+  if (query.startDate) {
+    const slotsInPeriod = await CourseSlot
+      .find({ startDate: { $gte: query.startDate }, endDate: { $lte: query.endDate } }, { course: 1 })
+      .lean();
+    courseIdsWithSlotsInPeriod = uniqBy(slotsInPeriod.map(slot => slot.course), id => id.toHexString());
+  }
+
   const courses = await Course
     .find(
-      { trainers: query.trainer, type: { $ne: SINGLE } },
-      { trainers: 1, rolesPerTrainer: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 }
+      {
+        ...(courseIdsWithSlotsInPeriod && { _id: { $in: courseIdsWithSlotsInPeriod } }),
+        ...(query.trainer ? { trainers: query.trainer } : { 'trainers.0': { $exists: true } }),
+        type: { $nin: [SINGLE, INTER_B2C] },
+      },
+      { trainers: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 }
     )
     .populate({ path: 'companies', select: 'name' })
-    .populate({
-      path: 'subProgram',
-      select: 'program trainerPriceVersions',
-      populate: { path: 'program', select: 'name' },
-    })
+    .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({ path: 'billingPurchaseList.billingItem', select: 'type' })
     .sort({ createdAt: -1 })
@@ -2360,40 +2357,52 @@ exports.listTrainersBilling = async (query) => {
   if (!courses.length) return [];
 
   const trainerBills = await TrainerBill
-    .find({ course: { $in: courses.map(c => c._id) }, trainer: query.trainer }, { course: 1, amount: 1 })
+    .find(
+      { course: { $in: courses.map(c => c._id) }, ...(query.trainer && { trainer: query.trainer }) },
+      { course: 1, amount: 1, trainer: 1 }
+    )
     .populate({ path: 'payment', select: 'status' })
     .lean();
+  const billsByTrainerAndCourse = groupBy(trainerBills, bill => `${bill.trainer}-${bill.course}`);
 
-  const billsByCourse = groupBy(trainerBills, bill => bill.course);
+  const trainers = query.trainer
+    ? [courses[0].trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, query.trainer))]
+    : uniqBy(courses.flatMap(c => c.trainers), t => t._id.toHexString());
 
-  const trainerCourses = [];
-  for (const course of courses) {
-    const plannedSalary = await exports.getCourseTrainerSalary(course, query.trainer);
-    const courseBills = billsByCourse[course._id] || [];
-    let invoicedAmount = 0;
-    let paidAmount = 0;
-    for (const bill of courseBills) {
-      invoicedAmount = NumbersHelper.add(invoicedAmount, bill.amount);
-      if (bill.payment?.status === PAID) paidAmount = NumbersHelper.add(paidAmount, bill.amount);
+  const trainersBilling = [];
+  for (const trainer of trainers) {
+    const filteredTrainerCourses = courses
+      .filter(course => UtilsHelper.doesArrayIncludeId(course.trainers.map(t => t._id), trainer._id));
+
+    const trainerCourses = [];
+    for (const course of filteredTrainerCourses) {
+      const plannedSalary = exports.getCoursePlannedSalary(course);
+      const courseBills = billsByTrainerAndCourse[`${trainer._id}-${course._id}`] || [];
+      let invoicedAmount = 0;
+      let paidAmount = 0;
+      for (const bill of courseBills) {
+        invoicedAmount = NumbersHelper.add(invoicedAmount, bill.amount);
+        if (bill.payment?.status === PAID) paidAmount = NumbersHelper.add(paidAmount, bill.amount);
+      }
+      invoicedAmount = NumbersHelper.toNumber(invoicedAmount);
+      paidAmount = NumbersHelper.toNumber(paidAmount);
+
+      let status = INVOICED;
+      if (invoicedAmount === 0) status = NOT_INVOICED;
+      else if (invoicedAmount < plannedSalary) status = PARTIALLY_INVOICED;
+      else if (invoicedAmount === paidAmount) status = PAID;
+
+      trainerCourses.push({
+        ...omit(course, ['billingPurchaseList']),
+        ...(plannedSalary !== undefined && { plannedSalary }),
+        invoicedAmount,
+        paidAmount,
+        status,
+      });
     }
-    invoicedAmount = NumbersHelper.toNumber(invoicedAmount);
-    paidAmount = NumbersHelper.toNumber(paidAmount);
 
-    let status = INVOICED;
-    if (invoicedAmount === 0) status = NOT_INVOICED;
-    else if (invoicedAmount < plannedSalary) status = PARTIALLY_INVOICED;
-    else if (invoicedAmount === paidAmount) status = PAID;
-
-    trainerCourses.push({
-      ...omit(course, ['billingPurchaseList', 'rolesPerTrainer']),
-      plannedSalary,
-      invoicedAmount,
-      paidAmount,
-      status,
-    });
+    trainersBilling.push({ ...trainer, courses: trainerCourses });
   }
 
-  const trainer = courses[0].trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, query.trainer));
-
-  return [{ ...trainer, courses: trainerCourses }];
+  return trainersBilling;
 };

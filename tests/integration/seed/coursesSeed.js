@@ -9,6 +9,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const CourseSmsHistory = require('../../../src/models/CourseSmsHistory');
 const CourseHistory = require('../../../src/models/CourseHistory');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const TrainerMission = require('../../../src/models/TrainerMission');
 const User = require('../../../src/models/User');
 const Step = require('../../../src/models/Step');
@@ -1537,6 +1538,18 @@ const trainerMissionList = [
   },
 ];
 
+const trainerBillList = [
+  {
+    _id: new ObjectId(),
+    trainer: trainer._id,
+    number: 'FACT_0001',
+    course: coursesList[0]._id,
+    amount: 100,
+    submittedAt: '2025-01-01T10:00:00.000Z',
+    file: { publicId: 'publicId', link: 'link' },
+  },
+];
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
@@ -1563,6 +1576,7 @@ const populateDB = async () => {
     QuestionnaireHistory.create(questionnaireHistory),
     Step.create(stepList),
     SubProgram.create(subProgramsList),
+    TrainerBill.create(trainerBillList),
     TrainerMission.create(trainerMissionList),
     User.create(userList),
     UserCompany.create(userCompanies),
@@ -1591,4 +1605,5 @@ module.exports = {
   traineeWithoutCompany,
   ROFAndCoach,
   slots,
+  trainerBillList,
 };
