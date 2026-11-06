@@ -10138,8 +10138,10 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.trainers.length).toEqual(1);
-      expect(response.result.data.trainers[0].courses.length).toEqual(5);
+      const { trainers } = response.result.data;
+      expect(trainers.length).toEqual(2);
+      expect(trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainer._id)).courses.length).toEqual(2);
+      expect(trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerAndCoach._id)).courses.length).toEqual(4);
     });
 
     it('should return 400 if endDate without startDate', async () => {
