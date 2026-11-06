@@ -3,7 +3,6 @@ const { expect } = require('expect');
 const { ObjectId } = require('mongodb');
 const set = require('lodash/set');
 const omit = require('lodash/omit');
-const Course = require('../../src/models/Course');
 const CourseBill = require('../../src/models/CourseBill');
 const app = require('../../server');
 const {
@@ -540,6 +539,29 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(billsCountAfter).toBe(billsCountBefore + 1);
       });
 
+      it('should create a bill without price when an hourly payment plan is sent (MONTHLY)', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: {
+            ...singleCoursePayload,
+            course: coursesList[17]._id,
+            mainFee: omit(singleCoursePayload.mainFee, 'price'),
+            hourlyPaymentPlanId,
+          },
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const billsWithPlanAndWithoutPriceCount = await CourseBill.countDocuments({
+          course: coursesList[17]._id,
+          hourlyPaymentPlan: hourlyPaymentPlanId,
+          'mainFee.price': { $exists: false },
+        });
+        expect(billsWithPlanAndWithoutPriceCount).toBe(1);
+      });
+
       it('should return 403 if payload has percentage but some companies have no price', async () => {
         const response = await app.inject({
           method: 'POST',
@@ -814,7 +836,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(response.statusCode).toBe(400);
       });
 
-      it('should return 403 if the last slot of the course is not over', async () => {
+      it('should return 403 if the last slot of the course is not over (GLOBAL)', async () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
@@ -830,7 +852,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(response.statusCode).toBe(403);
       });
 
-      it('should return 403 if some slots of the course have no attendance', async () => {
+      it('should return 403 if some slots of the course have no attendance (GLOBAL)', async () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
@@ -929,7 +951,7 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(billsCountAfter).toBe(billsCountBefore + 2);
       });
 
-      it('should create several bills and link the hourly payment plan (MONTHLY certification)', async () => {
+      it('should create bills with hourly payment plan even if other bills have another plan (MONTHLY)', async () => {
         const response = await app.inject({
           method: 'POST',
           url: '/coursebills/list-creation',
@@ -939,9 +961,14 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
 
         expect(response.statusCode).toBe(200);
 
-        const courseCount = await Course
-          .countDocuments({ _id: coursesList[17]._id, hourlyPaymentPlan: hourlyPaymentPlanId });
-        expect(courseCount).toBe(1);
+        const billsWithPlanCount = await CourseBill
+          .countDocuments({ course: coursesList[17]._id, hourlyPaymentPlan: hourlyPaymentPlanId });
+        expect(billsWithPlanCount).toBe(2);
+        const billsWithAnotherPlanCount = await CourseBill.countDocuments({
+          course: coursesList[17]._id,
+          hourlyPaymentPlan: { $exists: true, $ne: hourlyPaymentPlanId },
+        });
+        expect(billsWithAnotherPlanCount).toBe(1);
       });
 
       it('should return 400 if several bills are created with an hourly payment plan (GLOBAL)', async () => {
@@ -969,17 +996,6 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         });
 
         expect(response.statusCode).toBe(404);
-      });
-
-      it('should return 403 if the course already has another hourly payment plan', async () => {
-        const response = await app.inject({
-          method: 'POST',
-          url: '/coursebills/list-creation',
-          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
-          payload: { ...singleCoursePayload, course: coursesList[20]._id, hourlyPaymentPlanId },
-        });
-
-        expect(response.statusCode).toBe(403);
       });
 
       it('should return 403 if hourly payment plan is sent for a non SINGLE course', async () => {

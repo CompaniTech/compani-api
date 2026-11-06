@@ -7,6 +7,7 @@ const Program = require('../../models/Program');
 const Company = require('../../models/Company');
 const Step = require('../../models/Step');
 const CourseSlot = require('../../models/CourseSlot');
+const CourseBill = require('../../models/CourseBill');
 const {
   PUBLISHED,
   DRAFT,
@@ -186,9 +187,10 @@ exports.authorizeSubProgramUpdate = async (req) => {
       const hourlyPaymentPlanExists = UtilsHelper.doesArrayIncludeId(subProgramHppIds, hourlyPaymentPlanId);
       if (!hourlyPaymentPlanExists) throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
 
-      const isUsedByCourse = !prices.length && subProgram.courses
-        .some(c => UtilsHelper.areObjectIdsEquals(c.hourlyPaymentPlan, hourlyPaymentPlanId));
-      if (isUsedByCourse) throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanUsed);
+      if (!prices.length) {
+        const isUsedByBill = await CourseBill.countDocuments({ hourlyPaymentPlan: hourlyPaymentPlanId }, { limit: 1 });
+        if (isUsedByBill) throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanUsed);
+      }
     }
 
     if (prices.length) {

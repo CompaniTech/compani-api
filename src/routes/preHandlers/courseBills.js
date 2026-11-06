@@ -41,7 +41,6 @@ exports.authorizeCourseBillListCreation = async (req) => {
       companies: 1,
       prices: 1,
       interruptionDates: 1,
-      hourlyPaymentPlan: 1,
       certificateGenerationMode: 1,
       trainees: 1,
     })
@@ -58,15 +57,12 @@ exports.authorizeCourseBillListCreation = async (req) => {
     if (!UtilsHelper.doesArrayIncludeId(subProgramHppIds, hourlyPaymentPlanId)) {
       throw Boom.notFound(translate[language].subProgramHourlyPaymentPlanNotFound);
     }
-
-    if (course.hourlyPaymentPlan && !UtilsHelper.areObjectIdsEquals(course.hourlyPaymentPlan, hourlyPaymentPlanId)) {
-      throw Boom.forbidden();
-    }
   }
 
+  if (quantity === 1 && !mainFee.price && !hourlyPaymentPlanId) throw Boom.badRequest();
+  if (hourlyPaymentPlanId && mainFee.price) throw Boom.badRequest();
+
   const shouldComputePriceFromDuration = hourlyPaymentPlanId && course.certificateGenerationMode === GLOBAL;
-  if (quantity === 1 && !mainFee.price && !shouldComputePriceFromDuration) throw Boom.badRequest();
-  if (shouldComputePriceFromDuration && mainFee.price) throw Boom.badRequest();
 
   if (shouldComputePriceFromDuration) {
     if (quantity !== 1) throw Boom.badRequest();

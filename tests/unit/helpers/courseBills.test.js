@@ -1224,7 +1224,6 @@ describe('computePriceFromDurations', () => {
 
 describe('createBillList', () => {
   let findOneCourse;
-  let updateOneCourse;
   let computePriceFromDurations;
   let createCourseBill;
   let insertManyCourseBills;
@@ -1234,7 +1233,6 @@ describe('createBillList', () => {
 
   beforeEach(() => {
     findOneCourse = sinon.stub(Course, 'findOne');
-    updateOneCourse = sinon.stub(Course, 'updateOne');
     computePriceFromDurations = sinon.stub(CourseBillHelper, 'computePriceFromDurations');
     createCourseBill = sinon.stub(CourseBill, 'create');
     insertManyCourseBills = sinon.stub(CourseBill, 'insertMany');
@@ -1245,7 +1243,6 @@ describe('createBillList', () => {
 
   afterEach(() => {
     findOneCourse.restore();
-    updateOneCourse.restore();
     computePriceFromDurations.restore();
     createCourseBill.restore();
     insertManyCourseBills.restore();
@@ -1279,11 +1276,6 @@ describe('createBillList', () => {
     await CourseBillHelper.createBillList(payload);
 
     sinon.assert.calledOnceWithExactly(computePriceFromDurations, payload.course, payload.hourlyPaymentPlanId);
-    sinon.assert.calledOnceWithExactly(
-      updateOneCourse,
-      { _id: payload.course },
-      { $set: { hourlyPaymentPlan: payload.hourlyPaymentPlanId } }
-    );
 
     sinon.assert.calledOnceWithExactly(
       createCourseBill,
@@ -1295,6 +1287,7 @@ describe('createBillList', () => {
           countUnit: GROUP,
           description: 'test',
         },
+        hourlyPaymentPlan: payload.hourlyPaymentPlanId,
         companies: payload.companies,
         payer: payload.payer,
         maturityDate: payload.maturityDate,
@@ -1526,6 +1519,7 @@ describe('createBillList', () => {
       companies: [companyId],
       payer: { fundingOrganisation: payerId },
       maturityDate: '2025-04-29T22:00:00.000Z',
+      hourlyPaymentPlanId: new ObjectId(),
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
@@ -1545,7 +1539,6 @@ describe('createBillList', () => {
               trainees: 1,
               trainers: 1,
               subProgram: 1,
-              hourlyPaymentPlan: 1,
               certificateGenerationMode: 1,
             },
           ],
@@ -1569,6 +1562,7 @@ describe('createBillList', () => {
           + 'Nom de l\'apprenant·e: Sarah PEL \r\n'
           + 'Nom du / des intervenants: toto TEST',
         },
+        hourlyPaymentPlan: payload.hourlyPaymentPlanId,
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-04-29T22:00:00.000Z',
@@ -1587,6 +1581,7 @@ describe('createBillList', () => {
           + 'Nom de l\'apprenant·e: Sarah PEL \r\n'
           + 'Nom du / des intervenants: toto TEST',
         },
+        hourlyPaymentPlan: payload.hourlyPaymentPlanId,
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-05-29T22:00:00.000Z',
@@ -1633,7 +1628,6 @@ describe('createBillList', () => {
               trainees: 1,
               trainers: 1,
               subProgram: 1,
-              hourlyPaymentPlan: 1,
               certificateGenerationMode: 1,
             },
           ],

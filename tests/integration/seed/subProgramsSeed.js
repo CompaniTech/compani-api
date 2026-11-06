@@ -5,6 +5,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const Step = require('../../../src/models/Step');
 const Activity = require('../../../src/models/Activity');
 const Course = require('../../../src/models/Course');
+const CourseBill = require('../../../src/models/CourseBill');
 const Card = require('../../../src/models/Card');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const TrainerBill = require('../../../src/models/TrainerBill');
@@ -12,7 +13,16 @@ const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const { vendorAdmin, trainer } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL, PAID, MONTHLY } = require('../../../src/helpers/constants');
+const {
+  WEBAPP,
+  INTRA,
+  PUBLISHED,
+  DRAFT,
+  GLOBAL,
+  PAID,
+  MONTHLY,
+  GROUP,
+} = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 
 const tester = {
@@ -246,15 +256,26 @@ const coursesList = [
     _id: new ObjectId(),
     format: 'blended',
     subProgram: subProgramsList[13]._id,
-    hourlyPaymentPlan: hourlyPaymentPlanId,
     type: INTRA,
     trainees: [],
     accessRules: [],
     companies: [authCompany._id],
     operationsRepresentative: vendorAdmin._id,
     tradeName: 'hourly plan',
+    expectedBillsCount: 1,
     certificateGenerationMode: MONTHLY,
     maxTrainees: 3,
+  },
+];
+
+const courseBillsList = [
+  {
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    companies: [authCompany._id],
+    payer: { company: authCompany._id },
+    mainFee: { price: 0, count: 1, countUnit: GROUP },
+    hourlyPaymentPlan: hourlyPaymentPlanId,
   },
 ];
 
@@ -299,6 +320,7 @@ const populateDB = async () => {
     Activity.create(activitiesList),
     Card.create(cardsList),
     Course.create(coursesList),
+    CourseBill.create(courseBillsList),
     CourseSlot.create(courseSlotsList),
     Program.create(programsList),
     Step.create(stepsList),

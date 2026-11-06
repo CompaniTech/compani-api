@@ -356,15 +356,7 @@ exports.createBillList = async (payload) => {
   const course = await Course
     .findOne(
       { _id: payload.course },
-      {
-        type: 1,
-        prices: 1,
-        trainees: 1,
-        trainers: 1,
-        subProgram: 1,
-        hourlyPaymentPlan: 1,
-        certificateGenerationMode: 1,
-      }
+      { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1, certificateGenerationMode: 1 }
     )
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
@@ -375,10 +367,6 @@ exports.createBillList = async (payload) => {
   if (get(course, 'subProgram.subjectToVat')) {
     const vendorCompany = await VendorCompaniesHelper.get();
     vat = vendorCompany.vat;
-  }
-
-  if (payload.hourlyPaymentPlanId) {
-    await Course.updateOne({ _id: payload.course }, { $set: { hourlyPaymentPlan: payload.hourlyPaymentPlanId } });
   }
 
   if (payload.quantity === 1) {
@@ -392,6 +380,7 @@ exports.createBillList = async (payload) => {
     const billCreated = await CourseBill.create({
       ...omit(payload, ['quantity', 'hourlyPaymentPlanId']),
       mainFee: { ...mainFee, ...Array.isArray(mainFeePrice) && { price: mainFeePrice[0] } },
+      ...payload.hourlyPaymentPlanId && { hourlyPaymentPlan: payload.hourlyPaymentPlanId },
       ...vat && { vat },
     });
 
@@ -453,8 +442,9 @@ exports.createBillList = async (payload) => {
         .formatSingleCourseBillDescription(billMaturityDate, course.trainees, get(course, 'trainers', []));
 
       await CourseBill.create({
-        ...omit(payload, ['quantity', 'maturityDate']),
+        ...omit(payload, ['quantity', 'maturityDate', 'hourlyPaymentPlanId']),
         mainFee: { ...payload.mainFee, description, ...payload.mainFee.price && { price: payload.mainFee.price[i] } },
+        ...payload.hourlyPaymentPlanId && { hourlyPaymentPlan: payload.hourlyPaymentPlanId },
         maturityDate: billMaturityDate.toISO(),
         ...vat && { vat },
       });

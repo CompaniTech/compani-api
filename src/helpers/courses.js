@@ -645,7 +645,11 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           ...(isRofOrAdmin
             ? [
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
-              { path: 'bills', select: '_id companies', options: { isVendorUser: true } },
+              {
+                path: 'bills',
+                select: '_id companies hourlyPaymentPlan maturityDate',
+                options: { isVendorUser: true },
+              },
             ]
             : []),
         ]

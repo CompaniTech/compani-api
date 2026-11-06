@@ -148,7 +148,6 @@ const courseList = [
     operationsRepresentative: trainerOrganisationManager._id,
     trainers: [trainer._id],
     certificateGenerationMode: MONTHLY,
-    hourlyPaymentPlan: hourlyPaymentPlanId,
     tradeName: 'nom',
   },
   { // 3 Archived course with monthly certificateGenerationMode
@@ -316,6 +315,7 @@ const courseBillsList = [
     companies: [authCompany._id],
     payer: { company: authCompany._id },
     mainFee: { price: 0, count: 1, countUnit: GROUP },
+    hourlyPaymentPlan: hourlyPaymentPlanId,
     maturityDate: '2020-01-15T10:00:00.000Z',
   },
   { // 1 bill with the real price, to reset when the certificate file is deleted
@@ -324,6 +324,7 @@ const courseBillsList = [
     companies: [authCompany._id],
     payer: { company: authCompany._id },
     mainFee: { price: 200, count: 1, countUnit: GROUP },
+    hourlyPaymentPlan: hourlyPaymentPlanId,
     maturityDate: '2020-01-20T10:00:00.000Z',
   },
 ];

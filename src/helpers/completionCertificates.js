@@ -2,10 +2,10 @@ const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const has = require('lodash/has');
 const pick = require('lodash/pick');
+const groupBy = require('lodash/groupBy');
 const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const CompletionCertificate = require('../models/CompletionCertificate');
 const TrainingContract = require('../models/TrainingContract');
-const Course = require('../models/Course');
 const CourseBill = require('../models/CourseBill');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -99,7 +99,7 @@ exports.generate = async (completionCertificateId) => {
     .populate([
       {
         path: 'course',
-        select: 'subProgram slots companies trainees tradeName hourlyPaymentPlan',
+        select: 'subProgram slots companies trainees tradeName',
         populate: [
           {
             path: 'slots',
@@ -228,48 +228,39 @@ exports.generate = async (completionCertificateId) => {
   }
   await CompletionCertificate.updateOne({ _id: completionCertificateId }, { $set: updatePayload });
 
-  if (course.hourlyPaymentPlan) {
-    const billsToUpdate = await CourseBill
-      .find(
-        {
-          course: course._id,
-          maturityDate: { $gte: startOfMonth, $lte: endOfMonth },
-          'mainFee.price': { $in: [0, null] },
-        },
-        { _id: 1 }
-      )
-      .setOptions({ isVendorUser: true })
-      .lean();
+  const billsToUpdate = await CourseBill
+    .find(
+      {
+        course: course._id,
+        maturityDate: { $gte: startOfMonth, $lte: endOfMonth },
+        hourlyPaymentPlan: { $exists: true },
+        'mainFee.price': { $in: [0, null] },
+      },
+      { hourlyPaymentPlan: 1 }
+    )
+    .setOptions({ isVendorUser: true })
+    .lean();
 
-    if (billsToUpdate.length) {
-      const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
-        .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, course.hourlyPaymentPlan));
-      const price = HourlyPaymentPlansHelper
-        .getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
+  const billsGroupedByPlan = groupBy(billsToUpdate, 'hourlyPaymentPlan');
+  for (const [planId, bills] of Object.entries(billsGroupedByPlan)) {
+    const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
+      .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, planId));
+    const price = HourlyPaymentPlansHelper.getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
 
-      await CourseBill
-        .updateMany({ _id: { $in: billsToUpdate.map(b => b._id) } }, { $set: { 'mainFee.price': price } });
-    }
+    await CourseBill.updateMany({ _id: { $in: bills.map(b => b._id) } }, { $set: { 'mainFee.price': price } });
   }
 };
 
 exports.create = async payload => CompletionCertificate.create(payload);
 
 exports.deleteFile = async (completionCertificateId) => {
-  const completionCertificate = await CompletionCertificate
-    .findOne({ _id: completionCertificateId })
-    .populate({ path: 'course', select: 'hourlyPaymentPlan' })
-    .lean();
+  const completionCertificate = await CompletionCertificate.findOne({ _id: completionCertificateId }).lean();
 
   let certificatesToDelete = [completionCertificate];
   if (completionCertificate.vaeSupportRemainingMinutes) {
     const { course, trainee, vaeSupportRemainingMinutes } = completionCertificate;
     const completionCertificateWithRemainingMinutes = await CompletionCertificate
-      .find({
-        course: course._id,
-        trainee,
-        vaeSupportRemainingMinutes: { $lt: vaeSupportRemainingMinutes },
-      })
+      .find({ course, trainee, vaeSupportRemainingMinutes: { $lt: vaeSupportRemainingMinutes } })
       .setOptions({ isVendorUser: true })
       .lean();
     certificatesToDelete = [completionCertificate, ...completionCertificateWithRemainingMinutes];
@@ -289,47 +280,18 @@ exports.deleteFile = async (completionCertificateId) => {
     await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
   }
 
-  if (completionCertificate.course.hourlyPaymentPlan) {
-    const course = await Course
-      .findOne(
-        { _id: completionCertificate.course._id },
-        { subProgram: 1, slots: 1, companies: 1, trainees: 1, hourlyPaymentPlan: 1 }
-      )
-      .populate({
-        path: 'slots',
-        select: 'startDate endDate trainers step',
-        populate: { path: 'step', select: 'durationCountedPerTrainer' },
-      })
-      .populate({
-        path: 'subProgram',
-        select: 'program steps hourlyPaymentPlans',
-        populate: [
-          { path: 'program', select: 'subPrograms' },
-          { path: 'steps', select: 'activities type theoreticalDuration' },
-        ],
-      })
-      .lean();
-
-    for (const certificate of certificatesToDelete) {
-      const durations = await computeMonthDurations(course, certificate.month, certificate.trainee);
-      const { startOfMonth, endOfMonth, durationPerStep, eLearningDuration } = durations;
-
-      const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
-        .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, course.hourlyPaymentPlan));
-      const price = HourlyPaymentPlansHelper
-        .getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
-
-      const billsToReset = await CourseBill
-        .find(
-          { course: course._id, maturityDate: { $gte: startOfMonth, $lte: endOfMonth }, 'mainFee.price': price },
-          { _id: 1 }
-        )
-        .setOptions({ isVendorUser: true })
-        .lean();
-
-      if (billsToReset.length) {
-        await CourseBill.updateMany({ _id: { $in: billsToReset.map(b => b._id) } }, { $set: { 'mainFee.price': 0 } });
-      }
-    }
+  for (const certificate of certificatesToDelete) {
+    await CourseBill.updateMany(
+      {
+        course: certificate.course,
+        maturityDate: {
+          $gte: CompaniDate(certificate.month, MM_YYYY).startOf(MONTH).toISO(),
+          $lte: CompaniDate(certificate.month, MM_YYYY).endOf(MONTH).toISO(),
+        },
+        hourlyPaymentPlan: { $exists: true },
+        billedAt: { $exists: false },
+      },
+      { $set: { 'mainFee.price': 0 } }
+    );
   }
 };

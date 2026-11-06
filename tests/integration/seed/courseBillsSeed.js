@@ -44,7 +44,10 @@ const subProgramList = [
     name: 'subProgram 1',
     steps: [steps[0]._id],
     status: PUBLISHED,
-    hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, prices: [{ step: steps[0]._id, hourlyAmount: 50 }] }],
+    hourlyPaymentPlans: [
+      { _id: hourlyPaymentPlanId, prices: [{ step: steps[0]._id, hourlyAmount: 50 }] },
+      { _id: new ObjectId(), prices: [{ step: steps[0]._id, hourlyAmount: 60 }] },
+    ],
   },
 ];
 
@@ -440,25 +443,6 @@ const coursesList = [
     gSheetId: 'gSheetId',
     tradeName: 'nom',
   },
-  { // 20 - single course with global certificate, already linked to another hourly payment plan
-    _id: new ObjectId(),
-    type: SINGLE,
-    maxTrainees: 1,
-    subProgram: subProgramList[0]._id,
-    misc: 'group 8',
-    trainers: [trainer._id],
-    operationsRepresentative: vendorAdmin._id,
-    contact: vendorAdmin._id,
-    trainees: [traineeFromOtherCompany._id],
-    expectedBillsCount: 4,
-    companies: [otherCompany._id],
-    certificateGenerationMode: GLOBAL,
-    hourlyPaymentPlan: new ObjectId(),
-    prices: [{ company: otherCompany._id, global: 15000, trainerFee: 1500 }],
-    folderId: 'folderId',
-    gSheetId: 'gSheetId',
-    tradeName: 'nom',
-  },
 ];
 
 const courseFundingOrganisationList = [
@@ -663,6 +647,15 @@ const courseBillsList = [
     mainFee: { price: 100, count: 1, countUnit: TRAINEE, description: 'test' },
     payer: { company: otherCompany._id },
     maturityDate: '2025-08-14T22:00:00.000+00:00',
+  },
+  { // 18 - bill linked with hourly payment plan
+    _id: new ObjectId(),
+    course: coursesList[17]._id,
+    companies: [otherCompany._id],
+    mainFee: { price: 100, count: 1, countUnit: TRAINEE, description: 'test' },
+    payer: { company: otherCompany._id },
+    hourlyPaymentPlan: subProgramList[0].hourlyPaymentPlans[1]._id,
+    maturityDate: '2025-09-14T22:00:00.000+00:00',
   },
 ];
 
