@@ -77,29 +77,25 @@ describe('remove', () => {
 
 describe('list', () => {
   let trainerPaymentFind;
-  let courseSlotFind;
-  let getCourseTrainerSalaryFromSlots;
+  let getCourseTrainerSalary;
 
   beforeEach(() => {
     trainerPaymentFind = sinon.stub(TrainerPayment, 'find');
-    courseSlotFind = sinon.stub(CourseSlot, 'find');
-    getCourseTrainerSalaryFromSlots = sinon.stub(CoursesHelper, 'getCourseTrainerSalaryFromSlots');
+    getCourseTrainerSalary = sinon.stub(CoursesHelper, 'getCourseTrainerSalary');
   });
 
   afterEach(() => {
     trainerPaymentFind.restore();
-    courseSlotFind.restore();
-    getCourseTrainerSalaryFromSlots.restore();
+    getCourseTrainerSalary.restore();
   });
 
-  it('should return the trainer payments with the given status', async () => {
+  it('should return PAID trainer payments', async () => {
     const trainerPayments = [{
       _id: new ObjectId(),
       status: PAID,
       trainerBill: { number: 'FACT', trainer: { identity: { lastname: 'Trainer' }, bic: 'WERTFRPP', iban: 'FR35' } },
     }];
     trainerPaymentFind.returns(SinonMongoose.stubChainedQueries(trainerPayments, ['populate', 'sort', 'lean']));
-    courseSlotFind.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
     const result = await TrainerPaymentsHelper.list({ status: PAID });
 
@@ -120,9 +116,9 @@ describe('list', () => {
               { path: 'trainer', select: 'identity bic iban' },
               {
                 path: 'course',
-                select: 'trainers billingPurchaseList rolesPerTrainer subProgram createdAt',
+                select: 'trainers billingPurchaseList subProgram',
                 populate: [
-                  { path: 'subProgram', select: 'name trainerPriceVersions' },
+                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
                   { path: 'billingPurchaseList.billingItem', select: 'type' },
                 ],
               },
@@ -137,44 +133,34 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(
-      courseSlotFind,
-      [
-        {
-          query: 'find',
-          args: [{ course: { $in: [] } }, { course: 1, step: 1, startDate: 1, endDate: 1, trainers: 1 }],
-        },
-        { query: 'lean' },
-      ]
-    );
-    sinon.assert.notCalled(getCourseTrainerSalaryFromSlots);
+    sinon.assert.notCalled(getCourseTrainerSalary);
   });
 
-  it('should return the planned salary of the course from billing purchase list or from slots', async () => {
+  it('should return trainer payments formatted with trainer\'s planned salary', async () => {
     const trainerId = new ObjectId();
     const trainer = { _id: trainerId, identity: { lastname: 'Trainer' }, bic: 'WERTFRPP', iban: 'FR35' };
-    const courseWithSalaryItem = {
+    const courseWithTrainerSalary = {
       _id: new ObjectId(),
       trainers: [trainerId],
       billingPurchaseList: [{ billingItem: { type: TRAINER_SALARY }, price: 40, count: 1 }],
     };
-    const courseWithoutSalaryItem = { _id: new ObjectId(), trainers: [trainerId, new ObjectId()] };
+    const courseWithoutTrainerSalary = { _id: new ObjectId(), trainers: [trainerId, new ObjectId()] };
     const trainerPayments = [
-      { _id: new ObjectId(), status: PAID, trainerBill: { number: 'FACT_1', trainer, course: courseWithSalaryItem } },
       {
         _id: new ObjectId(),
         status: PAID,
-        trainerBill: { number: 'FACT_2', trainer, course: courseWithoutSalaryItem },
+        trainerBill: { number: 'FACT_1', trainer, course: courseWithTrainerSalary },
       },
-    ];
-    const courseSlots = [
-      { _id: new ObjectId(), course: courseWithoutSalaryItem._id, trainers: [trainerId] },
-      { _id: new ObjectId(), course: courseWithoutSalaryItem._id, trainers: [trainerId] },
+      {
+        _id: new ObjectId(),
+        status: PAID,
+        trainerBill: { number: 'FACT_2', trainer, course: courseWithoutTrainerSalary },
+      },
     ];
 
     trainerPaymentFind.returns(SinonMongoose.stubChainedQueries(trainerPayments, ['populate', 'sort', 'lean']));
-    courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlots, ['lean']));
-    getCourseTrainerSalaryFromSlots.returns(120);
+    getCourseTrainerSalary.onCall(0).returns(40);
+    getCourseTrainerSalary.onCall(1).returns(undefined);
 
     const result = await TrainerPaymentsHelper.list({ status: PAID });
 
@@ -185,48 +171,87 @@ describe('list', () => {
         trainerBill: {
           number: 'FACT_1',
           trainer: formattedTrainer,
-          course: { _id: courseWithSalaryItem._id, plannedSalary: 40 },
+          course: { _id: courseWithTrainerSalary._id, plannedSalary: 40 },
         },
       },
       {
         ...trainerPayments[1],
-        trainerBill: {
-          number: 'FACT_2',
-          trainer: formattedTrainer,
-          course: { _id: courseWithoutSalaryItem._id, plannedSalary: 120 },
-        },
+        trainerBill: { number: 'FACT_2', trainer: formattedTrainer, course: { _id: courseWithoutTrainerSalary._id } },
       },
     ]);
+
     SinonMongoose.calledOnceWithExactly(
-      courseSlotFind,
+      trainerPaymentFind,
       [
+        { query: 'find', args: [{ status: { $in: [PAID] } }] },
         {
-          query: 'find',
-          args: [
-            { course: { $in: [courseWithSalaryItem._id, courseWithoutSalaryItem._id] } },
-            { course: 1, step: 1, startDate: 1, endDate: 1, trainers: 1 },
-          ],
+          query: 'populate',
+          args: [{
+            path: 'trainerBill',
+            select: 'number file course',
+            populate: [
+              { path: 'trainer', select: 'identity bic iban' },
+              {
+                path: 'course',
+                select: 'trainers billingPurchaseList subProgram',
+                populate: [
+                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
+                  { path: 'billingPurchaseList.billingItem', select: 'type' },
+                ],
+              },
+            ],
+          }],
         },
+        {
+          query: 'populate',
+          args: [{ path: 'trainerPaymentsXmlFileInfos', select: 'name', options: { isVendorUser: true } }],
+        },
+        { query: 'sort', args: [{ date: -1 }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(
-      getCourseTrainerSalaryFromSlots,
-      courseWithoutSalaryItem,
-      trainerId,
-      courseSlots
-    );
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(0), courseWithTrainerSalary);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(1), courseWithoutTrainerSalary);
   });
 
-  it('should query every status when status is an array', async () => {
+  it('should return PAID and PENDING trainer payments', async () => {
     const trainerPayments = [{ _id: new ObjectId(), status: PAID }, { _id: new ObjectId(), status: PENDING }];
 
     trainerPaymentFind.returns(SinonMongoose.stubChainedQueries(trainerPayments, ['populate', 'sort', 'lean']));
-    courseSlotFind.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
     const result = await TrainerPaymentsHelper.list({ status: [PENDING, PAID] });
     expect(result).toEqual(trainerPayments);
 
-    sinon.assert.calledOnceWithExactly(trainerPaymentFind, { status: { $in: [PENDING, PAID] } });
+    SinonMongoose.calledOnceWithExactly(
+      trainerPaymentFind,
+      [
+        { query: 'find', args: [{ status: { $in: [PENDING, PAID] } }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'trainerBill',
+            select: 'number file course',
+            populate: [
+              { path: 'trainer', select: 'identity bic iban' },
+              {
+                path: 'course',
+                select: 'trainers billingPurchaseList subProgram',
+                populate: [
+                  { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
+                  { path: 'billingPurchaseList.billingItem', select: 'type' },
+                ],
+              },
+            ],
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{ path: 'trainerPaymentsXmlFileInfos', select: 'name', options: { isVendorUser: true } }],
+        },
+        { query: 'sort', args: [{ date: -1 }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(getCourseTrainerSalary);
   });
 });
