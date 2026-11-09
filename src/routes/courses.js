@@ -140,8 +140,21 @@ exports.plugin = {
       method: 'GET',
       path: '/trainers-billing',
       options: {
-        auth: { scope: ['user:read-{query.trainer}'] },
-        validate: { query: Joi.object({ trainer: Joi.objectId().required() }) },
+        auth: { scope: ['trainerbills:edit', 'user:read-{query.trainer}'] },
+        validate: {
+          query: Joi.object({
+            trainer: Joi.objectId(),
+            startDate: dateToISOString,
+            endDate: Joi.when(
+              'startDate',
+              {
+                is: Joi.exist(),
+                then: dateToISOString && Joi.date().required().min(Joi.ref('startDate')),
+                otherwise: Joi.forbidden(),
+              }
+            ),
+          }),
+        },
         pre: [{ method: authorizeTrainerBillsGet }],
       },
       handler: listTrainersBilling,

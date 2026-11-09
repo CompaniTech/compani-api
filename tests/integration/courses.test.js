@@ -10097,6 +10097,94 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
   let authToken;
   beforeEach(populateDB);
 
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should return all trainers with their collective courses and billing infos', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const { trainers } = response.result.data;
+      expect(trainers.length).toBe(2);
+      expect(trainers.every(t => t.courses.every(c => c.type !== SINGLE))).toBeTruthy();
+    });
+
+    it('should return a specific trainer with its collective courses and billing infos', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?trainer=${trainer._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const { trainers } = response.result.data;
+      expect(trainers.length).toEqual(1);
+      expect(trainers[0].courses.length).toEqual(15);
+    });
+
+    it('should return all trainer\'s courses with slots in period', async () => {
+      const startDate = '2020-03-01T00:00:00.000Z';
+      const endDate = '2020-03-05T23:59:59.999Z';
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?startDate=${startDate}&endDate=${endDate}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const { trainers } = response.result.data;
+      expect(trainers.length).toEqual(2);
+      expect(trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainer._id)).courses.length).toEqual(2);
+      expect(trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerAndCoach._id)).courses.length).toEqual(4);
+    });
+
+    it('should return 400 if endDate without startDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing?endDate=2020-03-05T23:59:59.999Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if startDate without endDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing?startDate=2020-03-01T00:00:00.000Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if endDate is before startDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing?startDate=2020-03-05T00:00:00.000Z&endDate=2020-03-01T00:00:00.000Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if trainer does not exist', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?trainer=${new ObjectId()}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
   describe('TRAINER', () => {
     beforeEach(async () => {
       authToken = await getToken('trainer');
@@ -10125,6 +10213,16 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       const response = await app.inject({
         method: 'GET',
         url: `/courses/trainers-billing?trainer=${trainerAndCoach._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if no trainer in query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing',
         headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
       });
 
