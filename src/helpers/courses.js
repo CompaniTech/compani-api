@@ -2384,9 +2384,12 @@ exports.listTrainersBilling = async (query) => {
       paidAmount = NumbersHelper.toNumber(paidAmount);
 
       let status = INVOICED;
-      if (invoicedAmount === 0) status = NOT_INVOICED;
-      else if (invoicedAmount < plannedSalary) status = PARTIALLY_INVOICED;
-      else if (invoicedAmount === paidAmount) status = PAID;
+      if (NumbersHelper.isEqualTo(invoicedAmount, 0)) status = NOT_INVOICED;
+      else if (plannedSalary !== undefined && NumbersHelper.isLessThan(invoicedAmount, plannedSalary)) {
+        status = PARTIALLY_INVOICED;
+      } else if (NumbersHelper.isEqualTo(invoicedAmount, paidAmount)) {
+        status = PAID;
+      }
 
       trainerCourses.push({
         ...omit(course, ['billingPurchaseList']),
