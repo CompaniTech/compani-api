@@ -4,6 +4,7 @@ const CourseSlot = require('../models/CourseSlot');
 const TrainerBill = require('../models/TrainerBill');
 const TrainerPayment = require('../models/TrainerPayment');
 const GCloudStorageHelper = require('./gCloudStorage');
+const CoursesHelper = require('./courses');
 
 exports.list = async (query) => {
   const status = Array.isArray(query.status) ? query.status : [query.status];
@@ -12,20 +13,41 @@ exports.list = async (query) => {
     .find({ status: { $in: status } })
     .populate({
       path: 'trainerBill',
-      select: 'number file',
-      populate: { path: 'trainer', select: 'identity bic iban' },
+      select: 'number file course',
+      populate: [
+        { path: 'trainer', select: 'identity bic iban' },
+        {
+          path: 'course',
+          select: 'trainers billingPurchaseList subProgram',
+          populate: [
+            { path: 'subProgram', select: 'program', populate: { path: 'program', select: '_id' } },
+            { path: 'billingPurchaseList.billingItem', select: 'type' },
+          ],
+        },
+      ],
     })
     .populate({ path: 'trainerPaymentsXmlFileInfos', select: 'name', options: { isVendorUser: true } })
     .sort({ date: -1 })
     .lean();
 
   const formattedPayments = trainerPayments.map((payment) => {
-    const trainer = get(payment, 'trainerBill.trainer');
+    const { trainer, course } = payment.trainerBill || {};
     if (!trainer) return payment;
 
     const formattedTrainer = { ...omit(trainer, ['bic', 'iban']), hasBankDetails: !!(trainer.bic && trainer.iban) };
+    if (!course) return { ...payment, trainerBill: { ...payment.trainerBill, trainer: formattedTrainer } };
 
-    return { ...payment, trainerBill: { ...payment.trainerBill, trainer: formattedTrainer } };
+    const plannedSalary = CoursesHelper.getCourseTrainerSalary(course);
+    const formattedCourse = { _id: course._id, ...(plannedSalary && { plannedSalary }) };
+
+    return {
+      ...payment,
+      trainerBill: {
+        ...payment.trainerBill,
+        trainer: formattedTrainer,
+        course: formattedCourse,
+      },
+    };
   });
 
   return formattedPayments;
