@@ -77,15 +77,18 @@ describe('remove', () => {
 
 describe('list', () => {
   let trainerPaymentFind;
+  let trainerBillFind;
   let getCourseTrainerSalary;
 
   beforeEach(() => {
     trainerPaymentFind = sinon.stub(TrainerPayment, 'find');
+    trainerBillFind = sinon.stub(TrainerBill, 'find');
     getCourseTrainerSalary = sinon.stub(CoursesHelper, 'getCourseTrainerSalary');
   });
 
   afterEach(() => {
     trainerPaymentFind.restore();
+    trainerBillFind.restore();
     getCourseTrainerSalary.restore();
   });
 
@@ -134,6 +137,7 @@ describe('list', () => {
       ]
     );
     sinon.assert.notCalled(getCourseTrainerSalary);
+    sinon.assert.notCalled(trainerBillFind);
   });
 
   it('should return trainer payments formatted with trainer\'s planned salary', async () => {
@@ -158,9 +162,18 @@ describe('list', () => {
       },
     ];
 
+    const otherTrainerId = new ObjectId();
+    const trainerBills = [
+      { _id: new ObjectId(), course: courseWithTrainerSalary._id, trainer: trainerId, payment: { amount: 30 } },
+      { _id: new ObjectId(), course: courseWithTrainerSalary._id, trainer: trainerId, payment: { amount: 20.1 } },
+      { _id: new ObjectId(), course: courseWithTrainerSalary._id, trainer: otherTrainerId, payment: { amount: 50 } },
+      { _id: new ObjectId(), course: courseWithTrainerSalary._id, trainer: trainerId },
+    ];
+
     trainerPaymentFind.returns(SinonMongoose.stubChainedQueries(trainerPayments, ['populate', 'sort', 'lean']));
-    getCourseTrainerSalary.onCall(0).returns(40);
-    getCourseTrainerSalary.onCall(1).returns(undefined);
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+    getCourseTrainerSalary.withArgs(courseWithTrainerSalary).returns(40);
+    getCourseTrainerSalary.withArgs(courseWithoutTrainerSalary).returns(undefined);
 
     const result = await TrainerPaymentsHelper.list({ status: PAID });
 
@@ -171,7 +184,7 @@ describe('list', () => {
         trainerBill: {
           number: 'FACT_1',
           trainer: formattedTrainer,
-          course: { _id: courseWithTrainerSalary._id, plannedSalary: 40 },
+          course: { _id: courseWithTrainerSalary._id, plannedSalary: 40, totalPaymentsAmount: 50.1 },
         },
       },
       {
@@ -210,8 +223,22 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(0), courseWithTrainerSalary);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(1), courseWithoutTrainerSalary);
+    SinonMongoose.calledOnceWithExactly(
+      trainerBillFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: [courseWithTrainerSalary._id] } },
+            { course: 1, trainer: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'payment', select: 'amount' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledWithExactly(getCourseTrainerSalary, courseWithTrainerSalary);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary, courseWithoutTrainerSalary);
   });
 
   it('should return PAID and PENDING trainer payments', async () => {
