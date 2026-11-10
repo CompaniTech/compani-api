@@ -1548,6 +1548,16 @@ const trainerBillList = [
     submittedAt: '2025-01-01T10:00:00.000Z',
     file: { publicId: 'publicId', link: 'link' },
   },
+  {
+    _id: new ObjectId(),
+    trainer: trainer._id,
+    number: 'FACT_0002',
+    course: coursesList[7]._id,
+    amount: 50,
+    submittedAt: '2020-03-02T10:00:00.000Z',
+    createdAt: '2020-03-02T10:00:00.000Z',
+    file: { publicId: 'publicId2', link: 'link2' },
+  },
 ];
 
 const populateDB = async () => {

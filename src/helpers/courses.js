@@ -2331,18 +2331,24 @@ exports.getCourseTrainerSalary = (course) => {
 };
 
 exports.listTrainersBilling = async (query) => {
-  let courseIdsWithSlotsInPeriod;
+  let courseIdsWithSlotsOrBillsInPeriod;
   if (query.startDate) {
     const slotsInPeriod = await CourseSlot
       .find({ startDate: { $gte: query.startDate }, endDate: { $lte: query.endDate } }, { course: 1 })
       .lean();
-    courseIdsWithSlotsInPeriod = uniqBy(slotsInPeriod.map(slot => slot.course), id => id.toHexString());
+    const billsInPeriod = await TrainerBill
+      .find({ submittedAt: { $gte: query.startDate, $lte: query.endDate }, course: { $exists: true } }, { course: 1 })
+      .lean();
+    courseIdsWithSlotsOrBillsInPeriod = uniqBy(
+      [...slotsInPeriod.map(slot => slot.course), ...billsInPeriod.map(bill => bill.course)],
+      id => id.toHexString()
+    );
   }
 
   const courses = await Course
     .find(
       {
-        ...(courseIdsWithSlotsInPeriod && { _id: { $in: courseIdsWithSlotsInPeriod } }),
+        ...(courseIdsWithSlotsOrBillsInPeriod && { _id: { $in: courseIdsWithSlotsOrBillsInPeriod } }),
         ...(query.trainer ? { trainers: query.trainer } : { 'trainers.0': { $exists: true } }),
         type: { $nin: [SINGLE, INTER_B2C] },
       },
@@ -2359,7 +2365,7 @@ exports.listTrainersBilling = async (query) => {
   const trainerBills = await TrainerBill
     .find(
       { course: { $in: courses.map(c => c._id) }, ...(query.trainer && { trainer: query.trainer }) },
-      { course: 1, amount: 1, trainer: 1 }
+      { course: 1, amount: 1, trainer: 1, submittedAt: 1 }
     )
     .populate({ path: 'payment', select: 'status' })
     .lean();
@@ -2380,9 +2386,13 @@ exports.listTrainersBilling = async (query) => {
       const courseBills = billsByTrainerAndCourse[`${trainer._id}-${course._id}`] || [];
       let invoicedAmount = 0;
       let paidAmount = 0;
+      const billsSubmissionDates = [];
       for (const bill of courseBills) {
         invoicedAmount = NumbersHelper.add(invoicedAmount, bill.amount);
-        if (bill.payment?.status === PAID) paidAmount = NumbersHelper.add(paidAmount, bill.amount);
+        if (bill.payment?.status === PAID) {
+          paidAmount = NumbersHelper.add(paidAmount, bill.amount);
+        }
+        billsSubmissionDates.push(bill.submittedAt);
       }
       invoicedAmount = NumbersHelper.toNumber(invoicedAmount);
       paidAmount = NumbersHelper.toNumber(paidAmount);
@@ -2401,6 +2411,7 @@ exports.listTrainersBilling = async (query) => {
         invoicedAmount,
         paidAmount,
         status,
+        ...(status === INVOICED && { billsSubmissionDates }),
       });
     }
 

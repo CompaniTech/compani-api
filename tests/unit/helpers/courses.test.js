@@ -11455,10 +11455,34 @@ describe('listTrainersBilling', () => {
       },
     ];
     const trainerBills = [
-      { course: courses[1]._id, trainer: trainerId, amount: 40, payment: { status: 'pending' } },
-      { course: courses[2]._id, trainer: trainerId, amount: 100, payment: { status: 'pending' } },
-      { course: courses[3]._id, trainer: trainerId, amount: 60, payment: { status: 'paid' } },
-      { course: courses[3]._id, trainer: trainerId, amount: 40, payment: { status: 'paid' } },
+      {
+        course: courses[1]._id,
+        trainer: trainerId,
+        amount: 40,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[2]._id,
+        trainer: trainerId,
+        amount: 100,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[3]._id,
+        trainer: trainerId,
+        amount: 60,
+        payment: { status: 'paid' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[3]._id,
+        trainer: trainerId,
+        amount: 40,
+        payment: { status: 'paid' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
     ];
 
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
@@ -11483,6 +11507,7 @@ describe('listTrainersBilling', () => {
           invoicedAmount: 100,
           paidAmount: 0,
           status: 'invoiced',
+          billsSubmissionDates: ['2024-01-01T08:00:00.000Z'],
         },
         {
           ...omit(courses[3], ['billingPurchaseList']),
@@ -11521,7 +11546,7 @@ describe('listTrainersBilling', () => {
           query: 'find',
           args: [
             { course: { $in: courses.map(c => c._id) }, trainer: trainerId },
-            { course: 1, amount: 1, trainer: 1 },
+            { course: 1, amount: 1, trainer: 1, submittedAt: 1 },
           ],
         },
         { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
@@ -11531,7 +11556,7 @@ describe('listTrainersBilling', () => {
     sinon.assert.notCalled(courseSlotFind);
   });
 
-  it('should only return courses with slots in period', async () => {
+  it('should only return courses with slots or trainer bills in period', async () => {
     const trainerId = new ObjectId();
     const trainer = { _id: trainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
     const query = { trainer: trainerId, startDate: '2024-02-01T00:00:00.000Z', endDate: '2024-02-29T23:59:59.999Z' };
@@ -11551,17 +11576,16 @@ describe('listTrainersBilling', () => {
         endDate: '2024-02-01T10:00:00.000Z',
         trainers: [trainerId],
       },
-      {
-        course: courses[1]._id,
-        startDate: '2024-02-06T08:00:00.000Z',
-        endDate: '2024-02-06T10:00:00.000Z',
-        trainers: [trainerId],
-      },
+      { course: courses[0]._id, startDate: '2024-02-06T08:00:00.000Z', endDate: '2024-02-06T10:00:00.000Z' },
+    ];
+    const trainerBillsInPeriod = [
+      { course: courses[1]._id, submittedAt: '2024-02-15T08:00:00.000Z', trainer: trainerId, amount: 100 },
     ];
 
     courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlotsInPeriod, ['lean']));
+    trainerBillFind.onCall(0).returns(SinonMongoose.stubChainedQueries(trainerBillsInPeriod, ['lean']));
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
-    trainerBillFind.returns(SinonMongoose.stubChainedQueries([], ['populate', 'lean']));
+    trainerBillFind.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['populate', 'lean']));
 
     const result = await CourseHelper.listTrainersBilling(query);
 
@@ -11591,6 +11615,20 @@ describe('listTrainersBilling', () => {
         { query: 'lean' },
       ]
     );
+    SinonMongoose.calledWithExactly(
+      trainerBillFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { submittedAt: { $gte: query.startDate, $lte: query.endDate }, course: { $exists: true } },
+            { course: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
     SinonMongoose.calledOnceWithExactly(
       courseFind,
       [
@@ -11616,6 +11654,21 @@ describe('listTrainersBilling', () => {
         { query: 'lean' },
       ]
     );
+    SinonMongoose.calledWithExactly(
+      trainerBillFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: [courses[0]._id, courses[1]._id] }, trainer: trainerId },
+            { course: 1, amount: 1, trainer: 1, submittedAt: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
+        { query: 'lean' },
+      ],
+      1
+    );
   });
 
   it('should return all trainers without planned salary for courses with several trainers', async () => {
@@ -11638,9 +11691,27 @@ describe('listTrainersBilling', () => {
       },
     ];
     const trainerBills = [
-      { course: courses[0]._id, trainer: firstTrainerId, amount: 100, payment: { status: 'paid' } },
-      { course: courses[0]._id, trainer: secondTrainerId, amount: 40, payment: { status: 'pending' } },
-      { course: courses[1]._id, trainer: secondTrainerId, amount: 100, payment: { status: 'pending' } },
+      {
+        course: courses[0]._id,
+        trainer: firstTrainerId,
+        amount: 100,
+        payment: { status: 'paid' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[0]._id,
+        trainer: secondTrainerId,
+        amount: 40,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[1]._id,
+        trainer: secondTrainerId,
+        amount: 100,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
     ];
 
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
@@ -11658,13 +11729,20 @@ describe('listTrainersBilling', () => {
       {
         ...secondTrainer,
         courses: [
-          { ...omit(courses[0], ['billingPurchaseList']), invoicedAmount: 40, paidAmount: 0, status: 'invoiced' },
+          {
+            ...omit(courses[0], ['billingPurchaseList']),
+            invoicedAmount: 40,
+            paidAmount: 0,
+            status: 'invoiced',
+            billsSubmissionDates: ['2024-01-01T08:00:00.000Z'],
+          },
           {
             ...omit(courses[1], ['billingPurchaseList']),
             plannedSalary: 100,
             invoicedAmount: 100,
             paidAmount: 0,
             status: 'invoiced',
+            billsSubmissionDates: ['2024-01-01T08:00:00.000Z'],
           },
         ],
       },
@@ -11693,7 +11771,10 @@ describe('listTrainersBilling', () => {
     SinonMongoose.calledOnceWithExactly(
       trainerBillFind,
       [
-        { query: 'find', args: [{ course: { $in: courses.map(c => c._id) } }, { course: 1, amount: 1, trainer: 1 }] },
+        {
+          query: 'find',
+          args: [{ course: { $in: courses.map(c => c._id) } }, { course: 1, amount: 1, trainer: 1, submittedAt: 1 }],
+        },
         { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
         { query: 'lean' },
       ]
