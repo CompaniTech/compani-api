@@ -138,6 +138,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       .findOne({ subProgram: { $in: otherSubProgramList }, type: INTER_B2C, format: STRICTLY_E_LEARNING })
       .lean();
     let courseId;
+    const accessCompanies = existingCourse ? existingCourse.accessRules : payload.accessCompanies;
     if (existingCourse) {
       courseId = existingCourse._id;
       await updateExistingElearningCourse(existingCourse._id, subProgramId);
@@ -152,11 +153,11 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       courseId = course._id;
     }
     query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
-    if (payload.accessCompanies) {
+    if (accessCompanies && accessCompanies.length) {
       const userCompanies = await UserCompany
         .find(
           {
-            company: { $in: payload.accessCompanies },
+            company: { $in: accessCompanies },
             $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
           },
           { user: 1 }

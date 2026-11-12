@@ -11,6 +11,7 @@ const {
   TRAINER_ATTENDANCE_REMINDER,
 } = require('./constants');
 
+const EXPO_BATCH_SIZE = 100;
 const EXPO_NOTIFICATION_API_URL = 'https://exp.host/--/api/v2/push/send/';
 
 exports.sendNotificationToAPI = async payload => axios.post(`${EXPO_NOTIFICATION_API_URL}`, payload);
@@ -54,21 +55,27 @@ exports.sendNewElearningCourseNotification = async (courseId, query) => {
 
   const courseName = getCourseName(course);
 
-  const notifications = [];
+  const messages = [];
   for (const trainee of trainees) {
     for (const expoToken of trainee.formationExpoTokenList) {
-      notifications.push(
-        this.sendNotificationToUser({
-          title: 'Une nouvelle formation est disponible',
-          body: `Découvrez notre nouvelle formation : ${courseName}.`,
-          data: { _id: course.subProgram.program._id, type: NEW_ELEARNING_COURSE },
-          expoToken,
-        })
-      );
+      messages.push({
+        to: expoToken,
+        title: 'Une nouvelle formation est disponible',
+        body: `Découvrez notre nouvelle formation : ${courseName}.`,
+        data: { _id: course.subProgram.program._id, type: NEW_ELEARNING_COURSE },
+      });
     }
   }
 
-  await Promise.all(notifications);
+  // Expo accepts up to 100 messages per request and rate-limits (429) concurrent single requests.
+  // A notification failure must not make the calling request fail.
+  for (let i = 0; i < messages.length; i += EXPO_BATCH_SIZE) {
+    try {
+      await this.sendNotificationToAPI(messages.slice(i, i + EXPO_BATCH_SIZE));
+    } catch (e) {
+      console.error(e);
+    }
+  }
 };
 
 exports.sendAttendanceSheetSignatureRequestNotification =

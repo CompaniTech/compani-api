@@ -472,11 +472,13 @@ describe('updateSubProgram', () => {
         ],
         program: { name: 'nom', subPrograms: programSubPrograms },
       };
+      const userId = new ObjectId();
       const existingCourse = { _id: new ObjectId(), subProgram: otherSubProgramId, accessRules: [new ObjectId()] };
 
       findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedSubProgram));
       stepUpdateManyStub.returns({ activities });
       courseFindOne.returns(SinonMongoose.stubChainedQueries(existingCourse, ['lean']));
+      userCompanyFind.returns(SinonMongoose.stubChainedQueries([{ user: userId }], ['lean']));
 
       await SubProgramHelper.updateSubProgram(subProgram._id, payload);
 
@@ -496,14 +498,28 @@ describe('updateSubProgram', () => {
         { $set: { subProgram: subProgram._id } }
       );
       sinon.assert.notCalled(courseCreateStub);
-      sinon.assert.notCalled(find);
       sinon.assert.notCalled(updateOne);
+      SinonMongoose.calledOnceWithExactly(
+        userCompanyFind,
+        [
+          {
+            query: 'find',
+            args: [
+              {
+                company: { $in: existingCourse.accessRules },
+                $or: [{ endDate: { $gt: '2025-03-31T14:00:00.000Z' } }, { endDate: { $exists: false } }],
+              },
+              { user: 1 },
+            ],
+          },
+          { query: 'lean' },
+        ]
+      );
       sinon.assert.calledWithExactly(
         sendNewElearningCourseNotification,
         existingCourse._id,
-        { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
+        { _id: { $in: [userId] }, formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
       );
-      sinon.assert.notCalled(userCompanyFind);
       sinon.assert.notCalled(getLastVersion);
       sinon.assert.notCalled(findOne);
     });
