@@ -2389,9 +2389,7 @@ exports.listTrainersBilling = async (query) => {
       const billsSubmissionDates = [];
       for (const bill of courseBills) {
         invoicedAmount = NumbersHelper.add(invoicedAmount, bill.amount);
-        if (bill.payment?.status === PAID) {
-          paidAmount = NumbersHelper.add(paidAmount, bill.amount);
-        }
+        if (bill.payment?.status === PAID) paidAmount = NumbersHelper.add(paidAmount, bill.amount);
         billsSubmissionDates.push(bill.submittedAt);
       }
       invoicedAmount = NumbersHelper.toNumber(invoicedAmount);

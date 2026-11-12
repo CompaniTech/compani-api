@@ -10141,12 +10141,14 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       const { trainers } = response.result.data;
       expect(trainers.length).toEqual(2);
       const trainerCourses = trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainer._id)).courses;
+      const trainerAndCoachCourses = trainers
+        .find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerAndCoach._id)).courses;
       expect(trainerCourses.length).toEqual(3);
-      expect(trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerAndCoach._id)).courses.length).toEqual(4);
+      expect(trainerAndCoachCourses.length).toEqual(4);
       const trainerCourseBilledInPeriod = trainerCourses
         .find(c => UtilsHelper.areObjectIdsEquals(c._id, coursesList[7]._id));
-      expect(trainerCourseBilledInPeriod.billsSubmissionDates)
-        .toEqual([CompaniDate('2020-03-02T10:00:00.000Z').toDate()]);
+      expect(CompaniDate(trainerCourseBilledInPeriod.billsSubmissionDates[0]).toISO())
+        .toEqual('2020-03-02T10:00:00.000Z');
     });
 
     it('should return 400 if endDate without startDate', async () => {

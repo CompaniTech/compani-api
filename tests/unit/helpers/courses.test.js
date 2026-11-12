@@ -11585,7 +11585,7 @@ describe('listTrainersBilling', () => {
     courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlotsInPeriod, ['lean']));
     trainerBillFind.onCall(0).returns(SinonMongoose.stubChainedQueries(trainerBillsInPeriod, ['lean']));
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
-    trainerBillFind.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['populate', 'lean']));
+    trainerBillFind.onCall(1).returns(SinonMongoose.stubChainedQueries([]));
 
     const result = await CourseHelper.listTrainersBilling(query);
 
