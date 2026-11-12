@@ -10128,7 +10128,7 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       expect(trainers[0].courses.length).toEqual(15);
     });
 
-    it('should return all trainer\'s courses with slots in period', async () => {
+    it('should return all trainer\'s courses with slots or trainer bills in period', async () => {
       const startDate = '2020-03-01T00:00:00.000Z';
       const endDate = '2020-03-05T23:59:59.999Z';
       const response = await app.inject({
@@ -10140,8 +10140,15 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       expect(response.statusCode).toBe(200);
       const { trainers } = response.result.data;
       expect(trainers.length).toEqual(2);
-      expect(trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainer._id)).courses.length).toEqual(2);
-      expect(trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerAndCoach._id)).courses.length).toEqual(4);
+      const trainerCourses = trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainer._id)).courses;
+      const trainerAndCoachCourses = trainers
+        .find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerAndCoach._id)).courses;
+      expect(trainerCourses.length).toEqual(3);
+      expect(trainerAndCoachCourses.length).toEqual(4);
+      const trainerCourseBilledInPeriod = trainerCourses
+        .find(c => UtilsHelper.areObjectIdsEquals(c._id, coursesList[7]._id));
+      expect(CompaniDate(trainerCourseBilledInPeriod.billsSubmissionDates[0]).toISO())
+        .toEqual('2020-03-02T10:00:00.000Z');
     });
 
     it('should return 400 if endDate without startDate', async () => {
@@ -10202,7 +10209,8 @@ describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
       const { courses } = response.result.data.trainers[0];
       expect(courses.length).toEqual(15);
       expect(courses.every(c => c.type !== SINGLE)).toBeTruthy();
-      expect(courses[0]).toEqual(expect.objectContaining({
+      const notInvoicedCourse = courses.find(c => UtilsHelper.areObjectIdsEquals(c._id, coursesList[4]._id));
+      expect(notInvoicedCourse).toEqual(expect.objectContaining({
         invoicedAmount: 0,
         paidAmount: 0,
         status: 'not_invoiced',
