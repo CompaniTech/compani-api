@@ -171,7 +171,7 @@ describe('list', () => {
     ];
 
     trainerPaymentFind.returns(SinonMongoose.stubChainedQueries(trainerPayments, ['populate', 'sort', 'lean']));
-    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills));
     getCourseTrainerSalary.withArgs(courseWithTrainerSalary).returns(40);
     getCourseTrainerSalary.withArgs(courseWithoutTrainerSalary).returns(undefined);
 
@@ -237,8 +237,10 @@ describe('list', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledWithExactly(getCourseTrainerSalary, courseWithTrainerSalary);
-    sinon.assert.calledWithExactly(getCourseTrainerSalary, courseWithoutTrainerSalary);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(0), courseWithTrainerSalary);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(1), courseWithoutTrainerSalary);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(2), courseWithTrainerSalary);
+    sinon.assert.calledWithExactly(getCourseTrainerSalary.getCall(3), courseWithoutTrainerSalary);
   });
 
   it('should return PAID and PENDING trainer payments', async () => {
@@ -280,5 +282,6 @@ describe('list', () => {
       ]
     );
     sinon.assert.notCalled(getCourseTrainerSalary);
+    sinon.assert.notCalled(trainerBillFind);
   });
 });
