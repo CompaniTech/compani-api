@@ -248,6 +248,9 @@ exports.generate = async (completionCertificateId) => {
       .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, planId));
     const priceDetails = HourlyPaymentPlansHelper
       .getPricesFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration, course.subProgram.steps);
+    const hasPricedStep = Object.values(priceDetails).some(line => line.stepId);
+    if (!hasPricedStep && CompaniDuration(eLearningDuration).isShorterThan('PT900S')) continue;
+
     const descriptionDetails = HourlyPaymentPlansHelper.getPriceDetails(priceDetails);
     const price = NumbersHelper
       .toFixedToFloat(NumbersHelper.add(...Object.values(priceDetails).map(line => line.price)));

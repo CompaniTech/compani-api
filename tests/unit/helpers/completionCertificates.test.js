@@ -846,6 +846,9 @@ describe('generate', () => {
     const companyId = new ObjectId();
     const courseId = new ObjectId();
     const month = '03-2025';
+    const hourlyPaymentPlan = { _id: new ObjectId(), prices: [], elearningPrice: 20 };
+    const billId = new ObjectId();
+    const durationPerStep = { [stepId]: CompaniDuration({ minutes: 390 }) };
     const slotList = [
       { _id: new ObjectId(), startDate: '2025-01-20T10:00:00.000Z', endDate: '2025-01-20T14:00:00.000Z' },
       { _id: new ObjectId(), startDate: '2025-03-14T10:00:00.000Z', endDate: '2025-03-14T14:00:00.000Z' },
@@ -878,6 +881,7 @@ describe('generate', () => {
         subProgram: {
           _id: subProgramIds[0],
           program: { subPrograms: subProgramIds },
+          hourlyPaymentPlans: [hourlyPaymentPlan],
           steps: [
             {
               type: E_LEARNING,
@@ -936,10 +940,14 @@ describe('generate', () => {
     );
     findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([{ month: '02-2025' }], ['setOptions', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getDurationPerStep.returns({ [stepId]: CompaniDuration({ minutes: 390 }) });
+    getDurationPerStep.returns(durationPerStep);
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
-    findBills.returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
+    findBills.returns(SinonMongoose.stubChainedQueries(
+      [{ _id: billId, hourlyPaymentPlan: hourlyPaymentPlan._id }],
+      ['setOptions', 'lean']
+    ));
+    getPricesFromDurations.returns({ elearning: { duration: CompaniDuration({ seconds: 200 }), price: '1.11' } });
     getRealELearningDuration.returns('PT200S');
     formatIdentity.returns('Jean SAITRIEN');
     getPdf.returns('pdf');
@@ -1099,9 +1107,15 @@ describe('generate', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(updateManyBills);
-    sinon.assert.notCalled(getPricesFromDurations);
+    sinon.assert.calledOnceWithExactly(
+      getPricesFromDurations,
+      hourlyPaymentPlan,
+      durationPerStep,
+      'PT200S',
+      completionCertificate.course.subProgram.steps
+    );
     sinon.assert.notCalled(getPriceDetails);
+    sinon.assert.notCalled(updateManyBills);
   });
 
   it('should generate completion certificate in VAE period (attendance within remaining budget)', async () => {
