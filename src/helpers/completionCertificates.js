@@ -11,6 +11,7 @@ const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 const { MM_YYYY, MONTH, DD_MM_YYYY, SHORT_DURATION_H_MM, OFFICIAL } = require('./constants');
 const UtilsHelper = require('./utils');
+const NumbersHelper = require('./numbers');
 const HourlyPaymentPlansHelper = require('./hourlyPaymentPlans');
 const CourseSlotsHelper = require('./courseSlots');
 const CoursesHelper = require('./courses');
@@ -112,7 +113,7 @@ exports.generate = async (completionCertificateId) => {
             select: 'program steps hourlyPaymentPlans',
             populate: [
               { path: 'program', select: 'subPrograms' },
-              { path: 'steps', select: 'activities type theoreticalDuration' },
+              { path: 'steps', select: 'name activities type theoreticalDuration' },
             ],
           },
         ],
@@ -245,9 +246,47 @@ exports.generate = async (completionCertificateId) => {
   for (const [planId, bills] of Object.entries(billsGroupedByPlan)) {
     const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
       .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, planId));
-    const price = HourlyPaymentPlansHelper.getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
+    const priceDetails = HourlyPaymentPlansHelper
+      .getPricesFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration, course.subProgram.steps);
+    const descriptionDetails = HourlyPaymentPlansHelper.getPriceDetails(priceDetails);
+    const price = NumbersHelper
+      .toFixedToFloat(NumbersHelper.add(...Object.values(priceDetails).map(line => line.price)));
 
-    await CourseBill.updateMany({ _id: { $in: bills.map(b => b._id) } }, { $set: { 'mainFee.price': price } });
+    await CourseBill.updateMany(
+      { _id: { $in: bills.map(b => b._id) } },
+      [{
+        $set: {
+          'mainFee.price': price,
+          'mainFee.description': {
+            $let: {
+              vars: {
+                base: {
+                  $rtrim: {
+                    input: {
+                      $arrayElemAt: [
+                        { $split: [{ $ifNull: ['$mainFee.description', ''] }, '--- Détail ---'] },
+                        0,
+                      ],
+                    },
+                    chars: '\r\n ',
+                  },
+                },
+              },
+              in: {
+                $concat: descriptionDetails
+                  ? [
+                    '$$base',
+                    { $cond: [{ $eq: ['$$base', ''] }, '', '\r\n'] },
+                    `--- Détail ---\r\n${descriptionDetails}`,
+                  ]
+                  : ['$$base'],
+              },
+            },
+          },
+        },
+      }],
+      { updatePipeline: true }
+    );
   }
 };
 
@@ -291,7 +330,30 @@ exports.deleteFile = async (completionCertificateId) => {
         hourlyPaymentPlan: { $exists: true },
         billedAt: { $exists: false },
       },
-      { $set: { 'mainFee.price': 0 } }
+      [{
+        $set: {
+          'mainFee.price': 0,
+          'mainFee.description': {
+            $let: {
+              vars: {
+                base: {
+                  $rtrim: {
+                    input: {
+                      $arrayElemAt: [
+                        { $split: [{ $ifNull: ['$mainFee.description', ''] }, '--- Détail ---'] },
+                        0,
+                      ],
+                    },
+                    chars: '\r\n ',
+                  },
+                },
+              },
+              in: { $cond: [{ $eq: ['$$base', ''] }, '$$REMOVE', '$$base'] },
+            },
+          },
+        },
+      }],
+      { updatePipeline: true }
     );
   }
 };
