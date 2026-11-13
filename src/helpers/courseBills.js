@@ -338,7 +338,7 @@ exports.computePriceFromDurations = async (courseId, hourlyPaymentPlanId) => {
     .populate({
       path: 'subProgram',
       select: 'steps hourlyPaymentPlans',
-      populate: { path: 'steps', select: 'activities type theoreticalDuration' },
+      populate: { path: 'steps', select: 'name activities type theoreticalDuration' },
     })
     .lean();
 
@@ -349,7 +349,13 @@ exports.computePriceFromDurations = async (courseId, hourlyPaymentPlanId) => {
   const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
     .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, hourlyPaymentPlanId));
 
-  return HourlyPaymentPlansHelper.getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
+  const priceDetails = HourlyPaymentPlansHelper
+    .getPricesFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration, course.subProgram.steps);
+
+  return {
+    price: NumbersHelper.toFixedToFloat(NumbersHelper.add(...Object.values(priceDetails).map(line => line.price))),
+    details: HourlyPaymentPlansHelper.getPriceDetails(priceDetails),
+  };
 };
 
 exports.createBillList = async (payload) => {
@@ -372,9 +378,13 @@ exports.createBillList = async (payload) => {
   if (payload.quantity === 1) {
     const isGlobalCertificationCourseWithPriceFromDurations = payload.hourlyPaymentPlanId &&
       course.certificateGenerationMode === GLOBAL;
-    const mainFee = isGlobalCertificationCourseWithPriceFromDurations
-      ? { ...payload.mainFee, price: await exports.computePriceFromDurations(course._id, payload.hourlyPaymentPlanId) }
-      : payload.mainFee;
+    let { mainFee } = payload;
+    if (isGlobalCertificationCourseWithPriceFromDurations) {
+      const { price, details } = await exports.computePriceFromDurations(course._id, payload.hourlyPaymentPlanId);
+      const descriptionDetails = details && `--- Détail ---\r\n${details}`;
+      const description = [payload.mainFee.description, descriptionDetails].filter(Boolean).join('\r\n');
+      mainFee = { ...payload.mainFee, price, ...description && { description } };
+    }
     const { price: mainFeePrice } = mainFee;
 
     const billCreated = await CourseBill.create({

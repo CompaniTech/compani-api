@@ -237,8 +237,10 @@ describe('COMPLETION CERTIFICATES ROUTES - PUT /completioncertificates/{_id}', (
       });
 
       expect(response.statusCode).toBe(200);
-      const billCount = await CourseBill.countDocuments({ _id: courseBillsList[0]._id, 'mainFee.price': 200 });
-      expect(billCount).toBe(1);
+      const bill = await CourseBill.findOne({ _id: courseBillsList[0]._id }).setOptions({ isVendorUser: true }).lean();
+      expect(bill.mainFee.price).toBe(200);
+      expect(bill.mainFee.description)
+        .toBe('Facture test\r\n--- Détail ---\r\nautre étape - 4h - 200,00\u00a0€');
     });
 
     it('should return 404 if completion certificate does not exist', async () => {
@@ -421,8 +423,9 @@ describe('COMPLETION CERTIFICATES ROUTES - DELETE /completioncertificates/{_id}/
       });
 
       expect(response.statusCode).toBe(200);
-      const billCount = await CourseBill.countDocuments({ _id: courseBillsList[1]._id, 'mainFee.price': 0 });
-      expect(billCount).toBe(1);
+      const bill = await CourseBill.findOne({ _id: courseBillsList[1]._id }).setOptions({ isVendorUser: true }).lean();
+      expect(bill.mainFee.price).toBe(0);
+      expect(bill.mainFee.description).toBe('Facture test');
     });
 
     it('should return 404 if completion certificate does not exist', async () => {
