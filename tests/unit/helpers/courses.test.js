@@ -11487,6 +11487,7 @@ describe('listTrainersBilling', () => {
 
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
     trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+    courseSlotFind.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
     const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
 
@@ -11553,7 +11554,86 @@ describe('listTrainersBilling', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(courseSlotFind);
+    SinonMongoose.calledOnceWithExactly(
+      courseSlotFind,
+      [
+        {
+          query: 'find',
+          args: [{ course: { $in: courses.map(c => c._id) } }, { course: 1, endDate: 1 }],
+        },
+        { query: 'lean' },
+      ]
+    );
+  });
+
+  it('should consider courses ended before trainer payments start as paid', async () => {
+    const trainerId = new ObjectId();
+    const trainer = { _id: trainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const billingPurchaseList = [{ billingItem: { type: TRAINER_SALARY }, price: 100, count: 1 }];
+    const courses = [
+      { _id: new ObjectId(), trainers: [trainer], tradeName: 'ended before', billingPurchaseList },
+      { _id: new ObjectId(), trainers: [trainer], tradeName: 'ended after with bill', billingPurchaseList },
+      { _id: new ObjectId(), trainers: [trainer], tradeName: 'ended after', billingPurchaseList },
+      { _id: new ObjectId(), trainers: [trainer], tradeName: 'with slot to plan', billingPurchaseList },
+    ];
+    const trainerBills = [
+      {
+        course: courses[1]._id,
+        trainer: trainerId,
+        amount: 40,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+    ];
+    const courseSlots = [
+      { course: courses[0]._id, endDate: '2026-09-01T10:00:00.000Z' },
+      { course: courses[0]._id, endDate: '2026-09-30T21:00:00.000Z' },
+      { course: courses[1]._id, endDate: '2026-11-01T10:00:00.000Z' },
+      { course: courses[2]._id, endDate: '2026-09-01T10:00:00.000Z' },
+      { course: courses[2]._id, endDate: '2026-10-01T08:00:00.000Z' },
+      { course: courses[3]._id, endDate: '2026-09-01T10:00:00.000Z' },
+      { course: courses[3]._id },
+    ];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+    courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlots, ['lean']));
+
+    const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
+
+    expect(result).toEqual([{
+      ...trainer,
+      courses: [
+        {
+          ...omit(courses[0], ['billingPurchaseList']),
+          plannedSalary: 100,
+          invoicedAmount: 0,
+          paidAmount: 0,
+          status: 'paid',
+        },
+        {
+          ...omit(courses[1], ['billingPurchaseList']),
+          plannedSalary: 100,
+          invoicedAmount: 40,
+          paidAmount: 0,
+          status: 'partially_invoiced',
+        },
+        {
+          ...omit(courses[2], ['billingPurchaseList']),
+          plannedSalary: 100,
+          invoicedAmount: 0,
+          paidAmount: 0,
+          status: 'not_invoiced',
+        },
+        {
+          ...omit(courses[3], ['billingPurchaseList']),
+          plannedSalary: 100,
+          invoicedAmount: 0,
+          paidAmount: 0,
+          status: 'not_invoiced',
+        },
+      ],
+    }]);
   });
 
   it('should only return courses with slots or trainer bills in period', async () => {
@@ -11582,10 +11662,11 @@ describe('listTrainersBilling', () => {
       { course: courses[1]._id, submittedAt: '2024-02-15T08:00:00.000Z', trainer: trainerId, amount: 100 },
     ];
 
-    courseSlotFind.returns(SinonMongoose.stubChainedQueries(courseSlotsInPeriod, ['lean']));
+    courseSlotFind.onCall(0).returns(SinonMongoose.stubChainedQueries(courseSlotsInPeriod, ['lean']));
     trainerBillFind.onCall(0).returns(SinonMongoose.stubChainedQueries(trainerBillsInPeriod, ['lean']));
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
     trainerBillFind.onCall(1).returns(SinonMongoose.stubChainedQueries([]));
+    courseSlotFind.onCall(1).returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
     const result = await CourseHelper.listTrainersBilling(query);
 
@@ -11602,7 +11683,7 @@ describe('listTrainersBilling', () => {
         { ...courses[1], invoicedAmount: 0, paidAmount: 0, status: 'not_invoiced' },
       ],
     }]);
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
       courseSlotFind,
       [
         {
@@ -11613,7 +11694,22 @@ describe('listTrainersBilling', () => {
           ],
         },
         { query: 'lean' },
-      ]
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      courseSlotFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: [courses[0]._id, courses[1]._id] } },
+            { course: 1, endDate: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ],
+      1
     );
     SinonMongoose.calledWithExactly(
       trainerBillFind,
@@ -11716,6 +11812,7 @@ describe('listTrainersBilling', () => {
 
     courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
     trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+    courseSlotFind.returns(SinonMongoose.stubChainedQueries([], ['lean']));
 
     const result = await CourseHelper.listTrainersBilling({});
 
@@ -11779,6 +11876,15 @@ describe('listTrainersBilling', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(courseSlotFind);
+    SinonMongoose.calledOnceWithExactly(
+      courseSlotFind,
+      [
+        {
+          query: 'find',
+          args: [{ course: { $in: courses.map(c => c._id) } }, { course: 1, endDate: 1 }],
+        },
+        { query: 'lean' },
+      ]
+    );
   });
 });

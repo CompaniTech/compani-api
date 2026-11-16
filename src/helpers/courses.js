@@ -2330,6 +2330,10 @@ exports.getCourseTrainerSalary = (course) => {
   return salary ? NumbersHelper.toNumber(NumbersHelper.multiply(salary.price, salary.count)) : undefined;
 };
 
+// Trainer billing was not tracked in the app before October 1st, 2026:
+// courses ended before this date are considered as paid
+const TRAINER_PAYMENTS_START_DATE = '2026-09-30T22:00:00.000Z';
+
 exports.listTrainersBilling = async (query) => {
   let courseIdsWithSlotsOrBillsInPeriod;
   if (query.startDate) {
@@ -2371,6 +2375,14 @@ exports.listTrainersBilling = async (query) => {
     .lean();
   const billsByTrainerAndCourse = groupBy(trainerBills, bill => `${bill.trainer}-${bill.course}`);
 
+  const courseSlots = await CourseSlot
+    .find({ course: { $in: courses.map(c => c._id) } }, { course: 1, endDate: 1 })
+    .lean();
+  const isCourseEndedBeforePaymentsStart = mapValues(
+    groupBy(courseSlots, 'course'),
+    slots => slots.every(slot => slot.endDate && CompaniDate(slot.endDate).isBefore(TRAINER_PAYMENTS_START_DATE))
+  );
+
   const trainers = query.trainer
     ? [courses[0].trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, query.trainer))]
     : uniqBy(courses.flatMap(c => c.trainers), t => t._id.toHexString());
@@ -2396,7 +2408,8 @@ exports.listTrainersBilling = async (query) => {
       paidAmount = NumbersHelper.toNumber(paidAmount);
 
       let status = INVOICED;
-      if (NumbersHelper.isEqualTo(invoicedAmount, 0)) status = NOT_INVOICED;
+      if (isCourseEndedBeforePaymentsStart[course._id]) status = PAID;
+      else if (NumbersHelper.isEqualTo(invoicedAmount, 0)) status = NOT_INVOICED;
       else if (plannedSalary !== undefined && NumbersHelper.isLessThan(invoicedAmount, plannedSalary)) {
         status = PARTIALLY_INVOICED;
       } else if (NumbersHelper.isEqualTo(invoicedAmount, paidAmount)) {
