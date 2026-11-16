@@ -237,7 +237,7 @@ exports.generate = async (completionCertificateId) => {
         hourlyPaymentPlan: { $exists: true },
         'mainFee.price': { $in: [0, null] },
       },
-      { hourlyPaymentPlan: 1 }
+      { hourlyPaymentPlan: 1, 'mainFee.description': 1 }
     )
     .setOptions({ isVendorUser: true })
     .lean();
@@ -255,41 +255,17 @@ exports.generate = async (completionCertificateId) => {
     const price = NumbersHelper
       .toFixedToFloat(NumbersHelper.add(...Object.values(priceDetails).map(line => line.price)));
 
-    await CourseBill.updateMany(
-      { _id: { $in: bills.map(b => b._id) } },
-      [{
-        $set: {
-          'mainFee.price': price,
-          'mainFee.description': {
-            $let: {
-              vars: {
-                base: {
-                  $rtrim: {
-                    input: {
-                      $arrayElemAt: [
-                        { $split: [{ $ifNull: ['$mainFee.description', ''] }, '--- Détail ---'] },
-                        0,
-                      ],
-                    },
-                    chars: '\r\n ',
-                  },
-                },
-              },
-              in: {
-                $concat: descriptionDetails
-                  ? [
-                    '$$base',
-                    { $cond: [{ $eq: ['$$base', ''] }, '', '\r\n'] },
-                    `--- Détail ---\r\n${descriptionDetails}`,
-                  ]
-                  : ['$$base'],
-              },
-            },
-          },
-        },
-      }],
-      { updatePipeline: true }
-    );
+    await Promise.all(bills.map((bill) => {
+      const base = (get(bill, 'mainFee.description') || '').split('--- Détail ---')[0].trimEnd();
+      const description = descriptionDetails
+        ? `${base ? `${base}\r\n` : ''}--- Détail ---\r\n${descriptionDetails}`
+        : base;
+
+      return CourseBill.updateOne(
+        { _id: bill._id },
+        { $set: { 'mainFee.price': price, 'mainFee.description': description } }
+      );
+    }));
   }
 };
 
@@ -323,40 +299,31 @@ exports.deleteFile = async (completionCertificateId) => {
   }
 
   for (const certificate of certificatesToDelete) {
-    await CourseBill.updateMany(
-      {
-        course: certificate.course,
-        maturityDate: {
-          $gte: CompaniDate(certificate.month, MM_YYYY).startOf(MONTH).toISO(),
-          $lte: CompaniDate(certificate.month, MM_YYYY).endOf(MONTH).toISO(),
-        },
-        hourlyPaymentPlan: { $exists: true },
-        billedAt: { $exists: false },
-      },
-      [{
-        $set: {
-          'mainFee.price': 0,
-          'mainFee.description': {
-            $let: {
-              vars: {
-                base: {
-                  $rtrim: {
-                    input: {
-                      $arrayElemAt: [
-                        { $split: [{ $ifNull: ['$mainFee.description', ''] }, '--- Détail ---'] },
-                        0,
-                      ],
-                    },
-                    chars: '\r\n ',
-                  },
-                },
-              },
-              in: { $cond: [{ $eq: ['$$base', ''] }, '$$REMOVE', '$$base'] },
-            },
+    const bills = await CourseBill
+      .find(
+        {
+          course: certificate.course,
+          maturityDate: {
+            $gte: CompaniDate(certificate.month, MM_YYYY).startOf(MONTH).toISO(),
+            $lte: CompaniDate(certificate.month, MM_YYYY).endOf(MONTH).toISO(),
           },
+          hourlyPaymentPlan: { $exists: true },
+          billedAt: { $exists: false },
         },
-      }],
-      { updatePipeline: true }
-    );
+        { 'mainFee.description': 1 }
+      )
+      .setOptions({ isVendorUser: true })
+      .lean();
+
+    await Promise.all(bills.map((bill) => {
+      const base = (get(bill, 'mainFee.description') || '').split('--- Détail ---')[0].trimEnd();
+
+      return CourseBill.updateOne(
+        { _id: bill._id },
+        base
+          ? { $set: { 'mainFee.price': 0, 'mainFee.description': base } }
+          : { $set: { 'mainFee.price': 0 }, $unset: { 'mainFee.description': '' } }
+      );
+    }));
   }
 };
