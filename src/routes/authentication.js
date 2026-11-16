@@ -20,7 +20,7 @@ const {
   MOBILE_CONNECTION_MODE,
   UNKNOWN,
 } = require('../helpers/constants');
-const { checkPasswordToken, authorizeRefreshToken } = require('./preHandlers/authentication');
+const { checkPasswordToken, authorizeRefreshToken, authorizeForgotPassword } = require('./preHandlers/authentication');
 
 exports.plugin = {
   name: 'routes-authentication',
@@ -93,6 +93,7 @@ exports.plugin = {
           }),
         },
         auth: false,
+        pre: [{ method: authorizeForgotPassword }],
       },
       handler: forgotPassword,
     });

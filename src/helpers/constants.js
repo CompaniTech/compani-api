@@ -14,6 +14,8 @@ module.exports = {
   REJECTED: 'rejected',
   // Time
   SECONDS_IN_AN_HOUR: 3600,
+  // Verification code
+  MAX_VERIFICATION_ATTEMPTS: 3,
   // COMPANIDURATION
   PT0S: 'PT0S',
   // COMPANIDURATION FORMATS

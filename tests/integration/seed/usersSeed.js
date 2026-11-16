@@ -469,6 +469,7 @@ const identityVerifications = [
     code: '3310',
     createdAt: new Date('2021-01-25T10:05:32.582Z'),
   },
+  { _id: new ObjectId(), email: usersSeedList[1].local.email, code: '4321', attempts: 3 },
 ];
 
 const isInList = (list, user) => list.some(i => i._id.toHexString() === user._id.toHexString());

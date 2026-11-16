@@ -9,9 +9,10 @@ const User = require('../models/User');
 const { TOKEN_EXPIRE_DURATION } = require('../models/User');
 const IdentityVerification = require('../models/IdentityVerification');
 const translate = require('./translate');
-const { MOBILE, EMAIL } = require('./constants');
+const { MOBILE, EMAIL, SECONDS_IN_AN_HOUR } = require('./constants');
 const EmailHelper = require('./email');
 const SmsHelper = require('./sms');
+const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 
@@ -84,16 +85,22 @@ exports.createPasswordToken = async email => exports.generatePasswordToken(email
 exports.forgotPassword = async (payload) => {
   const { email, origin, type } = payload;
   if (origin === MOBILE) {
-    const code = String(Math.floor(Math.random() * 9000 + 1000));
-    let verification = await IdentityVerification.findOneAndUpdate({ email }, { $set: { code } }, { new: true }).lean();
-    if (!verification) verification = await IdentityVerification.create({ email, code });
+    const code = UtilsHelper.generateVerificationCode();
+    const isOlderThanOneHour = { $gt: [{ $subtract: ['$$NOW', '$updatedAt'] }, SECONDS_IN_AN_HOUR * 1000] };
+    const verification = await IdentityVerification
+      .findOneAndUpdate(
+        { email },
+        [{ $set: { code, attempts: { $cond: [isOlderThanOneHour, 0, { $ifNull: ['$attempts', 0] }] } } }],
+        { new: true, updatePipeline: true }
+      )
+      .lean();
+    if (!verification) await IdentityVerification.create({ email, code });
 
-    if (type === EMAIL) return EmailHelper.sendVerificationCodeEmail(email, verification.code);
+    if (type === EMAIL) return EmailHelper.sendVerificationCodeEmail(email, code);
 
     const user = await User.findOne({ 'local.email': email }, { contact: 1 }).lean();
-    if (!get(user, 'contact.phone')) throw Boom.conflict();
 
-    return SmsHelper.sendVerificationCodeSms(user.contact, verification.code);
+    return SmsHelper.sendVerificationCodeSms(user.contact, code);
   }
 
   const passwordToken = await exports.generatePasswordToken(email, 3600000);

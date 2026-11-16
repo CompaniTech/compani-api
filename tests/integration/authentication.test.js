@@ -2,6 +2,7 @@ const { expect } = require('expect');
 const sinon = require('sinon');
 const app = require('../../server');
 const User = require('../../src/models/User');
+const IdentityVerification = require('../../src/models/IdentityVerification');
 const { usersSeedList, populateDB } = require('./seed/usersSeed');
 const { getToken, getTokenByCredentials } = require('./helpers/authentication');
 const { noRoleNoCompany } = require('../seed/authUsersSeed');
@@ -260,12 +261,13 @@ describe('AUTHENTICATION ROUTES - GET /users/passwordtoken/:token', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.result.data.token).toEqual(expect.any(String));
+    expect(await IdentityVerification.countDocuments({ email })).toBe(0);
   });
 
   it('should return a 404 error if verification code is wrong', async () => {
     const token = '3311';
     const { email } = usersSeedList[3].local;
-    fakeDate.returns(new Date('2021-01-26T10:08:32.582Z'));
+    fakeDate.returns(new Date('2021-01-25T10:08:32.582Z'));
 
     const response = await app.inject({
       method: 'GET',
@@ -273,6 +275,20 @@ describe('AUTHENTICATION ROUTES - GET /users/passwordtoken/:token', () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+
+  it('should return a 429 error if verification code was wrong 3 times', async () => {
+    const { email } = usersSeedList[3].local;
+    fakeDate.returns(new Date('2021-01-25T10:08:32.582Z'));
+
+    for (const token of ['3311', '3312', '3313']) {
+      await app.inject({ method: 'GET', url: `/users/passwordtoken/${token}?email=${email}` });
+    }
+
+    const responseWithGoodCode = await app.inject({ method: 'GET', url: `/users/passwordtoken/3310?email=${email}` });
+
+    expect(responseWithGoodCode.statusCode).toBe(429);
+    expect(responseWithGoodCode.result.message).toBe('Trop de tentatives. Réessayez dans 57 min.');
   });
 
   it('should return a 404 error if token is not valid', async () => {
@@ -421,6 +437,17 @@ describe('AUTHENTICATION ROUTES - POST /users/forgot-password', () => {
     sinon.assert.calledWith(sendVerificationCodeEmail, userEmail, sinon.match(sinon.match.string));
   });
 
+  it('should return 429 if origin mobile and verification code has already been tried 3 times', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/users/forgot-password',
+      payload: { email: usersSeedList[1].local.email, origin: MOBILE, type: EMAIL },
+    });
+
+    expect(response.statusCode).toBe(429);
+    sinon.assert.notCalled(sendVerificationCodeEmail);
+  });
+
   it('should send a code verification by sms if origin mobile and type phone', async () => {
     const userEmail = usersSeedList[0].local.email;
     const response = await app.inject({
@@ -431,6 +458,17 @@ describe('AUTHENTICATION ROUTES - POST /users/forgot-password', () => {
 
     expect(response.statusCode).toBe(200);
     sinon.assert.calledWith(sendVerificationCodeSms, usersSeedList[0].contact, sinon.match(sinon.match.string));
+  });
+
+  it('should return 409 if origin mobile, type phone and user has no phone', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/users/forgot-password',
+      payload: { email: usersSeedList[1].local.email, origin: MOBILE, type: PHONE },
+    });
+
+    expect(response.statusCode).toBe(409);
+    sinon.assert.notCalled(sendVerificationCodeSms);
   });
 
   it('should return 400 if origin mobile and wrong type', async () => {
@@ -470,5 +508,16 @@ describe('AUTHENTICATION ROUTES - POST /users/forgot-password', () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+
+  it('should return a 404 error if origin mobile and user does not exist', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/users/forgot-password',
+      payload: { email: 't@t.com', origin: MOBILE, type: EMAIL },
+    });
+
+    expect(response.statusCode).toBe(404);
+    sinon.assert.notCalled(sendVerificationCodeEmail);
   });
 });
