@@ -470,6 +470,7 @@ describe('list', () => {
     const singleSubProgramId = new ObjectId();
     const interSubProgramId = new ObjectId();
     const activitiesIds = [new ObjectId(), new ObjectId()];
+    const hourlyPaymentPlan = new ObjectId();
     const periodBills = [
       {
         _id: billIds[0],
@@ -524,6 +525,7 @@ describe('list', () => {
         companies: [companies[1]],
         mainFee: { price: 320, count: 1 },
         payer: { name: 'Funder' },
+        hourlyPaymentPlan,
         maturityDate: '2025-06-13T14:00:00.000Z',
       },
       {
@@ -627,6 +629,32 @@ describe('list', () => {
         maturityDate: '2025-06-13T14:00:00.000Z',
       },
       {
+        _id: new ObjectId(),
+        course: courseIds[2],
+        companies: [companies[0]._id],
+        billedAt: '2025-05-10T14:00:00.000Z',
+        hourlyPaymentPlan,
+        mainFee: { price: 100, count: 1 },
+        billingPurchaseList: [{ price: 10, count: 2 }],
+      },
+      {
+        _id: new ObjectId(),
+        course: courseIds[2],
+        companies: [companies[0]._id],
+        billedAt: '2025-05-20T14:00:00.000Z',
+        hourlyPaymentPlan,
+        mainFee: { price: 50, count: 1 },
+      },
+      {
+        _id: new ObjectId(),
+        course: courseIds[2],
+        companies: [companies[0]._id],
+        billedAt: '2025-05-25T14:00:00.000Z',
+        hourlyPaymentPlan,
+        mainFee: { price: 900, count: 1 },
+        courseCreditNote: { _id: new ObjectId() },
+      },
+      {
         _id: billIds[3],
         course: courseIds[3],
         companies: [companies[1]._id],
@@ -713,6 +741,8 @@ describe('list', () => {
         companies: [companies[1]],
         mainFee: { price: 320, count: 1 },
         payer: { name: 'Funder' },
+        hourlyPaymentPlan,
+        validatedHourlyBillsAmount: 170,
         maturityDate: '2025-06-13T14:00:00.000Z',
         course: {
           _id: courseIds[2],
@@ -860,7 +890,15 @@ describe('list', () => {
           query: 'find',
           args: [
             { course: { $in: [courseIds[0], courseIds[2], courseIds[3], courseIds[5]] } },
-            { course: 1, companies: 1, billedAt: 1, maturityDate: 1 },
+            {
+              course: 1,
+              companies: 1,
+              billedAt: 1,
+              maturityDate: 1,
+              hourlyPaymentPlan: 1,
+              mainFee: 1,
+              billingPurchaseList: 1,
+            },
           ],
         },
         {
@@ -1027,7 +1065,18 @@ describe('list', () => {
       [
         {
           query: 'find',
-          args: [{ course: { $in: [courseId] } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 }],
+          args: [
+            { course: { $in: [courseId] } },
+            {
+              course: 1,
+              companies: 1,
+              billedAt: 1,
+              maturityDate: 1,
+              hourlyPaymentPlan: 1,
+              mainFee: 1,
+              billingPurchaseList: 1,
+            },
+          ],
         },
         {
           query: 'populate',
@@ -1133,7 +1182,18 @@ describe('list', () => {
       [
         {
           query: 'find',
-          args: [{ course: { $in: [courseId] } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 }],
+          args: [
+            { course: { $in: [courseId] } },
+            {
+              course: 1,
+              companies: 1,
+              billedAt: 1,
+              maturityDate: 1,
+              hourlyPaymentPlan: 1,
+              mainFee: 1,
+              billingPurchaseList: 1,
+            },
+          ],
         },
         {
           query: 'populate',

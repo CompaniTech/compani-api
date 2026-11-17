@@ -152,11 +152,22 @@ const formatCourse = (course, traineesCompanyAtCourseRegistrationByCourse) => {
   return { ...course, trainees: courseTrainees, prices: coursePrices };
 };
 
-const getBillRanks = async (courseIds, isVendorUser) => {
-  if (!courseIds.length) return {};
+const getBillInfos = async (courseIds, isVendorUser, shouldComputePreviousBillsSum) => {
+  if (!courseIds.length) return { billRanks: {}, validatedHourlyBillsAmount: {} };
 
   const bills = await CourseBill
-    .find({ course: { $in: courseIds } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 })
+    .find(
+      { course: { $in: courseIds } },
+      {
+        course: 1,
+        companies: 1,
+        billedAt: 1,
+        maturityDate: 1,
+        hourlyPaymentPlan: 1,
+        mainFee: 1,
+        billingPurchaseList: 1,
+      }
+    )
     .populate({ path: 'courseCreditNote', select: 'courseBill', options: { isVendorUser } })
     .setOptions({ isVendorUser })
     .lean();
@@ -171,17 +182,27 @@ const getBillRanks = async (courseIds, isVendorUser) => {
 
   const billsGroupedByCourse = groupBy(sortedBills, bill => `${bill.course}-${[...bill.companies].sort().join(',')}`);
 
-  const ranks = {};
+  const billRanks = {};
   for (const billsGroupedByCompanies of Object.values(billsGroupedByCourse)) {
     for (let i = 0; i < billsGroupedByCompanies.length; i++) {
-      ranks[billsGroupedByCompanies[i]._id] = { index: i + 1, billsCount: billsGroupedByCompanies.length };
+      billRanks[billsGroupedByCompanies[i]._id] = { index: i + 1, billsCount: billsGroupedByCompanies.length };
     }
   }
 
-  return ranks;
+  if (!shouldComputePreviousBillsSum) return { billRanks, validatedHourlyBillsAmount: {} };
+
+  const validatedHourlyBills = sortedBills.filter(bill => bill.billedAt && bill.hourlyPaymentPlan);
+  const validatedHourlyBillsAmount = mapValues(
+    groupBy(validatedHourlyBills, 'course'),
+    billsOfCourse => NumbersHelper.toNumber(billsOfCourse
+      .reduce((acc, bill) => NumbersHelper.add(acc, exports.getDetailWithTaxes(bill).netExclTaxes), 0))
+  );
+
+  return { billRanks, validatedHourlyBillsAmount };
 };
 
 exports.list = async (query, credentials) => {
+  const isVendorUser = !!get(credentials, 'role.vendor');
   if (query.action === LIST) {
     const courseBills = await CourseBill
       .find({ course: query.course })
@@ -189,8 +210,8 @@ exports.list = async (query, credentials) => {
       .populate({ path: 'companies', select: 'name' })
       .populate({ path: 'payer.fundingOrganisation', select: 'name' })
       .populate({ path: 'payer.company', select: 'name' })
-      .populate({ path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } })
-      .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
+      .populate({ path: 'courseCreditNote', options: { isVendorUser } })
+      .setOptions({ isVendorUser })
       .lean();
 
     return courseBills
@@ -250,9 +271,9 @@ exports.list = async (query, credentials) => {
       ),
       { path: 'payer.fundingOrganisation', select: 'name' },
       { path: 'payer.company', select: 'name' },
-      { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
+      { path: 'courseCreditNote', options: { isVendorUser } },
     ])
-    .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
+    .setOptions({ isVendorUser })
     .lean();
 
   let traineesWithLongEnoughActivityHistory = {};
@@ -306,7 +327,7 @@ exports.list = async (query, credentials) => {
   }
 
   const courseIds = filteredCourseBills.map(bill => bill.course._id);
-  const billRanks = await getBillRanks(courseIds, !!get(credentials, 'role.vendor'));
+  const { billRanks, validatedHourlyBillsAmount } = await getBillInfos(courseIds, isVendorUser, !query.isValidated);
 
   return filteredCourseBills.map((bill) => {
     const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
@@ -314,6 +335,9 @@ exports.list = async (query, credentials) => {
     return {
       ...bill,
       rank: billRanks[bill._id],
+      ...validatedHourlyBillsAmount[bill.course._id] && {
+        validatedHourlyBillsAmount: validatedHourlyBillsAmount[bill.course._id],
+      },
       ...(query.startDate && query.endDate
         ? {
           course: formatCourse(bill.course, traineesCompanyAtCourseRegistrationByCourse),
