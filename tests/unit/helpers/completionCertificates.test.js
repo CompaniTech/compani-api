@@ -804,7 +804,8 @@ describe('generate', () => {
       hourlyPaymentPlan,
       durationPerStep,
       'PT3H30M',
-      completionCertificate.course.subProgram.steps
+      completionCertificate.course.subProgram.steps,
+      undefined
     );
     sinon.assert.calledOnceWithExactly(getPriceDetails, priceDetails);
     sinon.assert.calledOnceWithExactly(
@@ -825,7 +826,8 @@ describe('generate', () => {
     const companyId = new ObjectId();
     const courseId = new ObjectId();
     const month = '03-2025';
-    const hourlyPaymentPlan = { _id: new ObjectId(), prices: [], elearningPrice: 20 };
+    const hourlyPaymentPlan = { _id: new ObjectId(), prices: [], elearningPrice: 20, elearningLimit: 'PT36000S' };
+    const previousELearningDuration = CompaniDuration({ hours: 8 });
     const billId = new ObjectId();
     const durationPerStep = { [stepId]: CompaniDuration({ minutes: 390 }) };
     const slotList = [
@@ -921,13 +923,15 @@ describe('generate', () => {
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getDurationPerStep.returns(durationPerStep);
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
-    findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    findActivityHistories.onCall(0).returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    findActivityHistories.onCall(1).returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     findBills.returns(SinonMongoose.stubChainedQueries(
       [{ _id: billId, hourlyPaymentPlan: hourlyPaymentPlan._id }],
       ['setOptions', 'lean']
     ));
     getPricesFromDurations.returns({ elearning: { duration: CompaniDuration({ seconds: 200 }), price: '1.11' } });
-    getRealELearningDuration.returns('PT200S');
+    getRealELearningDuration.onCall(0).returns('PT200S');
+    getRealELearningDuration.onCall(1).returns(previousELearningDuration);
     formatIdentity.returns('Jean SAITRIEN');
     getPdf.returns('pdf');
     uploadCourseFile.returns({ publicId: '1234', link: 'tests/1234' });
@@ -980,12 +984,21 @@ describe('generate', () => {
         { query: 'lean' },
       ]
     );
-    SinonMongoose.calledOnceWithExactly(
+    SinonMongoose.calledWithExactly(
       findActivityHistories,
       [
         { query: 'find', args: [{ activity: { $in: activitiesIds }, user: traineeId }] },
         { query: 'lean' },
-      ]
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      findActivityHistories,
+      [
+        { query: 'find', args: [{ activity: { $in: activitiesIds }, user: traineeId }] },
+        { query: 'lean' },
+      ],
+      1
     );
     sinon.assert.calledOnceWithExactly(
       getDurationPerStep,
@@ -1021,7 +1034,8 @@ describe('generate', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(getRealELearningDuration, [activityHistories[0]]);
+    sinon.assert.calledWithExactly(getRealELearningDuration.getCall(0), [activityHistories[0]]);
+    sinon.assert.calledWithExactly(getRealELearningDuration.getCall(1), [activityHistories[1]]);
     sinon.assert.calledOnceWithExactly(formatIdentity, { firstname: 'Jean', lastname: 'Saitrien' }, 'FL');
     sinon.assert.calledOnceWithExactly(
       getPdf,
@@ -1091,7 +1105,8 @@ describe('generate', () => {
       hourlyPaymentPlan,
       durationPerStep,
       'PT200S',
-      completionCertificate.course.subProgram.steps
+      completionCertificate.course.subProgram.steps,
+      previousELearningDuration
     );
     sinon.assert.notCalled(getPriceDetails);
     sinon.assert.notCalled(updateOneBill);

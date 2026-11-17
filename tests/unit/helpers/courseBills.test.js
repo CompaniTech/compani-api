@@ -1183,7 +1183,11 @@ describe('computePriceFromDurations', () => {
     const priceDetails = { stepId: { stepName: 'étape', duration: CompaniDuration({ minutes: 120 }), price: '300' } };
 
     const steps = [{ _id: new ObjectId(), name: 'étape' }];
-    const course = { subProgram: { hourlyPaymentPlans, steps }, slots: [], trainees: [traineeId] };
+    const course = {
+      subProgram: { hourlyPaymentPlans, steps },
+      slots: [{ startDate: '2025-01-10T09:00:00.000Z' }],
+      trainees: [traineeId],
+    };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'lean']));
     getTraineeDurations.returns({ slotsWithAttendance, eLearningDuration });
@@ -1203,6 +1207,7 @@ describe('computePriceFromDurations', () => {
           args: [{
             path: 'slots',
             select: 'startDate endDate trainers step',
+            options: { sort: { startDate: 1 } },
             populate: { path: 'step', select: 'durationCountedPerTrainer' },
           }],
         },
@@ -1217,7 +1222,12 @@ describe('computePriceFromDurations', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(getTraineeDurations, course, traineeId);
+    sinon.assert.calledOnceWithExactly(
+      getTraineeDurations,
+      course,
+      traineeId,
+      { startDate: '2025-01-10T09:00:00.000Z', endDate: sinon.match.string }
+    );
     sinon.assert.calledOnceWithExactly(getDurationPerStep, slotsWithAttendance);
     sinon.assert.calledOnceWithExactly(
       getPricesFromDurations,

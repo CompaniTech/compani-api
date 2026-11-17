@@ -333,6 +333,7 @@ exports.computePriceFromDurations = async (courseId, hourlyPaymentPlanId) => {
     .populate({
       path: 'slots',
       select: 'startDate endDate trainers step',
+      options: { sort: { startDate: 1 } },
       populate: { path: 'step', select: 'durationCountedPerTrainer' },
     })
     .populate({
@@ -342,8 +343,9 @@ exports.computePriceFromDurations = async (courseId, hourlyPaymentPlanId) => {
     })
     .lean();
 
+  const dates = { startDate: course.slots[0].startDate, endDate: CompaniDate().toISO() };
   const { slotsWithAttendance, eLearningDuration } = await CoursesHelper
-    .getTraineeDurations(course, course.trainees[0]);
+    .getTraineeDurations(course, course.trainees[0], dates);
 
   const durationPerStep = CourseSlotsHelper.getDurationPerStep(slotsWithAttendance);
   const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans

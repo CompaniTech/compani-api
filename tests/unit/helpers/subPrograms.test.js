@@ -824,14 +824,28 @@ describe('updateSubProgram', () => {
     it('should add a new plan if payload.hourlyPaymentPlan has no id', async () => {
       const subProgramId = new ObjectId();
       const stepId = new ObjectId();
-      const payload = { hourlyPaymentPlan: { prices: [{ step: stepId, hourlyAmount: 50 }], elearningPrice: 30 } };
+      const payload = {
+        hourlyPaymentPlan: {
+          prices: [{ step: stepId, hourlyAmount: 50 }],
+          elearningPrice: 30,
+          elearningLimit: 'PT72000S',
+        },
+      };
 
       await SubProgramHelper.updateSubProgram(subProgramId, payload);
 
       sinon.assert.calledOnceWithExactly(
         updateOne,
         { _id: subProgramId },
-        { $push: { hourlyPaymentPlans: { prices: [{ step: stepId, hourlyAmount: 50 }], elearningPrice: 30 } } }
+        {
+          $push: {
+            hourlyPaymentPlans: {
+              prices: [{ step: stepId, hourlyAmount: 50 }],
+              elearningPrice: 30,
+              elearningLimit: 72000,
+            },
+          },
+        }
       );
       sinon.assert.notCalled(findOne);
       sinon.assert.notCalled(findOneAndUpdate);
@@ -841,7 +855,7 @@ describe('updateSubProgram', () => {
       const subProgramId = new ObjectId();
       const hourlyPaymentPlanId = new ObjectId();
       const prices = [{ step: new ObjectId(), hourlyAmount: 60 }];
-      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, prices } };
+      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, prices, elearningPrice: 30 } };
 
       await SubProgramHelper.updateSubProgram(subProgramId, payload);
 
@@ -849,8 +863,8 @@ describe('updateSubProgram', () => {
         updateOne,
         { _id: subProgramId, 'hourlyPaymentPlans._id': hourlyPaymentPlanId },
         {
-          $set: { 'hourlyPaymentPlans.$.prices': prices },
-          $unset: { 'hourlyPaymentPlans.$.elearningPrice': '' },
+          $set: { 'hourlyPaymentPlans.$.prices': prices, 'hourlyPaymentPlans.$.elearningPrice': 30 },
+          $unset: { 'hourlyPaymentPlans.$.elearningLimit': '' },
         }
       );
       sinon.assert.notCalled(findOne);

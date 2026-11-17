@@ -36,6 +36,26 @@ describe('getPricesFromDurations', () => {
     expect(result.elearning.duration.asMinutes()).toBe(90);
   });
 
+  it('should cap the billed e-learning with the limit of the plan (real duration, capped price)', () => {
+    const hourlyPaymentPlan = { prices: [], elearningPrice: 20, elearningLimit: 'PT36000S' };
+    const eLearningDuration = CompaniDuration({ hours: 3 });
+
+    const noPreviousDuration = HourlyPaymentPlansHelper
+      .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, []);
+    const limitNotReached = HourlyPaymentPlansHelper
+      .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, [], CompaniDuration({ hours: 6 }));
+    const limitReachedThisMonth = HourlyPaymentPlansHelper
+      .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, [], CompaniDuration({ hours: 8 }));
+    const limitAlreadyReached = HourlyPaymentPlansHelper
+      .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, [], CompaniDuration({ hours: 12 }));
+
+    expect(noPreviousDuration.elearning.price).toBe('60');
+    expect(limitNotReached.elearning.price).toBe('60');
+    expect(limitReachedThisMonth.elearning.price).toBe('40');
+    expect(limitReachedThisMonth.elearning.duration.asHours()).toBe(3);
+    expect(limitAlreadyReached.elearning.price).toBe('0');
+  });
+
   it('should not return e-learning line if there is no e-learning price', () => {
     const steps = [{ _id: new ObjectId(), name: 'étape A' }];
     const hourlyPaymentPlan = { prices: [{ step: steps[0]._id, hourlyAmount: 40 }] };
