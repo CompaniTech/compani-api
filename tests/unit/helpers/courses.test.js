@@ -9003,17 +9003,17 @@ describe('generateCompletionCertificates', () => {
 });
 
 describe('addAccessRule', () => {
-  let updateOne;
+  let findOneAndUpdate;
   let userCompanyFind;
   let sendNewElearningCourseNotification;
 
   beforeEach(() => {
-    updateOne = sinon.stub(Course, 'updateOne');
+    findOneAndUpdate = sinon.stub(Course, 'findOneAndUpdate');
     userCompanyFind = sinon.stub(UserCompany, 'find');
     sendNewElearningCourseNotification = sinon.stub(NotificationHelper, 'sendNewElearningCourseNotification');
   });
   afterEach(() => {
-    updateOne.restore();
+    findOneAndUpdate.restore();
     userCompanyFind.restore();
     sendNewElearningCourseNotification.restore();
   });
@@ -9026,10 +9026,25 @@ describe('addAccessRule', () => {
       { user: userIds[0], company: payload.companies[0] },
       { user: userIds[1], company: payload.companies[1] },
     ];
+    findOneAndUpdate.returns(SinonMongoose.stubChainedQueries({ _id: courseId, subProgram: { _id: new ObjectId() } }));
     userCompanyFind.returns(SinonMongoose.stubChainedQueries(userCompanies, ['lean']));
     await CourseHelper.addAccessRule(courseId, payload);
 
-    sinon.assert.calledOnceWithExactly(updateOne, { _id: courseId }, { $addToSet: { accessRules: payload.companies } });
+    SinonMongoose.calledOnceWithExactly(
+      findOneAndUpdate,
+      [
+        {
+          query: 'findOneAndUpdate',
+          args: [
+            { _id: courseId },
+            { $addToSet: { accessRules: payload.companies } },
+            { projection: { subProgram: 1 } },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'subProgram', select: 'archivedAt' }] },
+        { query: 'lean' },
+      ]
+    );
     SinonMongoose.calledOnceWithExactly(
       userCompanyFind,
       [
@@ -9050,6 +9065,21 @@ describe('addAccessRule', () => {
       courseId,
       { _id: { $in: userIds }, formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
     );
+  });
+
+  it('should add access rule but not notify if subProgram is archived', async () => {
+    const courseId = new ObjectId();
+    const payload = { companies: [new ObjectId()] };
+    findOneAndUpdate.returns(
+      SinonMongoose
+        .stubChainedQueries({ _id: courseId, subProgram: { _id: new ObjectId(), archivedAt: '2025-01-01T12:30:00' } })
+    );
+
+    await CourseHelper.addAccessRule(courseId, payload);
+
+    sinon.assert.calledOnce(findOneAndUpdate);
+    sinon.assert.notCalled(userCompanyFind);
+    sinon.assert.notCalled(sendNewElearningCourseNotification);
   });
 });
 

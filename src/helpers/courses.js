@@ -1869,7 +1869,15 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
 };
 
 exports.addAccessRule = async (courseId, payload) => {
-  await Course.updateOne({ _id: courseId }, { $addToSet: { accessRules: payload.companies } });
+  const course = await Course
+    .findOneAndUpdate(
+      { _id: courseId },
+      { $addToSet: { accessRules: payload.companies } },
+      { projection: { subProgram: 1 } }
+    )
+    .populate({ path: 'subProgram', select: 'archivedAt' })
+    .lean();
+  if (course.subProgram.archivedAt) return;
 
   const userCompanies = await UserCompany
     .find(
