@@ -11,6 +11,7 @@ const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 const { MM_YYYY, MONTH, DD_MM_YYYY, SHORT_DURATION_H_MM, OFFICIAL } = require('./constants');
 const UtilsHelper = require('./utils');
+const NumbersHelper = require('./numbers');
 const HourlyPaymentPlansHelper = require('./hourlyPaymentPlans');
 const CourseSlotsHelper = require('./courseSlots');
 const CoursesHelper = require('./courses');
@@ -112,7 +113,7 @@ exports.generate = async (completionCertificateId) => {
             select: 'program steps hourlyPaymentPlans',
             populate: [
               { path: 'program', select: 'subPrograms' },
-              { path: 'steps', select: 'activities type theoreticalDuration' },
+              { path: 'steps', select: 'name activities type theoreticalDuration' },
             ],
           },
         ],
@@ -236,7 +237,7 @@ exports.generate = async (completionCertificateId) => {
         hourlyPaymentPlan: { $exists: true },
         'mainFee.price': { $in: [0, null] },
       },
-      { hourlyPaymentPlan: 1 }
+      { hourlyPaymentPlan: 1, 'mainFee.description': 1 }
     )
     .setOptions({ isVendorUser: true })
     .lean();
@@ -245,9 +246,26 @@ exports.generate = async (completionCertificateId) => {
   for (const [planId, bills] of Object.entries(billsGroupedByPlan)) {
     const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
       .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, planId));
-    const price = HourlyPaymentPlansHelper.getPriceFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration);
+    const priceDetails = HourlyPaymentPlansHelper
+      .getPricesFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration, course.subProgram.steps);
+    const hasPricedStep = Object.values(priceDetails).some(line => line.stepId);
+    if (!hasPricedStep && CompaniDuration(eLearningDuration).isShorterThan('PT900S')) continue;
 
-    await CourseBill.updateMany({ _id: { $in: bills.map(b => b._id) } }, { $set: { 'mainFee.price': price } });
+    const descriptionDetails = HourlyPaymentPlansHelper.getPriceDetails(priceDetails);
+    const price = NumbersHelper
+      .toFixedToFloat(NumbersHelper.add(...Object.values(priceDetails).map(line => line.price)));
+
+    await Promise.all(bills.map((bill) => {
+      const base = (get(bill, 'mainFee.description') || '').split('--- Détail ---')[0].trimEnd();
+      const description = descriptionDetails
+        ? `${base ? `${base}\r\n` : ''}--- Détail ---\r\n${descriptionDetails}`
+        : base;
+
+      return CourseBill.updateOne(
+        { _id: bill._id },
+        { $set: { 'mainFee.price': price, 'mainFee.description': description } }
+      );
+    }));
   }
 };
 
@@ -281,17 +299,31 @@ exports.deleteFile = async (completionCertificateId) => {
   }
 
   for (const certificate of certificatesToDelete) {
-    await CourseBill.updateMany(
-      {
-        course: certificate.course,
-        maturityDate: {
-          $gte: CompaniDate(certificate.month, MM_YYYY).startOf(MONTH).toISO(),
-          $lte: CompaniDate(certificate.month, MM_YYYY).endOf(MONTH).toISO(),
+    const bills = await CourseBill
+      .find(
+        {
+          course: certificate.course,
+          maturityDate: {
+            $gte: CompaniDate(certificate.month, MM_YYYY).startOf(MONTH).toISO(),
+            $lte: CompaniDate(certificate.month, MM_YYYY).endOf(MONTH).toISO(),
+          },
+          hourlyPaymentPlan: { $exists: true },
+          billedAt: { $exists: false },
         },
-        hourlyPaymentPlan: { $exists: true },
-        billedAt: { $exists: false },
-      },
-      { $set: { 'mainFee.price': 0 } }
-    );
+        { 'mainFee.description': 1 }
+      )
+      .setOptions({ isVendorUser: true })
+      .lean();
+
+    await Promise.all(bills.map((bill) => {
+      const base = (get(bill, 'mainFee.description') || '').split('--- Détail ---')[0].trimEnd();
+
+      return CourseBill.updateOne(
+        { _id: bill._id },
+        base
+          ? { $set: { 'mainFee.price': 0, 'mainFee.description': base } }
+          : { $set: { 'mainFee.price': 0 }, $unset: { 'mainFee.description': '' } }
+      );
+    }));
   }
 };

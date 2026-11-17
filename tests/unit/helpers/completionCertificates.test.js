@@ -440,8 +440,9 @@ describe('generate', () => {
   let getELearningDuration;
   let getRealELearningDuration;
   let findBills;
-  let updateManyBills;
-  let getPriceFromDurations;
+  let updateOneBill;
+  let getPricesFromDurations;
+  let getPriceDetails;
   const PRI_SUBPROGRAM_IDS = new ObjectId();
   const stepId = new ObjectId();
   const REAL_ELEARNING_DURATION_SUBPROGRAM_ID = new ObjectId();
@@ -462,8 +463,9 @@ describe('generate', () => {
     getELearningDuration = sinon.stub(CoursesHelper, 'getELearningDuration');
     getRealELearningDuration = sinon.stub(CoursesHelper, 'getRealELearningDuration');
     findBills = sinon.stub(CourseBill, 'find');
-    updateManyBills = sinon.stub(CourseBill, 'updateMany');
-    getPriceFromDurations = sinon.stub(HourlyPaymentPlansHelper, 'getPriceFromDurations');
+    updateOneBill = sinon.stub(CourseBill, 'updateOne');
+    getPricesFromDurations = sinon.stub(HourlyPaymentPlansHelper, 'getPricesFromDurations');
+    getPriceDetails = sinon.stub(HourlyPaymentPlansHelper, 'getPriceDetails');
     process.env.VAEI_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
     process.env.PRI_SUBPROGRAM_IDS = PRI_SUBPROGRAM_IDS;
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = REAL_ELEARNING_DURATION_SUBPROGRAM_ID;
@@ -486,8 +488,9 @@ describe('generate', () => {
     getELearningDuration.restore();
     getRealELearningDuration.restore();
     findBills.restore();
-    updateManyBills.restore();
-    getPriceFromDurations.restore();
+    updateOneBill.restore();
+    getPricesFromDurations.restore();
+    getPriceDetails.restore();
     process.env.VAEI_SUBPROGRAM_IDS = '';
     process.env.PRI_SUBPROGRAM_IDS = '';
     process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = '';
@@ -503,6 +506,9 @@ describe('generate', () => {
     const hourlyPaymentPlan = { _id: new ObjectId(), prices: [{ step: stepId, hourlyAmount: 40 }] };
     const billId = new ObjectId();
     const durationPerStep = { [stepId]: CompaniDuration({ minutes: 390 }) };
+    const priceDetails = {
+      [stepId]: { stepId, stepName: 'étape 1', duration: CompaniDuration({ minutes: 390 }), price: '260' },
+    };
     const slotList = [
       { _id: new ObjectId(), startDate: '2025-01-20T10:00:00.000Z', endDate: '2025-01-20T14:00:00.000Z' },
       { _id: new ObjectId(), startDate: '2025-03-14T10:00:00.000Z', endDate: '2025-03-14T14:00:00.000Z' },
@@ -549,6 +555,12 @@ describe('generate', () => {
           program: { subPrograms: subProgramIds },
           hourlyPaymentPlans: [hourlyPaymentPlan],
           steps: [
+            {
+              _id: stepId,
+              name: 'étape 1',
+              type: 'on_site',
+              theoreticalDuration: '1h',
+            },
             {
               type: E_LEARNING,
               theoreticalDuration: '3h30',
@@ -611,10 +623,11 @@ describe('generate', () => {
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
     getDurationPerStep.returns(durationPerStep);
     findBills.returns(SinonMongoose.stubChainedQueries(
-      [{ _id: billId, hourlyPaymentPlan: hourlyPaymentPlan._id }],
+      [{ _id: billId, hourlyPaymentPlan: hourlyPaymentPlan._id, mainFee: { description: 'Facture test' } }],
       ['setOptions', 'lean']
     ));
-    getPriceFromDurations.returns(260);
+    getPricesFromDurations.returns(priceDetails);
+    getPriceDetails.returns('étape 1 - 6h30 - 260,00 €');
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
     getELearningDuration.returns('PT3H30M');
@@ -646,7 +659,7 @@ describe('generate', () => {
                   select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    { path: 'steps', select: 'activities type theoreticalDuration' },
+                    { path: 'steps', select: 'name activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -779,18 +792,30 @@ describe('generate', () => {
               hourlyPaymentPlan: { $exists: true },
               'mainFee.price': { $in: [0, null] },
             },
-            { hourlyPaymentPlan: 1 },
+            { hourlyPaymentPlan: 1, 'mainFee.description': 1 },
           ],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledOnceWithExactly(getPriceFromDurations, hourlyPaymentPlan, durationPerStep, 'PT3H30M');
     sinon.assert.calledOnceWithExactly(
-      updateManyBills,
-      { _id: { $in: [billId] } },
-      { $set: { 'mainFee.price': 260 } }
+      getPricesFromDurations,
+      hourlyPaymentPlan,
+      durationPerStep,
+      'PT3H30M',
+      completionCertificate.course.subProgram.steps
+    );
+    sinon.assert.calledOnceWithExactly(getPriceDetails, priceDetails);
+    sinon.assert.calledOnceWithExactly(
+      updateOneBill,
+      { _id: billId },
+      {
+        $set: {
+          'mainFee.price': 260,
+          'mainFee.description': 'Facture test\r\n--- Détail ---\r\nétape 1 - 6h30 - 260,00 €',
+        },
+      }
     );
   });
 
@@ -800,6 +825,9 @@ describe('generate', () => {
     const companyId = new ObjectId();
     const courseId = new ObjectId();
     const month = '03-2025';
+    const hourlyPaymentPlan = { _id: new ObjectId(), prices: [], elearningPrice: 20 };
+    const billId = new ObjectId();
+    const durationPerStep = { [stepId]: CompaniDuration({ minutes: 390 }) };
     const slotList = [
       { _id: new ObjectId(), startDate: '2025-01-20T10:00:00.000Z', endDate: '2025-01-20T14:00:00.000Z' },
       { _id: new ObjectId(), startDate: '2025-03-14T10:00:00.000Z', endDate: '2025-03-14T14:00:00.000Z' },
@@ -832,6 +860,7 @@ describe('generate', () => {
         subProgram: {
           _id: subProgramIds[0],
           program: { subPrograms: subProgramIds },
+          hourlyPaymentPlans: [hourlyPaymentPlan],
           steps: [
             {
               type: E_LEARNING,
@@ -890,10 +919,14 @@ describe('generate', () => {
     );
     findCompletionCertificate.returns(SinonMongoose.stubChainedQueries([{ month: '02-2025' }], ['setOptions', 'lean']));
     findAttendance.returns(SinonMongoose.stubChainedQueries(attendances, ['setOptions', 'lean']));
-    getDurationPerStep.returns({ [stepId]: CompaniDuration({ minutes: 390 }) });
+    getDurationPerStep.returns(durationPerStep);
     courseFind.returns(SinonMongoose.stubChainedQueries(coursesWithSameProgram));
     findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
-    findBills.returns(SinonMongoose.stubChainedQueries([], ['setOptions', 'lean']));
+    findBills.returns(SinonMongoose.stubChainedQueries(
+      [{ _id: billId, hourlyPaymentPlan: hourlyPaymentPlan._id }],
+      ['setOptions', 'lean']
+    ));
+    getPricesFromDurations.returns({ elearning: { duration: CompaniDuration({ seconds: 200 }), price: '1.11' } });
     getRealELearningDuration.returns('PT200S');
     formatIdentity.returns('Jean SAITRIEN');
     getPdf.returns('pdf');
@@ -923,7 +956,7 @@ describe('generate', () => {
                   select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    { path: 'steps', select: 'activities type theoreticalDuration' },
+                    { path: 'steps', select: 'name activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -1046,15 +1079,22 @@ describe('generate', () => {
               hourlyPaymentPlan: { $exists: true },
               'mainFee.price': { $in: [0, null] },
             },
-            { hourlyPaymentPlan: 1 },
+            { hourlyPaymentPlan: 1, 'mainFee.description': 1 },
           ],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(updateManyBills);
-    sinon.assert.notCalled(getPriceFromDurations);
+    sinon.assert.calledOnceWithExactly(
+      getPricesFromDurations,
+      hourlyPaymentPlan,
+      durationPerStep,
+      'PT200S',
+      completionCertificate.course.subProgram.steps
+    );
+    sinon.assert.notCalled(getPriceDetails);
+    sinon.assert.notCalled(updateOneBill);
   });
 
   it('should generate completion certificate in VAE period (attendance within remaining budget)', async () => {
@@ -1188,7 +1228,7 @@ describe('generate', () => {
                   select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    { path: 'steps', select: 'activities type theoreticalDuration' },
+                    { path: 'steps', select: 'name activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -1338,15 +1378,16 @@ describe('generate', () => {
               hourlyPaymentPlan: { $exists: true },
               'mainFee.price': { $in: [0, null] },
             },
-            { hourlyPaymentPlan: 1 },
+            { hourlyPaymentPlan: 1, 'mainFee.description': 1 },
           ],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(updateManyBills);
-    sinon.assert.notCalled(getPriceFromDurations);
+    sinon.assert.notCalled(updateOneBill);
+    sinon.assert.notCalled(getPricesFromDurations);
+    sinon.assert.notCalled(getPriceDetails);
   });
 
   it('should generate completion certificate in VAE period (attendance exceeds remaining budget)', async () => {
@@ -1485,7 +1526,7 @@ describe('generate', () => {
                   select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    { path: 'steps', select: 'activities type theoreticalDuration' },
+                    { path: 'steps', select: 'name activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -1635,15 +1676,16 @@ describe('generate', () => {
               hourlyPaymentPlan: { $exists: true },
               'mainFee.price': { $in: [0, null] },
             },
-            { hourlyPaymentPlan: 1 },
+            { hourlyPaymentPlan: 1, 'mainFee.description': 1 },
           ],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(updateManyBills);
-    sinon.assert.notCalled(getPriceFromDurations);
+    sinon.assert.notCalled(updateOneBill);
+    sinon.assert.notCalled(getPricesFromDurations);
+    sinon.assert.notCalled(getPriceDetails);
   });
 
   it('should generate completion certificate normally when VAE period budget is exhausted', async () => {
@@ -1779,7 +1821,7 @@ describe('generate', () => {
                   select: 'program steps hourlyPaymentPlans',
                   populate: [
                     { path: 'program', select: 'subPrograms' },
-                    { path: 'steps', select: 'activities type theoreticalDuration' },
+                    { path: 'steps', select: 'name activities type theoreticalDuration' },
                   ],
                 },
               ],
@@ -1928,15 +1970,16 @@ describe('generate', () => {
               hourlyPaymentPlan: { $exists: true },
               'mainFee.price': { $in: [0, null] },
             },
-            { hourlyPaymentPlan: 1 },
+            { hourlyPaymentPlan: 1, 'mainFee.description': 1 },
           ],
         },
         { query: 'setOptions', args: [{ isVendorUser: true }] },
         { query: 'lean' },
       ]
     );
-    sinon.assert.notCalled(updateManyBills);
-    sinon.assert.notCalled(getPriceFromDurations);
+    sinon.assert.notCalled(updateOneBill);
+    sinon.assert.notCalled(getPricesFromDurations);
+    sinon.assert.notCalled(getPriceDetails);
   });
 });
 
@@ -1966,14 +2009,16 @@ describe('deleteFile', () => {
   let updateOne;
   let updateMany;
   let deleteCourseFile;
-  let updateManyBills;
+  let findBills;
+  let updateOneBill;
   beforeEach(() => {
     findOne = sinon.stub(CompletionCertificate, 'findOne');
     find = sinon.stub(CompletionCertificate, 'find');
     updateOne = sinon.stub(CompletionCertificate, 'updateOne');
     updateMany = sinon.stub(CompletionCertificate, 'updateMany');
     deleteCourseFile = sinon.stub(GCloudStorageHelper, 'deleteCourseFile');
-    updateManyBills = sinon.stub(CourseBill, 'updateMany');
+    findBills = sinon.stub(CourseBill, 'find');
+    updateOneBill = sinon.stub(CourseBill, 'updateOne');
   });
   afterEach(() => {
     findOne.restore();
@@ -1981,13 +2026,21 @@ describe('deleteFile', () => {
     updateOne.restore();
     updateMany.restore();
     deleteCourseFile.restore();
-    updateManyBills.restore();
+    findBills.restore();
+    updateOneBill.restore();
   });
 
   it('should remove the file of a completion certificat and the price of the bills with a hourly payment plan',
     async () => {
       const completionCertificateId = new ObjectId();
       const courseId = new ObjectId();
+      const bills = [
+        {
+          _id: new ObjectId(),
+          mainFee: { description: 'Facture test\r\n--- Détail ---\r\nétape - 4h - 200,00 €' },
+        },
+        { _id: new ObjectId(), mainFee: { description: '--- Détail ---\r\nétape - 4h - 200,00 €' } },
+      ];
       const completionCertificate = {
         _id: completionCertificateId,
         trainee: new ObjectId(),
@@ -1996,6 +2049,7 @@ describe('deleteFile', () => {
         file: { publicId: 'completionCertificateTest', link: 'test/completionCertificateTest' },
       };
       findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['lean']));
+      findBills.returns(SinonMongoose.stubChainedQueries(bills, ['setOptions', 'lean']));
 
       await CompletionCertificatesHelper.deleteFile(completionCertificateId);
 
@@ -2009,20 +2063,39 @@ describe('deleteFile', () => {
         { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
       );
       sinon.assert.calledOnceWithExactly(deleteCourseFile, 'completionCertificateTest');
-      sinon.assert.calledOnceWithExactly(
-        updateManyBills,
-        {
-          course: courseId,
-          maturityDate: {
-            $gte: CompaniDate('03-2025', MM_YYYY).startOf(MONTH).toISO(),
-            $lte: CompaniDate('03-2025', MM_YYYY).endOf(MONTH).toISO(),
+      SinonMongoose.calledOnceWithExactly(
+        findBills,
+        [
+          {
+            query: 'find',
+            args: [
+              {
+                course: courseId,
+                maturityDate: {
+                  $gte: CompaniDate('03-2025', MM_YYYY).startOf(MONTH).toISO(),
+                  $lte: CompaniDate('03-2025', MM_YYYY).endOf(MONTH).toISO(),
+                },
+                hourlyPaymentPlan: { $exists: true },
+                billedAt: { $exists: false },
+              },
+              { 'mainFee.description': 1 },
+            ],
           },
-          hourlyPaymentPlan: { $exists: true },
-          billedAt: { $exists: false },
-        },
-        { $set: { 'mainFee.price': 0 } }
+          { query: 'setOptions', args: [{ isVendorUser: true }] },
+          { query: 'lean' },
+        ]
       );
-      sinon.assert.callOrder(deleteCourseFile, updateManyBills);
+      sinon.assert.calledWithExactly(
+        updateOneBill.getCall(0),
+        { _id: bills[0]._id },
+        { $set: { 'mainFee.price': 0, 'mainFee.description': 'Facture test' } }
+      );
+      sinon.assert.calledWithExactly(
+        updateOneBill.getCall(1),
+        { _id: bills[1]._id },
+        { $set: { 'mainFee.price': 0 }, $unset: { 'mainFee.description': '' } }
+      );
+      sinon.assert.callOrder(deleteCourseFile, updateOneBill);
       sinon.assert.notCalled(find);
       sinon.assert.notCalled(updateMany);
     });
@@ -2031,6 +2104,10 @@ describe('deleteFile', () => {
     const completionCertificateIds = [new ObjectId(), new ObjectId()];
     const traineeId = new ObjectId();
     const courseId = new ObjectId();
+    const bills = [
+      { _id: new ObjectId(), mainFee: { description: 'Facture mars\r\n--- Détail ---\r\nétape - 4h - 200,00 €' } },
+      { _id: new ObjectId(), mainFee: { description: 'Facture avril\r\n--- Détail ---\r\nétape - 2h - 100,00 €' } },
+    ];
     const completionCertificate = {
       _id: completionCertificateIds[0],
       trainee: traineeId,
@@ -2049,6 +2126,8 @@ describe('deleteFile', () => {
     }];
     findOne.returns(SinonMongoose.stubChainedQueries(completionCertificate, ['lean']));
     find.returns(SinonMongoose.stubChainedQueries(completionCertificatesWithRemaingMinutes, ['setOptions', 'lean']));
+    findBills.onCall(0).returns(SinonMongoose.stubChainedQueries([bills[0]], ['setOptions', 'lean']));
+    findBills.onCall(1).returns(SinonMongoose.stubChainedQueries([bills[1]], ['setOptions', 'lean']));
 
     await CompletionCertificatesHelper.deleteFile(completionCertificateIds[0]);
 
@@ -2071,34 +2150,64 @@ describe('deleteFile', () => {
     );
     sinon.assert.calledWithExactly(deleteCourseFile.getCall(0), 'completionCertificateTest');
     sinon.assert.calledWithExactly(deleteCourseFile.getCall(1), 'completionCertificateTest_2');
-    sinon.assert.calledTwice(updateManyBills);
-    sinon.assert.calledWithExactly(
-      updateManyBills.getCall(0),
-      {
-        course: courseId,
-        maturityDate: {
-          $gte: CompaniDate('03-2025', MM_YYYY).startOf(MONTH).toISO(),
-          $lte: CompaniDate('03-2025', MM_YYYY).endOf(MONTH).toISO(),
+    sinon.assert.calledTwice(findBills);
+    SinonMongoose.calledWithExactly(
+      findBills,
+      [
+        {
+          query: 'find',
+          args: [
+            {
+              course: courseId,
+              maturityDate: {
+                $gte: CompaniDate('03-2025', MM_YYYY).startOf(MONTH).toISO(),
+                $lte: CompaniDate('03-2025', MM_YYYY).endOf(MONTH).toISO(),
+              },
+              hourlyPaymentPlan: { $exists: true },
+              billedAt: { $exists: false },
+            },
+            { 'mainFee.description': 1 },
+          ],
         },
-        hourlyPaymentPlan: { $exists: true },
-        billedAt: { $exists: false },
-      },
-      { $set: { 'mainFee.price': 0 } }
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      findBills,
+      [
+        {
+          query: 'find',
+          args: [
+            {
+              course: courseId,
+              maturityDate: {
+                $gte: CompaniDate('04-2025', MM_YYYY).startOf(MONTH).toISO(),
+                $lte: CompaniDate('04-2025', MM_YYYY).endOf(MONTH).toISO(),
+              },
+              hourlyPaymentPlan: { $exists: true },
+              billedAt: { $exists: false },
+            },
+            { 'mainFee.description': 1 },
+          ],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ],
+      1
     );
     sinon.assert.calledWithExactly(
-      updateManyBills.getCall(1),
-      {
-        course: courseId,
-        maturityDate: {
-          $gte: CompaniDate('04-2025', MM_YYYY).startOf(MONTH).toISO(),
-          $lte: CompaniDate('04-2025', MM_YYYY).endOf(MONTH).toISO(),
-        },
-        hourlyPaymentPlan: { $exists: true },
-        billedAt: { $exists: false },
-      },
-      { $set: { 'mainFee.price': 0 } }
+      updateOneBill.getCall(0),
+      { _id: bills[0]._id },
+      { $set: { 'mainFee.price': 0, 'mainFee.description': 'Facture mars' } }
     );
-    sinon.assert.callOrder(deleteCourseFile, updateManyBills);
+    sinon.assert.calledWithExactly(
+      updateOneBill.getCall(1),
+      { _id: bills[1]._id },
+      { $set: { 'mainFee.price': 0, 'mainFee.description': 'Facture avril' } }
+    );
+    sinon.assert.callOrder(deleteCourseFile, updateOneBill);
     sinon.assert.notCalled(updateOne);
   });
 });

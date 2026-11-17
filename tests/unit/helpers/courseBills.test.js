@@ -1154,20 +1154,23 @@ describe('computePriceFromDurations', () => {
   let findOneCourse;
   let getTraineeDurations;
   let getDurationPerStep;
-  let getPriceFromDurations;
+  let getPricesFromDurations;
+  let getPriceDetails;
 
   beforeEach(() => {
     findOneCourse = sinon.stub(Course, 'findOne');
     getTraineeDurations = sinon.stub(CoursesHelper, 'getTraineeDurations');
     getDurationPerStep = sinon.stub(CourseSlotsHelper, 'getDurationPerStep');
-    getPriceFromDurations = sinon.stub(HourlyPaymentPlansHelper, 'getPriceFromDurations');
+    getPricesFromDurations = sinon.stub(HourlyPaymentPlansHelper, 'getPricesFromDurations');
+    getPriceDetails = sinon.stub(HourlyPaymentPlansHelper, 'getPriceDetails');
   });
 
   afterEach(() => {
     findOneCourse.restore();
     getTraineeDurations.restore();
     getDurationPerStep.restore();
-    getPriceFromDurations.restore();
+    getPricesFromDurations.restore();
+    getPriceDetails.restore();
   });
 
   it('should compute the price of the course from the chosen hourly payment plan', async () => {
@@ -1177,17 +1180,20 @@ describe('computePriceFromDurations', () => {
     const slotsWithAttendance = [{ _id: new ObjectId() }];
     const eLearningDuration = CompaniDuration({ minutes: 60 });
     const durationPerStep = { [new ObjectId()]: CompaniDuration({ minutes: 120 }) };
+    const priceDetails = { stepId: { stepName: 'étape', duration: CompaniDuration({ minutes: 120 }), price: '300' } };
 
-    const course = { subProgram: { hourlyPaymentPlans }, slots: [], trainees: [traineeId] };
+    const steps = [{ _id: new ObjectId(), name: 'étape' }];
+    const course = { subProgram: { hourlyPaymentPlans, steps }, slots: [], trainees: [traineeId] };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'lean']));
     getTraineeDurations.returns({ slotsWithAttendance, eLearningDuration });
     getDurationPerStep.returns(durationPerStep);
-    getPriceFromDurations.returns(300);
+    getPricesFromDurations.returns(priceDetails);
+    getPriceDetails.returns('étape - 2h - 300,00 €');
 
     const result = await CourseBillHelper.computePriceFromDurations(courseId, hourlyPaymentPlans[1]._id);
 
-    expect(result).toBe(300);
+    expect(result).toEqual({ price: 300, details: 'étape - 2h - 300,00 €' });
     SinonMongoose.calledOnceWithExactly(
       findOneCourse,
       [
@@ -1205,7 +1211,7 @@ describe('computePriceFromDurations', () => {
           args: [{
             path: 'subProgram',
             select: 'steps hourlyPaymentPlans',
-            populate: { path: 'steps', select: 'activities type theoreticalDuration' },
+            populate: { path: 'steps', select: 'name activities type theoreticalDuration' },
           }],
         },
         { query: 'lean' },
@@ -1214,11 +1220,13 @@ describe('computePriceFromDurations', () => {
     sinon.assert.calledOnceWithExactly(getTraineeDurations, course, traineeId);
     sinon.assert.calledOnceWithExactly(getDurationPerStep, slotsWithAttendance);
     sinon.assert.calledOnceWithExactly(
-      getPriceFromDurations,
+      getPricesFromDurations,
       hourlyPaymentPlans[1],
       durationPerStep,
-      eLearningDuration
+      eLearningDuration,
+      steps
     );
+    sinon.assert.calledOnceWithExactly(getPriceDetails, priceDetails);
   });
 });
 
@@ -1271,7 +1279,7 @@ describe('createBillList', () => {
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
-    computePriceFromDurations.returns(250);
+    computePriceFromDurations.returns({ price: 250, details: 'étape - 2h - 250,00 €' });
 
     await CourseBillHelper.createBillList(payload);
 
@@ -1285,7 +1293,7 @@ describe('createBillList', () => {
           price: 250,
           count: 1,
           countUnit: GROUP,
-          description: 'test',
+          description: 'test\r\n--- Détail ---\r\nétape - 2h - 250,00 €',
         },
         hourlyPaymentPlan: payload.hourlyPaymentPlanId,
         companies: payload.companies,

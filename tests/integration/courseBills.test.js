@@ -825,6 +825,29 @@ describe('COURSE BILL ROUTES - POST /coursebills/list-creation', () => {
         expect(response.statusCode).toBe(409);
       });
 
+      it('should create a bill with the price and the details of the hourly payment plan (GLOBAL)', async () => {
+        const response = await app.inject({
+          method: 'POST',
+          url: '/coursebills/list-creation',
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+          payload: {
+            ...singleCoursePayload,
+            mainFee: omit(singleCoursePayload.mainFee, 'price'),
+            hourlyPaymentPlanId,
+          },
+        });
+
+        expect(response.statusCode).toBe(200);
+
+        const createdBill = await CourseBill
+          .findOne({ course: coursesList[12]._id, hourlyPaymentPlan: hourlyPaymentPlanId })
+          .setOptions({ isVendorUser: true })
+          .lean();
+        expect(createdBill.mainFee.price).toBe(150);
+        expect(createdBill.mainFee.description)
+          .toBe('test\r\n--- Détail ---\r\nétape - 3h - 150,00\u00a0€');
+      });
+
       it('should return 400 if price sent with an hourly payment plan', async () => {
         const response = await app.inject({
           method: 'POST',
