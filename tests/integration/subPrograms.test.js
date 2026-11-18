@@ -550,6 +550,19 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(400);
     });
 
+    it('should return 403 if the e-learning price is missing on a subProgram with an e-learning step', async () => {
+      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[17]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 403 if an identical hourly payment plan already exists', async () => {
       const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 40 }] } };
 

@@ -85,7 +85,7 @@ exports.plugin = {
                 }),
                 elearningPrice: Joi.number().positive(),
                 elearningLimit: durationStrictlyPositive
-                  .when('elearningPrice', { not: Joi.exist(), then: Joi.forbidden() }),
+                  .when('elearningPrice', { is: Joi.exist(), otherwise: Joi.forbidden() }),
               }).required(),
             }),
             Joi.object({ archivedAt: Joi.date().allow('') })

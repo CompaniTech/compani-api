@@ -132,17 +132,13 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       CompaniDuration(payload.hourlyPaymentPlan.elearningLimit).asSeconds();
 
     if (hourlyPaymentPlanId && prices.length) {
-      const fieldsToUnset = {
-        ...!elearningPrice && { 'hourlyPaymentPlans.$.elearningPrice': '' },
-        ...!elearningLimit && { 'hourlyPaymentPlans.$.elearningLimit': '' },
-      };
       const updateQuery = {
         $set: {
           'hourlyPaymentPlans.$.prices': prices,
           ...elearningPrice && { 'hourlyPaymentPlans.$.elearningPrice': elearningPrice },
           ...elearningLimit && { 'hourlyPaymentPlans.$.elearningLimit': elearningLimit },
         },
-        ...!isEmpty(fieldsToUnset) && { $unset: fieldsToUnset },
+        ...!elearningLimit && { $unset: { 'hourlyPaymentPlans.$.elearningLimit': '' } },
       };
 
       return SubProgram.updateOne({ _id: subProgramId, 'hourlyPaymentPlans._id': hourlyPaymentPlanId }, updateQuery);

@@ -213,8 +213,12 @@ exports.authorizeSubProgramUpdate = async (req) => {
       if (isDuplicate) throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanAlreadyExists);
     }
 
-    if (elearningPrice && !subProgram.steps.some(s => s.type === E_LEARNING)) {
+    const hasELearningStep = subProgram.steps.some(s => s.type === E_LEARNING);
+    if (elearningPrice && !hasELearningStep) {
       throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanNoELearningStep);
+    }
+    if (prices.length && !elearningPrice && hasELearningStep) {
+      throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanNoELearningPrice);
     }
   }
 
