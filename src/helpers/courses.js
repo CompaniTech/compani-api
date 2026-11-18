@@ -587,7 +587,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       },
       {
         path: 'subProgram',
-        select: origin === WEBAPP ? 'program steps paymentPlans hourlyPaymentPlans' : 'program steps',
+        select: origin === WEBAPP ? 'program steps paymentPlans hourlyPaymentPlans archivedAt' : 'program steps',
         populate: [
           { path: 'program', select: 'learningGoals' },
           ...(origin === WEBAPP
@@ -1869,15 +1869,7 @@ exports.generateCompletionCertificates = async (courseId, credentials, query) =>
 };
 
 exports.addAccessRule = async (courseId, payload) => {
-  const course = await Course
-    .findOneAndUpdate(
-      { _id: courseId },
-      { $addToSet: { accessRules: payload.companies } },
-      { projection: { subProgram: 1 } }
-    )
-    .populate({ path: 'subProgram', select: 'archivedAt' })
-    .lean();
-  if (course.subProgram.archivedAt) return;
+  await Course.updateOne({ _id: courseId }, { $addToSet: { accessRules: payload.companies } });
 
   const userCompanies = await UserCompany
     .find(
