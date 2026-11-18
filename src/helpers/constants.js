@@ -224,6 +224,7 @@ module.exports = {
       [this.RECEIVED]: 'Reçu',
       [this.XML_GENERATED]: 'Fichier XML associé',
       [this.PAID]: 'Réglé',
+      [this.CANCELLED]: 'Annulé',
     };
   },
   NOT_INVOICED: 'not_invoiced',
