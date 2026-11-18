@@ -3,19 +3,42 @@ const flat = require('flat');
 const get = require('lodash/get');
 const User = require('../../models/User');
 const IdentityVerification = require('../../models/IdentityVerification');
-const { MOBILE, PHONE, SECONDS_IN_AN_HOUR, MAX_VERIFICATION_ATTEMPTS } = require('../../helpers/constants');
+const {
+  MOBILE,
+  PHONE,
+  SECONDS_IN_AN_HOUR,
+  MAX_VERIFICATION_ATTEMPTS,
+  LOGIN_CODE_LOCK_DELAYS_IN_MINUTES,
+} = require('../../helpers/constants');
+const UtilsHelper = require('../../helpers/utils');
 const translate = require('../../helpers/translate');
 const UserCompany = require('../../models/UserCompany');
+const { CompaniDate } = require('../../helpers/dates/companiDates');
 
 const { language } = translate;
 
-const formatLockMessage = (lockedUntil) => {
-  if (!lockedUntil) return `${translate[language].tooManyAttempts} Réessayez plus tard.`;
+// Lock the user after too many wrong attempts: the lock gets longer each time (5 min, 15 min, 1 h, then 24 h)
+// and a new loginCode is generated, so that the code which was being guessed is not valid anymore
+const lockLoginCode = async (user) => {
+  const now = CompaniDate();
 
-  const minutes = Math.max(1, Math.ceil((new Date(lockedUntil).getTime() - Date.now()) / 60000));
-  const delay = minutes < 60 ? `${minutes} min` : `${Math.ceil(minutes / 60)} h`;
+  // The previous lock count is kept only if the last lock ended less than 48 h ago, otherwise we start again at 5 min
+  const lockEndDate = get(user, 'loginCodeLock.lockedUntil');
+  const hasRecentLock = lockEndDate && now.isBefore(CompaniDate(lockEndDate).add('PT48H'));
+  const previousLockCount = hasRecentLock ? user.loginCodeLock.count : 0;
 
-  return `${translate[language].tooManyAttempts} Réessayez dans ${delay}.`;
+  // The count is capped to the number of delays: after the last one, every lock lasts 24 h
+  const lockCount = Math.min(previousLockCount + 1, LOGIN_CODE_LOCK_DELAYS_IN_MINUTES.length);
+  const delayInMinutes = LOGIN_CODE_LOCK_DELAYS_IN_MINUTES[lockCount - 1];
+
+  const lockedUntil = now.add(`PT${delayInMinutes}M`).toDate();
+
+  // loginCodeLock is replaced as a whole: attempts is dropped, so the user has 3 new attempts when the lock ends
+  await User.updateOne(
+    { _id: user._id },
+    { $set: { loginCode: UtilsHelper.generateVerificationCode(), loginCodeLock: { count: lockCount, lockedUntil } } },
+    { timestamps: false }
+  );
 };
 
 exports.checkPasswordToken = async (req) => {
@@ -29,11 +52,9 @@ exports.checkPasswordToken = async (req) => {
       )
       .lean();
     if (!verification) {
-      const exhausted = await IdentityVerification
-        .findOne({ email: query.email, attempts: { $gte: MAX_VERIFICATION_ATTEMPTS } })
-        .lean();
-      const lockedUntil = exhausted && new Date(exhausted.updatedAt).getTime() + SECONDS_IN_AN_HOUR * 1000;
-      if (lockedUntil > Date.now()) throw Boom.tooManyRequests(formatLockMessage(lockedUntil));
+      const isExhausted = await IdentityVerification
+        .countDocuments({ email: query.email, attempts: { $gte: MAX_VERIFICATION_ATTEMPTS } });
+      if (isExhausted) throw Boom.tooManyRequests(translate[language].tooManyAttempts);
 
       throw Boom.notFound();
     }
@@ -51,15 +72,66 @@ exports.checkPasswordToken = async (req) => {
   }
 
   if (query.firstname) {
-    const user = await User
-      .findOne({ 'identity.firstname': query.firstname, 'identity.lastname': query.lastname, loginCode: params.token })
+    // Users are identified by name and company only: homonyms of a same company are possible
+    const matchingUsers = await User
+      .find(
+        { 'identity.firstname': query.firstname, 'identity.lastname': query.lastname, loginCode: { $exists: true } },
+        { _id: 1, loginCode: 1, loginCodeLock: 1 }
+      )
       .collation({ locale: 'fr', strength: 1, alternate: 'shifted' })
       .lean();
+    const userCompanies = await UserCompany
+      .find({ user: { $in: matchingUsers.map(u => u._id) }, company: query.company }, { user: 1 })
+      .lean();
+    const companyUsers = matchingUsers
+      .filter(u => userCompanies.some(uc => UtilsHelper.areObjectIdsEquals(uc.user, u._id)));
 
-    const userCompany = await UserCompany.countDocuments({ user: get(user, '_id'), company: query.company });
-    if (!user || !userCompany) throw Boom.notFound(translate[language].userNotFound);
+    // Right code: the user is returned only if he is not locked (checked in db, so it is safe with parallel requests).
+    // No attempt is counted for a right code.
+    const matchingCodeUser = companyUsers.find(u => u.loginCode === params.token);
+    if (matchingCodeUser) {
+      const user = await User
+        .findOne(
+          {
+            _id: matchingCodeUser._id,
+            loginCode: params.token,
+            'loginCodeLock.attempts': { $not: { $gte: MAX_VERIFICATION_ATTEMPTS } },
+            'loginCodeLock.lockedUntil': { $not: { $gt: CompaniDate().toDate() } },
+          },
+          { 'local.email': 1, loginCode: 1, loginCodeLock: 1 }
+        )
+        .lean();
+      if (user) return user;
+    }
 
-    return user;
+    // Wrong code: count an attempt for every candidate, even homonyms, because we can't know who is targeted.
+    // The filter excludes locked users, so attemptedUsers only contains users that were not locked.
+    const usersWithUpdatedAttempts = (
+      await Promise.all(
+        companyUsers
+          .map(u => User.findOneAndUpdate(
+            {
+              _id: u._id,
+              'loginCodeLock.attempts': { $not: { $gte: MAX_VERIFICATION_ATTEMPTS } },
+              'loginCodeLock.lockedUntil': { $not: { $gt: CompaniDate().toDate() } },
+            },
+            { $inc: { 'loginCodeLock.attempts': 1 } },
+            { new: true, timestamps: false, projection: { 'local.email': 1, loginCode: 1, loginCodeLock: 1 } }
+          )
+            .lean()))
+    ).filter(Boolean);
+
+    // Users who just reached the max attempts are locked and get a new login code
+    const usersToLock = usersWithUpdatedAttempts.filter(u => u.loginCodeLock.attempts >= MAX_VERIFICATION_ATTEMPTS);
+    await Promise.all(usersToLock.map(lockLoginCode));
+    // No attempt could be counted for any candidate: they are all locked, answer 429 and not 404,
+    // so that the user knows that his code is not the problem
+    const areAllUsersLocked = companyUsers.length && !usersWithUpdatedAttempts.length;
+    if (usersToLock.length || areAllUsersLocked) {
+      throw Boom.tooManyRequests(translate[language].tooManyAttempts);
+    }
+
+    throw Boom.notFound(translate[language].userNotFound);
   }
 
   const filter = { passwordToken: { token: params.token, expiresIn: { $gt: Date.now() } } };
@@ -69,6 +141,7 @@ exports.checkPasswordToken = async (req) => {
   return user;
 };
 
+// a new code can't be asked while the last one has been tried too many times in the last hour
 exports.authorizeForgotPassword = async (req) => {
   const { email, origin, type } = req.payload;
   if (origin !== MOBILE) return null;
@@ -79,8 +152,8 @@ exports.authorizeForgotPassword = async (req) => {
 
   const verification = await IdentityVerification.findOne({ email }).lean();
   if (verification && verification.attempts >= MAX_VERIFICATION_ATTEMPTS) {
-    const lockedUntil = new Date(verification.updatedAt).getTime() + SECONDS_IN_AN_HOUR * 1000;
-    if (lockedUntil > Date.now()) throw Boom.tooManyRequests(formatLockMessage(lockedUntil));
+    const isRecent = !CompaniDate().isAfter(CompaniDate(verification.updatedAt).add('PT1H'));
+    if (isRecent) throw Boom.tooManyRequests(translate[language].tooManyAttempts);
   }
 
   return null;

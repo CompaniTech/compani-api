@@ -73,7 +73,7 @@ describe('authenticate', () => {
       { _id: user._id, firstMobileConnectionDate: { $exists: false } },
       {
         $set: { firstMobileConnectionDate: '2022-09-18T10:00:00.000Z', firstMobileConnectionMode: AUTHENTICATION },
-        $unset: { loginCode: '' },
+        $unset: { loginCode: '', loginCodeLock: '' },
       }
     );
     sinon.assert.calledOnceWithExactly(compare, payload.password, 'toto');
@@ -313,11 +313,14 @@ describe('updatePassword', () => {
 
 describe('sendToken', () => {
   let encode;
+  let updateOne;
   beforeEach(() => {
     encode = sinon.stub(AuthenticationHelper, 'encode');
+    updateOne = sinon.stub(User, 'updateOne');
   });
   afterEach(() => {
     encode.restore();
+    updateOne.restore();
   });
 
   it('should return token with user', async () => {
@@ -330,6 +333,25 @@ describe('sendToken', () => {
     const result = await AuthenticationHelper.sendToken(user);
     expect(result).toEqual({ token: '1234567890', user: userPayload });
     sinon.assert.calledWithExactly(encode, userPayload);
+    sinon.assert.notCalled(updateOne);
+  });
+
+  it('should remove login code lock of user', async () => {
+    const email = 'carolyn@alenvi.io';
+    const user = { _id: new ObjectId(), local: { email }, loginCodeLock: { attempts: 2 } };
+    const userPayload = { _id: user._id, email };
+
+    encode.returns('1234567890');
+
+    const result = await AuthenticationHelper.sendToken(user);
+
+    expect(result).toEqual({ token: '1234567890', user: userPayload });
+    sinon.assert.calledOnceWithExactly(
+      updateOne,
+      { _id: user._id },
+      { $unset: { loginCodeLock: '' } },
+      { timestamps: false }
+    );
   });
 });
 

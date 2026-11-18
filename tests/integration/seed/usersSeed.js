@@ -159,6 +159,8 @@ const usersSeedList = [
     administrative: { certificates: [{ driveId: '1234567890' }], driveFolder: { driveId: '0987654321' } },
     origin: WEBAPP,
     formationExpoTokenList: ['ExponentPushToken[jeSuisUnAutreIdExpo]'],
+    loginCode: '4321',
+    loginCodeLock: { attempts: 2, count: 1, lockedUntil: new Date('2021-01-25T10:05:00.000Z') },
   },
   { // 2
     _id: new ObjectId(),

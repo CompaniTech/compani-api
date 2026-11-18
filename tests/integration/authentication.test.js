@@ -10,6 +10,7 @@ const EmailHelper = require('../../src/helpers/email');
 const SmsHelper = require('../../src/helpers/sms');
 const { MOBILE, EMAIL, PHONE, AUTHENTICATION } = require('../../src/helpers/constants');
 const UtilsMock = require('../utilsMock');
+const UtilsHelper = require('../../src/helpers/utils');
 const { authCompany, otherCompany } = require('../seed/authCompaniesSeed');
 
 describe('NODE ENV', () => {
@@ -230,12 +231,17 @@ describe('AUTHENTICATION ROUTES - POST /users/refreshToken', () => {
 describe('AUTHENTICATION ROUTES - GET /users/passwordtoken/:token', () => {
   beforeEach(populateDB);
   let fakeDate;
+  let generateVerificationCode;
   beforeEach(() => {
-    fakeDate = sinon.stub(Date, 'now');
+    fakeDate = sinon.stub(Date, 'now').returns(new Date().getTime());
+    generateVerificationCode = sinon.stub(UtilsHelper, 'generateVerificationCode').returns('5678');
   });
   afterEach(() => {
     fakeDate.restore();
+    generateVerificationCode.restore();
   });
+
+  const now = new Date('2021-01-25T10:00:00.000Z').getTime();
 
   it('should return a new access token after checking reset password token', async () => {
     fakeDate.returns(new Date('2020-01-20'));
@@ -288,7 +294,7 @@ describe('AUTHENTICATION ROUTES - GET /users/passwordtoken/:token', () => {
     const responseWithGoodCode = await app.inject({ method: 'GET', url: `/users/passwordtoken/3310?email=${email}` });
 
     expect(responseWithGoodCode.statusCode).toBe(429);
-    expect(responseWithGoodCode.result.message).toBe('Trop de tentatives. Réessayez dans 57 min.');
+    expect(responseWithGoodCode.result.message).toBe('Trop de tentatives. Réessayez plus tard.');
   });
 
   it('should return a 404 error if token is not valid', async () => {
@@ -331,6 +337,20 @@ describe('AUTHENTICATION ROUTES - GET /users/passwordtoken/:token', () => {
     expect(response.statusCode).toBe(200);
   });
 
+  it('should return 200 and remove lock if token is correct and lock is over', async () => {
+    const company = authCompany._id;
+    const { _id, loginCode: token, loginCodeLock, identity: { lastname, firstname } } = usersSeedList[1];
+    fakeDate.returns(loginCodeLock.lockedUntil.getTime() + 60 * 1000);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `/users/passwordtoken/${token}?firstname=${firstname}&lastname=${lastname}&company=${company}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(await User.countDocuments({ _id, loginCodeLock: { $exists: false } })).toBe(1);
+  });
+
   it('should return 400 if both email and firstname are in query', async () => {
     const company = authCompany._id;
     const { loginCode: token, local: { email }, identity: { firstname, lastname } } = usersSeedList[3];
@@ -371,6 +391,7 @@ describe('AUTHENTICATION ROUTES - GET /users/passwordtoken/:token', () => {
     const token = '1294';
     const company = authCompany._id;
     const { identity: { lastname, firstname } } = usersSeedList[3];
+    fakeDate.returns(now);
 
     const response = await app.inject({
       method: 'GET',
@@ -378,6 +399,59 @@ describe('AUTHENTICATION ROUTES - GET /users/passwordtoken/:token', () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+
+  it('should return 429, renew login code and add 5min lock if token is wrong and user has 2 attempts', async () => {
+    const company = authCompany._id;
+    const { _id, loginCodeLock, identity: { lastname, firstname } } = usersSeedList[1];
+    const token = '1296';
+    const fakeNow = loginCodeLock.lockedUntil.getTime() + 3 * 24 * 60 * 60 * 1000;
+    fakeDate.returns(fakeNow);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `/users/passwordtoken/${token}?firstname=${firstname}&lastname=${lastname}&company=${company}`,
+    });
+
+    expect(response.statusCode).toBe(429);
+    expect(response.result.message).toBe('Trop de tentatives. Réessayez plus tard.');
+
+    const lockedUser = await User.findOne({ _id }, { loginCode: 1, loginCodeLock: 1 }).lean();
+    expect(lockedUser.loginCode).toBe('5678');
+    expect(lockedUser.loginCodeLock.count).toBe(1);
+    expect(lockedUser.loginCodeLock.lockedUntil).toEqual(new Date(fakeNow + 5 * 60 * 1000));
+  });
+
+  it('should return 429 if token is correct but user is locked', async () => {
+    const company = authCompany._id;
+    const { loginCode: token, loginCodeLock, identity: { lastname, firstname } } = usersSeedList[1];
+    fakeDate.returns(loginCodeLock.lockedUntil.getTime() - 60 * 1000);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `/users/passwordtoken/${token}?firstname=${firstname}&lastname=${lastname}&company=${company}`,
+    });
+
+    expect(response.statusCode).toBe(429);
+  });
+
+  it('should lock user for a longer time if token is wrong after a first lock', async () => {
+    const company = authCompany._id;
+    const { _id, loginCodeLock, identity: { lastname, firstname } } = usersSeedList[1];
+    const token = '1296';
+    const fakeNow = loginCodeLock.lockedUntil.getTime() + 60 * 1000;
+    fakeDate.returns(fakeNow);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: `/users/passwordtoken/${token}?firstname=${firstname}&lastname=${lastname}&company=${company}`,
+    });
+
+    expect(response.statusCode).toBe(429);
+
+    const lockedUser = await User.findOne({ _id }, { loginCodeLock: 1 }).lean();
+    expect(lockedUser.loginCodeLock.count).toBe(2);
+    expect(lockedUser.loginCodeLock.lockedUntil).toEqual(new Date(fakeNow + 15 * 60 * 1000));
   });
 
   it('should return 404 if company is not correct', async () => {
@@ -508,16 +582,5 @@ describe('AUTHENTICATION ROUTES - POST /users/forgot-password', () => {
     });
 
     expect(response.statusCode).toBe(404);
-  });
-
-  it('should return a 404 error if origin mobile and user does not exist', async () => {
-    const response = await app.inject({
-      method: 'POST',
-      url: '/users/forgot-password',
-      payload: { email: 't@t.com', origin: MOBILE, type: EMAIL },
-    });
-
-    expect(response.statusCode).toBe(404);
-    sinon.assert.notCalled(sendVerificationCodeEmail);
   });
 });

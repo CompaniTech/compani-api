@@ -41,7 +41,7 @@ exports.authenticate = async (payload) => {
           firstMobileConnectionDate: CompaniDate().toISO(),
           firstMobileConnectionMode: payload.mobileConnectionMode,
         },
-        $unset: { loginCode: '' },
+        $unset: { loginCode: '', loginCodeLock: '' },
       }
     );
   }
@@ -74,8 +74,12 @@ exports.updatePassword = async (userId, userPayload) => User.findOneAndUpdate(
   { new: true }
 ).lean();
 
-exports.sendToken = (user) => {
+exports.sendToken = async (user) => {
   const payload = pickBy({ _id: user._id, email: user.local.email });
+
+  if (user.loginCodeLock) {
+    await User.updateOne({ _id: user._id }, { $unset: { loginCodeLock: '' } }, { timestamps: false });
+  }
 
   return { token: exports.encode(payload), user: payload };
 };
