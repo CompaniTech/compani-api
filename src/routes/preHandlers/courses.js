@@ -601,8 +601,11 @@ exports.authorizeGetCourse = async (req) => {
 };
 
 exports.authorizeAccessRuleAddition = async (req) => {
-  const course = await Course.findById(req.params._id, 'accessRules').lean();
+  const course = await Course.findById(req.params._id, 'accessRules subProgram')
+    .populate({ path: 'subProgram', select: 'archivedAt' })
+    .lean();
   if (!course) throw Boom.notFound();
+  if (course.subProgram.archivedAt) throw Boom.forbidden();
 
   const accessRuleAlreadyExist = req.payload.companies
     .some(companyId => UtilsHelper.doesArrayIncludeId(course.accessRules, companyId));
@@ -615,9 +618,13 @@ exports.authorizeAccessRuleAddition = async (req) => {
 };
 
 exports.authorizeAccessRuleDeletion = async (req) => {
-  const course = await Course.countDocuments({ _id: req.params._id, accessRules: req.params.accessRuleId });
+  const course = await Course
+    .findOne({ _id: req.params._id, accessRules: req.params.accessRuleId }, 'subProgram')
+    .populate({ path: 'subProgram', select: 'archivedAt' })
+    .lean();
 
   if (!course) throw Boom.notFound();
+  if (course.subProgram.archivedAt) throw Boom.forbidden();
 
   return null;
 };

@@ -369,6 +369,13 @@ const subProgramsList = [
     sheetTemplateId: 'templateId',
     folderId: 'parent_folderId',
   },
+  {
+    _id: new ObjectId(),
+    name: 'sous-programme archivé',
+    steps: [stepList[1]._id],
+    status: PUBLISHED,
+    archivedAt: '2021-01-01T00:00:00.000Z',
+  },
 ];
 
 const programsList = [
@@ -831,6 +838,15 @@ const coursesList = [
         count: 1,
       },
     ],
+  },
+  { // 28 eLearning course with archived subProgram
+    _id: new ObjectId(),
+    subProgram: subProgramsList[5]._id,
+    type: INTER_B2C,
+    format: STRICTLY_E_LEARNING,
+    trainees: [],
+    accessRules: [authCompany._id],
+    tradeName: 'nom',
   },
 ];
 

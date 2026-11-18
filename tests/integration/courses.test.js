@@ -1020,7 +1020,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(4);
+      expect(response.result.data.courses.length).toEqual(5);
     });
 
     it('should get all trainee courses (pedagogy webapp)', async () => {
@@ -5092,6 +5092,17 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       expect(response.statusCode).toBe(409);
     });
 
+    it('should return 403 if subProgram is archived', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[28]._id}/accessrules`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { companies: [otherCompany._id] },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 404 if company does not exist', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -5170,6 +5181,16 @@ describe('COURSES ROUTES - DELETE /:_id/accessrules/:accessRuleId', () => {
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if subProgram is archived', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[28]._id}/accessrules/${authCompany._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 404 if accessRules doesn\'t exist', async () => {

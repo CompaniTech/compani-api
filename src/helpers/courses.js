@@ -587,7 +587,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       },
       {
         path: 'subProgram',
-        select: origin === WEBAPP ? 'program steps paymentPlans hourlyPaymentPlans' : 'program steps',
+        select: origin === WEBAPP ? 'program steps paymentPlans hourlyPaymentPlans archivedAt' : 'program steps',
         populate: [
           { path: 'program', select: 'learningGoals' },
           ...(origin === WEBAPP

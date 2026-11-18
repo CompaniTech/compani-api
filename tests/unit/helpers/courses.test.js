@@ -2889,7 +2889,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps paymentPlans hourlyPaymentPlans',
+                select: 'program steps paymentPlans hourlyPaymentPlans archivedAt',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
@@ -3009,7 +3009,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps paymentPlans hourlyPaymentPlans',
+                  select: 'program steps paymentPlans hourlyPaymentPlans archivedAt',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3118,7 +3118,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps paymentPlans hourlyPaymentPlans',
+                  select: 'program steps paymentPlans hourlyPaymentPlans archivedAt',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3301,7 +3301,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps paymentPlans hourlyPaymentPlans',
+                select: 'program steps paymentPlans hourlyPaymentPlans archivedAt',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
