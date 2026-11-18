@@ -9,6 +9,7 @@ const TrainingContract = require('../models/TrainingContract');
 const CourseBill = require('../models/CourseBill');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
+const DatesUtilsHelper = require('./dates/utils');
 const { MM_YYYY, MONTH, DD_MM_YYYY, SHORT_DURATION_H_MM, OFFICIAL } = require('./constants');
 const UtilsHelper = require('./utils');
 const NumbersHelper = require('./numbers');
@@ -246,10 +247,30 @@ exports.generate = async (completionCertificateId) => {
   for (const [planId, bills] of Object.entries(billsGroupedByPlan)) {
     const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
       .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, planId));
-    const priceDetails = HourlyPaymentPlansHelper
-      .getPricesFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration, course.subProgram.steps);
+    let previousELearningDuration;
+    if (hourlyPaymentPlan.elearningLimit) {
+      const firstCertificateMonthStart = [month, ...certificates.map(c => c.month)]
+        .map(m => CompaniDate(m, MM_YYYY).startOf(MONTH).toISO())
+        .sort(DatesUtilsHelper.ascendingSort)[0];
+
+      if (CompaniDate(firstCertificateMonthStart).isBefore(startOfMonth)) {
+        const dates = { startDate: firstCertificateMonthStart, endDate: CompaniDate(startOfMonth).toISO() };
+        previousELearningDuration = await CoursesHelper.getTraineeELearningDuration(course, trainee._id, dates);
+      }
+    }
+
+    const priceDetails = HourlyPaymentPlansHelper.getPricesFromDurations(
+      hourlyPaymentPlan,
+      durationPerStep,
+      eLearningDuration,
+      course.subProgram.steps,
+      previousELearningDuration
+    );
     const hasPricedStep = Object.values(priceDetails).some(line => line.stepId);
-    if (!hasPricedStep && CompaniDuration(eLearningDuration).isShorterThan('PT900S')) continue;
+    const eLearningPrice = get(priceDetails, 'elearning.price', 0);
+    const isELearningNotBillable = CompaniDuration(eLearningDuration).isShorterThan('PT900S') ||
+      NumbersHelper.isEqualTo(eLearningPrice, 0);
+    if (!hasPricedStep && isELearningNotBillable) continue;
 
     const descriptionDetails = HourlyPaymentPlansHelper.getPriceDetails(priceDetails);
     const price = NumbersHelper

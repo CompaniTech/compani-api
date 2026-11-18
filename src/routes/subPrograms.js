@@ -12,6 +12,7 @@ const {
   authorizeStepReuse,
   getSubProgram,
 } = require('./preHandlers/subPrograms');
+const { durationStrictlyPositive } = require('./validations/utils');
 const {
   update,
   remove,
@@ -83,6 +84,8 @@ exports.plugin = {
                     .required(),
                 }),
                 elearningPrice: Joi.number().positive(),
+                elearningLimit: durationStrictlyPositive
+                  .when('elearningPrice', { is: Joi.exist(), otherwise: Joi.forbidden() }),
               }).required(),
             }),
             Joi.object({ archivedAt: Joi.date().allow('') })

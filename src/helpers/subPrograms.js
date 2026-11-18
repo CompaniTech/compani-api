@@ -9,6 +9,7 @@ const Course = require('../models/Course');
 const UserCompany = require('../models/UserCompany');
 const { INTER_B2C, STRICTLY_E_LEARNING, DRAFT, PUBLISHED } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
+const { CompaniDuration } = require('./dates/companiDurations');
 const NotificationHelper = require('./notifications');
 const UtilsHelper = require('./utils');
 
@@ -127,11 +128,18 @@ exports.updateSubProgram = async (subProgramId, payload) => {
 
   if (payload.hourlyPaymentPlan) {
     const { hourlyPaymentPlanId, prices, elearningPrice } = payload.hourlyPaymentPlan;
+    const elearningLimit = payload.hourlyPaymentPlan.elearningLimit &&
+      CompaniDuration(payload.hourlyPaymentPlan.elearningLimit).asSeconds();
 
     if (hourlyPaymentPlanId && prices.length) {
-      const updateQuery = elearningPrice
-        ? { $set: { 'hourlyPaymentPlans.$.prices': prices, 'hourlyPaymentPlans.$.elearningPrice': elearningPrice } }
-        : { $set: { 'hourlyPaymentPlans.$.prices': prices }, $unset: { 'hourlyPaymentPlans.$.elearningPrice': '' } };
+      const updateQuery = {
+        $set: {
+          'hourlyPaymentPlans.$.prices': prices,
+          ...elearningPrice && { 'hourlyPaymentPlans.$.elearningPrice': elearningPrice },
+          ...elearningLimit && { 'hourlyPaymentPlans.$.elearningLimit': elearningLimit },
+        },
+        ...!elearningLimit && { $unset: { 'hourlyPaymentPlans.$.elearningLimit': '' } },
+      };
 
       return SubProgram.updateOne({ _id: subProgramId, 'hourlyPaymentPlans._id': hourlyPaymentPlanId }, updateQuery);
     }
@@ -145,7 +153,15 @@ exports.updateSubProgram = async (subProgramId, payload) => {
 
     return SubProgram.updateOne(
       { _id: subProgramId },
-      { $push: { hourlyPaymentPlans: { prices, ...elearningPrice && { elearningPrice } } } }
+      {
+        $push: {
+          hourlyPaymentPlans: {
+            prices,
+            ...elearningPrice && { elearningPrice },
+            ...elearningLimit && { elearningLimit },
+          },
+        },
+      }
     );
   }
 

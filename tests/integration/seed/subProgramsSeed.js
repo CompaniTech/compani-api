@@ -191,6 +191,12 @@ const subProgramsList = [
     status: PUBLISHED,
     steps: [stepsList[2]._id],
   },
+  { // 17 published, on site step and e-learning step
+    _id: new ObjectId(),
+    name: 'subProgram 17',
+    status: PUBLISHED,
+    steps: [stepsList[0]._id, stepsList[2]._id],
+  },
 ];
 
 const programsList = [

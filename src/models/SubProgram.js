@@ -2,7 +2,13 @@ const mongoose = require('mongoose');
 const has = require('lodash/has');
 const mongooseLeanVirtuals = require('mongoose-lean-virtuals');
 const { DRAFT, PUBLISHED, E_LEARNING, TRAINER_ROLES } = require('../helpers/constants');
-const { formatQuery, queryMiddlewareList } = require('./preHooks/validate');
+const {
+  formatQuery,
+  queryMiddlewareList,
+  getDocMiddlewareList,
+  getDocListMiddlewareList,
+} = require('./preHooks/validate');
+const { formatSecondsToISODuration } = require('../helpers/dates/utils');
 
 const STATUS_TYPES = [DRAFT, PUBLISHED];
 
@@ -31,6 +37,7 @@ const SubProgramSchema = mongoose.Schema({
         hourlyAmount: { type: Number, required: true },
       }],
       elearningPrice: { type: Number },
+      elearningLimit: { type: Number },
     }],
     default: undefined,
   },
@@ -77,7 +84,23 @@ SubProgramSchema.virtual('areStepsValid').get(setAreStepsValid);
 
 SubProgramSchema.virtual('isStrictlyELearning').get(setIsStrictlyELearning);
 
+function formatELearningLimit(doc) {
+  if (!doc || !doc.hourlyPaymentPlans) return;
+
+  for (const plan of doc.hourlyPaymentPlans) {
+    if (plan.elearningLimit) plan.elearningLimit = formatSecondsToISODuration(plan.elearningLimit);
+  }
+}
+
+function formatELearningLimitList(docs) {
+  for (const doc of docs) {
+    formatELearningLimit(doc);
+  }
+}
+
 queryMiddlewareList.map(middleware => SubProgramSchema.pre(middleware, formatQuery));
+getDocMiddlewareList.map(middleware => SubProgramSchema.post(middleware, formatELearningLimit));
+getDocListMiddlewareList.map(middleware => SubProgramSchema.post(middleware, formatELearningLimitList));
 
 SubProgramSchema.plugin(mongooseLeanVirtuals);
 

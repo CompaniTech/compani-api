@@ -1420,11 +1420,34 @@ exports.getRealELearningDuration = (activityHistories) => {
   return eLearningDuration;
 };
 
-exports.getTraineeDurations = async (course, traineeId, dates) => {
+exports.getTraineeELearningDuration = async (course, traineeId, dates) => {
   const REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS
     .split(',')
     .map(id => new ObjectId(id));
 
+  const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
+  const activityHistories = await ActivityHistory
+    .find({ activity: { $in: eLearningSteps.flatMap(s => s.activities) }, user: traineeId })
+    .lean();
+
+  if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, course.subProgram._id)) {
+    const filteredActivityHistories = dates
+      ? activityHistories.filter(aH => CompaniDate(aH.date).isSameOrBetween(dates.startDate, dates.endDate))
+      : activityHistories;
+
+    return exports.getRealELearningDuration(filteredActivityHistories);
+  }
+
+  const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
+  const eLearningStepsWithAH = eLearningSteps.map(s => ({
+    ...s,
+    activities: s.activities.map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
+  }));
+
+  return exports.getELearningDuration(eLearningStepsWithAH, traineeId, dates);
+};
+
+exports.getTraineeDurations = async (course, traineeId, dates) => {
   const slots = dates
     ? course.slots.filter(slot => CompaniDate(slot.startDate).isSameOrBetween(dates.startDate, dates.endDate))
     : course.slots;
@@ -1436,25 +1459,7 @@ exports.getTraineeDurations = async (course, traineeId, dates) => {
   const slotsWithAttendance = slots
     .filter(slot => UtilsHelper.doesArrayIncludeId(attendances.map(a => a.courseSlot), slot._id));
 
-  const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
-  const activityHistories = await ActivityHistory
-    .find({ activity: { $in: eLearningSteps.flatMap(s => s.activities) }, user: traineeId })
-    .lean();
-
-  let eLearningDuration;
-  if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, course.subProgram._id)) {
-    const filteredActivityHistories = dates
-      ? activityHistories.filter(aH => CompaniDate(aH.date).isSameOrBetween(dates.startDate, dates.endDate))
-      : activityHistories;
-    eLearningDuration = exports.getRealELearningDuration(filteredActivityHistories);
-  } else {
-    const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
-    const eLearningStepsWithAH = eLearningSteps.map(s => ({
-      ...s,
-      activities: s.activities.map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
-    }));
-    eLearningDuration = exports.getELearningDuration(eLearningStepsWithAH, traineeId, dates);
-  }
+  const eLearningDuration = await exports.getTraineeELearningDuration(course, traineeId, dates);
 
   return { slotsWithAttendance, eLearningDuration };
 };

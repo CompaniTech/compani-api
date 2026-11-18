@@ -19,6 +19,7 @@ const {
 } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
+const { CompaniDuration } = require('../../helpers/dates/companiDurations');
 const { CompaniDate } = require('../../helpers/dates/companiDates');
 
 const { language } = translate;
@@ -181,7 +182,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
     if (subProgram.status !== PUBLISHED) throw Boom.forbidden();
     if ((subProgram.paymentPlans || []).length) throw Boom.forbidden(translate[language].subProgramHasPaymentPlan);
 
-    const { hourlyPaymentPlanId, prices, elearningPrice } = req.payload.hourlyPaymentPlan;
+    const { hourlyPaymentPlanId, prices, elearningPrice, elearningLimit } = req.payload.hourlyPaymentPlan;
     if (hourlyPaymentPlanId) {
       const subProgramHppIds = (subProgram.hourlyPaymentPlans || []).map(hpp => hpp._id);
       const hourlyPaymentPlanExists = UtilsHelper.doesArrayIncludeId(subProgramHppIds, hourlyPaymentPlanId);
@@ -203,14 +204,21 @@ exports.authorizeSubProgramUpdate = async (req) => {
       const isDuplicate = (subProgram.hourlyPaymentPlans || [])
         .some(hpp => !UtilsHelper.areObjectIdsEquals(hpp._id, hourlyPaymentPlanId) &&
         hpp.elearningPrice === elearningPrice &&
+        (hpp.elearningLimit
+          ? !!elearningLimit && CompaniDuration(hpp.elearningLimit).isEquivalentTo(elearningLimit)
+          : !elearningLimit) &&
         hpp.prices.length === prices.length &&
         hpp.prices.every(hp => prices
           .some(p => UtilsHelper.areObjectIdsEquals(p.step, hp.step) && p.hourlyAmount === hp.hourlyAmount)));
       if (isDuplicate) throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanAlreadyExists);
     }
 
-    if (elearningPrice && !subProgram.steps.some(s => s.type === E_LEARNING)) {
+    const hasELearningStep = subProgram.steps.some(s => s.type === E_LEARNING);
+    if (elearningPrice && !hasELearningStep) {
       throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanNoELearningStep);
+    }
+    if (prices.length && !elearningPrice && hasELearningStep) {
+      throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanNoELearningPrice);
     }
   }
 
