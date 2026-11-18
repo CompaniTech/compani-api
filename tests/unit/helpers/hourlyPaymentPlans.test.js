@@ -36,23 +36,43 @@ describe('getPricesFromDurations', () => {
     expect(result.elearning.duration.asMinutes()).toBe(90);
   });
 
-  it('should cap the billed e-learning with the limit of the plan (real duration, capped price)', () => {
+  it('should not cap the billed e-learning if no previous duration and duration is lower than limit', () => {
     const hourlyPaymentPlan = { prices: [], elearningPrice: 20, elearningLimit: 'PT36000S' };
     const eLearningDuration = CompaniDuration({ hours: 3 });
 
     const noPreviousDuration = HourlyPaymentPlansHelper
       .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, []);
+
+    expect(noPreviousDuration.elearning.price).toBe('60');
+  });
+
+  it('should not cap the billed e-learning if previous and current duration sum is lower than limit ', () => {
+    const hourlyPaymentPlan = { prices: [], elearningPrice: 20, elearningLimit: 'PT36000S' };
+    const eLearningDuration = CompaniDuration({ hours: 3 });
+
     const limitNotReached = HourlyPaymentPlansHelper
       .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, [], CompaniDuration({ hours: 6 }));
+
+    expect(limitNotReached.elearning.price).toBe('60');
+  });
+
+  it('should cap the billed e-learning with the remaining allowed duration', () => {
+    const hourlyPaymentPlan = { prices: [], elearningPrice: 20, elearningLimit: 'PT36000S' };
+    const eLearningDuration = CompaniDuration({ hours: 3 });
+
     const limitReachedThisMonth = HourlyPaymentPlansHelper
       .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, [], CompaniDuration({ hours: 8 }));
+
+    expect(limitReachedThisMonth.elearning.price).toBe('40');
+    expect(limitReachedThisMonth.elearning.duration.asHours()).toBe(3);
+  });
+  it('should not bill e-learning if limit already reached', () => {
+    const hourlyPaymentPlan = { prices: [], elearningPrice: 20, elearningLimit: 'PT36000S' };
+    const eLearningDuration = CompaniDuration({ hours: 3 });
+
     const limitAlreadyReached = HourlyPaymentPlansHelper
       .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, [], CompaniDuration({ hours: 12 }));
 
-    expect(noPreviousDuration.elearning.price).toBe('60');
-    expect(limitNotReached.elearning.price).toBe('60');
-    expect(limitReachedThisMonth.elearning.price).toBe('40');
-    expect(limitReachedThisMonth.elearning.duration.asHours()).toBe(3);
     expect(limitAlreadyReached.elearning.price).toBe('0');
   });
 
