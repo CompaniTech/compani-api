@@ -8377,7 +8377,10 @@ describe('generateCompletionCertificates', () => {
               },
               {
                 _id: new ObjectId(),
-                activityHistories: [{ _id: new ObjectId(), user: traineesIds[0], duration: 'PT100S' }],
+                activityHistories: [
+                  { _id: new ObjectId(), user: traineesIds[0], duration: 'PT100S' },
+                  { _id: new ObjectId(), user: traineesIds[0] },
+                ],
               },
             ],
           },

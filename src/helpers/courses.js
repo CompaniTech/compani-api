@@ -1414,7 +1414,7 @@ exports.getELearningDuration = (steps, traineeId, { startDate, endDate } = {}) =
 
 exports.getRealELearningDuration = (activityHistories) => {
   const eLearningDuration = activityHistories
-    .map(ah => ah.duration)
+    .map(ah => ah.duration || PT0S)
     .reduce((acc, val) => acc.add(CompaniDuration(val)), CompaniDuration());
 
   return eLearningDuration;
