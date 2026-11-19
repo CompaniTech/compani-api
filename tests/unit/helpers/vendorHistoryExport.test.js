@@ -22,6 +22,7 @@ const {
   VENDOR_ADMIN,
   NO_DATA,
   CHECK,
+  DIRECT_DEBIT,
   REFUND,
   ESTIMATED_START_DATE_EDITION,
   WEBAPP,
@@ -32,6 +33,7 @@ const {
   RECEIVED,
   PENDING,
   PAID,
+  CANCELLED,
   PRESENT,
   MISSING,
   DRAFT,
@@ -2918,7 +2920,7 @@ describe('exportCoursePaymentHistory', () => {
   });
 
   it('should return an array with the header and 3 rows', async () => {
-    const courseBillIds = [new ObjectId(), new ObjectId()];
+    const courseBillIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const payerId = new ObjectId();
     const coursePaymentList = [
       {
@@ -2967,6 +2969,21 @@ describe('exportCoursePaymentHistory', () => {
         netInclTaxes: 200,
         status: RECEIVED,
       },
+      {
+        _id: new ObjectId(),
+        nature: PAYMENT,
+        number: 'REG-5',
+        date: '2022-01-15T23:00:00.000Z',
+        courseBill: {
+          _id: courseBillIds[2],
+          number: 'FACT-3',
+          payer: { _id: payerId },
+          course: { type: INTRA, trainees: [{ _id: new ObjectId(), identity: { firstname: 'Archie', lastname: 'Pelle' } }] },
+        },
+        type: DIRECT_DEBIT,
+        netInclTaxes: 50,
+        status: CANCELLED,
+      },
     ];
     findCoursePayment
       .onCall(0)
@@ -2975,6 +2992,7 @@ describe('exportCoursePaymentHistory', () => {
           [
             { _id: coursePaymentList[0], courseBill: courseBillIds[0] },
             { _id: coursePaymentList[2], courseBill: courseBillIds[1] },
+            { _id: coursePaymentList[3], courseBill: courseBillIds[2] },
           ],
           ['setOptions', 'lean'])
       );
@@ -2986,6 +3004,7 @@ describe('exportCoursePaymentHistory', () => {
       ['Nature', 'Identifiant', 'Date', 'Facture associée', 'Id payeur facture', 'Numéro du paiement (parmi ceux de la même facture)', 'Moyen de paiement', 'Montant', 'Statut', 'Nom de lot fichier XML', 'Date d\'effet du prélèvement', 'Apprenant'],
       ['Remboursement', 'REG-2', '23/01/2022', 'FACT-2', payerId, 2, 'Chèque', '22,00', 'Reçu', 'LOT-002', '22/01/2022', 'Archie PELLE'],
       ['Remboursement', 'REG-4', '11/01/2022', 'FACT-1', payerId, 1, 'Chèque', '200,00', 'Reçu', '', '', ''],
+      ['Paiement', 'REG-5', '16/01/2022', 'FACT-3', payerId, 1, 'Prélèvement', '50,00', 'Annulé', '', '', ''],
     ]);
     SinonMongoose.calledWithExactly(
       findCoursePayment,
