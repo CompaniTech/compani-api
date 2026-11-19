@@ -43,3 +43,4 @@ jobs:
           REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN }}
           CONSULTING_PROGRAM_IDS: ${{ secrets.CONSULTING_PROGRAM_IDS }}
           CONSULTING_BILLING_ITEM: ${{ secrets.CONSULTING_BILLING_ITEM }}
+          WEBSITE_HOSTNAME: http://localhost:8080
