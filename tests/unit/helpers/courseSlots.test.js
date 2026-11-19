@@ -1735,3 +1735,20 @@ describe('removeCourseSlot', () => {
     sinon.assert.calledOnceWithExactly(deleteOne, { _id: courseSlotId });
   });
 });
+
+describe('getDurationPerStep', () => {
+  it('should return the total duration of the slots for each step', () => {
+    const steps = [{ _id: new ObjectId() }, { _id: new ObjectId() }];
+    const slots = [
+      { startDate: '2025-03-10T08:00:00.000Z', endDate: '2025-03-10T10:00:00.000Z', step: steps[0] },
+      { startDate: '2025-03-11T08:00:00.000Z', endDate: '2025-03-11T09:30:00.000Z', step: steps[0] },
+      { startDate: '2025-03-12T08:00:00.000Z', endDate: '2025-03-12T09:00:00.000Z', step: steps[1] },
+    ];
+
+    const result = CourseSlotsHelper.getDurationPerStep(slots);
+
+    expect(Object.keys(result)).toEqual([steps[0]._id.toString(), steps[1]._id.toString()]);
+    expect(result[steps[0]._id.toString()].asHours()).toBe(3.5);
+    expect(result[steps[1]._id.toString()].asHours()).toBe(1);
+  });
+});

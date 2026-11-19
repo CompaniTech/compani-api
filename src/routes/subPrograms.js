@@ -12,6 +12,7 @@ const {
   authorizeStepReuse,
   getSubProgram,
 } = require('./preHandlers/subPrograms');
+const { durationStrictlyPositive } = require('./validations/utils');
 const {
   update,
   remove,
@@ -63,6 +64,28 @@ exports.plugin = {
                   then: Joi.array().items(Joi.number().positive()),
                   otherwise: Joi.array().items(Joi.number().positive()).min(1).required(),
                 }),
+              }).required(),
+            }),
+            Joi.object({
+              hourlyPaymentPlan: Joi.object({
+                hourlyPaymentPlanId: Joi.objectId(),
+                prices: Joi.when('hourlyPaymentPlanId', {
+                  is: Joi.exist(),
+                  then: Joi.array().items({
+                    step: Joi.objectId().required(),
+                    hourlyAmount: Joi.number().positive().required(),
+                  }),
+                  otherwise: Joi.array()
+                    .items({
+                      step: Joi.objectId().required(),
+                      hourlyAmount: Joi.number().positive().required(),
+                    })
+                    .min(1)
+                    .required(),
+                }),
+                elearningPrice: Joi.number().positive(),
+                elearningLimit: durationStrictlyPositive
+                  .when('elearningPrice', { is: Joi.exist(), otherwise: Joi.forbidden() }),
               }).required(),
             }),
             Joi.object({ archivedAt: Joi.date().allow('') })

@@ -97,6 +97,7 @@ const {
   PENDING,
   RECEIVED,
   XML_GENERATED,
+  CANCELLED,
   BANK_TRANSFER,
   PRESENT,
   MISSING,
@@ -1462,7 +1463,7 @@ const courseFundingOrganisation = {
 const courseBillNumber = { _id: new ObjectId(), seq: 8 };
 const courseCreditNoteNumber = { _id: new ObjectId(), seq: 2 };
 const coursePaymentNumber = [
-  { _id: new ObjectId(), seq: 6, nature: PAYMENT },
+  { _id: new ObjectId(), seq: 7, nature: PAYMENT },
   { _id: new ObjectId(), seq: 4, nature: REFUND },
 ];
 
@@ -1663,6 +1664,16 @@ const coursePaymentList = [
     nature: PAYMENT,
     type: DIRECT_DEBIT,
     status: PENDING,
+  },
+  { // 10 cancelled because of creditNote
+    number: 'REG-00007',
+    date: '2022-03-10T00:00:00.000Z',
+    companies: [authCompany._id],
+    courseBill: courseBillList[1]._id,
+    netInclTaxes: 1200,
+    nature: PAYMENT,
+    type: DIRECT_DEBIT,
+    status: CANCELLED,
   },
 ];
 

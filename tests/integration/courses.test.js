@@ -1020,7 +1020,7 @@ describe('COURSES ROUTES - GET /courses', () => {
       });
 
       expect(response.statusCode).toBe(200);
-      expect(response.result.data.courses.length).toEqual(4);
+      expect(response.result.data.courses.length).toEqual(5);
     });
 
     it('should get all trainee courses (pedagogy webapp)', async () => {
@@ -5092,6 +5092,17 @@ describe('COURSES ROUTES - POST /:_id/accessrules', () => {
       expect(response.statusCode).toBe(409);
     });
 
+    it('should return 403 if subProgram is archived', async () => {
+      const response = await app.inject({
+        method: 'POST',
+        url: `/courses/${coursesList[28]._id}/accessrules`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { companies: [otherCompany._id] },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
     it('should return 404 if company does not exist', async () => {
       const response = await app.inject({
         method: 'POST',
@@ -5170,6 +5181,16 @@ describe('COURSES ROUTES - DELETE /:_id/accessrules/:accessRuleId', () => {
       });
 
       expect(response.statusCode).toBe(404);
+    });
+
+    it('should return 403 if subProgram is archived', async () => {
+      const response = await app.inject({
+        method: 'DELETE',
+        url: `/courses/${coursesList[28]._id}/accessrules/${authCompany._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
     });
 
     it('should return 404 if accessRules doesn\'t exist', async () => {
@@ -10084,6 +10105,173 @@ describe('COURSES ROUTES - GET /{_id}/all-documents', () => {
         const response = await app.inject({
           method: 'GET',
           url: `/courses/${courseIdFromAuthCompany}/all-documents`,
+          headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        });
+
+        expect(response.statusCode).toBe(role.expectedCode);
+      });
+    });
+  });
+});
+
+describe('COURSES ROUTES - GET /courses/trainers-billing', () => {
+  let authToken;
+  beforeEach(populateDB);
+
+  describe('TRAINING_ORGANISATION_MANAGER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('training_organisation_manager');
+    });
+
+    it('should return all trainers with their collective courses and billing infos', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const { trainers } = response.result.data;
+      expect(trainers.length).toBe(2);
+      expect(trainers.every(t => t.courses.every(c => c.type !== SINGLE))).toBeTruthy();
+    });
+
+    it('should return a specific trainer with its collective courses and billing infos', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?trainer=${trainer._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const { trainers } = response.result.data;
+      expect(trainers.length).toEqual(1);
+      expect(trainers[0].courses.length).toEqual(15);
+    });
+
+    it('should return all trainer\'s courses with slots or trainer bills in period', async () => {
+      const startDate = '2020-03-01T00:00:00.000Z';
+      const endDate = '2020-03-05T23:59:59.999Z';
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?startDate=${startDate}&endDate=${endDate}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      const { trainers } = response.result.data;
+      expect(trainers.length).toEqual(2);
+      const trainerCourses = trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, trainer._id)).courses;
+      const trainerAndCoachCourses = trainers
+        .find(t => UtilsHelper.areObjectIdsEquals(t._id, trainerAndCoach._id)).courses;
+      expect(trainerCourses.length).toEqual(3);
+      expect(trainerAndCoachCourses.length).toEqual(4);
+      const trainerCourseBilledInPeriod = trainerCourses
+        .find(c => UtilsHelper.areObjectIdsEquals(c._id, coursesList[7]._id));
+      expect(CompaniDate(trainerCourseBilledInPeriod.billsSubmissionDates[0]).toISO())
+        .toEqual('2020-03-02T10:00:00.000Z');
+    });
+
+    it('should return 400 if endDate without startDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing?endDate=2020-03-05T23:59:59.999Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if startDate without endDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing?startDate=2020-03-01T00:00:00.000Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 400 if endDate is before startDate', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing?startDate=2020-03-05T00:00:00.000Z&endDate=2020-03-01T00:00:00.000Z',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
+    it('should return 404 if trainer does not exist', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?trainer=${new ObjectId()}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(404);
+    });
+  });
+
+  describe('TRAINER', () => {
+    beforeEach(async () => {
+      authToken = await getToken('trainer');
+    });
+
+    it('should return trainer\'s collective courses with billing infos', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?trainer=${trainer._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(200);
+      expect(response.result.data.trainers.length).toBe(1);
+      const { courses } = response.result.data.trainers[0];
+      expect(courses.length).toEqual(15);
+      expect(courses.every(c => c.type !== SINGLE)).toBeTruthy();
+      const notInvoicedCourse = courses.find(c => UtilsHelper.areObjectIdsEquals(c._id, coursesList[4]._id));
+      expect(notInvoicedCourse).toEqual(expect.objectContaining({
+        invoicedAmount: 0,
+        paidAmount: 0,
+        status: 'not_invoiced',
+      }));
+    });
+
+    it('should return 403 if trainer is not the logged user', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: `/courses/trainers-billing?trainer=${trainerAndCoach._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 403 if no trainer in query', async () => {
+      const response = await app.inject({
+        method: 'GET',
+        url: '/courses/trainers-billing',
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+  });
+
+  describe('Other roles', () => {
+    const roles = [
+      { name: 'helper', expectedCode: 403 },
+      { name: 'planning_referent', expectedCode: 403 },
+      { name: 'coach', expectedCode: 403 },
+    ];
+    roles.forEach((role) => {
+      it(`should return ${role.expectedCode} as user is ${role.name}`, async () => {
+        authToken = await getToken(role.name);
+
+        const response = await app.inject({
+          method: 'GET',
+          url: `/courses/trainers-billing?trainer=${trainer._id}`,
           headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
         });
 

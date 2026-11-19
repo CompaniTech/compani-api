@@ -472,11 +472,13 @@ describe('updateSubProgram', () => {
         ],
         program: { name: 'nom', subPrograms: programSubPrograms },
       };
+      const userId = new ObjectId();
       const existingCourse = { _id: new ObjectId(), subProgram: otherSubProgramId, accessRules: [new ObjectId()] };
 
       findOneAndUpdate.returns(SinonMongoose.stubChainedQueries(updatedSubProgram));
       stepUpdateManyStub.returns({ activities });
       courseFindOne.returns(SinonMongoose.stubChainedQueries(existingCourse, ['lean']));
+      userCompanyFind.returns(SinonMongoose.stubChainedQueries([{ user: userId }], ['lean']));
 
       await SubProgramHelper.updateSubProgram(subProgram._id, payload);
 
@@ -496,14 +498,28 @@ describe('updateSubProgram', () => {
         { $set: { subProgram: subProgram._id } }
       );
       sinon.assert.notCalled(courseCreateStub);
-      sinon.assert.notCalled(find);
       sinon.assert.notCalled(updateOne);
+      SinonMongoose.calledOnceWithExactly(
+        userCompanyFind,
+        [
+          {
+            query: 'find',
+            args: [
+              {
+                company: { $in: existingCourse.accessRules },
+                $or: [{ endDate: { $gt: '2025-03-31T14:00:00.000Z' } }, { endDate: { $exists: false } }],
+              },
+              { user: 1 },
+            ],
+          },
+          { query: 'lean' },
+        ]
+      );
       sinon.assert.calledWithExactly(
         sendNewElearningCourseNotification,
         existingCourse._id,
-        { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
+        { _id: { $in: [userId] }, formationExpoTokenList: { $exists: true, $not: { $size: 0 } } }
       );
-      sinon.assert.notCalled(userCompanyFind);
       sinon.assert.notCalled(getLastVersion);
       sinon.assert.notCalled(findOne);
     });
@@ -816,6 +832,74 @@ describe('updateSubProgram', () => {
         'effectiveDate'
       );
       sinon.assert.notCalled(updateOne);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+  });
+
+  describe('update hourly payment plan', () => {
+    it('should add a new plan if payload.hourlyPaymentPlan has no id', async () => {
+      const subProgramId = new ObjectId();
+      const stepId = new ObjectId();
+      const payload = {
+        hourlyPaymentPlan: {
+          prices: [{ step: stepId, hourlyAmount: 50 }],
+          elearningPrice: 30,
+          elearningLimit: 'PT72000S',
+        },
+      };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId },
+        {
+          $push: {
+            hourlyPaymentPlans: {
+              prices: [{ step: stepId, hourlyAmount: 50 }],
+              elearningPrice: 30,
+              elearningLimit: 72000,
+            },
+          },
+        }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should update an existing plan if payload.hourlyPaymentPlan has an id and prices', async () => {
+      const subProgramId = new ObjectId();
+      const hourlyPaymentPlanId = new ObjectId();
+      const prices = [{ step: new ObjectId(), hourlyAmount: 60 }];
+      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, prices, elearningPrice: 30 } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId, 'hourlyPaymentPlans._id': hourlyPaymentPlanId },
+        {
+          $set: { 'hourlyPaymentPlans.$.prices': prices, 'hourlyPaymentPlans.$.elearningPrice': 30 },
+          $unset: { 'hourlyPaymentPlans.$.elearningLimit': '' },
+        }
+      );
+      sinon.assert.notCalled(findOne);
+      sinon.assert.notCalled(findOneAndUpdate);
+    });
+
+    it('should delete a plan if payload.hourlyPaymentPlan has an id and empty prices', async () => {
+      const subProgramId = new ObjectId();
+      const hourlyPaymentPlanId = new ObjectId();
+      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, prices: [] } };
+
+      await SubProgramHelper.updateSubProgram(subProgramId, payload);
+
+      sinon.assert.calledOnceWithExactly(
+        updateOne,
+        { _id: subProgramId },
+        { $pull: { hourlyPaymentPlans: { _id: hourlyPaymentPlanId } } }
+      );
+      sinon.assert.notCalled(findOne);
       sinon.assert.notCalled(findOneAndUpdate);
     });
   });

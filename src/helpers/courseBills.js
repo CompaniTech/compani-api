@@ -15,6 +15,9 @@ const CoursePayment = require('../models/CoursePayment');
 const SubProgram = require('../models/SubProgram');
 const BalanceHelper = require('./balances');
 const UtilsHelper = require('./utils');
+const HourlyPaymentPlansHelper = require('./hourlyPaymentPlans');
+const CoursesHelper = require('./courses');
+const CourseSlotsHelper = require('./courseSlots');
 const CourseHistoriesHelper = require('./courseHistories');
 const VendorCompaniesHelper = require('./vendorCompanies');
 const CourseBillPdf = require('../data/pdf/courseBilling/courseBill');
@@ -33,6 +36,7 @@ const {
   BANK_TRANSFER,
   DIRECT_DEBIT,
   PRESENT,
+  GLOBAL,
 } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
@@ -148,11 +152,22 @@ const formatCourse = (course, traineesCompanyAtCourseRegistrationByCourse) => {
   return { ...course, trainees: courseTrainees, prices: coursePrices };
 };
 
-const getBillRanks = async (courseIds, isVendorUser) => {
-  if (!courseIds.length) return {};
+const getBillInfos = async (courseIds, isVendorUser, shouldComputePreviousBillsSum) => {
+  if (!courseIds.length) return { billRanks: {}, validatedHourlyBillsAmount: {} };
 
   const bills = await CourseBill
-    .find({ course: { $in: courseIds } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 })
+    .find(
+      { course: { $in: courseIds } },
+      {
+        course: 1,
+        companies: 1,
+        billedAt: 1,
+        maturityDate: 1,
+        hourlyPaymentPlan: 1,
+        mainFee: 1,
+        billingPurchaseList: 1,
+      }
+    )
     .populate({ path: 'courseCreditNote', select: 'courseBill', options: { isVendorUser } })
     .setOptions({ isVendorUser })
     .lean();
@@ -167,17 +182,27 @@ const getBillRanks = async (courseIds, isVendorUser) => {
 
   const billsGroupedByCourse = groupBy(sortedBills, bill => `${bill.course}-${[...bill.companies].sort().join(',')}`);
 
-  const ranks = {};
+  const billRanks = {};
   for (const billsGroupedByCompanies of Object.values(billsGroupedByCourse)) {
     for (let i = 0; i < billsGroupedByCompanies.length; i++) {
-      ranks[billsGroupedByCompanies[i]._id] = { index: i + 1, billsCount: billsGroupedByCompanies.length };
+      billRanks[billsGroupedByCompanies[i]._id] = { index: i + 1, billsCount: billsGroupedByCompanies.length };
     }
   }
 
-  return ranks;
+  if (!shouldComputePreviousBillsSum) return { billRanks, validatedHourlyBillsAmount: {} };
+
+  const validatedHourlyBills = sortedBills.filter(bill => bill.billedAt && bill.hourlyPaymentPlan);
+  const validatedHourlyBillsAmount = mapValues(
+    groupBy(validatedHourlyBills, 'course'),
+    billsOfCourse => NumbersHelper.toNumber(billsOfCourse
+      .reduce((acc, bill) => NumbersHelper.add(acc, exports.getDetailWithTaxes(bill).netExclTaxes), 0))
+  );
+
+  return { billRanks, validatedHourlyBillsAmount };
 };
 
 exports.list = async (query, credentials) => {
+  const isVendorUser = !!get(credentials, 'role.vendor');
   if (query.action === LIST) {
     const courseBills = await CourseBill
       .find({ course: query.course })
@@ -185,8 +210,8 @@ exports.list = async (query, credentials) => {
       .populate({ path: 'companies', select: 'name' })
       .populate({ path: 'payer.fundingOrganisation', select: 'name' })
       .populate({ path: 'payer.company', select: 'name' })
-      .populate({ path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } })
-      .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
+      .populate({ path: 'courseCreditNote', options: { isVendorUser } })
+      .setOptions({ isVendorUser })
       .lean();
 
     return courseBills
@@ -246,9 +271,9 @@ exports.list = async (query, credentials) => {
       ),
       { path: 'payer.fundingOrganisation', select: 'name' },
       { path: 'payer.company', select: 'name' },
-      { path: 'courseCreditNote', options: { isVendorUser: !!get(credentials, 'role.vendor') } },
+      { path: 'courseCreditNote', options: { isVendorUser } },
     ])
-    .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
+    .setOptions({ isVendorUser })
     .lean();
 
   let traineesWithLongEnoughActivityHistory = {};
@@ -302,7 +327,7 @@ exports.list = async (query, credentials) => {
   }
 
   const courseIds = filteredCourseBills.map(bill => bill.course._id);
-  const billRanks = await getBillRanks(courseIds, !!get(credentials, 'role.vendor'));
+  const { billRanks, validatedHourlyBillsAmount } = await getBillInfos(courseIds, isVendorUser, !query.isValidated);
 
   return filteredCourseBills.map((bill) => {
     const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
@@ -310,6 +335,9 @@ exports.list = async (query, credentials) => {
     return {
       ...bill,
       rank: billRanks[bill._id],
+      ...validatedHourlyBillsAmount[bill.course._id] && {
+        validatedHourlyBillsAmount: validatedHourlyBillsAmount[bill.course._id],
+      },
       ...(query.startDate && query.endDate
         ? {
           course: formatCourse(bill.course, traineesCompanyAtCourseRegistrationByCourse),
@@ -323,9 +351,45 @@ exports.list = async (query, credentials) => {
   });
 };
 
+exports.computePriceFromDurations = async (courseId, hourlyPaymentPlanId) => {
+  const course = await Course
+    .findOne({ _id: courseId }, { subProgram: 1, slots: 1, trainees: 1 })
+    .populate({
+      path: 'slots',
+      select: 'startDate endDate trainers step',
+      options: { sort: { startDate: 1 } },
+      populate: { path: 'step', select: 'durationCountedPerTrainer' },
+    })
+    .populate({
+      path: 'subProgram',
+      select: 'steps hourlyPaymentPlans',
+      populate: { path: 'steps', select: 'name activities type theoreticalDuration' },
+    })
+    .lean();
+
+  const dates = { startDate: course.slots[0].startDate, endDate: CompaniDate().toISO() };
+  const { slotsWithAttendance, eLearningDuration } = await CoursesHelper
+    .getTraineeDurations(course, course.trainees[0], dates);
+
+  const durationPerStep = CourseSlotsHelper.getDurationPerStep(slotsWithAttendance);
+  const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
+    .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, hourlyPaymentPlanId));
+
+  const priceDetails = HourlyPaymentPlansHelper
+    .getPricesFromDurations(hourlyPaymentPlan, durationPerStep, eLearningDuration, course.subProgram.steps);
+
+  return {
+    price: NumbersHelper.toFixedToFloat(NumbersHelper.add(...Object.values(priceDetails).map(line => line.price))),
+    details: HourlyPaymentPlansHelper.getPriceDetails(priceDetails),
+  };
+};
+
 exports.createBillList = async (payload) => {
   const course = await Course
-    .findOne({ _id: payload.course }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 })
+    .findOne(
+      { _id: payload.course },
+      { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1, certificateGenerationMode: 1 }
+    )
     .populate({ path: 'trainees', select: 'identity' })
     .populate({ path: 'trainers', select: 'identity' })
     .populate({ path: 'subProgram', select: 'subjectToVat' })
@@ -338,7 +402,23 @@ exports.createBillList = async (payload) => {
   }
 
   if (payload.quantity === 1) {
-    const billCreated = await CourseBill.create({ ...omit(payload, 'quantity'), ...vat && { vat } });
+    const isGlobalCertificationCourseWithPriceFromDurations = payload.hourlyPaymentPlanId &&
+      course.certificateGenerationMode === GLOBAL;
+    let { mainFee } = payload;
+    if (isGlobalCertificationCourseWithPriceFromDurations) {
+      const { price, details } = await exports.computePriceFromDurations(course._id, payload.hourlyPaymentPlanId);
+      const descriptionDetails = details && `--- Détail ---\r\n${details}`;
+      const description = [payload.mainFee.description, descriptionDetails].filter(Boolean).join('\r\n');
+      mainFee = { ...payload.mainFee, price, ...description && { description } };
+    }
+    const { price: mainFeePrice } = mainFee;
+
+    const billCreated = await CourseBill.create({
+      ...omit(payload, ['quantity', 'hourlyPaymentPlanId']),
+      mainFee: { ...mainFee, ...Array.isArray(mainFeePrice) && { price: mainFeePrice[0] } },
+      ...payload.hourlyPaymentPlanId && { hourlyPaymentPlan: payload.hourlyPaymentPlanId },
+      ...vat && { vat },
+    });
 
     if (payload.mainFee.percentage) {
       const trainerFees = (course.prices || []).reduce((acc, price) => {
@@ -398,8 +478,9 @@ exports.createBillList = async (payload) => {
         .formatSingleCourseBillDescription(billMaturityDate, course.trainees, get(course, 'trainers', []));
 
       await CourseBill.create({
-        ...omit(payload, ['quantity', 'maturityDate']),
+        ...omit(payload, ['quantity', 'maturityDate', 'hourlyPaymentPlanId']),
         mainFee: { ...payload.mainFee, description, ...payload.mainFee.price && { price: payload.mainFee.price[i] } },
+        ...payload.hourlyPaymentPlanId && { hourlyPaymentPlan: payload.hourlyPaymentPlanId },
         maturityDate: billMaturityDate.toISO(),
         ...vat && { vat },
       });

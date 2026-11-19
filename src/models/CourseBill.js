@@ -12,6 +12,7 @@ const CourseBillSchema = mongoose.Schema({
     countUnit: { type: String, enum: [GROUP, TRAINEE], required: true },
     description: { type: String },
   },
+  hourlyPaymentPlan: { type: mongoose.Schema.Types.ObjectId },
   companies: { type: [mongoose.Schema.Types.ObjectId], ref: 'Company', required: true },
   payer: {
     type: mongoose.Schema({

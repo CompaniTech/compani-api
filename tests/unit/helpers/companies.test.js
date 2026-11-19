@@ -246,6 +246,8 @@ describe('getCompany', () => {
     const company = {
       _id: new ObjectId(),
       name: 'test',
+      bic: 'WERTFRPP',
+      iban: 'FR3514508000505917721779B12',
       billingRepresentatives: [{
         _id: new ObjectId(),
         identity: { firstname: 'nono', lastname: 'toto' },
@@ -257,7 +259,7 @@ describe('getCompany', () => {
 
     const result = await CompanyHelper.getCompany(company._id);
 
-    expect(result).toEqual(company);
+    expect(result).toEqual({ ...company, bic: 'WE****PP', iban: 'FR***********************12' });
     SinonMongoose.calledOnceWithExactly(
       findOne,
       [
@@ -301,7 +303,7 @@ describe('updateCompany', () => {
 
     const result = await CompanyHelper.updateCompany(companyId, payload);
 
-    expect(result).toEqual({ ...company, name: 'Nouveau nom' });
+    expect(result).toEqual(({ ...company, name: 'Nouveau nom', bic: 'WE****PP' }));
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -325,8 +327,8 @@ describe('updateCompany', () => {
   });
 
   const editedField = [
-    { key: 'bic', value: 'QWERFRPP' },
-    { key: 'iban', value: 'FR3514508000505917721779B12' },
+    { key: 'bic', value: 'QWERFRPP', returnedValue: 'QW****PP' },
+    { key: 'iban', value: 'FR3514508000505917721779B12', returnedValue: 'FR***********************12' },
     {
       key: 'address',
       value: {
@@ -360,7 +362,11 @@ describe('updateCompany', () => {
       const payload = { [param.key]: param.value };
       const result = await CompanyHelper.updateCompany(companyId, payload);
 
-      expect(result).toEqual(updatedCompany);
+      expect(result).toEqual(
+        param.returnedValue
+          ? { ...updatedCompany, [param.key]: param.returnedValue }
+          : updatedCompany
+      );
 
       SinonMongoose.calledOnceWithExactly(
         findOne,
@@ -406,7 +412,11 @@ describe('updateCompany', () => {
       const payload = { [param.key]: param.value };
       const result = await CompanyHelper.updateCompany(companyId, payload);
 
-      expect(result).toEqual(updatedCompany);
+      expect(result).toEqual(
+        param.returnedValue
+          ? { ...updatedCompany, [param.key]: param.returnedValue }
+          : updatedCompany
+      );
 
       SinonMongoose.calledOnceWithExactly(
         findOne,
@@ -452,7 +462,7 @@ describe('updateCompany', () => {
     const payload = { bic: 'DFGTFRPP' };
     const result = await CompanyHelper.updateCompany(companyId, payload);
 
-    expect(result).toEqual(updatedCompany);
+    expect(result).toEqual({ ...updatedCompany, bic: 'DF****PP' });
 
     SinonMongoose.calledOnceWithExactly(
       findOne,

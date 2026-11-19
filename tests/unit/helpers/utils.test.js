@@ -978,3 +978,18 @@ describe('getVAESupportConfigs', () => {
     expect(result).toEqual(undefined);
   });
 });
+
+describe('maskBankInfo', () => {
+  it('should keep the first and last two characters and mask the rest', () => {
+    expect(UtilsHelper.maskBankInfo('FR3514508000505917721779B12')).toEqual('FR***********************12');
+  });
+
+  it('should mask everything if value is too short', () => {
+    expect(UtilsHelper.maskBankInfo('FR12')).toEqual('****');
+  });
+
+  it('should return undefined if empty', () => {
+    expect(UtilsHelper.maskBankInfo(undefined)).toBeUndefined();
+    expect(UtilsHelper.maskBankInfo('')).toBeUndefined();
+  });
+});

@@ -23,4 +23,18 @@ const create = async (req) => {
   }
 };
 
-module.exports = { create };
+const list = async (req) => {
+  try {
+    const trainerBills = await TrainerBillsHelper.list(req.auth.credentials);
+
+    return {
+      message: trainerBills.length ? translate[language].trainerBillsFound : translate[language].trainerBillsNotFound,
+      data: { trainerBills },
+    };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
+module.exports = { create, list };

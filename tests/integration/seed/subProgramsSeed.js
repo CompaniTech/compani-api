@@ -5,6 +5,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const Step = require('../../../src/models/Step');
 const Activity = require('../../../src/models/Activity');
 const Course = require('../../../src/models/Course');
+const CourseBill = require('../../../src/models/CourseBill');
 const Card = require('../../../src/models/Card');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const TrainerBill = require('../../../src/models/TrainerBill');
@@ -12,7 +13,16 @@ const User = require('../../../src/models/User');
 const UserCompany = require('../../../src/models/UserCompany');
 const { vendorAdmin, trainer } = require('../../seed/authUsersSeed');
 const { deleteNonAuthenticationSeeds } = require('../helpers/db');
-const { WEBAPP, INTRA, PUBLISHED, DRAFT, GLOBAL, PAID } = require('../../../src/helpers/constants');
+const {
+  WEBAPP,
+  INTRA,
+  PUBLISHED,
+  DRAFT,
+  GLOBAL,
+  PAID,
+  MONTHLY,
+  GROUP,
+} = require('../../../src/helpers/constants');
 const { authCompany } = require('../../seed/authCompaniesSeed');
 
 const tester = {
@@ -102,6 +112,7 @@ const stepsList = [
 ];
 
 const paymentPlanId = new ObjectId();
+const hourlyPaymentPlanId = new ObjectId();
 
 const subProgramsList = [
   { _id: new ObjectId(), name: 'subProgram 0', status: DRAFT, steps: [stepsList[0]._id, stepsList[1]._id] },
@@ -159,6 +170,7 @@ const subProgramsList = [
     name: 'subProgram 13',
     status: PUBLISHED,
     steps: [stepsList[0]._id],
+    hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, prices: [{ step: stepsList[0]._id, hourlyAmount: 40 }] }],
   },
   { // 14 draft, e-learning - to be published on program 3, where subProgram 11 is already archived+published
     _id: new ObjectId(),
@@ -178,6 +190,12 @@ const subProgramsList = [
     name: 'subProgram 16',
     status: PUBLISHED,
     steps: [stepsList[2]._id],
+  },
+  { // 17 published, on site step and e-learning step
+    _id: new ObjectId(),
+    name: 'subProgram 17',
+    status: PUBLISHED,
+    steps: [stepsList[0]._id, stepsList[2]._id],
   },
 ];
 
@@ -240,6 +258,31 @@ const coursesList = [
     accessRules: [],
     tradeName: 'program 5',
   },
+  { // course using the hourly payment plan of subProgram 13
+    _id: new ObjectId(),
+    format: 'blended',
+    subProgram: subProgramsList[13]._id,
+    type: INTRA,
+    trainees: [],
+    accessRules: [],
+    companies: [authCompany._id],
+    operationsRepresentative: vendorAdmin._id,
+    tradeName: 'hourly plan',
+    expectedBillsCount: 1,
+    certificateGenerationMode: MONTHLY,
+    maxTrainees: 3,
+  },
+];
+
+const courseBillsList = [
+  {
+    _id: new ObjectId(),
+    course: coursesList[3]._id,
+    companies: [authCompany._id],
+    payer: { company: authCompany._id },
+    mainFee: { price: 0, count: 1, countUnit: GROUP },
+    hourlyPaymentPlan: hourlyPaymentPlanId,
+  },
 ];
 
 const trainerBillId = new ObjectId();
@@ -283,6 +326,7 @@ const populateDB = async () => {
     Activity.create(activitiesList),
     Card.create(cardsList),
     Course.create(coursesList),
+    CourseBill.create(courseBillsList),
     CourseSlot.create(courseSlotsList),
     Program.create(programsList),
     Step.create(stepsList),
@@ -301,4 +345,5 @@ module.exports = {
   cardsList,
   tester,
   paymentPlanId,
+  hourlyPaymentPlanId,
 };

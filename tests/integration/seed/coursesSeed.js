@@ -9,6 +9,7 @@ const SubProgram = require('../../../src/models/SubProgram');
 const CourseSlot = require('../../../src/models/CourseSlot');
 const CourseSmsHistory = require('../../../src/models/CourseSmsHistory');
 const CourseHistory = require('../../../src/models/CourseHistory');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const TrainerMission = require('../../../src/models/TrainerMission');
 const User = require('../../../src/models/User');
 const Step = require('../../../src/models/Step');
@@ -367,6 +368,13 @@ const subProgramsList = [
     status: PUBLISHED,
     sheetTemplateId: 'templateId',
     folderId: 'parent_folderId',
+  },
+  {
+    _id: new ObjectId(),
+    name: 'sous-programme archivé',
+    steps: [stepList[1]._id],
+    status: PUBLISHED,
+    archivedAt: '2021-01-01T00:00:00.000Z',
   },
 ];
 
@@ -830,6 +838,15 @@ const coursesList = [
         count: 1,
       },
     ],
+  },
+  { // 28 eLearning course with archived subProgram
+    _id: new ObjectId(),
+    subProgram: subProgramsList[5]._id,
+    type: INTER_B2C,
+    format: STRICTLY_E_LEARNING,
+    trainees: [],
+    accessRules: [authCompany._id],
+    tradeName: 'nom',
   },
 ];
 
@@ -1537,6 +1554,28 @@ const trainerMissionList = [
   },
 ];
 
+const trainerBillList = [
+  {
+    _id: new ObjectId(),
+    trainer: trainer._id,
+    number: 'FACT_0001',
+    course: coursesList[0]._id,
+    amount: 100,
+    submittedAt: '2025-01-01T10:00:00.000Z',
+    file: { publicId: 'publicId', link: 'link' },
+  },
+  {
+    _id: new ObjectId(),
+    trainer: trainer._id,
+    number: 'FACT_0002',
+    course: coursesList[7]._id,
+    amount: 50,
+    submittedAt: '2020-03-02T10:00:00.000Z',
+    createdAt: '2020-03-02T10:00:00.000Z',
+    file: { publicId: 'publicId2', link: 'link2' },
+  },
+];
+
 const populateDB = async () => {
   await deleteNonAuthenticationSeeds();
 
@@ -1563,6 +1602,7 @@ const populateDB = async () => {
     QuestionnaireHistory.create(questionnaireHistory),
     Step.create(stepList),
     SubProgram.create(subProgramsList),
+    TrainerBill.create(trainerBillList),
     TrainerMission.create(trainerMissionList),
     User.create(userList),
     UserCompany.create(userCompanies),
@@ -1591,4 +1631,5 @@ module.exports = {
   traineeWithoutCompany,
   ROFAndCoach,
   slots,
+  trainerBillList,
 };

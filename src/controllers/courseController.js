@@ -22,6 +22,20 @@ const list = async (req) => {
   }
 };
 
+const listTrainersBilling = async (req) => {
+  try {
+    const trainers = await CoursesHelper.listTrainersBilling(req.query);
+
+    return {
+      message: trainers.length ? translate[language].coursesFound : translate[language].coursesNotFound,
+      data: { trainers },
+    };
+  } catch (e) {
+    req.log('error', e);
+    return Boom.isBoom(e) ? e : Boom.badImplementation(e);
+  }
+};
+
 const create = async (req) => {
   try {
     const course = await CoursesHelper.createCourse(req.payload, req.auth.credentials);
@@ -457,4 +471,5 @@ module.exports = {
   uploadSingleCourseCSV,
   uploadCollectiveCourseCSV,
   downloadAllDocuments,
+  listTrainersBilling,
 };

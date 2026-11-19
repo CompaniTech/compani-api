@@ -200,6 +200,7 @@ const vendorHistoryExportTypes = [
       `"Paiement";"REG-00001";"09/03/2022";"FACT-00001";${authCompany._id};1;"Prélèvement";"1100,00";"Fichier XML associé";"Prélèvements Septembre 2025";"14/03/2022";`,
       `"Paiement";"REG-00003";"09/03/2022";"FACT-00005";${courseFundingOrganisation._id};1;"Espèces";"300,00";"Reçu";;;`,
       `"Paiement";"REG-00006";"01/04/2022";"FACT-00001";${authCompany._id};2;"Prélèvement";"50,00";"En attente";;;`,
+      `"Paiement";"REG-00007";"10/03/2022";"FACT-00002";${courseFundingOrganisation._id};1;"Prélèvement";"1200,00";"Annulé";;;`,
       `"Remboursement";"REMB-00001";"11/03/2022";"FACT-00005";${courseFundingOrganisation._id};2;"Chèque";"200,00";"Reçu";;;`,
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',

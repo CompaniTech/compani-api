@@ -81,7 +81,12 @@ exports.plugin = {
                 'quantity',
                 {
                   is: 1,
-                  then: Joi.object({ price: Joi.required() }),
+                  then: Joi.object({
+                    price: Joi.when(
+                      '/hourlyPaymentPlanId',
+                      { is: Joi.exist(), then: Joi.any(), otherwise: Joi.required() }
+                    ),
+                  }),
                   otherwise: Joi.object({ percentage: Joi.forbidden() }),
                 }
               ),
@@ -92,6 +97,7 @@ exports.plugin = {
             }).xor('company', 'fundingOrganisation')
               .required(),
             maturityDate: Joi.when('quantity', { is: 1, then: requiredDateToISOString, otherwise: dateToISOString }),
+            hourlyPaymentPlanId: Joi.objectId(),
           }),
         },
         pre: [{ method: authorizeCourseBillListCreation }],

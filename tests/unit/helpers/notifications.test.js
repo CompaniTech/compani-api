@@ -153,23 +153,23 @@ describe('sendBlendedCourseRegistrationNotification', () => {
 });
 
 describe('sendNewElearningCourseNotification', () => {
-  let sendNotificationToUser;
+  let sendNotificationToAPI;
   let courseFindOne;
   let userFind;
 
   beforeEach(() => {
-    sendNotificationToUser = sinon.stub(NotificationHelper, 'sendNotificationToUser');
+    sendNotificationToAPI = sinon.stub(NotificationHelper, 'sendNotificationToAPI');
     courseFindOne = sinon.stub(Course, 'findOne');
     userFind = sinon.stub(User, 'find');
   });
 
   afterEach(() => {
-    sendNotificationToUser.restore();
+    sendNotificationToAPI.restore();
     courseFindOne.restore();
     userFind.restore();
   });
 
-  it('should format payload and call sendNotificationToUser', async () => {
+  it('should format payload and call sendNotificationToAPI', async () => {
     const trainees = [{
       formationExpoTokenList: ['ExponentPushToken[jeSuisUnTokenExpo]', 'ExponentPushToken[jeSuisUnAutreTokenExpo]'],
     }];
@@ -212,23 +212,22 @@ describe('sendNewElearningCourseNotification', () => {
         { query: 'lean', args: [] },
       ]
     );
-    sinon.assert.calledWithExactly(
-      sendNotificationToUser.getCall(0),
-      {
-        title: 'Une nouvelle formation est disponible',
-        body: 'Découvrez notre nouvelle formation : La communication avec Patrick - skusku.',
-        data: { _id: course.subProgram.program._id, type: NEW_ELEARNING_COURSE },
-        expoToken: 'ExponentPushToken[jeSuisUnTokenExpo]',
-      }
-    );
-    sinon.assert.calledWithExactly(
-      sendNotificationToUser.getCall(1),
-      {
-        title: 'Une nouvelle formation est disponible',
-        body: 'Découvrez notre nouvelle formation : La communication avec Patrick - skusku.',
-        data: { _id: course.subProgram.program._id, type: NEW_ELEARNING_COURSE },
-        expoToken: 'ExponentPushToken[jeSuisUnAutreTokenExpo]',
-      }
+    sinon.assert.calledOnceWithExactly(
+      sendNotificationToAPI,
+      [
+        {
+          to: 'ExponentPushToken[jeSuisUnTokenExpo]',
+          title: 'Une nouvelle formation est disponible',
+          body: 'Découvrez notre nouvelle formation : La communication avec Patrick - skusku.',
+          data: { _id: course.subProgram.program._id, type: NEW_ELEARNING_COURSE },
+        },
+        {
+          to: 'ExponentPushToken[jeSuisUnAutreTokenExpo]',
+          title: 'Une nouvelle formation est disponible',
+          body: 'Découvrez notre nouvelle formation : La communication avec Patrick - skusku.',
+          data: { _id: course.subProgram.program._id, type: NEW_ELEARNING_COURSE },
+        },
+      ]
     );
   });
 
@@ -271,7 +270,7 @@ describe('sendNewElearningCourseNotification', () => {
         { query: 'lean', args: [] },
       ]
     );
-    sinon.assert.notCalled(sendNotificationToUser);
+    sinon.assert.notCalled(sendNotificationToAPI);
   });
 });
 

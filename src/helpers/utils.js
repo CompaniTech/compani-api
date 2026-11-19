@@ -194,6 +194,13 @@ exports.doesArrayIncludeId = (array, id) => !!array && array.some(item => export
 
 exports.isStringedObjectId = value => typeof value === 'string' && !!value.match(/^[0-9a-fA-F]{24}$/);
 
+exports.maskBankInfo = (value) => {
+  if (!value) return undefined;
+  if (value.length <= 4) return '*'.repeat(value.length);
+
+  return `${value.slice(0, 2)}${'*'.repeat(value.length - 4)}${value.slice(-2)}`;
+};
+
 exports.formatPhone = contact => (contact.phone
   ? `${contact.countryCode} ${contact.phone.substring(1)
     .replace(/^(\d{1})(\d{2})(\d{2})(\d{2})(\d{2})$/, '$1 $2 $3 $4 $5')}`

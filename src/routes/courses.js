@@ -37,6 +37,7 @@ const {
   uploadSingleCourseCSV,
   uploadCollectiveCourseCSV,
   downloadAllDocuments,
+  listTrainersBilling,
 } = require('../controllers/courseController');
 const { MESSAGE_TYPE } = require('../models/CourseSmsHistory');
 const { COURSE_TYPES, COURSE_FORMATS, CERTIFICATE_GENERATION_MODE } = require('../models/Course');
@@ -72,6 +73,7 @@ const {
   authorizeUploadSingleCourseCSV,
   authorizeUploadCollectiveCourseCSV,
   authorizeGetAllDocuments,
+  authorizeTrainerBillsGet,
 } = require('./preHandlers/courses');
 const {
   INTRA,
@@ -132,6 +134,30 @@ exports.plugin = {
         pre: [{ method: authorizeGetList }],
       },
       handler: list,
+    });
+
+    server.route({
+      method: 'GET',
+      path: '/trainers-billing',
+      options: {
+        auth: { scope: ['trainerbills:edit', 'user:read-{query.trainer}'] },
+        validate: {
+          query: Joi.object({
+            trainer: Joi.objectId(),
+            startDate: dateToISOString,
+            endDate: Joi.when(
+              'startDate',
+              {
+                is: Joi.exist(),
+                then: dateToISOString && Joi.date().required().min(Joi.ref('startDate')),
+                otherwise: Joi.forbidden(),
+              }
+            ),
+          }),
+        },
+        pre: [{ method: authorizeTrainerBillsGet }],
+      },
+      handler: listTrainersBilling,
     });
 
     server.route({

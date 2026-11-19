@@ -1253,7 +1253,9 @@ describe('SEEDS VERIFICATION', () => {
         });
 
         it('should pass if every price is positive', () => {
-          const everyPriceIsValid = courseBillList.every(bill => !has(bill, 'mainFee.price') || bill.mainFee.price > 0);
+          const everyPriceIsValid = courseBillList.every(bill =>
+            !has(bill, 'mainFee.price') || bill.mainFee.price > 0 ||
+            (bill.mainFee.price === 0 && has(bill, 'hourlyPaymentPlan')));
 
           expect(everyPriceIsValid).toBeTruthy();
         });
@@ -2555,10 +2557,16 @@ describe('SEEDS VERIFICATION', () => {
 
       describe('Collection TrainerBill', () => {
         let trainerBillList;
+        let courseTrainerBillList;
 
         before(async () => {
+          courseTrainerBillList = await TrainerBill
+            .find({ course: { $exists: true } }, { course: 1, courseSlots: 1, trainer: 1, amount: 1 })
+            .populate({ path: 'course', select: 'trainers' })
+            .lean();
+
           trainerBillList = await TrainerBill
-            .find()
+            .find({ courseSlots: { $exists: true } })
             .populate({
               path: 'courseSlots',
               select: 'startDate endDate step trainerBillings',
@@ -2606,6 +2614,19 @@ describe('SEEDS VERIFICATION', () => {
           });
 
           expect(everyAmountIsCorrect).toBeTruthy();
+        });
+
+        it('should pass if no trainerBill is linked to both a course and course slots', () => {
+          const noTrainerBillHasCourseAndCourseSlots = courseTrainerBillList.every(tb => !tb.courseSlots);
+
+          expect(noTrainerBillHasCourseAndCourseSlots).toBeTruthy();
+        });
+
+        it('should pass if every trainerBill linked to a course has its trainer in course trainers', () => {
+          const everyTrainerIsInCourseTrainers = courseTrainerBillList
+            .every(tb => tb.course && UtilsHelper.doesArrayIncludeId(tb.course.trainers, tb.trainer));
+
+          expect(everyTrainerIsInCourseTrainers).toBeTruthy();
         });
       });
 

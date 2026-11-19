@@ -12,10 +12,12 @@ const Company = require('../../../src/models/Company');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const SubProgram = require('../../../src/models/SubProgram');
+const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Attendance = require('../../../src/models/Attendance');
 const User = require('../../../src/models/User');
 const CourseHistory = require('../../../src/models/CourseHistory');
 const CourseSlot = require('../../../src/models/CourseSlot');
+const TrainerBill = require('../../../src/models/TrainerBill');
 const CourseSmsHistory = require('../../../src/models/CourseSmsHistory');
 const Drive = require('../../../src/models/Google/Drive');
 const Sheet = require('../../../src/models/Google/Sheets');
@@ -23,6 +25,7 @@ const Questionnaire = require('../../../src/models/Questionnaire');
 const TrainingContract = require('../../../src/models/TrainingContract');
 const CompanyHelper = require('../../../src/helpers/companies');
 const CourseHelper = require('../../../src/helpers/courses');
+const { CompaniDuration } = require('../../../src/helpers/dates/companiDurations');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
 const CourseCreditNoteHelper = require('../../../src/helpers/courseCreditNotes');
 const EmailHelper = require('../../../src/helpers/email');
@@ -2886,7 +2889,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps paymentPlans',
+                select: 'program steps paymentPlans hourlyPaymentPlans archivedAt',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
@@ -2894,6 +2897,7 @@ describe('getCourse', () => {
                     select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
+                  { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                 ],
               },
               {
@@ -2931,7 +2935,11 @@ describe('getCourse', () => {
               { path: 'contact', select: 'identity.firstname identity.lastname contact' },
               { path: 'questionnaires' },
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
-              { path: 'bills', select: '_id companies', options: { isVendorUser: true } },
+              {
+                path: 'bills',
+                select: '_id companies hourlyPaymentPlan maturityDate',
+                options: { isVendorUser: true },
+              },
             ]],
           },
           { query: 'lean' },
@@ -3001,7 +3009,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps paymentPlans',
+                  select: 'program steps paymentPlans hourlyPaymentPlans archivedAt',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3009,6 +3017,7 @@ describe('getCourse', () => {
                       select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
+                    { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                   ],
                 },
                 {
@@ -3109,7 +3118,7 @@ describe('getCourse', () => {
                 },
                 {
                   path: 'subProgram',
-                  select: 'program steps paymentPlans',
+                  select: 'program steps paymentPlans hourlyPaymentPlans archivedAt',
                   populate: [
                     { path: 'program', select: 'learningGoals' },
                     {
@@ -3117,6 +3126,7 @@ describe('getCourse', () => {
                       select: 'name type theoreticalDuration durationCountedPerTrainer',
                       populate: { path: 'activities', select: 'name type' },
                     },
+                    { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                   ],
                 },
                 {
@@ -3291,7 +3301,7 @@ describe('getCourse', () => {
               },
               {
                 path: 'subProgram',
-                select: 'program steps paymentPlans',
+                select: 'program steps paymentPlans hourlyPaymentPlans archivedAt',
                 populate: [
                   { path: 'program', select: 'learningGoals' },
                   {
@@ -3299,6 +3309,7 @@ describe('getCourse', () => {
                     select: 'name type theoreticalDuration durationCountedPerTrainer',
                     populate: { path: 'activities', select: 'name type' },
                   },
+                  { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
                 ],
               },
               {
@@ -11250,5 +11261,605 @@ describe('downloadAllDocuments', () => {
         { file: 'pdf_certif_2', name: 'certif_2' },
       ]
     );
+  });
+});
+
+describe('getTraineeDurations', () => {
+  let findAttendance;
+  let findActivityHistories;
+  let getELearningDuration;
+
+  beforeEach(() => {
+    process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = new ObjectId().toHexString();
+    findAttendance = sinon.stub(Attendance, 'find');
+    findActivityHistories = sinon.stub(ActivityHistory, 'find');
+    getELearningDuration = sinon.stub(CourseHelper, 'getELearningDuration');
+  });
+
+  afterEach(() => {
+    findAttendance.restore();
+    findActivityHistories.restore();
+    getELearningDuration.restore();
+  });
+
+  it('should return the slots with attendance on the period and the e-learning duration', async () => {
+    const traineeId = new ObjectId();
+    const activityId = new ObjectId();
+    const slots = [
+      { _id: new ObjectId(), startDate: '2025-02-10T08:00:00.000Z', endDate: '2025-02-10T10:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2025-03-10T08:00:00.000Z', endDate: '2025-03-10T10:00:00.000Z' },
+      { _id: new ObjectId(), startDate: '2025-03-11T08:00:00.000Z', endDate: '2025-03-11T10:00:00.000Z' },
+    ];
+    const course = {
+      _id: new ObjectId(),
+      slots,
+      subProgram: {
+        _id: new ObjectId(),
+        steps: [{ type: 'e_learning', activities: [activityId] }, { type: 'on_site' }],
+      },
+    };
+    const dates = { startDate: '2025-03-01T00:00:00.000Z', endDate: '2025-03-31T23:59:59.000Z' };
+    const activityHistories = [{ _id: new ObjectId(), activity: activityId, user: traineeId }];
+    const eLearningDuration = CompaniDuration({ minutes: 90 });
+
+    findAttendance.returns(SinonMongoose.stubChainedQueries([{ courseSlot: slots[1]._id }], ['setOptions', 'lean']));
+    findActivityHistories.returns(SinonMongoose.stubChainedQueries(activityHistories, ['lean']));
+    getELearningDuration.returns(eLearningDuration);
+
+    const result = await CourseHelper.getTraineeDurations(course, traineeId, dates);
+
+    expect(result).toEqual({ slotsWithAttendance: [slots[1]], eLearningDuration });
+    SinonMongoose.calledOnceWithExactly(
+      findAttendance,
+      [
+        {
+          query: 'find',
+          args: [{ trainee: traineeId, courseSlot: { $in: [slots[1]._id, slots[2]._id] }, status: 'present' }],
+        },
+        { query: 'setOptions', args: [{ isVendorUser: true }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      findActivityHistories,
+      [{ query: 'find', args: [{ activity: { $in: [activityId] }, user: traineeId }] }, { query: 'lean' }]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getELearningDuration,
+      [{ type: 'e_learning', activities: [{ _id: activityId, activityHistories }] }],
+      traineeId,
+      dates
+    );
+  });
+});
+
+describe('getCourseTrainerSalary', () => {
+  const consultingProgramId = new ObjectId();
+  const consultingBillingItemId = new ObjectId();
+  const trainerSalaryItem = { billingItem: { _id: new ObjectId(), type: TRAINER_SALARY }, price: 40, count: 2 };
+  const consultingItem = { billingItem: { _id: consultingBillingItemId, type: 'other' }, price: 300, count: 1 };
+
+  beforeEach(() => {
+    process.env.CONSULTING_PROGRAM_IDS = `${new ObjectId()},${consultingProgramId}`;
+    process.env.CONSULTING_BILLING_ITEM = consultingBillingItemId.toHexString();
+  });
+
+  afterEach(() => {
+    process.env.CONSULTING_PROGRAM_IDS = '';
+    process.env.CONSULTING_BILLING_ITEM = '';
+  });
+
+  it('should return undefined if course has several trainers', () => {
+    const course = { trainers: [{ _id: new ObjectId() }, { _id: new ObjectId() }] };
+
+    const result = CourseHelper.getCourseTrainerSalary(course);
+
+    expect(result).toBeUndefined();
+  });
+
+  it('should return trainer salary from course billingPurchaseList', () => {
+    const course = {
+      trainers: [{ _id: new ObjectId() }],
+      subProgram: { program: { _id: new ObjectId() } },
+      billingPurchaseList: [trainerSalaryItem],
+    };
+
+    const result = CourseHelper.getCourseTrainerSalary(course);
+
+    expect(result).toEqual(80);
+  });
+
+  it('should return consulting billing item if no trainer salary and program is consulting', () => {
+    const course = {
+      trainers: [{ _id: new ObjectId() }],
+      subProgram: { program: { _id: consultingProgramId } },
+      billingPurchaseList: [consultingItem],
+    };
+
+    const result = CourseHelper.getCourseTrainerSalary(course);
+
+    expect(result).toEqual(300);
+  });
+
+  it('should return undefined if no trainer salary and program is not consulting', () => {
+    const course = {
+      trainers: [{ _id: new ObjectId() }],
+      subProgram: { program: { _id: new ObjectId() } },
+      billingPurchaseList: [consultingItem],
+    };
+
+    const result = CourseHelper.getCourseTrainerSalary(course);
+
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined if no billing purchase list', () => {
+    const course = { trainers: [{ _id: new ObjectId() }], subProgram: { program: { _id: consultingProgramId } } };
+
+    const result = CourseHelper.getCourseTrainerSalary(course);
+
+    expect(result).toBeUndefined();
+  });
+});
+
+describe('listTrainersBilling', () => {
+  let courseFind;
+  let trainerBillFind;
+  let courseSlotFind;
+
+  beforeEach(() => {
+    courseFind = sinon.stub(Course, 'find');
+    trainerBillFind = sinon.stub(TrainerBill, 'find');
+    courseSlotFind = sinon.stub(CourseSlot, 'find');
+  });
+
+  afterEach(() => {
+    courseFind.restore();
+    trainerBillFind.restore();
+    courseSlotFind.restore();
+  });
+
+  it('should return an empty array if no course found', async () => {
+    const trainerId = new ObjectId();
+    courseFind.returns(SinonMongoose.stubChainedQueries([], ['populate', 'sort', 'lean']));
+
+    const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
+
+    expect(result).toEqual([]);
+    sinon.assert.notCalled(trainerBillFind);
+    sinon.assert.notCalled(courseSlotFind);
+  });
+
+  it('should return trainer with its courses and billing status', async () => {
+    const trainerId = new ObjectId();
+    const trainer = { _id: trainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const courses = [
+      { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog' },
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: TRAINER_SALARY }, price: 40, count: 2 }],
+      },
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: TRAINER_SALARY }, price: 100, count: 1 }],
+      },
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: TRAINER_SALARY }, price: 40, count: 2 }],
+      },
+    ];
+    const trainerBills = [
+      {
+        course: courses[1]._id,
+        trainer: trainerId,
+        amount: 40,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[2]._id,
+        trainer: trainerId,
+        amount: 100,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[3]._id,
+        trainer: trainerId,
+        amount: 60,
+        payment: { status: 'paid' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[3]._id,
+        trainer: trainerId,
+        amount: 40,
+        payment: { status: 'paid' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+    ];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+
+    const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
+
+    expect(result).toEqual([{
+      ...trainer,
+      courses: [
+        { ...courses[0], invoicedAmount: 0, paidAmount: 0, status: 'not_invoiced' },
+        {
+          ...omit(courses[1], ['billingPurchaseList']),
+          plannedSalary: 80,
+          invoicedAmount: 40,
+          paidAmount: 0,
+          status: 'partially_invoiced',
+        },
+        {
+          ...omit(courses[2], ['billingPurchaseList']),
+          plannedSalary: 100,
+          invoicedAmount: 100,
+          paidAmount: 0,
+          status: 'invoiced',
+          billsSubmissionDates: ['2024-01-01T08:00:00.000Z'],
+        },
+        {
+          ...omit(courses[3], ['billingPurchaseList']),
+          plannedSalary: 80,
+          invoicedAmount: 100,
+          paidAmount: 100,
+          status: 'paid',
+        },
+      ],
+    }]);
+    SinonMongoose.calledOnceWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { trainers: trainerId, type: { $nin: ['single', 'inter_b2c'] } },
+            { trainers: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1, archivedAt: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
+        {
+          query: 'populate',
+          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'billingPurchaseList.billingItem', select: 'type' }] },
+        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      trainerBillFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: courses.map(c => c._id) }, trainer: trainerId },
+            { course: 1, amount: 1, trainer: 1, submittedAt: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(courseSlotFind);
+  });
+
+  it('should consider courses archived before trainer payments start as paid', async () => {
+    const trainerId = new ObjectId();
+    const trainer = { _id: trainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const billingPurchaseList = [{ billingItem: { type: TRAINER_SALARY }, price: 100, count: 1 }];
+    const courses = [
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'archived before',
+        billingPurchaseList,
+        archivedAt: '2026-08-31T21:00:00.000Z',
+      },
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'archived after with bill',
+        billingPurchaseList,
+        archivedAt: '2026-09-01T08:00:00.000Z',
+      },
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'archived on september 1st',
+        billingPurchaseList,
+        archivedAt: '2026-08-31T22:00:00.000Z',
+      },
+      { _id: new ObjectId(), trainers: [trainer], tradeName: 'not archived', billingPurchaseList },
+    ];
+    const trainerBills = [
+      {
+        course: courses[1]._id,
+        trainer: trainerId,
+        amount: 40,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+    ];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+
+    const result = await CourseHelper.listTrainersBilling({ trainer: trainerId });
+
+    expect(result).toEqual([{
+      ...trainer,
+      courses: [
+        {
+          ...omit(courses[0], ['billingPurchaseList', 'archivedAt']),
+          plannedSalary: 100,
+          invoicedAmount: 0,
+          paidAmount: 0,
+          status: 'paid',
+        },
+        {
+          ...omit(courses[1], ['billingPurchaseList', 'archivedAt']),
+          plannedSalary: 100,
+          invoicedAmount: 40,
+          paidAmount: 0,
+          status: 'partially_invoiced',
+        },
+        {
+          ...omit(courses[2], ['billingPurchaseList', 'archivedAt']),
+          plannedSalary: 100,
+          invoicedAmount: 0,
+          paidAmount: 0,
+          status: 'not_invoiced',
+        },
+        {
+          ...omit(courses[3], ['billingPurchaseList']),
+          plannedSalary: 100,
+          invoicedAmount: 0,
+          paidAmount: 0,
+          status: 'not_invoiced',
+        },
+      ],
+    }]);
+    sinon.assert.notCalled(courseSlotFind);
+  });
+
+  it('should only return courses with slots or trainer bills in period', async () => {
+    const trainerId = new ObjectId();
+    const trainer = { _id: trainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const query = { trainer: trainerId, startDate: '2024-02-01T00:00:00.000Z', endDate: '2024-02-29T23:59:59.999Z' };
+    const courses = [
+      {
+        _id: new ObjectId(),
+        trainers: [trainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: TRAINER_SALARY }, price: 100, count: 1 }],
+      },
+      { _id: new ObjectId(), trainers: [trainer], tradeName: 'prog 2' },
+    ];
+    const courseSlotsInPeriod = [
+      {
+        course: courses[0]._id,
+        startDate: '2024-02-01T08:00:00.000Z',
+        endDate: '2024-02-01T10:00:00.000Z',
+        trainers: [trainerId],
+      },
+      { course: courses[0]._id, startDate: '2024-02-06T08:00:00.000Z', endDate: '2024-02-06T10:00:00.000Z' },
+    ];
+    const trainerBillsInPeriod = [
+      { course: courses[1]._id, submittedAt: '2024-02-15T08:00:00.000Z', trainer: trainerId, amount: 100 },
+    ];
+
+    courseSlotFind.onCall(0).returns(SinonMongoose.stubChainedQueries(courseSlotsInPeriod, ['lean']));
+    trainerBillFind.onCall(0).returns(SinonMongoose.stubChainedQueries(trainerBillsInPeriod, ['lean']));
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
+    trainerBillFind.onCall(1).returns(SinonMongoose.stubChainedQueries([]));
+
+    const result = await CourseHelper.listTrainersBilling(query);
+
+    expect(result).toEqual([{
+      ...trainer,
+      courses: [
+        {
+          ...omit(courses[0], ['billingPurchaseList']),
+          plannedSalary: 100,
+          invoicedAmount: 0,
+          paidAmount: 0,
+          status: 'not_invoiced',
+        },
+        { ...courses[1], invoicedAmount: 0, paidAmount: 0, status: 'not_invoiced' },
+      ],
+    }]);
+    SinonMongoose.calledWithExactly(
+      courseSlotFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { startDate: { $gte: query.startDate }, endDate: { $lte: query.endDate } },
+            { course: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledWithExactly(
+      trainerBillFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { submittedAt: { $gte: query.startDate, $lte: query.endDate }, course: { $exists: true } },
+            { course: 1 },
+          ],
+        },
+        { query: 'lean' },
+      ],
+      0
+    );
+    SinonMongoose.calledOnceWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [
+            {
+              _id: { $in: [courses[0]._id, courses[1]._id] },
+              trainers: trainerId,
+              type: { $nin: ['single', 'inter_b2c'] },
+            },
+            { trainers: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1, archivedAt: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
+        {
+          query: 'populate',
+          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'billingPurchaseList.billingItem', select: 'type' }] },
+        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledWithExactly(
+      trainerBillFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { course: { $in: [courses[0]._id, courses[1]._id] }, trainer: trainerId },
+            { course: 1, amount: 1, trainer: 1, submittedAt: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
+        { query: 'lean' },
+      ],
+      1
+    );
+  });
+
+  it('should return all trainers without planned salary for courses with several trainers', async () => {
+    const firstTrainerId = new ObjectId();
+    const secondTrainerId = new ObjectId();
+    const firstTrainer = { _id: firstTrainerId, identity: { firstname: 'Jean', lastname: 'Dupont' } };
+    const secondTrainer = { _id: secondTrainerId, identity: { firstname: 'Paul', lastname: 'Martin' } };
+    const courses = [
+      {
+        _id: new ObjectId(),
+        trainers: [firstTrainer, secondTrainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: TRAINER_SALARY }, price: 40, count: 2 }],
+      },
+      {
+        _id: new ObjectId(),
+        trainers: [secondTrainer],
+        tradeName: 'prog',
+        billingPurchaseList: [{ billingItem: { type: TRAINER_SALARY }, price: 100, count: 1 }],
+      },
+    ];
+    const trainerBills = [
+      {
+        course: courses[0]._id,
+        trainer: firstTrainerId,
+        amount: 100,
+        payment: { status: 'paid' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[0]._id,
+        trainer: secondTrainerId,
+        amount: 40,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+      {
+        course: courses[1]._id,
+        trainer: secondTrainerId,
+        amount: 100,
+        payment: { status: 'pending' },
+        submittedAt: '2024-01-01T08:00:00.000Z',
+      },
+    ];
+
+    courseFind.returns(SinonMongoose.stubChainedQueries(courses, ['populate', 'sort', 'lean']));
+    trainerBillFind.returns(SinonMongoose.stubChainedQueries(trainerBills, ['populate', 'lean']));
+    courseSlotFind.returns(SinonMongoose.stubChainedQueries([], ['lean']));
+
+    const result = await CourseHelper.listTrainersBilling({});
+
+    expect(result).toEqual([
+      {
+        ...firstTrainer,
+        courses: [
+          { ...omit(courses[0], ['billingPurchaseList']), invoicedAmount: 100, paidAmount: 100, status: 'paid' },
+        ],
+      },
+      {
+        ...secondTrainer,
+        courses: [
+          {
+            ...omit(courses[0], ['billingPurchaseList']),
+            invoicedAmount: 40,
+            paidAmount: 0,
+            status: 'invoiced',
+            billsSubmissionDates: ['2024-01-01T08:00:00.000Z'],
+          },
+          {
+            ...omit(courses[1], ['billingPurchaseList']),
+            plannedSalary: 100,
+            invoicedAmount: 100,
+            paidAmount: 0,
+            status: 'invoiced',
+            billsSubmissionDates: ['2024-01-01T08:00:00.000Z'],
+          },
+        ],
+      },
+    ]);
+    SinonMongoose.calledOnceWithExactly(
+      courseFind,
+      [
+        {
+          query: 'find',
+          args: [
+            { 'trainers.0': { $exists: true }, type: { $nin: ['single', 'inter_b2c'] } },
+            { trainers: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1, archivedAt: 1 },
+          ],
+        },
+        { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
+        {
+          query: 'populate',
+          args: [{ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } }],
+        },
+        { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
+        { query: 'populate', args: [{ path: 'billingPurchaseList.billingItem', select: 'type' }] },
+        { query: 'sort', args: [{ createdAt: -1 }] },
+        { query: 'lean' },
+      ]
+    );
+    SinonMongoose.calledOnceWithExactly(
+      trainerBillFind,
+      [
+        {
+          query: 'find',
+          args: [{ course: { $in: courses.map(c => c._id) } }, { course: 1, amount: 1, trainer: 1, submittedAt: 1 }],
+        },
+        { query: 'populate', args: [{ path: 'payment', select: 'status' }] },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.notCalled(courseSlotFind);
   });
 });

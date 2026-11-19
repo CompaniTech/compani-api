@@ -386,12 +386,16 @@ describe('getUsersList', () => {
     SinonMongoose.calledOnceWithExactly(
       find,
       [
-        { query: 'find', args: [{ ...query, company: companyId }, {}, { autopopulate: false }] },
+        { query: 'find', args: [{ ...query, company: companyId }, { iban: 0, bic: 0 }, { autopopulate: false }] },
         { query: 'populate', args: [{ path: 'role.client', select: '-__v -createdAt -updatedAt' }] },
         { query: 'populate', args: [{ path: 'role.holding', select: '-__v -createdAt -updatedAt' }] },
         {
           query: 'populate',
-          args: [{ path: 'company', populate: { path: 'company' }, select: '-__v -createdAt -updatedAt' }],
+          args: [{
+            path: 'company',
+            populate: { path: 'company', select: '_id name' },
+            select: '-__v -createdAt -updatedAt',
+          }],
         },
         { query: 'setOptions', args: [{ isVendorUser: false }] },
         { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
@@ -415,13 +419,17 @@ describe('getUsersList', () => {
     SinonMongoose.calledOnceWithExactly(
       find,
       [
-        { query: 'find', args: [formattedQuery, {}, { autopopulate: false }] },
+        { query: 'find', args: [formattedQuery, { iban: 0, bic: 0 }, { autopopulate: false }] },
         { query: 'populate', args: [{ path: 'role.client', select: '-__v -createdAt -updatedAt' }] },
         { query: 'populate', args: [{ path: 'role.holding', select: '-__v -createdAt -updatedAt' }] },
 
         {
           query: 'populate',
-          args: [{ path: 'company', populate: { path: 'company' }, select: '-__v -createdAt -updatedAt' }],
+          args: [{
+            path: 'company',
+            populate: { path: 'company', select: '_id name' },
+            select: '-__v -createdAt -updatedAt',
+          }],
         },
         { query: 'setOptions', args: [{ isVendorUser: false }] },
         { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
@@ -973,7 +981,11 @@ describe('getUser', () => {
           query: 'populate',
           args: [{
             path: 'company',
-            populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+            populate: {
+              path: 'company',
+              select: '-iban -bic',
+              populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+            },
             select: '-__v -createdAt -updatedAt',
           }],
         },
@@ -991,6 +1003,7 @@ describe('getUser', () => {
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
         { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+        { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1023,7 +1036,11 @@ describe('getUser', () => {
           query: 'populate',
           args: [{
             path: 'company',
-            populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+            populate: {
+              path: 'company',
+              select: '-iban -bic',
+              populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+            },
             select: '-__v -createdAt -updatedAt',
           }],
         },
@@ -1041,6 +1058,7 @@ describe('getUser', () => {
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
         { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+        { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1052,13 +1070,15 @@ describe('getUser', () => {
       _id: userId,
       role: { vendor: 'trainer', rights: [] },
       userCompanyList: [{ company: new ObjectId() }, { company: new ObjectId() }],
+      iban: 'FR3514508000505917721779B12',
+      bic: 'WERTFRPP',
     };
     const credentials = { company: { _id: new ObjectId() }, _id: new ObjectId(), role: { vendor: 'trainer' } };
 
     findOne.returns(SinonMongoose.stubChainedQueries(user));
 
     const res = await UsersHelper.getUser(userId, credentials);
-    expect(res).toEqual(user);
+    expect(res).toEqual({ ...user, iban: 'FR***********************12', bic: 'WE****PP' });
 
     SinonMongoose.calledOnceWithExactly(
       findOne,
@@ -1068,7 +1088,11 @@ describe('getUser', () => {
           query: 'populate',
           args: [{
             path: 'company',
-            populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+            populate: {
+              path: 'company',
+              select: '-iban -bic',
+              populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+            },
             select: '-__v -createdAt -updatedAt',
           }],
         },
@@ -1086,6 +1110,7 @@ describe('getUser', () => {
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
         { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+        { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1109,7 +1134,11 @@ describe('getUser', () => {
           query: 'populate',
           args: [{
             path: 'company',
-            populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+            populate: {
+              path: 'company',
+              select: '-iban -bic',
+              populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+            },
             select: '-__v -createdAt -updatedAt',
           }],
         },
@@ -1127,6 +1156,7 @@ describe('getUser', () => {
         },
         { query: 'populate', args: [{ path: 'userCompanyList' }] },
         { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+        { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
         { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
       ]
     );
@@ -1155,7 +1185,11 @@ describe('getUser', () => {
             query: 'populate',
             args: [{
               path: 'company',
-              populate: { path: 'company', populate: { path: 'billingRepresentatives salesRepresentative' } },
+              populate: {
+                path: 'company',
+                select: '-iban -bic',
+                populate: { path: 'billingRepresentatives salesRepresentative', select: '-iban -bic' },
+              },
               select: '-__v -createdAt -updatedAt',
             }],
           },
@@ -1173,6 +1207,7 @@ describe('getUser', () => {
           },
           { query: 'populate', args: [{ path: 'userCompanyList' }] },
           { query: 'populate', args: [{ path: 'isSingleCourseTrainer' }] },
+          { query: 'populate', args: [{ path: 'isCollectiveCourseTrainer' }] },
           { query: 'lean', args: [{ autopopulate: true, virtuals: true }] },
         ]
       );

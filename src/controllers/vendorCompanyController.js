@@ -6,7 +6,7 @@ const { language } = translate;
 
 const get = async (req) => {
   try {
-    const vendorCompany = await VendorCompaniesHelper.get();
+    const vendorCompany = await VendorCompaniesHelper.get(true);
 
     return {
       message: translate[language].vendorCompanyFound,

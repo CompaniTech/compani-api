@@ -1,17 +1,20 @@
 const { ObjectId } = require('mongodb');
 const get = require('lodash/get');
 const has = require('lodash/has');
-const groupBy = require('lodash/groupBy');
 const pick = require('lodash/pick');
+const groupBy = require('lodash/groupBy');
 const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const CompletionCertificate = require('../models/CompletionCertificate');
 const TrainingContract = require('../models/TrainingContract');
-const ActivityHistory = require('../models/ActivityHistory');
-const Attendance = require('../models/Attendance');
+const CourseBill = require('../models/CourseBill');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
-const { MM_YYYY, MONTH, DD_MM_YYYY, E_LEARNING, SHORT_DURATION_H_MM, OFFICIAL, PRESENT } = require('./constants');
+const DatesUtilsHelper = require('./dates/utils');
+const { MM_YYYY, MONTH, DD_MM_YYYY, SHORT_DURATION_H_MM, OFFICIAL } = require('./constants');
 const UtilsHelper = require('./utils');
+const NumbersHelper = require('./numbers');
+const HourlyPaymentPlansHelper = require('./hourlyPaymentPlans');
+const CourseSlotsHelper = require('./courseSlots');
 const CoursesHelper = require('./courses');
 const GCloudStorageHelper = require('./gCloudStorage');
 
@@ -66,12 +69,32 @@ exports.list = async (query, credentials) => {
   return completionCertificates;
 };
 
+const computeMonthDurations = async (course, month, traineeId) => {
+  const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
+  const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
+
+  const dates = { startDate: startOfMonth, endDate: endOfMonth };
+  const { slotsWithAttendance, eLearningDuration } = await CoursesHelper.getTraineeDurations(course, traineeId, dates);
+
+  const unsubscribedAttendances = await CoursesHelper.getUnsubscribedAttendances(
+    { ...pick(course, ['_id', 'trainees', 'companies']), subPrograms: get(course, 'subProgram.program.subPrograms') },
+    true
+  );
+  const slotsWithUnsubscribedAttendance = unsubscribedAttendances
+    .filter(a => CompaniDate(a.courseSlot.startDate).isSameOrBetween(startOfMonth, endOfMonth))
+    .map(a => a.courseSlot);
+
+  const allSlotsWithAttendance = [...slotsWithAttendance, ...slotsWithUnsubscribedAttendance];
+  const durationPerStep = CourseSlotsHelper.getDurationPerStep(allSlotsWithAttendance);
+  const traineePresence = Object.values(durationPerStep)
+    .reduce((acc, duration) => acc.add(duration), CompaniDuration());
+
+  return { startOfMonth, endOfMonth, traineePresence, eLearningDuration, durationPerStep };
+};
+
 exports.generate = async (completionCertificateId) => {
   const VAEI_SUBPROGRAM_IDS = process.env.VAEI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
   const PRI_SUBPROGRAM_IDS = process.env.PRI_SUBPROGRAM_IDS.split(',').map(id => new ObjectId(id));
-  const REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS
-    .split(',')
-    .map(id => new ObjectId(id));
 
   const completionCertificate = await CompletionCertificate
     .findOne({ _id: completionCertificateId })
@@ -88,13 +111,10 @@ exports.generate = async (completionCertificateId) => {
           },
           {
             path: 'subProgram',
-            select: 'program steps',
+            select: 'program steps hourlyPaymentPlans',
             populate: [
               { path: 'program', select: 'subPrograms' },
-              {
-                path: 'steps',
-                select: 'activities type theoreticalDuration',
-              },
+              { path: 'steps', select: 'name activities type theoreticalDuration' },
             ],
           },
         ],
@@ -127,57 +147,8 @@ exports.generate = async (completionCertificateId) => {
     }
   }
 
-  const startOfMonth = CompaniDate(month, MM_YYYY).startOf(MONTH).toISO();
-  const endOfMonth = CompaniDate(month, MM_YYYY).endOf(MONTH).toISO();
-
-  const courseSlotIdsOnMonth = course.slots
-    .filter(slot => CompaniDate(slot.startDate).isSameOrBetween(startOfMonth, endOfMonth)).map(s => s._id);
-
-  const attendances = await Attendance
-    .find({ trainee: trainee._id, courseSlot: { $in: courseSlotIdsOnMonth }, status: PRESENT })
-    .setOptions({ isVendorUser: true })
-    .lean();
-
-  const slotsWithAttendanceIds = attendances.map(a => a.courseSlot);
-
-  const slotsWithAttendance = course.slots
-    .filter(slot => UtilsHelper.doesArrayIncludeId(slotsWithAttendanceIds, slot._id));
-
-  const unsubscribedAttendances = await CoursesHelper.getUnsubscribedAttendances(
-    { ...pick(course, ['_id', 'trainees', 'companies']), subPrograms: get(course, 'subProgram.program.subPrograms') },
-    true
-  );
-  const slotsWithUnsubscribedAttendance = unsubscribedAttendances
-    .filter(a => CompaniDate(a.courseSlot.startDate).isSameOrBetween(startOfMonth, endOfMonth))
-    .map(a => a.courseSlot);
-
-  const allSlotsWithAttendance = [...slotsWithAttendance, ...slotsWithUnsubscribedAttendance];
-  const traineePresence = UtilsHelper.getTotalDuration(allSlotsWithAttendance, false);
-
-  const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
-
-  const activitiesIds = eLearningSteps.flatMap(s => s.activities);
-  const activityHistories = await ActivityHistory
-    .find({ activity: { $in: activitiesIds }, user: trainee._id })
-    .lean();
-  const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
-
-  const dates = { startDate: startOfMonth, endDate: endOfMonth };
-
-  let eLearningDuration;
-  if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, course.subProgram._id)) {
-    const filteredActivityHistories = activityHistories
-      .filter(aH => (CompaniDate(aH.date).isSameOrBetween(dates.startDate, dates.endDate)));
-    eLearningDuration = CoursesHelper.getRealELearningDuration(filteredActivityHistories);
-  } else {
-    const eLearningStepsWithAH = eLearningSteps
-      .map(s => ({
-        ...s,
-        activities: s.activities
-          .map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
-      }));
-    eLearningDuration = CoursesHelper.getELearningDuration(eLearningStepsWithAH, trainee._id, dates);
-  }
+  const durations = await computeMonthDurations(course, month, trainee._id);
+  const { startOfMonth, endOfMonth, traineePresence, durationPerStep, eLearningDuration } = durations;
 
   const formattedELearningDuration = CompaniDuration(eLearningDuration).format(SHORT_DURATION_H_MM);
 
@@ -258,24 +229,85 @@ exports.generate = async (completionCertificateId) => {
     updatePayload.vaeSupportRemainingMinutes = newVAESupportRemainingMinutes;
   }
   await CompletionCertificate.updateOne({ _id: completionCertificateId }, { $set: updatePayload });
+
+  const billsToUpdate = await CourseBill
+    .find(
+      {
+        course: course._id,
+        maturityDate: { $gte: startOfMonth, $lte: endOfMonth },
+        hourlyPaymentPlan: { $exists: true },
+        'mainFee.price': { $in: [0, null] },
+      },
+      { hourlyPaymentPlan: 1, 'mainFee.description': 1 }
+    )
+    .setOptions({ isVendorUser: true })
+    .lean();
+
+  const billsGroupedByPlan = groupBy(billsToUpdate, 'hourlyPaymentPlan');
+  for (const [planId, bills] of Object.entries(billsGroupedByPlan)) {
+    const hourlyPaymentPlan = course.subProgram.hourlyPaymentPlans
+      .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, planId));
+    let previousELearningDuration;
+    if (hourlyPaymentPlan.elearningLimit) {
+      const firstCertificateMonthStart = [month, ...certificates.map(c => c.month)]
+        .map(m => CompaniDate(m, MM_YYYY).startOf(MONTH).toISO())
+        .sort(DatesUtilsHelper.ascendingSort)[0];
+
+      if (CompaniDate(firstCertificateMonthStart).isBefore(startOfMonth)) {
+        const dates = { startDate: firstCertificateMonthStart, endDate: CompaniDate(startOfMonth).toISO() };
+        previousELearningDuration = await CoursesHelper.getTraineeELearningDuration(course, trainee._id, dates);
+      }
+    }
+
+    const priceDetails = HourlyPaymentPlansHelper.getPricesFromDurations(
+      hourlyPaymentPlan,
+      durationPerStep,
+      eLearningDuration,
+      course.subProgram.steps,
+      previousELearningDuration
+    );
+    const hasPricedStep = Object.values(priceDetails).some(line => line.stepId);
+    const eLearningPrice = get(priceDetails, 'elearning.price', 0);
+    const isELearningNotBillable = CompaniDuration(eLearningDuration).isShorterThan('PT900S') ||
+      NumbersHelper.isEqualTo(eLearningPrice, 0);
+    if (!hasPricedStep && isELearningNotBillable) continue;
+
+    const descriptionDetails = HourlyPaymentPlansHelper.getPriceDetails(priceDetails);
+    const price = NumbersHelper
+      .toFixedToFloat(NumbersHelper.add(...Object.values(priceDetails).map(line => line.price)));
+
+    await Promise.all(bills.map((bill) => {
+      const base = (get(bill, 'mainFee.description') || '').split('--- Détail ---')[0].trimEnd();
+      const description = descriptionDetails
+        ? `${base ? `${base}\r\n` : ''}--- Détail ---\r\n${descriptionDetails}`
+        : base;
+
+      return CourseBill.updateOne(
+        { _id: bill._id },
+        { $set: { 'mainFee.price': price, 'mainFee.description': description } }
+      );
+    }));
+  }
 };
 
 exports.create = async payload => CompletionCertificate.create(payload);
 
 exports.deleteFile = async (completionCertificateId) => {
   const completionCertificate = await CompletionCertificate.findOne({ _id: completionCertificateId }).lean();
+
+  let certificatesToDelete = [completionCertificate];
   if (completionCertificate.vaeSupportRemainingMinutes) {
     const { course, trainee, vaeSupportRemainingMinutes } = completionCertificate;
     const completionCertificateWithRemainingMinutes = await CompletionCertificate
       .find({ course, trainee, vaeSupportRemainingMinutes: { $lt: vaeSupportRemainingMinutes } })
       .setOptions({ isVendorUser: true })
       .lean();
-    const certificateToDelete = [completionCertificate, ...completionCertificateWithRemainingMinutes];
+    certificatesToDelete = [completionCertificate, ...completionCertificateWithRemainingMinutes];
     await CompletionCertificate.updateMany(
-      { _id: { $in: certificateToDelete.map(c => c._id) } },
+      { _id: { $in: certificatesToDelete.map(c => c._id) } },
       { $unset: { file: '', vaeSupportRemainingMinutes: '' } }
     );
-    for (const certificate of certificateToDelete) {
+    for (const certificate of certificatesToDelete) {
       await GCloudStorageHelper.deleteCourseFile(certificate.file.publicId);
     }
   } else {
@@ -285,5 +317,34 @@ exports.deleteFile = async (completionCertificateId) => {
     );
 
     await GCloudStorageHelper.deleteCourseFile(completionCertificate.file.publicId);
+  }
+
+  for (const certificate of certificatesToDelete) {
+    const bills = await CourseBill
+      .find(
+        {
+          course: certificate.course,
+          maturityDate: {
+            $gte: CompaniDate(certificate.month, MM_YYYY).startOf(MONTH).toISO(),
+            $lte: CompaniDate(certificate.month, MM_YYYY).endOf(MONTH).toISO(),
+          },
+          hourlyPaymentPlan: { $exists: true },
+          billedAt: { $exists: false },
+        },
+        { 'mainFee.description': 1 }
+      )
+      .setOptions({ isVendorUser: true })
+      .lean();
+
+    await Promise.all(bills.map((bill) => {
+      const base = (get(bill, 'mainFee.description') || '').split('--- Détail ---')[0].trimEnd();
+
+      return CourseBill.updateOne(
+        { _id: bill._id },
+        base
+          ? { $set: { 'mainFee.price': 0, 'mainFee.description': base } }
+          : { $set: { 'mainFee.price': 0 }, $unset: { 'mainFee.description': '' } }
+      );
+    }));
   }
 };

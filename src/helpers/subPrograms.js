@@ -9,6 +9,7 @@ const Course = require('../models/Course');
 const UserCompany = require('../models/UserCompany');
 const { INTER_B2C, STRICTLY_E_LEARNING, DRAFT, PUBLISHED } = require('./constants');
 const { CompaniDate } = require('./dates/companiDates');
+const { CompaniDuration } = require('./dates/companiDurations');
 const NotificationHelper = require('./notifications');
 const UtilsHelper = require('./utils');
 
@@ -125,6 +126,45 @@ exports.updateSubProgram = async (subProgramId, payload) => {
     return SubProgram.updateOne({ _id: subProgramId }, { $push: { paymentPlans: { prices } } });
   }
 
+  if (payload.hourlyPaymentPlan) {
+    const { hourlyPaymentPlanId, prices, elearningPrice } = payload.hourlyPaymentPlan;
+    const elearningLimit = payload.hourlyPaymentPlan.elearningLimit &&
+      CompaniDuration(payload.hourlyPaymentPlan.elearningLimit).asSeconds();
+
+    if (hourlyPaymentPlanId && prices.length) {
+      const updateQuery = {
+        $set: {
+          'hourlyPaymentPlans.$.prices': prices,
+          ...elearningPrice && { 'hourlyPaymentPlans.$.elearningPrice': elearningPrice },
+          ...elearningLimit && { 'hourlyPaymentPlans.$.elearningLimit': elearningLimit },
+        },
+        ...!elearningLimit && { $unset: { 'hourlyPaymentPlans.$.elearningLimit': '' } },
+      };
+
+      return SubProgram.updateOne({ _id: subProgramId, 'hourlyPaymentPlans._id': hourlyPaymentPlanId }, updateQuery);
+    }
+
+    if (hourlyPaymentPlanId && !prices.length) {
+      return SubProgram.updateOne(
+        { _id: subProgramId },
+        { $pull: { hourlyPaymentPlans: { _id: hourlyPaymentPlanId } } }
+      );
+    }
+
+    return SubProgram.updateOne(
+      { _id: subProgramId },
+      {
+        $push: {
+          hourlyPaymentPlans: {
+            prices,
+            ...elearningPrice && { elearningPrice },
+            ...elearningLimit && { elearningLimit },
+          },
+        },
+      }
+    );
+  }
+
   const subProgram = await SubProgram
     .findOneAndUpdate({ _id: subProgramId }, { $set: { status: payload.status } })
     .populate({ path: 'steps', select: 'activities type' })
@@ -138,6 +178,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       .findOne({ subProgram: { $in: otherSubProgramList }, type: INTER_B2C, format: STRICTLY_E_LEARNING })
       .lean();
     let courseId;
+    const accessCompanies = existingCourse ? existingCourse.accessRules : payload.accessCompanies;
     if (existingCourse) {
       courseId = existingCourse._id;
       await updateExistingElearningCourse(existingCourse._id, subProgramId);
@@ -152,11 +193,11 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       courseId = course._id;
     }
     query = { formationExpoTokenList: { $exists: true, $not: { $size: 0 } } };
-    if (payload.accessCompanies) {
+    if (accessCompanies && accessCompanies.length) {
       const userCompanies = await UserCompany
         .find(
           {
-            company: { $in: payload.accessCompanies },
+            company: { $in: accessCompanies },
             $or: [{ endDate: { $gt: CompaniDate().toISO() } }, { endDate: { $exists: false } }],
           },
           { user: 1 }

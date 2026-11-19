@@ -6,6 +6,10 @@ const ActivityHistory = require('../../../src/models/ActivityHistory');
 const Course = require('../../../src/models/Course');
 const CourseBill = require('../../../src/models/CourseBill');
 const SubProgram = require('../../../src/models/SubProgram');
+const CoursesHelper = require('../../../src/helpers/courses');
+const HourlyPaymentPlansHelper = require('../../../src/helpers/hourlyPaymentPlans');
+const CourseSlotsHelper = require('../../../src/helpers/courseSlots');
+const { CompaniDuration } = require('../../../src/helpers/dates/companiDurations');
 const CourseBillHelper = require('../../../src/helpers/courseBills');
 const CourseHistoriesHelper = require('../../../src/helpers/courseHistories');
 const VendorCompaniesHelper = require('../../../src/helpers/vendorCompanies');
@@ -25,6 +29,7 @@ const {
   TRAINEE,
   SINGLE,
   GROUP,
+  GLOBAL,
   INTER_B2B,
   RECEIVED,
   XML_GENERATED,
@@ -465,6 +470,7 @@ describe('list', () => {
     const singleSubProgramId = new ObjectId();
     const interSubProgramId = new ObjectId();
     const activitiesIds = [new ObjectId(), new ObjectId()];
+    const hourlyPaymentPlan = new ObjectId();
     const periodBills = [
       {
         _id: billIds[0],
@@ -519,6 +525,7 @@ describe('list', () => {
         companies: [companies[1]],
         mainFee: { price: 320, count: 1 },
         payer: { name: 'Funder' },
+        hourlyPaymentPlan,
         maturityDate: '2025-06-13T14:00:00.000Z',
       },
       {
@@ -622,6 +629,32 @@ describe('list', () => {
         maturityDate: '2025-06-13T14:00:00.000Z',
       },
       {
+        _id: new ObjectId(),
+        course: courseIds[2],
+        companies: [companies[0]._id],
+        billedAt: '2025-05-10T14:00:00.000Z',
+        hourlyPaymentPlan,
+        mainFee: { price: 100, count: 1 },
+        billingPurchaseList: [{ price: 10, count: 2 }],
+      },
+      {
+        _id: new ObjectId(),
+        course: courseIds[2],
+        companies: [companies[0]._id],
+        billedAt: '2025-05-20T14:00:00.000Z',
+        hourlyPaymentPlan,
+        mainFee: { price: 50, count: 1 },
+      },
+      {
+        _id: new ObjectId(),
+        course: courseIds[2],
+        companies: [companies[0]._id],
+        billedAt: '2025-05-25T14:00:00.000Z',
+        hourlyPaymentPlan,
+        mainFee: { price: 900, count: 1 },
+        courseCreditNote: { _id: new ObjectId() },
+      },
+      {
         _id: billIds[3],
         course: courseIds[3],
         companies: [companies[1]._id],
@@ -708,6 +741,8 @@ describe('list', () => {
         companies: [companies[1]],
         mainFee: { price: 320, count: 1 },
         payer: { name: 'Funder' },
+        hourlyPaymentPlan,
+        validatedHourlyBillsAmount: 170,
         maturityDate: '2025-06-13T14:00:00.000Z',
         course: {
           _id: courseIds[2],
@@ -855,7 +890,15 @@ describe('list', () => {
           query: 'find',
           args: [
             { course: { $in: [courseIds[0], courseIds[2], courseIds[3], courseIds[5]] } },
-            { course: 1, companies: 1, billedAt: 1, maturityDate: 1 },
+            {
+              course: 1,
+              companies: 1,
+              billedAt: 1,
+              maturityDate: 1,
+              hourlyPaymentPlan: 1,
+              mainFee: 1,
+              billingPurchaseList: 1,
+            },
           ],
         },
         {
@@ -1022,7 +1065,18 @@ describe('list', () => {
       [
         {
           query: 'find',
-          args: [{ course: { $in: [courseId] } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 }],
+          args: [
+            { course: { $in: [courseId] } },
+            {
+              course: 1,
+              companies: 1,
+              billedAt: 1,
+              maturityDate: 1,
+              hourlyPaymentPlan: 1,
+              mainFee: 1,
+              billingPurchaseList: 1,
+            },
+          ],
         },
         {
           query: 'populate',
@@ -1128,7 +1182,18 @@ describe('list', () => {
       [
         {
           query: 'find',
-          args: [{ course: { $in: [courseId] } }, { course: 1, companies: 1, billedAt: 1, maturityDate: 1 }],
+          args: [
+            { course: { $in: [courseId] } },
+            {
+              course: 1,
+              companies: 1,
+              billedAt: 1,
+              maturityDate: 1,
+              hourlyPaymentPlan: 1,
+              mainFee: 1,
+              billingPurchaseList: 1,
+            },
+          ],
         },
         {
           query: 'populate',
@@ -1145,8 +1210,99 @@ describe('list', () => {
   });
 });
 
+describe('computePriceFromDurations', () => {
+  let findOneCourse;
+  let getTraineeDurations;
+  let getDurationPerStep;
+  let getPricesFromDurations;
+  let getPriceDetails;
+
+  beforeEach(() => {
+    findOneCourse = sinon.stub(Course, 'findOne');
+    getTraineeDurations = sinon.stub(CoursesHelper, 'getTraineeDurations');
+    getDurationPerStep = sinon.stub(CourseSlotsHelper, 'getDurationPerStep');
+    getPricesFromDurations = sinon.stub(HourlyPaymentPlansHelper, 'getPricesFromDurations');
+    getPriceDetails = sinon.stub(HourlyPaymentPlansHelper, 'getPriceDetails');
+  });
+
+  afterEach(() => {
+    findOneCourse.restore();
+    getTraineeDurations.restore();
+    getDurationPerStep.restore();
+    getPricesFromDurations.restore();
+    getPriceDetails.restore();
+  });
+
+  it('should compute the price of the course from the chosen hourly payment plan', async () => {
+    const courseId = new ObjectId();
+    const traineeId = new ObjectId();
+    const hourlyPaymentPlans = [{ _id: new ObjectId(), prices: [] }, { _id: new ObjectId(), prices: [] }];
+    const slotsWithAttendance = [{ _id: new ObjectId() }];
+    const eLearningDuration = CompaniDuration({ minutes: 60 });
+    const durationPerStep = { [new ObjectId()]: CompaniDuration({ minutes: 120 }) };
+    const priceDetails = { stepId: { stepName: 'étape', duration: CompaniDuration({ minutes: 120 }), price: '300' } };
+
+    const steps = [{ _id: new ObjectId(), name: 'étape' }];
+    const course = {
+      subProgram: { hourlyPaymentPlans, steps },
+      slots: [{ startDate: '2025-01-10T09:00:00.000Z' }],
+      trainees: [traineeId],
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'lean']));
+    getTraineeDurations.returns({ slotsWithAttendance, eLearningDuration });
+    getDurationPerStep.returns(durationPerStep);
+    getPricesFromDurations.returns(priceDetails);
+    getPriceDetails.returns('étape - 2h - 300,00 €');
+
+    const result = await CourseBillHelper.computePriceFromDurations(courseId, hourlyPaymentPlans[1]._id);
+
+    expect(result).toEqual({ price: 300, details: 'étape - 2h - 300,00 €' });
+    SinonMongoose.calledOnceWithExactly(
+      findOneCourse,
+      [
+        { query: 'findOne', args: [{ _id: courseId }, { subProgram: 1, slots: 1, trainees: 1 }] },
+        {
+          query: 'populate',
+          args: [{
+            path: 'slots',
+            select: 'startDate endDate trainers step',
+            options: { sort: { startDate: 1 } },
+            populate: { path: 'step', select: 'durationCountedPerTrainer' },
+          }],
+        },
+        {
+          query: 'populate',
+          args: [{
+            path: 'subProgram',
+            select: 'steps hourlyPaymentPlans',
+            populate: { path: 'steps', select: 'name activities type theoreticalDuration' },
+          }],
+        },
+        { query: 'lean' },
+      ]
+    );
+    sinon.assert.calledOnceWithExactly(
+      getTraineeDurations,
+      course,
+      traineeId,
+      { startDate: '2025-01-10T09:00:00.000Z', endDate: sinon.match.string }
+    );
+    sinon.assert.calledOnceWithExactly(getDurationPerStep, slotsWithAttendance);
+    sinon.assert.calledOnceWithExactly(
+      getPricesFromDurations,
+      hourlyPaymentPlans[1],
+      durationPerStep,
+      eLearningDuration,
+      steps
+    );
+    sinon.assert.calledOnceWithExactly(getPriceDetails, priceDetails);
+  });
+});
+
 describe('createBillList', () => {
   let findOneCourse;
+  let computePriceFromDurations;
   let createCourseBill;
   let insertManyCourseBills;
   let addBillingPurchase;
@@ -1155,6 +1311,7 @@ describe('createBillList', () => {
 
   beforeEach(() => {
     findOneCourse = sinon.stub(Course, 'findOne');
+    computePriceFromDurations = sinon.stub(CourseBillHelper, 'computePriceFromDurations');
     createCourseBill = sinon.stub(CourseBill, 'create');
     insertManyCourseBills = sinon.stub(CourseBill, 'insertMany');
     addBillingPurchase = sinon.stub(CourseBillHelper, 'addBillingPurchase');
@@ -1164,6 +1321,7 @@ describe('createBillList', () => {
 
   afterEach(() => {
     findOneCourse.restore();
+    computePriceFromDurations.restore();
     createCourseBill.restore();
     insertManyCourseBills.restore();
     addBillingPurchase.restore();
@@ -1171,31 +1329,43 @@ describe('createBillList', () => {
     process.env.MANAGEMENT_FEES_BILLING_ITEM = '';
   });
 
-  it('should create one bill without percentage for INTER course', async () => {
-    const course = { type: INTER_B2B, prices: [], subProgram: { subjectToVat: false } };
+  it('should create one bill with real price for a GLOBAL certification course', async () => {
+    const courseId = new ObjectId();
+    const course = {
+      _id: courseId,
+      type: INTER_B2B,
+      prices: [],
+      subProgram: { subjectToVat: false },
+      certificateGenerationMode: GLOBAL,
+    };
     const payload = {
-      course: new ObjectId(),
+      course: courseId,
       quantity: 1,
-      mainFee: { price: 100, count: 1, countUnit: GROUP, description: 'test' },
+      mainFee: { count: 1, countUnit: GROUP, description: 'test' },
       companies: [new ObjectId()],
       payer: { fundingOrganisation: new ObjectId() },
       maturityDate: '2025-04-29T22:00:00.000Z',
+      hourlyPaymentPlanId: new ObjectId(),
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+    computePriceFromDurations.returns({ price: 250, details: 'étape - 2h - 250,00 €' });
 
     await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledOnceWithExactly(computePriceFromDurations, payload.course, payload.hourlyPaymentPlanId);
 
     sinon.assert.calledOnceWithExactly(
       createCourseBill,
       {
         course: payload.course,
         mainFee: {
-          price: 100,
+          price: 250,
           count: 1,
           countUnit: GROUP,
-          description: 'test',
+          description: 'test\r\n--- Détail ---\r\nétape - 2h - 250,00 €',
         },
+        hourlyPaymentPlan: payload.hourlyPaymentPlanId,
         companies: payload.companies,
         payer: payload.payer,
         maturityDate: payload.maturityDate,
@@ -1427,6 +1597,7 @@ describe('createBillList', () => {
       companies: [companyId],
       payer: { fundingOrganisation: payerId },
       maturityDate: '2025-04-29T22:00:00.000Z',
+      hourlyPaymentPlanId: new ObjectId(),
     };
 
     findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
@@ -1438,7 +1609,17 @@ describe('createBillList', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 }],
+          args: [
+            { _id: course._id },
+            {
+              type: 1,
+              prices: 1,
+              trainees: 1,
+              trainers: 1,
+              subProgram: 1,
+              certificateGenerationMode: 1,
+            },
+          ],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -1459,6 +1640,7 @@ describe('createBillList', () => {
           + 'Nom de l\'apprenant·e: Sarah PEL \r\n'
           + 'Nom du / des intervenants: toto TEST',
         },
+        hourlyPaymentPlan: payload.hourlyPaymentPlanId,
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-04-29T22:00:00.000Z',
@@ -1477,6 +1659,7 @@ describe('createBillList', () => {
           + 'Nom de l\'apprenant·e: Sarah PEL \r\n'
           + 'Nom du / des intervenants: toto TEST',
         },
+        hourlyPaymentPlan: payload.hourlyPaymentPlanId,
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-05-29T22:00:00.000Z',
@@ -1515,7 +1698,17 @@ describe('createBillList', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: course._id }, { type: 1, prices: 1, trainees: 1, trainers: 1, subProgram: 1 }],
+          args: [
+            { _id: course._id },
+            {
+              type: 1,
+              prices: 1,
+              trainees: 1,
+              trainers: 1,
+              subProgram: 1,
+              certificateGenerationMode: 1,
+            },
+          ],
         },
         { query: 'populate', args: [{ path: 'trainees', select: 'identity' }] },
         { query: 'populate', args: [{ path: 'trainers', select: 'identity' }] },
@@ -1644,6 +1837,38 @@ describe('createBillList', () => {
         companies: [companyId],
         payer: { fundingOrganisation: payerId },
         maturityDate: '2025-06-29T22:00:00.000Z',
+      }
+    );
+    sinon.assert.notCalled(addBillingPurchase);
+    sinon.assert.notCalled(insertManyCourseBills);
+    sinon.assert.notCalled(getVendorCompany);
+  });
+
+  it('should create one bill for SINGLE course with prices array', async () => {
+    const companyId = new ObjectId();
+    const payerId = new ObjectId();
+    const course = { _id: new ObjectId(), type: SINGLE, prices: [], subProgram: { subjectToVat: false } };
+    const payload = {
+      course: course._id,
+      quantity: 1,
+      mainFee: { count: 1, countUnit: TRAINEE, price: [9000], description: 'test' },
+      companies: [companyId],
+      payer: { fundingOrganisation: payerId },
+      maturityDate: '2025-04-29T22:00:00.000Z',
+    };
+
+    findOneCourse.returns(SinonMongoose.stubChainedQueries(course));
+
+    await CourseBillHelper.createBillList(payload);
+
+    sinon.assert.calledOnceWithExactly(
+      createCourseBill,
+      {
+        course: course._id,
+        mainFee: { count: 1, countUnit: TRAINEE, price: 9000, description: 'test' },
+        companies: [companyId],
+        payer: { fundingOrganisation: payerId },
+        maturityDate: '2025-04-29T22:00:00.000Z',
       }
     );
     sinon.assert.notCalled(addBillingPurchase);

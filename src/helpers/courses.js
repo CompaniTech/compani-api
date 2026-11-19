@@ -23,6 +23,7 @@ const UserCompany = require('../models/UserCompany');
 const Questionnaire = require('../models/Questionnaire');
 const QuestionnaireHistory = require('../models/QuestionnaireHistory');
 const CourseSmsHistory = require('../models/CourseSmsHistory');
+const ActivityHistory = require('../models/ActivityHistory');
 const Attendance = require('../models/Attendance');
 const SubProgram = require('../models/SubProgram');
 const TrainingContract = require('../models/TrainingContract');
@@ -88,8 +89,13 @@ const {
   SECOND,
   MONTH,
   TRAINER_SALARY,
+  PARTIALLY_INVOICED,
+  NOT_INVOICED,
+  INVOICED,
+  PAID,
   VAEI_COACH,
   ARCHITECT,
+  INTER_B2C,
 } = require('./constants');
 const CompaniesHelper = require('./companies');
 const CourseHistoriesHelper = require('./courseHistories');
@@ -105,6 +111,7 @@ const CompletionCertificatePdf = require('../data/pdf/completionCertificate');
 const TrainingContractPdf = require('../data/pdf/trainingContract');
 const CourseBill = require('../models/CourseBill');
 const CourseSlot = require('../models/CourseSlot');
+const TrainerBill = require('../models/TrainerBill');
 const CourseHistory = require('../models/CourseHistory');
 const CompletionCertificate = require('../models/CompletionCertificate');
 const CourseBillingItem = require('../models/CourseBillingItem');
@@ -580,15 +587,18 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       },
       {
         path: 'subProgram',
-        select: origin === WEBAPP ? 'program steps paymentPlans' : 'program steps',
+        select: origin === WEBAPP ? 'program steps paymentPlans hourlyPaymentPlans archivedAt' : 'program steps',
         populate: [
           { path: 'program', select: 'learningGoals' },
           ...(origin === WEBAPP
-            ? [{
-              path: 'steps',
-              select: 'name type theoreticalDuration durationCountedPerTrainer',
-              populate: { path: 'activities', select: 'name type' },
-            }]
+            ? [
+              {
+                path: 'steps',
+                select: 'name type theoreticalDuration durationCountedPerTrainer',
+                populate: { path: 'activities', select: 'name type' },
+              },
+              { path: 'hourlyPaymentPlans.prices.step', select: 'name' },
+            ]
             : [{ path: 'steps', select: 'name' }]
           ),
         ],
@@ -634,7 +644,11 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           ...(isRofOrAdmin
             ? [
               { path: 'trainerMissions', select: '_id trainer', options: { isVendorUser: true } },
-              { path: 'bills', select: '_id companies', options: { isVendorUser: true } },
+              {
+                path: 'bills',
+                select: '_id companies hourlyPaymentPlan maturityDate',
+                options: { isVendorUser: true },
+              },
             ]
             : []),
         ]
@@ -1404,6 +1418,50 @@ exports.getRealELearningDuration = (activityHistories) => {
     .reduce((acc, val) => acc.add(CompaniDuration(val)), CompaniDuration());
 
   return eLearningDuration;
+};
+
+exports.getTraineeELearningDuration = async (course, traineeId, dates) => {
+  const REAL_ELEARNING_DURATION_SUBPROGRAM_IDS = process.env.REAL_ELEARNING_DURATION_SUBPROGRAM_IDS
+    .split(',')
+    .map(id => new ObjectId(id));
+
+  const eLearningSteps = course.subProgram.steps.filter(step => step.type === E_LEARNING);
+  const activityHistories = await ActivityHistory
+    .find({ activity: { $in: eLearningSteps.flatMap(s => s.activities) }, user: traineeId })
+    .lean();
+
+  if (UtilsHelper.doesArrayIncludeId(REAL_ELEARNING_DURATION_SUBPROGRAM_IDS, course.subProgram._id)) {
+    const filteredActivityHistories = dates
+      ? activityHistories.filter(aH => CompaniDate(aH.date).isSameOrBetween(dates.startDate, dates.endDate))
+      : activityHistories;
+
+    return exports.getRealELearningDuration(filteredActivityHistories);
+  }
+
+  const activityHistoriesGroupedByActivity = groupBy(activityHistories, 'activity');
+  const eLearningStepsWithAH = eLearningSteps.map(s => ({
+    ...s,
+    activities: s.activities.map(a => ({ _id: a, activityHistories: activityHistoriesGroupedByActivity[a] || [] })),
+  }));
+
+  return exports.getELearningDuration(eLearningStepsWithAH, traineeId, dates);
+};
+
+exports.getTraineeDurations = async (course, traineeId, dates) => {
+  const slots = dates
+    ? course.slots.filter(slot => CompaniDate(slot.startDate).isSameOrBetween(dates.startDate, dates.endDate))
+    : course.slots;
+
+  const attendances = await Attendance
+    .find({ trainee: traineeId, courseSlot: { $in: slots.map(s => s._id) }, status: PRESENT })
+    .setOptions({ isVendorUser: true })
+    .lean();
+  const slotsWithAttendance = slots
+    .filter(slot => UtilsHelper.doesArrayIncludeId(attendances.map(a => a.courseSlot), slot._id));
+
+  const eLearningDuration = await exports.getTraineeELearningDuration(course, traineeId, dates);
+
+  return { slotsWithAttendance, eLearningDuration };
 };
 
 const getTraineeInformations = (
@@ -2260,3 +2318,116 @@ exports.deleteBillingPurchase = async (courseId, billingPurchaseId) => Course.up
   { _id: courseId },
   { $pull: { billingPurchaseList: { _id: billingPurchaseId } } }
 );
+
+exports.getCourseTrainerSalary = (course) => {
+  if (course.trainers.length !== 1) return undefined;
+
+  const billingPurchaseList = course.billingPurchaseList || [];
+  let salary = billingPurchaseList.find(item => item.billingItem?.type === TRAINER_SALARY);
+  if (!salary) {
+    const CONSULTING_PROGRAM_IDS = (process.env.CONSULTING_PROGRAM_IDS || '').split(',');
+    if (UtilsHelper.doesArrayIncludeId(CONSULTING_PROGRAM_IDS, get(course, 'subProgram.program._id'))) {
+      salary = billingPurchaseList
+        .find(item => UtilsHelper.areObjectIdsEquals(item.billingItem?._id, process.env.CONSULTING_BILLING_ITEM));
+    }
+  }
+
+  return salary ? NumbersHelper.toNumber(NumbersHelper.multiply(salary.price, salary.count)) : undefined;
+};
+
+// Trainer billing was not tracked in the app before September 1st, 2026:
+// courses archived before this date are considered as paid
+const TRAINER_PAYMENTS_START_DATE = '2026-08-31T22:00:00.000Z';
+
+exports.listTrainersBilling = async (query) => {
+  let courseIdsWithSlotsOrBillsInPeriod;
+  if (query.startDate) {
+    const slotsInPeriod = await CourseSlot
+      .find({ startDate: { $gte: query.startDate }, endDate: { $lte: query.endDate } }, { course: 1 })
+      .lean();
+    const billsInPeriod = await TrainerBill
+      .find({ submittedAt: { $gte: query.startDate, $lte: query.endDate }, course: { $exists: true } }, { course: 1 })
+      .lean();
+    courseIdsWithSlotsOrBillsInPeriod = uniqBy(
+      [...slotsInPeriod.map(slot => slot.course), ...billsInPeriod.map(bill => bill.course)],
+      id => id.toHexString()
+    );
+  }
+
+  const courses = await Course
+    .find(
+      {
+        ...(courseIdsWithSlotsOrBillsInPeriod && { _id: { $in: courseIdsWithSlotsOrBillsInPeriod } }),
+        ...(query.trainer ? { trainers: query.trainer } : { 'trainers.0': { $exists: true } }),
+        type: { $nin: [SINGLE, INTER_B2C] },
+      },
+      { trainers: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1, archivedAt: 1 }
+    )
+    .populate({ path: 'companies', select: 'name' })
+    .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
+    .populate({ path: 'trainers', select: 'identity' })
+    .populate({ path: 'billingPurchaseList.billingItem', select: 'type' })
+    .sort({ createdAt: -1 })
+    .lean();
+  if (!courses.length) return [];
+
+  const trainerBills = await TrainerBill
+    .find(
+      { course: { $in: courses.map(c => c._id) }, ...(query.trainer && { trainer: query.trainer }) },
+      { course: 1, amount: 1, trainer: 1, submittedAt: 1 }
+    )
+    .populate({ path: 'payment', select: 'status' })
+    .lean();
+  const billsByTrainerAndCourse = groupBy(trainerBills, bill => `${bill.trainer}-${bill.course}`);
+
+  const trainers = query.trainer
+    ? [courses[0].trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, query.trainer))]
+    : uniqBy(courses.flatMap(c => c.trainers), t => t._id.toHexString());
+
+  const trainersBilling = [];
+  for (const trainer of trainers) {
+    const filteredTrainerCourses = courses
+      .filter(course => UtilsHelper.doesArrayIncludeId(course.trainers.map(t => t._id), trainer._id));
+
+    const trainerCourses = [];
+    for (const course of filteredTrainerCourses) {
+      const plannedSalary = exports.getCourseTrainerSalary(course);
+      const courseBills = billsByTrainerAndCourse[`${trainer._id}-${course._id}`] || [];
+      let invoicedAmount = 0;
+      let paidAmount = 0;
+      const billsSubmissionDates = [];
+      for (const bill of courseBills) {
+        invoicedAmount = NumbersHelper.add(invoicedAmount, bill.amount);
+        if (bill.payment?.status === PAID) paidAmount = NumbersHelper.add(paidAmount, bill.amount);
+        billsSubmissionDates.push(bill.submittedAt);
+      }
+      invoicedAmount = NumbersHelper.toNumber(invoicedAmount);
+      paidAmount = NumbersHelper.toNumber(paidAmount);
+
+      const isArchivedBeforePaymentsStart = !!course.archivedAt &&
+        CompaniDate(course.archivedAt).isBefore(TRAINER_PAYMENTS_START_DATE);
+
+      let status = INVOICED;
+      if (isArchivedBeforePaymentsStart) status = PAID;
+      else if (NumbersHelper.isEqualTo(invoicedAmount, 0)) status = NOT_INVOICED;
+      else if (plannedSalary !== undefined && NumbersHelper.isLessThan(invoicedAmount, plannedSalary)) {
+        status = PARTIALLY_INVOICED;
+      } else if (NumbersHelper.isEqualTo(invoicedAmount, paidAmount)) {
+        status = PAID;
+      }
+
+      trainerCourses.push({
+        ...omit(course, ['billingPurchaseList', 'archivedAt']),
+        ...(plannedSalary !== undefined && { plannedSalary }),
+        invoicedAmount,
+        paidAmount,
+        status,
+        ...(status === INVOICED && { billsSubmissionDates }),
+      });
+    }
+
+    trainersBilling.push({ ...trainer, courses: trainerCourses });
+  }
+
+  return trainersBilling;
+};
