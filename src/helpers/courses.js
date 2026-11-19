@@ -2330,9 +2330,9 @@ exports.getCourseTrainerSalary = (course) => {
   return salary ? NumbersHelper.toNumber(NumbersHelper.multiply(salary.price, salary.count)) : undefined;
 };
 
-// Trainer billing was not tracked in the app before October 1st, 2026:
-// courses ended before this date are considered as paid
-const TRAINER_PAYMENTS_START_DATE = '2026-09-30T22:00:00.000Z';
+// Trainer billing was not tracked in the app before September 1st, 2026:
+// courses archived before this date are considered as paid
+const TRAINER_PAYMENTS_START_DATE = '2026-08-31T22:00:00.000Z';
 
 exports.listTrainersBilling = async (query) => {
   let courseIdsWithSlotsOrBillsInPeriod;
@@ -2356,7 +2356,7 @@ exports.listTrainersBilling = async (query) => {
         ...(query.trainer ? { trainers: query.trainer } : { 'trainers.0': { $exists: true } }),
         type: { $nin: [SINGLE, INTER_B2C] },
       },
-      { trainers: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1 }
+      { trainers: 1, createdAt: 1, billingPurchaseList: 1, type: 1, misc: 1, tradeName: 1, archivedAt: 1 }
     )
     .populate({ path: 'companies', select: 'name' })
     .populate({ path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } })
@@ -2374,14 +2374,6 @@ exports.listTrainersBilling = async (query) => {
     .populate({ path: 'payment', select: 'status' })
     .lean();
   const billsByTrainerAndCourse = groupBy(trainerBills, bill => `${bill.trainer}-${bill.course}`);
-
-  const courseSlots = await CourseSlot
-    .find({ course: { $in: courses.map(c => c._id) } }, { course: 1, endDate: 1 })
-    .lean();
-  const isCourseEndedBeforePaymentsStart = mapValues(
-    groupBy(courseSlots, 'course'),
-    slots => slots.every(slot => slot.endDate && CompaniDate(slot.endDate).isBefore(TRAINER_PAYMENTS_START_DATE))
-  );
 
   const trainers = query.trainer
     ? [courses[0].trainers.find(t => UtilsHelper.areObjectIdsEquals(t._id, query.trainer))]
@@ -2407,8 +2399,11 @@ exports.listTrainersBilling = async (query) => {
       invoicedAmount = NumbersHelper.toNumber(invoicedAmount);
       paidAmount = NumbersHelper.toNumber(paidAmount);
 
+      const isArchivedBeforePaymentsStart = !!course.archivedAt &&
+        CompaniDate(course.archivedAt).isBefore(TRAINER_PAYMENTS_START_DATE);
+
       let status = INVOICED;
-      if (isCourseEndedBeforePaymentsStart[course._id]) status = PAID;
+      if (isArchivedBeforePaymentsStart) status = PAID;
       else if (NumbersHelper.isEqualTo(invoicedAmount, 0)) status = NOT_INVOICED;
       else if (plannedSalary !== undefined && NumbersHelper.isLessThan(invoicedAmount, plannedSalary)) {
         status = PARTIALLY_INVOICED;
@@ -2417,7 +2412,7 @@ exports.listTrainersBilling = async (query) => {
       }
 
       trainerCourses.push({
-        ...omit(course, ['billingPurchaseList']),
+        ...omit(course, ['billingPurchaseList', 'archivedAt']),
         ...(plannedSalary !== undefined && { plannedSalary }),
         invoicedAmount,
         paidAmount,
