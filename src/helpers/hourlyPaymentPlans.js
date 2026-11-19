@@ -29,8 +29,8 @@ exports.getPricesFromDurations = (
       billableELearningDuration = remainingDuration.isShorterThan(PT0S) ? CompaniDuration(PT0S) : remainingDuration;
     }
   }
-  const eLearning = hourlyPaymentPlan.elearningPrice && {
-    duration: eLearningMonthDuration,
+  const eLearning = hourlyPaymentPlan.elearningPrice && !billableELearningDuration.isEquivalentTo(PT0S) && {
+    duration: billableELearningDuration,
     price: NumbersHelper.multiply(billableELearningDuration.asHours(), hourlyPaymentPlan.elearningPrice),
   };
 
