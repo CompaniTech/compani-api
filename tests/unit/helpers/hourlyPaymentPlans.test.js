@@ -64,16 +64,16 @@ describe('getPricesFromDurations', () => {
       .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, [], CompaniDuration({ hours: 8 }));
 
     expect(limitReachedThisMonth.elearning.price).toBe('40');
-    expect(limitReachedThisMonth.elearning.duration.asHours()).toBe(3);
+    expect(limitReachedThisMonth.elearning.duration.asHours()).toBe(2);
   });
-  it('should not bill e-learning if limit already reached', () => {
+  it('should not return e-learning line if limit already reached', () => {
     const hourlyPaymentPlan = { prices: [], elearningPrice: 20, elearningLimit: 'PT36000S' };
     const eLearningDuration = CompaniDuration({ hours: 3 });
 
     const limitAlreadyReached = HourlyPaymentPlansHelper
       .getPricesFromDurations(hourlyPaymentPlan, {}, eLearningDuration, [], CompaniDuration({ hours: 12 }));
 
-    expect(limitAlreadyReached.elearning.price).toBe('0');
+    expect(limitAlreadyReached.elearning).toBeUndefined();
   });
 
   it('should not return e-learning line if there is no e-learning price', () => {
