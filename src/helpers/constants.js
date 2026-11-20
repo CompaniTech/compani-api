@@ -14,6 +14,9 @@ module.exports = {
   REJECTED: 'rejected',
   // Time
   SECONDS_IN_AN_HOUR: 3600,
+  // Verification code
+  MAX_VERIFICATION_ATTEMPTS: 3,
+  LOGIN_CODE_LOCK_DELAYS: ['PT5M', 'PT15M', 'PT1H', 'PT24H'],
   // COMPANIDURATION
   PT0S: 'PT0S',
   // COMPANIDURATION FORMATS

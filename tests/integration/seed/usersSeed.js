@@ -159,6 +159,8 @@ const usersSeedList = [
     administrative: { certificates: [{ driveId: '1234567890' }], driveFolder: { driveId: '0987654321' } },
     origin: WEBAPP,
     formationExpoTokenList: ['ExponentPushToken[jeSuisUnAutreIdExpo]'],
+    loginCode: '4321',
+    loginCodeLock: { attempts: 2, count: 1, lockedUntil: new Date('2021-01-25T10:05:00.000Z') },
   },
   { // 2
     _id: new ObjectId(),
@@ -469,6 +471,7 @@ const identityVerifications = [
     code: '3310',
     createdAt: new Date('2021-01-25T10:05:32.582Z'),
   },
+  { _id: new ObjectId(), email: usersSeedList[1].local.email, code: '4321', attempts: 3 },
 ];
 
 const isInList = (list, user) => list.some(i => i._id.toHexString() === user._id.toHexString());

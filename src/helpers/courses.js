@@ -57,6 +57,8 @@ const {
   VENDOR_ADMIN,
   TRAINING_ORGANISATION_MANAGER,
   TRAINER,
+  CLIENT_ADMIN,
+  COACH,
   REMOTE,
   OPERATIONS,
   HHhMM,
@@ -567,6 +569,10 @@ exports.formatCourseWithProgress = (course, userId, shouldComputePresence = fals
 
 const getCourseForOperations = async (courseId, credentials, origin) => {
   const isRofOrAdmin = [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(credentials, 'role.vendor.name'));
+  const canSeeLoginCode = [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER]
+    .includes(get(credentials, 'role.vendor.name')) ||
+    [CLIENT_ADMIN, COACH].includes(get(credentials, 'role.client.name'));
+  const loginCodeSelect = canSeeLoginCode ? ' loginCode' : '';
 
   const fetchedCourse = await Course.findOne({ _id: courseId })
     .populate([
@@ -578,7 +584,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
       {
         path: 'trainees',
         select: 'identity.firstname identity.lastname local.email contact picture.link '
-          + 'firstMobileConnectionDate loginCode',
+          + `firstMobileConnectionDate${loginCodeSelect}`,
         populate: { path: 'company' },
       },
       {
@@ -608,7 +614,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
           {
             path: 'tutors',
             select: 'identity.firstname identity.lastname contact local.email picture.link '
-              + 'firstMobileConnectionDate loginCode',
+              + `firstMobileConnectionDate${loginCodeSelect}`,
           },
           {
             path: 'slots',
@@ -777,7 +783,7 @@ exports.getCourseFollowUp = async (course, query, credentials) => {
     })
     .populate({
       path: 'trainees',
-      select: 'identity.firstname identity.lastname firstMobileConnectionDate loginCode',
+      select: `identity.firstname identity.lastname firstMobileConnectionDate${query.trainee ? '' : ' loginCode'}`,
       populate: { path: 'company' },
     })
     .lean();
@@ -1176,11 +1182,14 @@ exports.addTrainee = async (courseId, payload, credentials) => {
   );
 
   const trainee = await User
-    .findOne({ _id: payload.trainee }, { formationExpoTokenList: 1, firstMobileConnectionDate: 1, loginCode: 1 })
+    .findOne(
+      { _id: payload.trainee },
+      { formationExpoTokenList: 1, firstMobileConnectionDate: 1, loginCode: 1, 'local.password': 1 }
+    )
     .lean();
 
-  if (!trainee.firstMobileConnectionDate && !trainee.loginCode) {
-    const loginCode = String(Math.floor(Math.random() * 9000 + 1000));
+  if (!trainee.firstMobileConnectionDate && !trainee.loginCode && !get(trainee, 'local.password')) {
+    const loginCode = UtilsHelper.generateVerificationCode();
     await User.updateOne({ _id: payload.trainee }, { $set: { loginCode } });
   }
 
@@ -2100,7 +2109,7 @@ exports.addTutor = async (courseId, payload) => {
   const tutor = await User
     .findOne(
       { _id: payload.tutor },
-      { firstMobileConnectionDate: 1, loginCode: 1, identity: 1, contact: 1, 'local.email': 1 }
+      { firstMobileConnectionDate: 1, loginCode: 1, identity: 1, contact: 1, 'local.email': 1, 'local.password': 1 }
     )
     .lean();
 
@@ -2116,8 +2125,8 @@ exports.addTutor = async (courseId, payload) => {
     });
   }
 
-  if (!(tutor.firstMobileConnectionDate || tutor.loginCode)) {
-    const loginCode = String(Math.floor(Math.random() * 9000 + 1000));
+  if (!(tutor.firstMobileConnectionDate || tutor.loginCode || get(tutor, 'local.password'))) {
+    const loginCode = UtilsHelper.generateVerificationCode();
     await User.updateOne({ _id: payload.tutor }, { $set: { loginCode } });
   }
 

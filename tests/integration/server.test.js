@@ -23,3 +23,38 @@ describe('SCAN PATH GUARD', () => {
     expect(response.statusCode).not.toBe(403);
   });
 });
+
+describe('CORS', () => {
+  it('should allow the webapp origin to call the api with credentials', async () => {
+    const origin = process.env.WEBSITE_HOSTNAME;
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/users/forgot-password',
+      headers: { origin, 'access-control-request-method': 'POST' },
+    });
+
+    expect(response.headers['access-control-allow-origin']).toBe(origin);
+    expect(response.headers['access-control-allow-credentials']).toBe('true');
+  });
+
+  it('should allow the web version of the mobile app to call the api', async () => {
+    const origin = process.env.MOBILE_WEBSITE_HOSTNAME;
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/users/forgot-password',
+      headers: { origin, 'access-control-request-method': 'POST' },
+    });
+
+    expect(response.headers['access-control-allow-origin']).toBe(origin);
+  });
+
+  it('should not allow another origin to call the api', async () => {
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/users/forgot-password',
+      headers: { origin: 'https://evil.example.com', 'access-control-request-method': 'POST' },
+    });
+
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+});

@@ -6,6 +6,7 @@ module.exports = {
     /* Users strings */
     usersNotFound: 'There are no users.',
     userNotFound: 'User doesn\'t exist.',
+    tooManyAttempts: 'Too many attempts. Try again later.',
     userEmailExists: 'This email is already taken by another user.',
     userFound: 'User found successfully.',
     userSaved: 'User saved successfully.',
@@ -391,6 +392,7 @@ module.exports = {
     /* Users strings */
     usersNotFound: 'Il n\'y a aucun compte.',
     userNotFound: 'Le compte n\'existe pas.',
+    tooManyAttempts: 'Trop de tentatives. Réessayez plus tard.',
     userEmailExists: 'Cet email est déjà pris par un autre compte.',
     userSaved: 'Compte enregistré avec succès.',
     userFound: 'Compte trouvé avec succès.',

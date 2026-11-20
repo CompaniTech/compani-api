@@ -3109,7 +3109,7 @@ describe('getCourse', () => {
                 {
                   path: 'trainees',
                   select: 'identity.firstname identity.lastname local.email contact picture.link '
-                    + 'firstMobileConnectionDate loginCode',
+                    + 'firstMobileConnectionDate',
                   populate: { path: 'company' },
                 },
                 {
@@ -3132,7 +3132,7 @@ describe('getCourse', () => {
                 {
                   path: 'tutors',
                   select: 'identity.firstname identity.lastname contact local.email picture.link '
-                    + 'firstMobileConnectionDate loginCode',
+                    + 'firstMobileConnectionDate',
                 },
                 {
                   path: 'slots',
@@ -4674,7 +4674,7 @@ describe('getCourseFollowUp', () => {
           query: 'populate',
           args: [{
             path: 'trainees',
-            select: 'identity.firstname identity.lastname firstMobileConnectionDate loginCode',
+            select: 'identity.firstname identity.lastname firstMobileConnectionDate',
             populate: { path: 'company' },
           }],
         },
@@ -5726,7 +5726,10 @@ describe('addTrainee', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: user._id }, { formationExpoTokenList: 1, firstMobileConnectionDate: 1, loginCode: 1 }],
+          args: [
+            { _id: user._id },
+            { formationExpoTokenList: 1, firstMobileConnectionDate: 1, loginCode: 1, 'local.password': 1 },
+          ],
         },
         { query: 'lean' },
       ]
@@ -5768,7 +5771,10 @@ describe('addTrainee', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: user._id }, { formationExpoTokenList: 1, firstMobileConnectionDate: 1, loginCode: 1 }],
+          args: [
+            { _id: user._id },
+            { formationExpoTokenList: 1, firstMobileConnectionDate: 1, loginCode: 1, 'local.password': 1 },
+          ],
         },
         { query: 'lean' },
       ]
@@ -5780,6 +5786,21 @@ describe('addTrainee', () => {
     );
     sinon.assert.calledOnceWithExactly(sendBlendedCourseRegistrationNotification, user, course._id);
     sinon.assert.notCalled(userUpdateOne);
+  });
+
+  it('should register an existing user with a password to course and not create loginCode', async () => {
+    const user = { _id: new ObjectId(), formationExpoTokenList: 'ExponentPushToken[bla]', local: { password: 'hash' } };
+    const course = { _id: new ObjectId(), misc: 'Test', type: INTRA, companies: [new ObjectId()] };
+    const payload = { trainee: user._id };
+    const credentials = { _id: new ObjectId(), company: { _id: new ObjectId() } };
+
+    userFindOne.returns(SinonMongoose.stubChainedQueries(user, ['lean']));
+    courseFindOneAndUpdate.returns(course);
+
+    await CourseHelper.addTrainee(course._id, payload, credentials);
+
+    sinon.assert.notCalled(userUpdateOne);
+    sinon.assert.calledOnceWithExactly(sendBlendedCourseRegistrationNotification, user, course._id);
   });
 
   it('should register an existing user to course (INTRA) and create loginCode in db', async () => {
@@ -5805,7 +5826,10 @@ describe('addTrainee', () => {
       [
         {
           query: 'findOne',
-          args: [{ _id: user._id }, { formationExpoTokenList: 1, firstMobileConnectionDate: 1, loginCode: 1 }],
+          args: [
+            { _id: user._id },
+            { formationExpoTokenList: 1, firstMobileConnectionDate: 1, loginCode: 1, 'local.password': 1 },
+          ],
         },
         { query: 'lean' },
       ]
@@ -10196,12 +10220,38 @@ describe('addTutor', () => {
           query: 'findOne',
           args: [
             { _id: tutorId },
-            { firstMobileConnectionDate: 1, loginCode: 1, identity: 1, contact: 1, 'local.email': 1 },
+            {
+              firstMobileConnectionDate: 1,
+              loginCode: 1,
+              identity: 1,
+              contact: 1,
+              'local.email': 1,
+              'local.password': 1,
+            },
           ],
         },
         { query: 'lean' },
       ]
     );
+  });
+
+  it('should add tutor with a password to course and not create loginCode', async () => {
+    const tutorId = new ObjectId();
+    const course = { _id: new ObjectId(), misc: 'Test', tutors: [new ObjectId()] };
+    const tutor = {
+      _id: tutorId,
+      identity: { firstname: 'Jeanne', lastname: 'Tutor' },
+      local: { email: 'tutor@email.com', password: 'hash' },
+    };
+
+    emailAddTutor.returns('email sent');
+    courseFindOneAndUpdate.returns(SinonMongoose.stubChainedQueries(course, ['lean']));
+    userFindOne.returns(SinonMongoose.stubChainedQueries(tutor, ['lean']));
+
+    await CourseHelper.addTutor(course._id, { tutor: tutorId });
+
+    sinon.assert.notCalled(userUpdateOne);
+    sinon.assert.calledOnceWithExactly(emailAddTutor, course._id, tutorId);
   });
 
   it('should add tutor to course (with connection infos and gSheetId)', async () => {
@@ -10247,7 +10297,14 @@ describe('addTutor', () => {
           query: 'findOne',
           args: [
             { _id: tutorId },
-            { firstMobileConnectionDate: 1, loginCode: 1, identity: 1, contact: 1, 'local.email': 1 },
+            {
+              firstMobileConnectionDate: 1,
+              loginCode: 1,
+              identity: 1,
+              contact: 1,
+              'local.email': 1,
+              'local.password': 1,
+            },
           ],
         },
         { query: 'lean' },
