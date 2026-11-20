@@ -6,9 +6,8 @@ const IdentityVerification = require('../../models/IdentityVerification');
 const {
   MOBILE,
   PHONE,
-  SECONDS_IN_AN_HOUR,
   MAX_VERIFICATION_ATTEMPTS,
-  LOGIN_CODE_LOCK_DELAYS_IN_MINUTES,
+  LOGIN_CODE_LOCK_DELAYS,
 } = require('../../helpers/constants');
 const UtilsHelper = require('../../helpers/utils');
 const translate = require('../../helpers/translate');
@@ -28,10 +27,9 @@ const lockLoginCode = async (user) => {
   const previousLockCount = hasRecentLock ? user.loginCodeLock.count : 0;
 
   // The count is capped to the number of delays: after the last one, every lock lasts 24 h
-  const lockCount = Math.min(previousLockCount + 1, LOGIN_CODE_LOCK_DELAYS_IN_MINUTES.length);
-  const delayInMinutes = LOGIN_CODE_LOCK_DELAYS_IN_MINUTES[lockCount - 1];
+  const lockCount = Math.min(previousLockCount + 1, LOGIN_CODE_LOCK_DELAYS.length);
 
-  const lockedUntil = now.add(`PT${delayInMinutes}M`).toDate();
+  const lockedUntil = now.add(LOGIN_CODE_LOCK_DELAYS[lockCount - 1]).toDate();
 
   // loginCodeLock is replaced as a whole: attempts is dropped, so the user has 3 new attempts when the lock ends
   await User.updateOne(
@@ -52,16 +50,16 @@ exports.checkPasswordToken = async (req) => {
       )
       .lean();
     if (!verification) {
-      const isExhausted = await IdentityVerification
+      const hasExhaustedAttempts = await IdentityVerification
         .countDocuments({ email: query.email, attempts: { $gte: MAX_VERIFICATION_ATTEMPTS } });
-      if (isExhausted) throw Boom.tooManyRequests(translate[language].tooManyAttempts);
+      if (hasExhaustedAttempts) throw Boom.tooManyRequests(translate[language].tooManyAttempts);
 
       throw Boom.notFound();
     }
     if (verification.code !== params.token) throw Boom.notFound();
 
-    const timeElapsed = (Date.now() - verification.updatedAt) / 1000;
-    if (timeElapsed > SECONDS_IN_AN_HOUR) throw Boom.unauthorized();
+    const isExpired = CompaniDate().isAfter(CompaniDate(verification.updatedAt).add('PT1H'));
+    if (isExpired) throw Boom.unauthorized();
 
     const user = await User.findOne({ 'local.email': query.email }).select('local.email').lean();
     if (!user) throw Boom.notFound(translate[language].userNotFound);

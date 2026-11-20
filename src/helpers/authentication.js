@@ -9,7 +9,7 @@ const User = require('../models/User');
 const { TOKEN_EXPIRE_DURATION } = require('../models/User');
 const IdentityVerification = require('../models/IdentityVerification');
 const translate = require('./translate');
-const { MOBILE, EMAIL, SECONDS_IN_AN_HOUR } = require('./constants');
+const { MOBILE, EMAIL } = require('./constants');
 const EmailHelper = require('./email');
 const SmsHelper = require('./sms');
 const UtilsHelper = require('./utils');
@@ -90,15 +90,14 @@ exports.forgotPassword = async (payload) => {
   const { email, origin, type } = payload;
   if (origin === MOBILE) {
     const code = UtilsHelper.generateVerificationCode();
-    const isOlderThanOneHour = { $gt: [{ $subtract: ['$$NOW', '$updatedAt'] }, SECONDS_IN_AN_HOUR * 1000] };
-    const verification = await IdentityVerification
-      .findOneAndUpdate(
-        { email },
-        [{ $set: { code, attempts: { $cond: [isOlderThanOneHour, 0, { $ifNull: ['$attempts', 0] }] } } }],
-        { new: true, updatePipeline: true }
-      )
-      .lean();
-    if (!verification) await IdentityVerification.create({ email, code });
+    const verification = await IdentityVerification.findOne({ email }, { updatedAt: 1 }).lean();
+    if (verification) {
+      const isOlderThanOneHour = CompaniDate().isAfter(CompaniDate(verification.updatedAt).add('PT1H'));
+      await IdentityVerification.updateOne(
+        { _id: verification._id },
+        { $set: { code, ...(isOlderThanOneHour && { attempts: 0 }) } }
+      );
+    } else await IdentityVerification.create({ email, code });
 
     if (type === EMAIL) return EmailHelper.sendVerificationCodeEmail(email, code);
 
