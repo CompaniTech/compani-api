@@ -2954,6 +2954,92 @@ describe('getCourse', () => {
       sinon.assert.notCalled(attendanceCountDocuments);
     });
 
+    it('should return single course with generic operations representative infos (webapp)', async () => {
+      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
+      const operationsRepresentative = {
+        _id: new ObjectId(),
+        identity: { firstname: 'Jean', lastname: 'Opération' },
+        local: { email: 'jean.operation@compani.fr' },
+        contact: { phone: '0123456789', countryCode: '+33' },
+        picture: { link: 'link' },
+      };
+      const course = {
+        _id: new ObjectId(),
+        type: SINGLE,
+        format: BLENDED,
+        trainees: [{ _id: traineeIds[0] }],
+        subProgram: { steps: [{ theoreticalDuration: 'PT3600S' }] },
+        slots: [{ step: new ObjectId() }],
+        operationsRepresentative,
+        contact: {
+          _id: operationsRepresentative._id,
+          identity: operationsRepresentative.identity,
+          contact: operationsRepresentative.contact,
+        },
+      };
+      findOne.returns(SinonMongoose.stubChainedQueries(course));
+      getCompanyAtCourseRegistrationList.returns([{ trainee: traineeIds[0], company: authCompanyId }]);
+
+      const result = await CourseHelper.getCourse(
+        { action: OPERATIONS, origin: WEBAPP },
+        { _id: course._id },
+        { role: { vendor: { name: 'vendor_admin' } }, company: { _id: new ObjectId() } }
+      );
+
+      expect(result.operationsRepresentative).toEqual({
+        _id: operationsRepresentative._id,
+        identity: { firstname: 'Jean', lastname: 'Opération' },
+        local: { email: 'test@compani.fr' },
+        picture: { link: 'link' },
+      });
+      expect(result.contact).toEqual({
+        _id: operationsRepresentative._id,
+        identity: { firstname: 'Jean', lastname: 'Opération' },
+        local: { email: 'test@compani.fr' },
+      });
+      process.env.MANAGEMENT_COMPANI_EMAIL = '';
+    });
+
+    it('should return single course with contact infos if contact is not operations representative', async () => {
+      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
+      const contact = {
+        _id: new ObjectId(),
+        identity: { firstname: 'Paul', lastname: 'Formateur' },
+        contact: { phone: '0123456789', countryCode: '+33' },
+      };
+      const course = {
+        _id: new ObjectId(),
+        type: SINGLE,
+        format: BLENDED,
+        trainees: [{ _id: traineeIds[0] }],
+        subProgram: { steps: [{ theoreticalDuration: 'PT3600S' }] },
+        slots: [{ step: new ObjectId() }],
+        operationsRepresentative: {
+          _id: new ObjectId(),
+          identity: { firstname: 'Jean', lastname: 'Opération' },
+          local: { email: 'jean.operation@compani.fr' },
+          contact: { phone: '0987654321', countryCode: '+33' },
+        },
+        contact,
+      };
+      findOne.returns(SinonMongoose.stubChainedQueries(course));
+      getCompanyAtCourseRegistrationList.returns([{ trainee: traineeIds[0], company: authCompanyId }]);
+
+      const result = await CourseHelper.getCourse(
+        { action: OPERATIONS, origin: WEBAPP },
+        { _id: course._id },
+        { role: { vendor: { name: 'vendor_admin' } }, company: { _id: new ObjectId() } }
+      );
+
+      expect(result.operationsRepresentative).toEqual({
+        _id: course.operationsRepresentative._id,
+        identity: { firstname: 'Jean', lastname: 'Opération' },
+        local: { email: 'test@compani.fr' },
+      });
+      expect(result.contact).toEqual(contact);
+      process.env.MANAGEMENT_COMPANI_EMAIL = '';
+    });
+
     it('should return inter b2b course with trainees filtering on company (webapp)', async () => {
       const course = {
         _id: new ObjectId(),
@@ -3466,7 +3552,12 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
+          {
+            query: 'select',
+            args: [
+              '_id misc format type trainees gSheetId certificateGenerationMode tradeName operationsRepresentative',
+            ],
+          },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3632,7 +3723,12 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
+          {
+            query: 'select',
+            args: [
+              '_id misc format type trainees gSheetId certificateGenerationMode tradeName operationsRepresentative',
+            ],
+          },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3806,7 +3902,12 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
+          {
+            query: 'select',
+            args: [
+              '_id misc format type trainees gSheetId certificateGenerationMode tradeName operationsRepresentative',
+            ],
+          },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
@@ -3950,13 +4051,150 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
+          {
+            query: 'select',
+            args: [
+              '_id misc format type trainees gSheetId certificateGenerationMode tradeName operationsRepresentative',
+            ],
+          },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
 
       sinon.assert.notCalled(formatCourseWithProgress);
       sinon.assert.notCalled(attendanceCountDocuments);
+    });
+
+    it('should return generic contact infos if contact is operations representative of single course', async () => {
+      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
+      const loggedUser = { _id: new ObjectId(), company: { _id: new ObjectId() } };
+      const operationsRepresentativeId = new ObjectId();
+      const course = {
+        _id: new ObjectId(),
+        type: SINGLE,
+        subProgram: { isStrictlyELearning: false, steps: [] },
+        slots: [],
+        slotsToPlan: [],
+        trainers: [{ _id: loggedUser._id }],
+        trainees: [new ObjectId()],
+        operationsRepresentative: operationsRepresentativeId,
+        contact: {
+          _id: operationsRepresentativeId,
+          identity: { firstname: 'Jean', lastname: 'Opération' },
+          local: { email: 'jean.operation@compani.fr' },
+          contact: { phone: '0123456789', countryCode: '+33' },
+        },
+      };
+
+      findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
+
+      const result = await CourseHelper.getCourse({ action: PEDAGOGY }, { _id: course._id }, loggedUser);
+
+      expect(result.contact).toEqual({
+        _id: operationsRepresentativeId,
+        identity: { firstname: 'Jean', lastname: 'Opération' },
+        local: { email: 'test@compani.fr' },
+      });
+      expect(result.operationsRepresentative).toBeUndefined();
+      SinonMongoose.calledOnceWithExactly(
+        findOne,
+        [
+          { query: 'findOne', args: [{ _id: course._id }] },
+          {
+            query: 'populate',
+            args: [{
+              path: 'subProgram',
+              select: 'program steps',
+              populate: [
+                { path: 'program', select: 'name image description learningGoals' },
+                {
+                  path: 'steps',
+                  select: 'name type activities theoreticalDuration',
+                  populate: {
+                    path: 'activities',
+                    select: 'name type cards activityHistories',
+                    populate: [
+                      { path: 'activityHistories', match: { user: loggedUser._id } },
+                      { path: 'cards', select: 'template' },
+                    ],
+                  },
+                },
+              ],
+            }],
+          },
+          {
+            query: 'populate',
+            args: [
+              {
+                path: 'slots',
+                select: 'startDate endDate step address meetingLink trainees trainers',
+                populate: { path: 'step', select: 'type durationCountedPerTrainer' },
+                options: { sort: { startDate: 1 } },
+              },
+            ],
+          },
+          { query: 'populate', args: [{ path: 'slotsToPlan', select: '_id' }] },
+          {
+            query: 'populate',
+            args: [{ path: 'trainers', select: 'identity.firstname identity.lastname biography picture' }],
+          },
+          { query: 'populate', args: [{ path: 'tutors', select: 'identity.firstname identity.lastname picture' }] },
+          {
+            query: 'populate',
+            args: [{ path: 'contact', select: 'identity.firstname identity.lastname contact local.email' }],
+          },
+          {
+            query: 'populate',
+            args: [{
+              path: 'attendanceSheets',
+              match: { $or: [{ trainee: loggedUser._id }, { 'slots.traineesSignature.traineeId': loggedUser._id }] },
+              options: { requestingOwnInfos: true },
+              populate: [
+                { path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' },
+              ],
+            }],
+          },
+          { query: 'populate', args: [{ path: 'questionnaires' }] },
+          {
+            query: 'select',
+            args: [
+              '_id misc format type trainees gSheetId certificateGenerationMode tradeName operationsRepresentative',
+            ],
+          },
+          { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
+        ]
+      );
+      process.env.MANAGEMENT_COMPANI_EMAIL = '';
+    });
+
+    it('should return contact infos if contact is not operations representative of single course', async () => {
+      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
+      const loggedUser = { _id: new ObjectId(), company: { _id: new ObjectId() } };
+      const contact = {
+        _id: loggedUser._id,
+        identity: { firstname: 'Paul', lastname: 'Formateur' },
+        local: { email: 'paul.formateur@compani.fr' },
+        contact: { phone: '0123456789', countryCode: '+33' },
+      };
+      const course = {
+        _id: new ObjectId(),
+        type: SINGLE,
+        subProgram: { isStrictlyELearning: false, steps: [] },
+        slots: [],
+        slotsToPlan: [],
+        trainers: [{ _id: loggedUser._id }],
+        trainees: [new ObjectId()],
+        operationsRepresentative: new ObjectId(),
+        contact,
+      };
+
+      findOne.returns(SinonMongoose.stubChainedQueries(course, ['populate', 'select', 'lean']));
+
+      const result = await CourseHelper.getCourse({ action: PEDAGOGY }, { _id: course._id }, loggedUser);
+
+      expect(result.contact).toEqual(contact);
+      expect(result.operationsRepresentative).toBeUndefined();
+      process.env.MANAGEMENT_COMPANI_EMAIL = '';
     });
 
     it('should return course as tutor', async () => {
@@ -4093,7 +4331,12 @@ describe('getCourse', () => {
             query: 'populate',
             args: [{ path: 'questionnaires' }],
           },
-          { query: 'select', args: ['_id misc format type trainees gSheetId certificateGenerationMode tradeName'] },
+          {
+            query: 'select',
+            args: [
+              '_id misc format type trainees gSheetId certificateGenerationMode tradeName operationsRepresentative',
+            ],
+          },
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
