@@ -21,7 +21,7 @@ const server = Hapi.server({
       collect: true,
     },
     cors: {
-      origin: [process.env.WEBSITE_HOSTNAME], // only the webapp of the environment can call the API from a browser
+      origin: [process.env.WEBSITE_HOSTNAME, ...[process.env.MOBILE_WEBSITE_HOSTNAME].filter(Boolean)],
       credentials: true,
       additionalHeaders: ['accept-language', 'accept-encoding', 'access-control-request-headers', 'x-access-token'],
     },
