@@ -182,7 +182,7 @@ exports.authorizeSubProgramUpdate = async (req) => {
     if (subProgram.status !== PUBLISHED) throw Boom.forbidden();
     if ((subProgram.paymentPlans || []).length) throw Boom.forbidden(translate[language].subProgramHasPaymentPlan);
 
-    const { hourlyPaymentPlanId, prices, elearningPrice, elearningLimit } = req.payload.hourlyPaymentPlan;
+    const { hourlyPaymentPlanId, name, prices, elearningPrice, elearningLimit } = req.payload.hourlyPaymentPlan;
     if (hourlyPaymentPlanId) {
       const subProgramHppIds = (subProgram.hourlyPaymentPlans || []).map(hpp => hpp._id);
       const hourlyPaymentPlanExists = UtilsHelper.doesArrayIncludeId(subProgramHppIds, hourlyPaymentPlanId);
@@ -195,6 +195,11 @@ exports.authorizeSubProgramUpdate = async (req) => {
     }
 
     if (prices.length) {
+      const isNameUsed = (subProgram.hourlyPaymentPlans || [])
+        .some(hpp => !UtilsHelper.areObjectIdsEquals(hpp._id, hourlyPaymentPlanId) &&
+          hpp.name.toLowerCase() === name.toLowerCase());
+      if (isNameUsed) throw Boom.forbidden(translate[language].subProgramHourlyPaymentPlanNameAlreadyUsed);
+
       const nonELearningStepIds = subProgram.steps.filter(s => s.type !== E_LEARNING).map(s => s._id);
       const pricedStepIds = prices.map(p => p.step);
       const areStepsInvalid = pricedStepIds.length !== nonELearningStepIds.length ||

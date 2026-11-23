@@ -842,6 +842,7 @@ describe('updateSubProgram', () => {
       const stepId = new ObjectId();
       const payload = {
         hourlyPaymentPlan: {
+          name: 'Plan A',
           prices: [{ step: stepId, hourlyAmount: 50 }],
           elearningPrice: 30,
           elearningLimit: 'PT72000S',
@@ -856,6 +857,7 @@ describe('updateSubProgram', () => {
         {
           $push: {
             hourlyPaymentPlans: {
+              name: 'Plan A',
               prices: [{ step: stepId, hourlyAmount: 50 }],
               elearningPrice: 30,
               elearningLimit: 72000,
@@ -871,7 +873,7 @@ describe('updateSubProgram', () => {
       const subProgramId = new ObjectId();
       const hourlyPaymentPlanId = new ObjectId();
       const prices = [{ step: new ObjectId(), hourlyAmount: 60 }];
-      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, prices, elearningPrice: 30 } };
+      const payload = { hourlyPaymentPlan: { hourlyPaymentPlanId, name: 'Plan A', prices, elearningPrice: 30 } };
 
       await SubProgramHelper.updateSubProgram(subProgramId, payload);
 
@@ -879,7 +881,11 @@ describe('updateSubProgram', () => {
         updateOne,
         { _id: subProgramId, 'hourlyPaymentPlans._id': hourlyPaymentPlanId },
         {
-          $set: { 'hourlyPaymentPlans.$.prices': prices, 'hourlyPaymentPlans.$.elearningPrice': 30 },
+          $set: {
+            'hourlyPaymentPlans.$.name': 'Plan A',
+            'hourlyPaymentPlans.$.prices': prices,
+            'hourlyPaymentPlans.$.elearningPrice': 30,
+          },
           $unset: { 'hourlyPaymentPlans.$.elearningLimit': '' },
         }
       );
