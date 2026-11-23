@@ -157,7 +157,11 @@ const UserSchema = mongoose.Schema({
   },
   origin: { type: String, enum: ORIGIN_OPTIONS, required: true, immutable: true },
   formationExpoTokenList: [{ type: String }],
-  loginCode: { type: String },
+  loginCode: { type: String, select: false },
+  loginCodeLock: {
+    type: mongoose.Schema({ attempts: Number, count: Number, lockedUntil: Date }, { _id: false, id: false }),
+    select: false,
+  },
   isProgramEditor: { type: Boolean, default: false },
 }, {
   timestamps: true,

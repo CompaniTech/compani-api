@@ -21,7 +21,7 @@ const server = Hapi.server({
       collect: true,
     },
     cors: {
-      origin: ['*'],
+      origin: [process.env.WEBSITE_HOSTNAME, ...[process.env.MOBILE_WEBSITE_HOSTNAME].filter(Boolean)],
       credentials: true,
       additionalHeaders: ['accept-language', 'accept-encoding', 'access-control-request-headers', 'x-access-token'],
     },

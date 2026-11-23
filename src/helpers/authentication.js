@@ -12,6 +12,7 @@ const translate = require('./translate');
 const { MOBILE, EMAIL } = require('./constants');
 const EmailHelper = require('./email');
 const SmsHelper = require('./sms');
+const UtilsHelper = require('./utils');
 const { CompaniDate } = require('./dates/companiDates');
 const { CompaniDuration } = require('./dates/companiDurations');
 
@@ -40,7 +41,7 @@ exports.authenticate = async (payload) => {
           firstMobileConnectionDate: CompaniDate().toISO(),
           firstMobileConnectionMode: payload.mobileConnectionMode,
         },
-        $unset: { loginCode: '' },
+        $unset: { loginCode: '', loginCodeLock: '' },
       }
     );
   }
@@ -73,8 +74,12 @@ exports.updatePassword = async (userId, userPayload) => User.findOneAndUpdate(
   { new: true }
 ).lean();
 
-exports.sendToken = (user) => {
+exports.sendToken = async (user) => {
   const payload = pickBy({ _id: user._id, email: user.local.email });
+
+  if (user.loginCodeLock) {
+    await User.updateOne({ _id: user._id }, { $unset: { loginCodeLock: '' } }, { timestamps: false });
+  }
 
   return { token: exports.encode(payload), user: payload };
 };
@@ -84,16 +89,21 @@ exports.createPasswordToken = async email => exports.generatePasswordToken(email
 exports.forgotPassword = async (payload) => {
   const { email, origin, type } = payload;
   if (origin === MOBILE) {
-    const code = String(Math.floor(Math.random() * 9000 + 1000));
-    let verification = await IdentityVerification.findOneAndUpdate({ email }, { $set: { code } }, { new: true }).lean();
-    if (!verification) verification = await IdentityVerification.create({ email, code });
+    const code = UtilsHelper.generateVerificationCode();
+    const verification = await IdentityVerification.findOne({ email }, { updatedAt: 1 }).lean();
+    if (verification) {
+      const isOlderThanOneHour = CompaniDate().isAfter(CompaniDate(verification.updatedAt).add('PT1H'));
+      await IdentityVerification.updateOne(
+        { _id: verification._id },
+        { $set: { code, ...(isOlderThanOneHour && { attempts: 0 }) } }
+      );
+    } else await IdentityVerification.create({ email, code });
 
-    if (type === EMAIL) return EmailHelper.sendVerificationCodeEmail(email, verification.code);
+    if (type === EMAIL) return EmailHelper.sendVerificationCodeEmail(email, code);
 
     const user = await User.findOne({ 'local.email': email }, { contact: 1 }).lean();
-    if (!get(user, 'contact.phone')) throw Boom.conflict();
 
-    return SmsHelper.sendVerificationCodeSms(user.contact, verification.code);
+    return SmsHelper.sendVerificationCodeSms(user.contact, code);
   }
 
   const passwordToken = await exports.generatePasswordToken(email, 3600000);

@@ -313,6 +313,8 @@ exports.hasUserAccessToCompany = (credentials, company) => {
 
 exports.formatName = list => list.map(item => item.name).join(', ');
 
+exports.generateVerificationCode = () => String(crypto.randomInt(1000, 10000));
+
 exports.formatRumNumber = (companyPrefixNumber, prefix, seq) => {
   const len = 20;
   const random = crypto.randomBytes(Math.ceil(len / 2)).toString('hex').slice(0, len).toUpperCase();
