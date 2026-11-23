@@ -2995,7 +2995,6 @@ describe('getCourse', () => {
       expect(result.contact).toEqual({
         _id: operationsRepresentative._id,
         identity: { firstname: 'Jean', lastname: 'Opération' },
-        local: { email: 'test@compani.fr' },
       });
       process.env.MANAGEMENT_COMPANI_EMAIL = '';
     });

@@ -576,7 +576,7 @@ const _formatSingleCourseInterlocutors = (course) => {
 
   return {
     operationsRepresentative: _formatUserWithGenericContactInfos(course.operationsRepresentative),
-    ...(isOperationsRepresentativeContact && { contact: _formatUserWithGenericContactInfos(course.contact) }),
+    ...(isOperationsRepresentativeContact && { contact: omit(course.contact, 'contact') }),
   };
 };
 
