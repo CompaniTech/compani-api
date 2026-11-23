@@ -2829,10 +2829,12 @@ describe('getCourse', () => {
     beforeEach(() => {
       getCompanyAtCourseRegistrationList =
         sinon.stub(CourseHistoriesHelper, 'getCompanyAtCourseRegistrationList');
+      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
     });
 
     afterEach(() => {
       getCompanyAtCourseRegistrationList.restore();
+      process.env.MANAGEMENT_COMPANI_EMAIL = '';
     });
 
     it('should return inter b2b course without trainees filtering (webapp)', async () => {
@@ -2955,7 +2957,6 @@ describe('getCourse', () => {
     });
 
     it('should return single course with generic operations representative infos (webapp)', async () => {
-      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
       const operationsRepresentative = {
         _id: new ObjectId(),
         identity: { firstname: 'Jean', lastname: 'Opération' },
@@ -2992,15 +2993,10 @@ describe('getCourse', () => {
         local: { email: 'test@compani.fr' },
         picture: { link: 'link' },
       });
-      expect(result.contact).toEqual({
-        _id: operationsRepresentative._id,
-        identity: { firstname: 'Jean', lastname: 'Opération' },
-      });
-      process.env.MANAGEMENT_COMPANI_EMAIL = '';
+      expect(result.contact).toEqual({ _id: operationsRepresentative._id });
     });
 
-    it('should return single course with contact infos if contact is not operations representative', async () => {
-      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
+    it('should return single course with only contact id if contact is not operations representative', async () => {
       const contact = {
         _id: new ObjectId(),
         identity: { firstname: 'Paul', lastname: 'Formateur' },
@@ -3035,8 +3031,7 @@ describe('getCourse', () => {
         identity: { firstname: 'Jean', lastname: 'Opération' },
         local: { email: 'test@compani.fr' },
       });
-      expect(result.contact).toEqual(contact);
-      process.env.MANAGEMENT_COMPANI_EMAIL = '';
+      expect(result.contact).toEqual({ _id: contact._id });
     });
 
     it('should return inter b2b course with trainees filtering on company (webapp)', async () => {
@@ -3439,6 +3434,14 @@ describe('getCourse', () => {
   });
 
   describe('PEDAGOGY', () => {
+    beforeEach(() => {
+      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
+    });
+
+    afterEach(() => {
+      process.env.MANAGEMENT_COMPANI_EMAIL = '';
+    });
+
     it('should return elearning course for trainee', async () => {
       const authCompanyId = new ObjectId();
       const loggedUser = {
@@ -4065,7 +4068,6 @@ describe('getCourse', () => {
     });
 
     it('should return generic contact infos if contact is operations representative of single course', async () => {
-      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
       const loggedUser = { _id: new ObjectId(), company: { _id: new ObjectId() } };
       const operationsRepresentativeId = new ObjectId();
       const course = {
@@ -4163,11 +4165,9 @@ describe('getCourse', () => {
           { query: 'lean', args: [{ virtuals: true, autopopulate: true }] },
         ]
       );
-      process.env.MANAGEMENT_COMPANI_EMAIL = '';
     });
 
     it('should return contact infos if contact is not operations representative of single course', async () => {
-      process.env.MANAGEMENT_COMPANI_EMAIL = 'test@compani.fr';
       const loggedUser = { _id: new ObjectId(), company: { _id: new ObjectId() } };
       const contact = {
         _id: loggedUser._id,
@@ -4193,7 +4193,6 @@ describe('getCourse', () => {
 
       expect(result.contact).toEqual(contact);
       expect(result.operationsRepresentative).toBeUndefined();
-      process.env.MANAGEMENT_COMPANI_EMAIL = '';
     });
 
     it('should return course as tutor', async () => {

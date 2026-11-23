@@ -570,15 +570,10 @@ const _formatUserWithGenericContactInfos = user => ({
   local: { email: process.env.MANAGEMENT_COMPANI_EMAIL },
 });
 
-const _formatSingleCourseInterlocutors = (course) => {
-  const isOperationsRepresentativeContact = UtilsHelper
-    .areObjectIdsEquals(get(course, 'contact._id'), get(course, 'operationsRepresentative._id'));
-
-  return {
-    operationsRepresentative: _formatUserWithGenericContactInfos(course.operationsRepresentative),
-    ...(isOperationsRepresentativeContact && { contact: omit(course.contact, 'contact') }),
-  };
-};
+const _formatSingleCourseInterlocutors = course => ({
+  operationsRepresentative: _formatUserWithGenericContactInfos(course.operationsRepresentative),
+  ...(course.contact && { contact: { _id: course.contact._id } }),
+});
 
 const getCourseForOperations = async (courseId, credentials, origin) => {
   const isRofOrAdmin = [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(credentials, 'role.vendor.name'));
