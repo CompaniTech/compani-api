@@ -127,13 +127,14 @@ exports.updateSubProgram = async (subProgramId, payload) => {
   }
 
   if (payload.hourlyPaymentPlan) {
-    const { hourlyPaymentPlanId, prices, elearningPrice } = payload.hourlyPaymentPlan;
+    const { hourlyPaymentPlanId, name, prices, elearningPrice } = payload.hourlyPaymentPlan;
     const elearningLimit = payload.hourlyPaymentPlan.elearningLimit &&
       CompaniDuration(payload.hourlyPaymentPlan.elearningLimit).asSeconds();
 
     if (hourlyPaymentPlanId && prices.length) {
       const updateQuery = {
         $set: {
+          'hourlyPaymentPlans.$.name': name,
           'hourlyPaymentPlans.$.prices': prices,
           ...elearningPrice && { 'hourlyPaymentPlans.$.elearningPrice': elearningPrice },
           ...elearningLimit && { 'hourlyPaymentPlans.$.elearningLimit': elearningLimit },
@@ -156,6 +157,7 @@ exports.updateSubProgram = async (subProgramId, payload) => {
       {
         $push: {
           hourlyPaymentPlans: {
+            name,
             prices,
             ...elearningPrice && { elearningPrice },
             ...elearningLimit && { elearningLimit },

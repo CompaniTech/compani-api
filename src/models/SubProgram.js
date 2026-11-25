@@ -31,6 +31,7 @@ const SubProgramSchema = mongoose.Schema({
   },
   hourlyPaymentPlans: {
     type: [{
+      name: { type: String, required: true },
       prices: [{
         _id: false,
         step: { type: mongoose.Schema.Types.ObjectId, ref: 'Step', required: true },

@@ -152,6 +152,13 @@ const formatCourse = (course, traineesCompanyAtCourseRegistrationByCourse) => {
   return { ...course, trainees: courseTrainees, prices: coursePrices };
 };
 
+const getHourlyPaymentPlanName = (bill) => {
+  const plan = get(bill, 'course.subProgram.hourlyPaymentPlans', [])
+    .find(hpp => UtilsHelper.areObjectIdsEquals(hpp._id, bill.hourlyPaymentPlan));
+
+  return get(plan, 'name');
+};
+
 const getBillInfos = async (courseIds, isVendorUser, shouldComputePreviousBillsSum) => {
   if (!courseIds.length) return { billRanks: {}, validatedHourlyBillsAmount: {} };
 
@@ -206,7 +213,14 @@ exports.list = async (query, credentials) => {
   if (query.action === LIST) {
     const courseBills = await CourseBill
       .find({ course: query.course })
-      .populate({ path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } })
+      .populate({
+        path: 'course',
+        select: 'type trainees subProgram',
+        populate: [
+          { path: 'trainees', select: 'identity' },
+          { path: 'subProgram', select: 'hourlyPaymentPlans' },
+        ],
+      })
       .populate({ path: 'companies', select: 'name' })
       .populate({ path: 'payer.fundingOrganisation', select: 'name' })
       .populate({ path: 'payer.company', select: 'name' })
@@ -217,7 +231,14 @@ exports.list = async (query, credentials) => {
     return courseBills
       .map((bill) => {
         const { netExclTaxes } = exports.getDetailWithTaxes(bill);
-        return { ...bill, netExclTaxes };
+        return {
+          ...bill,
+          course: omit(bill.course, 'subProgram'),
+          ...bill.hourlyPaymentPlan && {
+            hourlyPaymentPlan: { _id: bill.hourlyPaymentPlan, name: getHourlyPaymentPlanName(bill) },
+          },
+          netExclTaxes,
+        };
       })
       .sort((a, b) => new Date(a.billedAt || a.maturityDate) - new Date(b.billedAt || b.maturityDate));
   }
@@ -241,6 +262,7 @@ exports.list = async (query, credentials) => {
             + ' trainers archivedAt',
             populate: [
               { path: 'companies', select: 'name' },
+              { path: 'subProgram', select: 'hourlyPaymentPlans' },
               {
                 path: 'slots',
                 select: 'startDate endDate',
@@ -265,7 +287,14 @@ exports.list = async (query, credentials) => {
           },
         ]
         : [
-          { path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } },
+          {
+            path: 'course',
+            select: 'trainees type subProgram',
+            populate: [
+              { path: 'trainees', select: 'identity' },
+              { path: 'subProgram', select: 'hourlyPaymentPlans' },
+            ],
+          },
           { path: 'companies', select: 'name' },
         ]
       ),
@@ -280,7 +309,7 @@ exports.list = async (query, credentials) => {
   if (!query.isValidated) {
     const singleCourseBills = courseBills
       .filter(bill => !bill.course.archivedAt && bill.course.type === SINGLE);
-    const singleSubProgramIds = [...new Set(singleCourseBills.map(b => b.course.subProgram.toHexString()))];
+    const singleSubProgramIds = [...new Set(singleCourseBills.map(b => b.course.subProgram._id.toHexString()))];
     const subPrograms = await SubProgram
       .find({ _id: { $in: singleSubProgramIds } })
       .populate({ path: 'steps', select: 'activities' })
@@ -331,19 +360,23 @@ exports.list = async (query, credentials) => {
 
   return filteredCourseBills.map((bill) => {
     const { netExclTaxes, netInclTaxes } = exports.getDetailWithTaxes(bill);
+    const course = { ...bill.course, subProgram: bill.course.subProgram._id };
 
     return {
       ...bill,
       rank: billRanks[bill._id],
+      ...bill.hourlyPaymentPlan && {
+        hourlyPaymentPlan: { _id: bill.hourlyPaymentPlan, name: getHourlyPaymentPlanName(bill) },
+      },
       ...validatedHourlyBillsAmount[bill.course._id] && {
         validatedHourlyBillsAmount: validatedHourlyBillsAmount[bill.course._id],
       },
       ...(query.startDate && query.endDate
         ? {
-          course: formatCourse(bill.course, traineesCompanyAtCourseRegistrationByCourse),
+          course: formatCourse(course, traineesCompanyAtCourseRegistrationByCourse),
           ...!query.isValidated && { hasCourseAction: hasCourseAction(bill) },
         }
-        : { course: bill.course }
+        : { course }
       ),
       netInclTaxes,
       netExclTaxes,

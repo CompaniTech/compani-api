@@ -45,8 +45,8 @@ const subProgramList = [
     steps: [steps[0]._id],
     status: PUBLISHED,
     hourlyPaymentPlans: [
-      { _id: hourlyPaymentPlanId, prices: [{ step: steps[0]._id, hourlyAmount: 50 }] },
-      { _id: new ObjectId(), prices: [{ step: steps[0]._id, hourlyAmount: 60 }] },
+      { _id: hourlyPaymentPlanId, name: 'Plan A', prices: [{ step: steps[0]._id, hourlyAmount: 50 }] },
+      { _id: new ObjectId(), name: 'Plan B', prices: [{ step: steps[0]._id, hourlyAmount: 60 }] },
     ],
   },
 ];

@@ -69,6 +69,8 @@ exports.plugin = {
             Joi.object({
               hourlyPaymentPlan: Joi.object({
                 hourlyPaymentPlanId: Joi.objectId(),
+                name: Joi.string().trim()
+                  .when('prices', { is: Joi.array().min(1), then: Joi.required(), otherwise: Joi.forbidden() }),
                 prices: Joi.when('hourlyPaymentPlanId', {
                   is: Joi.exist(),
                   then: Joi.array().items({

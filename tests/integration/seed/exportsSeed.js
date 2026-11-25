@@ -1152,6 +1152,8 @@ const stepList = [
   { _id: new ObjectId(), name: 'étape 4', type: ON_SITE, status: PUBLISHED, theoreticalDuration: 9000 },
 ];
 
+const hourlyPaymentPlanId = new ObjectId();
+
 const subProgramList = [
   {
     _id: new ObjectId(),
@@ -1162,6 +1164,9 @@ const subProgramList = [
     trainerPriceVersions: [
       { effectiveDate: '2019-01-16T10:30:19.543Z', prices: [{ step: stepList[1]._id, hourlyAmount: 80 }] },
       { effectiveDate: '2021-02-01T10:30:19.543Z', prices: [{ step: stepList[1]._id, hourlyAmount: 100 }] },
+    ],
+    hourlyPaymentPlans: [
+      { _id: hourlyPaymentPlanId, name: 'Grille A', prices: [{ step: stepList[0]._id, hourlyAmount: 50 }] },
     ],
   },
   {
@@ -1477,6 +1482,7 @@ const courseBillList = [
     billedAt: '2022-03-08T00:00:00.000Z',
     number: 'FACT-00001',
     sendingDates: ['2022-05-08T00:00:00.000Z', '2022-06-08T00:00:00.000Z'],
+    hourlyPaymentPlan: hourlyPaymentPlanId,
     vat: 10,
   },
   { // 1 cancelled with creditNote
@@ -1549,6 +1555,7 @@ const courseBillList = [
     mainFee: { price: 1000, count: 1, countUnit: GROUP, description: 'Échéance 2' },
     companies: [authCompany._id],
     payer: { company: authCompany._id },
+    hourlyPaymentPlan: hourlyPaymentPlanId,
     maturityDate: '2022-05-15T00:00:00.000Z',
     vat: 20,
     billingPurchaseList: [{ billingItem: courseBillingItemList[1]._id, price: 15, count: 3 }],

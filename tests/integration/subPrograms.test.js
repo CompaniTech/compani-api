@@ -490,7 +490,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     });
 
     it('should add a new hourly payment plan', async () => {
-      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] } };
+      const payload = { hourlyPaymentPlan: { name: 'Plan B', prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] } };
 
       const response = await app.inject({
         method: 'PUT',
@@ -502,11 +502,16 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(200);
       const updatedSubProgram = await SubProgram.findById(subProgramsList[13]._id).lean();
       expect(updatedSubProgram.hourlyPaymentPlans.length).toBe(2);
+      expect(updatedSubProgram.hourlyPaymentPlans[1].name).toBe('Plan B');
     });
 
     it('should update an existing hourly payment plan', async () => {
       const payload = {
-        hourlyPaymentPlan: { hourlyPaymentPlanId, prices: [{ step: stepsList[0]._id, hourlyAmount: 70 }] },
+        hourlyPaymentPlan: {
+          hourlyPaymentPlanId,
+          name: 'Plan renommé',
+          prices: [{ step: stepsList[0]._id, hourlyAmount: 70 }],
+        },
       };
 
       const response = await app.inject({
@@ -520,6 +525,7 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       const updatedSubProgram = await SubProgram.findById(subProgramsList[13]._id).lean();
       expect(updatedSubProgram.hourlyPaymentPlans.length).toBe(1);
       expect(updatedSubProgram.hourlyPaymentPlans[0].prices[0].hourlyAmount).toBe(70);
+      expect(updatedSubProgram.hourlyPaymentPlans[0].name).toBe('Plan renommé');
     });
 
     it('should return 403 if deleting an hourly payment plan used by a course', async () => {
@@ -535,9 +541,41 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
       expect(response.statusCode).toBe(403);
     });
 
+    it('should return 403 if another hourly payment plan has the same name', async () => {
+      const payload = {
+        hourlyPaymentPlan: { name: 'plan a', prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] },
+      };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[13]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(403);
+    });
+
+    it('should return 400 if the name is missing', async () => {
+      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] } };
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/subprograms/${subProgramsList[13]._id.toHexString()}`,
+        payload,
+        headers: { 'x-access-token': authToken },
+      });
+
+      expect(response.statusCode).toBe(400);
+    });
+
     it('should return 400 if the e-learning limit is sent without e-learning price', async () => {
       const payload = {
-        hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }], elearningLimit: 'PT36000S' },
+        hourlyPaymentPlan: {
+          name: 'Plan B',
+          prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }],
+          elearningLimit: 'PT36000S',
+        },
       };
 
       const response = await app.inject({
@@ -551,7 +589,9 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     });
 
     it('should return 403 if the e-learning price is missing on a subProgram with an e-learning step', async () => {
-      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] } };
+      const payload = {
+        hourlyPaymentPlan: { name: 'Plan B', prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] },
+      };
 
       const response = await app.inject({
         method: 'PUT',
@@ -564,7 +604,9 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     });
 
     it('should return 403 if an identical hourly payment plan already exists', async () => {
-      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 40 }] } };
+      const payload = {
+        hourlyPaymentPlan: { name: 'Plan C', prices: [{ step: stepsList[0]._id, hourlyAmount: 40 }] },
+      };
 
       const response = await app.inject({
         method: 'PUT',
@@ -590,7 +632,9 @@ describe('SUBPROGRAMS ROUTES - PUT /subprograms/{_id}', () => {
     });
 
     it('should return 403 if adding hourly payment plan on a subProgram with payment plans', async () => {
-      const payload = { hourlyPaymentPlan: { prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] } };
+      const payload = {
+        hourlyPaymentPlan: { name: 'Plan B', prices: [{ step: stepsList[0]._id, hourlyAmount: 60 }] },
+      };
 
       const response = await app.inject({
         method: 'PUT',

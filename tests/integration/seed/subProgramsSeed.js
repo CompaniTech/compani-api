@@ -170,7 +170,9 @@ const subProgramsList = [
     name: 'subProgram 13',
     status: PUBLISHED,
     steps: [stepsList[0]._id],
-    hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, prices: [{ step: stepsList[0]._id, hourlyAmount: 40 }] }],
+    hourlyPaymentPlans: [
+      { _id: hourlyPaymentPlanId, name: 'Plan A', prices: [{ step: stepsList[0]._id, hourlyAmount: 40 }] },
+    ],
   },
   { // 14 draft, e-learning - to be published on program 3, where subProgram 11 is already archived+published
     _id: new ObjectId(),

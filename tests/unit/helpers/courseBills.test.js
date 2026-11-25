@@ -103,13 +103,19 @@ describe('list', () => {
 
   it('should return all course bills (without billing purchases)', async () => {
     const courseId = new ObjectId();
+    const hourlyPaymentPlanId = new ObjectId();
     const credentials = { role: { vendor: new ObjectId() } };
     const courseBills = [
       {
-        course: { _id: courseId, trainee: { identity: { lastname: 'trainee', firstname: 'name' } } },
+        course: {
+          _id: courseId,
+          trainee: { identity: { lastname: 'trainee', firstname: 'name' } },
+          subProgram: { hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, name: 'Plan A' }] },
+        },
         company: { name: 'Company' },
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
+        hourlyPaymentPlan: hourlyPaymentPlanId,
         maturityDate: '2021-11-11T08:00:00.000Z',
       },
       {
@@ -138,6 +144,7 @@ describe('list', () => {
         company: { name: 'Company' },
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
+        hourlyPaymentPlan: { _id: hourlyPaymentPlanId, name: 'Plan A' },
         maturityDate: '2021-11-11T08:00:00.000Z',
         netExclTaxes: 240,
       },
@@ -148,7 +155,14 @@ describe('list', () => {
         { query: 'find', args: [{ course: courseId }] },
         {
           query: 'populate',
-          args: [{ path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } }],
+          args: [{
+            path: 'course',
+            select: 'type trainees subProgram',
+            populate: [
+              { path: 'trainees', select: 'identity' },
+              { path: 'subProgram', select: 'hourlyPaymentPlans' },
+            ],
+          }],
         },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
@@ -201,7 +215,14 @@ describe('list', () => {
         { query: 'find', args: [{ course: courseId }] },
         {
           query: 'populate',
-          args: [{ path: 'course', select: 'type trainees', populate: { path: 'trainees', select: 'identity' } }],
+          args: [{
+            path: 'course',
+            select: 'type trainees subProgram',
+            populate: [
+              { path: 'trainees', select: 'identity' },
+              { path: 'subProgram', select: 'hourlyPaymentPlans' },
+            ],
+          }],
         },
         { query: 'populate', args: [{ path: 'companies', select: 'name' }] },
         { query: 'populate', args: [{ path: 'payer.fundingOrganisation', select: 'name' }] },
@@ -480,7 +501,7 @@ describe('list', () => {
           type: INTER_B2B,
           expectedBillscount: 2,
           tradeName: 'program',
-          subProgram: interSubProgramId,
+          subProgram: { _id: interSubProgramId },
           trainees: [traineesIds[0], traineesIds[1], traineesIds[2]]
             .map((t, i) => ({ _id: t, identity: { lastname: 'trainee', firstname: String(i) } })),
           prices: [{ company: companies[0]._id, global: 200 }],
@@ -498,7 +519,7 @@ describe('list', () => {
           type: SINGLE,
           expectedBillscount: 4,
           tradeName: 'program 2',
-          subProgram: singleSubProgramId,
+          subProgram: { _id: singleSubProgramId },
           trainees: [{ _id: traineesIds[0], identity: { lastname: 'trainee', firstname: '0' } }],
           prices: [{ company: companies[0]._id, global: 400 }],
           interruptionDates: [{ startDate: '2025-01-01T00:00:00.000Z' }],
@@ -517,7 +538,10 @@ describe('list', () => {
           type: SINGLE,
           expectedBillscount: 4,
           tradeName: 'program 2',
-          subProgram: singleSubProgramId,
+          subProgram: {
+            _id: singleSubProgramId,
+            hourlyPaymentPlans: [{ _id: hourlyPaymentPlan, name: 'Plan A' }],
+          },
           trainees: [{ _id: traineesIds[1], identity: { lastname: 'trainee', firstname: '1' } }],
           prices: [{ company: companies[1]._id, global: 400 }],
           slots: [],
@@ -536,7 +560,7 @@ describe('list', () => {
           type: SINGLE,
           expectedBillscount: 4,
           tradeName: 'program 2',
-          subProgram: singleSubProgramId,
+          subProgram: { _id: singleSubProgramId },
           trainees: [{ _id: traineesIds[2], identity: { lastname: 'trainee', firstname: '2' } }],
           prices: [{ company: companies[1]._id, global: 400 }],
           slots: [
@@ -575,7 +599,7 @@ describe('list', () => {
           type: SINGLE,
           expectedBillscount: 4,
           tradeName: 'program 2',
-          subProgram: singleSubProgramId,
+          subProgram: { _id: singleSubProgramId },
           trainees: [{ _id: traineesIds[3], identity: { lastname: 'trainee', firstname: '3' } }],
           prices: [{ company: companies[1]._id, global: 400 }],
           interruptionDates: [{ startDate: '2025-01-01T00:00:00.000Z' }],
@@ -626,6 +650,7 @@ describe('list', () => {
         _id: billIds[2],
         course: courseIds[2],
         companies: [companies[1]._id],
+        hourlyPaymentPlan,
         maturityDate: '2025-06-13T14:00:00.000Z',
       },
       {
@@ -741,7 +766,7 @@ describe('list', () => {
         companies: [companies[1]],
         mainFee: { price: 320, count: 1 },
         payer: { name: 'Funder' },
-        hourlyPaymentPlan,
+        hourlyPaymentPlan: { _id: hourlyPaymentPlan, name: 'Plan A' },
         validatedHourlyBillsAmount: 170,
         maturityDate: '2025-06-13T14:00:00.000Z',
         course: {
@@ -853,6 +878,7 @@ describe('list', () => {
                 + ' trainers archivedAt',
               populate: [
                 { path: 'companies', select: 'name' },
+                { path: 'subProgram', select: 'hourlyPaymentPlans' },
                 {
                   path: 'slots',
                   select: 'startDate endDate',
@@ -954,7 +980,7 @@ describe('list', () => {
           type: INTRA,
           expectedBillscount: 2,
           tradeName: 'program',
-          subProgram: subProgramId,
+          subProgram: { _id: subProgramId },
           trainees: traineesIds.map((t, i) => ({ _id: t, identity: { lastname: 'trainee', firstname: String(i) } })),
           prices: [{ company: companies[0]._id, global: 200, trainerFees: 20 }],
         },
@@ -965,9 +991,24 @@ describe('list', () => {
       },
     ];
     const courseBillList = [
-      { _id: billId, course: courseId, companies: [companies[0]._id], billedAt: '2025-06-10T22:00:00.000Z' },
-      { _id: new ObjectId(), course: courseId, companies: [companies[0]._id], billedAt: '2025-06-20T22:00:00.000Z' },
-      { _id: new ObjectId(), course: courseId, companies: [companies[1]._id], billedAt: '2025-06-01T22:00:00.000Z' },
+      {
+        _id: billId,
+        course: courseId,
+        companies: [companies[0]._id],
+        billedAt: '2025-06-10T22:00:00.000Z',
+      },
+      {
+        _id: new ObjectId(),
+        course: courseId,
+        companies: [companies[0]._id],
+        billedAt: '2025-06-20T22:00:00.000Z',
+      },
+      {
+        _id: new ObjectId(),
+        course: courseId,
+        companies: [companies[1]._id],
+        billedAt: '2025-06-01T22:00:00.000Z',
+      },
     ];
 
     find.onCall(0).returns(SinonMongoose.stubChainedQueries(periodBills, ['populate', 'setOptions', 'lean']));
@@ -1040,6 +1081,7 @@ describe('list', () => {
               + ' trainers archivedAt',
               populate: [
                 { path: 'companies', select: 'name' },
+                { path: 'subProgram', select: 'hourlyPaymentPlans' },
                 { path: 'slots', select: 'startDate endDate' },
                 { path: 'slotsToPlan', select: '_id' },
                 { path: 'trainees', select: 'identity' },
@@ -1094,6 +1136,7 @@ describe('list', () => {
 
   it('should return all validated course bills', async () => {
     const courseId = new ObjectId();
+    const subProgramId = new ObjectId();
     const billId = new ObjectId();
     const company = { _id: new ObjectId(), name: 'Company' };
     const otherCompany = new ObjectId();
@@ -1102,7 +1145,11 @@ describe('list', () => {
     const periodBills = [
       {
         _id: billId,
-        course: { _id: courseId, trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'nom' } }] },
+        course: {
+          _id: courseId,
+          subProgram: { _id: subProgramId },
+          trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'nom' } }],
+        },
         companies: [company],
         mainFee: { price: 120, count: 2 },
         payer: { name: 'Funder' },
@@ -1149,7 +1196,11 @@ describe('list', () => {
       mainFee: { price: 120, count: 2 },
       payer: { name: 'Funder' },
       billedAt: '2025-06-10T22:00:00.000Z',
-      course: { _id: courseId, trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'nom' } }] },
+      course: {
+        _id: courseId,
+        subProgram: subProgramId,
+        trainees: [{ _id: traineeId, identity: { lastname: 'trainee', firstname: 'nom' } }],
+      },
       netInclTaxes: 240,
       netExclTaxes: 240,
       rank: { index: 2, billsCount: 3 },
@@ -1165,7 +1216,14 @@ describe('list', () => {
         {
           query: 'populate',
           args: [[
-            { path: 'course', select: 'trainees type', populate: { path: 'trainees', select: 'identity' } },
+            {
+              path: 'course',
+              select: 'trainees type subProgram',
+              populate: [
+                { path: 'trainees', select: 'identity' },
+                { path: 'subProgram', select: 'hourlyPaymentPlans' },
+              ],
+            },
             { path: 'companies', select: 'name' },
             { path: 'payer.fundingOrganisation', select: 'name' },
             { path: 'payer.company', select: 'name' },

@@ -2365,7 +2365,12 @@ describe('exportEndOfCourseQuestionnaireHistory', () => {
 });
 
 describe('exportCourseBillAndCreditNoteHistory', () => {
-  const subProgram = { _id: new ObjectId(), program: { name: 'Program 1' } };
+  const hourlyPaymentPlanId = new ObjectId();
+  const subProgram = {
+    _id: new ObjectId(),
+    program: { name: 'Program 1' },
+    hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, name: 'Grille A' }],
+  };
   const companies = [{ _id: new ObjectId(), name: 'Test SAS' }];
   const courseIds = [new ObjectId(), new ObjectId(), new ObjectId(), new ObjectId()];
   const courseList = [
@@ -2488,6 +2493,7 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
       payer: payerList[3],
       billedAt: '2022-03-08T00:00:00.000Z',
       number: 'FACT-00002',
+      hourlyPaymentPlan: hourlyPaymentPlanId,
       courseCreditNote: null,
       coursePayments: [{ netInclTaxes: 110, nature: PAYMENT, status: RECEIVED }],
       sendingDates: ['2022-06-10T00:00:00.000Z', '2022-07-10T00:00:00.000Z'],
@@ -2570,7 +2576,11 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
             path: 'course',
             select: 'subProgram misc type trainees tradeName',
             populate: [
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              {
+                path: 'subProgram',
+                select: 'program hourlyPaymentPlans',
+                populate: { path: 'program', select: 'name' },
+              },
               { path: 'trainees', select: 'identity' },
             ],
           }],
@@ -2662,6 +2672,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         'Début de la formation',
         'Milieu de la formation',
         'Fin de la formation',
+        'Facture au réel',
+        'Grille tarifaire',
       ],
       [
         'Facture',
@@ -2689,6 +2701,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         '13/01/2021',
         '13/01/2021',
         '13/03/2021',
+        'Non',
+        '',
       ],
       [
         'Facture',
@@ -2716,6 +2730,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         '',
         '',
         '',
+        'Oui',
+        'Grille A',
       ],
       [
         'Facture',
@@ -2743,6 +2759,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         '10/02/2021',
         '10/02/2021',
         '10/02/2021',
+        'Non',
+        '',
       ],
       [
         'Facture',
@@ -2769,6 +2787,8 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
         '0,86',
         '11/01/2021',
         '13/01/2021',
+        '',
+        'Non',
         '',
       ],
       [
@@ -2812,7 +2832,11 @@ describe('exportCourseBillAndCreditNoteHistory', () => {
             path: 'course',
             select: 'subProgram misc type trainees tradeName',
             populate: [
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              {
+                path: 'subProgram',
+                select: 'program hourlyPaymentPlans',
+                populate: { path: 'program', select: 'name' },
+              },
               { path: 'trainees', select: 'identity' },
             ],
           }],
@@ -3409,7 +3433,11 @@ describe('exportDraftCourseBillHistory', () => {
             path: 'course',
             select: 'subProgram type trainees archivedAt interruptionDates',
             populate: [
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              {
+                path: 'subProgram',
+                select: 'program hourlyPaymentPlans',
+                populate: { path: 'program', select: 'name' },
+              },
               { path: 'trainees', select: 'identity' },
             ],
           }],
@@ -3429,7 +3457,12 @@ describe('exportDraftCourseBillHistory', () => {
   });
 
   it('should return an array with the header and one row per bill', async () => {
-    const subProgram = { _id: new ObjectId(), program: { name: 'Program 1' } };
+    const hourlyPaymentPlanId = new ObjectId();
+    const subProgram = {
+      _id: new ObjectId(),
+      program: { name: 'Program 1' },
+      hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, name: 'Grille A' }],
+    };
     const courseIds = [new ObjectId(), new ObjectId()];
     const traineeId = new ObjectId();
     const courseList = [
@@ -3453,6 +3486,7 @@ describe('exportDraftCourseBillHistory', () => {
         mainFee: { price: 100, count: 1, description: 'Échéance 1' },
         companies: [companies[0]],
         maturityDate: '2022-04-05T00:00:00.000Z',
+        hourlyPaymentPlan: hourlyPaymentPlanId,
         vat: 20,
         billingPurchaseList: [{ price: 10, count: 2 }],
       },
@@ -3485,6 +3519,8 @@ describe('exportDraftCourseBillHistory', () => {
         'Date d\'archivage',
         'En pause',
         'Liste des pauses',
+        'Facture au réel',
+        'Grille tarifaire',
       ],
       [
         courseIds[0],
@@ -3501,6 +3537,8 @@ describe('exportDraftCourseBillHistory', () => {
         '01/02/2022',
         'Oui',
         '01/01/2022 - en cours',
+        'Oui',
+        'Grille A',
       ],
       [
         courseIds[1],
@@ -3514,6 +3552,8 @@ describe('exportDraftCourseBillHistory', () => {
         '200,00',
         '200,00',
         '0,00',
+        '',
+        'Non',
         '',
         'Non',
         '',
@@ -3535,7 +3575,11 @@ describe('exportDraftCourseBillHistory', () => {
             path: 'course',
             select: 'subProgram type trainees archivedAt interruptionDates',
             populate: [
-              { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+              {
+                path: 'subProgram',
+                select: 'program hourlyPaymentPlans',
+                populate: { path: 'program', select: 'name' },
+              },
               { path: 'trainees', select: 'identity' },
             ],
           }],
