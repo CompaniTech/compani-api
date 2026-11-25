@@ -567,6 +567,16 @@ exports.formatCourseWithProgress = (course, userId, shouldComputePresence = fals
   };
 };
 
+const _formatUserWithGenericContactInfos = user => ({
+  ...omit(user, 'contact'),
+  local: { email: process.env.MANAGEMENT_COMPANI_EMAIL },
+});
+
+const _formatSingleCourseInterlocutors = course => ({
+  operationsRepresentative: _formatUserWithGenericContactInfos(course.operationsRepresentative),
+  ...(course.contact && { contact: { _id: course.contact._id } }),
+});
+
 const getCourseForOperations = async (courseId, credentials, origin) => {
   const isRofOrAdmin = [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER].includes(get(credentials, 'role.vendor.name'));
   const canSeeLoginCode = [VENDOR_ADMIN, TRAINING_ORGANISATION_MANAGER, TRAINER]
@@ -706,6 +716,7 @@ const getCourseForOperations = async (courseId, credentials, origin) => {
     totalTheoreticalDuration: exports.getTotalTheoreticalDuration(fetchedCourse),
     trainees,
     ...isBlended && { slots },
+    ...(origin === WEBAPP && fetchedCourse.type === SINGLE && _formatSingleCourseInterlocutors(fetchedCourse)),
   };
 };
 
@@ -871,8 +882,17 @@ exports.getTraineesWithElearningProgress = (trainees, steps) => {
   return trainees.map(t => ({ ...t, ..._computeTraineeElearningProgress(t._id, stepsWithGroupedHistories) }));
 };
 
+const _formatCourseForPedagogy = (course) => {
+  const isOperationsRepresentativeContact = course.type === SINGLE &&
+    UtilsHelper.areObjectIdsEquals(get(course, 'contact._id'), course.operationsRepresentative);
+  const formattedCourse = omit(course, 'operationsRepresentative');
+  if (!isOperationsRepresentativeContact) return formattedCourse;
+
+  return { ...formattedCourse, contact: _formatUserWithGenericContactInfos(course.contact) };
+};
+
 const _getCourseForPedagogy = async (courseId, credentials) => {
-  const course = await Course.findOne({ _id: courseId })
+  const fetchedCourse = await Course.findOne({ _id: courseId })
     .populate({
       path: 'subProgram',
       select: 'program steps',
@@ -909,9 +929,10 @@ const _getCourseForPedagogy = async (courseId, credentials) => {
       populate: [{ path: 'slots.slotId', select: 'startDate endDate step' }, { path: 'trainer', select: 'identity' }],
     })
     .populate({ path: 'questionnaires' })
-    .select('_id misc format type trainees gSheetId certificateGenerationMode tradeName')
+    .select('_id misc format type trainees gSheetId certificateGenerationMode tradeName operationsRepresentative')
     .lean({ autopopulate: true, virtuals: true });
 
+  const course = _formatCourseForPedagogy(fetchedCourse);
   const courseTrainerIds = course.trainers ? course.trainers.map(trainer => trainer._id) : [];
   const isTrainer = UtilsHelper.doesArrayIncludeId(courseTrainerIds, credentials._id);
   const courseTutorIds = course.tutors ? course.tutors.map(tutor => tutor._id) : [];
