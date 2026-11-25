@@ -703,7 +703,7 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
         path: 'course',
         select: 'subProgram misc type trainees tradeName',
         populate: [
-          { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+          { path: 'subProgram', select: 'program hourlyPaymentPlans', populate: { path: 'program', select: 'name' } },
           { path: 'trainees', select: 'identity' },
         ],
       })
@@ -784,6 +784,11 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
     const commonInfos = formatCommonInfos(bill, netInclTaxes, netExclTaxes);
     const xmlSEPAFileInfos = compact((bill.coursePayments || []).map(p => (get(p, 'xmlSEPAFileInfos'))));
 
+    const hourlyPaymentPlan = bill.hourlyPaymentPlan
+      ? bill.course.subProgram.hourlyPaymentPlans
+        .find(p => UtilsHelper.areObjectIdsEquals(bill.hourlyPaymentPlan, p._id))?.name || ''
+      : '';
+
     const formattedBill = {
       Nature: BILLING_DOCUMENTS[BILL],
       Identifiant: bill.number,
@@ -805,6 +810,8 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
       'Début de la formation': slotInfo.firstSlotDate ? CompaniDate(slotInfo.firstSlotDate).format(DD_MM_YYYY) : '',
       'Milieu de la formation': slotInfo.middleSlotDate ? CompaniDate(slotInfo.middleSlotDate).format(DD_MM_YYYY) : '',
       'Fin de la formation': slotInfo.lastSlotDate ? CompaniDate(slotInfo.lastSlotDate).format(DD_MM_YYYY) : '',
+      'Facture au réel': bill.hourlyPaymentPlan ? 'Oui' : 'Non',
+      'Grille tarifaire': hourlyPaymentPlan,
     };
 
     rows.push(formattedBill);
@@ -861,7 +868,7 @@ exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) =
       path: 'course',
       select: 'subProgram type trainees archivedAt interruptionDates',
       populate: [
-        { path: 'subProgram', select: 'program', populate: { path: 'program', select: 'name' } },
+        { path: 'subProgram', select: 'program hourlyPaymentPlans', populate: { path: 'program', select: 'name' } },
         { path: 'trainees', select: 'identity' },
       ],
     })
@@ -880,6 +887,10 @@ exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) =
     const { netExclTaxes, netInclTaxes } = CourseBillHelper.getDetailWithTaxes(bill);
     const companiesHolding = [...new Set(compact(bill.companies.map(c => get(c, 'holding.name'))))];
     const { interruptionDatesList, isInterrupted } = getInterruptionDatesForExport(bill.course.interruptionDates);
+    const hourlyPaymentPlan = bill.hourlyPaymentPlan
+      ? bill.course.subProgram.hourlyPaymentPlans
+        .find(p => UtilsHelper.areObjectIdsEquals(bill.hourlyPaymentPlan, p._id))?.name || ''
+      : '';
 
     rows.push({
       'Id formation': bill.course._id,
@@ -896,6 +907,8 @@ exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) =
       'Date d\'archivage': bill.course.archivedAt ? CompaniDate(bill.course.archivedAt).format(DD_MM_YYYY) : '',
       'En pause': isInterrupted,
       'Liste des pauses': interruptionDatesList,
+      'Facture au réel': bill.hourlyPaymentPlan ? 'Oui' : 'Non',
+      'Grille tarifaire': hourlyPaymentPlan,
     });
   }
 

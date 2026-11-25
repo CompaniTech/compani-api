@@ -185,10 +185,10 @@ const vendorHistoryExportTypes = [
   {
     exportType: COURSE_BILL,
     expectedRows: [
-      '\ufeff"Nature";"Identifiant";"Date";"Id formation";"Formation";"Programme";"Apprenant";"Structure";"Id payeur";"Payeur";"Coordonnées bancaires du payeur renseignées";"Date de signature de mandat du payeur";"Montant HT";"Montant TTC";"Montant réglé";"Lot de prélèvement";"Date du lot de prélèvement";"Document lié";"Montant soldé";"Solde";"Envoyé le";"Avancement";"Début de la formation";"Milieu de la formation";"Fin de la formation"',
-      `"Facture";"FACT-00001";"08/03/2022";${coursesList[0]._id};"Test SAS - Nom 1 - group 1";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"Oui";"20/07/2025";"1200,00";"1320,00";"0,00";"Prélèvements Septembre 2025";"12/03/2022";;;"-1320,00";"08/05/2022, 08/06/2022";"1,00";"01/05/2021";"01/05/2021";"01/05/2021"`,
-      `"Facture";"FACT-00002";"08/03/2022";${coursesList[3]._id};"Test SAS - Nom 1 - group 4";"Program 1";;"Test SAS";${courseFundingOrganisation._id};"APA Paris";"Non";;"1200,00";"1200,00";"0,00";;;"AV-00001";"1200,00";"0,00";"08/05/2022";"1,00";"01/02/2021";"03/02/2021";"10/02/2021"`,
-      `"Facture";"FACT-00005";"08/03/2022";${coursesList[1]._id};"Nom 2";"Program 2";;"Un autre SAS";${courseFundingOrganisation._id};"APA Paris";"Non";;"400,00";"400,00";"100,00";;;;;"-300,00";;"0,67";"01/02/2021";"02/02/2021";`,
+      '\ufeff"Nature";"Identifiant";"Date";"Id formation";"Formation";"Programme";"Apprenant";"Structure";"Id payeur";"Payeur";"Coordonnées bancaires du payeur renseignées";"Date de signature de mandat du payeur";"Montant HT";"Montant TTC";"Montant réglé";"Lot de prélèvement";"Date du lot de prélèvement";"Document lié";"Montant soldé";"Solde";"Envoyé le";"Avancement";"Début de la formation";"Milieu de la formation";"Fin de la formation";"Facture au réel";"Grille tarifaire"',
+      `"Facture";"FACT-00001";"08/03/2022";${coursesList[0]._id};"Test SAS - Nom 1 - group 1";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"Oui";"20/07/2025";"1200,00";"1320,00";"0,00";"Prélèvements Septembre 2025";"12/03/2022";;;"-1320,00";"08/05/2022, 08/06/2022";"1,00";"01/05/2021";"01/05/2021";"01/05/2021";"Oui";"Grille A"`,
+      `"Facture";"FACT-00002";"08/03/2022";${coursesList[3]._id};"Test SAS - Nom 1 - group 4";"Program 1";;"Test SAS";${courseFundingOrganisation._id};"APA Paris";"Non";;"1200,00";"1200,00";"0,00";;;"AV-00001";"1200,00";"0,00";"08/05/2022";"1,00";"01/02/2021";"03/02/2021";"10/02/2021";"Non";`,
+      `"Facture";"FACT-00005";"08/03/2022";${coursesList[1]._id};"Nom 2";"Program 2";;"Un autre SAS";${courseFundingOrganisation._id};"APA Paris";"Non";;"400,00";"400,00";"100,00";;;;;"-300,00";;"0,67";"01/02/2021";"02/02/2021";;"Non";`,
       `"Avoir";"AV-00002";"09/03/2022";${coursesList[5]._id};"Test SAS - Nom 1 - group 6";"Program 1";;"Test SAS";${authCompany._id};"Test SAS";"Oui";"20/07/2025";"240,00";"240,00";;;;"FACT-00008";;;;;;;`,
     ],
     query: 'startDate=2022-03-01T10:00:00.000Z&endDate=2022-04-20T10:00:00.000Z',
@@ -208,9 +208,9 @@ const vendorHistoryExportTypes = [
   {
     exportType: DRAFT_COURSE_BILL,
     expectedRows: [
-      '\ufeff"Id formation";"Programme";"Id apprenant";"Apprenant";"Structure";"Société mère";"Date de facturation";"Description";"Montant HT";"Montant TTC";"Taux TVA";"Date d\'archivage";"En pause";"Liste des pauses"',
-      `${coursesList[0]._id};"Program 1";;;"Test SAS";"Auth Holding";"15/05/2022";"Échéance 2";"1045,00";"1254,00";"20,00";"08/07/2024";"Non";"10/01/2023 - 15/02/2023"`,
-      `${coursesList[9]._id};"Program 1";${coursesList[9].trainees[0]};"Paul TRAINEE";"Un autre SAS";"Other Holding";"20/05/2022";;"300,00";"300,00";"0,00";;"Non";`,
+      '\ufeff"Id formation";"Programme";"Id apprenant";"Apprenant";"Structure";"Société mère";"Date de facturation";"Description";"Montant HT";"Montant TTC";"Taux TVA";"Date d\'archivage";"En pause";"Liste des pauses";"Facture au réel";"Grille tarifaire"',
+      `${coursesList[0]._id};"Program 1";;;"Test SAS";"Auth Holding";"15/05/2022";"Échéance 2";"1045,00";"1254,00";"20,00";"08/07/2024";"Non";"10/01/2023 - 15/02/2023";"Oui";"Grille A"`,
+      `${coursesList[9]._id};"Program 1";${coursesList[9].trainees[0]};"Paul TRAINEE";"Un autre SAS";"Other Holding";"20/05/2022";;"300,00";"300,00";"0,00";;"Non";;"Non";`,
     ],
     query: 'startDate=2022-05-01T10:00:00.000Z&endDate=2022-05-31T10:00:00.000Z',
   },
