@@ -305,6 +305,13 @@ module.exports = {
   ARCHITECT: 'architect',
   CODEV_REPRESENTATIVE: 'codev_representative',
   get TRAINER_ROLES() { return [this.VAEI_COACH, this.ARCHITECT, this.CODEV_REPRESENTATIVE]; },
+  // STUDY TRACK MILESTONES TARGETS
+  TUTOR: 'tutor',
+  get MILESTONE_TARGETS() {
+    return [this.TRAINEE, this.VAEI_COACH, this.TUTOR, this.ARCHITECT, this.CODEV_REPRESENTATIVE];
+  },
+  // le stagiaire participe à toutes les étapes : il n'est pas une cible d'étape
+  get STEP_TARGETS() { return this.MILESTONE_TARGETS.filter(target => target !== this.TRAINEE); },
   // APP NAMES
   FORMATION: 'formation',
   // SUBSCRIPTIONS

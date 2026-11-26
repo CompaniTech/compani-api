@@ -56,6 +56,14 @@ SubProgramSchema.virtual('program', {
   justOne: true,
 });
 
+SubProgramSchema.virtual('studyTrack', {
+  ref: 'StudyTrack',
+  localField: '_id',
+  foreignField: 'subProgram',
+  match: { isDefault: true },
+  justOne: true,
+});
+
 SubProgramSchema.virtual('courses', {
   ref: 'Course',
   localField: '_id',
