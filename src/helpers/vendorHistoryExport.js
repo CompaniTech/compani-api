@@ -848,16 +848,19 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
 };
 
 const getInterruptionDatesForExport = (interruptionDates) => {
-  let isInterrupted = 'Non';
+  let isCourseInterrupted = 'Non';
+  const now = CompaniDate();
   const interruptionDatesList = (interruptionDates || [])
     .map((interruption) => {
       const end = interruption.endDate ? CompaniDate(interruption.endDate).format(DD_MM_YYYY) : 'en cours';
-      if (!interruption.endDate) isInterrupted = 'Oui';
+      const isActive = CompaniDate(interruption.startDate).isBefore(now) &&
+        (!interruption.endDate || CompaniDate(interruption.endDate).isAfter(now));
+      if (isActive) isCourseInterrupted = 'Oui';
       return `${CompaniDate(interruption.startDate).format(DD_MM_YYYY)} - ${end}`;
     })
     .join(', ');
 
-  return { interruptionDatesList, isInterrupted };
+  return { interruptionDatesList, isCourseInterrupted };
 };
 
 exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) => {
@@ -886,7 +889,7 @@ exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) =
   for (const bill of courseBills) {
     const { netExclTaxes, netInclTaxes } = CourseBillHelper.getDetailWithTaxes(bill);
     const companiesHolding = [...new Set(compact(bill.companies.map(c => get(c, 'holding.name'))))];
-    const { interruptionDatesList, isInterrupted } = getInterruptionDatesForExport(bill.course.interruptionDates);
+    const { interruptionDatesList, isCourseInterrupted } = getInterruptionDatesForExport(bill.course.interruptionDates);
     const hourlyPaymentPlan = bill.hourlyPaymentPlan
       ? bill.course.subProgram.hourlyPaymentPlans
         .find(p => UtilsHelper.areObjectIdsEquals(bill.hourlyPaymentPlan, p._id))?.name || ''
@@ -905,7 +908,7 @@ exports.exportDraftCourseBillHistory = async (startDate, endDate, credentials) =
       'Montant TTC': UtilsHelper.formatFloatForExport(netInclTaxes),
       'Taux TVA': UtilsHelper.formatFloatForExport(bill.vat || 0),
       'Date d\'archivage': bill.course.archivedAt ? CompaniDate(bill.course.archivedAt).format(DD_MM_YYYY) : '',
-      'En pause': isInterrupted,
+      'En pause': isCourseInterrupted,
       'Liste des pauses': interruptionDatesList,
       'Facture au réel': bill.hourlyPaymentPlan ? 'Oui' : 'Non',
       'Grille tarifaire': hourlyPaymentPlan,

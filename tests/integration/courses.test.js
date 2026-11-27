@@ -2277,6 +2277,41 @@ describe('COURSES ROUTES - PUT /courses/{_id}', () => {
       expect(course).toBeTruthy();
     });
 
+    it('should return 400 if restart date is before interruption start date', async () => {
+      const payload = { interruptionDate: '2020-12-31T00:00:00.000Z' };
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload,
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.result.message)
+        .toBe('Impossible : la date de fin doit être postérieure à la date de début de la pause.');
+    });
+
+    it('should return 400 if new interruption date is before previous interruption end date', async () => {
+      const restartResponse = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { interruptionDate: '2021-06-01T00:00:00.000Z' },
+      });
+      expect(restartResponse.statusCode).toBe(200);
+
+      const response = await app.inject({
+        method: 'PUT',
+        url: `/courses/${coursesList[26]._id}`,
+        headers: { Cookie: `${process.env.ALENVI_TOKEN}=${authToken}` },
+        payload: { interruptionDate: '2021-05-31T00:00:00.000Z' },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.result.message)
+        .toBe('Impossible : la date de début doit être postérieure à la date de fin de la pause précédente.');
+    });
+
     it('should update salesRepresentative for a blended course', async () => {
       const payload = { salesRepresentative: trainerOrganisationManager._id };
       const response = await app.inject({

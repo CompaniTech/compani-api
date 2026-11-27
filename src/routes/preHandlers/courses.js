@@ -47,6 +47,7 @@ const {
   MONTHLY,
   GLOBAL,
   SINGLE,
+  DAY,
 } = require('../../helpers/constants');
 const translate = require('../../helpers/translate');
 const UtilsHelper = require('../../helpers/utils');
@@ -265,6 +266,26 @@ const checkInterlocutors = async (payload, course, isRofOrAdmin, req) => {
   }
 };
 
+const checkInterruptionDate = (payload, course, isRofOrAdmin) => {
+  if (!isRofOrAdmin) throw Boom.forbidden();
+
+  const courseInterruptionDates = course.interruptionDates || [];
+  const payloadInterruptionDate = CompaniDate(payload.interruptionDate);
+
+  const ongoingCourseInterruption = courseInterruptionDates.find(d => !d.endDate);
+  if (ongoingCourseInterruption) {
+    if (payloadInterruptionDate.isBefore(ongoingCourseInterruption.startDate, DAY)) {
+      throw Boom.badRequest(translate[language].interruptionEndDateBeforeStartDate);
+    }
+    return;
+  }
+
+  const lastInterruption = UtilsHelper.getLastVersion(courseInterruptionDates, 'endDate');
+  if (lastInterruption && payloadInterruptionDate.isBefore(lastInterruption.endDate, DAY)) {
+    throw Boom.badRequest(translate[language].interruptionStartDateBeforePreviousEndDate);
+  }
+};
+
 exports.authorizeCourseEdit = async (req) => {
   try {
     const { auth: { credentials }, payload, params } = req;
@@ -282,7 +303,7 @@ exports.authorizeCourseEdit = async (req) => {
     const unarchiveCourse = has(payload, 'archivedAt') && payload.archivedAt === '';
     if (course.archivedAt && !unarchiveCourse) throw Boom.forbidden();
 
-    if (has(payload, 'interruptionDate') && !isRofOrAdmin) throw Boom.forbidden();
+    if (has(payload, 'interruptionDate')) checkInterruptionDate(payload, course, isRofOrAdmin);
 
     const courseTrainerIds = get(course, 'trainers', []);
     const companies = [INTRA, INTRA_HOLDING, SINGLE].includes(course.type) ? course.companies : [];

@@ -5453,7 +5453,7 @@ describe('updateCourse', () => {
     );
     sinon.assert.calledOnceWithExactly(
       createHistoryOnCourseInterruptionOrRestart,
-      { courseId, action: COURSE_INTERRUPTION },
+      { courseId, action: COURSE_INTERRUPTION, interruptionDate: '2025-01-06T10:20:00.000Z' },
       credentials._id
     );
     sinon.assert.notCalled(courseBillFind);
@@ -5506,7 +5506,7 @@ describe('updateCourse', () => {
     );
     sinon.assert.calledOnceWithExactly(
       createHistoryOnCourseInterruptionOrRestart,
-      { courseId, action: COURSE_RESTART },
+      { courseId, action: COURSE_RESTART, interruptionDate: '2025-04-22T10:20:00.000Z' },
       credentials._id
     );
     SinonMongoose.calledOnceWithExactly(
@@ -5574,7 +5574,7 @@ describe('updateCourse', () => {
     );
     sinon.assert.calledOnceWithExactly(
       createHistoryOnCourseInterruptionOrRestart,
-      { courseId, action: COURSE_RESTART },
+      { courseId, action: COURSE_RESTART, interruptionDate: '2025-04-22T10:20:00.000Z' },
       credentials._id
     );
     SinonMongoose.calledOnceWithExactly(
@@ -5633,7 +5633,7 @@ describe('updateCourse', () => {
 
     sinon.assert.calledOnceWithExactly(
       createHistoryOnCourseInterruptionOrRestart,
-      { courseId, action: COURSE_RESTART },
+      { courseId, action: COURSE_RESTART, interruptionDate: '2025-04-22T10:20:00.000Z' },
       credentials._id
     );
     SinonMongoose.calledOnceWithExactly(

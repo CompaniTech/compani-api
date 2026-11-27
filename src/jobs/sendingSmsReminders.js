@@ -300,13 +300,23 @@ const getPOEIFirstSingleSlot = async () => {
   const POEISubProgramIds = UtilsHelper.getEnvObjectIds('POEI_SUBPROGRAM_IDS');
   const collectiveStepIds = UtilsHelper.getEnvObjectIds('COLLECTIVE_STEP_IDS');
 
+  const now = CompaniDate().toISO();
   const courses = await Course
     .find({
       subProgram: { $in: POEISubProgramIds },
       archivedAt: { $exists: false },
       $or: [
         { interruptionDates: { $exists: false } },
-        { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+        {
+          interruptionDates: {
+            $not: {
+              $elemMatch: {
+                startDate: { $lt: now },
+                $or: [{ endDate: { $exists: false } }, { endDate: { $gt: now } }],
+              },
+            },
+          },
+        },
       ],
     })
     .populate({ path: 'trainees', select: 'contact' })

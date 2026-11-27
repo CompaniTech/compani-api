@@ -3404,10 +3404,12 @@ describe('exportDraftCourseBillHistory', () => {
 
   beforeEach(() => {
     findCourseBill = sinon.stub(CourseBill, 'find');
+    UtilsMock.mockCurrentDate('2022-04-15T10:00:00.000Z');
   });
 
   afterEach(() => {
     findCourseBill.restore();
+    UtilsMock.unmockCurrentDate();
   });
 
   it('should return an empty array if no draft course bill', async () => {
@@ -3463,7 +3465,7 @@ describe('exportDraftCourseBillHistory', () => {
       program: { name: 'Program 1' },
       hourlyPaymentPlans: [{ _id: hourlyPaymentPlanId, name: 'Grille A' }],
     };
-    const courseIds = [new ObjectId(), new ObjectId()];
+    const courseIds = [new ObjectId(), new ObjectId(), new ObjectId()];
     const traineeId = new ObjectId();
     const courseList = [
       {
@@ -3475,6 +3477,13 @@ describe('exportDraftCourseBillHistory', () => {
         interruptionDates: [{ startDate: '2022-01-01T00:00:00.000Z' }],
       },
       { _id: courseIds[1], subProgram, type: INTRA, trainees: [] },
+      {
+        _id: courseIds[2],
+        subProgram,
+        type: INTRA,
+        trainees: [],
+        interruptionDates: [{ startDate: '2022-04-01T00:00:00.000Z', endDate: '2022-05-01T00:00:00.000Z' }],
+      },
     ];
     const companies = [
       { _id: new ObjectId(), name: 'Test SAS', holding: { name: 'Auth Holding' } },
@@ -3495,6 +3504,12 @@ describe('exportDraftCourseBillHistory', () => {
         mainFee: { price: 200, count: 1 },
         companies: [companies[0], companies[1]],
         maturityDate: '2022-04-10T00:00:00.000Z',
+      },
+      {
+        course: courseList[2],
+        mainFee: { price: 300, count: 1 },
+        companies: [companies[1]],
+        maturityDate: '2022-04-12T00:00:00.000Z',
       },
     ];
 
@@ -3555,6 +3570,24 @@ describe('exportDraftCourseBillHistory', () => {
         '',
         'Non',
         '',
+        'Non',
+        '',
+      ],
+      [
+        courseIds[2],
+        'Program 1',
+        '',
+        '',
+        'Un autre SAS',
+        '',
+        '12/04/2022',
+        '',
+        '300,00',
+        '300,00',
+        '0,00',
+        '',
+        'Oui',
+        '01/04/2022 - 01/05/2022',
         'Non',
         '',
       ],
