@@ -1040,21 +1040,21 @@ exports.updateCourse = async (courseId, payload, credentials) => {
   }
 
   let historyAction;
-  let isCourseInterrupted = false;
+  let hasOngoingInterruption = false;
   if (payload.interruptionDate) {
     setFields = omit(setFields, 'interruptionDate');
 
     const course = await Course.findOne({ _id: courseId }, { interruptionDates: 1 }).lean();
-    const interruptionDates = course.interruptionDates || [];
+    const courseInterruptionDates = course.interruptionDates || [];
 
-    isCourseInterrupted = interruptionDates.some(d => !d.endDate);
+    hasOngoingInterruption = courseInterruptionDates.some(d => !d.endDate);
 
-    const updatedInterruptionDates = isCourseInterrupted
-      ? interruptionDates.map(d => (!d.endDate ? { ...d, endDate: payload.interruptionDate } : d))
-      : [...interruptionDates, { startDate: payload.interruptionDate }];
+    const updatedInterruptionDates = hasOngoingInterruption
+      ? courseInterruptionDates.map(d => (!d.endDate ? { ...d, endDate: payload.interruptionDate } : d))
+      : [...courseInterruptionDates, { startDate: payload.interruptionDate }];
 
     setFields = { ...setFields, interruptionDates: updatedInterruptionDates };
-    historyAction = !isCourseInterrupted ? COURSE_INTERRUPTION : COURSE_RESTART;
+    historyAction = !hasOngoingInterruption ? COURSE_INTERRUPTION : COURSE_RESTART;
   }
 
   const formattedPayload = {
@@ -1083,7 +1083,7 @@ exports.updateCourse = async (courseId, payload, credentials) => {
         credentials._id
       );
 
-    if (isCourseInterrupted) {
+    if (hasOngoingInterruption) {
       const interruptionStartDate = CompaniDate(courseFromDb.interruptionDates.find(d => !d.endDate).startDate)
         .startOf(DAY)
         .toISO();

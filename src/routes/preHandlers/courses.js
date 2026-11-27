@@ -269,19 +269,19 @@ const checkInterlocutors = async (payload, course, isRofOrAdmin, req) => {
 const checkInterruptionDate = (payload, course, isRofOrAdmin) => {
   if (!isRofOrAdmin) throw Boom.forbidden();
 
-  const interruptionDates = course.interruptionDates || [];
-  const interruptionDate = CompaniDate(payload.interruptionDate);
+  const courseInterruptionDates = course.interruptionDates || [];
+  const payloadInterruptionDate = CompaniDate(payload.interruptionDate);
 
-  const isCourseInterrupted = interruptionDates.find(d => !d.endDate);
-  if (isCourseInterrupted) {
-    if (interruptionDate.isBefore(isCourseInterrupted.startDate, DAY)) {
+  const ongoingCourseInterruption = courseInterruptionDates.find(d => !d.endDate);
+  if (ongoingCourseInterruption) {
+    if (payloadInterruptionDate.isBefore(ongoingCourseInterruption.startDate, DAY)) {
       throw Boom.badRequest(translate[language].interruptionEndDateBeforeStartDate);
     }
     return;
   }
 
-  const lastInterruption = UtilsHelper.getLastVersion(interruptionDates, 'endDate');
-  if (lastInterruption && interruptionDate.isBefore(lastInterruption.endDate, DAY)) {
+  const lastInterruption = UtilsHelper.getLastVersion(courseInterruptionDates, 'endDate');
+  if (lastInterruption && payloadInterruptionDate.isBefore(lastInterruption.endDate, DAY)) {
     throw Boom.badRequest(translate[language].interruptionStartDateBeforePreviousEndDate);
   }
 };
