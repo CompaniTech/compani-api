@@ -108,6 +108,16 @@ module.exports = {
     subProgramPaymentPlanNotFound: 'This payment plan does not exist.',
     subProgramHourlyPaymentPlanNotFound: 'This hourly payment plan does not exist.',
     subProgramHourlyPaymentPlanUsed: 'Forbidden: this hourly payment plan is used by a course.',
+    /* StudyTracks */
+    studyTrackCreated: 'Study track created.',
+    studyTrackNameAlreadyExists: 'A study track with this name already exists for this sub-program.',
+    defaultStudyTrackAlreadyExists: 'A default study track already exists for this sub-program.',
+    studyTrackInconsistentELearning: 'Forbidden: e-learning durations must be provided if and only if the sub-program '
+      + 'contains an e-learning step.',
+    studyTrackInconsistentSteps: 'Forbidden: steps details are not consistent with sub-program\'s steps.',
+    studyTrackInconsistentDurations: 'Forbidden: all steps must have the same number of months.',
+    studyTrackEmptyDurations: 'Forbidden: each step must have at least one duration greater than 0.',
+    studyTrackMilestoneMonthTooHigh: 'Forbidden: a milestone month cannot exceed the number of months.',
     subProgramHourlyPaymentPlanAlreadyExists: 'Forbidden: an identical hourly payment plan already exists.',
     subProgramHourlyPaymentPlanNameAlreadyUsed: 'Forbidden: this hourly payment plan name is already used.',
     subProgramHourlyPaymentPlanNoELearningStep: 'Forbidden: this sub-program has no e-learning step.',
@@ -497,6 +507,18 @@ module.exports = {
     subProgramPaymentPlanNotFound: 'Cet échéancier n\'existe pas.',
     subProgramHourlyPaymentPlanNotFound: 'Cette tarification n\'existe pas.',
     subProgramHourlyPaymentPlanUsed: 'Impossible : cette tarification est utilisée par des factures.',
+    /* StudyTracks */
+    studyTrackCreated: 'Parcours type créé.',
+    studyTrackNameAlreadyExists: 'Un parcours type avec ce nom existe déjà pour ce sous-programme.',
+    defaultStudyTrackAlreadyExists: 'Un parcours type par défaut existe déjà pour ce sous-programme.',
+    studyTrackInconsistentELearning: 'Impossible : les durées e-learning doivent être obligatoirement renseignées si '
+      + 'le sous-programme contient une étape e-learning.',
+    studyTrackInconsistentSteps: 'Impossible : le détail des durées par étape n\'est pas raccord avec les étapes '
+      + 'du sous-programme.',
+    studyTrackInconsistentDurations: 'Impossible : toutes les étapes doivent avoir le même nombre de mois.',
+    studyTrackEmptyDurations: 'Impossible : chaque étape doit avoir au moins une durée supérieure à 0.',
+    studyTrackMilestoneMonthTooHigh: 'Impossible : le mois d\'un jalon ne peut pas dépasser le nombre de mois '
+      + 'du parcours.',
     subProgramHourlyPaymentPlanAlreadyExists: 'Impossible : une tarification identique existe déjà.',
     subProgramHourlyPaymentPlanNameAlreadyUsed: 'Impossible : une tarification avec ce nom existe déjà.',
     subProgramHourlyPaymentPlanNoELearningStep: 'Impossible : ce sous-programme n\'a pas d\'étape e-learning.',

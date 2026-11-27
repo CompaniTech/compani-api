@@ -297,6 +297,7 @@ describe('getProgram', () => {
                 ],
               },
               { path: 'courses', select: 'tradeName format' },
+              { path: 'studyTrack' },
             ],
           }],
         },

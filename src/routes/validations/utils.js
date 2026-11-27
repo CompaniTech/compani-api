@@ -131,6 +131,8 @@ const trainerMissionCoursesValidation = Joi.alternatives().try(
   Joi.string().custom(parseAndValidateTrainerMissionCourse)
 );
 
+const studyTracksDurationsValidation = Joi.array().items(Joi.number().integer().min(0)).min(1);
+
 module.exports = {
   monthValidation,
   phoneNumberValidation,
@@ -150,4 +152,5 @@ module.exports = {
   icsValidation,
   attendanceSheetSlotsValidation,
   trainerMissionCoursesValidation,
+  studyTracksDurationsValidation,
 };

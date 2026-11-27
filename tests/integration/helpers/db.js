@@ -63,6 +63,7 @@ const SectorHistory = require('../../../src/models/SectorHistory');
 const Sector = require('../../../src/models/Sector');
 const Service = require('../../../src/models/Service');
 const Step = require('../../../src/models/Step');
+const StudyTrack = require('../../../src/models/StudyTrack');
 const SubProgram = require('../../../src/models/SubProgram');
 const Surcharge = require('../../../src/models/Surcharge');
 const TaxCertificate = require('../../../src/models/TaxCertificate');
@@ -160,6 +161,7 @@ const deleteNonAuthenticationSeeds = async () => {
     Sector.deleteMany({ _id: { $nin: [sector._id] } }),
     Service.deleteMany(),
     Step.deleteMany(),
+    StudyTrack.deleteMany(),
     SubProgram.deleteMany(),
     Surcharge.deleteMany(),
     TaxCertificate.deleteMany(),
