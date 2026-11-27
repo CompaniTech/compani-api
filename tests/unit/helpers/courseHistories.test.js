@@ -840,7 +840,7 @@ describe('createHistoryOnCourseInterruptionOrRestart', () => {
   it('should create a courseHistory on course interruption', async () => {
     const courseId = new ObjectId();
     const userId = new ObjectId();
-    const payload = { courseId, action: COURSE_INTERRUPTION };
+    const payload = { courseId, action: COURSE_INTERRUPTION, interruptionDate: '2025-01-06T00:00:00.000Z' };
 
     await CourseHistoriesHelper.createHistoryOnCourseInterruptionOrRestart(payload, userId);
 
@@ -848,7 +848,8 @@ describe('createHistoryOnCourseInterruptionOrRestart', () => {
       createHistory,
       courseId,
       userId,
-      COURSE_INTERRUPTION
+      COURSE_INTERRUPTION,
+      { interruptionDate: '2025-01-06T00:00:00.000Z' }
     );
   });
 });

@@ -1078,7 +1078,10 @@ exports.updateCourse = async (courseId, payload, credentials) => {
 
   if (has(payload, 'interruptionDate')) {
     await CourseHistoriesHelper
-      .createHistoryOnCourseInterruptionOrRestart({ courseId, action: historyAction }, credentials._id);
+      .createHistoryOnCourseInterruptionOrRestart(
+        { courseId, action: historyAction, interruptionDate: payload.interruptionDate },
+        credentials._id
+      );
 
     if (isCourseInterrupted) {
       const interruptionStartDate = CompaniDate(courseFromDb.interruptionDates.find(d => !d.endDate).startDate)

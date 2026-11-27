@@ -165,6 +165,9 @@ module.exports = {
     maxTraineesReached: 'Max. number of trainees reached for this course.',
     maxTraineesSmallerThanRegistered: 'Max. number of trainees can\'t be smaller than actual registered number.',
     courseTraineeNotFromCourseCompany: 'Course trainee not connected to course company.',
+    interruptionEndDateBeforeStartDate: 'Impossible: the end date must be after the start date of the interruption.',
+    interruptionStartDateBeforePreviousEndDate: 'Impossible: the start date must be after the end date of the previous '
+      + 'interruption.',
     courseAccessRuleAdded: 'Access rule added.',
     courseAccessRuleDeleted: 'Access rule deleted.',
     courseQuestionnairesFound: 'Questionnaires found.',
@@ -554,6 +557,10 @@ module.exports = {
     maxTraineesReached: 'Nombre max. de stagiaires atteint pour cette formation.',
     maxTraineesSmallerThanRegistered: 'Le nombre max. de stagiaires ne peut être inférieur au nombre déjà inscrit.',
     courseTraineeNotFromCourseCompany: 'Ce compte n\'est pas relié à la structure de la formation.',
+    interruptionEndDateBeforeStartDate: 'Impossible : la date de fin doit être postérieure à la date de début de la '
+      + 'pause.',
+    interruptionStartDateBeforePreviousEndDate: 'Impossible : la date de début doit être postérieure à la date de '
+      + 'fin de la pause précédente.',
     courseAccessRuleAdded: 'Règle d\'accès ajoutée.',
     courseAccessRuleDeleted: 'Règle d\'accès supprimée.',
     courseQuestionnairesFound: 'Questionnaires trouvés.',

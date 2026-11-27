@@ -553,7 +553,16 @@ describe('method', () => {
             archivedAt: { $exists: false },
             $or: [
               { interruptionDates: { $exists: false } },
-              { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+              {
+                interruptionDates: {
+                  $not: {
+                    $elemMatch: {
+                      startDate: { $lt: '2026-01-04T15:00:00.000Z' },
+                      $or: [{ endDate: { $exists: false } }, { endDate: { $gt: '2026-01-04T15:00:00.000Z' } }],
+                    },
+                  },
+                },
+              },
             ],
           }],
         },
@@ -849,7 +858,16 @@ describe('method', () => {
             archivedAt: { $exists: false },
             $or: [
               { interruptionDates: { $exists: false } },
-              { interruptionDates: { $not: { $elemMatch: { endDate: { $exists: false } } } } },
+              {
+                interruptionDates: {
+                  $not: {
+                    $elemMatch: {
+                      startDate: { $lt: '2026-01-04T15:00:00.000Z' },
+                      $or: [{ endDate: { $exists: false } }, { endDate: { $gt: '2026-01-04T15:00:00.000Z' } }],
+                    },
+                  },
+                },
+              },
             ],
           }],
         },

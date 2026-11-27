@@ -167,7 +167,7 @@ exports.createHistoryOnTrainerRoleUpdate = (payload, userId) =>
   );
 
 exports.createHistoryOnCourseInterruptionOrRestart = (payload, userId) =>
-  exports.createHistory(payload.courseId, userId, payload.action);
+  exports.createHistory(payload.courseId, userId, payload.action, { interruptionDate: payload.interruptionDate });
 
 exports.createHistoryOnSlotRestriction = (payload, userId) => {
   const pickedFields = ['startDate', 'endDate'];

@@ -92,6 +92,11 @@ const CourseHistorySchema = mongoose.Schema({
     }, { _id: false }),
     required() { return this.action === TRAINER_ROLE_UPDATE; },
   },
+  interruptionDate: {
+    type: Date,
+    required() { return [COURSE_INTERRUPTION, COURSE_RESTART].includes(this.action); },
+    immutable: true,
+  },
 }, { timestamps: true });
 
 queryMiddlewareList.map(middleware => CourseHistorySchema.pre(middleware, formatQuery));

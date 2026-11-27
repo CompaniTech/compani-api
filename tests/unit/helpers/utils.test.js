@@ -908,14 +908,36 @@ describe('sanitizeFileName', () => {
 });
 
 describe('isCourseInterrupted', () => {
-  it('should return true if one element of interruptionDates has no endDate', () => {
+  beforeEach(() => {
+    UtilsMock.mockCurrentDate('2023-03-01T08:00:00.000Z');
+  });
+
+  afterEach(() => {
+    UtilsMock.unmockCurrentDate();
+  });
+
+  it('should return true if an interruption has started and has no endDate', () => {
     const interruptionDates = [{ startDate: '2022-05-31T08:00:00.000Z' }];
     const result = UtilsHelper.isCourseInterrupted(interruptionDates);
 
     expect(result).toBe(true);
   });
 
-  it('should return true if every interruptionDate has endDate', () => {
+  it('should return true if an interruption has started and ends in the future', () => {
+    const interruptionDates = [{ startDate: '2023-02-01T08:00:00.000Z', endDate: '2023-04-01T08:00:00.000Z' }];
+    const result = UtilsHelper.isCourseInterrupted(interruptionDates);
+
+    expect(result).toBe(true);
+  });
+
+  it('should return false if interruption has not started yet', () => {
+    const interruptionDates = [{ startDate: '2023-04-01T08:00:00.000Z' }];
+    const result = UtilsHelper.isCourseInterrupted(interruptionDates);
+
+    expect(result).toBe(false);
+  });
+
+  it('should return false if every interruption is over', () => {
     const interruptionDates = [
       { startDate: '2022-05-31T08:00:00.000Z', endDate: '2022-06-26T08:00:00.000Z' },
       { startDate: '2023-01-31T08:00:00.000Z', endDate: '2023-02-23T08:00:00.000Z' },
@@ -925,7 +947,7 @@ describe('isCourseInterrupted', () => {
     expect(result).toBe(false);
   });
 
-  it('should return true if no interruptionDates', () => {
+  it('should return false if no interruptionDates', () => {
     const result = UtilsHelper.isCourseInterrupted([]);
 
     expect(result).toBe(false);

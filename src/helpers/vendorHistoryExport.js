@@ -849,10 +849,13 @@ exports.exportCourseBillAndCreditNoteHistory = async (startDate, endDate, creden
 
 const getInterruptionDatesForExport = (interruptionDates) => {
   let isInterrupted = 'Non';
+  const now = CompaniDate();
   const interruptionDatesList = (interruptionDates || [])
     .map((interruption) => {
       const end = interruption.endDate ? CompaniDate(interruption.endDate).format(DD_MM_YYYY) : 'en cours';
-      if (!interruption.endDate) isInterrupted = 'Oui';
+      const courseIsInterrupted = CompaniDate(interruption.startDate).isBefore(now) &&
+        (!interruption.endDate || CompaniDate(interruption.endDate).isAfter(now));
+      if (courseIsInterrupted) isInterrupted = 'Oui';
       return `${CompaniDate(interruption.startDate).format(DD_MM_YYYY)} - ${end}`;
     })
     .join(', ');

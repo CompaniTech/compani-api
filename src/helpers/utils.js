@@ -391,7 +391,12 @@ exports.sanitizeFileName = (name) => {
   return sanitized;
 };
 
-exports.isCourseInterrupted = (interruptionDates = []) => interruptionDates.some(d => !d.endDate);
+exports.isCourseInterrupted = (interruptionDates = []) => {
+  const now = CompaniDate();
+
+  return interruptionDates
+    .some(d => CompaniDate(d.startDate).isBefore(now) && (!d.endDate || CompaniDate(d.endDate).isAfter(now)));
+};
 
 exports.getEnvObjectIds = key => (process.env[key] || '').split(',').filter(Boolean).map(id => new ObjectId(id));
 
